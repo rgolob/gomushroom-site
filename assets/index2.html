@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta name="description" content="GoMushroom: napredne, ultrazvočno podprte ekstrakcije medicinskih gob. Trojna ekstrakcija, nizkotemperaturno vakuumsko koncentriranje, standardizacija, HACCP/GMP pristop.">
+<link rel="canonical" href="https://www.gomushroom.si/">
+<meta property="og:title" content="GoMushroom — napredne ekstrakcije medicinskih gob">
+<meta property="og:description" content="Trojna ekstrakcija, vakuumsko koncentriranje, standardizacija. Majhne serije, visoka sledljivost.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://www.gomushroom.si/assets/og-hero.jpg">
+<meta property="og:locale" content="sl_SI">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GoMushroom — napredne ekstrakcije medicinskih gob</title>
+<meta name="theme-color" content="#ffffff" />
+<link rel="icon" href="assets/favicon.png" />
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"Organization",
+  "name":"GoMushroom",
+  "url":"https://www.gomushroom.si/",
+  "logo":"https://www.gomushroom.si/assets/logo-horizontal.jpg",
+  "sameAs":[
+    "https://www.instagram.com/go.mushroom",
+    "https://www.fungalist.si"
+  ],
+  "contactPoint":{
+    "@type":"ContactPoint",
+    "contactType":"customer support",
+    "email":"info@gomushroom.si"
+  }
+}
+</script>
+
+<style>
+  :root{
+    --bg:#f7f8f7; --bg-rgb:247,248,247;
+    --fg:#101311; --muted:#6b726d;
+    --brand:#2b0a39; --accent:#b18556;
+    --line:#e6e9e6; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Inter,Segoe UI,Roboto,Helvetica,Arial}
+  img{max-width:100%;display:block}
+  a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  section{padding:64px 0}
+
+  /* Skip link */
+  .skip{
+    position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden;
+  }
+  .skip:focus{
+    left:12px;top:12px;width:auto;height:auto;z-index:9999;
+    background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:10px;
+    box-shadow:0 10px 24px rgba(0,0,0,.15);
+  }
+
+  /* NAV */
+  header{
+    position:sticky; top:0; z-index:30;
+    background:rgba(255,255,255,.76);
+    backdrop-filter:saturate(160%) blur(10px);
+    border-bottom:1px solid var(--line)
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+  .brand img{height:42px}
+  nav{display:flex;gap:22px}
+  nav a{font-size:14px;position:relative;white-space:nowrap}
+  nav a::after{
+    content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;
+    background:linear-gradient(90deg,var(--accent),var(--brand));transition:width .22s ease
+  }
+  nav a:hover::after{width:100%}
+
+  /* HERO */
+  .hero{position:relative;min-height:62vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .slides{position:absolute;inset:0}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+  .slide.active{opacity:1}
+  .slide img{width:100%;height:100%;object-fit:cover;filter:saturate(108%) contrast(102%)}
+  .hero::after{
+    content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(80% 80% at 50% 30%, rgba(255,255,255,.18), rgba(255,255,255,.55)),
+      linear-gradient(90deg, rgba(var(--bg-rgb),.96) 0%, rgba(var(--bg-rgb),.35) 50%, rgba(var(--bg-rgb),.96) 100%);
+  }
+  .dots{
+    position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    display:flex;gap:8px;z-index:3
+  }
+  .dot{
+    width:10px;height:10px;border-radius:999px;border:1px solid rgba(0,0,0,.25);
+    background:rgba(255,255,255,.65);cursor:pointer
+  }
+  .dot.active{background:#fff}
+  .arrow{
+    position:absolute;top:50%;transform:translateY(-50%);
+    border:none;background:rgba(255,255,255,.6);color:#2b0a39;border-radius:999px;
+    width:36px;height:36px;font-size:20px;cursor:pointer;z-index:3
+  }
+  .arrow:hover{background:#fff}
+  .arrow.prev{left:12px} .arrow.next{right:12px}
+  .inner{position:relative;z-index:2;text-align:center;padding:40px 0}
+  .headline{
+    display:inline-block;max-width:880px;padding:22px 26px;border-radius:18px;
+    background:rgba(255,255,255,.50); border:1px solid rgba(0,0,0,.06);
+    backdrop-filter: blur(6px);
+    box-shadow:0 16px 42px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2b2f2c;opacity:.9}
+  h1{font-size:clamp(28px,3.6vw,48px);line-height:1.08;margin:.5rem 0}
+  .lead{color:var(--fg);opacity:.84;max-width:75ch;margin:0 auto}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;
+    border:1px solid rgba(0,0,0,.06);font-weight:650;box-shadow:0 1px 0 rgba(255,255,255,.6) inset
+  }
+  .btn.brand{background:linear-gradient(135deg,var(--brand),#3d0f52);color:#fff}
+  .btn.accent{background:linear-gradient(135deg,var(--accent),#9b6f45);color:#fff}
+  .btn.ghost{background:#fff;color:#2b0a39}
+  .btn:hover{opacity:.96;text-decoration:none;transform:translateY(-1px)}
+
+  /* LAYOUT */
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}
+  h2{margin:0;font-size:clamp(22px,2.4vw,30px)}
+  .under{height:2px;background:linear-gradient(90deg,var(--brand),var(--accent));width:100px;border-radius:2px;margin-top:8px}
+  .lead2{color:var(--muted);max-width:75ch}
+  .grid{display:grid;gap:22px}
+  @media (min-width:980px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    box-shadow:0 14px 30px rgba(0,0,0,.08);transition:transform .18s ease, box-shadow .18s ease;
+    position:relative
+  }
+  .card:hover{transform:translateY(-3px); box-shadow:0 20px 48px rgba(0,0,0,.12)}
+  .media{
+    position:relative;border-bottom:1px solid var(--line);aspect-ratio:16/10;
+    display:flex;align-items:center;justify-content:center;overflow:hidden
+  }
+  .body{padding:16px}
+  h3{margin:0 0 6px;font-size:18px}
+  .meta{font-size:14px;color:#6b726d}
+
+  /* STORITVE */
+  .card.service{cursor:pointer}
+  .hover-panel{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:16px;text-align:left;background:rgba(255,255,255,.82);
+    border-top:1px solid rgba(0,0,0,.06); backdrop-filter: blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .18s ease; z-index:1;
+  }
+  .hover-panel ul{margin:0;padding-left:18px}
+  @media (hover:hover){
+    .card.service:hover .hover-panel,
+    .card.ref:hover .hover-panel{opacity:1;pointer-events:auto}
+  }
+
+  /* MOBILNI fallback: hover panel vedno viden kot bottom-sheet */
+  @media (hover:none){
+    .card.service .hover-panel,
+    .card.ref .hover-panel{
+      opacity:1;pointer-events:auto;align-items:flex-end;
+      background:linear-gradient(to top, rgba(255,255,255,.95), rgba(255,255,255,.55) 60%, rgba(255,255,255,0));
+    }
+    .card.service .hover-panel ul,
+    .card.ref .hover-panel ul{
+      background:rgba(255,255,255,.9);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      width:100%;
+      margin:0;
+    }
+  }
+
+  .card.service.is-active{
+    border-color: var(--accent);
+    box-shadow: 0 26px 64px rgba(0,0,0,.18), 0 0 0 2px rgba(177,133,86,.35) inset;
+    transform: translateY(-2px);
+  }
+  .card.service.is-active::after{
+    content: "ODPRTO";
+    position: absolute; top: 10px; right: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    color: #fff; padding: 6px 8px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--brand), var(--accent));
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    pointer-events: none;
+  }
+  #services-grid.has-open > .card.service:not(.is-active){
+    filter: grayscale(.12) brightness(.94);
+    opacity:.8;
+    transition:opacity .18s ease, filter .18s ease;
+  }
+
+  .service-detail{
+    display:none;grid-column: 1 / -1;
+    background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.98));
+    backdrop-filter: blur(6px);-webkit-backdrop-filter: blur(6px);
+    border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 20px 48px rgba(0,0,0,.12);
+    padding:22px 20px;margin-top:10px;
+  }
+  .service-detail.is-open{ display:block; }
+
+  .service-detail .content{
+    max-width: 980px;margin: 6px auto 0;
+    font-size: 15px;line-height: 1.65;color: #444a45;
+  }
+  .service-detail .content h3{
+    font-size: 20px;line-height: 1.35;margin: 0 0 12px;color: var(--fg);font-weight: 700;
+  }
+  .service-detail .content p{ margin: 0 0 12px; }
+  .service-detail .content ul{
+    margin: 0 0 12px 20px;
+    padding: 0;list-style: disc;
+  }
+  .service-detail .content li{ margin: 4px 0; padding-left: 2px; }
+  .service-detail .content strong{ font-weight: 650; color:#2c312d; }
+  .service-detail .content .refs{
+    margin: 8px 0 0 20px;font-size: 13.5px;color: #5e645f;
+  }
+  .service-detail .content .refs li + li{ margin-top: 2px; }
+
+  @media (min-width: 768px){
+    .service-detail .content{ max-height:none; overflow:visible; padding-right:0; }
+  }
+  @media (max-width: 767px){
+    .service-detail .content{
+      max-height: min(68vh, 520px);
+      overflow:auto;padding-right:10px;
+    }
+    .service-detail .content::-webkit-scrollbar{ width:10px }
+    .service-detail .content::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.15); border-radius:8px }
+  }
+  .service-detail .content::after{
+    content:'';position:sticky; bottom:-1px; height:32px; display:block;
+    background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.98));
+    pointer-events:none;
+  }
+
+  /* REFERENCE */
+  .grid-refs{display:grid;gap:22px}
+  @media (min-width:980px){ .grid-refs{grid-template-columns:repeat(3,1fr)} }
+
+  .card.ref{cursor:pointer;display:flex;flex-direction:column}
+  .card.ref .media{
+    position:relative;aspect-ratio:4/5;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    border-bottom:1px solid var(--line);overflow:hidden
+  }
+  .card.ref .media img{
+    width:100%;height:100%;object-fit:contain;padding:10px;transition:filter .2s ease;
+    position:relative; z-index:0;
+  }
+  .card.ref .media *:not(.hover-panel):not(.detail-panel):not(.topbar){pointer-events:none}
+
+  .card.ref .hover-panel{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:16px;background:rgba(255,255,255,.82);backdrop-filter:blur(6px);
+    border-top:1px solid rgba(0,0,0,.06);
+    opacity:0;pointer-events:none;transition:opacity .18s ease; z-index:1;
+  }
+
+  .card.ref .topbar{
+    position:absolute;left:0;right:0;top:0;display:none;align-items:center;gap:10px;
+    padding:12px 14px;
+    background:linear-gradient(135deg, rgba(43,10,57,.55), rgba(177,133,86,.50));
+    color:#fff;backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border-bottom:1px solid rgba(0,0,0,.12);
+    font-weight:700; z-index:3;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .card.ref .detail-panel{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    padding:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(6px); z-index:1;
+  }
+  .card.ref .detail-panel .meta{max-width:92%;line-height:1.55}
+  .card.ref.is-open .media img{filter:blur(2px) brightness(.9)}
+  .card.ref.is-open .hover-panel{display:none}
+  .card.ref.is-open .topbar{display:flex}
+  .card.ref.is-open .detail-panel{display:flex}
+
+  .titlebar{
+    border-top:1px solid var(--line);padding:14px 16px;min-height:60px;background:#fff;
+    display:flex;align-items:center;gap:10px
+  }
+  .titlebar .title{display:inline;font-size:18px;font-weight:700;margin:0}
+  .titlebar .buy{display:none;font-weight:700}
+  .card.ref.is-open .titlebar .title{display:none}
+  .card.ref.is-open .titlebar .buy{display:inline}
+
+  /* hint za tap */
+  .card.ref .titlebar::after{
+    content:"Tapni za več";
+    font-size:12px;color:var(--muted);margin-left:auto;
+  }
+  .card.ref.is-open .titlebar::after{content:"Zapri";}
+
+  footer{padding:28px 0;border-top:1px dashed #dcdedc;color:#69736d;font-size:14px;text-align:center}
+
+  .ico{width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+  .li-icon{display:flex;align-items:flex-start;gap:8px}
+  .li-icon svg{flex:0 0 auto;margin-top:2px}
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1110; --bg-rgb:15,17,16;
+      --fg:#f3f4f3; --muted:#a7ada9;
+      --brand:#caa6ff; --accent:#e0b27a;
+      --line:#232624; --card:#151816;
+    }
+    header{background:rgba(15,17,16,.8)}
+    .headline{background:rgba(21,24,22,.6)}
+    .arrow{background:rgba(21,24,22,.7);color:#fff}
+    .btn.ghost{background:#151816;color:#fff}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Preskoči na vsebino</a>
+
+<!-- SVG simboli za ikone -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <symbol id="i-drop" viewBox="0 0 24 24">
+      <path fill="#2b0a39" d="M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z"/>
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24">
+      <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z"/>
+      <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><img src="assets/logo-horizontal.jpg" alt="GoMushroom"></div>
+    <nav>
+      <a href="#storitve">Storitve</a>
+      <a href="#kakodelamo">Kako delamo</a>
+      <a href="#kakovost">Kakovost</a>
+      <a href="#reference">Reference</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="slides">
+      <div class="slide active">
+        <img src="assets/rotovap.webp"
+             alt="Vakuumska destilacija (rotavap)"
+             loading="eager"
+             fetchpriority="high"
+             decoding="async">
+      </div>
+      <div class="slide">
+        <img src="assets/ultrasonic-probe.webp"
+             alt="Ultrazvočna sonda"
+             loading="lazy"
+             decoding="async">
+      </div>
+    </div>
+    <button class="arrow prev" aria-label="Prejšnja">‹</button>
+    <button class="arrow next" aria-label="Naslednja">›</button>
+
+    <div class="dots" role="tablist" aria-label="Hero slike">
+      <button class="dot active" data-idx="0" role="tab" aria-selected="true" aria-label="Slika 1"></button>
+      <button class="dot" data-idx="1" role="tab" aria-selected="false" aria-label="Slika 2"></button>
+    </div>
+
+    <div class="inner wrap">
+      <div class="headline">
+        <div class="kicker">Omejene serije • Ročno • Slovenija</div>
+        <h1>Napredne ekstrakcije medicinskih gob.</h1>
+        <p class="lead">Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.</p>
+        <div class="cta">
+          <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener">Instagram</a>
+          <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORITVE -->
+  <section id="storitve">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Storitve</h2><div class="under"></div></div>
+        <p class="lead2">Na miški kratek opis; klik odpre vsebino spodaj čez celotno širino (odprta je le ena).</p>
+      </div>
+
+      <div class="grid grid-3" id="services-grid">
+        <!-- EKSTRAKCIJE GOB -->
+        <article class="card service" data-service="ekstrakcije">
+          <div class="media">
+            <img src="assets/analytics-cylinder-lg.webp" alt="Ekstrakcije gob" loading="lazy" decoding="async" />
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Trojna ekstrakcija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Ultrazvočna ekstrakcija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Nizko-T vakuumsko koncentriranje</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Visoka vsebnost učinkovin</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Alkoholna in brezalkoholna različica</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC kontrola suhe snovi</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP pristop</li>
+              </ul>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Ekstrakcije medicinskih gob</h3>
+            <p class="meta">Reishi, Bradovec, Čaga …</p>
+          </div>
+        </article>
+
+        <!-- GOJENJE REISHI -->
+        <article class="card service" data-service="gojenje">
+          <div class="media">
+            <img src="assets/antlers.jpg" alt="Gojenje Reishi" loading="lazy" decoding="async" />
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Gojenje od micelija do gobe</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Ekološki substrati</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Lastna sterilizacija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Antler morfologija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Nizkotemperaturno sušenje</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC kontrola vlage</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Sledljivost do serije</li>
+              </ul>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Gojenje Reishi (in-house)</h3>
+            <p class="meta">Antlers/klobuk — konsistentna surovina</p>
+          </div>
+        </article>
+
+        <!-- OSTALO -->
+        <article class="card service" data-service="botanicne">
+          <div class="media">
+            <img src="assets/filling-line-lg.webp" alt="Ostale storitve" loading="lazy" decoding="async" />
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Botanične ekstrakcije rastlin</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Enak QC pristop</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Sterilizacija substratov</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Priprava agar medijev</li>
+              </ul>
+            </div>
+          </div>
+          <div class="body">
+            <h3>Ostale storitve</h3>
+            <p class="meta">Po dogovoru</p>
+          </div>
+        </article>
+
+        <!-- FULL-WIDTH PANEL -->
+        <div id="service-detail" class="service-detail" aria-live="polite">
+          <div class="content"></div>
+        </div>
+      </div>
+
+      <!-- TEMPLATE: EKSTRAKCIJE -->
+      <template id="tpl-ekstrakcije">
+        <h3>Kaj vključuje</h3>
+        <ul>
+          <li><strong>Sprejem in priprava surovine:</strong> prevzem, QC kontrola vlage, dosuševanje do 8 % vlage, mletje v homogeno frakcijo.</li>
+          <li><strong>Trojna ekstrakcija v šaržah:</strong>
+            <ul>
+              <li>etanolna ekstrakcija (triterpeni, hericenoni, fenoli)</li>
+              <li>vročevodna ekstrakcija (≈ 80–90 °C, polisaharidi)</li>
+              <li>tlačna ekstrakcija (≈ 120–130 °C, visokomolekularne spojine)</li>
+            </ul>
+          </li>
+          <li><strong>Združitev frakcij in formulacija</strong> končnega ekstrakta (alkoholna ali glicerinska tinktura).</li>
+        </ul>
+
+        <h3>Tehnološki poudarki</h3>
+        <ul>
+          <li>Ultrazvočno podprta ekstrakcija z nadzorom temperature.</li>
+          <li>Visoka razmerja topilo : surovina za boljši izplen.</li>
+          <li>Nizkotemperaturno vakuumsko koncentriranje.</li>
+        </ul>
+
+        <h3>Topila in formulacije</h3>
+        <ul>
+          <li>Food-grade etanol, RO voda in rastlinski glicerin Ph. Eur.</li>
+          <li>Možnost <strong>alkoholne</strong> ali <strong>brezalkoholne (glicerinske)</strong> različice.</li>
+          <li>Po potrebi dodatek sončničnega lecitina (stabilnost, biorazpoložljivost) in vitamina C (antioksidativna zaščita).</li>
+        </ul>
+
+        <h3>Standardizacija in QC</h3>
+        <ul>
+          <li>Določanje % suhe snovi, % etanola, % glicerina, gostota in organoleptika.</li>
+          <li>Po potrebi: mikrobiologija in težke kovine (Pb, Cd, Hg).</li>
+          <li><strong>Interni QC:</strong> za vsako vrsto gobe definirani minimalni cilji suhe snovi.</li>
+        </ul>
+
+        <h3>Skladnost in dokumentacija</h3>
+        <ul>
+          <li>Izvedba v skladu s HACCP / GMP pristopom.</li>
+          <li>SOP/ZOP sistem in popolna sledljivost lotov.</li>
+          <li>Proizvodnja v registriranem trošarinskem obratu za etanol.</li>
+        </ul>
+
+        <h3>Prisotnost usedline — znak koncentracije, ne napaka</h3>
+        <p>
+          Naše tinkture <strong>namenoma niso filtrirane do popolne bistrosti</strong>.
+          Naravna usedlina je <strong>normalen in zaželen pojav</strong> in znak visoke koncentracije.
+          Pred uporabo pretresi.
+        </p>
+      </template>
+
+      <!-- TEMPLATE: GOJENJE -->
+      <template id="tpl-gojenje">
+        <h3>Gojenje Reishi (in-house)</h3>
+        <ul class="meta">
+          <li>Micelij → sterilni substrat → plodišča (antlers ali klobuk).</li>
+          <li>Vse faze izvajamo sami: micelij, sterilizacija, plodonošenje.</li>
+          <li>Ekološke surovine: pšenični otrobi, proso, rž, bukova žagovina.</li>
+          <li>Majhne šarže, ročna kontrola, sledljivost od seva do serije.</li>
+          <li>Antler obliko spodbujamo z omejenim pretokom zraka, povišanim CO₂ in nadzorovano svetlobo.</li>
+        </ul>
+      </template>
+
+      <!-- TEMPLATE: BOTANIČNE -->
+      <template id="tpl-botanicne">
+        <h3>Botanične ekstrakcije</h3>
+        <ul class="meta">
+          <li>Smrekovi vršički & izbrane rastline; EtOH / glicerin / H₂O.</li>
+          <li>Enak QC pristop kot pri gobah (HACCP/GMP).</li>
+          <li>Po dogovoru: ciljni profil, okus, viskoznost, polnitev.</li>
+        </ul>
+
+        <h3>Sterilizacija gojitvenih substratov</h3>
+        <ul class="meta">
+          <li>Priprava substratov iz ekoloških sestavin.</li>
+          <li>Sterilizacija substratov in žita.</li>
+          <li>Priprava in sterilizacija agar medija.</li>
+          <li>Inokulacija z micelijem.</li>
+        </ul>
+      </template>
+
+    </div>
+  </section>
+
+  <!-- KAKO DELAMO -->
+  <section id="kakodelamo">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Kako delamo</h2><div class="under"></div></div>
+        <p class="lead2">Naš proces je zasnovan za maksimalen izplen in ponovljivost serij.</p>
+      </div>
+
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="body">
+            <h3>Trojna ekstrakcija</h3>
+            <p class="meta">EtOH → vročevodna → tlačna vodna frakcija. Vsaka posebej filtrirana in koncentrirana.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="body">
+            <h3>Ultrazvočna podpora</h3>
+            <p class="meta">Poveča difuzijo topil, skrajša čas in izboljša izplen pri nizkih temperaturah.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="body">
+            <h3>Vakuumsko koncentriranje</h3>
+            <p class="meta">Nežno odstranjevanje topil pri nizkih T, brez pregrevanja občutljivih spojin.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- KAKOVOST -->
+  <section id="kakovost">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Kakovost</h2><div class="under"></div></div>
+        <p class="lead2">HACCP/GMP pristop, QC merjenja in sledljivost v vsakem koraku.</p>
+      </div>
+
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="body">
+            <h3>QC kontrola surovine</h3>
+            <p class="meta">Vlaga, homogenost mletja, vizualna in organoleptična preverjanja.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="body">
+            <h3>Standardizacija serij</h3>
+            <p class="meta">Suha snov, gostota, % topil, stabilnost in ponovljivost okusa/viskoznosti.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="body">
+            <h3>Sledljivost lotov</h3>
+            <p class="meta">Od micelija / surovine do vsake stekleničke; SOP/ZOP dokumentacija.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- REFERENCE -->
+  <section id="reference">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Reference — Fungalist</h2><div class="under"></div></div>
+        <p class="lead2">Podjetje <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Fungalist</a> je naš osrednji partner, pri katerem lahko najdete naše tinkture.</p>
+      </div>
+
+      <div class="grid-refs">
+        <!-- REISHI -->
+        <article class="card ref" aria-expanded="false">
+          <div class="media">
+            <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura" loading="lazy" decoding="async">
+            <div class="topbar">Reishi</div>
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakumom</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost lotov</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
+              </ul>
+            </div>
+            <div class="detail-panel">
+              <ul class="meta">
+                <li><strong>Izvor surovine:</strong> Reishi gojen in-house.</li>
+                <li><strong>Postopek:</strong> trojna ekstrakcija z ultrazvokom; nizko-T vakuumsko koncentriranje.</li>
+                <li><strong>Formulacija:</strong> EtOH ali glicerin, lecitin non-GMO, vit. C.</li>
+                <li><strong>Uporaba (smernica):</strong> 15–25 kapljic, 2× dnevno; pretresi.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="titlebar">
+            <h3 class="title">Reishi</h3>
+            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+          </div>
+        </article>
+
+        <!-- RESASTI BRADOVEC -->
+        <article class="card ref" aria-expanded="false">
+          <div class="media">
+            <img src="assets/ref-fungalist-lionsmane.jpg" alt="Resasti bradovec tinktura" loading="lazy" decoding="async">
+            <div class="topbar">Resasti bradovec</div>
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakumom</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost lotov</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
+              </ul>
+            </div>
+            <div class="detail-panel">
+              <ul class="meta">
+                <li><strong>Postopek:</strong> ultrazvočno podprta ekstrakcija z visokimi razmerji topila; nežno koncentriranje.</li>
+                <li><strong>Ciljne frakcije:</strong> polisaharidi + etanolotopne spojine.</li>
+                <li><strong>Suha snov:</strong> visoka koncentracija, > 11 %.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="titlebar">
+            <h3 class="title">Resasti bradovec</h3>
+            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+          </div>
+        </article>
+
+        <!-- ČAGA -->
+        <article class="card ref" aria-expanded="false">
+          <div class="media">
+            <img src="assets/ref-fungalist-chaga.jpg" alt="Čaga tinktura" loading="lazy" decoding="async">
+            <div class="topbar">Čaga</div>
+            <div class="hover-panel">
+              <ul class="meta">
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakumom</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost lotov</li>
+                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
+              </ul>
+            </div>
+            <div class="detail-panel">
+              <ul class="meta">
+                <li><strong>Postopek:</strong> večstopenjska ekstrakcija (EtOH + H₂O) z ultrazvokom.</li>
+                <li><strong>Standardizacija:</strong> ciljna vsebnost topil za ponovljiv okus/viskoznost.</li>
+                <li><strong>Uporaba (smernica):</strong> 15–25 kapljic, 2× dnevno; pretresi.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="titlebar">
+            <h3 class="title">Čaga</h3>
+            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- KONTAKT -->
+  <section id="kontakt">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Kontakt</h2><div class="under"></div></div>
+      </div>
+
+      <p class="lead2" style="margin-top:6px">
+        Napiši katero gobo / vrsto ekstrakcije potrebuješ in količino surovine — odgovoriva v 24 h.
+      </p>
+
+      <div class="cta">
+        <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener">Instagram</a>
+        <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">© <span id="y"></span> GoMushroom</div></footer>
+
+<script>
+  // HERO slider (aria + reduced motion)
+  (function(){
+    const hero=document.querySelector('.hero');
+    const slides=[...hero.querySelectorAll('.slide')];
+    const dots=[...hero.querySelectorAll('.dot')];
+    const prev=hero.querySelector('.arrow.prev');
+    const next=hero.querySelector('.arrow.next');
+    let i=0,t;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const show=n=>{
+      slides[i].classList.remove('active');
+      dots[i].classList.remove('active');
+      dots[i].setAttribute('aria-selected','false');
+
+      i=(n+slides.length)%slides.length;
+
+      slides[i].classList.add('active');
+      dots[i].classList.add('active');
+      dots[i].setAttribute('aria-selected','true');
+    };
+
+    const auto=()=>{
+      if(reduceMotion) return;
+      clearInterval(t);
+      t=setInterval(()=>show(i+1),5500);
+    };
+
+    prev.onclick=()=>{show(i-1);auto()};
+    next.onclick=()=>{show(i+1);auto()};
+    dots.forEach((d,idx)=>d.onclick=()=>{show(idx);auto()});
+    auto();
+  })();
+
+  // STORITVE — klik prikaže full-width panel pod karticami
+  (function(){
+    const grid = document.getElementById('services-grid');
+    const cards = [...grid.querySelectorAll('.card.service')];
+    const panel = document.getElementById('service-detail');
+    const panelContent = panel.querySelector('.content');
+    const templates = {
+      ekstrakcije: document.getElementById('tpl-ekstrakcije'),
+      gojenje:     document.getElementById('tpl-gojenje'),
+      botanicne:   document.getElementById('tpl-botanicne'),
+    };
+
+    function openPanel(key, card){
+      cards.forEach(c=>c.classList.toggle('is-active', c===card));
+      grid.classList.add('has-open');
+
+      const tpl = templates[key];
+      if(!tpl) return;
+      panelContent.innerHTML = '';
+      panelContent.appendChild(tpl.content.cloneNode(true));
+      panel.classList.add('is-open');
+
+      const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+      requestAnimationFrame(()=>{
+        const panelTop = panel.getBoundingClientRect().top + window.pageYOffset;
+        const targetTop = panelTop - headerHeight - 10;
+        window.scrollTo({ top: targetTop, behavior: 'smooth' });
+      });
+    }
+
+    function closePanel(){
+      cards.forEach(c=>c.classList.remove('is-active'));
+      grid.classList.remove('has-open');
+      panel.classList.remove('is-open');
+      panelContent.innerHTML = '';
+    }
+
+    cards.forEach(card=>{
+      card.addEventListener('click', (e)=>{
+        if((e.target.tagName||'').toLowerCase()==='a') return;
+        const key = card.getAttribute('data-service');
+        if(card.classList.contains('is-active')) closePanel();
+        else openPanel(key, card);
+      });
+      card.setAttribute('tabindex','0'); card.setAttribute('role','button');
+      card.addEventListener('keydown', e=>{
+        if(e.key==='Enter'||e.key===' '){ e.preventDefault(); card.click(); }
+      });
+    });
+
+    document.addEventListener('keydown', e=>{
+      if(e.key==='Escape') closePanel();
+    });
+  })();
+
+  // REFERENCE – click open one at a time
+  (function(){
+    const refs=[...document.querySelectorAll('.card.ref')];
+    function closeAll(except){
+      refs.forEach(c=>{
+        if(c!==except){
+          c.classList.remove('is-open');
+          c.setAttribute('aria-expanded','false');
+        }
+      });
+    }
+    function toggle(card){
+      const open=card.classList.contains('is-open');
+      if(open){
+        card.classList.remove('is-open');
+        card.setAttribute('aria-expanded','false');
+      } else {
+        closeAll(card);
+        card.classList.add('is-open');
+        card.setAttribute('aria-expanded','true');
+        if(window.innerWidth<900){
+          card.scrollIntoView({behavior:'smooth',block:'center'});
+        }
+      }
+    }
+    refs.forEach(card=>{
+      card.addEventListener('click',e=>{
+        const t=(e.target.tagName||'').toLowerCase();
+        if(t==='a') return;
+        toggle(card);
+      });
+      card.setAttribute('tabindex','0');
+      card.setAttribute('role','button');
+      card.addEventListener('keydown',e=>{
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          toggle(card);
+        }
+      });
+    });
+  })();
+
+  document.getElementById('y').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>

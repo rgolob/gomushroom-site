@@ -1,0 +1,5 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://www.gomushroom.si/sitemap.xml
+Host: https://www.gomushroom.si

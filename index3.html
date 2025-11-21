@@ -136,16 +136,16 @@
   }
   .service-detail.is-open{ display:block; }
 
-  /* ----- POENOTENA TIPOGRAFIJA V PANELU (kot pri Reishi) ----- */
+  /* ---- SAMO POENOTENA TIPOGRAFIJA V PANELU (brez vsebinskih posegov) ---- */
   .service-detail .content{
     max-width: 980px;
     margin: 6px auto 0;
-    font-size: 14px;
+    font-size: 14px;     /* poenoteno z ostalimi karticami */
     line-height: 1.65;
     color: #444a45;
   }
   .service-detail .content h3{
-    font-size: 18px;
+    font-size: 18px;     /* poenoteno s karticami */
     line-height: 1.35;
     margin: 0 0 10px;
     color: var(--fg);
@@ -166,11 +166,9 @@
   }
   .service-detail .content .refs li + li{ margin-top: 2px; }
 
-  /* Desktop – brez notranjega scrolla */
   @media (min-width: 768px){
     .service-detail .content{ max-height:none; overflow:visible; padding-right:0; }
   }
-  /* Manjši zasloni – omejena višina */
   @media (max-width: 767px){
     .service-detail .content{
       max-height: min(68vh, 520px);
@@ -203,7 +201,6 @@
   }
   .card.ref .media *:not(.hover-panel):not(.detail-panel):not(.topbar){pointer-events:none}
 
-  /* HOVER: kratka vsebina */
   @media (hover:hover){ .card.ref:hover .media img{filter:blur(3px) brightness(.9)} }
   .card.ref .hover-panel{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -213,7 +210,6 @@
   }
   @media (hover:hover){ .card.ref:hover .hover-panel{opacity:1;pointer-events:auto} }
 
-  /* KLIK: topbar + daljši opis (steklen) */
   .card.ref .topbar{
     position:absolute;left:0;right:0;top:0;display:none;align-items:center;gap:10px;
     padding:12px 14px;
@@ -250,7 +246,21 @@
   .li-icon{display:flex;align-items:flex-start;gap:8px}
   .li-icon svg{flex:0 0 auto;margin-top:2px}
 
-  /* ===== KAKO DELAMO + QC – kartice (v3) ===== */
+  /* ===== KAKO DELAMO + KAKOVOST – premium sekcija (brez posega v tekst kartic) ===== */
+  #kakodelamo{
+    position:relative;
+    background:
+      radial-gradient(80% 60% at 10% 0%, rgba(43,10,57,.06), transparent 55%),
+      radial-gradient(80% 60% at 90% 10%, rgba(177,133,86,.08), transparent 55%);
+  }
+  .process-shell{
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.7);
+    backdrop-filter: blur(6px);
+    border-radius:22px;
+    padding:22px;
+    box-shadow:0 18px 44px rgba(0,0,0,.08);
+  }
   .process-grid{
     display:grid;
     gap:22px;
@@ -273,7 +283,7 @@
   }
   .process-card:hover{
     transform:translateY(-3px);
-    box-shadow:0 20px 48px rgba(0,0,0,.12);
+    box-shadow:0 22px 52px rgba(0,0,0,.12);
     border-color:rgba(177,133,86,.55);
   }
   .process-top{
@@ -701,118 +711,126 @@
     </div>
   </section>
 
-  <!-- KAKO DELAMO + QC (KARTICE) -->
+  <!-- ZDRUŽENA RUBRIKA: KAKO DELAMO & KAKOVOST -->
   <section id="kakodelamo">
     <div class="wrap">
       <div class="section-head">
-        <div><h2>Kako delamo</h2><div class="under"></div></div>
+        <div>
+          <h2>Kako delamo &amp; kakovost</h2>
+          <div class="under"></div>
+        </div>
         <p class="lead2">
           Proces je zgrajen tako, da iz vsake gobe dobimo celoten spekter učinkovin
           in da so serije med seboj primerljive ter ponovljive.
         </p>
       </div>
 
-      <div class="process-grid">
-        <article class="process-card tint-brand">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
-            <div class="process-pill">KORAK 1</div>
-          </div>
-          <h3>Sprejem surovine in QC</h3>
-          <p>
-            Vsako serijo <strong>prevzamemo, pregledamo in analiziramo</strong>. Merimo vlago,
-            surovino po potrebi dosušimo do cilja, nato jo zmeljemo v homogeno frakcijo
-            za ponovljiv stik s topili.
-          </p>
-        </article>
+      <div class="process-shell">
+        <div class="process-grid">
+          <article class="process-card tint-brand">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
+              <div class="process-pill">KORAK 1</div>
+            </div>
+            <h3>Sprejem surovine in QC</h3>
+            <p>
+              Vsako serijo <strong>prevzamemo, pregledamo in analiziramo</strong>. Merimo vlago,
+              surovino po potrebi dosušimo do cilja, nato jo zmeljemo v homogeno frakcijo
+              za ponovljiv stik s topili.
+            </p>
+          </article>
 
-        <article class="process-card tint-accent">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
-            <div class="process-pill">KORAK 2</div>
-          </div>
-          <h3>Etanolna ekstrakcija (ultrazvočno podprta)</h3>
-          <p>
-            Z visokim razmerjem topilo:surovina in kontrolirano temperaturo izločimo
-            <strong>triterpene, fenole in smole</strong>. Ultrazvok pospeši difuzijo in poveča izplen,
-            brez pregrevanja.
-          </p>
-        </article>
+          <article class="process-card tint-accent">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
+              <div class="process-pill">KORAK 2</div>
+            </div>
+            <h3>Etanolna ekstrakcija (ultrazvočno podprta)</h3>
+            <p>
+              Z visokim razmerjem topilo:surovina in kontrolirano temperaturo izločimo
+              <strong>triterpene, fenole in smole</strong>. Ultrazvok pospeši difuzijo in poveča izplen,
+              brez pregrevanja.
+            </p>
+          </article>
 
-        <article class="process-card tint-brand">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
-            <div class="process-pill">KORAK 3</div>
-          </div>
-          <h3>Vročevodna ekstrakcija</h3>
-          <p>
-            Pri ~80–90&nbsp;°C izlužimo <strong>vodotopne polisaharide in β-glukane</strong>.
-            Ta faza gradi vodotopni del profila tinkture.
-          </p>
-        </article>
+          <article class="process-card tint-brand">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
+              <div class="process-pill">KORAK 3</div>
+            </div>
+            <h3>Vročevodna ekstrakcija</h3>
+            <p>
+              Pri ~80–90&nbsp;°C izlužimo <strong>vodotopne polisaharide in β-glukane</strong>.
+              Ta faza gradi vodotopni del profila tinkture.
+            </p>
+          </article>
 
-        <article class="process-card tint-accent">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
-            <div class="process-pill">KORAK 4</div>
-          </div>
-          <h3>Tlačna vodna ekstrakcija</h3>
-          <p>
-            Pri ~120–130&nbsp;°C izločimo še <strong>visokomolekularne frakcije</strong>,
-            ki jih vroča voda ne sprosti dovolj. To je ključ do “polnega spektra”.
-          </p>
-        </article>
+          <article class="process-card tint-accent">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
+              <div class="process-pill">KORAK 4</div>
+            </div>
+            <h3>Tlačna vodna ekstrakcija</h3>
+            <p>
+              Pri ~120–130&nbsp;°C izločimo še <strong>visokomolekularne frakcije</strong>,
+              ki jih vroča voda ne sprosti dovolj. To je ključ do “polnega spektra”.
+            </p>
+          </article>
 
-        <article class="process-card tint-brand">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
-            <div class="process-pill">KORAK 5</div>
-          </div>
-          <h3>Nizkotemperaturno vakuumsko koncentriranje</h3>
-          <p>
-            Vsako frakcijo posebej nežno skoncentriramo pod vakuumom, da
-            <strong>ohranimo termolabilne spojine</strong> in dvignemo koncentracijo suhe snovi.
-          </p>
-        </article>
+          <article class="process-card tint-brand">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-drop"/></svg></div>
+              <div class="process-pill">KORAK 5</div>
+            </div>
+            <h3>Nizkotemperaturno vakuumsko koncentriranje</h3>
+            <p>
+              Vsako frakcijo posebej nežno skoncentriramo pod vakuumom, da
+              <strong>ohranimo termolabilne spojine</strong> in dvignemo koncentracijo suhe snovi.
+            </p>
+          </article>
 
-        <article class="process-card tint-accent">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
-            <div class="process-pill">KORAK 6</div>
-          </div>
-          <h3>Združitev frakcij, standardizacija in polnitev</h3>
-          <p>
-            Frakcije združimo v ciljnem razmerju, standardiziramo delež topil,
-            po potrebi dodamo <strong>lecitin + vitamin C</strong> (stabilnost, biorazpoložljivost),
-            nato polnimo in zapremo šaržo z <strong>lot sledljivostjo</strong>.
-          </p>
-        </article>
+          <article class="process-card tint-accent">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
+              <div class="process-pill">KORAK 6</div>
+            </div>
+            <h3>Združitev frakcij, standardizacija in polnitev</h3>
+            <p>
+              Frakcije združimo v ciljnem razmerju, standardiziramo delež topil,
+              po potrebi dodamo <strong>lecitin + vitamin C</strong> (stabilnost, biorazpoložljivost),
+              nato polnimo in zapremo šaržo z <strong>lot sledljivostjo</strong>.
+            </p>
+          </article>
 
-        <article id="kakovost" class="process-card qc">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
-            <div class="process-pill">QC</div>
-          </div>
-          <h3>Standardizacija in interna kontrola</h3>
-          <p>
-            Pri vsaki šarži določimo <strong>% suhe snovi</strong>, gostoto,
-            ciljni delež EtOH/glicerina in organoleptiko, da so tinkture
-            <strong>ponovljive med serijami</strong>.
-          </p>
-        </article>
+          <!-- marker za navbar Kakovost -->
+          <span id="kakovost" aria-hidden="true" style="position:relative;top:-90px;"></span>
 
-        <article class="process-card qc">
-          <div class="process-top">
-            <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
-            <div class="process-pill">QC</div>
-          </div>
-          <h3>Sledljivost, HACCP/GMP</h3>
-          <p>
-            Delamo po SOP/ZOP sistemu s popolno sledljivostjo lotov, vključno z
-            <strong>trošarinsko skladnostjo za etanol</strong>. Po potrebi izvedemo tudi
-            mikrobiologijo in analize težkih kovin.
-          </p>
-        </article>
+          <article class="process-card qc">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
+              <div class="process-pill">QC</div>
+            </div>
+            <h3>Standardizacija in interna kontrola</h3>
+            <p>
+              Pri vsaki šarži določimo <strong>% suhe snovi</strong>, gostoto,
+              ciljni delež EtOH/glicerina in organoleptiko, da so tinkture
+              <strong>ponovljive med serijami</strong>.
+            </p>
+          </article>
+
+          <article class="process-card qc">
+            <div class="process-top">
+              <div class="process-icon"><svg class="ico"><use href="#i-shield"/></svg></div>
+              <div class="process-pill">QC</div>
+            </div>
+            <h3>Sledljivost, HACCP/GMP</h3>
+            <p>
+              Delamo po SOP/ZOP sistemu s popolno sledljivostjo lotov, vključno z
+              <strong>trošarinsko skladnostjo za etanol</strong>. Po potrebi izvedemo tudi
+              mikrobiologijo in analize težkih kovin.
+            </p>
+          </article>
+        </div>
       </div>
     </div>
   </section>
@@ -824,8 +842,8 @@
         <div><h2>Reference — Fungalist</h2><div class="under"></div></div>
         <p class="lead2">Podjetje <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Fungalist</a> je naš osrednji partner, pri katerem lahko najdete naše tinkture.</p>
       </div>
- <div class="grid-refs">
- <!-- REISHI -->
+      <div class="grid-refs">
+        <!-- REISHI -->
         <article class="card ref" aria-expanded="false">
           <div class="media">
             <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura">

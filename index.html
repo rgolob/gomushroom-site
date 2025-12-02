@@ -675,36 +675,98 @@
     }
   </style>
 
-  <!-- Schema.org -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "GoMushroom",
-    "url": "https://gomushroom.si/",
-    "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
-    "description": "GoMushroom izvaja napredne trojne ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in HACCP/GMP pristopom.",
-    "founder": "Rok Golob",
-    "sameAs": [
-      "https://www.instagram.com/go.mushroom",
-      "https://www.fungalist.si"
-    ]
-  }
-  </script>
+<!-- Schema.org: LocalBusiness + Laboratory + Organization -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": [
+    "LocalBusiness",
+    "Laboratory",
+    "Organization"
+  ],
+  "name": "GoMushroom",
+  "url": "https://gomushroom.si/",
+  "image": "https://gomushroom.si/assets/logo-horizontal.webp",
+  "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
+  "description": "GoMushroom je butični laboratorij za trojne ekstrakcije medicinskih gob (Reishi, Čaga, resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in pristopom HACCP/GMP. Proizvodnja in razvoj tinktur v majhnih serijah z dokumentirano sledljivostjo.",
 
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "url": "https://gomushroom.si/",
-    "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
+  "email": "info@gomushroom.si",
+
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Prapreče pri Straži 22",
+    "postalCode": "8351",
+    "addressLocality": "Straža",
+    "addressRegion": "Dolenjska",
+    "addressCountry": "SI"
+  },
+
+  "founder": {
+    "@type": "Person",
+    "name": "Rok Golob"
+  },
+
+  "sameAs": [
+    "https://www.instagram.com/go.mushroom",
+    "https://www.fungalist.si"
+  ],
+
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Tinkture medicinskih gob",
+    "itemListElement": [
+      {
+        "@type": "Product",
+        "name": "Reishi tinktura",
+        "description": "Trojna ekstrakcija Reishi (Ganoderma lucidum) z ultrazvočno podporo in vakuumskim koncentriranjem.",
+        "url": "https://gomushroom.si/#reishi"
+      },
+      {
+        "@type": "Product",
+        "name": "Čaga tinktura",
+        "description": "Trojna ekstrakcija čage (Inonotus obliquus) — etanolna, vročevodna in tlačna frakcija, z ultrazvočno podporo.",
+        "url": "https://gomushroom.si/#chaga"
+      },
+      {
+        "@type": "Product",
+        "name": "Resasti bradovec tinktura",
+        "description": "Trojna ekstrakcija resastega bradovca (Hericium erinaceus) z ultrazvočno obdelavo in tlačno fazo pri 130 °C.",
+        "url": "https://gomushroom.si/#bradovec"
+      }
+    ]
+  },
+
+  "areaServed": {
+    "@type": "AdministrativeArea",
+    "name": "Slovenija"
+  },
+
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": [
+      "Monday","Tuesday","Wednesday","Thursday","Friday"
+    ],
+    "opens": "16:00",
+    "closes": "20:00",
+    "description": "Obiski in sodelovanja po predhodnem dogovoru."
   }
-  </script>
+}
+</script>
+
+<!-- Schema.org: WebSite (pusti tak kot je) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "url": "https://gomushroom.si/",
+  "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
 </head>
 
 <body>

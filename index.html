@@ -36,6 +36,15 @@
   <link rel="preload" as="image" href="assets/rotovap.webp">
 
   <style>
+    /* ----- Smooth scroll za mehke prehode po kliku na meni ----- */
+    html {
+    scroll-behavior: smooth;
+    }
+
+    /* Kompenzacija za višino zgornje navigacije (sticky menu) */
+    section {
+    scroll-margin-top: 80px; /* prilagodi, če tvoj menu ni visok 80px */
+    }
     :root{
       --bg:#f7f8f7; --bg-rgb:247,248,247;
       --fg:#101311; --muted:#6b726d;

@@ -286,7 +286,7 @@
       opacity:.06;transform:rotate(8deg);pointer-events:none;
     }
 
-    /* ===== GALERIJA – mini masonry (ostane) ===== */
+    /* ===== GALERIJA – BEST OF masonry, brez kartic ===== */
     #galerija .gallery-grid{
       column-count: 2;
       column-gap: 14px;
@@ -327,8 +327,34 @@
       .g-item:hover .g-overlay{opacity:1;pointer-events:auto}
     }
 
+    /* ===== GALERIJA — klik zaklene opis (brez modala) ===== */
     .g-item.is-open img{filter:blur(2px) brightness(.95);transform:scale(1.02)}
     .g-item.is-open .g-overlay{opacity:1;pointer-events:auto}
+    .g-item.is-open .g-overlay .box{
+      max-height: 75%;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ===== Telefon: izbrana slika full-bleed (brez modala) ===== */
+    @media (max-width: 820px){
+      #galerija .gallery-grid{ column-count:1; }
+      .g-item.is-open{
+        width:100vw;
+        margin-left:calc(50% - 50vw);
+        border-radius:0;
+      }
+      .g-item.is-open img{
+        width:100%;
+        height:62vh;
+        object-fit:cover;
+        max-height:none;
+      }
+      .g-item.is-open .g-overlay{ padding:16px; }
+      .g-item.is-open .g-overlay .box{
+        max-height: calc(62vh - 32px);
+      }
+    }
 
     /* REFERENCE */
     .grid-refs{display:grid;gap:22px}
@@ -556,1101 +582,1090 @@
     @media (prefers-reduced-motion: reduce){
       .about-drawer{transition:none}
     }
-
-    /* ===== GALERIJA MODAL (FIX za telefon: full-screen opis) ===== */
-    .gallery-modal{
-      position:fixed; inset:0;
-      z-index:999;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:12px;
-      background:rgba(10,12,11,.55);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .gallery-modal.is-open{display:flex;}
-    .gallery-modal .gm-card{
-      width:min(980px, 96vw);
-      max-height:92vh;
-      background:rgba(255,255,255,.96);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:0 30px 80px rgba(0,0,0,.25);
-      overflow:hidden;
-      display:grid;
-      grid-template-columns: 1.15fr 1fr;
-      position:relative;
-    }
-    .gallery-modal .gm-img{
-      background:#000;
-      display:flex; align-items:center; justify-content:center;
-      max-height:92vh;
-    }
-    .gallery-modal .gm-img img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      max-height:92vh;
-    }
-    .gallery-modal .gm-body{
-      padding:18px 18px 14px;
-      overflow:auto;
-      max-height:92vh;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(14px + env(safe-area-inset-bottom));
-    }
-    .gallery-modal .gm-body h4{margin:0 0 8px;font-size:20px;}
-    .gallery-modal .gm-body p{
-      margin:0;
-      font-size:15.5px;
-      line-height:1.7;
-      color:#3f4541;
-      white-space:pre-line;
-    }
-    .gallery-modal .gm-close{
-      position:absolute; top:10px; right:10px;
-      width:40px; height:40px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.6);
-      background:rgba(255,255,255,.92);
-      font-size:22px;
-      cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 8px 20px rgba(0,0,0,.18);
-    }
-    .gallery-modal .gm-close:hover{background:#fff;}
-    @media (max-width: 820px){
-      .gallery-modal .gm-card{
-        grid-template-columns:1fr;
-        max-height:92vh;
-      }
-      .gallery-modal .gm-img{max-height:38vh;}
-      .gallery-modal .gm-img img{max-height:38vh;object-fit:cover;}
-      .gallery-modal .gm-body{
-        max-height:calc(92vh - 38vh);
-        font-size:16px;
-        line-height:1.75;
-      }
-    }
   </style>
 
   <!-- Schema.org strukturirani podatki (Organization + WebSite) -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "GoMushroom",
-    "url": "https://gomushroom.si/",
-    "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
-    "description": "GoMushroom izvaja napredne trojne ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in HACCP/GMP pristopom.",
-    "founder": "Rok Golob",
-    "sameAs": [
-      "https://www.instagram.com/go.mushroom",
-      "https://www.fungalist.si"
-    ]
-  }
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "GoMushroom",
+      "url": "https://gomushroom.si/",
+      "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
+      "description": "GoMushroom izvaja napredne trojne ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in HACCP/GMP pristopom.",
+      "founder": "Rok Golob",
+      "sameAs": [
+        "https://www.instagram.com/go.mushroom",
+        "https://www.fungalist.si"
+      ]
+    }
   </script>
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "url": "https://gomushroom.si/",
-    "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
-      "query-input": "required name=search_term_string"
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://gomushroom.si/",
+      "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
-  }
   </script>
 
 </head>
+
 <body>
 
-<!-- SVG simboli za ikone -->
-<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
-  <defs>
-    <symbol id="i-drop" viewBox="0 0 24 24">
-      <path fill="#2b0a39" d="M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z"/>
-    </symbol>
-    <symbol id="i-shield" viewBox="0 0 24 24">
-      <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z"/>
-      <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9"/>
-    </symbol>
-  </defs>
-</svg>
+  <!-- SVG simboli za ikone -->
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-drop" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z" />
+        <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9" />
+      </symbol>
+    </defs>
+  </svg>
 
-<header>
-  <div class="wrap nav">
-    <div class="brand"><img src="assets/logo-horizontal.webp" alt="GoMushroom"></div>
-    <nav>
-      <a href="#storitve">Storitve</a>
-      <a href="#pristop">Pristop</a>
-      <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">O meni</a>
-      <a href="#galerija">Galerija</a>
-      <a href="#reference">Reference</a>
-      <!-- <a href="#kontakt">Kontakt</a>-->
-    </nav>
-  </div>
-</header>
-
-<main>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="slides">
-      <div class="slide active"><img src="assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)"></div>
-      <div class="slide"><img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy"></div>
+  <header>
+    <div class="wrap nav">
+      <div class="brand"><img src="assets/logo-horizontal.webp" alt="GoMushroom"></div>
+      <nav>
+        <a href="#storitve">Storitve</a>
+        <a href="#pristop">Pristop</a>
+        <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">O meni</a>
+        <a href="#galerija">Galerija</a>
+        <a href="#reference">Reference</a>
+        <!-- <a href="#kontakt">Kontakt</a>-->
+      </nav>
     </div>
-    <button class="arrow prev" aria-label="Prejšnja">‹</button>
-    <button class="arrow next" aria-label="Naslednja">›</button>
-    <div class="dots">
-      <button class="dot active" data-idx="0"></button>
-      <button class="dot" data-idx="1"></button>
-    </div>
+  </header>
 
-    <div class="inner wrap">
-      <div class="headline">
-        <div class="kicker">Omejene serije • Ročno • Slovenija</div>
-        <h1>Napredne ekstrakcije medicinskih gob.</h1>
-        <p class="lead">
-          Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno
-          <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
+  <main>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="slides">
+        <div class="slide active"><img src="assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)"></div>
+        <div class="slide"><img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy"></div>
+      </div>
+      <button class="arrow prev" aria-label="Prejšnja">‹</button>
+      <button class="arrow next" aria-label="Naslednja">›</button>
+      <div class="dots">
+        <button class="dot active" data-idx="0"></button>
+        <button class="dot" data-idx="1"></button>
+      </div>
+
+      <div class="inner wrap">
+        <div class="headline">
+          <div class="kicker">Omejene serije • Ročno • Slovenija</div>
+          <h1>Napredne ekstrakcije medicinskih gob.</h1>
+          <p class="lead">
+            Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno
+            <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
+          </p>
+          <div class="cta">
+            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
+            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank">Instagram</a>
+            <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STORITVE -->
+    <section id="storitve">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Storitve</h2>
+            <div class="under"></div>
+          </div>
+          <p class="lead2"></p>
+        </div>
+
+        <div class="grid grid-3" id="services-grid">
+
+          <!-- EKSTRAKCIJE GOB -->
+          <article class="card service" data-service="ekstrakcije">
+            <div class="media">
+              <img src="assets/analytics-cylinder-lg.webp" alt="Trojna ekstrakcija medicinskih gob" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Trojna ekstrakcija</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Ultrazvočna ekstrakcija</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Nizko-T vakuumsko koncentriranje</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Visoka vsebnost učinkovin</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Alkoholna in brezalkoholna različica</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>QC kontrola suhe snovi</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>Proizvodnja v skladu z načeli HACCP in GMP</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec)</h3>
+              <p class="meta">Reishi, Bradovec, Čaga …</p>
+            </div>
+          </article>
+
+          <!-- GOJENJE REISHI -->
+          <article class="card service" data-service="gojenje">
+            <div class="media">
+              <img src="assets/antlers.jpg" alt="Gojenje Reishi Ganoderma lucidum" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Gojenje od micelija do gobe</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Izključno na ekoloških substratih</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Lastna sterilizacija substratov</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Nadzorovane razmere za antler obliko</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Sušenje pri nizkih temperaturah</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>QC kontrola vlage</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>Sledljivost od micelija do gobe</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Gojenje Reishi (Ganoderma lucidum)</h3>
+              <p class="meta">Antlers/klobuk — konsistentna surovina</p>
+            </div>
+          </article>
+
+          <!-- BOTANIČNE EKSTRAKCIJE -->
+          <article class="card service" data-service="botanicne">
+            <div class="media">
+              <img src="assets/filling-line-lg.webp" alt="Botanične ekstrakcije in substrati" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Botanične ekstrakcije izbranih rastlin</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Enak QC pristop kot pri gobah</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Priprava in sterilizacije gojitvenih substratov</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>Priprava agar medija za gojenje micelija</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Ostale storitve</h3>
+              <p class="meta">Po dogovoru</p>
+            </div>
+          </article>
+
+          <!-- FULL-WIDTH PANEL (dinamičen) -->
+          <div id="service-detail" class="service-detail" aria-live="polite">
+            <div class="content"></div>
+          </div>
+        </div>
+
+        <!-- SKRITI TEMPLATE za vsebine storitev -->
+        <template id="tpl-ekstrakcije">
+          <h2>Kaj vključuje postopek</h2>
+
+          <ul>
+            <li>
+              <strong>Sprejem in priprava surovine:</strong>
+              prevzem, QC kontrola vlage, dosuševanje do 8 % vlage, mletje v homogeno frakcijo.
+            </li>
+            <li>
+              <strong>Trojna ekstrakcija v šaržah:</strong>
+              <ul>
+                <li>etanolna ekstrakcija (triterpeni, hericenoni, fenoli)</li>
+                <li>vročevodna ekstrakcija (≈ 80–90 °C, polisaharidi)</li>
+                <li>tlačna ekstrakcija (≈ 120–130 °C, visokomolekularne spojine)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Združitev frakcij in formulacija</strong> končnega ekstrakta
+              (alkoholna ali glicerinska tinktura).
+            </li>
+          </ul>
+
+          <h3>Tehnološki poudarki</h3>
+          <ul>
+            <li>Ultrazvočno podprta ekstrakcija z nadzorom temperature.</li>
+            <li>Visoka razmerja topilo : surovina za boljši izplen ekstrakcije.</li>
+            <li>Nizkotemperaturno vakuumsko koncentriranje.</li>
+          </ul>
+
+          <h3>Vhodni material</h3>
+          <ul>
+            <li>Reishi (Ganoderma lucidum) iz lastnega gojenja (micelij → plodišča).</li>
+            <li>Druge vrste medicinskih gob po dogovoru – možna je tudi obdelava surovine naročnika.</li>
+          </ul>
+
+          <h3>Topila in formulacije</h3>
+          <ul>
+            <li>Food-grade etanol, RO voda in rastlinski glicerin Ph. Eur.</li>
+            <li>Možnost <strong>alkoholne</strong> ali <strong>brezalkoholne (glicerinske)</strong> različice.</li>
+            <li>Po potrebi dodatek sončničnega lecitina (stabilnost, biorazpoložljivost)
+              in vitamina C (antioksidativna zaščita).</li>
+          </ul>
+
+          <h3>Standardizacija in kontrola kakovosti</h3>
+          <ul>
+            <li>Določanje % suhe snovi, % etanola, % glicerina, gostota in organoleptike.</li>
+            <li>Po potrebi: mikrobiološke analize in težke kovine (Pb, Cd, Hg).</li>
+            <li>Osnovni stabilnostni testi končne formulacije.</li>
+            <li><strong>Interni QC:</strong> za vsako vrsto gobe definirani minimalni cilji suhe snovi (glej tabelo spodaj).</li>
+          </ul>
+
+          <h3>Skladnost in dokumentacija</h3>
+          <ul>
+            <li>Izvedba v skladu s HACCP / GMP pristopom.</li>
+            <li>Vzpostavljen sistem SOP / ZOP in popolna sledljivost lotov.</li>
+            <li>Proizvodnja poteka v registriranem trošarinskem obratu za etanol, z zagotovljeno sledljivostjo in skladnostjo z zakonodajo.</li>
+          </ul>
+
+          <section class="tinkture-usedlina">
+            <h2>Prisotnost usedline v tinkturah medicinskih gob — znak visoke koncentracije, ne napaka</h2>
+            <p>
+              Naše tinkture <strong>namenoma niso filtrirane do popolne bistrosti</strong>, ker bi s tem odstranili del učinkovin.
+              Naravna usedlina je zato <strong>normalen in zaželen pojav</strong> ter znak
+              <strong>visoke koncentracije bioaktivnih spojin</strong>, ne napaka v proizvodnji.
+            </p>
+
+            <p>
+              Vse posamezne faze (alkoholna in vodne ekstrakcije) so <strong>najprej temeljito filtrirane</strong>.
+              Do usedline pride šele po <strong>združitvi vodne frakcije</strong>, bogate s
+              <strong>polisaharidi in β-glukani</strong>, ter <strong>alkoholne frakcije</strong>, ki vsebuje triterpene
+              in druge v alkoholu topne spojine. Ker so polisaharidi in β-glukani v alkoholu
+              <strong>slabo topni oziroma netopni</strong>, se del njih <strong>naravno izobori</strong> – na dnu se pojavi
+              <strong>oborina / usedlina</strong>.
+            </p>
+
+            <p>
+              V tej naravni usedlini so praviloma prisotni predvsem <strong>vodotopni polisaharidi in β-glukani</strong>,
+              ki izvirajo iz vodnega dela ekstrakta. To velja pri vseh vrstah, tudi pri
+              <strong>Reishi</strong>, kjer se po združitvi vodne in alkoholne faze pogosto pojavi drobna oborina teh spojin,
+              le da je je manj kot pri vrstah z višjim deležem suhe snovi (npr. resasti bradovec).
+            </p>
+
+            <p>
+              Tinkture, ki <strong>nimajo skoraj nobene usedline</strong>, praviloma
+              <strong>ne vsebujejo veliko polisaharidov</strong> ali pa so filtrirane/razredčene do te mere,
+              da je delež teh spojin nizek.
+            </p>
+
+            <p>
+              Pri različnih vrstah gob se delež suhe snovi in s tem količina usedline razlikujeta.
+              Minimalne in tipične vrednosti suhe snovi v naših tinkturah so:
+            </p>
+
+            <table class="tinkture-usedlina-tabela">
+              <thead>
+                <tr>
+                  <th>Vrsta</th>
+                  <th>Minimalna suha snov (%)</th>
+                  <th>Tipična suha snov v praksi (%)</th>
+                  <th>Značilnost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Reishi</strong> (Ganoderma lucidum)</td>
+                  <td>&ge; 4&nbsp;%</td>
+                  <td>&asymp; 5&nbsp;%</td>
+                  <td>manj izrazita, a prisotna usedlina polisaharidov in β-glukanov</td>
+                </tr>
+                <tr>
+                  <td><strong>Chaga</strong> (Inonotus obliquus)</td>
+                  <td>&ge; 6&nbsp;%</td>
+                  <td>&asymp; 8,5&nbsp;%</td>
+                  <td>zmerna usedlina, bogata v melaninih, betulinu in polisaharidih</td>
+                </tr>
+                <tr>
+                  <td><strong>Resasti bradovec</strong> (Hericium erinaceus)</td>
+                  <td>&ge; 11&nbsp;%</td>
+                  <td>&asymp; 14&nbsp;%</td>
+                  <td>obilna usedlina zaradi zelo visoke vsebnosti polisaharidov</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </template>
+
+        <template id="tpl-gojenje">
+          <h3>Gojenje Reishi</h3>
+          <ul class="meta">
+            <li>Micelij → sterilni substrat → plodišča (antlers ali klobuk)</li>
+            <li>Vse faze izvajamo sami: vzgoja micelija, sterilizacija substratov, nadzorovano plodonošenje</li>
+            <li>Ekološke surovine: pšenični otrobi, proso, rž, bukova žagovina iz kočevskih gozdov</li>
+            <li>Majhne šarže, ročna kontrola vsake vreče, sledljivost od seva do serije tinkture</li>
+            <li>Nastanek antler oblike spodbujamo z omejenim pretokom zraka, povišanim CO₂ in nadzorovano svetlobo</li>
+          </ul>
+          <br>
+          <h3>Antler oblika Reishija – naravna odzivnost in višja aktivnost</h3>
+          <p>
+            V nadzorovanem okolju z <strong>omejenim pretokom zraka</strong>, <strong>povišano koncentracijo CO₂</strong> in
+            <strong>zmerno osvetlitvijo</strong> <em>Ganoderma lucidum</em> praviloma <strong>ne razvije klobuka</strong>, temveč
+            zraste v <strong>razvejano, rogovilasto (antler) morfologijo</strong>
+            <sup>[2], [1]</sup>.
+            Ta morfologija je metabolno zahtevnejša in je povezana s
+            <strong>povečano biosintezo triterpenov (ganodermičnih kislin)</strong> ter pogosto tudi višjo ravnijo
+            <strong>β-D-glukanov</strong>
+            <sup>[3], [2]</sup>.
+          </p>
+
+          <p>
+            Eksperimentalno je bilo pokazano, da <strong>povišan CO₂ in omejen kisik</strong> povečata sintezo ganodermičnih kislin
+            in prispevata k nastanku antler tipa plodišč
+            <sup>[1]</sup>. V novejši raziskavi so iz antler oblike <em>G. lucidum</em>
+            <strong>izolirali sedem novih triterpenov</strong>, ki jih v “fan/klobuk” obliki niso zaznali
+            <sup>[3]</sup>. Dodatno so primerjave izvlečkov potrdile
+            <strong>višjo antioksidativno in hepatoprotektivno aktivnost</strong> antler izvlečkov
+            <sup>[4]</sup>.
+          </p>
+
+          <p>
+            Naš pristop tako <strong>posnema naravne stresne razmere</strong>, da goba izrazi
+            <strong>polni biokemični potencial</strong> – rezultat so plodišča z
+            <strong>visoko vsebnostjo triterpenov</strong> in <strong>konsistentna surovina</strong> za
+            standardizirane tinkture z visoko bioaktivnostjo.
+          </p>
+
+          [1] Wang, J. et al. (2012). Effect of CO₂ concentration on morphology and triterpenoid synthesis of <em>Ganoderma lucidum</em>. <strong>Scientific Reports</strong>, 2, 905.<br>
+          [2] Chen, L. et al. (2018). Morphological differentiation and triterpenoid accumulation in antler-type <em>G. lucidum</em>. <strong>Mycosphere</strong>, 9(2), 290–301.<br>
+          [3] Li, Q. et al. (2024). New ganoderic acids from antler-type <em>G. lucidum</em> fruiting bodies. <strong>Phytochemistry Letters</strong>, 67, 150–158.<br>
+          [4] Kim, S. et al. (2015). Comparative antioxidant and hepatoprotective effects of antler- and fan-type <em>G. lucidum</em>. <strong>International Journal of Medicinal Mushrooms</strong>, 17(3), 259–267.
+        </template>
+
+        <template id="tpl-botanicne">
+          <h3>Botanične ekstrakcije</h3>
+          <ul class="meta">
+            <li>Smrekovi vršički & izbrane rastline; EtOH / glicerin / H₂O</li>
+            <li>Enak QC pristop kot pri gobah (HACCP/GMP)</li>
+            <li>Po dogovoru: ciljni profil, okus, viskoznost, polnitev</li>
+          </ul>
+          <br>
+          <h3>Sterilizacija gojitvenih substratov</h3>
+          <ul class="meta">
+            <li>Priprava substratov iz ekoloških sestavin</li>
+            <li>Sterilizacija substratov in žita</li>
+            <li>Priprava in sterilizacija agar medija</li>
+            <li>Inokulacija z micelijem</li>
+          </ul>
+        </template>
+
+      </div>
+    </section>
+
+    <!-- PRISTOP -->
+    <section id="pristop">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Pristop — trojna ekstrakcija in vakuumsko koncentriranje</h2>
+            <div class="under"></div>
+          </div>
+          <p class="lead2">Iz vsake gobe iztisnemo maksimum — ponovljivo, sledljivo in nežno do učinkovin.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step tech">
+            <div class="num">Korak 1</div>
+            <h3>Trojna ekstrakcija</h3>
+            <p>Etanol → vroča vodna → tlačna vodna. Vsaka faza cilja drug spekter spojin, zato dobimo celovit izvleček.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Korak 2</div>
+            <h3>Velika količina topila</h3>
+            <p>Velika količina topila prepreči hitro nasičenje, ohranja prenos snovi in poveča izplen ekstrakcije.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Korak 3</div>
+            <h3>Ultrazvočna podpora</h3>
+            <p>Ultrazvok z mikrokavitacijo razrahlja matriko gobe, pospeši in poveča izplen ekstrakcije.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Korak 4</div>
+            <h3>Vakuumsko koncentriranje</h3>
+            <p>Topila odstranimo pri nižjih temperaturah, zato bolje ohranimo občutljive spojine ter naravno aromo in barvo.</p>
+          </div>
+
+          <div class="step qc">
+            <div class="num">QC 1</div>
+            <h3>Kakovost</h3>
+            <p>Interni QC na surovinah in končnih izdelkih: suha snov, gostota, ekstraktibilni delež in sledljivost serij.</p>
+          </div>
+
+          <div class="step qc">
+            <div class="num">QC 2</div>
+            <h3>Skladnost</h3>
+            <p>Delo poteka po HACCP načelih in GMP pristopu; uporaba etanola je vodena skladno s trošarinskimi evidencami.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALERIJA -->
+    <section id="galerija">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Galerija</h2>
+            <div class="under"></div>
+          </div>
+          <p class="lead2"></p>
+        </div>
+
+        <div class="gallery-grid">
+          <!-- 1 -->
+          <figure class="g-item" data-title="Ultrazvočna sonda" data-text="Opis faze ali naprave …">
+            <img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Ultrazvočna sonda</h4>
+                <p>Ultrazvočna sonda je naprava, ki v mešanici gobe in topila ustvarja zelo hitre mehanske vibracije.
+                  Te vibracije v tekočini povzročijo kavitacijo – nastanek drobnih mehurčkov, ki ob pokanju naredijo močne mikro-tokove.
+                  Ti “mikro udarci” razrahljajo in delno porušijo celične stene gob, zato se učinkovine lažje sprostijo.
+                  Hkrati se močno izboljša mešanje na mikro ravni, kar pospeši prehod snovi iz gobe v topilo.
+                  Rezultat je hitrejša ekstrakcija in višji izplen učinkovin.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 2 -->
+          <figure class="g-item" data-title="Rotavapor" data-text="Opis faze ali naprave …">
+            <img src="assets/rotovap.webp" alt="Rotavapor">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Rotavapor</h4>
+                <p>Rotovapor je naprava, ki nam omogoča koncentriranje (odstranjevanje topila iz mešanice) pri nizkih temperaturah,
+                  kar omogoča maksimalno ohranitev termolabilnih spojin. Nizke temperature vrelišča dosežemo s pomočjo vakuuma, ki
+                  med procesom znaša od 10-150 mbar. Voda nam v takšnem sistemu lahko vre že pri 40 °C.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 3 -->
+          <figure class="g-item" data-title="Analizator vlage" data-text="Opisa halogenski analizator vlage">
+            <img src="assets/moisture_a.webp" alt="Halogenski analizator vlage">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Halogenski analizator vlage</h4>
+                <p>S halogenskim analizatorjem vlage določamo hlapne komponente vzorca. V našem primeru gre za določevanje vlage v
+                  suhi mleti gobi pred ekstrakcijo, ali pa določevanje suhe snovi v končni tinkturi.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 4 -->
+          <figure class="g-item" data-title="Vakuumski sušilnik" data-text="Opis vakuumski sušilnik">
+            <img src="assets/vacuum-oven-1600w.webp" alt="Vakuumski sušilnik">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Vakuumski sušilnik</h4>
+                <p>Vakuumski sušilnik uporabljamo za končno dosuševanje gob, ker nam omogoča, da vlago znižamo na približno 5 % — do te vrednosti s klasičnim
+                  sušilnikom praviloma ne pridemo zanesljivo in ponovljivo. V vakuumu voda izhlapeva pri nižji temperaturi, zato lahko sušimo okoli 45 °C in s tem bistveno
+                  zmanjšamo toplotno obremenitev. Tako bolje ohranimo občutljive komponente, hkrati pa dobimo bolj stabilno in standardizirano surovino za ekstrakcijo.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 5 -->
+          <figure class="g-item" data-title="Vakuum kontroler" data-text="Opis vakuum kontroler">
+            <img src="assets/vcontroller.webp" alt="Vakuum kontroler">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Vakuum kontroler</h4>
+                <p>Vakuumski kontroler uporabljamo za natančno zniževanje tlaka med odstranjevanjem topila. Ker pri konstantni temperaturi med procesom narašča delež vode (etanol izhlapeva),
+                  se zmesi postopno zvišuje vrelišče. Z regulacijo vakuuma sproti prilagajamo tlak, da ostajamo na točki vrelišča in koncentriranje poteka stabilno, učinkovito in z nizko toplotno obremenitvijo.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 6 -->
+          <figure class="g-item" data-title="Polnilna linija" data-text="Opis faze ali naprave …">
+            <img src="assets/filling-line.webp" alt="Polnilna linija">
+            <div class="g-overlay">
+              <div class="box">
+                <h4>Polnilna linija</h4>
+                <p>Polnjenje izvajamo v laminar­nem toku sterilnega zraka, da med odprtimi stekleničkami omejimo vpliv okolja.
+                  Uporabljamo dozirno črpalko in standardiziran postopek polnjenja za ponovljiv volumen in enakomerno serijo.</p>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFERENCE -->
+    <section id="reference">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Reference — Fungalist</h2>
+            <div class="under"></div>
+          </div>
+          <p class="lead2">Podjetje <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Fungalist</a> je naš osrednji partner, pri katerem lahko najdete naše tinkture.</p>
+        </div>
+
+        <div class="grid-refs">
+
+          <!-- REISHI -->
+          <article class="card ref" aria-expanded="false">
+            <div class="media">
+              <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura">
+              <div class="topbar">Reishi</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>trojna ultrazvočna ekstrakcija</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>koncentriranje pod vakuumom</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>celoten spekter učinkovin</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>sledljivost od surovine do serije izdelka</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>HACCP/GMP-pristop</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Izvor surovine:</strong> Reishi GoMushroom</li>
+                  <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
+                  <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 5 %, stabilna viskoznost in okus.</li>
+                  <li><strong>Sestavine:</strong> Svetlikava pološčenka - Reishi (ganoderma lucidum), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Reishi</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+            </div>
+          </article>
+
+          <!-- RESASTI BRADOVEC -->
+          <article class="card ref" aria-expanded="false">
+            <div class="media">
+              <img src="assets/ref-fungalist-lionsmane.jpg" alt="Resasti bradovec tinktura">
+              <div class="topbar">Resasti bradovec</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>trojna ultrazvočna ekstrakcija</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>koncentriranje pod vakuumom</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>celoten spekter učinkovin</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>sledljivost od surovine do serije izdelka</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>HACCP/GMP-pristop</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Izvor surovine:</strong> Fungalist</li>
+                  <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
+                  <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 14%, stabilna viskoznost in okus.</li>
+                  <li><strong>Sestavine:</strong> Resasti bradovec (Hericium erinaceus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Resasti bradovec</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+            </div>
+          </article>
+
+          <!-- ČAGA -->
+          <article class="card ref" aria-expanded="false">
+            <div class="media">
+              <img src="assets/ref-fungalist-chaga.jpg" alt="Čaga tinktura">
+              <div class="topbar">Čaga</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>50 ml · alkoholna &amp; brezalkoholna</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>trojna ultrazvočna ekstrakcija</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>koncentriranje pod vakuumom</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-drop" />
+                    </svg>celoten spekter učinkovin</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>sledljivost od surovine do serije izdelka</li>
+                  <li class="li-icon"><svg class="ico">
+                      <use href="#i-shield" />
+                    </svg>HACCP/GMP-pristop</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Izvor surovine:</strong> Različni viri</li>
+                  <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
+                  <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 8,5 %, stabilna viskoznost in okus.</li>
+                  <li><strong>Sestavine:</strong> Čaga - brezin luknjač (Inonotus obliquus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Čaga</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- KONTAKT -->
+    <section id="kontakt">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Kontakt GoMushroom — laboratorij za ekstrakcije medicinskih gob</h2>
+            <div class="under"></div>
+          </div>
+        </div>
+
+        <p>Ali te zanima sodelovanje z GoMushroom? Piši mi in na kratko opiši, kaj te zanima (izdelek, surovina, razvoj, veleprodaja ali projekt po meri).
+          Odgovorim hitro in predlagam naslednje korake: kratek klic, dogovor o ciljih, nato priprava predloga (rok, količine, specifikacije) in uskladitev izvedbe.
         </p>
+
         <div class="cta">
           <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
           <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank">Instagram</a>
           <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- STORITVE -->
-  <section id="storitve">
-    <div class="wrap">
-      <div class="section-head">
-        <div><h2>Storitve</h2><div class="under"></div></div>
-        <p class="lead2"></p>
-      </div>
+  </main>
 
-      <div class="grid grid-3" id="services-grid">
+  <footer>
+    <div class="wrap">© <span id="y"></span> GoMushroom</div>
+  </footer>
 
-        <!-- EKSTRAKCIJE GOB -->
-        <article class="card service" data-service="ekstrakcije">
-          <div class="media">
-            <img src="assets/analytics-cylinder-lg.webp" alt="Trojna ekstrakcija medicinskih gob" />
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Trojna ekstrakcija</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Ultrazvočna ekstrakcija</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Nizko-T vakuumsko koncentriranje</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Visoka vsebnost učinkovin</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Alkoholna in brezalkoholna različica</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC kontrola suhe snovi</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Proizvodnja v skladu z načeli HACCP in GMP</li>
-              </ul>
-            </div>
-          </div>
-          <div class="body">
-            <h3>Ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec)</h3>
-            <p class="meta">Reishi, Bradovec, Čaga …</p>
-          </div>
-        </article>
+  <!-- O MENI — Drawer / Modal -->
+  <div id="o-meni" hidden></div>
+  <div class="about-modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
+    <div class="about-overlay" id="about-overlay" tabindex="-1"></div>
 
-        <!-- GOJENJE REISHI -->
-        <article class="card service" data-service="gojenje">
-          <div class="media">
-            <img src="assets/antlers.jpg" alt="Gojenje Reishi Ganoderma lucidum" />
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Gojenje od micelija do gobe</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Izključno na ekoloških substratih</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Lastna sterilizacija substratov</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Nadzorovane razmere za antler obliko</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Sušenje pri nizkih temperaturah</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC kontrola vlage</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Sledljivost od micelija do gobe</li>
-              </ul>
-            </div>
-          </div>
-          <div class="body">
-            <h3>Gojenje Reishi (Ganoderma lucidum)</h3>
-            <p class="meta">Antlers/klobuk — konsistentna surovina</p>
-          </div>
-        </article>
-
-        <!-- BOTANIČNE EKSTRAKCIJE -->
-        <article class="card service" data-service="botanicne">
-          <div class="media">
-            <img src="assets/filling-line-lg.webp" alt="Botanične ekstrakcije in substrati" />
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Botanične ekstrakcije izbranih rastlin</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Enak QC pristop kot pri gobah</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Priprava in sterilizacije gojitvenih substratov</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Priprava agar medija za gojenje micelija</li>
-              </ul>
-            </div>
-          </div>
-          <div class="body">
-            <h3>Ostale storitve</h3>
-            <p class="meta">Po dogovoru</p>
-          </div>
-        </article>
-
-        <!-- FULL-WIDTH PANEL (dinamičen) -->
-        <div id="service-detail" class="service-detail" aria-live="polite">
-          <div class="content"></div>
+    <div class="about-drawer" role="document" aria-label="O meni">
+      <div class="about-top">
+        <div class="ttl">
+          <strong id="about-title">O meni</strong>
+          <span>Rok Golob — GoMushroom</span>
         </div>
+        <button class="icon-btn" type="button" id="about-x" aria-label="Zapri">×</button>
       </div>
 
-      <!-- SKRITI TEMPLATE za vsebine storitev -->
-      <template id="tpl-ekstrakcije">
-        <h2>Kaj vključuje postopek</h2>
-
-        <ul>
-          <li>
-            <strong>Sprejem in priprava surovine:</strong>
-            prevzem, QC kontrola vlage, dosuševanje do 8 % vlage, mletje v homogeno frakcijo.
-          </li>
-          <li>
-            <strong>Trojna ekstrakcija v šaržah:</strong>
-            <ul>
-              <li>etanolna ekstrakcija (triterpeni, hericenoni, fenoli)</li>
-              <li>vročevodna ekstrakcija (≈ 80–90 °C, polisaharidi)</li>
-              <li>tlačna ekstrakcija (≈ 120–130 °C, visokomolekularne spojine)</li>
-            </ul>
-          </li>
-          <li>
-            <strong>Združitev frakcij in formulacija</strong> končnega ekstrakta
-            (alkoholna ali glicerinska tinktura).
-          </li>
-        </ul>
-
-        <h3>Tehnološki poudarki</h3>
-        <ul>
-          <li>Ultrazvočno podprta ekstrakcija z nadzorom temperature.</li>
-          <li>Visoka razmerja topilo : surovina za boljši izplen ekstrakcije.</li>
-          <li>Nizkotemperaturno vakuumsko koncentriranje.</li>
-        </ul>
-
-        <h3>Vhodni material</h3>
-        <ul>
-          <li>Reishi (Ganoderma lucidum) iz lastnega gojenja (micelij → plodišča).</li>
-          <li>Druge vrste medicinskih gob po dogovoru – možna je tudi obdelava surovine naročnika.</li>
-        </ul>
-
-        <h3>Topila in formulacije</h3>
-        <ul>
-          <li>Food-grade etanol, RO voda in rastlinski glicerin Ph. Eur.</li>
-          <li>Možnost <strong>alkoholne</strong> ali <strong>brezalkoholne (glicerinske)</strong> različice.</li>
-          <li>Po potrebi dodatek sončničnega lecitina (stabilnost, biorazpoložljivost)
-              in vitamina C (antioksidativna zaščita).</li>
-        </ul>
-
-        <h3>Standardizacija in kontrola kakovosti</h3>
-        <ul>
-          <li>Določanje % suhe snovi, % etanola, % glicerina, gostota in organoleptike.</li>
-          <li>Po potrebi: mikrobiološke analize in težke kovine (Pb, Cd, Hg).</li>
-          <li>Osnovni stabilnostni testi končne formulacije.</li>
-          <li><strong>Interni QC:</strong> za vsako vrsto gobe definirani minimalni cilji suhe snovi (glej tabelo spodaj).</li>
-        </ul>
-
-        <h3>Skladnost in dokumentacija</h3>
-        <ul>
-          <li>Izvedba v skladu s HACCP / GMP pristopom.</li>
-          <li>Vzpostavljen sistem SOP / ZOP in popolna sledljivost lotov.</li>
-          <li>Proizvodnja poteka v registriranem trošarinskem obratu za etanol, z zagotovljeno sledljivostjo in skladnostjo z zakonodajo.</li>
-        </ul>
-
-        <section class="tinkture-usedlina">
-          <h2>Prisotnost usedline v tinkturah medicinskih gob — znak visoke koncentracije, ne napaka</h2>
-          <p>
-            Naše tinkture <strong>namenoma niso filtrirane do popolne bistrosti</strong>, ker bi s tem odstranili del učinkovin.
-            Naravna usedlina je zato <strong>normalen in zaželen pojav</strong> ter znak
-            <strong>visoke koncentracije bioaktivnih spojin</strong>, ne napaka v proizvodnji.
-          </p>
-
-          <p>
-            Vse posamezne faze (alkoholna in vodne ekstrakcije) so <strong>najprej temeljito filtrirane</strong>.
-            Do usedline pride šele po <strong>združitvi vodne frakcije</strong>, bogate s
-            <strong>polisaharidi in β-glukani</strong>, ter <strong>alkoholne frakcije</strong>, ki vsebuje triterpene
-            in druge v alkoholu topne spojine. Ker so polisaharidi in β-glukani v alkoholu
-            <strong>slabo topni oziroma netopni</strong>, se del njih <strong>naravno izobori</strong> – na dnu se pojavi
-            <strong>oborina / usedlina</strong>.
-          </p>
-
-          <p>
-            V tej naravni usedlini so praviloma prisotni predvsem <strong>vodotopni polisaharidi in β-glukani</strong>,
-            ki izvirajo iz vodnega dela ekstrakta. To velja pri vseh vrstah, tudi pri
-            <strong>Reishi</strong>, kjer se po združitvi vodne in alkoholne faze pogosto pojavi drobna oborina teh spojin,
-            le da je je manj kot pri vrstah z višjim deležem suhe snovi (npr. resasti bradovec).
-          </p>
-
-          <p>
-            Tinkture, ki <strong>nimajo skoraj nobene usedline</strong>, praviloma
-            <strong>ne vsebujejo veliko polisaharidov</strong> ali pa so filtrirane/razredčene do te mere,
-            da je delež teh spojin nizek.
-          </p>
-
-          <p>
-            Pri različnih vrstah gob se delež suhe snovi in s tem količina usedline razlikujeta.
-            Minimalne in tipične vrednosti suhe snovi v naših tinkturah so:
-          </p>
-
-          <table class="tinkture-usedlina-tabela">
-            <thead>
-              <tr>
-                <th>Vrsta</th>
-                <th>Minimalna suha snov (%)</th>
-                <th>Tipična suha snov v praksi (%)</th>
-                <th>Značilnost</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Reishi</strong> (Ganoderma lucidum)</td>
-                <td>&ge; 4&nbsp;%</td>
-                <td>&asymp; 5&nbsp;%</td>
-                <td>manj izrazita, a prisotna usedlina polisaharidov in β-glukanov</td>
-              </tr>
-              <tr>
-                <td><strong>Chaga</strong> (Inonotus obliquus)</td>
-                <td>&ge; 6&nbsp;%</td>
-                <td>&asymp; 8,5&nbsp;%</td>
-                <td>zmerna usedlina, bogata v melaninih, betulinu in polisaharidih</td>
-              </tr>
-              <tr>
-                <td><strong>Resasti bradovec</strong> (Hericium erinaceus)</td>
-                <td>&ge; 11&nbsp;%</td>
-                <td>&asymp; 14&nbsp;%</td>
-                <td>obilna usedlina zaradi zelo visoke vsebnosti polisaharidov</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </template>
-
-      <template id="tpl-gojenje">
-        <h3>Gojenje Reishi</h3>
-        <ul class="meta">
-          <li>Micelij → sterilni substrat → plodišča (antlers ali klobuk)</li>
-          <li>Vse faze izvajamo sami: vzgoja micelija, sterilizacija substratov, nadzorovano plodonošenje</li>
-          <li>Ekološke surovine: pšenični otrobi, proso, rž, bukova žagovina iz kočevskih gozdov</li>
-          <li>Majhne šarže, ročna kontrola vsake vreče, sledljivost od seva do serije tinkture</li>
-          <li>Nastanek antler oblike spodbujamo z omejenim pretokom zraka, povišanim CO₂ in nadzorovano svetlobo</li>
-        </ul>
-        <br>
-        <h3>Antler oblika Reishija – naravna odzivnost in višja aktivnost</h3>
-        <p>
-          V nadzorovanem okolju z <strong>omejenim pretokom zraka</strong>, <strong>povišano koncentracijo CO₂</strong> in
-          <strong>zmerno osvetlitvijo</strong> <em>Ganoderma lucidum</em> praviloma <strong>ne razvije klobuka</strong>, temveč
-          zraste v <strong>razvejano, rogovilasto (antler) morfologijo</strong>
-          <sup>[2], [1]</sup>.
-          Ta morfologija je metabolno zahtevnejša in je povezana s
-          <strong>povečano biosintezo triterpenov (ganodermičnih kislin)</strong> ter pogosto tudi višjo ravnijo
-          <strong>β-D-glukanov</strong>
-          <sup>[3], [2]</sup>.
-        </p>
-
-        <p>
-          Eksperimentalno je bilo pokazano, da <strong>povišan CO₂ in omejen kisik</strong> povečata sintezo ganodermičnih kislin
-          in prispevata k nastanku antler tipa plodišč
-          <sup>[1]</sup>. V novejši raziskavi so iz antler oblike <em>G. lucidum</em>
-          <strong>izolirali sedem novih triterpenov</strong>, ki jih v “fan/klobuk” obliki niso zaznali
-          <sup>[3]</sup>. Dodatno so primerjave izvlečkov potrdile
-          <strong>višjo antioksidativno in hepatoprotektivno aktivnost</strong> antler izvlečkov
-          <sup>[4]</sup>.
-        </p>
-
-        <p>
-          Naš pristop tako <strong>posnema naravne stresne razmere</strong>, da goba izrazi
-          <strong>polni biokemični potencial</strong> – rezultat so plodišča z
-          <strong>visoko vsebnostjo triterpenov</strong> in <strong>konsistentna surovina</strong> za
-          standardizirane tinkture z visoko bioaktivnostjo.
-        </p>
-
-        [1] Wang, J. et al. (2012). Effect of CO₂ concentration on morphology and triterpenoid synthesis of <em>Ganoderma lucidum</em>. <strong>Scientific Reports</strong>, 2, 905.<br>
-        [2] Chen, L. et al. (2018). Morphological differentiation and triterpenoid accumulation in antler-type <em>G. lucidum</em>. <strong>Mycosphere</strong>, 9(2), 290–301.<br>
-        [3] Li, Q. et al. (2024). New ganoderic acids from antler-type <em>G. lucidum</em> fruiting bodies. <strong>Phytochemistry Letters</strong>, 67, 150–158.<br>
-        [4] Kim, S. et al. (2015). Comparative antioxidant and hepatoprotective effects of antler- and fan-type <em>G. lucidum</em>. <strong>International Journal of Medicinal Mushrooms</strong>, 17(3), 259–267.
-      </template>
-
-      <template id="tpl-botanicne">
-        <h3>Botanične ekstrakcije</h3>
-        <ul class="meta">
-          <li>Smrekovi vršički & izbrane rastline; EtOH / glicerin / H₂O</li>
-          <li>Enak QC pristop kot pri gobah (HACCP/GMP)</li>
-          <li>Po dogovoru: ciljni profil, okus, viskoznost, polnitev</li>
-        </ul>
-        <br>
-        <h3>Sterilizacija gojitvenih substratov</h3>
-        <ul class="meta">
-          <li>Priprava substratov iz ekoloških sestavin</li>
-          <li>Sterilizacija substratov in žita</li>
-          <li>Priprava in sterilizacija agar medija</li>
-          <li>Inokulacija z micelijem</li>
-        </ul>
-      </template>
-
-    </div>
-  </section>
-
-  <!-- PRISTOP -->
-  <section id="pristop">
-    <div class="wrap">
-      <div class="section-head">
-        <div>
-          <h2>Pristop — trojna ekstrakcija in vakuumsko koncentriranje</h2>
-          <div class="under"></div>
-        </div>
-        <p class="lead2">Iz vsake gobe iztisnemo maksimum — ponovljivo, sledljivo in nežno do učinkovin.</p>
-      </div>
-
-      <div class="steps">
-        <div class="step tech">
-          <div class="num">Korak 1</div>
-          <h3>Trojna ekstrakcija</h3>
-          <p>Etanol → vroča vodna  → tlačna vodna. Vsaka faza cilja drug spekter spojin, zato dobimo celovit izvleček.</p>
-        </div>
-
-        <div class="step tech">
-          <div class="num">Korak 2</div>
-          <h3>Velika količina topila</h3>
-          <p>Velika količina topila prepreči hitro nasičenje, ohranja prenos snovi in poveča izplen ekstrakcije.</p>
-        </div>
-
-        <div class="step tech">
-          <div class="num">Korak 3</div>
-          <h3>Ultrazvočna podpora</h3>
-          <p>Ultrazvok z mikrokavitacijo razrahlja matriko gobe, pospeši in poveča izplen ekstrakcije.</p>
-        </div>
-
-        <div class="step tech">
-          <div class="num">Korak 4</div>
-          <h3>Vakuumsko koncentriranje</h3>
-          <p>Topila odstranimo pri nižjih temperaturah, zato bolje ohranimo občutljive spojine ter naravno aromo in barvo.</p>
-        </div>
-
-        <div class="step qc">
-          <div class="num">QC 1</div>
-          <h3>Kakovost</h3>
-          <p>Interni QC na surovinah in končnih izdelkih: suha snov, gostota, ekstraktibilni delež in sledljivost serij.</p>
-        </div>
-
-        <div class="step qc">
-          <div class="num">QC 2</div>
-          <h3>Skladnost</h3>
-          <p>Delo poteka po HACCP načelih in GMP pristopu; uporaba etanola je vodena skladno s trošarinskimi evidencami.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- GALERIJA – mini best of -->
-  <section id="galerija">
-    <div class="wrap">
-      <div class="section-head">
-        <div><h2>Galerija</h2><div class="under"></div></div>
-        <p class="lead2"></p>
-      </div>
-
-      <div class="gallery-grid">
-        <!-- 1 -->
-        <figure class="g-item" data-title="Ultrazvočna sonda" data-text="Opis faze ali naprave …">
-          <img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda">
-          <div class="g-overlay"><div class="box">
-            <h4>Ultrazvočna sonda</h4>
-            <p>Ultrazvočna sonda je naprava, ki v mešanici gobe in topila ustvarja zelo hitre mehanske vibracije.
-		Te vibracije v tekočini povzročijo kavitacijo – nastanek drobnih mehurčkov, ki ob pokanju naredijo močne mikro-tokove.
-		Ti “mikro udarci” razrahljajo in delno porušijo celične stene gob, zato se učinkovine lažje sprostijo.
-		Hkrati se močno izboljša mešanje na mikro ravni, kar pospeši prehod snovi iz gobe v topilo.
-		Rezultat je hitrejša ekstrakcija in višji izplen učinkovin.</p>
-          </div></div>
-        </figure>
-
-        <!-- 2 -->
-        <figure class="g-item" data-title="Rotavapor" data-text="Opis faze ali naprave …">
-          <img src="assets/rotovap.webp" alt="Rotavapor">
-          <div class="g-overlay"><div class="box">
-            <h4>Rotavapor</h4>
-            <p>Rotovapor je naprava, ki nam omogoča koncentriranje (odstranjevanje topila iz mešanice) pri nizkih temperaturah,
-		kar omogoča maksimalno ohranitev termolabilnih spojin. Nizke temperature vrelišča dosežemo s pomočjo vakuuma, ki
-		med procesom znaša od 10-150 mbar. Voda nam v takšnem sistemu lahko vre že pri 40 °C.</p>
-          </div></div>
-        </figure>
-
-        <!-- 3 -->
-        <figure class="g-item" data-title="Analizator vlage" data-text="Opisa halogenski analizator vlage">
-          <img src="assets/moisture_a.webp" alt="Halogenski analizator vlage">
-          <div class="g-overlay"><div class="box">
-            <h4>Halogenski analizator vlage</h4>
-            <p>S halogenskim analizatorjem vlage določamo hlapne komponente vzorca. V našem primeru gre za določevanje vlage v
-		suhi mleti gobi pred ekstrakcijo, ali pa določevanje suhe snovi v končni tinkturi. </p>
-          </div></div>
-        </figure>
-
-        <!-- 4 -->
-        <figure class="g-item" data-title="Vakuumski sušilnik" data-text="Opis vakuumski sušilnik">
-          <img src="assets/vacuum-oven-1600w.webp" alt="Vakuumski sušilnik">
-          <div class="g-overlay"><div class="box">
-            <h4>Vakuumski sušilnik</h4>
-            <p>Vakuumski sušilnik uporabljamo za končno dosuševanje gob, ker nam omogoča, da vlago znižamo na približno 5 % — do te vrednosti s klasičnim
-		sušilnikom praviloma ne pridemo zanesljivo in ponovljivo. V vakuumu voda izhlapeva pri nižji temperaturi, zato lahko sušimo okoli 45 °C in s tem bistveno
-		zmanjšamo toplotno obremenitev. Tako bolje ohranimo občutljive komponente, hkrati pa dobimo bolj stabilno in standardizirano surovino za ekstrakcijo.</p>
-          </div></div>
-        </figure>
-
-        <!-- 5 -->
-        <figure class="g-item" data-title="Gojenje Reishi" data-text="Opis faze ali naprave …">
-          <img src="assets/vcontroller.webp" alt="Vakuum kontroler">
-          <div class="g-overlay"><div class="box">
-            <h4>Vakuum kontroler</h4>
-            <p>Vakuumski kontroler uporabljamo za natančno zniževanje tlaka med odstranjevanjem topila. Ker pri konstantni temperaturi med procesom narašča delež vode (etanol izhlapeva),
-se zmesu postopno zvišuje vrelišče. Z regulacijo vakuuma sproti prilagajamo tlak, da ostajamo na točki vrelišča in koncentriranje poteka stabilno, učinkovito in z nizko toplotno obremenitvijo.</p>
-          </div></div>
-        </figure>
-
-        <!-- 6 -->
-        <figure class="g-item" data-title="Polnilna linija" data-text="Opis faze ali naprave …">
-          <img src="assets/filling-line.webp" alt="Polnilna linija">
-          <div class="g-overlay"><div class="box">
-            <h4>Polnilna linija</h4>
-            <p>Polnjenje izvajamo v laminar­nem toku sterilnega zraka, da med odprtimi stekleničkami omejimo vpliv okolja.
-		Uporabljamo dozirno črpalko in standardiziran postopek polnjenja za ponovljiv volumen in enakomerno serijo.</p>
-          </div></div>
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <!-- REFERENCE -->
-  <section id="reference">
-    <div class="wrap">
-      <div class="section-head">
-        <div><h2>Reference — Fungalist</h2><div class="under"></div></div>
-        <p class="lead2">Podjetje <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Fungalist</a> je naš osrednji partner, pri katerem lahko najdete naše tinkture.</p>
-      </div>
-
-      <div class="grid-refs">
-
-        <!-- REISHI -->
-        <article class="card ref" aria-expanded="false">
-          <div class="media">
-            <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura">
-            <div class="topbar">Reishi</div>
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakuumom</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost od surovine do serije izdelka</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
-              </ul>
+      <div class="about-scroll" id="about-scroll">
+        <div class="about-card">
+          <div class="about-hero">
+            <div class="about-ph">
+              <strong>Prostor za sliko</strong><br />
+              (Rok / laboratorij / proces)<br />
+              <code>&lt;img src="assets/rok.jpg" alt="Rok" /&gt;</code>
             </div>
-            <div class="detail-panel">
-              <ul class="meta">
-                <li><strong>Izvor surovine:</strong> Reishi GoMushroom</li>
-                <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
-                <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 5 %, stabilna viskoznost in okus.</li>
-                <li><strong>Sestavine:</strong> Svetlikava pološčenka - Reishi (ganoderma lucidum), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
-                <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="titlebar">
-            <h3 class="title">Reishi</h3>
-            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
-          </div>
-        </article>
-
-        <!-- RESASTI BRADOVEC -->
-        <article class="card ref" aria-expanded="false">
-          <div class="media">
-            <img src="assets/ref-fungalist-lionsmane.jpg" alt="Resasti bradovec tinktura">
-            <div class="topbar">Resasti bradovec</div>
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakuumom</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost od surovine do serije izdelka</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
-              </ul>
-            </div>
-            <div class="detail-panel">
-              <ul class="meta">
-                <li><strong>Izvor surovine:</strong> Fungalist</li>
-                <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
-                <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 14%, stabilna viskoznost in okus.</li>
-                <li><strong>Sestavine:</strong> Resasti bradovec (Hericium erinaceus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
-                <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="titlebar">
-            <h3 class="title">Resasti bradovec</h3>
-            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
-          </div>
-        </article>
-
-        <!-- ČAGA -->
-        <article class="card ref" aria-expanded="false">
-          <div class="media">
-            <img src="assets/ref-fungalist-chaga.jpg" alt="Čaga tinktura">
-            <div class="topbar">Čaga</div>
-            <div class="hover-panel">
-              <ul class="meta">
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alkoholna &amp; brezalkoholna</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>trojna ultrazvočna ekstrakcija</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>koncentriranje pod vakuumom</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>celoten spekter učinkovin</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>sledljivost od surovine do serije izdelka</li>
-                <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-pristop</li>
-              </ul>
-            </div>
-            <div class="detail-panel">
-              <ul class="meta">
-                <li><strong>Izvor surovine:</strong> Različni viri</li>
-                <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
-                <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 8,5 %, stabilna viskoznost in okus.</li>
-                <li><strong>Sestavine:</strong> Čaga - brezin luknjač (Inonotus obliquus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
-                <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="titlebar">
-            <h3 class="title">Čaga</h3>
-            <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener">Kupi pri Fungalistu</a>
-          </div>
-        </article>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- KONTAKT -->
-  <section id="kontakt">
-    <div class="wrap">
-      <div class="section-head"><div><h2>Kontakt GoMushroom — laboratorij za ekstrakcije medicinskih gob</h2><div class="under"></div></div></div>
-
-      <p>Ali te zanima sodelovanje z GoMushroom? Piši mi in na kratko opiši, kaj te zanima (izdelek, surovina, razvoj, veleprodaja ali projekt po meri).
-Odgovorim hitro in predlagam naslednje korake: kratek klic, dogovor o ciljih, nato priprava predloga (rok, količine, specifikacije) in uskladitev izvedbe.
-      </p>
-
-      <div class="cta">
-        <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
-        <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank">Instagram</a>
-        <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<footer><div class="wrap">© <span id="y"></span> GoMushroom</div></footer>
-
-<!-- O MENI — Drawer / Modal -->
-<div id="o-meni" hidden></div>
-<div class="about-modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
-  <div class="about-overlay" id="about-overlay" tabindex="-1"></div>
-
-  <div class="about-drawer" role="document" aria-label="O meni">
-    <div class="about-top">
-      <div class="ttl">
-        <strong id="about-title">O meni</strong>
-        <span>Rok Golob — GoMushroom</span>
-      </div>
-      <button class="icon-btn" type="button" id="about-x" aria-label="Zapri">×</button>
-    </div>
-
-    <div class="about-scroll" id="about-scroll">
-      <div class="about-card">
-        <div class="about-hero">
-          <div class="about-ph">
-            <strong>Prostor za sliko</strong><br/>
-            (Rok / laboratorij / proces)<br/>
-            <code>&lt;img src="assets/rok.jpg" alt="Rok" /&gt;</code>
-          </div>
-          <!-- Primer za kasneje:
+            <!-- Primer za kasneje:
           <img src="assets/rok.jpg" alt="Rok Golob" style="width:100%;height:100%;object-fit:cover">
           -->
-        </div>
-
-        <div class="about-body">
-          <h3>Rok Golob — GoMushroom</h3>
-
-          <p>
-            Moje ime je <strong>Rok Golob</strong> in stojim za projektom <strong>GoMushroom</strong>.
-            Po izobrazbi sem “skoraj kemijski tehnolog” — študij <strong>kemijske tehnologije</strong> je ostal malo
-            <strong>brez pike na i</strong>. Ampak ravno način razmišljanja, ki ga prinese kemija in tehnologija procesov,
-            je nekaj, kar me spremlja vsak dan: logika korakov, razumevanje topil, mase, pretokov in predvsem spoštovanje do detajlov.
-          </p>
-
-          <p>
-            Že skoraj <strong>20 let</strong> delam v <strong>analitskem laboratoriju</strong> — in v analitiki
-            <strong>še vedno delam tudi danes</strong>, v svoji redni službi. Analitika te hitro “vzgoji”:
-            rezultat je dober samo, če je <strong>ponovljiv</strong>, če je metoda smiselna, če razumeš vzorčenje, matriko
-            in če imaš urejene zapise. Tam ni prostora za približke. In ravno ta disciplina je tudi razlog,
-            da GoMushroom ni nastal kot hiter trend, ampak kot projekt, ki stoji na praksi in na sistemu.
-          </p>
-
-          <p>
-            GoMushroom je zrasel iz radovednosti in iz želje, da bi izvlečke delal tako, kot bi si jih sam želel:
-            brez napihnjenih obljub, z jasno logiko procesa in s fokusom na stabilnosti. Majhne serije mi omogočajo,
-            da imam nadzor nad detajli — od surovine do končne stekleničke — in da vsako serijo postavim tako,
-            da je primerljiva s prejšnjo.
-          </p>
-
-          <p>
-            Najbolj me vleče “inženirski del” zgodbe: kako proces postaviti tako, da je učinkovit,
-            nežen do občutljivih spojin in hkrati ponovljiv. Ko se vse sestavi — surovina, postopek,
-            kontrolne točke, meritve in zapisi — dobiš izdelek, ki ni odvisen od sreče, ampak od sistema.
-            To je tudi bistvo GoMushroom.
-          </p>
-
-          <div class="pill-row">
-            <span class="pill">~20 let analitike</span>
-            <span class="pill accent">Še vedno zaposlen v analitiki</span>
-            <span class="pill">Procesna logika</span>
-            <span class="pill accent">Sledljivost &amp; zapisi</span>
-            <span class="pill">Majhne serije</span>
           </div>
 
-          <div class="about-actions">
-            <button class="btn ghost" type="button" id="about-close">Zapri</button>
-            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
-            <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+          <div class="about-body">
+            <h3>Rok Golob — GoMushroom</h3>
+
+            <p>
+              Moje ime je <strong>Rok Golob</strong> in stojim za projektom <strong>GoMushroom</strong>.
+              Po izobrazbi sem “skoraj kemijski tehnolog” — študij <strong>kemijske tehnologije</strong> je ostal malo
+              <strong>brez pike na i</strong>. Ampak ravno način razmišljanja, ki ga prinese kemija in tehnologija procesov,
+              je nekaj, kar me spremlja vsak dan: logika korakov, razumevanje topil, mase, pretokov in predvsem spoštovanje do detajlov.
+            </p>
+
+            <p>
+              Že skoraj <strong>20 let</strong> delam v <strong>analitskem laboratoriju</strong> — in v analitiki
+              <strong>še vedno delam tudi danes</strong>, v svoji redni službi. Analitika te hitro “vzgoji”:
+              rezultat je dober samo, če je <strong>ponovljiv</strong>, če je metoda smiselna, če razumeš vzorčenje, matriko
+              in če imaš urejene zapise. Tam ni prostora za približke. In ravno ta disciplina je tudi razlog,
+              da GoMushroom ni nastal kot hiter trend, ampak kot projekt, ki stoji na praksi in na sistemu.
+            </p>
+
+            <p>
+              GoMushroom je zrasel iz radovednosti in iz želje, da bi izvlečke delal tako, kot bi si jih sam želel:
+              brez napihnjenih obljub, z jasno logiko procesa in s fokusom na stabilnosti. Majhne serije mi omogočajo,
+              da imam nadzor nad detajli — od surovine do končne stekleničke — in da vsako serijo postavim tako,
+              da je primerljiva s prejšnjo.
+            </p>
+
+            <p>
+              Najbolj me vleče “inženirski del” zgodbe: kako proces postaviti tako, da je učinkovit,
+              nežen do občutljivih spojin in hkrati ponovljiv. Ko se vse sestavi — surovina, postopek,
+              kontrolne točke, meritve in zapisi — dobiš izdelek, ki ni odvisen od sreče, ampak od sistema.
+              To je tudi bistvo GoMushroom.
+            </p>
+
+            <div class="pill-row">
+              <span class="pill">~20 let analitike</span>
+              <span class="pill accent">Še vedno zaposlen v analitiki</span>
+              <span class="pill">Procesna logika</span>
+              <span class="pill accent">Sledljivost &amp; zapisi</span>
+              <span class="pill">Majhne serije</span>
+            </div>
+
+            <div class="about-actions">
+              <button class="btn ghost" type="button" id="about-close">Zapri</button>
+              <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
+              <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="about-card">
-        <div class="about-body">
-          <h3>Fokus</h3>
-          <ul class="meta" style="margin:0;padding-left:0;list-style:none">
-            <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Doslednost:</strong> rezultat je dober samo, če je ponovljiv.</li>
-            <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Transparentnost:</strong> jasni koraki, brez praznih obljub.</li>
-            <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Stabilnost:</strong> fokus na kontrolnih točkah skozi proces.</li>
-            <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg><strong>Butično:</strong> majhne serije, ročna kontrola in detajli.</li>
-          </ul>
+        <div class="about-card">
+          <div class="about-body">
+            <h3>Fokus</h3>
+            <ul class="meta" style="margin:0;padding-left:0;list-style:none">
+              <li class="li-icon"><svg class="ico">
+                  <use href="#i-shield" />
+                </svg><strong>Doslednost:</strong> rezultat je dober samo, če je ponovljiv.</li>
+              <li class="li-icon"><svg class="ico">
+                  <use href="#i-shield" />
+                </svg><strong>Transparentnost:</strong> jasni koraki, brez praznih obljub.</li>
+              <li class="li-icon"><svg class="ico">
+                  <use href="#i-shield" />
+                </svg><strong>Stabilnost:</strong> fokus na kontrolnih točkah skozi proces.</li>
+              <li class="li-icon"><svg class="ico">
+                  <use href="#i-drop" />
+                </svg><strong>Butično:</strong> majhne serije, ročna kontrola in detajli.</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- GALERIJA — modal (fix za telefon: celo besedilo) -->
-<div id="gallery-modal" class="gallery-modal" aria-hidden="true">
-  <div class="gm-card" role="dialog" aria-modal="true" aria-labelledby="gm-title">
-    <button class="gm-close" type="button" aria-label="Zapri">×</button>
-    <div class="gm-img"><img id="gm-img" src="" alt=""></div>
-    <div class="gm-body">
-      <h4 id="gm-title"></h4>
-      <p id="gm-text"></p>
-    </div>
-  </div>
-</div>
+  <script>
+    // HERO slider
+    (function(){
+      const hero=document.querySelector('.hero');
+      const slides=[...hero.querySelectorAll('.slide')];
+      const dots=[...hero.querySelectorAll('.dot')];
+      const prev=hero.querySelector('.arrow.prev');
+      const next=hero.querySelector('.arrow.next');
+      let i=0,t;
+      const show=n=>{
+        slides[i].classList.remove('active');
+        dots[i].classList.remove('active');
+        i=(n+slides.length)%slides.length;
+        slides[i].classList.add('active');
+        dots[i].classList.add('active');
+      };
+      const auto=()=>{clearInterval(t);t=setInterval(()=>show(i+1),5500)};
+      prev.onclick=()=>{show(i-1);auto()};
+      next.onclick=()=>{show(i+1);auto()};
+      dots.forEach((d,idx)=>d.onclick=()=>{show(idx);auto()});
+      auto();
+    })();
 
-<script>
-  // HERO slider
-  (function(){
-    const hero=document.querySelector('.hero');
-    const slides=[...hero.querySelectorAll('.slide')];
-    const dots=[...hero.querySelectorAll('.dot')];
-    const prev=hero.querySelector('.arrow.prev');
-    const next=hero.querySelector('.arrow.next');
-    let i=0,t;
-    const show=n=>{
-      slides[i].classList.remove('active');
-      dots[i].classList.remove('active');
-      i=(n+slides.length)%slides.length;
-      slides[i].classList.add('active');
-      dots[i].classList.add('active');
-    };
-    const auto=()=>{clearInterval(t);t=setInterval(()=>show(i+1),5500)};
-    prev.onclick=()=>{show(i-1);auto()};
-    next.onclick=()=>{show(i+1);auto()};
-    dots.forEach((d,idx)=>d.onclick=()=>{show(idx);auto()});
-    auto();
-  })();
+    // STORITVE — klik prikaže full-width panel pod karticami
+    (function(){
+      const grid = document.getElementById('services-grid');
+      const cards = [...grid.querySelectorAll('.card.service')];
+      const panel = document.getElementById('service-detail');
+      const panelContent = panel.querySelector('.content');
+      const templates = {
+        ekstrakcije: document.getElementById('tpl-ekstrakcije'),
+        gojenje:     document.getElementById('tpl-gojenje'),
+        botanicne:   document.getElementById('tpl-botanicne'),
+      };
 
-  // STORITVE — klik prikaže full-width panel pod karticami
-  (function(){
-    const grid = document.getElementById('services-grid');
-    const cards = [...grid.querySelectorAll('.card.service')];
-    const panel = document.getElementById('service-detail');
-    const panelContent = panel.querySelector('.content');
-    const templates = {
-      ekstrakcije: document.getElementById('tpl-ekstrakcije'),
-      gojenje:     document.getElementById('tpl-gojenje'),
-      botanicne:   document.getElementById('tpl-botanicne'),
-    };
+      function openPanel(key, card){
+        cards.forEach(c=>c.classList.toggle('is-active', c===card));
+        grid.classList.add('has-open');
+        const tpl = templates[key];
+        if(!tpl) return;
+        panelContent.innerHTML = '';
+        panelContent.appendChild(tpl.content.cloneNode(true));
+        panel.classList.add('is-open');
 
-    function openPanel(key, card){
-      cards.forEach(c=>c.classList.toggle('is-active', c===card));
-      grid.classList.add('has-open');
-      const tpl = templates[key];
-      if(!tpl) return;
-      panelContent.innerHTML = '';
-      panelContent.appendChild(tpl.content.cloneNode(true));
-      panel.classList.add('is-open');
-
-      const headerHeight = document.querySelector('header')?.offsetHeight || 0;
-      requestAnimationFrame(()=>{
-        const panelTop = panel.getBoundingClientRect().top + window.pageYOffset;
-        window.scrollTo({ top: panelTop - headerHeight - 10, behavior: 'smooth' });
-      });
-    }
-
-    function closePanel(){
-      cards.forEach(c=>c.classList.remove('is-active'));
-      grid.classList.remove('has-open');
-      panel.classList.remove('is-open');
-      panelContent.innerHTML = '';
-    }
-
-    cards.forEach(card=>{
-      card.addEventListener('click', (e)=>{
-        if((e.target.tagName||'').toLowerCase()==='a') return;
-        const key = card.getAttribute('data-service');
-        if(card.classList.contains('is-active')) closePanel();
-        else openPanel(key, card);
-      });
-      card.setAttribute('tabindex','0');
-      card.setAttribute('role','button');
-      card.addEventListener('keydown', e=>{
-        if(e.key==='Enter'||e.key===' ') { e.preventDefault(); card.click(); }
-      });
-    });
-
-    document.addEventListener('keydown', e=>{
-      if(e.key==='Escape') closePanel();
-    });
-  })();
-
-  // GALERIJA — modal (telefon: prikaže vse besedilo + scroll)
-  (function(){
-    const items=[...document.querySelectorAll('.g-item')];
-    const modal=document.getElementById('gallery-modal');
-    const closeBtn=modal?.querySelector('.gm-close');
-    const imgEl=document.getElementById('gm-img');
-    const titleEl=document.getElementById('gm-title');
-    const textEl=document.getElementById('gm-text');
-    const bodyEl=modal?.querySelector('.gm-body');
-
-    if(!modal || !imgEl || !titleEl || !textEl) return;
-
-    let prevOverflow = '';
-
-    function openModalFromItem(it){
-      const title = it.getAttribute('data-title') || it.querySelector('.g-overlay h4')?.textContent?.trim() || '';
-      const text  = it.querySelector('.g-overlay p')?.textContent?.trim()
-                 || it.getAttribute('data-text')
-                 || '';
-      const src   = it.querySelector('img')?.getAttribute('src') || '';
-      const alt   = it.querySelector('img')?.getAttribute('alt') || title || 'Galerija';
-
-      titleEl.textContent = title;
-      textEl.textContent  = text;
-      imgEl.src = src;
-      imgEl.alt = alt;
-
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden','false');
-
-      // lock scroll (enako logiko kot drugje)
-      prevOverflow = document.documentElement.style.overflow || '';
-      document.documentElement.style.overflow = 'hidden';
-
-      requestAnimationFrame(()=>{
-        try{ bodyEl?.scrollTo({top:0}); } catch(e){ if(bodyEl) bodyEl.scrollTop = 0; }
-      });
-    }
-
-    function closeModal(){
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden','true');
-      document.documentElement.style.overflow = prevOverflow;
-    }
-
-    items.forEach(it=>{
-      it.addEventListener('click', ()=>openModalFromItem(it));
-      it.setAttribute('tabindex','0');
-      it.setAttribute('role','button');
-      it.addEventListener('keydown', e=>{
-        if(e.key==='Enter'||e.key===' ') { e.preventDefault(); openModalFromItem(it); }
-      });
-    });
-
-    closeBtn?.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e)=>{
-      if(e.target === modal) closeModal();
-    });
-    document.addEventListener('keydown', (e)=>{
-      if(!modal.classList.contains('is-open')) return;
-      if(e.key === 'Escape'){ e.preventDefault(); closeModal(); }
-    });
-  })();
-
-  // REFERENCE – hover + click, open one at a time
-  (function(){
-    const refs=[...document.querySelectorAll('.card.ref')];
-    function closeAll(except){
-      refs.forEach(c=>{
-        if(c!==except){
-          c.classList.remove('is-open');
-          c.setAttribute('aria-expanded','false');
-        }
-      });
-    }
-    function toggle(card){
-      const open=card.classList.contains('is-open');
-      if(open){
-        card.classList.remove('is-open');
-        card.setAttribute('aria-expanded','false');
-      } else {
-        closeAll(card);
-        card.classList.add('is-open');
-        card.setAttribute('aria-expanded','true');
-        if(window.innerWidth<900){
-          card.scrollIntoView({behavior:'smooth',block:'center'});
-        }
-      }
-    }
-    refs.forEach(card=>{
-      card.addEventListener('click',e=>{
-        const t=(e.target.tagName||'').toLowerCase();
-        if(t==='a') return;
-        toggle(card);
-      });
-      card.setAttribute('tabindex','0');
-      card.setAttribute('role','button');
-      card.addEventListener('keydown',e=>{
-        if(e.key==='Enter'||e.key===' '){
-          e.preventDefault(); toggle(card);
-        }
-      });
-    });
-  })();
-
-  // O MENI — drawer/modal (opcija B): klik v meniju odpre, klik na overlay/ESC zapre, fokus se pravilno vrne
-  (function(){
-    const link = document.getElementById('nav-about');
-    const modal = document.getElementById('about-modal');
-    const overlay = document.getElementById('about-overlay');
-    const closeBtn = document.getElementById('about-close');
-    const xBtn = document.getElementById('about-x');
-    const scrollEl = document.getElementById('about-scroll');
-
-    if(!link || !modal) return;
-
-    let lastFocus = null;
-    let prevOverflow = '';
-
-    const focusableSelector = [
-      'a[href]',
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])'
-    ].join(',');
-
-    function setOpenState(isOpen){
-      if(isOpen){
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden','false');
-        link.setAttribute('aria-expanded','true');
-
-        prevOverflow = document.documentElement.style.overflow || '';
-        document.documentElement.style.overflow = 'hidden';
-
-        // reset scroll supply
-        if(scrollEl) scrollEl.scrollTop = 0;
-
-        // fokus
+        const headerHeight = document.querySelector('header')?.offsetHeight || 0;
         requestAnimationFrame(()=>{
-          const first = modal.querySelector(focusableSelector);
-          (first || xBtn || closeBtn || modal).focus?.();
+          const panelTop = panel.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({ top: panelTop - headerHeight - 10, behavior: 'smooth' });
         });
-
-        history.replaceState(null, '', '#o-meni');
-      } else {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden','true');
-        link.setAttribute('aria-expanded','false');
-
-        document.documentElement.style.overflow = prevOverflow;
-
-        // remove hash (ne ruši drugih parametrov)
-        const clean = window.location.pathname + window.location.search;
-        history.replaceState(null, '', clean);
-
-        // vrni fokus
-        if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
-      }
-    }
-
-    function openModal(){
-      lastFocus = document.activeElement;
-      setOpenState(true);
-    }
-    function closeModal(){
-      setOpenState(false);
-    }
-
-    link.addEventListener('click', (e)=>{
-      e.preventDefault();
-      openModal();
-    });
-
-    overlay?.addEventListener('click', closeModal);
-    closeBtn?.addEventListener('click', closeModal);
-    xBtn?.addEventListener('click', closeModal);
-
-    document.addEventListener('keydown', (e)=>{
-      if(!modal.classList.contains('is-open')) return;
-
-      if(e.key === 'Escape'){
-        e.preventDefault();
-        closeModal();
-        return;
       }
 
-      // focus trap
-      if(e.key === 'Tab'){
-        const focusables = [...modal.querySelectorAll(focusableSelector)]
-          .filter(el => el.offsetParent !== null); // visible
-        if(focusables.length === 0) return;
+      function closePanel(){
+        cards.forEach(c=>c.classList.remove('is-active'));
+        grid.classList.remove('has-open');
+        panel.classList.remove('is-open');
+        panelContent.innerHTML = '';
+      }
 
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
+      cards.forEach(card=>{
+        card.addEventListener('click', (e)=>{
+          if((e.target.tagName||'').toLowerCase()==='a') return;
+          const key = card.getAttribute('data-service');
+          if(card.classList.contains('is-active')) closePanel();
+          else openPanel(key, card);
+        });
+        card.setAttribute('tabindex','0');
+        card.setAttribute('role','button');
+        card.addEventListener('keydown', e=>{
+          if(e.key==='Enter'||e.key===' ') { e.preventDefault(); card.click(); }
+        });
+      });
 
-        if(e.shiftKey && document.activeElement === first){
-          e.preventDefault();
-          last.focus();
-        } else if(!e.shiftKey && document.activeElement === last){
-          e.preventDefault();
-          first.focus();
+      document.addEventListener('keydown', e=>{
+        if(e.key==='Escape') closePanel();
+      });
+    })();
+
+    // GALERIJA — klik zaklene/odklene opis (brez modala) + na telefonu full-bleed
+    (function(){
+      const items=[...document.querySelectorAll('#galerija .g-item')];
+
+      function closeAll(except){
+        items.forEach(it=>{ if(it!==except) it.classList.remove('is-open'); });
+      }
+
+      items.forEach(it=>{
+        it.addEventListener('click', ()=>{
+          const open=it.classList.contains('is-open');
+          if(open){
+            it.classList.remove('is-open');
+          } else {
+            closeAll(it);
+            it.classList.add('is-open');
+
+            if(window.matchMedia('(max-width: 820px)').matches){
+              const headerH = document.querySelector('header')?.offsetHeight || 0;
+              requestAnimationFrame(() => {
+                const y = it.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+              });
+            }
+          }
+        });
+        it.setAttribute('tabindex','0');
+        it.setAttribute('role','button');
+        it.addEventListener('keydown', e=>{
+          if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); }
+        });
+      });
+
+      document.addEventListener('keydown', e=>{
+        if(e.key==='Escape') closeAll();
+      });
+    })();
+
+    // REFERENCE – hover + click, open one at a time
+    (function(){
+      const refs=[...document.querySelectorAll('.card.ref')];
+      function closeAll(except){
+        refs.forEach(c=>{
+          if(c!==except){
+            c.classList.remove('is-open');
+            c.setAttribute('aria-expanded','false');
+          }
+        });
+      }
+      function toggle(card){
+        const open=card.classList.contains('is-open');
+        if(open){
+          card.classList.remove('is-open');
+          card.setAttribute('aria-expanded','false');
+        } else {
+          closeAll(card);
+          card.classList.add('is-open');
+          card.setAttribute('aria-expanded','true');
+          if(window.innerWidth<900){
+            card.scrollIntoView({behavior:'smooth',block:'center'});
+          }
         }
       }
-    });
+      refs.forEach(card=>{
+        card.addEventListener('click',e=>{
+          const t=(e.target.tagName||'').toLowerCase();
+          if(t==='a') return;
+          toggle(card);
+        });
+        card.setAttribute('tabindex','0');
+        card.setAttribute('role','button');
+        card.addEventListener('keydown',e=>{
+          if(e.key==='Enter'||e.key===' '){
+            e.preventDefault(); toggle(card);
+          }
+        });
+      });
+    })();
 
-    // direct hash open
-    if(window.location.hash === '#o-meni'){
-      openModal();
-    } else {
-      setOpenState(false);
-    }
-  })();
+    // O MENI — drawer/modal (opcija B): klik v meniju odpre, klik na overlay/ESC zapre, fokus se pravilno vrne
+    (function(){
+      const link = document.getElementById('nav-about');
+      const modal = document.getElementById('about-modal');
+      const overlay = document.getElementById('about-overlay');
+      const closeBtn = document.getElementById('about-close');
+      const xBtn = document.getElementById('about-x');
+      const scrollEl = document.getElementById('about-scroll');
 
-  document.getElementById('y').textContent=new Date().getFullYear();
-</script>
+      if(!link || !modal) return;
+
+      let lastFocus = null;
+      let prevOverflow = '';
+
+      const focusableSelector = [
+        'a[href]',
+        'button:not([disabled])',
+        'textarea:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])'
+      ].join(',');
+
+      function setOpenState(isOpen){
+        if(isOpen){
+          modal.classList.add('is-open');
+          modal.setAttribute('aria-hidden','false');
+          link.setAttribute('aria-expanded','true');
+
+          prevOverflow = document.documentElement.style.overflow || '';
+          document.documentElement.style.overflow = 'hidden';
+
+          if(scrollEl) scrollEl.scrollTop = 0;
+
+          requestAnimationFrame(()=>{
+            const first = modal.querySelector(focusableSelector);
+            (first || xBtn || closeBtn || modal).focus?.();
+          });
+
+          history.replaceState(null, '', '#o-meni');
+        } else {
+          modal.classList.remove('is-open');
+          modal.setAttribute('aria-hidden','true');
+          link.setAttribute('aria-expanded','false');
+
+          document.documentElement.style.overflow = prevOverflow;
+
+          const clean = window.location.pathname + window.location.search;
+          history.replaceState(null, '', clean);
+
+          if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+        }
+      }
+
+      function openModal(){
+        lastFocus = document.activeElement;
+        setOpenState(true);
+      }
+      function closeModal(){
+        setOpenState(false);
+      }
+
+      link.addEventListener('click', (e)=>{
+        e.preventDefault();
+        openModal();
+      });
+
+      overlay?.addEventListener('click', closeModal);
+      closeBtn?.addEventListener('click', closeModal);
+      xBtn?.addEventListener('click', closeModal);
+
+      document.addEventListener('keydown', (e)=>{
+        if(!modal.classList.contains('is-open')) return;
+
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === 'Tab'){
+          const focusables = [...modal.querySelectorAll(focusableSelector)]
+            .filter(el => el.offsetParent !== null);
+          if(focusables.length === 0) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault();
+            last.focus();
+          } else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      if(window.location.hash === '#o-meni'){
+        openModal();
+      } else {
+        setOpenState(false);
+      }
+    })();
+
+    document.getElementById('y').textContent=new Date().getFullYear();
+  </script>
 </body>
+
 </html>

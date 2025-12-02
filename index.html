@@ -686,6 +686,7 @@
   ],
   "name": "GoMushroom",
   "url": "https://gomushroom.si/",
+  "legalName": "GoMushroom, pridelava gob, Rok Golob s.p.",
   "image": "https://gomushroom.si/assets/logo-horizontal.webp",
   "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
   "description": "GoMushroom je butični laboratorij za trojne ekstrakcije medicinskih gob (Reishi, Čaga, resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in pristopom HACCP/GMP. Proizvodnja in razvoj tinktur v majhnih serijah z dokumentirano sledljivostjo.",
@@ -1360,7 +1361,41 @@
     </section>
   </main>
 
-  <footer><div class="wrap">© <span id="y"></span> GoMushroom</div></footer>
+ <!-- FOOTER -->
+<footer id="footer" style="border-top:1px solid var(--line); background:#fafafa;">
+  <div class="wrap" style="padding:3rem 1rem; text-align:center; font-size:0.9rem; color:#555;">
+    
+    <p style="margin:0 0 .3rem;">
+      <strong style="color:var(--brand); font-weight:700;">GoMushroom</strong> —
+      laboratorij za ekstrakcije medicinskih gob
+    </p>
+
+    <p style="margin:0 0 .3rem;">
+      Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenija
+    </p>
+
+    <p style="margin:0;">
+      E:
+      <a href="mailto:info@gomushroom.si" style="color:var(--brand); text-decoration:none;">info@gomushroom.si</a>
+      &nbsp;·&nbsp;
+      IG:
+      <a href="https://www.instagram.com/go.mushroom"
+         target="_blank"
+         rel="noopener"
+         style="color:var(--brand); text-decoration:none;">
+        @go.mushroom
+      </a>
+    </p>
+
+    <p style="margin-top:1rem; font-size:0.8rem; color:#888;">
+      © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
+    </p>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</footer>
 
   <!-- O MENI — Drawer / Modal -->
   <div id="o-meni" hidden></div>

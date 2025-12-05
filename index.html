@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="sl-SI">
 <head>
@@ -11,6 +10,7 @@
   <meta name="author" content="GoMushroom — Rok Golob" />
   <meta name="robots" content="index,follow" />
   <meta name="language" content="sl" />
+  <meta name="theme-color" content="#f7f8f7" />
 
   <meta name="keywords" content="tinkture medicinskih gob, reishi tinktura, čaga tinktura, resasti bradovec tinktura, medicinske gobe, ultrazvočna ekstrakcija, trojna ekstrakcija, GoMushroom, Rok Golob" />
 
@@ -38,14 +38,11 @@
 
   <style>
     /* ----- Smooth scroll za mehke prehode po kliku na meni ----- */
-    html {
-    scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
     /* Kompenzacija za višino zgornje navigacije (sticky menu) */
-    section {
-    scroll-margin-top: 80px; /* prilagodi, če tvoj menu ni visok 80px */
-    }
+    section { scroll-margin-top: 80px; }
+
     :root{
       --bg:#f7f8f7; --bg-rgb:247,248,247;
       --fg:#101311; --muted:#6b726d;
@@ -372,7 +369,7 @@
       header{padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);}
       section{padding:52px 0;}
       .headline{padding:18px 16px}
-      .arrow{display:none} /* pri telefonu raje swipe/click dots */
+      .arrow{display:none}
       .dots{bottom:10px}
 
       /* Mobile nav: hamburger + dropdown */
@@ -410,7 +407,7 @@
         border-radius:0;
         display:block;
         box-shadow:0 26px 80px rgba(0,0,0,.22);
-        background:#000; /* behind image edges */
+        background:#000;
       }
       .g-item.is-open img{
         width:100%;
@@ -503,8 +500,6 @@
     .titlebar .buy{display:none;font-weight:700}
     .card.ref.is-open .titlebar .title{display:none}
     .card.ref.is-open .titlebar .buy{display:inline}
-
-    footer{padding:28px 0;border-top:1px dashed #dcdedc;color:#69736d;font-size:14px;text-align:center}
 
     /* Mini table styling */
     .tinkture-usedlina-tabela{
@@ -671,106 +666,132 @@
 
     #nav-about[aria-expanded="true"]::after{width:100%}
 
+    /* KONTAKT (dodano – samo stil, nič ne vpliva drugje) */
+    .contact-lead{
+      max-width: 78ch;
+      margin: 0 0 10px;
+      font-size: 15.5px;
+      line-height: 1.75;
+      color:#404642;
+    }
+    .contact-meta{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* FOOTER (usklajeno – brez inline stilov) */
+    #footer{ border-top:1px solid var(--line); background:#fafafa; }
+#footer .footer-inner{ padding:22px 0; text-align:center; }
+#footer .footer-brand{
+  margin:0;
+  font-size:13.5px;
+  color:#6f7772;
+}
+#footer .footer-brand strong{ color:var(--brand); font-weight:800; }
+#footer .sep{ padding:0 8px; color:#98a19b; }
+#footer .footer-copy{ margin:10px 0 0; font-size:12.5px; color:#8a938d; }
+
     @media (prefers-reduced-motion: reduce){
       .about-drawer{transition:none}
     }
   </style>
 
-<!-- Schema.org: LocalBusiness + Laboratory + Organization -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": [
-    "LocalBusiness",
-    "ProfessionalService",
-    "Organization"
-  ],
-  "name": "GoMushroom",
-  "url": "https://gomushroom.si/",
-  "legalName": "GoMushroom, pridelava gob, Rok Golob s.p.",
-  "image": "https://gomushroom.si/assets/logo-horizontal.webp",
-  "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
-  "description": "GoMushroom je butični laboratorij za trojne ekstrakcije medicinskih gob (Reishi, Čaga, resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in pristopom HACCP/GMP. Proizvodnja in razvoj tinktur v majhnih serijah z dokumentirano sledljivostjo.",
-
-  "email": "info@gomushroom.si",
-
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Prapreče pri Straži 22",
-    "postalCode": "8351",
-    "addressLocality": "Straža",
-    "addressRegion": "Dolenjska",
-    "addressCountry": "SI"
-  },
-
-  "founder": {
-    "@type": "Person",
-    "name": "Rok Golob"
-  },
-
-  "sameAs": [
-    "https://www.instagram.com/go.mushroom",
-    "https://www.fungalist.si",
-    "https://www.google.com/maps/place/GoMushroom,+Rok+Golob+s.p./@45.7748522,15.1037526,765m/data=!3m1!1e3!4m6!3m5!1s0x4764ff9c4f75539d:0xa918e20098d087ed!8m2!3d45.7748485!4d15.1063275!16s%2Fg%2F11yckbn157?entry=ttu"
-  
-  ],
-
-  "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "Tinkture medicinskih gob",
-    "itemListElement": [
-      {
-        "@type": "Product",
-        "name": "Reishi tinktura",
-        "description": "Trojna ekstrakcija Reishi (Ganoderma lucidum) z ultrazvočno podporo in vakuumskim koncentriranjem.",
-        "url": "https://gomushroom.si/#reishi"
-      },
-      {
-        "@type": "Product",
-        "name": "Čaga tinktura",
-        "description": "Trojna ekstrakcija čage (Inonotus obliquus) — etanolna, vročevodna in tlačna frakcija, z ultrazvočno podporo.",
-        "url": "https://gomushroom.si/#chaga"
-      },
-      {
-        "@type": "Product",
-        "name": "Resasti bradovec tinktura",
-        "description": "Trojna ekstrakcija resastega bradovca (Hericium erinaceus) z ultrazvočno obdelavo in tlačno fazo pri 130 °C.",
-        "url": "https://gomushroom.si/#bradovec"
-      }
-    ]
-  },
-
-  "areaServed": {
-    "@type": "AdministrativeArea",
-    "name": "Slovenija"
-  },
-
-  "openingHoursSpecification": {
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": [
-      "Monday","Tuesday","Wednesday","Thursday","Friday"
+  <!-- Schema.org: LocalBusiness + Laboratory + Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": [
+      "LocalBusiness",
+      "ProfessionalService",
+      "Organization"
     ],
-    "opens": "16:00",
-    "closes": "20:00",
-    "description": "Obiski in sodelovanja po predhodnem dogovoru."
-  }
-}
-</script>
+    "name": "GoMushroom",
+    "url": "https://gomushroom.si/",
+    "legalName": "GoMushroom, pridelava gob, Rok Golob s.p.",
+    "image": "https://gomushroom.si/assets/logo-horizontal.webp",
+    "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
+    "description": "GoMushroom je butični laboratorij za trojne ekstrakcije medicinskih gob (Reishi, Čaga, resasti bradovec) z ultrazvočno podporo, vakuumskim koncentriranjem in pristopom HACCP/GMP. Proizvodnja in razvoj tinktur v majhnih serijah z dokumentirano sledljivostjo.",
 
-<!-- Schema.org: WebSite (pusti tak kot je) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "url": "https://gomushroom.si/",
-  "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
-    "query-input": "required name=search_term_string"
+    "email": "info@gomushroom.si",
+
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Prapreče pri Straži 22",
+      "postalCode": "8351",
+      "addressLocality": "Straža",
+      "addressRegion": "Dolenjska",
+      "addressCountry": "SI"
+    },
+
+    "founder": {
+      "@type": "Person",
+      "name": "Rok Golob"
+    },
+
+    "sameAs": [
+      "https://www.instagram.com/go.mushroom",
+      "https://www.fungalist.si",
+      "https://www.google.com/maps/place/GoMushroom,+Rok+Golob+s.p./@45.7748522,15.1037526,765m/data=!3m1!1e3!4m6!3m5!1s0x4764ff9c4f75539d:0xa918e20098d087ed!8m2!3d45.7748485!4d15.1063275!16s%2Fg%2F11yckbn157?entry=ttu"
+    ],
+
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Tinkture medicinskih gob",
+      "itemListElement": [
+        {
+          "@type": "Product",
+          "name": "Reishi tinktura",
+          "description": "Trojna ekstrakcija Reishi (Ganoderma lucidum) z ultrazvočno podporo in vakuumskim koncentriranjem.",
+          "url": "https://gomushroom.si/#reishi"
+        },
+        {
+          "@type": "Product",
+          "name": "Čaga tinktura",
+          "description": "Trojna ekstrakcija čage (Inonotus obliquus) — etanolna, vročevodna in tlačna frakcija, z ultrazvočno podporo.",
+          "url": "https://gomushroom.si/#chaga"
+        },
+        {
+          "@type": "Product",
+          "name": "Resasti bradovec tinktura",
+          "description": "Trojna ekstrakcija resastega bradovca (Hericium erinaceus) z ultrazvočno obdelavo in tlačno fazo pri 130 °C.",
+          "url": "https://gomushroom.si/#bradovec"
+        }
+      ]
+    },
+
+    "areaServed": {
+      "@type": "AdministrativeArea",
+      "name": "Slovenija"
+    },
+
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday","Tuesday","Wednesday","Thursday","Friday"
+      ],
+      "opens": "16:00",
+      "closes": "20:00",
+      "description": "Obiski in sodelovanja po predhodnem dogovoru."
+    }
   }
-}
-</script>
+  </script>
+
+  <!-- Schema.org: WebSite (pusti tak kot je) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "https://gomushroom.si/",
+    "name": "GoMushroom — napredne ekstrakcije medicinskih gob",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 
 <body>
@@ -790,8 +811,7 @@
   <header id="site-header">
     <div class="wrap nav">
       <div class="brand">
-        <!-- tvoj transparentni webp -->
-        <img src="assets/logo-horizontal.webp" alt="GoMushroom">
+        <img src="assets/logo-horizontal.webp" alt="GoMushroom" decoding="async">
       </div>
 
       <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
@@ -816,7 +836,7 @@
     <section class="hero">
       <div class="slides">
         <div class="slide active"><img src="assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)" fetchpriority="high" width="1600" height="900"></div>
-        <div class="slide"><img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy"></div>
+        <div class="slide"><img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy" decoding="async"></div>
       </div>
       <button class="arrow prev" aria-label="Prejšnja">‹</button>
       <button class="arrow next" aria-label="Naslednja">›</button>
@@ -834,8 +854,8 @@
             <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
           </p>
           <div class="cta">
-            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
-            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank">Instagram</a>
+            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener">Instagram</a>
             <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
           </div>
         </div>
@@ -854,7 +874,7 @@
           <!-- EKSTRAKCIJE GOB -->
           <article class="card service" data-service="ekstrakcije">
             <div class="media">
-              <img src="assets/analytics-cylinder-lg.webp" alt="Trojna ekstrakcija medicinskih gob" />
+              <img src="assets/analytics-cylinder-lg.webp" alt="Trojna ekstrakcija medicinskih gob" loading="lazy" decoding="async" />
               <div class="hover-panel">
                 <ul class="meta">
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Trojna ekstrakcija</li>
@@ -876,7 +896,7 @@
           <!-- GOJENJE REISHI -->
           <article class="card service" data-service="gojenje">
             <div class="media">
-              <img src="assets/antlers.jpg" alt="Gojenje Reishi Ganoderma lucidum" />
+              <img src="assets/antlers.jpg" alt="Gojenje Reishi Ganoderma lucidum" loading="lazy" decoding="async" />
               <div class="hover-panel">
                 <ul class="meta">
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Gojenje od micelija do gobe</li>
@@ -898,7 +918,7 @@
           <!-- BOTANIČNE EKSTRAKCIJE -->
           <article class="card service" data-service="botanicne">
             <div class="media">
-              <img src="assets/filling-line-lg.webp" alt="Botanične ekstrakcije in substrati" />
+              <img src="assets/filling-line-lg.webp" alt="Botanične ekstrakcije in substrati" loading="lazy" decoding="async" />
               <div class="hover-panel">
                 <ul class="meta">
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Botanične ekstrakcije izbranih rastlin</li>
@@ -1173,7 +1193,7 @@
         <div class="gallery-grid">
           <figure class="g-item" data-title="Ultrazvočna sonda" data-text="Opis faze ali naprave …">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda">
+            <img src="assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Ultrazvočna sonda</h4>
               <p>Ultrazvočna sonda je naprava, ki v mešanici gobe in topila ustvarja zelo hitre mehanske vibracije.
@@ -1186,7 +1206,7 @@
 
           <figure class="g-item" data-title="Rotavapor" data-text="Opis faze ali naprave …">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/rotovap.webp" alt="Rotavapor">
+            <img src="assets/rotovap.webp" alt="Rotavapor" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Rotavapor</h4>
               <p>Rotovapor je naprava, ki nam omogoča koncentriranje (odstranjevanje topila iz mešanice) pri nizkih temperaturah,
@@ -1197,7 +1217,7 @@
 
           <figure class="g-item" data-title="Analizator vlage" data-text="Opisa halogenski analizator vlage">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/moisture_a.webp" alt="Halogenski analizator vlage">
+            <img src="assets/moisture_a.webp" alt="Halogenski analizator vlage" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Halogenski analizator vlage</h4>
               <p>S halogenskim analizatorjem vlage določamo hlapne komponente vzorca. V našem primeru gre za določevanje vlage v
@@ -1207,7 +1227,7 @@
 
           <figure class="g-item" data-title="Vakuumski sušilnik" data-text="Opis vakuumski sušilnik">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/vacuum-oven-1600w.webp" alt="Vakuumski sušilnik">
+            <img src="assets/vacuum-oven-1600w.webp" alt="Vakuumski sušilnik" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Vakuumski sušilnik</h4>
               <p>Vakuumski sušilnik uporabljamo za končno dosuševanje gob, ker nam omogoča, da vlago znižamo na približno 5 % — do te vrednosti s klasičnim
@@ -1218,7 +1238,7 @@
 
           <figure class="g-item" data-title="Vakuum kontroler" data-text="Opis vakuum kontroler">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/vcontroller.webp" alt="Vakuum kontroler">
+            <img src="assets/vcontroller.webp" alt="Vakuum kontroler" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Vakuum kontroler</h4>
               <p>Vakuumski kontroler uporabljamo za natančno zniževanje tlaka med odstranjevanjem topila. Ker pri konstantni temperaturi med procesom narašča delež vode (etanol izhlapeva),
@@ -1228,7 +1248,7 @@
 
           <figure class="g-item" data-title="Polnilna linija" data-text="Opis faze ali naprave …">
             <button class="g-close" type="button" aria-label="Zapri">×</button>
-            <img src="assets/filling-line.webp" alt="Polnilna linija">
+            <img src="assets/filling-line.webp" alt="Polnilna linija" loading="lazy" decoding="async">
             <div class="g-overlay"><div class="box">
               <h4>Polnilna linija</h4>
               <p>Polnjenje izvajamo v laminar­nem toku sterilnega zraka, da med odprtimi stekleničkami omejimo vpliv okolja.
@@ -1251,7 +1271,7 @@
           <!-- REISHI -->
           <article class="card ref" aria-expanded="false" id="reishi">
             <div class="media">
-              <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura">
+              <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tinktura" loading="lazy" decoding="async">
               <div class="topbar">Reishi</div>
               <div class="hover-panel">
                 <ul class="meta">
@@ -1282,7 +1302,7 @@
           <!-- RESASTI BRADOVEC -->
           <article class="card ref" aria-expanded="false" id="bradovec">
             <div class="media">
-              <img src="assets/ref-fungalist-lionsmane.jpg" alt="Resasti bradovec tinktura">
+              <img src="assets/ref-fungalist-lionsmane.jpg" alt="Resasti bradovec tinktura" loading="lazy" decoding="async">
               <div class="topbar">Resasti bradovec</div>
               <div class="hover-panel">
                 <ul class="meta">
@@ -1313,7 +1333,7 @@
           <!-- ČAGA -->
           <article class="card ref" aria-expanded="false" id="chaga">
             <div class="media">
-              <img src="assets/ref-fungalist-chaga.jpg" alt="Čaga tinktura">
+              <img src="assets/ref-fungalist-chaga.jpg" alt="Čaga tinktura" loading="lazy" decoding="async">
               <div class="topbar">Čaga</div>
               <div class="hover-panel">
                 <ul class="meta">
@@ -1347,49 +1367,42 @@
     <!-- KONTAKT -->
     <section id="kontakt">
       <div class="wrap">
-        <div class="section-head"><div><h2>Kontakt GoMushroom — laboratorij za ekstrakcije medicinskih gob</h2><div class="under"></div></div></div>
+        <div class="section-head">
+          <div>
+            <h2>Kontakt GoMushroom — laboratorij za ekstrakcije medicinskih gob</h2>
+            <div class="under"></div>
+          </div>
+        </div>
 
-        <p>Ali te zanima sodelovanje z GoMushroom? Piši mi in na kratko opiši, kaj te zanima (izdelek, surovina, razvoj, veleprodaja ali projekt po meri).
-        Odgovorim hitro in predlagam naslednje korake: kratek klic, dogovor o ciljih, nato priprava predloga (rok, količine, specifikacije) in uskladitev izvedbe.
+        <p class="contact-lead">
+          Zanima te sodelovanje? Piši mi in na kratko opiši, kaj potrebuješ
+          (izdelek, surovina, razvoj, veleprodaja ali projekt po meri).
+          Predlagam jasen naslednji korak: kratek klic ali sporočilo za uskladitev ciljev,
+          nato okviren predlog (rok, količina, specifikacije) in izvedba.
+        </p>
+        <p class="contact-meta">
+          Najhitreje me dobiš na WhatsAppu. Odgovorim čim prej.
         </p>
 
         <div class="cta">
-          <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
-          <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank">Instagram</a>
+          <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener">Instagram</a>
           <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
         </div>
       </div>
     </section>
   </main>
 
- <!-- FOOTER -->
-<footer id="footer" style="border-top:1px solid var(--line); background:#fafafa;">
-  <div class="wrap" style="padding:3rem 1rem; text-align:center; font-size:0.9rem; color:#555;">
-    
-    <p style="margin:0 0 .3rem;">
-      <strong style="color:var(--brand); font-weight:700;">GoMushroom</strong> —
-      laboratorij za ekstrakcije medicinskih gob
+  <footer id="footer">
+  <div class="wrap footer-inner">
+    <p class="footer-brand">
+      <strong>GoMushroom</strong> — Rok Golob s.p.
+      <span class="sep">·</span>
+      Prapreče pri Straži 22 · 8351 Straža · Slovenija
     </p>
 
-    <p style="margin:0 0 .3rem;">
-      Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenija
-    </p>
-
-    <p style="margin:0;">
-      E:
-      <a href="mailto:info@gomushroom.si" style="color:var(--brand); text-decoration:none;">info@gomushroom.si</a>
-      &nbsp;·&nbsp;
-      IG:
-      <a href="https://www.instagram.com/go.mushroom"
-         target="_blank"
-         rel="noopener"
-         style="color:var(--brand); text-decoration:none;">
-        @go.mushroom
-      </a>
-    </p>
-
-    <p style="margin-top:1rem; font-size:0.8rem; color:#888;">
-      © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
+    <p class="footer-copy">
+      © <span id="year"></span> GoMushroom. Vse pravice pridržane.
     </p>
   </div>
 
@@ -1397,6 +1410,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </footer>
+
 
   <!-- O MENI — Drawer / Modal -->
   <div id="o-meni" hidden></div>
@@ -1464,7 +1478,7 @@
 
             <div class="about-actions">
               <button class="btn ghost" type="button" id="about-close">Zapri</button>
-              <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank">WhatsApp</a>
+              <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener">WhatsApp</a>
               <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
             </div>
           </div>
@@ -1631,7 +1645,6 @@
         const closeBtn = it.querySelector('.g-close');
 
         it.addEventListener('click', (e)=>{
-          // če klikneš close gumb, zapri
           if(e.target === closeBtn) return;
           const open=it.classList.contains('is-open');
           if(open) closeItem(it);
@@ -1657,7 +1670,6 @@
       });
 
       window.addEventListener('resize', ()=>{
-        // če se spremeni breakpoint, očisti fullscreen stanje
         if(!isMobile()) document.body.classList.remove('gallery-open');
       });
     })();

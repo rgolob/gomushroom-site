@@ -191,6 +191,79 @@
       transition:opacity .18s ease, filter .18s ease;
     }
 
+
+/* ===== STORITVE: velika slika + nizek spodnji del + faint "nadaljevanje" slike ===== */
+.card.service{
+  overflow:hidden;
+  --media-h: 240px;              /* MUST: mora biti enako kot .media height */
+}
+
+/* višja slika */
+.card.service .media{
+  height: var(--media-h);
+}
+.card.service .media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* nizek spodnji del (1 vrstica) */
+.card.service .body{
+  position:relative;
+  padding: 12px 14px;
+}
+
+/* 1 vrstica naslova */
+.card.service .body h3{
+  margin:0;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* (če imaš meta opis, ga skrij, da ostane res nizko) */
+.card.service .body .meta{ display:none; }
+
+/* faint ozadje spodnjega dela:
+   pokaže segment slike, ki bi bil tik pod .media (isti crop) */
+.card.service .body::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background-image: var(--card-img);
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  /* KLJUČ: premaknemo "kadro" navzgor za višino slike */
+  background-position: center calc(26% - var(--media-h));
+
+  opacity: .35;                  /* slabo vidno, ne premočno */
+  filter: blur(6px) saturate(115%);
+  transform: scale(1.0);
+  z-index:0;
+}
+
+/* “mlečni” sloj čez, da je berljivo */
+.card.service .body::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(255,255,255,.2);  /* povečaj proti .85, če želiš bolj svetlo */
+  z-index:0;
+}
+
+/* tekst nad pseudo-elementi */
+.card.service .body > *{
+  position:relative;
+  z-index:1;
+}
+
+
+
     /* FULL-WIDTH PANEL pod karticami storitev */
     .service-detail{
       display:none;
@@ -206,28 +279,64 @@
     }
     .service-detail.is-open{ display:block; }
 
-    .service-detail .content{
-      max-width: 980px;
-      margin: 6px auto 0;
-      font-size: 15px;
-      line-height: 1.7;
-      color: #444a45;
-    }
-    .service-detail .content h3{
-      font-size: 18px;
-      line-height: 1.35;
-      margin: 0 0 10px;
-      color: var(--fg);
-      font-weight: 700;
-    }
-    .service-detail .content p{ margin: 0 0 12px; }
-    .service-detail .content ul{
-      margin: 0 0 12px 20px;
-      padding: 0;
-      list-style: disc;
-    }
-    .service-detail .content li{ margin: 4px 0; padding-left: 2px; }
-    .service-detail .content strong{ font-weight: 650; color:#2c312d; }
+.service-detail .content{
+  max-width: 980px;
+  margin: 6px auto 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #444a45;
+}
+
+/* enoten ritem naslovov */
+.service-detail .content :is(h2,h3,h4){
+  line-height: 1.22;
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.service-detail .content h2{
+  margin: 0 0 1.2rem;
+  font-size: clamp(20px, 2.2vw, 28px);
+}
+
+.service-detail .content h3{
+  margin: 2.0rem 0 0.75rem;  /* več presledka nad h3 */
+  font-size: 18px;
+}
+
+.service-detail .content h4{
+  margin: 1.6rem 0 0.6rem;
+  font-size: 16px;
+}
+
+/* tekst + seznami */
+.service-detail .content p{
+  margin: 0 0 1.0rem;
+}
+
+.service-detail .content :is(ul,ol){
+  margin: 0.6rem 0 1.1rem 1.15rem;
+  padding: 0;
+}
+
+.service-detail .content li{
+  margin: 0.35rem 0;
+  padding-left: 2px;
+}
+
+/* če takoj po naslovu sledi p ali seznam, naj bo bolj “tight” */
+.service-detail .content :is(h2,h3,h4) + :is(p,ul,ol){
+  margin-top: 0.2rem;
+}
+
+.service-detail .content strong{
+  font-weight: 650;
+  color:#2c312d;
+}
+
+
+
+
 
     @media (min-width: 768px){
       .service-detail .content{ max-height:none; overflow:visible; padding-right:0; }
@@ -982,7 +1091,7 @@ footer.site-footer{
             </div>
             <div class="body">
               <h3>Ekstrakcije medicinskih gob (Reishi, Čaga, Resasti bradovec)</h3>
-              <p class="meta">Reishi, Bradovec, Čaga …</p>
+          
             </div>
           </article>
 
@@ -1004,7 +1113,7 @@ footer.site-footer{
             </div>
             <div class="body">
               <h3>Gojenje Reishi (Ganoderma lucidum)</h3>
-              <p class="meta">Antlers/klobuk — konsistentna surovina</p>
+            
             </div>
           </article>
 
@@ -1023,7 +1132,7 @@ footer.site-footer{
             </div>
             <div class="body">
               <h3>Ostale storitve</h3>
-              <p class="meta">Po dogovoru</p>
+           
             </div>
           </article>
 
@@ -1071,7 +1180,7 @@ footer.site-footer{
 
           <h3>Topila in formulacije</h3>
           <ul>
-            <li>Food-grade etanol, RO voda in rastlinski glicerin Ph. Eur.</li>
+            <li>Food-grade etanol, Prečiščena voda (reverzna osmoza) in rastlinski glicerin Ph. Eur.</li>
             <li>Možnost <strong>alkoholne</strong> ali <strong>brezalkoholne (glicerinske)</strong> različice.</li>
             <li>Po potrebi dodatek sončničnega lecitina (stabilnost, biorazpoložljivost)
                 in vitamina C (antioksidativna zaščita).</li>
@@ -1160,61 +1269,96 @@ footer.site-footer{
           </section>
         </template>
 
-        <template id="tpl-gojenje">
-          <h3>Gojenje Reishi</h3>
-          <ul class="meta">
-            <li>Micelij → sterilni substrat → plodišča (antlers ali klobuk)</li>
-            <li>Vse faze izvajamo sami: vzgoja micelija, sterilizacija substratov, nadzorovano plodonošenje</li>
-            <li>Ekološke surovine: pšenični otrobi, proso, rž, bukova žagovina iz kočevskih gozdov</li>
-            <li>Majhne šarže, ročna kontrola vsake vreče, sledljivost od seva do serije tinkture</li>
-            <li>Nastanek antler oblike spodbujamo z omejenim pretokom zraka, povišanim CO₂ in nadzorovano svetlobo</li>
-          </ul>
-          <br>
-          <h3>Antler oblika Reishija – naravna odzivnost in višja aktivnost</h3>
-          <p>
-            V nadzorovanem okolju z <strong>omejenim pretokom zraka</strong>, <strong>povišano koncentracijo CO₂</strong> in
-            <strong>zmerno osvetlitvijo</strong> <em>Ganoderma lucidum</em> praviloma <strong>ne razvije klobuka</strong>, temveč
-            zraste v <strong>razvejano, rogovilasto (antler) morfologijo</strong>
-            <sup>[2], [1]</sup>.
-            Ta morfologija je metabolno zahtevnejša in je povezana s
-            <strong>povečano biosintezo triterpenov (ganodermičnih kislin)</strong> ter pogosto tudi višjo ravnijo
-            <strong>β-D-glukanov</strong>
-            <sup>[3], [2]</sup>.
-          </p>
+<template id="tpl-gojenje">
+  <h2>Gojenje Reishi</h2>
 
-          <p>
-            Eksperimentalno je bilo pokazano, da <strong>povišan CO₂ in omejen kisik</strong> povečata sintezo ganodermičnih kislin
-            in prispevata k nastanku antler tipa plodišč
-            <sup>[1]</sup>. V novejši raziskavi so iz antler oblike <em>G. lucidum</em>
-            <strong>izolirali sedem novih triterpenov</strong>, ki jih v “fan/klobuk” obliki niso zaznali
-            <sup>[3]</sup>. Dodatno so primerjave izvlečkov potrdile
-            <strong>višjo antioksidativno in hepatoprotektivno aktivnost</strong> antler izvlečkov
-            <sup>[4]</sup>.
-          </p>
+  <p>
+    Pri GoMushroom Reishi (<em>Ganoderma lucidum</em>) gojimo od začetka do konca sami – od vzgoje micelija,
+    priprave in <strong>sterilizacije substratov</strong> do <strong>nadzorovanega plodonošenja</strong>.
+    Delamo v majhnih šaržah, kjer ročno preverimo vsako vrečo, zato lahko ohranimo stabilne pogoje rasti,
+    visoko kakovost surovine in popolno sledljivost od izbranega seva do serije tinkture.
+    Zavestno pa se najpogosteje odločamo za <strong>antler (rogovilasto) morfologijo</strong>, ker raziskave kažejo,
+    da je ta oblika pogosto povezana z <strong>višjo vsebnostjo ključnih učinkovin Reishija</strong> – predvsem
+    <strong>triterpenov</strong>, natančneje <strong>ganodermičnih (ganoderičnih) kislin</strong>.
+    <sup><a href="#ref-1">[1]</a> <a href="#ref-2">[2]</a> <a href="#ref-3">[3]</a></sup>
+  </p>
 
-          <p>
-            Naš pristop tako <strong>posnema naravne stresne razmere</strong>, da goba izrazi
-            <strong>polni biokemični potencial</strong> – rezultat so plodišča z
-            <strong>visoko vsebnostjo triterpenov</strong> in <strong>konsistentna surovina</strong> za
-            standardizirane tinkture z visoko bioaktivnostjo.
-          </p>
+  <h3>Kako gojimo Reishi</h3>
+  <ul>
+    <li><strong>Micelij → sterilni substrat → plodišča</strong> (antlers ali klobuk)</li>
+    <li>Vse faze izvajamo sami: vzgoja micelija, priprava in sterilizacija substratov ter plodonošenje v nadzorovanem okolju</li>
+    <li><strong>Ekološke surovine:</strong> pšenični otrobi, proso, rž, bukova žagovina iz kočevskih gozdov</li>
+    <li><strong>Majhne šarže:</strong> ročna kontrola vsake vreče</li>
+    <li><strong>Sledljivost:</strong> od izbranega seva do serije tinkture</li>
+    <li><strong>Antler pogoji:</strong> omejen pretok zraka, povišan CO₂ in nadzorovana svetloba</li>
+  </ul>
 
-          [1] Wang, J. et al. (2012). Effect of CO₂ concentration on morphology and triterpenoid synthesis of <em>Ganoderma lucidum</em>. <strong>Scientific Reports</strong>, 2, 905.<br>
-          [2] Chen, L. et al. (2018). Morphological differentiation and triterpenoid accumulation in antler-type <em>G. lucidum</em>. <strong>Mycosphere</strong>, 9(2), 290–301.<br>
-          [3] Li, Q. et al. (2024). New ganoderic acids from antler-type <em>G. lucidum</em> fruiting bodies. <strong>Phytochemistry Letters</strong>, 67, 150–158.<br>
-          [4] Kim, S. et al. (2015). Comparative antioxidant and hepatoprotektivne effects of antler- and fan-type <em>G. lucidum</em>. <strong>International Journal of Medicinal Mushrooms</strong>, 17(3), 259–267.
-        </template>
+  <h3>Zakaj antler: naravni odzivnost in višja “triterpenoidna” usmeritev</h3>
+
+  <p>
+    Antler nastane kot <strong>naravni odziv gobe na specifične pogoje rasti</strong>.
+    V nadzorovanem okolju z <strong>omejeno ventilacijo</strong> (posledično višjim CO₂) in
+    <strong>nadzorovano svetlobo</strong> lahko Reishi namesto klobuka razvije
+    <strong>razvejano antler morfologijo</strong>.
+    V kontroliranih poskusih je bilo pokazano, da manipulacija ventilacije (CO₂) in svetlobe omogoča zanesljivo tvorbo antler tipa,
+    hkrati pa se lahko spremeni delež bioaktivnih spojin in antioksidativni potencial izvlečkov.
+    <sup><a href="#ref-4">[4]</a></sup>
+  </p>
+
+  <p>
+    Dodatno so iz antler oblike <em>G. lucidum</em> opisali triterpene in biološke aktivnosti,
+    kar podpira idejo, da lahko antler kot “stresna” morfologija prispeva k bogatejšemu profilu sekundarnih metabolitov.
+    <sup><a href="#ref-5">[5]</a></sup>
+  </p>
+
+  <hr style="border:none; border-top:1px solid var(--line); margin:1.2rem 0;">
+
+  <h4>Literatura</h4>
+  <ol class="refs" style="margin:0; padding-left:1.2rem; line-height:1.55;">
+    <li id="ref-1" style="margin:.35rem 0;">
+      Wu, S. et al. (2022). <em>Ganoderma lucidum: A comprehensive review of phytochemistry, efficacy, safety and clinical study</em>.
+      <strong>Food Science and Human Wellness</strong>.
+      DOI: <a href="https://doi.org/10.26599/FSHW.2022.9250051" target="_blank" rel="noopener">10.26599/FSHW.2022.9250051</a>
+      · SciOpen: <a href="https://www.sciopen.com/article/10.26599/FSHW.2022.9250051" target="_blank" rel="noopener">link</a>
+    </li>
+
+    <li id="ref-2" style="margin:.35rem 0;">
+      Xia, Q. et al. (2014). <em>A Comprehensive Review of the Structure Elucidation and Biological Activity of Triterpenoids from Ganoderma spp.</em>
+      <strong>Molecules</strong>, 19(11), 17478–17535.
+      DOI: <a href="https://doi.org/10.3390/molecules191117478" target="_blank" rel="noopener">10.3390/molecules191117478</a>
+    </li>
+
+    <li id="ref-3" style="margin:.35rem 0;">
+      (opcijsko, če želiš še en “ganoderic acids” pregled)
+      Wang, S. et al. (2024). <em>Research Progress on the Biological Activity of Ganoderic Acids in Ganoderma lucidum over the Last Five Years</em>.
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11509451/" target="_blank" rel="noopener">Open access (PMC)</a>
+    </li>
+
+    <li id="ref-4" style="margin:.35rem 0;">
+      Sudheer, S. et al. (2018). <em>Development of antler-type fruiting bodies of Ganoderma lucidum and determination of its biochemical properties</em>.
+      <strong>Fungal Biology</strong>, 122(5), 293–301.
+      DOI: <a href="https://doi.org/10.1016/j.funbio.2018.01.007" target="_blank" rel="noopener">10.1016/j.funbio.2018.01.007</a>
+      · PubMed: <a href="https://pubmed.ncbi.nlm.nih.gov/29665955/" target="_blank" rel="noopener">29665955</a>
+    </li>
+
+    <li id="ref-5" style="margin:.35rem 0;">
+      Shao, H. et al. (2024). <em>Triterpenes from antler-shaped fruiting body of Ganoderma lucidum and their hepatoprotective activities</em>.
+      <strong>Phytochemistry</strong>, 224, 114148.
+      DOI: <a href="https://doi.org/10.1016/j.phytochem.2024.114148" target="_blank" rel="noopener">10.1016/j.phytochem.2024.114148</a>
+      · PubMed: <a href="https://pubmed.ncbi.nlm.nih.gov/38763311/" target="_blank" rel="noopener">38763311</a>
+    </li>
+  </ol>
+</template>
 
         <template id="tpl-botanicne">
           <h3>Botanične ekstrakcije</h3>
-          <ul class="meta">
+          <ul>
             <li>Smrekovi vršički & izbrane rastline; EtOH / glicerin / H₂O</li>
             <li>Enak QC pristop kot pri gobah (HACCP/GMP)</li>
             <li>Po dogovoru: ciljni profil, okus, viskoznost, polnitev</li>
           </ul>
-          <br>
           <h3>Sterilizacija gojitvenih substratov</h3>
-          <ul class="meta">
+          <ul>
             <li>Priprava substratov iz ekoloških sestavin</li>
             <li>Sterilizacija substratov in žita</li>
             <li>Priprava in sterilizacija agar medija</li>
@@ -1381,7 +1525,7 @@ footer.site-footer{
                   <li><strong>Izvor surovine:</strong> Reishi GoMushroom</li>
                   <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
                   <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 5 %, stabilna viskoznost in okus.</li>
-                  <li><strong>Sestavine:</strong> Svetlikava pološčenka - Reishi (ganoderma lucidum), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Sestavine:</strong> Svetlikava pološčenka - Reishi (ganoderma lucidum), Prečiščena voda (reverzna osmoza), etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
                   <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
                 </ul>
               </div>
@@ -1412,7 +1556,7 @@ footer.site-footer{
                   <li><strong>Izvor surovine:</strong> Fungalist</li>
                   <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
                   <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 14%, stabilna viskoznost in okus.</li>
-                  <li><strong>Sestavine:</strong> Resasti bradovec (Hericium erinaceus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Sestavine:</strong> Resasti bradovec (Hericium erinaceus), Prečiščena voda (reverzna osmoza), etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
                   <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
                 </ul>
               </div>
@@ -1443,7 +1587,7 @@ footer.site-footer{
                   <li><strong>Izvor surovine:</strong> Različni viri</li>
                   <li><strong>Postopek:</strong> Trojna ultrazvočno podprta ekstrakcija.</li>
                   <li><strong>Standardizacija:</strong> Etilni alkohol 30 % v/v; Glicerin 75 % m/m; suha snov ~ 8,5 %, stabilna viskoznost in okus.</li>
-                  <li><strong>Sestavine:</strong> Čaga - brezin luknjač (Inonotus obliquus), demineralizirana voda, etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
+                  <li><strong>Sestavine:</strong> Čaga - brezin luknjač (Inonotus obliquus), Prečiščena voda (reverzna osmoza), etilni alkohol (Ph.Eur) <em>ali</em> rastlinski glicerin (Ph.Eur), sončnični lecitin (non-GMO), vit. C.</li>
                   <li><strong>Skladnost:</strong> trošarinski zavezanec; proizvodnja v okviru HACCP in GMP smernic; popolna sledljivost.</li>
                 </ul>
               </div>
@@ -1936,6 +2080,15 @@ footer.site-footer{
         setOpenState(false);
       }
     })();
+
+document.querySelectorAll('.card.service').forEach(card => {
+  const img = card.querySelector('.media img');
+  if (!img) return;
+  const src = img.currentSrc || img.src;
+  card.style.setProperty('--card-img', `url("${src}")`);
+});
+
+
   </script>
 </body>
 </html>

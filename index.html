@@ -899,15 +899,6 @@ footer.site-footer{
       .about-drawer{transition:none}
     }
   </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-L2PGE7VDHB"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-L2PGE7VDHB');
-</script>
 <!-- Schema.org: LocalBusiness + Laboratory + Organization -->
 <script type="application/ld+json">
 {
@@ -2096,5 +2087,39 @@ document.querySelectorAll('.card.service').forEach(card => {
   card.style.setProperty('--card-img', `url("${src}")`);
 });
   </script>
+
+  
+  <script>
+(function () {
+  const GA_ID = "G-L2PGE7VDHB";
+  let loaded = false;
+
+  function loadGA() {
+    if (loaded) return;
+    loaded = true;
+
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA_ID);
+    document.head.appendChild(s);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ window.dataLayer.push(arguments); }
+    window.gtag = gtag;
+
+    gtag("js", new Date());
+    gtag("config", GA_ID, { anonymize_ip: true });
+  }
+
+  // po prvi interakciji
+  ["scroll","click","touchstart","keydown"].forEach(evt => {
+    window.addEventListener(evt, loadGA, { once: true, passive: true });
+  });
+
+  // fallback po 4s
+  setTimeout(loadGA, 4000);
+})();
+</script>
+
 </body>
 </html>

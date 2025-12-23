@@ -1,4 +1,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://www.gomushroom.si/sitemap.xml
+Sitemap: https://gomushroom.si/sitemap.xml

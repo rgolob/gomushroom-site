@@ -6,29 +6,30 @@
 
   <title>GoMushroom — medicinal mushroom tinctures: Reishi, Chaga, Lion’s Mane</title>
 
-  <meta name="description" content="GoMushroom: advanced triple-extraction medicinal mushrooms (Reishi, Chaga, Lion’s Mane). Ultrasound-assisted extraction, low-temperature vacuum concentration, HACCP/GMP approach, small batches." />
+  <meta name="description" content="GoMushroom: advanced triple-extraction of medicinal mushrooms (Reishi, Chaga, Lion’s Mane). Ultrasound support, low-temperature vacuum concentration, HACCP/GMP approach, small batches." />
   <meta name="author" content="GoMushroom — Rok Golob" />
   <meta name="robots" content="index,follow" />
   <meta name="language" content="en" />
 
-  <meta name="keywords" content="medicinal mushroom tinctures, reishi tincture, chaga tincture, lion’s mane tincture, medicinal mushrooms, ultrasound-assisted extraction, triple extraction, GoMushroom, Rok Golob, vacuum concentration" />
+  <meta name="keywords" content="medicinal mushroom tinctures, reishi tincture, chaga tincture, lion's mane tincture, medicinal mushrooms, ultrasound extraction, triple extraction, GoMushroom, Rok Golob" />
 
-  <!-- If you have a dedicated /en/ path, keep this. Otherwise set it to https://gomushroom.si/ -->
+  <!-- TODO: update to your real EN URL -->
   <link rel="canonical" href="https://gomushroom.si/en/" />
 
-  <meta property="og:title" content="GoMushroom — advanced medicinal mushroom extraction" />
+  <meta property="og:title" content="GoMushroom — advanced medicinal mushroom extractions" />
   <meta property="og:description" content="Triple, ultrasound-assisted extraction of medicinal mushrooms. Low-temperature vacuum concentration, HACCP/GMP approach, small batches and high traceability." />
   <meta property="og:type" content="website" />
+  <!-- TODO: update to your real EN URL -->
   <meta property="og:url" content="https://gomushroom.si/en/" />
   <meta property="og:image" content="https://gomushroom.si/assets/og-hero.jpg" />
   <meta property="og:site_name" content="GoMushroom" />
   <meta property="og:locale" content="en_US" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="GoMushroom — advanced medicinal mushroom extraction" />
-  <meta name="twitter:description" content="Advanced triple extraction of medicinal mushrooms with ultrasound support and vacuum concentration. Reishi, Chaga, Lion’s Mane — small batches, high traceability." />
+  <meta name="twitter:title" content="GoMushroom — advanced medicinal mushroom extractions" />
+  <meta name="twitter:description" content="Advanced triple-extraction of medicinal mushrooms with ultrasound support and vacuum concentration. Reishi, Chaga, Lion’s Mane — small batches, high traceability." />
   <meta name="twitter:image" content="https://gomushroom.si/assets/og-hero.jpg" />
-  
+
   <link rel="icon" href="assets/favicon-16.png" sizes="16x16" type="image/png" />
   <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="icon" href="assets/favicon-192.png" sizes="192x192" type="image/png" />
@@ -39,8 +40,6 @@
   <style>
     /* ----- Smooth scroll ----- */
     html { scroll-behavior: smooth; }
-
-    /* Offset for sticky navigation */
     section { scroll-margin-top: 80px; }
 
     :root{
@@ -130,10 +129,7 @@
     h2{margin:0;font-size:clamp(22px,2.4vw,30px)}
     .under{height:2px;background:linear-gradient(90deg,var(--brand),var(--accent));width:100px;border-radius:2px;margin-top:8px}
     .lead2{color:var(--muted);max-width:75ch;font-size:15px;line-height:1.6}
-
-    @media (max-width: 767px){
-      .lead2{display:none !important;}
-    }
+    @media (max-width: 767px){ .lead2{display:none !important;} }
 
     .grid{display:grid;gap:22px}
     @media (min-width:980px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
@@ -168,7 +164,7 @@
     .hover-panel ul{margin:0;padding-left:18px}
     @media (hover:hover){ .card.service:hover .hover-panel{opacity:1;pointer-events:auto} }
 
-    /* SERVICES – open indicator + badge */
+    /* SERVICES – active indicator + badge */
     .card.service.is-active{
       border-color: var(--accent);
       box-shadow: 0 26px 64px rgba(0,0,0,.18), 0 0 0 2px rgba(177,133,86,.35) inset;
@@ -189,22 +185,14 @@
       transition:opacity .18s ease, filter .18s ease;
     }
 
-    /* ===== SERVICES: big image + low bottom part + faint continuation ===== */
+    /* ===== SERVICES: taller image + low bottom bar + faint continuation ===== */
     .card.service{
       overflow:hidden;
       --media-h: 240px;
     }
     .card.service .media{ height: var(--media-h); }
-    .card.service .media img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .card.service .body{
-      position:relative;
-      padding: 12px 14px;
-    }
+    .card.service .media img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .card.service .body{ position:relative; padding: 12px 14px; }
     .card.service .body h3{
       margin:0;
       line-height:1.2;
@@ -213,7 +201,6 @@
       text-overflow:ellipsis;
     }
     .card.service .body .meta{ display:none; }
-
     .card.service .body::before{
       content:"";
       position:absolute;
@@ -234,12 +221,9 @@
       background: rgba(255,255,255,.2);
       z-index:0;
     }
-    .card.service .body > *{
-      position:relative;
-      z-index:1;
-    }
+    .card.service .body > *{ position:relative; z-index:1; }
 
-    /* FULL-WIDTH PANEL under service cards */
+    /* FULL-WIDTH PANEL under services */
     .service-detail{
       display:none;
       grid-column: 1 / -1;
@@ -261,7 +245,6 @@
       line-height: 1.7;
       color: #444a45;
     }
-
     .service-detail .content :is(h2,h3,h4){
       line-height: 1.22;
       color: var(--fg);
@@ -352,14 +335,9 @@
       opacity:.06;transform:rotate(8deg);pointer-events:none;
     }
 
-    /* ===== GALLERY – masonry ===== */
-    #galerija .gallery-grid{
-      column-count: 2;
-      column-gap: 14px;
-    }
-    @media (min-width:900px){
-      #galerija .gallery-grid{ column-count:3; }
-    }
+    /* ===== GALLERY – BEST OF masonry ===== */
+    #galerija .gallery-grid{ column-count: 2; column-gap: 14px; }
+    @media (min-width:900px){ #galerija .gallery-grid{ column-count:3; } }
 
     .g-item{
       break-inside:avoid;
@@ -414,6 +392,7 @@
     }
     .g-item.is-open .g-close{display:block;}
 
+    /* ===== MOBILE: gallery fullscreen ===== */
     body.gallery-open{overflow:hidden}
     .gallery-backdrop{
       position:fixed; inset:0; z-index:109;
@@ -431,6 +410,7 @@
       .arrow{display:none}
       .dots{bottom:10px}
 
+      /* Mobile nav */
       .nav{padding:10px 0}
       .brand img{height:34px}
       .nav-toggle{display:inline-flex;align-items:center;justify-content:center}
@@ -571,21 +551,18 @@
       border-top:1px solid rgba(255,255,255,.18);
       font-size:13px;
     }
-
     .footer-inner{
       max-width:1180px;
       margin:0 auto;
       padding:18px 20px 16px;
       text-align:center;
     }
-
     .footer-social{
       display:flex;
       justify-content:center;
       gap:14px;
       margin-bottom:12px;
     }
-
     .footer-social a{
       width:38px;
       height:38px;
@@ -601,18 +578,15 @@
       background:rgba(255,255,255,.04);
       box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.55);
       transition:background .18s ease, transform .18s ease,
-               box-shadow .18s ease, border-color .18s ease;
+                box-shadow .18s ease, border-color .18s ease;
     }
-
     .footer-social a span{ position:relative; top:-1px; }
-
     .footer-social a:hover{
       background:linear-gradient(135deg,var(--brand),var(--accent));
       border-color:transparent;
       box-shadow:0 10px 24px rgba(0,0,0,.7);
       transform:translateY(-1px);
     }
-
     .footer-nav{
       display:flex;
       justify-content:center;
@@ -620,7 +594,6 @@
       gap:10px 18px;
       margin-bottom:8px;
     }
-
     .footer-nav a{
       text-decoration:none;
       color:rgba(255,255,255,.82);
@@ -628,21 +601,9 @@
       letter-spacing:.08em;
       text-transform:uppercase;
     }
-
     .footer-nav a:hover{ color:#fff; }
-
-    .footer-tags{
-      margin:4px 0 8px;
-      font-size:12.5px;
-      color:rgba(255,255,255,.76);
-    }
-
-    .footer-meta{
-      margin:2px 0 6px;
-      font-size:12.5px;
-      color:rgba(255,255,255,.78);
-    }
-
+    .footer-tags{ margin:4px 0 8px; font-size:12.5px; color:rgba(255,255,255,.76); }
+    .footer-meta{ margin:2px 0 6px; font-size:12.5px; color:rgba(255,255,255,.78); }
     .footer-line{
       margin:8px auto 6px;
       max-width:420px;
@@ -655,20 +616,14 @@
       );
       opacity:.7;
     }
-
-    .footer-copy{
-      margin:0;
-      font-size:11.5px;
-      color:rgba(255,255,255,.6);
-    }
-
+    .footer-copy{ margin:0; font-size:11.5px; color:rgba(255,255,255,.6); }
     @media (max-width:600px){
       .footer-inner{padding:16px 14px 14px;}
       .footer-nav{gap:8px 14px;}
       .footer-tags{font-size:12px;}
     }
 
-    /* Mini table styling */
+    /* Mini table */
     .tinkture-usedlina-tabela{
       width:100%;
       border-collapse:separate;
@@ -703,7 +658,7 @@
       .tinkture-usedlina-tabela td{padding:8px;}
     }
 
-    /* ===== ABOUT – Drawer / Modal ===== */
+    /* ===== ABOUT — Drawer / Modal ===== */
     .about-modal{
       position:fixed;
       inset:0;
@@ -760,9 +715,7 @@
       color:var(--brand);
     }
     .icon-btn:hover{background:#fff}
-
     .about-scroll{ padding:16px; overflow:auto; }
-
     .about-card{
       background:#fff;
       border:1px solid var(--line);
@@ -771,7 +724,6 @@
       overflow:hidden;
       margin-bottom:14px;
     }
-
     .about-hero{
       aspect-ratio: 16 / 9;
       border-bottom:1px solid var(--line);
@@ -831,17 +783,13 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": [
-      "LocalBusiness",
-      "ProfessionalService",
-      "Organization"
-    ],
+    "@type": ["LocalBusiness","ProfessionalService","Organization"],
     "name": "GoMushroom",
     "url": "https://gomushroom.si/en/",
     "legalName": "GoMushroom, pridelava gob, Rok Golob s.p.",
     "image": "https://gomushroom.si/assets/logo-horizontal.webp",
     "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
-    "description": "GoMushroom is a boutique lab for triple extraction of medicinal mushrooms (Reishi, Chaga, Lion’s Mane) with ultrasound support, low-temperature vacuum concentration and a HACCP/GMP approach. Small-batch production and R&D with documented traceability.",
+    "description": "GoMushroom is a boutique lab for triple extraction of medicinal mushrooms (Reishi, Chaga, Lion’s Mane) with ultrasound support, low-temperature vacuum concentration and a HACCP/GMP approach. Small-batch production and development with documented traceability.",
     "email": "info@gomushroom.si",
     "address": {
       "@type": "PostalAddress",
@@ -851,10 +799,7 @@
       "addressRegion": "Dolenjska",
       "addressCountry": "SI"
     },
-    "founder": {
-      "@type": "Person",
-      "name": "Rok Golob"
-    },
+    "founder": { "@type": "Person", "name": "Rok Golob" },
     "sameAs": [
       "https://www.instagram.com/go.mushroom",
       "https://www.fungalist.si",
@@ -867,35 +812,30 @@
         {
           "@type": "Service",
           "name": "Reishi tincture",
-          "description": "Triple extraction of Reishi (Ganoderma lucidum) with ultrasound support and low-temperature vacuum concentration.",
+          "description": "Triple extraction of Reishi (Ganoderma lucidum) with ultrasound support and vacuum concentration.",
           "url": "https://gomushroom.si/en/#reishi"
         },
         {
           "@type": "Service",
           "name": "Chaga tincture",
-          "description": "Triple extraction of Chaga (Inonotus obliquus) — ethanol, hot-water and pressure-water fractions, with ultrasound support.",
+          "description": "Triple extraction of Chaga (Inonotus obliquus) — ethanol, hot-water and pressurized-water fraction, with ultrasound support.",
           "url": "https://gomushroom.si/en/#chaga"
         },
         {
           "@type": "Service",
           "name": "Lion’s Mane tincture",
-          "description": "Triple extraction of Lion’s Mane (Hericium erinaceus) with ultrasound processing and a pressure phase at 130 °C.",
+          "description": "Triple extraction of Lion’s Mane (Hericium erinaceus) with ultrasound processing and a pressurized phase at ~130 °C.",
           "url": "https://gomushroom.si/en/#bradovec"
         }
       ]
     },
-    "areaServed": {
-      "@type": "AdministrativeArea",
-      "name": "Slovenia"
-    },
+    "areaServed": { "@type": "AdministrativeArea", "name": "Slovenia" },
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
-      "dayOfWeek": [
-        "Monday","Tuesday","Wednesday","Thursday","Friday"
-      ],
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
       "opens": "16:00",
       "closes": "20:00",
-      "description": "Visits and collaborations by prior arrangement."
+      "description": "Visits and collaborations by appointment."
     }
   }
   </script>
@@ -906,7 +846,7 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "url": "https://gomushroom.si/en/",
-    "name": "GoMushroom — advanced medicinal mushroom extraction",
+    "name": "GoMushroom — advanced medicinal mushroom extractions",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
@@ -917,7 +857,7 @@
 </head>
 
 <body>
-  <!-- SVG symbols -->
+  <!-- SVG icons -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <defs>
       <symbol id="i-drop" viewBox="0 0 24 24">
@@ -969,11 +909,11 @@
 
       <div class="inner wrap">
         <div class="headline">
-          <div class="kicker">Limited batches • Handmade • Slovenia</div>
+          <div class="kicker">Limited batches • Handcrafted • Slovenia</div>
           <h1>Advanced medicinal mushroom extraction.</h1>
           <p class="lead">
-            A three-step, ultrasound-assisted extraction process, low-temperature
-            <strong>vacuum concentration</strong>, and <strong>standardization</strong> — designed to preserve actives at the highest level.
+            Three-stage, ultrasound-assisted extraction, low-temperature
+            <strong>vacuum concentration</strong> and <strong>standardization</strong> — designed to preserve bioactives at their best.
           </p>
           <div class="cta">
             <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
@@ -993,7 +933,7 @@
         </div>
 
         <div class="grid grid-3" id="services-grid">
-          <!-- EXTRACTION -->
+          <!-- MUSHROOM EXTRACTIONS -->
           <article class="card service" data-service="ekstrakcije">
             <div class="media">
               <img src="assets/analytics-cylinder-lg.webp" alt="Triple extraction of medicinal mushrooms" />
@@ -1002,15 +942,15 @@
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Triple extraction</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Ultrasound-assisted extraction</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Low-temp vacuum concentration</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>High active content</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Alcohol & alcohol-free version</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC: dry matter control</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP & GMP principles</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>High bioactive solids</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Alcohol & alcohol-free options</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC check of dry matter</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP-driven production</li>
                 </ul>
               </div>
             </div>
             <div class="body">
-              <h3>Medicinal mushroom extraction (Reishi, Chaga, Lion’s Mane)</h3>
+              <h3>Medicinal mushroom extractions (Reishi, Chaga, Lion’s Mane)</h3>
             </div>
           </article>
 
@@ -1020,13 +960,13 @@
               <img src="assets/antlers_small.webp" alt="Reishi cultivation (Ganoderma lucidum)" />
               <div class="hover-panel">
                 <ul class="meta">
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Cultivation from mycelium to fruiting body</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Cultivation from mycelium to fruiting bodies</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Organic substrates only</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>In-house substrate sterilization</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Controlled conditions for antler morphology</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Low-temperature drying</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC: moisture control</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Traceability from mycelium to batch</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC moisture control</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Traceability from strain to batch</li>
                 </ul>
               </div>
             </div>
@@ -1038,12 +978,12 @@
           <!-- OTHER SERVICES -->
           <article class="card service" data-service="botanicne">
             <div class="media">
-              <img src="assets/filling-line_small.webp" alt="Botanical extracts and substrates" />
+              <img src="assets/filling-line_small.webp" alt="Botanical extraction and substrates" />
               <div class="hover-panel">
                 <ul class="meta">
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Botanical extracts from selected plants</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Same QC approach as for mushrooms</li>
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Preparation & sterilization of cultivation substrates</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Same QC mindset as mushrooms</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Preparation/sterilization of cultivation substrates</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Agar media preparation for mycelium work</li>
                 </ul>
               </div>
@@ -1053,7 +993,6 @@
             </div>
           </article>
 
-          <!-- FULL-WIDTH PANEL -->
           <div id="service-detail" class="service-detail" aria-live="polite">
             <div class="content"></div>
           </div>
@@ -1061,120 +1000,105 @@
 
         <!-- TEMPLATES -->
         <template id="tpl-ekstrakcije">
-          <h2>Medicinal mushroom extraction</h2>
+          <h2>Medicinal mushroom extractions</h2>
 
           <p>
-            In our lab we’ve developed and standardized a <strong>proprietary medicinal mushroom extraction process</strong>
-            built on science-based principles and supported by published literature as well as our internal measurements and learnings.
-            The key is not a single “magic parameter”, but <strong>efficiency and repeatability</strong> — achieving the best possible,
-            consistent recovery of target fractions for each mushroom species. Detailed parameters (ratios, timings, phase sequence and solvent selection)
-            are part of our internal know-how and are adjusted depending on the species and the target fraction(s).
+            In our lab we developed and standardized our own <strong>medicinal mushroom extraction process</strong>,
+            built on science-based principles and supported by published literature, along with our internal measurements and experience.
+            The key is not a single “magic parameter” but <strong>efficiency and repeatability</strong> — achieving the best and most consistent yield
+            of the target fractions for each mushroom. Exact parameters (ratios, times, phase order and solvent selection) are part of our internal know-how
+            and are adapted depending on species and target fractions.
           </p>
 
           <p>
-            Because medicinal mushrooms have a structurally resilient cell wall (e.g., chitin, β-glucans), releasing bioactive compounds
-            can be more demanding than with most plants.<sup class="ref">[1]</sup><sup class="ref">[2]</sup>
-            We therefore prepare the raw material to preserve actives; for Reishi we use a <strong>two-stage drying approach with final vacuum drying</strong>,
-            and apply similar principles to other species (by agreement and according to the matrix).<sup class="ref">[7]</sup><sup class="ref">[8]</sup>
-            Extraction is performed <strong>sequentially (multi-step)</strong> with solvents of different polarity to separately capture
-            water-soluble fractions (polysaccharides/β-glucans) and alcohol-soluble fractions (e.g., triterpenoids/phenolics).<sup class="ref">[6]</sup>
+            Because medicinal mushrooms have a structurally resistant cell wall (e.g., chitin, β-glucans), releasing bioactives is often more demanding
+            than for most botanicals.<sup class="ref">[1]</sup><sup class="ref">[2]</sup>
+            We prepare the raw material to preserve actives; for Reishi we use a <strong>two-stage drying approach with final vacuum drying</strong>,
+            and similar principles are adapted to other species where appropriate.<sup class="ref">[7]</sup><sup class="ref">[8]</sup>
+            Extraction is performed <strong>sequentially (multi-stage)</strong> with solvents of different polarity to capture water-soluble fractions
+            (polysaccharides/β-glucans) and alcohol-soluble fractions (e.g., triterpenoids/phenolics).<sup class="ref">[6]</sup>
           </p>
 
           <p>
-            We further increase yield with <strong>ultrasound-assisted extraction (UAE)</strong>, where acoustic cavitation accelerates mass transfer
-            and improves release of compounds from the matrix. UAE performance is well documented in mushroom bioactive extraction, including parameter
-            optimization for higher yields and/or lower process temperatures.<sup class="ref">[4]</sup><sup class="ref">[5]</sup><sup class="ref">[6]</sup>
-            We also use a <strong>high solvent-to-solid ratio</strong> (typically
-            <strong>~30–40 mL/g</strong>, depending on species and target fraction), in line with published optimization studies.<sup class="ref">[6]</sup><sup class="ref">[9]</sup><sup class="ref">[10]</sup>
-            After extraction, excess solvent is removed by <strong>low-temperature vacuum concentration</strong> (≈ 35–45 °C),
-            and fractions are combined and formulated into the final extract (alcoholic or glycerin-based).
+            We further increase yield using <strong>ultrasound-assisted extraction (UAE)</strong>, where acoustic cavitation accelerates mass transfer and helps release compounds from the matrix.
+            UAE efficiency is well documented for mushroom bioactives, including parameter optimization for higher yields and/or lower process temperatures.<sup class="ref">[4]</sup><sup class="ref">[5]</sup><sup class="ref">[6]</sup>
+            We also use a <strong>high solvent-to-solid ratio</strong> (typically <strong>~30–40 mL/g</strong>, depending on species and target fraction), consistent with published extraction optimizations.<sup class="ref">[6]</sup><sup class="ref">[9]</sup><sup class="ref">[10]</sup>
+            After extraction, excess solvent is removed by <strong>low-temperature vacuum concentration</strong> (≈ 35–45 °C), and fractions are combined and formulated into the final extract (alcohol-based or glycerin-based).
           </p>
 
           <h2>What the process includes</h2>
-
           <ul>
-            <li>
-              <strong>Raw material intake and preparation:</strong>
-              receiving, QC moisture check, conditioning to ~8% moisture, milling to a uniform fraction.
-            </li>
+            <li><strong>Raw material intake & preparation:</strong> receipt, QC moisture check, drying to ~8% moisture, milling into a homogeneous fraction.</li>
             <li>
               <strong>Triple batch extraction:</strong>
               <ul>
                 <li>ethanol extraction (triterpenes, hericenones, phenolics)</li>
                 <li>hot-water extraction (≈ 80–90 °C, polysaccharides)</li>
-                <li>pressure-water extraction (≈ 120–130 °C, high-molecular compounds)</li>
+                <li>pressurized water extraction (≈ 120–130 °C, high-molecular compounds)</li>
               </ul>
             </li>
-            <li>
-              <strong>Fraction blending and formulation</strong> of the final extract
-              (alcoholic or alcohol-free glycerin-based tincture).
-            </li>
+            <li><strong>Fraction blending & formulation</strong> into the final extract (alcohol or alcohol-free glycerin version).</li>
           </ul>
 
           <h3>Technology highlights</h3>
           <ul>
             <li>Ultrasound-assisted extraction with temperature control.</li>
-            <li>High solvent-to-solid ratios for better extraction yield.</li>
+            <li>High solvent-to-solid ratios to maximize extraction yield.</li>
             <li>Low-temperature vacuum concentration.</li>
           </ul>
 
           <h3>Input material</h3>
           <ul>
             <li>Reishi (Ganoderma lucidum) from our own cultivation (mycelium → fruiting bodies).</li>
-            <li>Other medicinal mushrooms by agreement — we can also process customer-supplied material.</li>
+            <li>Other medicinal mushroom species by arrangement — we can also process customer-supplied raw material.</li>
           </ul>
 
           <h3>Solvents and formulations</h3>
           <ul>
-            <li>Food-grade ethanol, purified water (reverse osmosis) and plant glycerin (Ph. Eur.).</li>
-            <li>Choice of <strong>alcoholic</strong> or <strong>alcohol-free (glycerin-based)</strong> version.</li>
-            <li>If needed: sunflower lecithin (stability, bioavailability) and vitamin C (antioxidant protection).</li>
+            <li>Food-grade ethanol, purified water (reverse osmosis) and vegetable glycerin (Ph. Eur.).</li>
+            <li>Option for <strong>alcohol-based</strong> or <strong>alcohol-free (glycerin)</strong> tinctures.</li>
+            <li>Optional sunflower lecithin (stability, bioavailability) and vitamin C (antioxidant protection).</li>
           </ul>
 
-          <h3>Standardization and quality control</h3>
+          <h3>Standardization & quality control</h3>
           <ul>
             <li>Dry matter %, ethanol %, glycerin %, density and organoleptic checks.</li>
-            <li>As needed: microbiology and heavy metals (Pb, Cd, Hg).</li>
+            <li>When needed: microbiological analyses and heavy metals (Pb, Cd, Hg).</li>
             <li>Basic stability checks of the final formulation.</li>
-            <li><strong>Internal QC:</strong> minimum dry matter targets are defined per mushroom species (see table below).</li>
+            <li><strong>Internal QC:</strong> minimum dry matter targets per species (see table below).</li>
           </ul>
 
-          <h3>Compliance and documentation</h3>
+          <h3>Compliance & documentation</h3>
           <ul>
-            <li>Execution aligned with HACCP principles and a GMP approach.</li>
+            <li>Work performed in line with a HACCP / GMP approach.</li>
             <li>SOP / work-instruction system and full lot traceability.</li>
-            <li>Ethanol use is managed in compliance with excise documentation requirements.</li>
+            <li>Ethanol handling is managed with traceability and legal compliance (excise-related records as applicable).</li>
           </ul>
 
           <h2>Sediment in medicinal mushroom tinctures — a sign of high concentration, not a defect</h2>
           <p>
-            Our tinctures are <strong>intentionally not filtered to absolute clarity</strong>, because heavy filtration can remove part of the actives.
-            Natural sediment is therefore <strong>normal and desirable</strong> — a sign of
-            <strong>high concentration of bioactive compounds</strong>, not a production error.
+            Our tinctures are <strong>intentionally not filtered to full clarity</strong>, because that would remove part of the bioactive fraction.
+            A natural sediment is therefore a <strong>normal and desirable</strong> phenomenon — a sign of <strong>high bioactive concentration</strong>, not a production mistake.
           </p>
 
           <p>
-            Each individual phase (ethanol and water extractions) is <strong>thoroughly filtered</strong>.
-            Sediment typically appears only after <strong>combining the water fraction</strong>, rich in
-            <strong>polysaccharides and β-glucans</strong>, with the <strong>ethanol fraction</strong> containing triterpenes
-            and other alcohol-soluble compounds. Since polysaccharides and β-glucans are
-            <strong>poorly soluble or insoluble</strong> in alcohol, part of them <strong>naturally precipitates</strong> —
-            forming <strong>sediment</strong> at the bottom.
+            Each phase (ethanol and water extractions) is <strong>thoroughly filtered</strong> first.
+            Sediment typically appears only after <strong>combining the water fraction</strong> (rich in <strong>polysaccharides and β-glucans</strong>) with the
+            <strong>ethanol fraction</strong> (containing triterpenes and other alcohol-soluble compounds).
+            Because polysaccharides and β-glucans are <strong>poorly soluble or insoluble in ethanol</strong>, part of them naturally <strong>precipitates</strong>.
           </p>
 
           <p>
-            This sediment usually contains mainly <strong>water-soluble polysaccharides and β-glucans</strong> originating from the water extract.
-            This applies to all species, including <strong>Reishi</strong>, where a fine precipitate often appears after blending water and ethanol phases —
-            typically less pronounced than in higher-solids species (e.g., Lion’s Mane).
+            This natural sediment usually contains mostly <strong>water-soluble polysaccharides and β-glucans</strong> originating from the aqueous part of the extract.
+            This can occur across species, including <strong>Reishi</strong>, where a fine precipitate may form after combining phases (typically less pronounced than in very high-solids species such as Lion’s Mane).
           </p>
 
           <p>
-            Tinctures with <strong>almost no sediment</strong> typically either
-            <strong>contain few polysaccharides</strong> or have been filtered/diluted to a level where their content is low.
+            Tinctures with <strong>almost no sediment</strong> often <strong>contain fewer polysaccharides</strong> or may be filtered/diluted to the point where these fractions are low.
           </p>
 
           <p>
-            Dry matter content (and therefore sediment amount) differs between species. Minimum and typical dry matter values in our tinctures:
+            Dry matter (and therefore sediment amount) varies between species. Our minimum and typical dry matter values are:
           </p>
 
           <table class="tinkture-usedlina-tabela">
@@ -1191,7 +1115,7 @@
                 <td><strong>Reishi</strong> (Ganoderma lucidum)</td>
                 <td>&ge; 4&nbsp;%</td>
                 <td>&asymp; 5&nbsp;%</td>
-                <td>fine but present polysaccharide/β-glucan sediment</td>
+                <td>less pronounced, but present polysaccharide/β-glucan sediment</td>
               </tr>
               <tr>
                 <td><strong>Chaga</strong> (Inonotus obliquus)</td>
@@ -1203,12 +1127,12 @@
                 <td><strong>Lion’s Mane</strong> (Hericium erinaceus)</td>
                 <td>&ge; 10&nbsp;%</td>
                 <td>&asymp; 13&nbsp;%</td>
-                <td>abundant sediment due to very high polysaccharide content</td>
+                <td>substantial sediment due to very high polysaccharide content</td>
               </tr>
             </tbody>
           </table>
 
-          <h2>Sources</h2>
+          <h2>References</h2>
           <ol class="viri-seznam">
             <li id="vir-1">Latgé J-P, Wang T. <em>Modern Biophysics Redefines Our Understanding of Fungal Cell Wall Structure, Complexity, and Dynamics</em>. mBio. 2022. DOI: 10.1128/mbio.01145-22.</li>
             <li id="vir-2">Bekirian C, et al. <em>β-1,6-glucan plays a central role in the structure and remodeling of the bilaminate fungal cell wall</em>. eLife. 2024.</li>
@@ -1226,40 +1150,39 @@
           <h2>Reishi cultivation</h2>
 
           <p>
-            At GoMushroom, we cultivate Reishi (<em>Ganoderma lucidum</em>) end-to-end — from mycelium propagation,
-            substrate preparation and <strong>sterilization</strong>, to <strong>controlled fruiting</strong>.
-            We work in small batches and manually inspect every bag, allowing stable growth conditions,
-            high-quality raw material, and full traceability from selected strain to tincture batch.
-            We most often choose the <strong>antler morphology</strong>, as research suggests this form is often associated with
-            a <strong>higher content of key Reishi actives</strong> — especially <strong>triterpenes</strong>,
-            in particular <strong>ganoderic acids</strong>.
+            At GoMushroom we grow Reishi (<em>Ganoderma lucidum</em>) end-to-end — from mycelium propagation and <strong>substrate preparation/sterilization</strong>
+            to <strong>controlled fruiting</strong>.
+            We work in small batches and manually inspect each bag, which helps us maintain stable growth conditions, high raw material quality,
+            and full traceability from strain selection to the final tincture batch.
+            We most often choose the <strong>antler morphology</strong>, because research suggests it can be associated with a <strong>higher content of key Reishi bioactives</strong>,
+            especially <strong>triterpenes</strong> — specifically <strong>ganoderic acids</strong>.
             <sup><a href="#ref-1">[1]</a> <a href="#ref-2">[2]</a> <a href="#ref-3">[3]</a></sup>
           </p>
 
           <h3>How we cultivate Reishi</h3>
           <ul>
-            <li><strong>Mycelium → sterile substrate → fruiting bodies</strong> (antlers or caps)</li>
-            <li>All stages in-house: mycelium work, substrate prep/sterilization, fruiting in a controlled environment</li>
-            <li><strong>Organic inputs:</strong> wheat bran, millet, rye, beech sawdust from Kočevje forests</li>
-            <li><strong>Small batches:</strong> manual control of every bag</li>
-            <li><strong>Traceability:</strong> from selected strain to tincture batch</li>
+            <li><strong>Mycelium → sterile substrate → fruiting bodies</strong> (antlers or cap)</li>
+            <li>All stages in-house: mycelium work, substrate preparation/sterilization and fruiting in a controlled environment</li>
+            <li><strong>Organic ingredients:</strong> wheat bran, millet, rye, beech sawdust from the Kočevje forests</li>
+            <li><strong>Small batches:</strong> manual inspection of every bag</li>
+            <li><strong>Traceability:</strong> from strain to tincture batch</li>
             <li><strong>Antler conditions:</strong> limited airflow, elevated CO₂ and controlled light</li>
           </ul>
 
-          <h3>Why antlers: a natural response and a “triterpenoid-forward” profile</h3>
+          <h3>Why antlers: a natural response and a more “triterpenoid-oriented” profile</h3>
 
           <p>
-            Antler morphology can be viewed as a <strong>natural response to specific growth conditions</strong>.
-            In a controlled environment with <strong>restricted ventilation</strong> (leading to higher CO₂) and
-            <strong>controlled light</strong>, Reishi may develop <strong>branched antler fruiting bodies</strong> instead of caps.
-            Controlled experiments show that manipulating ventilation (CO₂) and light can reliably produce antler-type morphology,
-            and may also shift the profile of bioactive compounds and antioxidant potential.
+            Antlers develop as a <strong>natural response to specific cultivation conditions</strong>.
+            In a controlled environment with <strong>limited ventilation</strong> (therefore higher CO₂) and <strong>controlled light</strong>,
+            Reishi can form a <strong>branched antler morphology</strong> rather than a cap.
+            Controlled studies show that manipulating ventilation (CO₂) and light can reliably induce antler formation,
+            while also influencing the bioactive profile and antioxidant potential of extracts.
             <sup><a href="#ref-4">[4]</a></sup>
           </p>
 
           <p>
-            In addition, triterpenes and biological activities have been reported from antler-shaped <em>G. lucidum</em> fruiting bodies,
-            supporting the idea that antler morphology as a “stress-like” form can contribute to a richer secondary metabolite profile.
+            Triterpenes and bioactivities have also been described from antler-form <em>G. lucidum</em>, supporting the idea that antlers — as a “stress morphology” —
+            may contribute to a richer secondary metabolite profile.
             <sup><a href="#ref-5">[5]</a></sup>
           </p>
 
@@ -1281,7 +1204,6 @@
             </li>
 
             <li id="ref-3" style="margin:.35rem 0;">
-              (Optional)
               Wang, S. et al. (2024). <em>Research Progress on the Biological Activity of Ganoderic Acids in Ganoderma lucidum over the Last Five Years</em>.
               <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11509451/" target="_blank" rel="noopener noreferrer">Open access (PMC)</a>
             </li>
@@ -1303,15 +1225,15 @@
         </template>
 
         <template id="tpl-botanicne">
-          <h3>Botanical extracts</h3>
+          <h3>Botanical extractions</h3>
           <ul>
-            <li>Spruce shoots & selected plants; EtOH / glycerin / H₂O</li>
-            <li>Same QC approach as for mushrooms (HACCP/GMP)</li>
-            <li>By agreement: target profile, taste, viscosity, filling</li>
+            <li>Spruce tips & selected plants; EtOH / glycerin / H₂O</li>
+            <li>Same QC mindset as for mushrooms (HACCP/GMP)</li>
+            <li>By arrangement: target profile, taste, viscosity, filling</li>
           </ul>
           <h3>Substrate sterilization</h3>
           <ul>
-            <li>Preparation of organic substrates</li>
+            <li>Preparation of substrates from organic ingredients</li>
             <li>Sterilization of substrates and grain</li>
             <li>Agar media preparation and sterilization</li>
             <li>Mycelium inoculation</li>
@@ -1328,44 +1250,44 @@
             <h2>Approach — triple extraction & vacuum concentration</h2>
             <div class="under"></div>
           </div>
-          <p class="lead2">We push each mushroom to its maximum — repeatably, traceably, and gently.</p>
+          <p class="lead2">We push each species to its maximum — repeatable, traceable and gentle on sensitive compounds.</p>
         </div>
 
         <div class="steps">
           <div class="step tech">
             <div class="num">Step 1</div>
             <h3>Triple extraction</h3>
-            <p>Ethanol → hot-water → pressure-water. Each phase targets a different compound spectrum, resulting in a full-range extract.</p>
+            <p>Ethanol → hot water → pressurized water. Each stage targets a different compound spectrum for a full-profile extract.</p>
           </div>
 
           <div class="step tech">
             <div class="num">Step 2</div>
             <h3>High solvent volume</h3>
-            <p>Higher solvent volume prevents early saturation, maintains mass transfer, and increases overall extraction yield.</p>
+            <p>Plenty of solvent prevents fast saturation, maintains mass transfer and improves extraction yield.</p>
           </div>
 
           <div class="step tech">
             <div class="num">Step 3</div>
             <h3>Ultrasound support</h3>
-            <p>Ultrasound microcavitation loosens the mushroom matrix, speeding up extraction and increasing yield.</p>
+            <p>Ultrasound micro-cavitation loosens the matrix, accelerates extraction and increases yield.</p>
           </div>
 
           <div class="step tech">
             <div class="num">Step 4</div>
             <h3>Vacuum concentration</h3>
-            <p>Solvents are removed at lower temperatures, preserving sensitive compounds and retaining natural aroma and color.</p>
+            <p>We remove solvents at lower temperatures to better preserve sensitive compounds, plus natural aroma and color.</p>
           </div>
 
           <div class="step qc">
             <div class="num">QC 1</div>
             <h3>Quality</h3>
-            <p>Internal QC on raw materials and finished products: dry matter, density, extractable fraction, and batch traceability.</p>
+            <p>Internal QC for raw materials and finished products: dry matter, density, extractable fraction and batch traceability.</p>
           </div>
 
           <div class="step qc">
             <div class="num">QC 2</div>
             <h3>Compliance</h3>
-            <p>Work follows HACCP principles and a GMP approach; ethanol use is documented in line with excise records.</p>
+            <p>Work follows HACCP principles and a GMP approach; ethanol use is managed with appropriate traceability and records.</p>
           </div>
         </div>
       </div>
@@ -1386,62 +1308,61 @@
             <div class="g-overlay"><div class="box">
               <h4>Ultrasonic probe</h4>
               <p>
-                An ultrasonic probe creates very fast mechanical vibrations in the solvent–mushroom mixture.
-                In liquids, these vibrations generate cavitation — tiny bubbles that collapse and produce strong micro-currents.
-                These “micro-impacts” loosen and partially disrupt mushroom cell walls, making it easier for actives to be released.
-                At the same time, mixing improves at the micro-scale, accelerating transfer from the mushroom matrix into the solvent.
-                The result is faster extraction and higher yield.
+                An ultrasonic probe generates very fast mechanical vibrations in the mushroom-solvent mixture.
+                In liquid, these vibrations create cavitation — tiny bubbles that collapse and produce strong micro-flows.
+                Those micro-impacts loosen and partially disrupt mushroom cell walls, making bioactives easier to release.
+                Cavitation also improves micro-level mixing, speeding up mass transfer from the matrix into the solvent.
+                Result: faster extraction and higher yields.
               </p>
             </div></div>
           </figure>
 
-          <figure class="g-item" data-title="Rotavap" data-text="Description…">
+          <figure class="g-item" data-title="Rotavapor" data-text="Description…">
             <button class="g-close" type="button" aria-label="Close">×</button>
-            <img src="assets/rotovap.webp" alt="Rotavap">
+            <img src="assets/rotovap.webp" alt="Rotavapor">
             <div class="g-overlay"><div class="box">
-              <h4>Rotavap</h4>
+              <h4>Rotavapor</h4>
               <p>
-                A rotary evaporator lets us concentrate the extract (remove solvent) at low temperatures,
-                helping preserve thermolabile compounds. Low boiling points are achieved with vacuum,
-                typically in the 10–150 mbar range. Under these conditions, water can boil at ~40 °C.
+                A rotavap allows us to concentrate extracts (remove solvent) at low temperatures,
+                which helps preserve thermolabile compounds. Low boiling temperatures are achieved with vacuum,
+                typically in the range of ~10–150 mbar. Under vacuum, water can boil around 40 °C.
               </p>
             </div></div>
           </figure>
 
-          <figure class="g-item" data-title="Moisture analyzer" data-text="Halogen moisture analyzer">
+          <figure class="g-item" data-title="Moisture analyzer" data-text="Description…">
             <button class="g-close" type="button" aria-label="Close">×</button>
             <img src="assets/moisture_a.webp" alt="Halogen moisture analyzer">
             <div class="g-overlay"><div class="box">
               <h4>Halogen moisture analyzer</h4>
               <p>
-                We use a halogen moisture analyzer to determine volatile components. In practice, this means
-                measuring moisture in dried, milled mushroom material before extraction, and measuring dry matter in the final tincture.
+                We use a halogen moisture analyzer to determine volatile components. In our case,
+                it’s used to measure moisture in dried, milled mushrooms before extraction and to determine dry matter in the final tincture.
               </p>
             </div></div>
           </figure>
 
-          <figure class="g-item" data-title="Vacuum oven" data-text="Vacuum oven description">
+          <figure class="g-item" data-title="Vacuum drying oven" data-text="Description…">
             <button class="g-close" type="button" aria-label="Close">×</button>
-            <img src="assets/vacuum-oven-1600w.webp" alt="Vacuum oven">
+            <img src="assets/vacuum-oven-1600w.webp" alt="Vacuum drying oven">
             <div class="g-overlay"><div class="box">
-              <h4>Vacuum oven</h4>
+              <h4>Vacuum drying oven</h4>
               <p>
-                We use a vacuum oven for final drying, allowing us to reliably reach ~5% moisture — a level that a conventional dryer
-                often can’t achieve consistently. Under vacuum, water evaporates at lower temperatures, so we can dry around 45 °C and
-                reduce heat load significantly. This helps preserve sensitive compounds and yields a more stable, standardized raw material.
+                We use vacuum drying for final moisture adjustment because it reliably brings moisture down to ~5% —
+                a level that standard dryers don’t consistently reach. Under vacuum, water evaporates at a lower temperature,
+                so we can dry around 45 °C and reduce thermal stress. This helps preserve sensitive components and produces a more stable, standardized raw material.
               </p>
             </div></div>
           </figure>
 
-          <figure class="g-item" data-title="Vacuum controller" data-text="Vacuum controller description">
+          <figure class="g-item" data-title="Vacuum controller" data-text="Description…">
             <button class="g-close" type="button" aria-label="Close">×</button>
             <img src="assets/vcontroller.webp" alt="Vacuum controller">
             <div class="g-overlay"><div class="box">
               <h4>Vacuum controller</h4>
               <p>
-                We use a vacuum controller to precisely adjust pressure during solvent removal. At constant temperature, as ethanol evaporates,
-                the relative water content increases and the boiling point rises. By regulating vacuum, we stay at the boiling point and keep
-                concentration stable, efficient and low-stress for the extract.
+                A vacuum controller lets us precisely adjust pressure during solvent removal. At constant temperature, the mixture’s composition shifts (ethanol evaporates first),
+                which raises the boiling point. By adjusting vacuum, we stay at the boiling point and keep concentration stable, efficient and low-stress for bioactives.
               </p>
             </div></div>
           </figure>
@@ -1452,7 +1373,7 @@
             <div class="g-overlay"><div class="box">
               <h4>Filling line</h4>
               <p>
-                Filling is performed under laminar flow of sterile air to reduce environmental impact while bottles are open.
+                Filling is performed under laminar flow of filtered air to minimize environmental impact while bottles are open.
                 We use a dosing pump and a standardized filling procedure for consistent volume and uniform batches.
               </p>
             </div></div>
@@ -1477,7 +1398,7 @@
               <div class="topbar">Reishi</div>
               <div class="hover-panel">
                 <ul class="meta">
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcohol & alcohol-free</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
@@ -1489,9 +1410,9 @@
                 <ul class="meta">
                   <li><strong>Raw material origin:</strong> GoMushroom Reishi</li>
                   <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
-                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~5%; stable viscosity and taste.</li>
-                  <li><strong>Ingredients:</strong> Reishi (Ganoderma lucidum), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
-                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                  <li><strong>Standardization:</strong> Ethanol 30% v/v; Glycerin 75% w/w; dry matter ~5%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Reishi (Ganoderma lucidum), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> vegetable glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> documented traceability; HACCP/GMP approach; ethanol handled with appropriate records.</li>
                 </ul>
               </div>
             </div>
@@ -1508,7 +1429,7 @@
               <div class="topbar">Lion’s Mane</div>
               <div class="hover-panel">
                 <ul class="meta">
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcohol & alcohol-free</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
@@ -1520,9 +1441,9 @@
                 <ul class="meta">
                   <li><strong>Raw material origin:</strong> Fungalist</li>
                   <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
-                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~14%; stable viscosity and taste.</li>
-                  <li><strong>Ingredients:</strong> Lion’s Mane (Hericium erinaceus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
-                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                  <li><strong>Standardization:</strong> Ethanol 30% v/v; Glycerin 75% w/w; dry matter ~14%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Lion’s Mane (Hericium erinaceus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> vegetable glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> documented traceability; HACCP/GMP approach; ethanol handled with appropriate records.</li>
                 </ul>
               </div>
             </div>
@@ -1539,7 +1460,7 @@
               <div class="topbar">Chaga</div>
               <div class="hover-panel">
                 <ul class="meta">
-                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcohol & alcohol-free</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
@@ -1549,11 +1470,11 @@
               </div>
               <div class="detail-panel">
                 <ul class="meta">
-                  <li><strong>Raw material origin:</strong> Multiple sources</li>
+                  <li><strong>Raw material origin:</strong> Mixed sources</li>
                   <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
-                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~8.5%; stable viscosity and taste.</li>
-                  <li><strong>Ingredients:</strong> Chaga (Inonotus obliquus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
-                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                  <li><strong>Standardization:</strong> Ethanol 30% v/v; Glycerin 75% w/w; dry matter ~8.5%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Chaga (Inonotus obliquus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> vegetable glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> documented traceability; HACCP/GMP approach; ethanol handled with appropriate records.</li>
                 </ul>
               </div>
             </div>
@@ -1572,8 +1493,8 @@
         <div class="section-head"><div><h2>Contact GoMushroom — medicinal mushroom extraction lab</h2><div class="under"></div></div></div>
 
         <p>
-          Interested in working with GoMushroom? Send me a message and briefly describe what you need (product, raw material, development, wholesale, or a custom project).
-          I’ll reply quickly and suggest next steps: a short call, alignment on goals, then a proposal (timeline, volumes, specifications) and execution planning.
+          Interested in collaborating with GoMushroom? Send me a message and briefly describe what you’re looking for (product, raw material, development, wholesale, or a custom project).
+          I reply quickly and suggest next steps: a short call, alignment on goals, then a proposal (timeline, volumes, specifications) and execution plan.
         </p>
       </div>
     </section>
@@ -1586,4 +1507,474 @@
         <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
         <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
         <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
-        <a href="mailto:
+        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
+      </div>
+
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="#storitve">Services</a>
+        <a href="#pristop">Approach</a>
+        <a href="#galerija">Gallery</a>
+        <a href="#reference">References</a>
+        <a href="#kontakt">Contact</a>
+      </nav>
+
+      <p class="footer-tags">
+        Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction ·
+        ultrasound-assisted extraction · vacuum concentration · small batches · traceability
+      </p>
+
+      <p class="footer-meta">
+        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
+      </p>
+
+      <div class="footer-line" aria-hidden="true"></div>
+
+      <p class="footer-copy">
+        © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
+      </p>
+    </div>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+  </footer>
+
+  <!-- ABOUT — Drawer / Modal -->
+  <div id="o-meni" hidden></div>
+  <div class="about-modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
+    <div class="about-overlay" id="about-overlay" tabindex="-1"></div>
+
+    <div class="about-drawer" role="document" aria-label="About">
+      <div class="about-top">
+        <div class="ttl">
+          <strong id="about-title">About</strong>
+          <span>Rok Golob — GoMushroom</span>
+        </div>
+        <button class="icon-btn" type="button" id="about-x" aria-label="Close">×</button>
+      </div>
+
+      <div class="about-scroll" id="about-scroll">
+        <div class="about-card">
+          <div class="about-hero">
+            <div class="about-ph">
+              <img src="assets/rok.webp" alt="Rok">
+            </div>
+          </div>
+
+          <div class="about-body">
+            <h3>Rok Golob — GoMushroom</h3>
+
+            <p>
+              My name is <strong>Rok Golob</strong> and I’m behind the <strong>GoMushroom</strong> project.
+              By education I’m “almost a chemical engineer” — my studies in <strong>chemical engineering</strong> ended just shy of the finish line.
+              But the mindset that chemistry and process technology brings is with me every day: logic of steps, understanding solvents, mass flows,
+              and above all, respect for details.
+            </p>
+
+            <p>
+              I’ve been working in an <strong>analytical laboratory</strong> for nearly <strong>20 years</strong> — and I still do analytical work today in my regular job.
+              Analytics teaches you quickly: a result is only good if it’s <strong>repeatable</strong>, if the method makes sense, if you understand sampling and the matrix,
+              and if your records are clean. There’s no room for approximations. That discipline is exactly why GoMushroom didn’t start as a quick trend,
+              but as a process-driven project built on practice and systems.
+            </p>
+
+            <p>
+              GoMushroom grew out of curiosity and a desire to make extracts the way I personally want them:
+              no inflated promises, clear process logic, and a focus on stability. Small batches allow tight control —
+              from raw material to the final bottle — and help keep each batch comparable to the previous one.
+            </p>
+
+            <p>
+              What pulls me in most is the “engineering side”: designing a process that is efficient, gentle to sensitive compounds,
+              and repeatable. When it all comes together — raw material, process, control points, measurements and documentation —
+              the result is not luck-dependent, but system-dependent. That’s the essence of GoMushroom.
+            </p>
+
+            <div class="pill-row">
+              <span class="pill">~20 years in analytics</span>
+              <span class="pill accent">Still employed in analytics</span>
+              <span class="pill">Process thinking</span>
+              <span class="pill accent">Traceability & records</span>
+              <span class="pill">Small batches</span>
+            </div>
+
+            <div class="about-actions">
+              <button class="btn ghost" type="button" id="about-close">Close</button>
+              <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <a class="btn ghost" href="mailto:info@gomushroom.si">Email</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-card">
+          <div class="about-body">
+            <h3>Focus</h3>
+            <ul class="meta" style="margin:0;padding-left:0;list-style:none">
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Consistency:</strong> a result is only good if it’s repeatable.</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Transparency:</strong> clear steps, no empty promises.</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg><strong>Stability:</strong> control points throughout the process.</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg><strong>Boutique:</strong> small batches, manual control and attention to detail.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-backdrop" id="gallery-backdrop" aria-hidden="true"></div>
+
+  <script>
+    // HERO slider
+    (function(){
+      const hero=document.querySelector('.hero');
+      const slides=[...hero.querySelectorAll('.slide')];
+      const dots=[...hero.querySelectorAll('.dot')];
+      const prev=hero.querySelector('.arrow.prev');
+      const next=hero.querySelector('.arrow.next');
+      let i=0,t;
+      const show=n=>{
+        slides[i].classList.remove('active');
+        dots[i].classList.remove('active');
+        i=(n+slides.length)%slides.length;
+        slides[i].classList.add('active');
+        dots[i].classList.add('active');
+      };
+      const auto=()=>{clearInterval(t);t=setInterval(()=>show(i+1),5500)};
+      prev && (prev.onclick=()=>{show(i-1);auto()});
+      next && (next.onclick=()=>{show(i+1);auto()});
+      dots.forEach((d,idx)=>d.onclick=()=>{show(idx);auto()});
+      auto();
+    })();
+
+    // MOBILE NAV (hamburger)
+    (function(){
+      const header = document.getElementById('site-header');
+      const btn = document.getElementById('nav-toggle');
+      const nav = document.getElementById('primary-nav');
+      if(!header || !btn || !nav) return;
+
+      function setOpen(open){
+        header.classList.toggle('nav-open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+
+      btn.addEventListener('click', ()=>{
+        const open = !header.classList.contains('nav-open');
+        setOpen(open);
+      });
+
+      nav.addEventListener('click', (e)=>{
+        const a = e.target.closest('a');
+        if(!a) return;
+        setOpen(false);
+      });
+
+      document.addEventListener('click', (e)=>{
+        if(!header.classList.contains('nav-open')) return;
+        if(header.contains(e.target)) return;
+        setOpen(false);
+      });
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape') setOpen(false);
+      });
+    })();
+
+    // SERVICES — click opens full-width panel
+    (function(){
+      const grid = document.getElementById('services-grid');
+      const cards = [...grid.querySelectorAll('.card.service')];
+      const panel = document.getElementById('service-detail');
+      const panelContent = panel.querySelector('.content');
+      const templates = {
+        ekstrakcije: document.getElementById('tpl-ekstrakcije'),
+        gojenje:     document.getElementById('tpl-gojenje'),
+        botanicne:   document.getElementById('tpl-botanicne'),
+      };
+
+      function openPanel(key, card){
+        cards.forEach(c=>c.classList.toggle('is-active', c===card));
+        grid.classList.add('has-open');
+        const tpl = templates[key];
+        if(!tpl) return;
+        panelContent.innerHTML = '';
+        panelContent.appendChild(tpl.content.cloneNode(true));
+        panel.classList.add('is-open');
+
+        const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+        requestAnimationFrame(()=>{
+          const panelTop = panel.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({ top: panelTop - headerHeight - 10, behavior: 'smooth' });
+        });
+      }
+
+      function closePanel(){
+        cards.forEach(c=>c.classList.remove('is-active'));
+        grid.classList.remove('has-open');
+        panel.classList.remove('is-open');
+        panelContent.innerHTML = '';
+      }
+
+      cards.forEach(card=>{
+        card.addEventListener('click', (e)=>{
+          if((e.target.tagName||'').toLowerCase()==='a') return;
+          const key = card.getAttribute('data-service');
+          if(card.classList.contains('is-active')) closePanel();
+          else openPanel(key, card);
+        });
+        card.setAttribute('tabindex','0');
+        card.setAttribute('role','button');
+        card.addEventListener('keydown', e=>{
+          if(e.key==='Enter'||e.key===' ') { e.preventDefault(); card.click(); }
+        });
+      });
+
+      document.addEventListener('keydown', e=>{
+        if(e.key==='Escape') closePanel();
+      });
+    })();
+
+    // GALLERY
+    (function(){
+      const items=[...document.querySelectorAll('.g-item')];
+      const backdrop = document.getElementById('gallery-backdrop');
+
+      function isMobile(){
+        return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      }
+
+      function closeAll(except){
+        items.forEach(it=>{ if(it!==except) it.classList.remove('is-open'); });
+        document.body.classList.remove('gallery-open');
+      }
+
+      function openItem(it){
+        closeAll(it);
+        it.classList.add('is-open');
+        if(isMobile()) document.body.classList.add('gallery-open');
+      }
+
+      function closeItem(it){
+        it.classList.remove('is-open');
+        document.body.classList.remove('gallery-open');
+      }
+
+      items.forEach(it=>{
+        const closeBtn = it.querySelector('.g-close');
+
+        it.addEventListener('click', (e)=>{
+          if(e.target === closeBtn) return;
+          const open=it.classList.contains('is-open');
+          if(open) closeItem(it);
+          else openItem(it);
+        });
+
+        closeBtn?.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          closeItem(it);
+        });
+
+        it.setAttribute('tabindex','0');
+        it.setAttribute('role','button');
+        it.addEventListener('keydown', e=>{
+          if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); }
+        });
+      });
+
+      backdrop?.addEventListener('click', ()=>closeAll());
+
+      document.addEventListener('keydown', e=>{
+        if(e.key==='Escape') closeAll();
+      });
+
+      window.addEventListener('resize', ()=>{
+        if(!isMobile()) document.body.classList.remove('gallery-open');
+      });
+    })();
+
+    // REFERENCES – open one at a time
+    (function(){
+      const refs=[...document.querySelectorAll('.card.ref')];
+      function closeAll(except){
+        refs.forEach(c=>{
+          if(c!==except){
+            c.classList.remove('is-open');
+            c.setAttribute('aria-expanded','false');
+          }
+        });
+      }
+      function toggle(card){
+        const open=card.classList.contains('is-open');
+        if(open){
+          card.classList.remove('is-open');
+          card.setAttribute('aria-expanded','false');
+        } else {
+          closeAll(card);
+          card.classList.add('is-open');
+          card.setAttribute('aria-expanded','true');
+          if(window.innerWidth<900){
+            card.scrollIntoView({behavior:'smooth',block:'center'});
+          }
+        }
+      }
+      refs.forEach(card=>{
+        card.addEventListener('click',e=>{
+          const t=(e.target.tagName||'').toLowerCase();
+          if(t==='a') return;
+          toggle(card);
+        });
+        card.setAttribute('tabindex','0');
+        card.setAttribute('role','button');
+        card.addEventListener('keydown',e=>{
+          if(e.key==='Enter'||e.key===' '){
+            e.preventDefault(); toggle(card);
+          }
+        });
+      });
+    })();
+
+    // ABOUT — drawer/modal
+    (function(){
+      const link = document.getElementById('nav-about');
+      const modal = document.getElementById('about-modal');
+      const overlay = document.getElementById('about-overlay');
+      const closeBtn = document.getElementById('about-close');
+      const xBtn = document.getElementById('about-x');
+      const scrollEl = document.getElementById('about-scroll');
+
+      if(!link || !modal) return;
+
+      let lastFocus = null;
+      let prevOverflow = '';
+
+      const focusableSelector = [
+        'a[href]',
+        'button:not([disabled])',
+        'textarea:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])'
+      ].join(',');
+
+      function setOpenState(isOpen){
+        if(isOpen){
+          modal.classList.add('is-open');
+          modal.setAttribute('aria-hidden','false');
+          link.setAttribute('aria-expanded','true');
+
+          prevOverflow = document.documentElement.style.overflow || '';
+          document.documentElement.style.overflow = 'hidden';
+
+          if(scrollEl) scrollEl.scrollTop = 0;
+
+          requestAnimationFrame(()=>{
+            const first = modal.querySelector(focusableSelector);
+            (first || xBtn || closeBtn || modal).focus?.();
+          });
+
+          history.replaceState(null, '', '#o-meni');
+        } else {
+          modal.classList.remove('is-open');
+          modal.setAttribute('aria-hidden','true');
+          link.setAttribute('aria-expanded','false');
+
+          document.documentElement.style.overflow = prevOverflow;
+
+          const clean = window.location.pathname + window.location.search;
+          history.replaceState(null, '', clean);
+
+          if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+        }
+      }
+
+      function openModal(){
+        lastFocus = document.activeElement;
+        setOpenState(true);
+      }
+      function closeModal(){
+        setOpenState(false);
+      }
+
+      link.addEventListener('click', (e)=>{
+        e.preventDefault();
+        openModal();
+      });
+
+      overlay?.addEventListener('click', closeModal);
+      closeBtn?.addEventListener('click', closeModal);
+      xBtn?.addEventListener('click', closeModal);
+
+      document.addEventListener('keydown', (e)=>{
+        if(!modal.classList.contains('is-open')) return;
+
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+
+        if(e.key === 'Tab'){
+          const focusables = [...modal.querySelectorAll(focusableSelector)]
+            .filter(el => el.offsetParent !== null);
+          if(focusables.length === 0) return;
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault();
+            last.focus();
+          } else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      if(window.location.hash === '#o-meni'){
+        openModal();
+      } else {
+        setOpenState(false);
+      }
+    })();
+
+    document.querySelectorAll('.card.service').forEach(card => {
+      const img = card.querySelector('.media img');
+      if (!img) return;
+      const src = img.currentSrc || img.src;
+      card.style.setProperty('--card-img', `url("${src}")`);
+    });
+  </script>
+
+  <script>
+  (function () {
+    const GA_ID = "G-L2PGE7VDHB";
+    let loaded = false;
+
+    function loadGA() {
+      if (loaded) return;
+      loaded = true;
+
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA_ID);
+      document.head.appendChild(s);
+
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ window.dataLayer.push(arguments); }
+      window.gtag = gtag;
+
+      gtag("js", new Date());
+      gtag("config", GA_ID, { anonymize_ip: true });
+    }
+
+    ["scroll","click","touchstart","keydown"].forEach(evt => {
+      window.addEventListener(evt, loadGA, { once: true, passive: true });
+    });
+
+    setTimeout(loadGA, 4000);
+  })();
+  </script>
+
+</body>
+</html>

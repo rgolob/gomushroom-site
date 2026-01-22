@@ -1,0 +1,1589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>GoMushroom — medicinal mushroom tinctures: Reishi, Chaga, Lion’s Mane</title>
+
+  <meta name="description" content="GoMushroom: advanced triple-extraction medicinal mushrooms (Reishi, Chaga, Lion’s Mane). Ultrasound-assisted extraction, low-temperature vacuum concentration, HACCP/GMP approach, small batches." />
+  <meta name="author" content="GoMushroom — Rok Golob" />
+  <meta name="robots" content="index,follow" />
+  <meta name="language" content="en" />
+
+  <meta name="keywords" content="medicinal mushroom tinctures, reishi tincture, chaga tincture, lion’s mane tincture, medicinal mushrooms, ultrasound-assisted extraction, triple extraction, GoMushroom, Rok Golob, vacuum concentration" />
+
+  <!-- If you have a dedicated /en/ path, keep this. Otherwise set it to https://gomushroom.si/ -->
+  <link rel="canonical" href="https://gomushroom.si/en/" />
+
+  <meta property="og:title" content="GoMushroom — advanced medicinal mushroom extraction" />
+  <meta property="og:description" content="Triple, ultrasound-assisted extraction of medicinal mushrooms. Low-temperature vacuum concentration, HACCP/GMP approach, small batches and high traceability." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gomushroom.si/en/" />
+  <meta property="og:image" content="https://gomushroom.si/assets/og-hero.jpg" />
+  <meta property="og:site_name" content="GoMushroom" />
+  <meta property="og:locale" content="en_US" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GoMushroom — advanced medicinal mushroom extraction" />
+  <meta name="twitter:description" content="Advanced triple extraction of medicinal mushrooms with ultrasound support and vacuum concentration. Reishi, Chaga, Lion’s Mane — small batches, high traceability." />
+  <meta name="twitter:image" content="https://gomushroom.si/assets/og-hero.jpg" />
+  
+  <link rel="icon" href="assets/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="assets/favicon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/favicon-180.png" />
+
+  <link rel="preload" as="image" href="assets/rotovap.webp">
+
+  <style>
+    /* ----- Smooth scroll ----- */
+    html { scroll-behavior: smooth; }
+
+    /* Offset for sticky navigation */
+    section { scroll-margin-top: 80px; }
+
+    :root{
+      --bg:#f7f8f7; --bg-rgb:247,248,247;
+      --fg:#101311; --muted:#6b726d;
+      --brand:#2b0a39; --accent:#b18556;
+      --line:#e6e9e6; --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Inter,Segoe UI,Roboto,Helvetica,Arial}
+    img{max-width:100%;display:block}
+    a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+    /* TOP NAVIGATION BAR */
+    header{
+      position:sticky; top:0; z-index:30;
+      background:rgba(255,255,255,.76);
+      backdrop-filter:saturate(160%) blur(10px);
+      border-bottom:1px solid var(--line);
+      padding-top: env(safe-area-inset-top);
+    }
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 0;position:relative}
+    .brand img{height:42px}
+    nav{display:flex;gap:22px}
+    nav a{font-size:14px;position:relative;white-space:nowrap}
+    nav a::after{
+      content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;
+      background:linear-gradient(90deg,var(--accent),var(--brand));
+      transition:width .22s ease
+    }
+    nav a:hover::after{width:100%}
+
+    /* Mobile nav toggle */
+    .nav-toggle{
+      display:none;
+      appearance:none;
+      border:1px solid rgba(0,0,0,.08);
+      background:rgba(255,255,255,.78);
+      border-radius:12px;
+      height:40px; width:44px;
+      box-shadow:0 1px 0 rgba(255,255,255,.65) inset, 0 10px 24px rgba(0,0,0,.06);
+      cursor:pointer;
+      padding:0;
+    }
+    .nav-toggle:active{transform:translateY(1px)}
+    .nav-toggle svg{width:22px;height:22px;display:block;margin:0 auto;fill:var(--brand)}
+
+    /* HERO */
+    .hero{position:relative;min-height:62vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .slides{position:absolute;inset:0}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+    .slide.active{opacity:1}
+    .slide img{width:100%;height:100%;object-fit:cover;filter:saturate(108%) contrast(102%)}
+    .hero::after{
+      content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:
+        radial-gradient(80% 80% at 50% 30%, rgba(255,255,255,.18), rgba(255,255,255,.55)),
+        linear-gradient(90deg, rgba(var(--bg-rgb),.96) 0%, rgba(var(--bg-rgb),.35) 50%, rgba(var(--bg-rgb),.96) 100%);
+    }
+    .dots{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:8px;z-index:3}
+    .dot{width:10px;height:10px;border-radius:999px;border:1px solid rgba(0,0,0,.25);background:rgba(255,255,255,.65);cursor:pointer}
+    .dot.active{background:#fff}
+    .arrow{position:absolute;top:50%;transform:translateY(-50%);border:none;background:rgba(255,255,255,.6);color:#2b0a39;border-radius:999px;width:36px;height:36px;font-size:20px;cursor:pointer;z-index:3}
+    .arrow:hover{background:#fff}
+    .arrow.prev{left:12px} .arrow.next{right:12px}
+    .inner{position:relative;z-index:2;text-align:center;padding:40px 0}
+    .headline{
+      display:inline-block;max-width:880px;padding:22px 26px;border-radius:18px;
+      background:rgba(255,255,255,.50); border:1px solid rgba(0,0,0,.06);
+      backdrop-filter: blur(6px);
+      box-shadow:0 16px 42px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2b2f2c;opacity:.9}
+    h1{font-size:clamp(28px,3.6vw,48px);line-height:1.08;margin:.5rem 0}
+    .lead{color:var(--fg);opacity:.9;max-width:75ch;margin:0 auto;font-size:clamp(15px,1.2vw,17px);line-height:1.6}
+    .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;border:1px solid rgba(0,0,0,.06);font-weight:650;box-shadow:0 1px 0 rgba(255,255,255,.6) inset}
+    .btn.brand{background:linear-gradient(135deg,var(--brand),#3d0f52);color:#fff}
+    .btn.accent{background:linear-gradient(135deg,var(--accent),#9b6f45);color:#fff}
+    .btn.ghost{background:#fff;color:#2b0a39}
+    .btn:hover{opacity:.96;text-decoration:none;transform:translateY(-1px)}
+
+    /* LAYOUT */
+    section{padding:64px 0}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}
+    h2{margin:0;font-size:clamp(22px,2.4vw,30px)}
+    .under{height:2px;background:linear-gradient(90deg,var(--brand),var(--accent));width:100px;border-radius:2px;margin-top:8px}
+    .lead2{color:var(--muted);max-width:75ch;font-size:15px;line-height:1.6}
+
+    @media (max-width: 767px){
+      .lead2{display:none !important;}
+    }
+
+    .grid{display:grid;gap:22px}
+    @media (min-width:980px){ .grid-3{grid-template-columns:repeat(3,1fr)} }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 14px 30px rgba(0,0,0,.08);
+      transition:transform .18s ease, box-shadow .18s ease;
+      position:relative
+    }
+    .card:hover{transform:translateY(-3px); box-shadow:0 20px 48px rgba(0,0,0,.12)}
+    .media{position:relative;border-bottom:1px solid var(--line);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .body{padding:16px}
+    h3{margin:0 0 6px;font-size:18px}
+    .meta{font-size:14px;color:#6b726d;line-height:1.55}
+
+    .ico{width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+    .li-icon{display:flex;align-items:flex-start;gap:8px}
+    .li-icon svg{flex:0 0 auto;margin-top:2px}
+
+    /* SERVICES (hover) */
+    .card.service{cursor:pointer}
+    .hover-panel{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      padding:16px;text-align:left;background:rgba(255,255,255,.82);
+      border-top:1px solid rgba(0,0,0,.06); backdrop-filter: blur(6px);
+      opacity:0;pointer-events:none;transition:opacity .18s ease; z-index:1;
+    }
+    .hover-panel ul{margin:0;padding-left:18px}
+    @media (hover:hover){ .card.service:hover .hover-panel{opacity:1;pointer-events:auto} }
+
+    /* SERVICES – open indicator + badge */
+    .card.service.is-active{
+      border-color: var(--accent);
+      box-shadow: 0 26px 64px rgba(0,0,0,.18), 0 0 0 2px rgba(177,133,86,.35) inset;
+      transform: translateY(-2px);
+    }
+    .card.service.is-active::after{
+      content: "OPEN";
+      position: absolute; top: 10px; right: 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      color: #fff; padding: 6px 8px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      box-shadow: 0 6px 16px rgba(0,0,0,.18);
+      pointer-events: none;
+    }
+    #services-grid.has-open > .card.service:not(.is-active){
+      filter: grayscale(.12) brightness(.94);
+      opacity:.8;
+      transition:opacity .18s ease, filter .18s ease;
+    }
+
+    /* ===== SERVICES: big image + low bottom part + faint continuation ===== */
+    .card.service{
+      overflow:hidden;
+      --media-h: 240px;
+    }
+    .card.service .media{ height: var(--media-h); }
+    .card.service .media img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .card.service .body{
+      position:relative;
+      padding: 12px 14px;
+    }
+    .card.service .body h3{
+      margin:0;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .card.service .body .meta{ display:none; }
+
+    .card.service .body::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--card-img);
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center calc(26% - var(--media-h));
+      opacity: .35;
+      filter: blur(6px) saturate(115%);
+      transform: scale(1.0);
+      z-index:0;
+    }
+    .card.service .body::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: rgba(255,255,255,.2);
+      z-index:0;
+    }
+    .card.service .body > *{
+      position:relative;
+      z-index:1;
+    }
+
+    /* FULL-WIDTH PANEL under service cards */
+    .service-detail{
+      display:none;
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.98));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 20px 48px rgba(0,0,0,.12);
+      padding:22px 20px;
+      margin-top:10px;
+    }
+    .service-detail.is-open{ display:block; }
+
+    .service-detail .content{
+      max-width: 980px;
+      margin: 6px auto 0;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #444a45;
+    }
+
+    .service-detail .content :is(h2,h3,h4){
+      line-height: 1.22;
+      color: var(--fg);
+      font-weight: 700;
+    }
+    .service-detail .content h2{
+      margin: 0 0 1.2rem;
+      font-size: clamp(20px, 2.2vw, 28px);
+    }
+    .service-detail .content h3{
+      margin: 2.0rem 0 0.75rem;
+      font-size: 18px;
+    }
+    .service-detail .content h4{
+      margin: 1.6rem 0 0.6rem;
+      font-size: 16px;
+    }
+    .service-detail .content p{ margin: 0 0 1.0rem; }
+    .service-detail .content :is(ul,ol){
+      margin: 0.6rem 0 1.1rem 1.15rem;
+      padding: 0;
+    }
+    .service-detail .content li{ margin: 0.35rem 0; padding-left: 2px; }
+    .service-detail .content :is(h2,h3,h4) + :is(p,ul,ol){ margin-top: 0.2rem; }
+    .service-detail .content strong{ font-weight: 650; color:#2c312d; }
+
+    @media (min-width: 768px){
+      .service-detail .content{ max-height:none; overflow:visible; padding-right:0; }
+    }
+    @media (max-width: 767px){
+      .service-detail .content{
+        max-height: min(68vh, 520px);
+        overflow:auto;
+        padding-right:10px;
+      }
+    }
+    .service-detail .content::after{
+      content:'';
+      position:sticky; bottom:-1px; height:32px; display:block;
+      background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.98));
+      pointer-events:none;
+    }
+
+    /* ===== APPROACH – TIMELINE / STEPS ===== */
+    #pristop{
+      background:
+        radial-gradient(70% 55% at 0% 0%, rgba(43,10,57,.04), transparent 60%),
+        radial-gradient(70% 55% at 100% 10%, rgba(177,133,86,.05), transparent 60%);
+    }
+    .steps{display:grid; gap:14px;}
+    @media (min-width:980px){
+      .steps{grid-template-columns:repeat(6,1fr);gap:10px;align-items:stretch;}
+    }
+    .step{
+      position:relative;
+      background:rgba(255,255,255,.9);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 14px 12px;
+      box-shadow:0 10px 24px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .step .num{
+      font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--muted);
+      text-transform:uppercase;
+    }
+    .step h3{margin:6px 0 6px;font-size:17px;}
+    .step p{margin:0;font-size:14.5px;color:#555c57;line-height:1.6;}
+
+    .step.tech::after{
+      content:'';
+      position:absolute; right:-22px; top:-22px;
+      width:140px;height:140px;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%232b0a39' d='M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z'/></svg>");
+      background-size:contain;background-repeat:no-repeat;
+      opacity:.06;transform:rotate(-10deg);pointer-events:none;
+    }
+    .step.qc{
+      border-style:dashed;
+      background:linear-gradient(180deg, rgba(177,133,86,.05), #fff);
+    }
+    .step.qc::after{
+      content:'';
+      position:absolute; left:-26px; bottom:-26px;
+      width:150px;height:150px;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23b18556' d='M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z'/></svg>");
+      background-size:contain;background-repeat:no-repeat;
+      opacity:.06;transform:rotate(8deg);pointer-events:none;
+    }
+
+    /* ===== GALLERY – masonry ===== */
+    #galerija .gallery-grid{
+      column-count: 2;
+      column-gap: 14px;
+    }
+    @media (min-width:900px){
+      #galerija .gallery-grid{ column-count:3; }
+    }
+
+    .g-item{
+      break-inside:avoid;
+      margin:0 0 14px;
+      position:relative;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 10px 26px rgba(0,0,0,.08);
+      cursor:pointer;
+      background:#fff;
+    }
+    .g-item img{
+      width:100%;height:auto;display:block;
+      transition:transform .35s ease, filter .25s ease;
+    }
+
+    .g-overlay{
+      position:absolute;inset:0;
+      background:rgba(255,255,255,.84);
+      backdrop-filter: blur(6px);
+      display:flex;align-items:center;justify-content:center;
+      padding:16px;text-align:left;
+      opacity:0;pointer-events:none;transition:opacity .18s ease;
+    }
+    .g-overlay .box{max-width:92%}
+    .g-overlay h4{margin:0 0 6px;font-size:17px}
+    .g-overlay p{margin:0;font-size:14.5px;color:#4a504b;line-height:1.6}
+
+    @media (hover:hover){
+      .g-item:hover img{filter:blur(2px) brightness(.95);transform:scale(1.02)}
+      .g-item:hover .g-overlay{opacity:1;pointer-events:auto}
+    }
+
+    .g-item.is-open img{filter:blur(2px) brightness(.95);transform:scale(1.02)}
+    .g-item.is-open .g-overlay{opacity:1;pointer-events:auto}
+
+    .g-close{
+      position:absolute;
+      top:10px; right:10px;
+      z-index:5;
+      width:40px;height:40px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.85);
+      backdrop-filter: blur(8px);
+      box-shadow:0 10px 26px rgba(0,0,0,.12), 0 1px 0 rgba(255,255,255,.7) inset;
+      cursor:pointer;
+      font-size:22px;
+      line-height:0;
+      color:var(--brand);
+      display:none;
+    }
+    .g-item.is-open .g-close{display:block;}
+
+    body.gallery-open{overflow:hidden}
+    .gallery-backdrop{
+      position:fixed; inset:0; z-index:109;
+      background:rgba(0,0,0,.22);
+      backdrop-filter:saturate(140%) blur(8px);
+      display:none;
+    }
+    body.gallery-open .gallery-backdrop{display:block;}
+
+    @media (max-width: 767px){
+      .wrap{padding:0 14px}
+      header{padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);}
+      section{padding:52px 0;}
+      .headline{padding:18px 16px}
+      .arrow{display:none}
+      .dots{bottom:10px}
+
+      .nav{padding:10px 0}
+      .brand img{height:34px}
+      .nav-toggle{display:inline-flex;align-items:center;justify-content:center}
+
+      header nav{
+        position:absolute;
+        top:100%;
+        left:-14px; right:-14px;
+        display:none;
+        flex-direction:column;
+        gap:8px;
+        padding:10px 14px 14px;
+        background:rgba(255,255,255,.92);
+        backdrop-filter:saturate(160%) blur(10px);
+        border-bottom:1px solid var(--line);
+      }
+      header.nav-open nav{display:flex;}
+
+      header nav a{
+        padding:10px 12px;
+        border-radius:12px;
+        border:1px solid rgba(0,0,0,.06);
+        background:rgba(255,255,255,.78);
+        font-size:15px;
+      }
+      header nav a::after{display:none}
+    }
+
+    .g-item.is-open{
+      position:fixed;
+      inset:0;
+      z-index:110;
+      margin:0;
+      border-radius:0;
+      display:block;
+      box-shadow:0 26px 80px rgba(0,0,0,.22);
+      background:#000;
+    }
+    .g-item.is-open img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .g-item.is-open .g-overlay{
+      opacity:1;
+      pointer-events:auto;
+      align-items:flex-end;
+      justify-content:flex-start;
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+      background:linear-gradient(to bottom,
+        rgba(255,255,255,0.0) 0%,
+        rgba(255,255,255,.78) 38%,
+        rgba(255,255,255,.92) 100%);
+    }
+    .g-item.is-open .g-overlay .box{
+      max-width:100%;
+      width:100%;
+      max-height:min(66vh, 560px);
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right:8px;
+    }
+    .g-item.is-open .g-overlay .box::after{
+      content:'';
+      display:block;
+      height:28px;
+      background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0));
+    }
+    .g-item.is-open .g-close{
+      display:block;
+      top: calc(10px + env(safe-area-inset-top));
+      right: calc(10px + env(safe-area-inset-right));
+    }
+
+    /* REFERENCE */
+    .grid-refs{display:grid;gap:22px}
+    @media (min-width:980px){ .grid-refs{grid-template-columns:repeat(3,1fr)} }
+
+    .card.ref{cursor:pointer;display:flex;flex-direction:column}
+    .card.ref .media{
+      position:relative;aspect-ratio:4/5;background:#fff;
+      display:flex;align-items:center;justify-content:center;
+      border-bottom:1px solid var(--line);overflow:hidden
+    }
+    .card.ref .media img{
+      width:100%;height:100%;object-fit:contain;padding:10px;transition:filter .2s ease;
+      position:relative; z-index:0;
+    }
+    .card.ref .media *:not(.hover-panel):not(.detail-panel):not(.topbar){pointer-events:none}
+
+    @media (hover:hover){ .card.ref:hover .media img{filter:blur(3px) brightness(.9)} }
+    .card.ref .hover-panel{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      padding:16px;background:rgba(255,255,255,.82);backdrop-filter:blur(6px);
+      border-top:1px solid rgba(0,0,0,.06);
+      opacity:0;pointer-events:none;transition:opacity .18s ease; z-index:1;
+    }
+    @media (hover:hover){ .card.ref:hover .hover-panel{opacity:1;pointer-events:auto} }
+
+    .card.ref .topbar{
+      position:absolute;left:0;right:0;top:0;display:none;align-items:center;gap:10px;
+      padding:12px 14px;
+      background:linear-gradient(135deg, rgba(43,10,57,.55), rgba(177,133,86,.50));
+      color:#fff;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(0,0,0,.12);
+      font-weight:700; z-index:3;
+      text-shadow:0 1px 2px rgba(0,0,0,.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+    }
+    .card.ref .detail-panel{
+      position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+      padding:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(6px); z-index:1;
+    }
+    .card.ref .detail-panel .meta{max-width:92%;line-height:1.55}
+    .card.ref.is-open .media img{filter:blur(2px) brightness(.9)}
+    .card.ref.is-open .hover-panel{display:none}
+    .card.ref.is-open .topbar{display:flex}
+    .card.ref.is-open .detail-panel{display:flex}
+
+    .titlebar{
+      border-top:1px solid var(--line);padding:14px 16px;min-height:60px;background:#fff;
+      display:flex;align-items:center
+    }
+    .titlebar .title{display:inline;font-size:18px;font-weight:700;margin:0}
+    .titlebar .buy{display:none;font-weight:700}
+    .card.ref.is-open .titlebar .title{display:none}
+    .card.ref.is-open .titlebar .buy{display:inline}
+
+    /* ===== FOOTER  ===== */
+    footer.site-footer{
+      margin-top:40px;
+      background:
+        radial-gradient(140% 200% at 0% 0%, rgba(177,133,86,.22), transparent 55%),
+        radial-gradient(110% 180% at 100% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(135deg, #2b0a39 0%, #2b0a39 45%, #1b0625 100%);
+      color:#fdfbff;
+      border-top:1px solid rgba(255,255,255,.18);
+      font-size:13px;
+    }
+
+    .footer-inner{
+      max-width:1180px;
+      margin:0 auto;
+      padding:18px 20px 16px;
+      text-align:center;
+    }
+
+    .footer-social{
+      display:flex;
+      justify-content:center;
+      gap:14px;
+      margin-bottom:12px;
+    }
+
+    .footer-social a{
+      width:38px;
+      height:38px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      color:#fff;
+      font-size:18px;
+      font-weight:700;
+      background:rgba(255,255,255,.04);
+      box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.55);
+      transition:background .18s ease, transform .18s ease,
+               box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .footer-social a span{ position:relative; top:-1px; }
+
+    .footer-social a:hover{
+      background:linear-gradient(135deg,var(--brand),var(--accent));
+      border-color:transparent;
+      box-shadow:0 10px 24px rgba(0,0,0,.7);
+      transform:translateY(-1px);
+    }
+
+    .footer-nav{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:10px 18px;
+      margin-bottom:8px;
+    }
+
+    .footer-nav a{
+      text-decoration:none;
+      color:rgba(255,255,255,.82);
+      font-size:12.5px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .footer-nav a:hover{ color:#fff; }
+
+    .footer-tags{
+      margin:4px 0 8px;
+      font-size:12.5px;
+      color:rgba(255,255,255,.76);
+    }
+
+    .footer-meta{
+      margin:2px 0 6px;
+      font-size:12.5px;
+      color:rgba(255,255,255,.78);
+    }
+
+    .footer-line{
+      margin:8px auto 6px;
+      max-width:420px;
+      height:1px;
+      background:linear-gradient(
+        90deg,
+        rgba(255,255,255,0),
+        rgba(255,255,255,.4),
+        rgba(255,255,255,0)
+      );
+      opacity:.7;
+    }
+
+    .footer-copy{
+      margin:0;
+      font-size:11.5px;
+      color:rgba(255,255,255,.6);
+    }
+
+    @media (max-width:600px){
+      .footer-inner{padding:16px 14px 14px;}
+      .footer-nav{gap:8px 14px;}
+      .footer-tags{font-size:12px;}
+    }
+
+    /* Mini table styling */
+    .tinkture-usedlina-tabela{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      margin:10px 0 6px;
+      font-size:13.5px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+    }
+    .tinkture-usedlina-tabela th,
+    .tinkture-usedlina-tabela td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    .tinkture-usedlina-tabela th{
+      text-align:left;
+      font-weight:700;
+      background: linear-gradient(90deg, rgba(43,10,57,.06), rgba(177,133,86,.06));
+    }
+    .tinkture-usedlina-tabela tr:last-child td{border-bottom:none;}
+    .tinkture-usedlina-tabela td:nth-child(2),
+    .tinkture-usedlina-tabela td:nth-child(3){
+      white-space:nowrap;
+      font-weight:650;
+    }
+    @media (max-width:700px){
+      .tinkture-usedlina-tabela{font-size:12.5px;}
+      .tinkture-usedlina-tabela th,
+      .tinkture-usedlina-tabela td{padding:8px;}
+    }
+
+    /* ===== ABOUT – Drawer / Modal ===== */
+    .about-modal{
+      position:fixed;
+      inset:0;
+      z-index:120;
+      display:none;
+    }
+    .about-modal.is-open{display:block;}
+    .about-overlay{
+      position:absolute; inset:0;
+      background:rgba(0,0,0,.25);
+      backdrop-filter:saturate(140%) blur(6px);
+    }
+    .about-drawer{
+      position:absolute;
+      top:0; right:0;
+      height:100%;
+      width:min(560px, 94vw);
+      background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.98));
+      border-left:1px solid rgba(0,0,0,.08);
+      box-shadow:-22px 0 60px rgba(0,0,0,.22);
+      transform:translateX(18px);
+      opacity:0;
+      transition:transform .22s ease, opacity .22s ease;
+      display:flex; flex-direction:column;
+    }
+    .about-modal.is-open .about-drawer{
+      transform:translateX(0);
+      opacity:1;
+    }
+
+    .about-top{
+      padding:16px 16px 12px;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background:linear-gradient(135deg, rgba(43,10,57,.08), rgba(177,133,86,.10));
+    }
+    .about-top .ttl{
+      display:flex; flex-direction:column; gap:2px;
+      min-width:0;
+    }
+    .about-top .ttl strong{ font-size:16px; color:#121512; }
+    .about-top .ttl span{
+      font-size:13px; color:#4d544f;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .icon-btn{
+      border:none;
+      background:rgba(255,255,255,.75);
+      width:38px;height:38px;border-radius:999px;
+      cursor:pointer;
+      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+      border:1px solid rgba(0,0,0,.08);
+      font-size:22px; line-height:0;
+      color:var(--brand);
+    }
+    .icon-btn:hover{background:#fff}
+
+    .about-scroll{ padding:16px; overflow:auto; }
+
+    .about-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 12px 26px rgba(0,0,0,.08);
+      overflow:hidden;
+      margin-bottom:14px;
+    }
+
+    .about-hero{
+      aspect-ratio: 16 / 9;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:center;
+      background:
+        radial-gradient(60% 60% at 20% 30%, rgba(43,10,57,.10), transparent 60%),
+        radial-gradient(60% 60% at 80% 20%, rgba(177,133,86,.12), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,1));
+    }
+    .about-ph{
+      padding:14px 16px;
+      text-align:center;
+      max-width: 44ch;
+      color:#5b615d;
+      font-size:14px;
+      line-height:1.55;
+    }
+    .about-body{padding:14px 14px 16px}
+    .about-body h3{margin:0 0 8px;font-size:18px}
+    .about-body p{
+      margin:0 0 10px;
+      font-size:15px;
+      line-height:1.75;
+      color:#444a45;
+    }
+    .about-body p:last-child{margin-bottom:0}
+    .pill-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .pill{
+      font-size:12px;font-weight:750;
+      color:var(--brand);
+      background:rgba(43,10,57,.06);
+      border:1px solid rgba(43,10,57,.12);
+      padding:8px 10px;border-radius:999px;
+      white-space:nowrap;
+    }
+    .pill.accent{
+      color:#7a511f;
+      background:rgba(177,133,86,.10);
+      border-color:rgba(177,133,86,.22);
+    }
+
+    .about-actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .about-actions .btn{justify-content:center}
+    .about-actions .btn.ghost{min-width:120px}
+
+    #nav-about[aria-expanded="true"]::after{width:100%}
+
+    @media (prefers-reduced-motion: reduce){
+      .about-drawer{transition:none}
+    }
+  </style>
+
+  <!-- Schema.org: LocalBusiness + Laboratory + Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": [
+      "LocalBusiness",
+      "ProfessionalService",
+      "Organization"
+    ],
+    "name": "GoMushroom",
+    "url": "https://gomushroom.si/en/",
+    "legalName": "GoMushroom, pridelava gob, Rok Golob s.p.",
+    "image": "https://gomushroom.si/assets/logo-horizontal.webp",
+    "logo": "https://gomushroom.si/assets/logo-horizontal.webp",
+    "description": "GoMushroom is a boutique lab for triple extraction of medicinal mushrooms (Reishi, Chaga, Lion’s Mane) with ultrasound support, low-temperature vacuum concentration and a HACCP/GMP approach. Small-batch production and R&D with documented traceability.",
+    "email": "info@gomushroom.si",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Prapreče pri Straži 22",
+      "postalCode": "8351",
+      "addressLocality": "Straža",
+      "addressRegion": "Dolenjska",
+      "addressCountry": "SI"
+    },
+    "founder": {
+      "@type": "Person",
+      "name": "Rok Golob"
+    },
+    "sameAs": [
+      "https://www.instagram.com/go.mushroom",
+      "https://www.fungalist.si",
+      "https://www.google.com/maps/place/GoMushroom,+Rok+Golob+s.p./@45.7748522,15.1037526,765m/data=!3m1!1e3!4m6!3m5!1s0x4764ff9c4f75539d:0xa918e20098d087ed!8m2!3d45.7748485!4d15.1063275!16s%2Fg%2F11yckbn157?entry=ttu"
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Medicinal mushroom tinctures",
+      "itemListElement": [
+        {
+          "@type": "Service",
+          "name": "Reishi tincture",
+          "description": "Triple extraction of Reishi (Ganoderma lucidum) with ultrasound support and low-temperature vacuum concentration.",
+          "url": "https://gomushroom.si/en/#reishi"
+        },
+        {
+          "@type": "Service",
+          "name": "Chaga tincture",
+          "description": "Triple extraction of Chaga (Inonotus obliquus) — ethanol, hot-water and pressure-water fractions, with ultrasound support.",
+          "url": "https://gomushroom.si/en/#chaga"
+        },
+        {
+          "@type": "Service",
+          "name": "Lion’s Mane tincture",
+          "description": "Triple extraction of Lion’s Mane (Hericium erinaceus) with ultrasound processing and a pressure phase at 130 °C.",
+          "url": "https://gomushroom.si/en/#bradovec"
+        }
+      ]
+    },
+    "areaServed": {
+      "@type": "AdministrativeArea",
+      "name": "Slovenia"
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday","Tuesday","Wednesday","Thursday","Friday"
+      ],
+      "opens": "16:00",
+      "closes": "20:00",
+      "description": "Visits and collaborations by prior arrangement."
+    }
+  }
+  </script>
+
+  <!-- Schema.org: WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "https://gomushroom.si/en/",
+    "name": "GoMushroom — advanced medicinal mushroom extraction",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.google.com/search?q=site%3Agomushroom.si+{search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <!-- SVG symbols -->
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-drop" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z"/>
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z"/>
+        <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header id="site-header">
+    <div class="wrap nav">
+      <div class="brand">
+        <img src="assets/logo-horizontal.webp" alt="GoMushroom">
+      </div>
+
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
+        </svg>
+      </button>
+
+      <nav id="primary-nav">
+        <a href="#storitve">Services</a>
+        <a href="#pristop">Approach</a>
+        <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">About</a>
+        <a href="#galerija">Gallery</a>
+        <a href="#reference">References</a>
+        <!-- <a href="#kontakt">Contact</a>-->
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="slides">
+        <div class="slide active"><img src="assets/rotovap.webp" alt="Vacuum distillation (rotavap)" fetchpriority="high" width="1600" height="900"></div>
+        <div class="slide"><img src="assets/ultrasonic-probe.webp" alt="Ultrasonic probe" loading="lazy"></div>
+      </div>
+      <button class="arrow prev" aria-label="Previous">‹</button>
+      <button class="arrow next" aria-label="Next">›</button>
+      <div class="dots">
+        <button class="dot active" data-idx="0" aria-label="Image 1"></button>
+        <button class="dot" data-idx="1" aria-label="Image 2"></button>
+      </div>
+
+      <div class="inner wrap">
+        <div class="headline">
+          <div class="kicker">Limited batches • Handmade • Slovenia</div>
+          <h1>Advanced medicinal mushroom extraction.</h1>
+          <p class="lead">
+            A three-step, ultrasound-assisted extraction process, low-temperature
+            <strong>vacuum concentration</strong>, and <strong>standardization</strong> — designed to preserve actives at the highest level.
+          </p>
+          <div class="cta">
+            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a class="btn ghost" href="mailto:info@gomushroom.si">Email</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section id="storitve">
+      <div class="wrap">
+        <div class="section-head">
+          <div><h2>Services</h2><div class="under"></div></div>
+          <p class="lead2"></p>
+        </div>
+
+        <div class="grid grid-3" id="services-grid">
+          <!-- EXTRACTION -->
+          <article class="card service" data-service="ekstrakcije">
+            <div class="media">
+              <img src="assets/analytics-cylinder-lg.webp" alt="Triple extraction of medicinal mushrooms" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Triple extraction</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Ultrasound-assisted extraction</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Low-temp vacuum concentration</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>High active content</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Alcohol & alcohol-free version</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC: dry matter control</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP & GMP principles</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Medicinal mushroom extraction (Reishi, Chaga, Lion’s Mane)</h3>
+            </div>
+          </article>
+
+          <!-- REISHI CULTIVATION -->
+          <article class="card service" data-service="gojenje">
+            <div class="media">
+              <img src="assets/antlers_small.webp" alt="Reishi cultivation (Ganoderma lucidum)" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Cultivation from mycelium to fruiting body</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Organic substrates only</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>In-house substrate sterilization</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Controlled conditions for antler morphology</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Low-temperature drying</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>QC: moisture control</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>Traceability from mycelium to batch</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Reishi cultivation (Ganoderma lucidum)</h3>
+            </div>
+          </article>
+
+          <!-- OTHER SERVICES -->
+          <article class="card service" data-service="botanicne">
+            <div class="media">
+              <img src="assets/filling-line_small.webp" alt="Botanical extracts and substrates" />
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Botanical extracts from selected plants</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Same QC approach as for mushrooms</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Preparation & sterilization of cultivation substrates</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Agar media preparation for mycelium work</li>
+                </ul>
+              </div>
+            </div>
+            <div class="body">
+              <h3>Other services</h3>
+            </div>
+          </article>
+
+          <!-- FULL-WIDTH PANEL -->
+          <div id="service-detail" class="service-detail" aria-live="polite">
+            <div class="content"></div>
+          </div>
+        </div>
+
+        <!-- TEMPLATES -->
+        <template id="tpl-ekstrakcije">
+          <h2>Medicinal mushroom extraction</h2>
+
+          <p>
+            In our lab we’ve developed and standardized a <strong>proprietary medicinal mushroom extraction process</strong>
+            built on science-based principles and supported by published literature as well as our internal measurements and learnings.
+            The key is not a single “magic parameter”, but <strong>efficiency and repeatability</strong> — achieving the best possible,
+            consistent recovery of target fractions for each mushroom species. Detailed parameters (ratios, timings, phase sequence and solvent selection)
+            are part of our internal know-how and are adjusted depending on the species and the target fraction(s).
+          </p>
+
+          <p>
+            Because medicinal mushrooms have a structurally resilient cell wall (e.g., chitin, β-glucans), releasing bioactive compounds
+            can be more demanding than with most plants.<sup class="ref">[1]</sup><sup class="ref">[2]</sup>
+            We therefore prepare the raw material to preserve actives; for Reishi we use a <strong>two-stage drying approach with final vacuum drying</strong>,
+            and apply similar principles to other species (by agreement and according to the matrix).<sup class="ref">[7]</sup><sup class="ref">[8]</sup>
+            Extraction is performed <strong>sequentially (multi-step)</strong> with solvents of different polarity to separately capture
+            water-soluble fractions (polysaccharides/β-glucans) and alcohol-soluble fractions (e.g., triterpenoids/phenolics).<sup class="ref">[6]</sup>
+          </p>
+
+          <p>
+            We further increase yield with <strong>ultrasound-assisted extraction (UAE)</strong>, where acoustic cavitation accelerates mass transfer
+            and improves release of compounds from the matrix. UAE performance is well documented in mushroom bioactive extraction, including parameter
+            optimization for higher yields and/or lower process temperatures.<sup class="ref">[4]</sup><sup class="ref">[5]</sup><sup class="ref">[6]</sup>
+            We also use a <strong>high solvent-to-solid ratio</strong> (typically
+            <strong>~30–40 mL/g</strong>, depending on species and target fraction), in line with published optimization studies.<sup class="ref">[6]</sup><sup class="ref">[9]</sup><sup class="ref">[10]</sup>
+            After extraction, excess solvent is removed by <strong>low-temperature vacuum concentration</strong> (≈ 35–45 °C),
+            and fractions are combined and formulated into the final extract (alcoholic or glycerin-based).
+          </p>
+
+          <h2>What the process includes</h2>
+
+          <ul>
+            <li>
+              <strong>Raw material intake and preparation:</strong>
+              receiving, QC moisture check, conditioning to ~8% moisture, milling to a uniform fraction.
+            </li>
+            <li>
+              <strong>Triple batch extraction:</strong>
+              <ul>
+                <li>ethanol extraction (triterpenes, hericenones, phenolics)</li>
+                <li>hot-water extraction (≈ 80–90 °C, polysaccharides)</li>
+                <li>pressure-water extraction (≈ 120–130 °C, high-molecular compounds)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Fraction blending and formulation</strong> of the final extract
+              (alcoholic or alcohol-free glycerin-based tincture).
+            </li>
+          </ul>
+
+          <h3>Technology highlights</h3>
+          <ul>
+            <li>Ultrasound-assisted extraction with temperature control.</li>
+            <li>High solvent-to-solid ratios for better extraction yield.</li>
+            <li>Low-temperature vacuum concentration.</li>
+          </ul>
+
+          <h3>Input material</h3>
+          <ul>
+            <li>Reishi (Ganoderma lucidum) from our own cultivation (mycelium → fruiting bodies).</li>
+            <li>Other medicinal mushrooms by agreement — we can also process customer-supplied material.</li>
+          </ul>
+
+          <h3>Solvents and formulations</h3>
+          <ul>
+            <li>Food-grade ethanol, purified water (reverse osmosis) and plant glycerin (Ph. Eur.).</li>
+            <li>Choice of <strong>alcoholic</strong> or <strong>alcohol-free (glycerin-based)</strong> version.</li>
+            <li>If needed: sunflower lecithin (stability, bioavailability) and vitamin C (antioxidant protection).</li>
+          </ul>
+
+          <h3>Standardization and quality control</h3>
+          <ul>
+            <li>Dry matter %, ethanol %, glycerin %, density and organoleptic checks.</li>
+            <li>As needed: microbiology and heavy metals (Pb, Cd, Hg).</li>
+            <li>Basic stability checks of the final formulation.</li>
+            <li><strong>Internal QC:</strong> minimum dry matter targets are defined per mushroom species (see table below).</li>
+          </ul>
+
+          <h3>Compliance and documentation</h3>
+          <ul>
+            <li>Execution aligned with HACCP principles and a GMP approach.</li>
+            <li>SOP / work-instruction system and full lot traceability.</li>
+            <li>Ethanol use is managed in compliance with excise documentation requirements.</li>
+          </ul>
+
+          <h2>Sediment in medicinal mushroom tinctures — a sign of high concentration, not a defect</h2>
+          <p>
+            Our tinctures are <strong>intentionally not filtered to absolute clarity</strong>, because heavy filtration can remove part of the actives.
+            Natural sediment is therefore <strong>normal and desirable</strong> — a sign of
+            <strong>high concentration of bioactive compounds</strong>, not a production error.
+          </p>
+
+          <p>
+            Each individual phase (ethanol and water extractions) is <strong>thoroughly filtered</strong>.
+            Sediment typically appears only after <strong>combining the water fraction</strong>, rich in
+            <strong>polysaccharides and β-glucans</strong>, with the <strong>ethanol fraction</strong> containing triterpenes
+            and other alcohol-soluble compounds. Since polysaccharides and β-glucans are
+            <strong>poorly soluble or insoluble</strong> in alcohol, part of them <strong>naturally precipitates</strong> —
+            forming <strong>sediment</strong> at the bottom.
+          </p>
+
+          <p>
+            This sediment usually contains mainly <strong>water-soluble polysaccharides and β-glucans</strong> originating from the water extract.
+            This applies to all species, including <strong>Reishi</strong>, where a fine precipitate often appears after blending water and ethanol phases —
+            typically less pronounced than in higher-solids species (e.g., Lion’s Mane).
+          </p>
+
+          <p>
+            Tinctures with <strong>almost no sediment</strong> typically either
+            <strong>contain few polysaccharides</strong> or have been filtered/diluted to a level where their content is low.
+          </p>
+
+          <p>
+            Dry matter content (and therefore sediment amount) differs between species. Minimum and typical dry matter values in our tinctures:
+          </p>
+
+          <table class="tinkture-usedlina-tabela">
+            <thead>
+              <tr>
+                <th>Species</th>
+                <th>Minimum dry matter (%)</th>
+                <th>Typical dry matter (%)</th>
+                <th>Characteristic</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Reishi</strong> (Ganoderma lucidum)</td>
+                <td>&ge; 4&nbsp;%</td>
+                <td>&asymp; 5&nbsp;%</td>
+                <td>fine but present polysaccharide/β-glucan sediment</td>
+              </tr>
+              <tr>
+                <td><strong>Chaga</strong> (Inonotus obliquus)</td>
+                <td>&ge; 6&nbsp;%</td>
+                <td>&asymp; 8.5&nbsp;%</td>
+                <td>moderate sediment; rich in melanins, betulin and polysaccharides</td>
+              </tr>
+              <tr>
+                <td><strong>Lion’s Mane</strong> (Hericium erinaceus)</td>
+                <td>&ge; 10&nbsp;%</td>
+                <td>&asymp; 13&nbsp;%</td>
+                <td>abundant sediment due to very high polysaccharide content</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Sources</h2>
+          <ol class="viri-seznam">
+            <li id="vir-1">Latgé J-P, Wang T. <em>Modern Biophysics Redefines Our Understanding of Fungal Cell Wall Structure, Complexity, and Dynamics</em>. mBio. 2022. DOI: 10.1128/mbio.01145-22.</li>
+            <li id="vir-2">Bekirian C, et al. <em>β-1,6-glucan plays a central role in the structure and remodeling of the bilaminate fungal cell wall</em>. eLife. 2024.</li>
+            <li id="vir-4">Chemat F, et al. <em>Advances in ultrasound assisted extraction of bioactive compounds: Mechanisms and applications</em>. Ultrasonics Sonochemistry. 2019.</li>
+            <li id="vir-5">Hu D-B, et al. <em>Ultrasound-assisted extraction optimization of polyphenols from mushroom (RSM study)</em>. Frontiers in Nutrition. 2023.</li>
+            <li id="vir-6">Zheng S, et al. <em>Optimization of ultrasonic-assisted extraction of polysaccharides and triterpenoids from Ganoderma lucidum</em>. PLOS ONE. 2020.</li>
+            <li id="vir-7">Chin S-K, Law C-L. <em>Maximizing the Retention of Ganoderic Acids and Water-Soluble Polysaccharides Content of Ganoderma lucidum Using Two-Stage Dehydration Method</em>. Drying Technology. 2014.</li>
+            <li id="vir-8">Li Y, et al. <em>Effects of drying methods on bioactive components in Ganoderma lucidum (incl. vacuum drying)</em>. Food Research International. 2023.</li>
+            <li id="vir-9">Gao Y, et al. <em>Study of the Extraction Process and In Vivo Inhibitory Effect of Ganoderma lucidum Triterpenes</em>. Molecules. 2011.</li>
+            <li id="vir-10">Zheng S, et al. <em>(Liquid/solid ratio influence in optimized extraction)</em>. PLOS ONE. 2020.</li>
+          </ol>
+        </template>
+
+        <template id="tpl-gojenje">
+          <h2>Reishi cultivation</h2>
+
+          <p>
+            At GoMushroom, we cultivate Reishi (<em>Ganoderma lucidum</em>) end-to-end — from mycelium propagation,
+            substrate preparation and <strong>sterilization</strong>, to <strong>controlled fruiting</strong>.
+            We work in small batches and manually inspect every bag, allowing stable growth conditions,
+            high-quality raw material, and full traceability from selected strain to tincture batch.
+            We most often choose the <strong>antler morphology</strong>, as research suggests this form is often associated with
+            a <strong>higher content of key Reishi actives</strong> — especially <strong>triterpenes</strong>,
+            in particular <strong>ganoderic acids</strong>.
+            <sup><a href="#ref-1">[1]</a> <a href="#ref-2">[2]</a> <a href="#ref-3">[3]</a></sup>
+          </p>
+
+          <h3>How we cultivate Reishi</h3>
+          <ul>
+            <li><strong>Mycelium → sterile substrate → fruiting bodies</strong> (antlers or caps)</li>
+            <li>All stages in-house: mycelium work, substrate prep/sterilization, fruiting in a controlled environment</li>
+            <li><strong>Organic inputs:</strong> wheat bran, millet, rye, beech sawdust from Kočevje forests</li>
+            <li><strong>Small batches:</strong> manual control of every bag</li>
+            <li><strong>Traceability:</strong> from selected strain to tincture batch</li>
+            <li><strong>Antler conditions:</strong> limited airflow, elevated CO₂ and controlled light</li>
+          </ul>
+
+          <h3>Why antlers: a natural response and a “triterpenoid-forward” profile</h3>
+
+          <p>
+            Antler morphology can be viewed as a <strong>natural response to specific growth conditions</strong>.
+            In a controlled environment with <strong>restricted ventilation</strong> (leading to higher CO₂) and
+            <strong>controlled light</strong>, Reishi may develop <strong>branched antler fruiting bodies</strong> instead of caps.
+            Controlled experiments show that manipulating ventilation (CO₂) and light can reliably produce antler-type morphology,
+            and may also shift the profile of bioactive compounds and antioxidant potential.
+            <sup><a href="#ref-4">[4]</a></sup>
+          </p>
+
+          <p>
+            In addition, triterpenes and biological activities have been reported from antler-shaped <em>G. lucidum</em> fruiting bodies,
+            supporting the idea that antler morphology as a “stress-like” form can contribute to a richer secondary metabolite profile.
+            <sup><a href="#ref-5">[5]</a></sup>
+          </p>
+
+          <hr style="border:none; border-top:1px solid var(--line); margin:1.2rem 0;">
+
+          <h4>Literature</h4>
+          <ol class="refs" style="margin:0; padding-left:1.2rem; line-height:1.55;">
+            <li id="ref-1" style="margin:.35rem 0;">
+              Wu, S. et al. (2022). <em>Ganoderma lucidum: A comprehensive review of phytochemistry, efficacy, safety and clinical study</em>.
+              <strong>Food Science and Human Wellness</strong>.
+              DOI: <a href="https://doi.org/10.26599/FSHW.2022.9250051" target="_blank" rel="noopener noreferrer">10.26599/FSHW.2022.9250051</a>
+              · SciOpen: <a href="https://www.sciopen.com/article/10.26599/FSHW.2022.9250051" target="_blank" rel="noopener noreferrer">link</a>
+            </li>
+
+            <li id="ref-2" style="margin:.35rem 0;">
+              Xia, Q. et al. (2014). <em>A Comprehensive Review of the Structure Elucidation and Biological Activity of Triterpenoids from Ganoderma spp.</em>
+              <strong>Molecules</strong>, 19(11), 17478–17535.
+              DOI: <a href="https://doi.org/10.3390/molecules191117478" target="_blank" rel="noopener noreferrer">10.3390/molecules191117478</a>
+            </li>
+
+            <li id="ref-3" style="margin:.35rem 0;">
+              (Optional)
+              Wang, S. et al. (2024). <em>Research Progress on the Biological Activity of Ganoderic Acids in Ganoderma lucidum over the Last Five Years</em>.
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11509451/" target="_blank" rel="noopener noreferrer">Open access (PMC)</a>
+            </li>
+
+            <li id="ref-4" style="margin:.35rem 0;">
+              Sudheer, S. et al. (2018). <em>Development of antler-type fruiting bodies of Ganoderma lucidum and determination of its biochemical properties</em>.
+              <strong>Fungal Biology</strong>, 122(5), 293–301.
+              DOI: <a href="https://doi.org/10.1016/j.funbio.2018.01.007" target="_blank" rel="noopener noreferrer">10.1016/j.funbio.2018.01.007</a>
+              · PubMed: <a href="https://pubmed.ncbi.nlm.nih.gov/29665955/" target="_blank" rel="noopener noreferrer">29665955</a>
+            </li>
+
+            <li id="ref-5" style="margin:.35rem 0;">
+              Shao, H. et al. (2024). <em>Triterpenes from antler-shaped fruiting body of Ganoderma lucidum and their hepatoprotective activities</em>.
+              <strong>Phytochemistry</strong>, 224, 114148.
+              DOI: <a href="https://doi.org/10.1016/j.phytochem.2024.114148" target="_blank" rel="noopener noreferrer">10.1016/j.phytochem.2024.114148</a>
+              · PubMed: <a href="https://pubmed.ncbi.nlm.nih.gov/38763311/" target="_blank" rel="noopener noreferrer">38763311</a>
+            </li>
+          </ol>
+        </template>
+
+        <template id="tpl-botanicne">
+          <h3>Botanical extracts</h3>
+          <ul>
+            <li>Spruce shoots & selected plants; EtOH / glycerin / H₂O</li>
+            <li>Same QC approach as for mushrooms (HACCP/GMP)</li>
+            <li>By agreement: target profile, taste, viscosity, filling</li>
+          </ul>
+          <h3>Substrate sterilization</h3>
+          <ul>
+            <li>Preparation of organic substrates</li>
+            <li>Sterilization of substrates and grain</li>
+            <li>Agar media preparation and sterilization</li>
+            <li>Mycelium inoculation</li>
+          </ul>
+        </template>
+      </div>
+    </section>
+
+    <!-- APPROACH -->
+    <section id="pristop">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Approach — triple extraction & vacuum concentration</h2>
+            <div class="under"></div>
+          </div>
+          <p class="lead2">We push each mushroom to its maximum — repeatably, traceably, and gently.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step tech">
+            <div class="num">Step 1</div>
+            <h3>Triple extraction</h3>
+            <p>Ethanol → hot-water → pressure-water. Each phase targets a different compound spectrum, resulting in a full-range extract.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Step 2</div>
+            <h3>High solvent volume</h3>
+            <p>Higher solvent volume prevents early saturation, maintains mass transfer, and increases overall extraction yield.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Step 3</div>
+            <h3>Ultrasound support</h3>
+            <p>Ultrasound microcavitation loosens the mushroom matrix, speeding up extraction and increasing yield.</p>
+          </div>
+
+          <div class="step tech">
+            <div class="num">Step 4</div>
+            <h3>Vacuum concentration</h3>
+            <p>Solvents are removed at lower temperatures, preserving sensitive compounds and retaining natural aroma and color.</p>
+          </div>
+
+          <div class="step qc">
+            <div class="num">QC 1</div>
+            <h3>Quality</h3>
+            <p>Internal QC on raw materials and finished products: dry matter, density, extractable fraction, and batch traceability.</p>
+          </div>
+
+          <div class="step qc">
+            <div class="num">QC 2</div>
+            <h3>Compliance</h3>
+            <p>Work follows HACCP principles and a GMP approach; ethanol use is documented in line with excise records.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="galerija">
+      <div class="wrap">
+        <div class="section-head">
+          <div><h2>Gallery</h2><div class="under"></div></div>
+          <p class="lead2"></p>
+        </div>
+
+        <div class="gallery-grid">
+          <figure class="g-item" data-title="Ultrasonic probe" data-text="Description…">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/ultrasonic-probe.webp" alt="Ultrasonic probe">
+            <div class="g-overlay"><div class="box">
+              <h4>Ultrasonic probe</h4>
+              <p>
+                An ultrasonic probe creates very fast mechanical vibrations in the solvent–mushroom mixture.
+                In liquids, these vibrations generate cavitation — tiny bubbles that collapse and produce strong micro-currents.
+                These “micro-impacts” loosen and partially disrupt mushroom cell walls, making it easier for actives to be released.
+                At the same time, mixing improves at the micro-scale, accelerating transfer from the mushroom matrix into the solvent.
+                The result is faster extraction and higher yield.
+              </p>
+            </div></div>
+          </figure>
+
+          <figure class="g-item" data-title="Rotavap" data-text="Description…">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/rotovap.webp" alt="Rotavap">
+            <div class="g-overlay"><div class="box">
+              <h4>Rotavap</h4>
+              <p>
+                A rotary evaporator lets us concentrate the extract (remove solvent) at low temperatures,
+                helping preserve thermolabile compounds. Low boiling points are achieved with vacuum,
+                typically in the 10–150 mbar range. Under these conditions, water can boil at ~40 °C.
+              </p>
+            </div></div>
+          </figure>
+
+          <figure class="g-item" data-title="Moisture analyzer" data-text="Halogen moisture analyzer">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/moisture_a.webp" alt="Halogen moisture analyzer">
+            <div class="g-overlay"><div class="box">
+              <h4>Halogen moisture analyzer</h4>
+              <p>
+                We use a halogen moisture analyzer to determine volatile components. In practice, this means
+                measuring moisture in dried, milled mushroom material before extraction, and measuring dry matter in the final tincture.
+              </p>
+            </div></div>
+          </figure>
+
+          <figure class="g-item" data-title="Vacuum oven" data-text="Vacuum oven description">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/vacuum-oven-1600w.webp" alt="Vacuum oven">
+            <div class="g-overlay"><div class="box">
+              <h4>Vacuum oven</h4>
+              <p>
+                We use a vacuum oven for final drying, allowing us to reliably reach ~5% moisture — a level that a conventional dryer
+                often can’t achieve consistently. Under vacuum, water evaporates at lower temperatures, so we can dry around 45 °C and
+                reduce heat load significantly. This helps preserve sensitive compounds and yields a more stable, standardized raw material.
+              </p>
+            </div></div>
+          </figure>
+
+          <figure class="g-item" data-title="Vacuum controller" data-text="Vacuum controller description">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/vcontroller.webp" alt="Vacuum controller">
+            <div class="g-overlay"><div class="box">
+              <h4>Vacuum controller</h4>
+              <p>
+                We use a vacuum controller to precisely adjust pressure during solvent removal. At constant temperature, as ethanol evaporates,
+                the relative water content increases and the boiling point rises. By regulating vacuum, we stay at the boiling point and keep
+                concentration stable, efficient and low-stress for the extract.
+              </p>
+            </div></div>
+          </figure>
+
+          <figure class="g-item" data-title="Filling line" data-text="Description…">
+            <button class="g-close" type="button" aria-label="Close">×</button>
+            <img src="assets/filling-line_small.webp" alt="Filling line">
+            <div class="g-overlay"><div class="box">
+              <h4>Filling line</h4>
+              <p>
+                Filling is performed under laminar flow of sterile air to reduce environmental impact while bottles are open.
+                We use a dosing pump and a standardized filling procedure for consistent volume and uniform batches.
+              </p>
+            </div></div>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFERENCES -->
+    <section id="reference">
+      <div class="wrap">
+        <div class="section-head">
+          <div><h2>References — Fungalist</h2><div class="under"></div></div>
+          <p class="lead2">Our core partner is <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener noreferrer">Fungalist</a>, where you can find our tinctures.</p>
+        </div>
+
+        <div class="grid-refs">
+          <!-- REISHI -->
+          <article class="card ref" aria-expanded="false" id="reishi">
+            <div class="media">
+              <img src="assets/ref-fungalist-reishi.jpg" alt="Reishi tincture">
+              <div class="topbar">Reishi</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>traceability from raw material to batch</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP approach</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Raw material origin:</strong> GoMushroom Reishi</li>
+                  <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
+                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~5%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Reishi (Ganoderma lucidum), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Reishi</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener noreferrer">Buy at Fungalist</a>
+            </div>
+          </article>
+
+          <!-- LION'S MANE -->
+          <article class="card ref" aria-expanded="false" id="bradovec">
+            <div class="media">
+              <img src="assets/ref-fungalist-lionsmane.jpg" alt="Lion’s Mane tincture">
+              <div class="topbar">Lion’s Mane</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>traceability from raw material to batch</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP approach</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Raw material origin:</strong> Fungalist</li>
+                  <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
+                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~14%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Lion’s Mane (Hericium erinaceus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Lion’s Mane</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener noreferrer">Buy at Fungalist</a>
+            </div>
+          </article>
+
+          <!-- CHAGA -->
+          <article class="card ref" aria-expanded="false" id="chaga">
+            <div class="media">
+              <img src="assets/ref-fungalist-chaga.jpg" alt="Chaga tincture">
+              <div class="topbar">Chaga</div>
+              <div class="hover-panel">
+                <ul class="meta">
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>50 ml · alcoholic &amp; alcohol-free</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>triple ultrasound-assisted extraction</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>vacuum concentration</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>full-spectrum extract</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>traceability from raw material to batch</li>
+                  <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>HACCP/GMP approach</li>
+                </ul>
+              </div>
+              <div class="detail-panel">
+                <ul class="meta">
+                  <li><strong>Raw material origin:</strong> Multiple sources</li>
+                  <li><strong>Process:</strong> Triple ultrasound-assisted extraction.</li>
+                  <li><strong>Standardization:</strong> Ethyl alcohol 30% v/v; Glycerin 75% w/w; dry matter ~8.5%; stable viscosity and taste.</li>
+                  <li><strong>Ingredients:</strong> Chaga (Inonotus obliquus), purified water (reverse osmosis), ethyl alcohol (Ph. Eur.) <em>or</em> plant glycerin (Ph. Eur.), sunflower lecithin (non-GMO), vitamin C.</li>
+                  <li><strong>Compliance:</strong> ethanol tracked per excise records; HACCP & GMP principles; full traceability.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="titlebar">
+              <h3 class="title">Chaga</h3>
+              <a class="buy" href="https://www.fungalist.si" target="_blank" rel="noopener noreferrer">Buy at Fungalist</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="kontakt">
+      <div class="wrap">
+        <div class="section-head"><div><h2>Contact GoMushroom — medicinal mushroom extraction lab</h2><div class="under"></div></div></div>
+
+        <p>
+          Interested in working with GoMushroom? Send me a message and briefly describe what you need (product, raw material, development, wholesale, or a custom project).
+          I’ll reply quickly and suggest next steps: a short call, alignment on goals, then a proposal (timeline, volumes, specifications) and execution planning.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="footer" class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-social" aria-label="Social media">
+        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
+        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
+        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
+        <a href="mailto:

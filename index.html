@@ -1012,35 +1012,62 @@
       <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
     </div>
 
-    <nav id="primary-nav">
+    <nav id="primary-nav" aria-label="Glavna navigacija">
       <a href="#storitve">Storitve</a>
       <a href="#pristop">Pristop</a>
       <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">O meni</a>
       <a href="#galerija">Galerija</a>
       <a href="#reference">Reference</a>
-      <!-- <a href="#kontakt">Kontakt</a>-->
+      <!-- <a href="#kontakt">Kontakt</a> -->
     </nav>
 
     <!-- DESNO: zastavice + hamburger -->
     <div class="nav-actions" aria-label="Jezik in meni">
       <div class="lang-switch" aria-label="Jezik">
         <a class="lang-flag" href="https://gomushroom.si/" aria-label="Slovenščina" lang="sl">
-          <span aria-hidden="true">🇸🇮</span>
+          <!-- Slovenia (inline SVG; dela na Windows/Mac) -->
+          <svg class="flag" viewBox="0 0 36 24" role="img" aria-hidden="true" focusable="false">
+            <rect width="36" height="24" fill="#fff"/>
+            <rect y="8" width="36" height="8" fill="#0b4ea2"/>
+            <rect y="16" width="36" height="8" fill="#d91c1c"/>
+            <!-- preprost grb placeholder (čist pri majhni velikosti) -->
+            <path d="M9 6.2c1.6 0 3.2.7 3.2.7v4.7c0 2.5-1.5 4-3.2 4s-3.2-1.5-3.2-4V6.9S7.4 6.2 9 6.2z"
+                  fill="#0b4ea2" stroke="#fff" stroke-width=".6"/>
+            <path d="M7.3 9.2h3.4M7.3 11h3.4" stroke="#fff" stroke-width=".6" opacity=".95"/>
+            <path d="M7.1 13.2c.7.8 1.2 1.1 1.9 1.1s1.2-.3 1.9-1.1" stroke="#fff" stroke-width=".6" fill="none"/>
+          </svg>
         </a>
+
         <a class="lang-flag" href="https://gomushroom.si/en/" aria-label="English" lang="en">
-          <span aria-hidden="true">🇬🇧</span>
+          <!-- United Kingdom (inline SVG) -->
+          <svg class="flag" viewBox="0 0 36 24" role="img" aria-hidden="true" focusable="false">
+            <rect width="36" height="24" fill="#012169"/>
+            <!-- white diagonals -->
+            <path d="M0 0 L4 0 L36 20 L36 24 L32 24 L0 4 Z" fill="#fff"/>
+            <path d="M36 0 L32 0 L0 20 L0 24 L4 24 L36 4 Z" fill="#fff"/>
+            <!-- red diagonals -->
+            <path d="M0 0 L2.7 0 L36 18.3 L36 24 L33.3 24 L0 5.7 Z" fill="#C8102E"/>
+            <path d="M36 0 L33.3 0 L0 18.3 L0 24 L2.7 24 L36 5.7 Z" fill="#C8102E"/>
+            <!-- white cross -->
+            <rect x="14" width="8" height="24" fill="#fff"/>
+            <rect y="8" width="36" height="8" fill="#fff"/>
+            <!-- red cross -->
+            <rect x="15.6" width="4.8" height="24" fill="#C8102E"/>
+            <rect y="9.6" width="36" height="4.8" fill="#C8102E"/>
+          </svg>
         </a>
       </div>
 
       <button class="nav-toggle" id="nav-toggle" type="button"
               aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
         </svg>
       </button>
     </div>
   </div>
 </header>
+
 
   <main>
     <!-- HERO -->

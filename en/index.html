@@ -1010,12 +1010,6 @@
         <img src="/assets/logo-horizontal.webp" alt="GoMushroom">
       </div>
 
-      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-        </svg>
-      </button>
-
       <nav id="primary-nav">
         <a href="#storitve">Services</a>
         <a href="#pristop">Approach</a>
@@ -1023,11 +1017,24 @@
         <a href="#galerija">Gallery</a>
         <a href="#reference">References</a>
 
-        <div class="lang-switch" aria-label="Language switch">
-          <a class="lang" href="/" data-lang="sl">SI</a>
-          <a class="lang" href="/en/" data-lang="en">EN</a>
+        <!-- DESNO: zastavice + hamburger -->
+    <div class="nav-actions" aria-label="Jezik in meni">
+      <div class="lang-switch" aria-label="Jezik">
+        <a class="lang-flag" href="https://gomushroom.si/" aria-label="Slovenščina" lang="sl">
+          <span aria-hidden="true">🇸🇮</span>
+        </a>
+        <a class="lang-flag" href="https://gomushroom.si/en/" aria-label="English" lang="en">
+          <span aria-hidden="true">🇬🇧</span>
+        </a>
+      </div>
+
+      <button class="nav-toggle" id="nav-toggle" type="button"
+              aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
+        </svg>
+      </button>
         </div>
-      </nav>
     </div>
   </header>
 

@@ -58,91 +58,113 @@
   a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
   .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 
-  /* TOP NAVIGATION BAR */
-  header{
-    position:sticky; top:0; z-index:30;
-    background:rgba(255,255,255,.76);
-    backdrop-filter:saturate(160%) blur(10px);
-    border-bottom:1px solid var(--line);
-    padding-top: env(safe-area-inset-top);
-  }
+/* TOP NAVIGATION BAR */
+header{
+  position:sticky; top:0; z-index:30;
+  background:rgba(255,255,255,.76);
+  backdrop-filter:saturate(160%) blur(10px);
+  border-bottom:1px solid var(--line);
+  padding-top: env(safe-area-inset-top);
+}
 
-  .nav{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:12px 0;
-    position:relative;
-    gap:14px;
-  }
+.nav{
+  display:flex;
+  align-items:center;
+  padding:12px 0;
+  position:relative;
+  gap:14px;
+}
 
-  .brand img{height:42px}
+/* Logo */
+.brand{ flex:0 0 auto; }
+.brand img{height:42px}
 
-  nav{
-    display:flex;
-    gap:22px;
-    margin-left:auto;
-  }
-  nav a{font-size:14px;position:relative;white-space:nowrap}
-  nav a::after{
-    content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;
-    background:linear-gradient(90deg,var(--accent),var(--brand));
-    transition:width .22s ease
-  }
-  nav a:hover::after{width:100%}
+/* Glavni meni */
+nav{
+  display:flex;
+  gap:22px;
+  /* POMEMBNO: odstrani margin-left:auto, ker “požre” prostor zastavic */
+  margin-left:0;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content:center; /* lepše na desktopu */
+}
 
-  /* ===== DESNO: zastavice + hamburger (vedno skupaj) ===== */
-  .nav-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding-right: env(safe-area-inset-right);
-  }
+nav a{font-size:14px;position:relative;white-space:nowrap}
+nav a::after{
+  content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),var(--brand));
+  transition:width .22s ease
+}
+nav a:hover::after{width:100%}
 
-  /* Language switch (flags) */
-  .lang-switch{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    z-index:31;
-  }
+/* ===== DESNO: zastavice + hamburger (vedno skupaj) ===== */
+.nav-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-right: env(safe-area-inset-right);
+  margin-left:auto;        /* to naj potisne desno, ne nav */
+  flex: 0 0 auto;          /* ne dovoli krčenja */
+  white-space: nowrap;
+}
 
-  /* podpira tako .lang kot .lang-flag, da ni “mismatch” napak */
-  .lang,
-  .lang-flag{
-    width:34px;
-    height:34px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:999px;
-    border:1px solid rgba(0,0,0,.10);
-    background:rgba(255,255,255,.78);
-    box-shadow:0 1px 0 rgba(255,255,255,.65) inset, 0 10px 24px rgba(0,0,0,.06);
-    text-decoration:none;
-    line-height:1;
-    font-size:18px;
-    color:var(--brand);
-  }
-  .lang:hover,
-  .lang-flag:hover{ text-decoration:none; background:#fff }
-  .lang:active,
-  .lang-flag:active{ transform:translateY(1px) }
+/* Language switch (flags) */
+.lang-switch{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  z-index:31;
+  flex: 0 0 auto;
+}
 
-  /* Mobile nav toggle */
-  .nav-toggle{
-    display:none;
-    appearance:none;
-    border:1px solid rgba(0,0,0,.08);
-    background:rgba(255,255,255,.78);
-    border-radius:12px;
-    height:40px; width:44px;
-    box-shadow:0 1px 0 rgba(255,255,255,.65) inset, 0 10px 24px rgba(0,0,0,.06);
-    cursor:pointer;
-    padding:0;
-  }
-  .nav-toggle:active{transform:translateY(1px)}
-  .nav-toggle svg{width:22px;height:22px;display:block;margin:0 auto;fill:var(--brand)}
+/* podpira tako .lang kot .lang-flag */
+.lang,
+.lang-flag{
+  width:34px;
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  background:rgba(255,255,255,.78);
+  box-shadow:0 1px 0 rgba(255,255,255,.65) inset, 0 10px 24px rgba(0,0,0,.06);
+  text-decoration:none;
+  line-height:1;
+  font-size:18px;
+  color:var(--brand);
+}
+.lang:hover,
+.lang-flag:hover{ text-decoration:none; background:#fff }
+.lang:active,
+.lang-flag:active{ transform:translateY(1px) }
+
+/* če uporabljaš inline SVG zastavice */
+.lang-flag .flag{
+  width:18px;
+  height:18px;
+  display:block;
+  border-radius:3px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.08);
+}
+
+/* Mobile nav toggle */
+.nav-toggle{
+  display:none;
+  appearance:none;
+  border:1px solid rgba(0,0,0,.08);
+  background:rgba(255,255,255,.78);
+  border-radius:12px;
+  height:40px; width:44px;
+  box-shadow:0 1px 0 rgba(255,255,255,.65) inset, 0 10px 24px rgba(0,0,0,.06);
+  cursor:pointer;
+  padding:0;
+  flex: 0 0 auto;
+}
+.nav-toggle:active{transform:translateY(1px)}
+.nav-toggle svg{width:22px;height:22px;display:block;margin:0 auto;fill:var(--brand)}
+
 
   /* HERO */
   .hero{position:relative;min-height:62vh;display:flex;align-items:center;justify-content:center;overflow:hidden}

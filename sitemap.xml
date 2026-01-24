@@ -8,32 +8,8 @@
   </url>
 
   <url>
-    <loc>https://gomushroom.si/#storitve</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://gomushroom.si/#pristop</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://gomushroom.si/#galerija</loc>
-    <priority>0.6</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://gomushroom.si/#reference</loc>
-    <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://gomushroom.si/#kontakt</loc>
-    <priority>0.7</priority>
+    <loc>https://gomushroom.si/en/</loc>
+    <priority>0.9</priority>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

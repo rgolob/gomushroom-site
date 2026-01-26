@@ -391,77 +391,152 @@ nav a:hover::after{width:100%}
     opacity:.06;transform:rotate(8deg);pointer-events:none;
   }
 
-  /* ===== GALERIJA – masonry ===== */
-  #galerija .gallery-grid{
-    column-count: 2;
-    column-gap: 14px;
-  }
-  @media (min-width:900px){
-    #galerija .gallery-grid{ column-count:3; }
+/* =========================
+   GALERIJA – masonry + overlay + fullscreen (mobile only)
+   ========================= */
+
+/* Masonry grid */
+#galerija .gallery-grid{
+  column-count: 2;
+  column-gap: 14px;
+}
+@media (min-width: 900px){
+  #galerija .gallery-grid{ column-count: 3; }
+}
+
+/* Item */
+.g-item{
+  break-inside: avoid;
+  margin: 0 0 14px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 26px rgba(0,0,0,.08);
+  cursor: pointer;
+  background: #fff;
+}
+.g-item img{
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform .35s ease, filter .25s ease;
+}
+
+/* Overlay tekst */
+.g-overlay{
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.84);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.g-overlay .box{ max-width: 92%; }
+.g-overlay h4{ margin: 0 0 6px; font-size: 17px; }
+.g-overlay p{ margin: 0; font-size: 14.5px; color: #4a504b; line-height: 1.6; }
+
+/* Hover (desktop) */
+@media (hover:hover){
+  .g-item:hover img{ filter: blur(2px) brightness(.95); transform: scale(1.02); }
+  .g-item:hover .g-overlay{ opacity: 1; pointer-events: auto; }
+}
+
+/* Click-open (all devices) = pokaži overlay */
+.g-item.is-open img{ filter: blur(2px) brightness(.95); transform: scale(1.02); }
+.g-item.is-open .g-overlay{ opacity: 1; pointer-events: auto; }
+
+/* Close gumb (prikaži samo na mobile fullscreen; na desktopu ni potreben) */
+.g-close{
+  position: absolute;
+  top: 10px; right: 10px;
+  z-index: 5;
+  width: 40px; height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 26px rgba(0,0,0,.12), 0 1px 0 rgba(255,255,255,.7) inset;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 0;
+  color: var(--brand);
+  display: none;
+}
+
+/* Backdrop (fullscreen mode) */
+.gallery-backdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 109;
+  background: rgba(0,0,0,.22);
+  backdrop-filter: saturate(140%) blur(8px);
+  display: none;
+}
+
+/* =========================
+   MOBILE FULLSCREEN (ONLY when body.gallery-open)
+   ========================= */
+@media (max-width: 899px){
+
+  body.gallery-open{ overflow: hidden; }
+  body.gallery-open .gallery-backdrop{ display: block; }
+
+  body.gallery-open .g-item.is-open{
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    margin: 0;
+    border-radius: 0;
+    background: #000;
+    box-shadow: 0 26px 80px rgba(0,0,0,.22);
   }
 
-  .g-item{
-    break-inside:avoid;
-    margin:0 0 14px;
-    position:relative;
-    border-radius:16px;
-    overflow:hidden;
-    box-shadow:0 10px 26px rgba(0,0,0,.08);
-    cursor:pointer;
-    background:#fff;
-  }
-  .g-item img{
-    width:100%;height:auto;display:block;
-    transition:transform .35s ease, filter .25s ease;
+  body.gallery-open .g-item.is-open img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  .g-overlay{
-    position:absolute;inset:0;
-    background:rgba(255,255,255,.84);
-    backdrop-filter: blur(6px);
-    display:flex;align-items:center;justify-content:center;
-    padding:16px;text-align:left;
-    opacity:0;pointer-events:none;transition:opacity .18s ease;
-  }
-  .g-overlay .box{max-width:92%}
-  .g-overlay h4{margin:0 0 6px;font-size:17px}
-  .g-overlay p{margin:0;font-size:14.5px;color:#4a504b;line-height:1.6}
-
-  @media (hover:hover){
-    .g-item:hover img{filter:blur(2px) brightness(.95);transform:scale(1.02)}
-    .g-item:hover .g-overlay{opacity:1;pointer-events:auto}
+  body.gallery-open .g-item.is-open .g-overlay{
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom,
+      rgba(255,255,255,0.0) 0%,
+      rgba(255,255,255,.78) 38%,
+      rgba(255,255,255,.92) 100%);
   }
 
-  .g-item.is-open img{filter:blur(2px) brightness(.95);transform:scale(1.02)}
-  .g-item.is-open .g-overlay{opacity:1;pointer-events:auto}
-
-  .g-close{
-    position:absolute;
-    top:10px; right:10px;
-    z-index:5;
-    width:40px;height:40px;
-    border-radius:999px;
-    border:1px solid rgba(0,0,0,.12);
-    background:rgba(255,255,255,.85);
-    backdrop-filter: blur(8px);
-    box-shadow:0 10px 26px rgba(0,0,0,.12), 0 1px 0 rgba(255,255,255,.7) inset;
-    cursor:pointer;
-    font-size:22px;
-    line-height:0;
-    color:var(--brand);
-    display:none;
+  body.gallery-open .g-item.is-open .g-overlay .box{
+    max-width: 100%;
+    width: 100%;
+    max-height: min(66vh, 560px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 8px;
   }
-  .g-item.is-open .g-close{display:block;}
 
-  /* ===== MOBILE: gallery fullscreen ===== */
-  body.gallery-open{overflow:hidden}
-  .gallery-backdrop{
-    position:fixed; inset:0; z-index:109;
-    background:rgba(0,0,0,.22);
-    backdrop-filter:saturate(140%) blur(8px);
-    display:none;
+  body.gallery-open .g-item.is-open .g-close{
+    display: block;
+    top: calc(10px + env(safe-area-inset-top));
+    right: calc(10px + env(safe-area-inset-right));
   }
-  body.gallery-open .gallery-backdrop{display:block;}
+}
+
+/* =========================
+   DESKTOP: safety (če kdaj ostane gallery-open)
+   ========================= */
+@media (min-width: 900px){
+  body.gallery-open{ overflow: auto; }
+  body.gallery-open .gallery-backdrop{ display: none; }
+}
+
 
   @media (max-width: 767px){
     .wrap{padding:0 14px}

@@ -395,14 +395,33 @@ nav a:hover::after{width:100%}
    GALERIJA – masonry + overlay + fullscreen (mobile only)
    ========================= */
 
-/* Masonry grid */
 #galerija .gallery-grid{
-  column-count: 2;
-  column-gap: 14px;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap:14px;
 }
+
 @media (min-width: 900px){
-  #galerija .gallery-grid{ column-count: 3; }
+  #galerija .gallery-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
+
+/* pri gridu ne rabiš break-inside */
+#galerija .g-item{
+  margin:0;
+  display:block;
+}
+
+/* stabilen layout, brez “skokov” in glitcha */
+#galerija .g-item img{
+  width:100%;
+  height:auto;
+  display:block;
+  aspect-ratio: 4 / 3;     /* lahko spremeniš (npr. 16/10) */
+  object-fit: cover;
+}
+
 
 /* Item 
 .g-item{

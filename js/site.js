@@ -111,65 +111,74 @@
       });
     })();
 
-    // GALERIJA — "lock" overlay on desktop; on phone expand the clicked figure fullscreen (same element, no separate modal)
-    (function(){
-      const items=[...document.querySelectorAll('.g-item')];
-      const backdrop = document.getElementById('gallery-backdrop');
+   // GALERIJA — desktop: samo overlay tekst (slika ostane); mobile: fullscreen (body.gallery-open)
+(function(){
+  const items=[...document.querySelectorAll('.g-item')];
+  const backdrop = document.getElementById('gallery-backdrop');
 
-      function isMobile(){
-        return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
-      }
+  // Uskladi breakpoint z CSS (če desktop layout preklopi pri 900px, naj bo tudi tukaj)
+  function isDesktop(){
+    return window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
+  }
+  function isMobile(){
+    return !isDesktop();
+  }
 
-      function closeAll(except){
-        items.forEach(it=>{ if(it!==except) it.classList.remove('is-open'); });
-        document.body.classList.remove('gallery-open');
-      }
+  function closeAll(except){
+    items.forEach(it=>{ if(it!==except) it.classList.remove('is-open'); });
+    document.body.classList.remove('gallery-open'); // fullscreen off
+  }
 
-      function openItem(it){
-        closeAll(it);
-        it.classList.add('is-open');
-        if(isMobile()) document.body.classList.add('gallery-open');
-      }
+  function openItem(it){
+    closeAll(it);
+    it.classList.add('is-open');
 
-      function closeItem(it){
-        it.classList.remove('is-open');
-        document.body.classList.remove('gallery-open');
-      }
+    // fullscreen samo na mobile
+    if(isMobile()) document.body.classList.add('gallery-open');
+    else document.body.classList.remove('gallery-open');
+  }
 
-      items.forEach(it=>{
-        const closeBtn = it.querySelector('.g-close');
+  function closeItem(it){
+    it.classList.remove('is-open');
+    document.body.classList.remove('gallery-open');
+  }
 
-        it.addEventListener('click', (e)=>{
-          // če klikneš close gumb, zapri
-          if(e.target === closeBtn) return;
-          const open=it.classList.contains('is-open');
-          if(open) closeItem(it);
-          else openItem(it);
-        });
+  items.forEach(it=>{
+    const closeBtn = it.querySelector('.g-close');
 
-        closeBtn?.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          closeItem(it);
-        });
+    it.addEventListener('click', (e)=>{
+      // če klikneš close gumb, zapri
+      if(closeBtn && (e.target === closeBtn || closeBtn.contains(e.target))) return;
 
-        it.setAttribute('tabindex','0');
-        it.setAttribute('role','button');
-        it.addEventListener('keydown', e=>{
-          if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); }
-        });
-      });
+      const open = it.classList.contains('is-open');
+      if(open) closeItem(it);
+      else openItem(it);
+    });
 
-      backdrop?.addEventListener('click', ()=>closeAll());
+    closeBtn?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      closeItem(it);
+    });
 
-      document.addEventListener('keydown', e=>{
-        if(e.key==='Escape') closeAll();
-      });
+    it.setAttribute('tabindex','0');
+    it.setAttribute('role','button');
+    it.addEventListener('keydown', e=>{
+      if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); }
+    });
+  });
 
-      window.addEventListener('resize', ()=>{
-        // če se spremeni breakpoint, očisti fullscreen stanje
-        if(!isMobile()) document.body.classList.remove('gallery-open');
-      });
-    })();
+  backdrop?.addEventListener('click', ()=>closeAll());
+
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape') closeAll();
+  });
+
+  window.addEventListener('resize', ()=>{
+    // če greš na desktop, nikoli ne pusti fullscreen stanja
+    if(isDesktop()) document.body.classList.remove('gallery-open');
+  });
+})();
+
 
     // REFERENCE – hover + click, open one at a time
     (function(){

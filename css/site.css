@@ -395,10 +395,14 @@ nav a:hover::after{width:100%}
    GALERIJA – masonry + overlay + fullscreen (mobile only)
    ========================= */
 
+/* =========================
+   GALERIJA – GRID layout (namesto columns)
+   ========================= */
+
 #galerija .gallery-grid{
-  display:grid;
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap:14px;
+  gap: 14px;
 }
 
 @media (min-width: 900px){
@@ -407,56 +411,27 @@ nav a:hover::after{width:100%}
   }
 }
 
-/* pri gridu ne rabiš break-inside */
+/* Item (enkrat, brez columns hackov) */
 #galerija .g-item{
-  margin:0;
-  display:block;
-}
-
-/* stabilen layout, brez “skokov” in glitcha */
-#galerija .g-item img{
-  width:100%;
-  height:auto;
-  display:block;
-  aspect-ratio: 16 / 10;     /* lahko spremeniš (npr. 16/10) */
-  object-fit: cover;
-}
-
-
-/* Item 
-.g-item{
-  break-inside: avoid;
-  margin: 0 0 14px;
+  margin: 0;
   position: relative;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 10px 26px rgba(0,0,0,.08);
   cursor: pointer;
   background: #fff;
-}*/
-.g-item{
-  display:inline-block;              /* KLJUČNO za CSS columns stabilnost */
-  width:100%;
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-
-  margin:0 0 14px;
-  position:relative;
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 10px 26px rgba(0,0,0,.08);
-  cursor:pointer;
-  background:#fff;
 }
 
-.g-item img{
+/* Slika */
+#galerija .g-item img{
   width: 100%;
   height: auto;
   display: block;
+  aspect-ratio: 16 / 10;           /* prilagodi po želji */
+  object-fit: cover;
   transition: transform .35s ease, filter .25s ease;
- 
 }
+
 
 /* Overlay tekst */
 .g-overlay{

@@ -435,7 +435,8 @@ nav a:hover::after{width:100%}
   width: 100%;
   height: auto;
   display: block;
-  transition: transform .35s ease, filter .25s ease;
+  /*transition: transform .35s ease, filter .25s ease;*/
+  aspect-ratio: 4 / 3;  /* približno; po želji spremeni */
 }
 
 /* Overlay tekst */

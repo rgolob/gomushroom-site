@@ -323,10 +323,7 @@ document.querySelectorAll('.card.service').forEach(card => {
   const src = img.currentSrc || img.src;
   card.style.setProperty('--card-img', `url("${src}")`);
 });
-  </script>
 
-  
-  <script>
 (function () {
   const GA_ID = "G-L2PGE7VDHB";
   let loaded = false;

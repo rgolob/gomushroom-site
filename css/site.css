@@ -404,7 +404,7 @@ nav a:hover::after{width:100%}
   #galerija .gallery-grid{ column-count: 3; }
 }
 
-/* Item */
+/* Item 
 .g-item{
   break-inside: avoid;
   margin: 0 0 14px;
@@ -414,7 +414,23 @@ nav a:hover::after{width:100%}
   box-shadow: 0 10px 26px rgba(0,0,0,.08);
   cursor: pointer;
   background: #fff;
+}*/
+.g-item{
+  display:inline-block;              /* KLJUČNO za CSS columns stabilnost */
+  width:100%;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+
+  margin:0 0 14px;
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 10px 26px rgba(0,0,0,.08);
+  cursor:pointer;
+  background:#fff;
 }
+
 .g-item img{
   width: 100%;
   height: auto;

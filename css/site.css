@@ -391,9 +391,6 @@ nav a:hover::after{width:100%}
     opacity:.06;transform:rotate(8deg);pointer-events:none;
   }
 
-/* =========================
-   GALERIJA – masonry + overlay + fullscreen (mobile only)
-   ========================= */
 
 /* =========================
    GALERIJA – GRID layout (namesto columns)
@@ -427,7 +424,7 @@ nav a:hover::after{width:100%}
   width: 100%;
   height: auto;
   display: block;
-  aspect-ratio: 16 / 10;           /* prilagodi po želji */
+  aspect-ratio: 10 / 16;           /* prilagodi po želji */
   object-fit: cover;
   transition: transform .35s ease, filter .25s ease;
 }

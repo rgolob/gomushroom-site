@@ -38,7 +38,95 @@
 
   <link rel="preload" as="image" href="https://gomushroom.si/assets/rotovap.webp">
   <link rel="stylesheet" href="https://gomushroom.si/css/site.css">
-  
+
+  <style>
+  /* Premium, “laboratorijsko čisto” – nevtralno, brez posebnih barv */
+  .qc-wrap { padding: 28px 16px; }
+  .qc-card {
+    max-width: 980px; margin: 0 auto;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(6px);
+  }
+
+  .qc-head { display: flex; gap: 18px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+  .qc-kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+  .qc-title { margin: 0 0 10px; font-size: 26px; line-height: 1.15; }
+  .qc-sub { margin: 0; font-size: 15px; line-height: 1.55; opacity: .9; max-width: 70ch; }
+
+  .qc-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .qc-badge {
+    font-size: 12px; padding: 8px 10px;
+    border: 1px solid rgba(0,0,0,.10);
+    border-radius: 999px;
+    background: rgba(0,0,0,.03);
+    white-space: nowrap;
+  }
+
+  .qc-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  @media (max-width: 820px) { .qc-metrics { grid-template-columns: 1fr; } }
+
+  .qc-metric {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    background: rgba(0,0,0,.02);
+  }
+  .qc-metric-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .qc-label { font-weight: 600; }
+  .qc-unit { font-size: 12px; opacity: .7; }
+  .qc-value { font-size: 28px; font-weight: 700; margin-top: 6px; letter-spacing: -0.02em; }
+  .qc-note { font-size: 12px; opacity: .75; margin-top: 4px; }
+
+  .qc-cta {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 16px;
+    padding: 14px;
+    margin-top: 14px;
+    background: rgba(255,255,255,.85);
+  }
+  .qc-cta-title { margin: 0; font-weight: 700; }
+  .qc-cta-sub { margin: 4px 0 0; font-size: 13px; opacity: .8; }
+  .qc-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,.15);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    background: rgba(0,0,0,.06);
+  }
+  .qc-btn:hover { background: rgba(0,0,0,.09); }
+
+  .qc-pdfs { margin-top: 12px; display: grid; gap: 10px; }
+  .qc-pdf {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 14px;
+    padding: 12px 12px;
+    text-decoration: none;
+    display: grid;
+    gap: 4px;
+    background: rgba(0,0,0,.02);
+  }
+  .qc-pdf-title { font-weight: 700; }
+  .qc-pdf-meta { font-size: 12px; opacity: .75; }
+
+  .qc-faq { margin-top: 14px; border-top: 1px solid rgba(0,0,0,.08); padding-top: 10px; }
+  .qc-q { border: 1px solid rgba(0,0,0,.08); border-radius: 14px; padding: 10px 12px; margin-top: 10px; background: rgba(255,255,255,.9); }
+  .qc-q > summary { cursor: pointer; font-weight: 700; list-style: none; }
+  .qc-q > summary::-webkit-details-marker { display: none; }
+  .qc-a { margin-top: 10px; font-size: 14px; line-height: 1.55; opacity: .9; }
+</style>
   <!-- Schema.org: LocalBusiness + Laboratory + Organization -->
   <script type="application/ld+json">
   {
@@ -180,9 +268,6 @@
     </div>
   </div>
 </header>
-
-
-
   <main>
     <!-- HERO -->
     <section class="hero">
@@ -217,6 +302,8 @@
         </div>
       </div>
     </section>
+
+    
 <section class="qc-wrap" aria-labelledby="qc-title">
   <div class="qc-card">
     <div class="qc-head">
@@ -276,7 +363,59 @@
     </div>
 
     <!-- (opcijsko) seznam PDFjev -->
-    <div id="certifikat
+    <div id="certifikati" class="qc-pdfs">
+      <a class="qc-pdf" href="PATH/REISHI_COA.pdf" target="_blank" rel="noopener">
+        <span class="qc-pdf-title">Reishi — Certifikat analize (PDF)</span>
+        <span class="qc-pdf-meta">Serija: R-2026-02 • Pb/Cd/Hg</span>
+      </a>
+      <a class="qc-pdf" href="PATH/CHAGA_COA.pdf" target="_blank" rel="noopener">
+        <span class="qc-pdf-title">Chaga — Certifikat analize (PDF)</span>
+        <span class="qc-pdf-meta">Serija: C-2026-02 • Pb/Cd/Hg</span>
+      </a>
+    </div>
+
+    <div class="qc-faq">
+      <details class="qc-q">
+        <summary>Zakaj sploh testirati težke kovine?</summary>
+        <div class="qc-a">
+          Težke kovine so v sledovih naravno prisotne v okolju (zemlja, voda, zrak) in se lahko pojavijo tudi v hrani.
+          Ker so pri dolgotrajni izpostavljenosti lahko problematične, je njihovo spremljanje del odgovorne proizvodnje.
+        </div>
+      </details>
+
+      <details class="qc-q">
+        <summary>Zakaj je to pri tinkturah še posebej pomembno?</summary>
+        <div class="qc-a">
+          Tinkture so koncentrirani izvlečki. Če je v surovini karkoli prisotno, se lahko pri koncentriranju “zgošči”.
+          Zato analiziramo končni izdelek — tisto, kar gre v stekleničko.
+        </div>
+      </details>
+
+      <details class="qc-q">
+        <summary>Od kod lahko težke kovine pridejo v tinkturo?</summary>
+        <div class="qc-a">
+          Možni viri so substrat/okolje (gobe vežejo minerale), voda ali alkohol ter procesna oprema, če ni ustrezno vzdrževana.
+        </div>
+      </details>
+
+      <details class="qc-q">
+        <summary>Kako to preprečujemo?</summary>
+        <div class="qc-a">
+          Nadzorovan izvor surovin, kontrolirani pogoji gojenja, prečiščena voda, certificiran etanol,
+          kakovostno nerjaveče jeklo in redna pasivacija ter vzdrževanje opreme.
+        </div>
+      </details>
+
+      <details class="qc-q">
+        <summary>Kaj pomeni mg/kg?</summary>
+        <div class="qc-a">
+          mg/kg pomeni miligram snovi na kilogram izdelka. Gre za zelo majhne količine (sledove), merjene z občutljivimi laboratorijskimi metodami.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+    
  <!-- FOOTER -->
   <footer id="footer" class="site-footer">
     <div class="footer-inner">

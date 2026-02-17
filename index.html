@@ -187,40 +187,79 @@
 
 
   <main>
-    <!-- HERO -->
-    <section class="hero">
-      <div class="slides">
-        <div class="slide active">
-          <img src="/assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)" fetchpriority="high" width="1600" height="900">
-        </div>
-        <div class="slide">
-          <img src="/assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" loading="lazy" width="1600" height="900">
-        </div>
-      </div>
-      <button class="arrow prev" aria-label="Prejšnja">‹</button>
-      <button class="arrow next" aria-label="Naslednja">›</button>
-      <div class="dots">
-        <button class="dot active" data-idx="0" aria-label="Slika 1"></button>
-        <button class="dot" data-idx="1" aria-label="Slika 2"></button>
-      </div>
+  <!-- HERO -->
+<section class="hero">
+  <div class="slides">
 
-      <div class="inner wrap">
-        <div class="headline">
-          <div class="kicker">Omejene serije • Ročno • Slovenija</div>
-          <h1>Napredne ekstrakcije medicinskih gob.</h1>
-          <p class="lead">
-            Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno
-            <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
-          </p>
-          <div class="cta">
-            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- SLIDE 1 -->
+    <div class="slide active">
+      <picture>
+        <!-- Mobilna slika -->
+        <source
+          srcset="/assets/rotovap_mobile.webp"
+          media="(max-width: 768px)">
 
+        <!-- Desktop slika -->
+        <source
+          srcset="/assets/rotovap.webp"
+          media="(min-width: 769px)">
+
+        <!-- Fallback -->
+        <img
+          src="/assets/rotovap.webp"
+          alt="Vakuumska destilacija (rotavap)"
+          fetchpriority="high"
+          width="1600"
+          height="900">
+      </picture>
+    </div>
+
+    <!-- SLIDE 2 -->
+    <div class="slide">
+      <picture>
+        <source
+          srcset="/assets/ultrasonic-probe_mobile.webp"
+          media="(max-width: 768px)">
+
+        <source
+          srcset="/assets/ultrasonic-probe.webp"
+          media="(min-width: 769px)">
+
+        <img
+          src="/assets/ultrasonic-probe.webp"
+          alt="Ultrazvočna sonda"
+          loading="lazy"
+          width="1600"
+          height="900">
+      </picture>
+    </div>
+
+  </div>
+
+  <button class="arrow prev" aria-label="Prejšnja">‹</button>
+  <button class="arrow next" aria-label="Naslednja">›</button>
+
+  <div class="dots">
+    <button class="dot active" data-idx="0" aria-label="Slika 1"></button>
+    <button class="dot" data-idx="1" aria-label="Slika 2"></button>
+  </div>
+
+  <div class="inner wrap">
+    <div class="headline">
+      <div class="kicker">Omejene serije • Ročno • Slovenija</div>
+      <h1>Napredne ekstrakcije medicinskih gob.</h1>
+      <p class="lead">
+        Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno
+        <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
+      </p>
+      <div class="cta">
+        <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
+      </div>
+    </div>
+  </div>
+</section>
     <!-- STORITVE -->
     <section id="storitve">
       <div class="wrap">
@@ -233,7 +272,7 @@
           <!-- EKSTRAKCIJE GOB -->
           <article class="card service" data-service="ekstrakcije">
             <div class="media">
-              <img src="/assets/analytics-cylinder-lg.webp" alt="Trojna ekstrakcija medicinskih gob" />
+              <img src="/assets/analytics-cylinder.webp" alt="Trojna ekstrakcija medicinskih gob" />
               <div class="hover-panel">
                 <ul class="meta">
                   <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>Trojna ekstrakcija</li>

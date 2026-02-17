@@ -388,56 +388,33 @@
     </div>
   </div>
 </header>
+  
   <main>
 <!-- HERO -->
 <section class="hero">
   <div class="slides">
-
     <!-- SLIDE 1 -->
     <div class="slide active">
       <picture>
         <!-- Mobilna slika -->
-        <source
-          srcset="/assets/rotovap_mobile.webp"
-          media="(max-width: 768px)">
-
+        <source srcset="/assets/rotovap_mobile.webp" media="(max-width: 768px)">
         <!-- Desktop slika -->
-        <source
-          srcset="/assets/rotovap.webp"
-          media="(min-width: 769px)">
-
+        <source srcset="/assets/rotovap.webp" media="(min-width: 769px)">
         <!-- Fallback -->
-        <img
-          src="/assets/rotovap.webp"
-          alt="Vakuumska destilacija (rotavap)"
-          fetchpriority="high"
-          width="1600"
-          height="900">
+        <img src="/assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)" fetchpriority="high" loading="eager" decoding="async" width="1600" height="900">
       </picture>
     </div>
 
     <!-- SLIDE 2 -->
     <div class="slide">
       <picture>
-        <source
-          srcset="/assets/ultrasonic-probe_mobile.webp"
-          media="(max-width: 768px)">
-
-        <source
-          srcset="/assets/ultrasonic-probe.webp"
-          media="(min-width: 769px)">
-
-        <img
-          src="/assets/ultrasonic-probe.webp"
-          alt="Ultrazvočna sonda"
-          loading="lazy"
-          width="1600"
-          height="900">
+        <source srcset="/assets/ultrasonic-probe_mobile.webp" media="(max-width: 768px)">
+        <source srcset="/assets/ultrasonic-probe.webp" media="(min-width: 769px)">
+        <img src="/assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" fetchpriority="low" loading="lazy" decoding="async" width="1600" height="900">
       </picture>
     </div>
-
   </div>
-
+  
   <button class="arrow prev" aria-label="Prejšnja">‹</button>
   <button class="arrow next" aria-label="Naslednja">›</button>
 

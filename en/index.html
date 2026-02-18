@@ -187,34 +187,69 @@
 
   <main>
     <!-- HERO -->
-    <section class="hero">
-      <div class="slides">
-        <div class="slide active"><img src="/assets/rotovap.webp" alt="Vacuum distillation (rotavap)" fetchpriority="high" width="1600" height="900"></div>
-        <div class="slide"><img src="/assets/ultrasonic-probe.webp" alt="Ultrasonic probe" loading="lazy"></div>
-      </div>
-      <button class="arrow prev" aria-label="Previous">‹</button>
-      <button class="arrow next" aria-label="Next">›</button>
-      <div class="dots">
-        <button class="dot active" data-idx="0" aria-label="Image 1"></button>
-        <button class="dot" data-idx="1" aria-label="Image 2"></button>
-      </div>
+   <section class="hero">
+  <div class="slides">
+    <!-- SLIDE 1 -->
+    <div class="slide active">
+      <img
+        src="/assets/rotovap_720.webp"
+        srcset="/assets/rotovap_480.webp 480w,
+                /assets/rotovap_720.webp 720w,
+                /assets/rotovap_960.webp 960w,
+                /assets/rotovap_1600.webp 1600w"
+        sizes="100vw"
+        alt="Vakuumska destilacija (rotovap)"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
+    </div>
 
-      <div class="inner wrap">
-        <div class="headline">
-          <div class="kicker">Limited batches • Hand-crafted • Slovenia</div>
-          <h1>Advanced medicinal mushroom extraction.</h1>
-          <p class="lead">
-            A three-stage, ultrasound-assisted extraction, low-temperature
-            <strong>vacuum concentration</strong> and <strong>standardization</strong> — designed to preserve actives at maximum.
-          </p>
-          <div class="cta">
-            <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-            <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a class="btn ghost" href="mailto:info@gomushroom.si">Email</a>
-          </div>
-        </div>
+    <!-- SLIDE 2 -->
+    <div class="slide">
+      <img
+        src="/assets/ultrasonic-probe_720.webp"
+        srcset="/assets/ultrasonic-probe_480.webp 480w,
+                /assets/ultrasonic-probe_720.webp 720w,
+                /assets/ultrasonic-probe_960.webp 960w,
+                /assets/ultrasonic-probe_1600.webp 1600w"
+        sizes="100vw"
+        alt="Ultrazvočna sonda"
+        fetchpriority="low"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
+    </div>
+  </div>
+
+  <button class="arrow prev" aria-label="Prejšnja">‹</button>
+  <button class="arrow next" aria-label="Naslednja">›</button>
+
+  <div class="dots">
+    <button class="dot active" data-idx="0" aria-label="Slika 1"></button>
+    <button class="dot" data-idx="1" aria-label="Slika 2"></button>
+  </div>
+
+  <div class="inner wrap">
+    <div class="headline">
+      <div class="kicker">Omejene serije • Ročno • Slovenija</div>
+      <h1>Napredne ekstrakcije medicinskih gob.</h1>
+      <p class="lead">
+        Tri-stopenjska, ultrazvočno podprta ekstrakcija, nizkotemperaturno
+        <strong>vakuumsko koncentriranje</strong> in <strong>standardizacija</strong> — za maksimalno ohranitev učinkovin.
+      </p>
+      <div class="cta">
+        <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a class="btn accent" href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a class="btn ghost" href="mailto:info@gomushroom.si">E-pošta</a>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
     <!-- SERVICES -->
     <section id="storitve">

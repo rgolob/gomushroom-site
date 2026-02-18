@@ -1,24 +1,45 @@
-    // HERO slider
-    (function(){
-      const hero=document.querySelector('.hero');
-      const slides=[...hero.querySelectorAll('.slide')];
-      const dots=[...hero.querySelectorAll('.dot')];
-      const prev=hero.querySelector('.arrow.prev');
-      const next=hero.querySelector('.arrow.next');
-      let i=0,t;
-      const show=n=>{
-        slides[i].classList.remove('active');
-        dots[i].classList.remove('active');
-        i=(n+slides.length)%slides.length;
-        slides[i].classList.add('active');
-        dots[i].classList.add('active');
-      };
-      const auto=()=>{clearInterval(t);t=setInterval(()=>show(i+1),5500)};
-      prev && (prev.onclick=()=>{show(i-1);auto()});
-      next && (next.onclick=()=>{show(i+1);auto()});
-      dots.forEach((d,idx)=>d.onclick=()=>{show(idx);auto()});
-      auto();
-    })();
+// HERO slider
+(function () {
+  function initHero(){
+    const hero = document.querySelector('.hero');
+    if(!hero) return;
+
+    const slides = [...hero.querySelectorAll('.slide')];
+    const dots   = [...hero.querySelectorAll('.dot')];
+    const prev   = hero.querySelector('.arrow.prev');
+    const next   = hero.querySelector('.arrow.next');
+
+    if(!slides.length || !dots.length) return; // guard
+
+    let i = 0, t;
+
+    const show = (n) => {
+      slides[i].classList.remove('active');
+      dots[i].classList.remove('active');
+      i = (n + slides.length) % slides.length;
+      slides[i].classList.add('active');
+      dots[i].classList.add('active');
+    };
+
+    const auto = () => {
+      clearInterval(t);
+      t = setInterval(() => show(i + 1), 5500);
+    };
+
+    prev && (prev.onclick = () => { show(i - 1); auto(); });
+    next && (next.onclick = () => { show(i + 1); auto(); });
+    dots.forEach((d, idx) => d.onclick = () => { show(idx); auto(); });
+
+    auto();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHero);
+  } else {
+    initHero();
+  }
+})();
+
 
     // MOBILE NAV (hamburger)
     (function(){

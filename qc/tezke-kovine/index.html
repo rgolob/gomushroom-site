@@ -391,30 +391,46 @@
   
   <main>
 <!-- HERO -->
-<section class="hero">
+    <!-- HERO -->
+   <section class="hero">
   <div class="slides">
     <!-- SLIDE 1 -->
     <div class="slide active">
-      <picture>
-        <!-- Mobilna slika -->
-        <source srcset="/assets/rotovap_mobile.webp" media="(max-width: 768px)">
-        <!-- Desktop slika -->
-        <source srcset="/assets/rotovap.webp" media="(min-width: 769px)">
-        <!-- Fallback -->
-        <img src="/assets/rotovap.webp" alt="Vakuumska destilacija (rotavap)" fetchpriority="high" loading="eager" decoding="async" width="1600" height="900">
-      </picture>
+      <img
+        src="/assets/rotovap_720.webp"
+        srcset="/assets/rotovap_480.webp 480w,
+                /assets/rotovap_720.webp 720w,
+                /assets/rotovap_960.webp 960w,
+                /assets/rotovap_1600.webp 1600w"
+        sizes="100vw"
+        alt="Vakuumska destilacija (rotovap)"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
     </div>
 
     <!-- SLIDE 2 -->
     <div class="slide">
-      <picture>
-        <source srcset="/assets/ultrasonic-probe_mobile.webp" media="(max-width: 768px)">
-        <source srcset="/assets/ultrasonic-probe.webp" media="(min-width: 769px)">
-        <img src="/assets/ultrasonic-probe.webp" alt="Ultrazvočna sonda" fetchpriority="low" decoding="async" width="1600" height="900">
-      </picture>
+      <img
+        src="/assets/ips_720.webp"
+        srcset="/assets/ips_480.webp 480w,
+                /assets/ips_720.webp 720w,
+                /assets/ips_960.webp 960w,
+                /assets/ips_1600.webp 1600w"
+        sizes="100vw"
+        alt="Ultrazvočna sonda"
+        fetchpriority="low"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
     </div>
   </div>
-  
+
   <button class="arrow prev" aria-label="Prejšnja">‹</button>
   <button class="arrow next" aria-label="Naslednja">›</button>
 

@@ -423,3 +423,62 @@
 
   setTimeout(loadGA, 4000);
 })();
+/* =========================
+   QC tezke kovine
+========================= */
+  (function () {
+    const root = document.getElementById('qc-tezke-kovine');
+    if (!root) return;
+
+    const tabs = Array.from(root.querySelectorAll('.qc-tab[role="tab"]'));
+    const panels = Array.from(root.querySelectorAll('.qc-panel[role="tabpanel"]'));
+
+    function activateTab(tab) {
+      const targetId = tab.getAttribute('aria-controls');
+      const targetPanel = root.querySelector('#' + CSS.escape(targetId));
+      if (!targetPanel) return;
+
+      // Update tabs
+      tabs.forEach(t => {
+        const isActive = (t === tab);
+        t.classList.toggle('is-active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        // roving tabindex for accessibility
+        t.tabIndex = isActive ? 0 : -1;
+      });
+
+      // Update panels
+      panels.forEach(p => {
+        const isActive = (p === targetPanel);
+        p.classList.toggle('is-active', isActive);
+        p.hidden = !isActive;
+      });
+    }
+
+    // Click
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => activateTab(tab));
+
+      // Keyboard navigation (Left/Right/Home/End)
+      tab.addEventListener('keydown', (e) => {
+        const idx = tabs.indexOf(tab);
+        if (idx === -1) return;
+
+        let nextIdx = null;
+        if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+        if (e.key === 'ArrowLeft')  nextIdx = (idx - 1 + tabs.length) % tabs.length;
+        if (e.key === 'Home') nextIdx = 0;
+        if (e.key === 'End')  nextIdx = tabs.length - 1;
+
+        if (nextIdx !== null) {
+          e.preventDefault();
+          tabs[nextIdx].focus();
+          activateTab(tabs[nextIdx]);
+        }
+      });
+    });
+
+    // Ensure initial state is consistent
+    const initial = root.querySelector('.qc-tab.is-active') || tabs[0];
+    if (initial) activateTab(initial);
+  })();

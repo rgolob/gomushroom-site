@@ -926,3 +926,132 @@ body.gallery-open .gallery-backdrop{display:block}
   @media (prefers-reduced-motion: reduce){
     .about-drawer{transition:none}
   }
+/* QC štempelj */
+/* starš mora biti relativno pozicioniran, da se štempelj pravilno postavi */
+/* =========================================
+   QC OKROGEL ŠTEMPELJ (mat, premium)
+   Uporaba: dodaj <a class="qc-stamp-round"> ... </a> znotraj .media
+   ========================================= */
+
+/* starš mora biti relativno pozicioniran */
+.card .media{ position: relative; }
+
+.qc-stamp-round{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  padding-top: 2px;
+
+  /* umirjena sivo-zelena (QC vibe) */
+  background: rgba(228, 238, 232, .88);
+
+  /* bolj “mat” obroba + nežen notranji relief */
+  border: 1px solid rgba(0,0,0,.18);
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.10),
+    inset 0 1px 0 rgba(255,255,255,.55);
+
+  backdrop-filter: blur(8px) saturate(140%);
+
+  /* minimalna rotacija (da se lepo ujame z layoutom) */
+  transform: rotate(2.5deg);
+
+  text-decoration: none;
+  color: rgba(0,0,0,.75);
+}
+
+/* zelo subtilen highlight (da ne izpade plastično) */
+.qc-stamp-round::before{
+  content:"";
+  position:absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%,
+    rgba(255,255,255,.35),
+    rgba(255,255,255,0) 60%);
+  pointer-events: none;
+  opacity: .35;
+}
+
+/* notranji “stamp” ring */
+.qc-stamp-round::after{
+  content:"";
+  position:absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0,0,0,.18);
+  pointer-events: none;
+}
+
+/* kljukica (subtilna) */
+.qc-stamp-round .qc-check{
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
+  opacity: .85;
+}
+
+/* tekst */
+.qc-stamp-round .qc-top{
+  margin-top: 0px; /* prostor za kljukico */
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .35px;
+  text-transform: uppercase;
+}
+
+.qc-stamp-round .qc-mid{
+  font-weight: 800;
+  font-size: 9.5px;
+  letter-spacing: .1px;
+  text-transform: uppercase;
+  line-height: 1.05;
+  text-align: center;
+  padding: 0 6px;
+}
+
+.qc-stamp-round .qc-bot{
+  font-weight: 800;
+  font-size: 9.5px;
+  letter-spacing: .1px;
+  text-transform: uppercase;
+  opacity: .9;
+}
+
+/* hover/focus */
+.qc-stamp-round:hover{
+  transform: rotate(2deg) translateY(-1px);
+}
+
+.qc-stamp-round:focus-visible{
+  outline: 3px solid rgba(0,0,0,.18);
+  outline-offset: 3px;
+}
+
+/* mobilno */
+@media (max-width: 420px){
+  .qc-stamp-round{
+    width: 70px;
+    height: 70px;
+    top: 10px;
+    right: 10px;
+  }
+  .qc-stamp-round .qc-check{ font-size: 13px; top: 7px; }
+  .qc-stamp-round .qc-top{ font-size: 11px; margin-top: 9px; }
+  .qc-stamp-round .qc-mid,
+  .qc-stamp-round .qc-bot{ font-size: 9px; }
+}

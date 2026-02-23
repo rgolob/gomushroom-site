@@ -950,11 +950,11 @@
       </div>
 
       <nav class="footer-nav" aria-label="Spodnja navigacija">
-        <a href="#storitve">Storitve</a>
-        <a href="#pristop">Pristop</a>
-        <a href="#galerija">Galerija</a>
-        <a href="#reference">Reference</a>
-        <a href="#kontakt">Kontakt</a>
+        <a href="/storitve">Storitve</a>
+        <a href="/pristop">Pristop</a>
+        <a href="/galerija">Galerija</a>
+        <a href="/reference">Reference</a>
+        <!--<a href="/kontakt">Kontakt</a>-->
       </nav>
 
       <p class="footer-tags">
@@ -980,20 +980,20 @@
       const hash = window.location.hash;
       if (!hash) return;
 
-      const el = document.querySelector(hash);
-      if (!el) return;
+      const target = document.querySelector(hash);
+      if (!target) return;
 
-      // če je target <details>, ga odpremo
-      const details = el.matches('details') ? el : el.closest('details');
+      // Če je target <details>, odpri. Če je kaj znotraj, najdi najbližji <details>.
+      const details = target.matches('details') ? target : target.closest('details');
       if (details) details.open = true;
 
-      // lepši scroll (če imaš fixed header)
-      const y = (el.getBoundingClientRect().top + window.pageYOffset) - 90;
+      // Smooth scroll brez offseta
+      const y = target.getBoundingClientRect().top + window.pageYOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
 
-    window.addEventListener('hashchange', openHashDetails);
     window.addEventListener('DOMContentLoaded', openHashDetails);
+    window.addEventListener('hashchange', openHashDetails);
   })();
 
       document.getElementById('year').textContent = new Date().getFullYear();

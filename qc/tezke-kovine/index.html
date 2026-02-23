@@ -510,7 +510,7 @@
         Testiranje izvajamo periodično (1× letno) ter ob večjih spremembah tehnološkega postopka.
       </p>
       <div class="cta">
-        <a class="btn brand" href="#howto">Kako merimo</a>
+        <a class="btn brand" href="#kako-merimo">Kako merimo</a>
         <a class="btn accent" href="#certifikati">Certifikati ↓</a>
         <a class="btn ghost" href="/">Nazaj</a>
       </div>
@@ -975,6 +975,28 @@
     </div>
 
     <script>
+      <script>
+  (function () {
+    function openHashDetails() {
+      const hash = window.location.hash;
+      if (!hash) return;
+
+      const el = document.querySelector(hash);
+      if (!el) return;
+
+      // če je target <details>, ga odpremo
+      const details = el.matches('details') ? el : el.closest('details');
+      if (details) details.open = true;
+
+      // lepši scroll (če imaš fixed header)
+      const y = (el.getBoundingClientRect().top + window.pageYOffset) - 90;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+
+    window.addEventListener('hashchange', openHashDetails);
+    window.addEventListener('DOMContentLoaded', openHashDetails);
+  })();
+
       document.getElementById('year').textContent = new Date().getFullYear();
     </script>
   </footer>

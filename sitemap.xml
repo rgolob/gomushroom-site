@@ -6,7 +6,13 @@
     <priority>1.0</priority>
     <changefreq>monthly</changefreq>
   </url>
-
+  
+  <url>
+    <loc>https://gomushroom.si/qc/tezke-kovine/</loc>
+    <priority>1.0</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  
   <url>
     <loc>https://gomushroom.si/en/</loc>
     <priority>0.9</priority>

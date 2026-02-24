@@ -191,7 +191,25 @@
   color: #4a504b;
   position:relative; z-index:1;
 }
+.qc-factor{
+  margin-top:8px;
+  font-size:13px;
+  padding-top:8px;
+  border-top:1px dashed #e2e2e2;
+}
+  .qc-panel{
+  transition:opacity .22s ease, transform .22s ease;
+}
 
+.qc-panel.is-active{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.qc-panel:not(.is-active){
+  opacity:0;
+  transform:translateY(6px);
+}
 .qc-highlight{
   margin-top: 16px;
   border: 1px dashed rgba(43,10,57,.22);
@@ -599,7 +617,7 @@
             <div class="qc-panel-head" style="margin-top:1rem;">
               <h3 style="margin:0">Reishi (Ganoderma lucidum) – koncentrirani ekstrakt</h3>
               <p class="lead2" style="margin:.35rem 0 0;">
-                Analiza končnega koncentrata (ICP-MS). Vrednosti so podane v <strong>mg/kg</strong> (enako kot <strong>ppm</strong>).
+                Analiza končnega koncentrata (ICP-OES). Vrednosti so podane v <strong>mg/kg</strong> (enako kot <strong>ppm</strong>).
               </p>
             </div>
 
@@ -612,6 +630,7 @@
                 <div class="qc-value">0,011</div>
                 <div class="qc-note">Zelo nizko</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>3,0 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≈ 273×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -622,6 +641,7 @@
                 <div class="qc-value">0,021</div>
                 <div class="qc-note">Zelo nizko</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>1,0 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≈ 48×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -632,6 +652,7 @@
                 <div class="qc-value">&lt; 0,0010</div>
                 <div class="qc-note">Pod mejo določljivosti</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>0,10 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≥ 100×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -662,7 +683,7 @@
             <div class="qc-cta" style="margin-top:1.25rem;">
               <div class="qc-cta-left">
                 <p class="qc-cta-title">Certifikat analize (COA)</p>
-                <p class="qc-cta-sub">Uradno laboratorijsko poročilo za prikazano serijo (PDF).</p>
+                <p class="qc-cta-sub">Uradno laboratorijsko poročilo zunanjega akreditiranega laboratorija.</p>
               </div>
               <div class="qc-cta-right">
                 <a class="btn accent" href="/doc/Reishi_R240131_COA.pdf" target="_blank" rel="noopener">Odpri COA (PDF)</a>
@@ -675,7 +696,7 @@
             <div class="qc-panel-head" style="margin-top:1rem;">
               <h3 style="margin:0">Resasti bradovec (Hericium erinaceus) – koncentrirani ekstrakt</h3>
               <p class="lead2" style="margin:.35rem 0 0;">
-                Analiza končnega koncentrata (ICP-MS). Vrednosti so podane v <strong>mg/kg</strong> (enako kot <strong>ppm</strong>).
+                Analiza končnega koncentrata (ICP-OES). Vrednosti so podane v <strong>mg/kg</strong> (enako kot <strong>ppm</strong>).
               </p>
             </div>
 
@@ -688,6 +709,7 @@
                 <div class="qc-value">&lt; 0,010</div>
                 <div class="qc-note">Pod mejo določljivosti</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>3,0 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≥ 300×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -698,6 +720,7 @@
                 <div class="qc-value">0,014</div>
                 <div class="qc-note">Zelo nizko</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>1,0 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≈ 71×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -708,6 +731,7 @@
                 <div class="qc-value">0,0015</div>
                 <div class="qc-note">Zelo nizko</div>
                 <div class="qc-ref">Referenčna meja (EU): <strong>0,10 mg/kg</strong></div>
+                <div class="qc-factor"><strong>≈ 67×</strong> pod EU mejo</div>
               </div>
 
               <div class="qc-metric">
@@ -800,7 +824,7 @@
               <h3>Certifikati (COA)</h3>
               <p>
                 Za vsako testirano serijo je na voljo laboratorijski certifikat (PDF), ki vključuje številko poročila,
-                datum analize, uporabljeno metodo (ICP-MS) in rezultate.
+                datum analize, uporabljeno metodo (ICP-OES) in rezultate.
               </p>
             </div>
 
@@ -821,7 +845,7 @@
         <div class="qc-conclusion" style="margin-top:1.5rem;">
           <p>
             Analize na končnem, koncentriranem izdelku potrjujejo čistost surovin, ustreznost uporabljene opreme ter
-            stabilnost proizvodnega procesa. <strong>Kakovost mora biti merljiva.</strong>
+            stabilnost proizvodnega procesa.
           </p>
         </div>
 
@@ -950,10 +974,10 @@
       </div>
 
       <nav class="footer-nav" aria-label="Spodnja navigacija">
-        <a href="/storitve">Storitve</a>
-        <a href="/pristop">Pristop</a>
-        <a href="/galerija">Galerija</a>
-        <a href="/reference">Reference</a>
+        <a href="/#storitve">Storitve</a>
+        <a href="/#pristop">Pristop</a>
+        <a href="/#galerija">Galerija</a>
+        <a href="/#reference">Reference</a>
         <!--<a href="/kontakt">Kontakt</a>-->
       </nav>
 

@@ -248,97 +248,36 @@
   }
   /* ===== QC FAQ (as it was before, but fixed for readability) ===== */
 .qc-faq{ margin-top: 18px; }
-
-/* details card */
-details.qc-q{
+.qc-q{
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--card);
   box-shadow: 0 14px 30px rgba(0,0,0,.08);
   padding: 10px 12px;
-  overflow: hidden; /* prevents weird marker/outline overflow */
 }
-
-/* summary header */
-details.qc-q > summary{
-  cursor: pointer;
+.qc-q > summary{
+  cursor:pointer;
   font-weight: 850;
-  list-style: none;
-  padding: 8px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  line-height: 1.35;
-  color: var(--fg);
+  list-style:none;
+  padding: 6px 6px;
 }
-
-/* remove default marker */
-details.qc-q > summary::-webkit-details-marker{ display:none; }
-details.qc-q > summary::marker{ content: ""; }
-
-/* chevron (right) */
-details.qc-q > summary::after{
-  content: "›";
-  font-size: 20px;
-  line-height: 1;
-  opacity: .75;
-  transform: rotate(0deg);
-  transition: transform .18s ease, opacity .18s ease;
-}
-details.qc-q[open] > summary::after{
-  transform: rotate(90deg);
-  opacity: 1;
-}
-
-/* answer body */
+.qc-q > summary::-webkit-details-marker{ display:none; }
 .qc-a{
-  padding: 10px 8px 12px;
+  padding: 8px 6px 10px;
   color: #444a45;
   line-height: 1.75;
   font-size: 14.5px;
-  max-width: 92ch; /* keeps long lines readable on desktop */
 }
-
-/* make paragraphs & lists readable (this is usually what breaks) */
-.qc-a p{ margin: 0 0 10px; }
-.qc-a p:last-child{ margin-bottom: 0; }
-
-.qc-a ul, .qc-a ol{
-  margin: 8px 0 10px 18px;
-  padding: 0;
-}
-.qc-a li{ margin: 6px 0; }
-.qc-a strong{ font-weight: 800; color: var(--fg); }
-
-/* open state highlight (subtle) */
-details.qc-q[open]{
-  border-color: rgba(177,133,86,.45);
-  box-shadow: 0 18px 44px rgba(0,0,0,.10);
-}
-
-/* keyboard focus */
-details.qc-q > summary:focus{ outline: none; }
-details.qc-q > summary:focus-visible{
-  box-shadow: 0 0 0 3px rgba(177,133,86,.35);
-  border-radius: 14px;
-}
-
-/* anchor offset for sticky header (fixes “prenizko” landing) */
-:target{ scroll-margin-top: 90px; }
-
-
-/* ===== QC FLOW (keeps yours, unchanged, but ensures contrast if needed) ===== */
 .qc-flow{
   display:flex;
   align-items:center;
   gap:0.75rem;
   flex-wrap:wrap;
   padding:0.9rem 1rem;
-  border:1px solid rgba(0,0,0,0.06);       /* changed from white to match your light UI */
+  border:1px solid rgba(255,255,255,0.12);
   border-radius:14px;
-  background:rgba(0,0,0,0.02);             /* same */
+  background:rgba(255,255,255,0.04);
   margin-top:1rem;
 }
 
@@ -355,8 +294,8 @@ details.qc-q > summary:focus-visible{
   display:grid;
   place-items:center;
   border-radius:12px;
-  border:1px solid rgba(0,0,0,0.06);       /* changed from white */
-  background:rgba(0,0,0,0.02);
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.03);
 }
 
 .qc-svg{
@@ -366,9 +305,18 @@ details.qc-q > summary:focus-visible{
   color:currentColor;
 }
 
-.qc-flow-text{ line-height:1.15; }
-.qc-flow-top{ font-size:0.98rem; }
-.qc-flow-bottom{ font-size:0.85rem; opacity:0.85; }
+.qc-flow-text{
+  line-height:1.15;
+}
+
+.qc-flow-top{
+  font-size:0.98rem;
+}
+
+.qc-flow-bottom{
+  font-size:0.85rem;
+  opacity:0.85;
+}
 
 .qc-flow-arrow{
   width:28px;
@@ -378,10 +326,12 @@ details.qc-q > summary:focus-visible{
   place-items:center;
 }
 
+/* mobile: puščice skrijemo, da ni gužve */
 @media (max-width: 520px){
   .qc-flow-arrow{ display:none; }
   .qc-flow-item{ min-width: 100%; }
 }
+
 </style>
 <!-- Schema.org: WebPage (QC – Težke kovine) -->
 <script type="application/ld+json">

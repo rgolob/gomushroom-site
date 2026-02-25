@@ -331,7 +331,32 @@
   .qc-flow-arrow{ display:none; }
   .qc-flow-item{ min-width: 100%; }
 }
+/* ozadje na posamezni kartici rezultatov */  
+.qc-metric{
+  position: relative;
+  overflow: hidden;         /* da motiv ne štrli ven */
+}
 
+.qc-metric--bg::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  pointer-events:none;
+  z-index:0;
+
+  /* subtilen motiv: brand + accent “glow” */
+  background:
+    radial-gradient(120px 90px at 18% 22%, rgba(43,10,57,.10), transparent 62%),
+    radial-gradient(140px 110px at 92% 18%, rgba(177,133,86,.12), transparent 65%);
+  filter: saturate(115%);
+  opacity: .9;
+}
+
+/* poskrbi, da tekst ostane nad motivom */
+.qc-metric > *{
+  position: relative;
+  z-index: 1;
+}
 </style>
 <!-- Schema.org: WebPage (QC – Težke kovine) -->
 <script type="application/ld+json">
@@ -584,7 +609,7 @@
             </div>
 
             <div class="qc-grid" style="margin-top:1rem;">
-              <div class="qc-metric">
+                <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Svinec (Pb)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -595,7 +620,7 @@
                 <div class="qc-factor"><strong>≈ 273×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Kadmij (Cd)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -606,7 +631,7 @@
                 <div class="qc-factor"><strong>≈ 48×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Živo srebro (Hg)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -617,7 +642,7 @@
                 <div class="qc-factor"><strong>≥ 100×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Arzen (As)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -649,7 +674,7 @@
             </div>
 
             <div class="qc-grid" style="margin-top:1rem;">
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Svinec (Pb)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -660,7 +685,7 @@
                 <div class="qc-factor"><strong>≥ 300×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Kadmij (Cd)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -671,7 +696,7 @@
                 <div class="qc-factor"><strong>≈ 71×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Živo srebro (Hg)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -682,7 +707,7 @@
                 <div class="qc-factor"><strong>≈ 67×</strong> pod EU mejo</div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Arzen (As)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -715,7 +740,7 @@
 
             <div class="qc-grid" style="margin-top:1rem;">
             
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Svinec (Pb)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -725,7 +750,7 @@
                 <div class="qc-ref">Referenčna meja (EU): <strong>3,0 mg/kg</strong></div>
               </div>
 
-              <div class="qc-metric">
+              <<div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Kadmij (Cd)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -735,7 +760,7 @@
                 <div class="qc-ref">Referenčna meja (EU): <strong>1,0 mg/kg</strong></div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Živo srebro (Hg)</span>
                   <span class="qc-unit">mg/kg</span>
@@ -745,7 +770,7 @@
                 <div class="qc-ref">Referenčna meja (EU): <strong>0,10 mg/kg</strong></div>
               </div>
 
-              <div class="qc-metric">
+              <div class="qc-metric qc-metric--bg">
                 <div class="qc-top">
                   <span class="qc-label">Arzen (As)</span>
                   <span class="qc-unit">mg/kg</span>

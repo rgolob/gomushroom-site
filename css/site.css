@@ -398,13 +398,13 @@ nav a:hover::after{width:100%}
    ========================= */
 
 /* GRID samo za galerije sekcije z id="galerija" */
-#galerija .gallery-grid{
+.gallery-grid{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:14px;
 }
 @media (min-width:900px){
-  #galerija .gallery-grid{
+  .gallery-grid{
     grid-template-columns:repeat(3, minmax(0, 1fr));
   }
 }

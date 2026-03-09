@@ -356,23 +356,43 @@
     </section>
   </main>
 
-  <footer class="site-footer">
+  <!-- FOOTER -->
+  <footer id="footer" class="site-footer">
     <div class="footer-inner">
-      <div class="footer-social">
-        <a href="https://www.instagram.com/go.mushroom/" aria-label="Instagram"><span>◎</span></a>
+      <div class="footer-social" aria-label="Social media">
+        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
+        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
+        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
+        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
       </div>
 
-      <div class="footer-nav">
-        <a href="https://gomushroom.si/en/#services">Services</a>
-        <a href="https://gomushroom.si/en/#approach">Approach</a>
-        <a href="https://gomushroom.si/en/#about">About</a>
-        <a href="https://gomushroom.si/en/#references">References</a>
-      </div>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="#services">Services</a>
+        <a href="#approach">Approach</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#references">References</a>
+       <!-- <a href="#kontakt">Contact</a>-->
+      </nav>
 
-      <p class="footer-tags">Medicinal mushrooms • Small-batch extracts • Slovenia</p>
-      <div class="footer-line"></div>
-      <p class="footer-copy">© GoMushroom</p>
+      <p class="footer-tags">
+        Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction ·
+        ultrasound-assisted extraction · vacuum concentration · small batches · traceability
+      </p>
+
+      <p class="footer-meta">
+        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
+      </p>
+
+      <div class="footer-line" aria-hidden="true"></div>
+
+      <p class="footer-copy">
+        © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
+      </p>
     </div>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
   </footer>
 
   <script>

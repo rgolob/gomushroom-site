@@ -1505,7 +1505,7 @@ body.gallery-open .gallery-backdrop{display:block}
 .article-block p,
 .article-block ul,
 .article-block ol{
-  max-width: 85ch;
+  max-width: 95ch;
 }
 
 .article-block p + p{

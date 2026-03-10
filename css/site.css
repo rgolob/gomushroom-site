@@ -1135,7 +1135,7 @@ body.gallery-open .gallery-backdrop{display:block}
 
   .qc-block{ padding: 18px 22px 22px; }
 
-  .qc-block-head{
+ /* .qc-block-head{
     display: flex;
    /* justify-content: space-between;
     align-items: flex-end;*/
@@ -1143,8 +1143,16 @@ body.gallery-open .gallery-backdrop{display:block}
     align-items: flex-start;
     gap: 20px;
     margin: 6px 0 12px;
-    /* flex-wrap: wrap;*/
-  }
+     flex-wrap: wrap;
+  }*/
+
+.qc-block-head{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0 12px;
+}
   .qc-block-head h2{ margin: 0; font-size: clamp(20px, 2.4vw, 28px); }
 
   /* Tabs – make buttons look like your site */

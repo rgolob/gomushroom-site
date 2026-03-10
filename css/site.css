@@ -1137,8 +1137,8 @@ body.gallery-open .gallery-backdrop{display:block}
 
  /* .qc-block-head{
     display: flex;
-   /* justify-content: space-between;
-    align-items: flex-end;*/
+    justify-content: space-between;
+    align-items: flex-end;
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
@@ -1180,6 +1180,7 @@ body.gallery-open .gallery-backdrop{display:block}
     display: grid;
     gap: 14px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1.6rem;
   }
   @media (max-width: 980px){
     .qc-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1251,7 +1252,7 @@ body.gallery-open .gallery-backdrop{display:block}
     background: rgba(255,255,255,.90);
     box-shadow: 0 10px 22px rgba(0,0,0,.06);
     flex-wrap: wrap;
-    margin-top: 1.6rem;
+    
   }
   .qc-cta-title{ margin:0; font-weight:900; }
   .qc-cta-sub{ margin:2px 0 0; color: var(--muted); font-size: 13px; }

@@ -1203,6 +1203,12 @@ body.gallery-open .gallery-backdrop{display:block}
   .qc-note{ font-size: 13px; color: var(--muted); margin-top: 2px; }
   .qc-ref{ font-size: 13px; color: #5e645f; margin-top: 10px; }
 
+.qc-results-intro{
+  margin: 0;
+  max-width: 760px;
+  color: #6f6f6f;
+  line-height: 1.55;
+}
   /* Fixed "x under limit" */
   .qc-factor{
     margin-top: 8px;

@@ -1258,6 +1258,57 @@ body.gallery-open .gallery-backdrop{display:block}
     opacity: 0;
     transform: translateY(8px);
   }
+
+  /* ===== QC CAO (as it was before, but fixed for readability) ===== */
+.qc-coa-box{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:20px;
+  padding:1.1rem;
+  background:#fff;
+}
+
+.qc-coa-head{
+  margin-bottom:0.9rem;
+}
+
+.qc-coa-list{
+  display:grid;
+  gap:0.75rem;
+}
+
+.qc-coa-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  padding:0.95rem 1rem;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:14px;
+  text-decoration:none;
+  color:inherit;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+
+.qc-coa-item:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+}
+
+.qc-coa-name{
+  font-weight:700;
+}
+
+.qc-coa-meta{
+  opacity:.7;
+  font-size:.95rem;
+}
+
+.qc-coa-link{
+  font-weight:600;
+  white-space:nowrap;
+}
+
+
   /* ===== QC FAQ (as it was before, but fixed for readability) ===== */
 .qc-faq{ margin-top: 18px; }
 .qc-q{

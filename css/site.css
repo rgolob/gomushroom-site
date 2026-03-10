@@ -1137,11 +1137,13 @@ body.gallery-open .gallery-backdrop{display:block}
 
   .qc-block-head{
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+   /* justify-content: space-between;
+    align-items: flex-end;*/
+    flex-direction: column;
+    align-items: flex-start;
     gap: 20px;
     margin: 6px 0 12px;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap;*/
   }
   .qc-block-head h2{ margin: 0; font-size: clamp(20px, 2.4vw, 28px); }
 

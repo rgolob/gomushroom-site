@@ -1472,7 +1472,7 @@ body.gallery-open .gallery-backdrop{display:block}
   opacity: .92;
   font-size: 15px;
   line-height: 1.7;
-  max-width: 85ch;
+  max-width: 100ch;
 }
 
 .article-badges{

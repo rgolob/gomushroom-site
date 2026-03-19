@@ -1260,11 +1260,21 @@ body.gallery-open .gallery-backdrop{display:block}
   .qc-cta-title{ margin:0; font-weight:900; }
   .qc-cta-sub{ margin:2px 0 0; color: var(--muted); font-size: 13px; }
   .qc-cta-right{ margin-left:auto; }
-  .qc-cta .btn{
-    padding: 11px 16px;
-    border-radius: 14px;
-    font-weight: 800;
-  }
+.qc-cta .btn.accent{
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: none;
+  background: rgba(177,133,86,.12);
+  color: var(--fg);
+  border: 1px solid rgba(177,133,86,.28);
+}
+
+.qc-cta .btn.accent:hover{
+  background: rgba(177,133,86,.18);
+  transform: translateY(-1px);
+}
 
   /* Panels animation (IMPORTANT: works with hidden + class timing) */
   .qc-panels{ position: relative; }

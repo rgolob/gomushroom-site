@@ -188,31 +188,6 @@ transform:translateX(-50%);
 opacity:.6;
 font-size:22px;
 }
-.headline{
-  max-width: 880px;
-  padding: 44px 56px;
-  border-radius: 28px;
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,.82);
-}
-
-.headline h1{
-  line-height: 1.06;
-  letter-spacing: -0.03em;
-  margin-bottom: 18px;
-}
-
-.headline .lead{
-  max-width: 760px;
-  margin: 0 auto;
-  line-height: 1.55;
-}
-
-.hero-badges{
-  margin-top: 22px;
-}
-
-
 
   /* LAYOUT */
   section{padding:64px 0}

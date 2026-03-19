@@ -1135,17 +1135,6 @@ body.gallery-open .gallery-backdrop{display:block}
 
   .qc-block{ padding: 18px 22px 22px; }
 
- /* .qc-block-head{
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    margin: 6px 0 12px;
-     flex-wrap: wrap;
-  }*/
-
 .qc-block-head{
   display: flex;
   flex-direction: column;
@@ -1247,6 +1236,12 @@ body.gallery-open .gallery-backdrop{display:block}
   margin: 0 0 1rem;
   font-size: 13px;
   color: var(--muted);
+}
+.qc-sample-sub{
+  margin: 4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: .01em;
 }
 
   /* CTA */

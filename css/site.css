@@ -1266,9 +1266,9 @@ body.gallery-open .gallery-backdrop{display:block}
   font-weight: 700;
   font-size: 0.95rem;
   box-shadow: none;
-  background: rgba(177,133,86,.12);
+  background: rgba(177,133,86,.16);
   color: var(--fg);
-  border: 1px solid rgba(177,133,86,.28);
+  border: 1px solid rgba(177,133,86,.34);
 }
 
 .qc-cta .btn.accent:hover{

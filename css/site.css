@@ -188,7 +188,10 @@ transform:translateX(-50%);
 opacity:.6;
 font-size:22px;
 }
-
+.headline .kicker{
+  letter-spacing: .18em;
+  font-size: 12px;
+}
   /* LAYOUT */
   section{padding:64px 0}
   .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}

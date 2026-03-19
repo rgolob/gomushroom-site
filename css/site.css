@@ -1243,6 +1243,12 @@ body.gallery-open .gallery-backdrop{display:block}
   .qc-highlight h3{ margin:0 0 6px; }
   .qc-highlight p{ margin:0; color:#5e645f; line-height:1.65; }
 
+.qc-lab-note{
+  margin: 0 0 1rem;
+  font-size: 13px;
+  color: var(--muted);
+}
+
   /* CTA */
   .qc-cta{
     display:flex;

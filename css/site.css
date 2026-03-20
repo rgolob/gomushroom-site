@@ -155,7 +155,8 @@ nav a:hover::after{width:100%}
 .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#2b2f2c;opacity:.9;}
 h1{font-size:clamp(30px,3.4vw,46px);line-height:1.04;letter-spacing:-0.03em;margin:.55rem 0 .8rem;}
 .lead{color:var(--fg);opacity:.9;max-width:52ch;margin:0 auto;font-size:clamp(15px,1.15vw,17px);line-height:1.65;}
-.hero-species{margin:0 0 14px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.95;}
+/*.hero-species{margin:0 0 14px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.95;}*/
+.hero-species{margin:10px 0 20px;font-size:.92rem;letter-spacing:.14em;color:rgba(var(--text),.52)}
 
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;border:1px solid rgba(0,0,0,.06);font-weight:650;box-shadow:0 1px 0 rgba(255,255,255,.6) inset;}

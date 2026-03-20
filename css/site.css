@@ -163,11 +163,14 @@ h1{font-size:clamp(30px,3.4vw,46px);line-height:1.04;letter-spacing:-0.03em;marg
 .btn.accent{background:linear-gradient(135deg,var(--accent),#9b6f45);color:#fff;}
 .btn.ghost{background:#fff;color:#2b0a39;}
 .btn:hover{opacity:.96;text-decoration:none;transform:translateY(-1px);}
-
-.hero-badges{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;font-size:13px;color:var(--muted);}
-.hero-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.66);padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.40);backdrop-filter:blur(6px);}
-
+.hero-badges{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:26px}
+.hero-badge{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:11px 20px;border-radius:999px;background:rgba(255,255,255,.58);border:1px solid rgba(255,255,255,.5);box-shadow:0 6px 18px rgba(0,0,0,.05);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:1rem;font-weight:500;line-height:1;color:rgba(var(--text),.72)}
+.hero-badge .icon{font-size:1.05em;line-height:1}
 .hero-scroll{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);opacity:.6;font-size:22px;}
+
+
+
+
 
 /* MOBILE HERO OPTIMIZATION */
 @media (max-width:640px){

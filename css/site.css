@@ -170,6 +170,11 @@ h1{font-size:clamp(30px,3.4vw,46px);line-height:1.04;letter-spacing:-0.03em;marg
 .hero-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.18);font-size:.78rem;font-weight:500;line-height:1;color:rgba(var(--text),.60);white-space:nowrap}
 .hero-badge .icon{font-size:.9em;line-height:1}
 
+.hero-badges--cta{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
+.hero-badge--link{display:inline-flex;align-items:center;text-decoration:none;color:inherit}
+.hero-badge--link:hover{text-decoration:none;transform:translateY(-1px)}
+.hero-badge--link .icon{display:inline-flex;align-items:center;justify-content:center}
+
 
 /* MOBILE HERO OPTIMIZATION */
 @media (max-width:640px){

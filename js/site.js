@@ -482,3 +482,27 @@
     const initial = root.querySelector('.qc-tab.is-active') || tabs[0];
     if (initial) activateTab(initial);
   })();
+
+/* =========================
+   STORITVE — anchor link odpre kartico
+========================= */
+(function(){
+  const grid = document.getElementById('services-grid');
+  if(!grid) return;
+
+  const cards = Array.from(grid.querySelectorAll('.card.service'));
+  if(!cards.length) return;
+
+  document.querySelectorAll('a.service-jump[data-open-service]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const key = link.getAttribute('data-open-service');
+      if(!key) return;
+
+      const targetCard = cards.find(card => card.getAttribute('data-service') === key);
+      if(!targetCard) return;
+
+      e.preventDefault();
+      targetCard.click();
+    });
+  });
+})();

@@ -243,6 +243,15 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
   transition:opacity .18s ease;
   z-index:1;
   }
+
+  .card.service:hover .hover-panel{
+  opacity:1;
+  pointer-events:auto;
+  }
+
+  .card.service:hover{
+  transform: translateY(-2px);
+  }
   .hover-panel ul{margin:0;padding-left:18px}
   @media (hover:hover){ .card.service:hover .hover-panel{opacity:1;pointer-events:auto} }
 

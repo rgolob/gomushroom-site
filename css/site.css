@@ -1836,11 +1836,11 @@ body.gallery-open .gallery-backdrop{display:block}
     grid-template-columns:1fr;
   }
 }
-.gm-product-media img{
+#gomushroom-tinkture .gm-product-media img{
   filter: blur(6px);
   transform: scale(1.03);
 }
-.gm-product-media::after{
+#gomushroom-tinkture .gm-product-media::after{
   content:"";
   position:absolute;
   inset:0;

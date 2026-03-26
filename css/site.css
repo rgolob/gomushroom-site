@@ -1839,6 +1839,8 @@ body.gallery-open .gallery-backdrop{display:block}
 #gomushroom-tinkture .gm-product-media img{
   filter: blur(6px);
   transform: scale(1.03);
+  position:relative;
+  overflow:hidden;
 }
 #gomushroom-tinkture .gm-product-media::after{
   content:"";
@@ -1849,4 +1851,5 @@ body.gallery-open .gallery-backdrop{display:block}
     rgba(0,0,0,0.15),
     rgba(0,0,0,0.25)
   );
+ pointer-events:none;
 }

@@ -1838,3 +1838,7 @@ body.gallery-open .gallery-backdrop{display:block}
     grid-template-columns:1fr;
   }
 }
+.gm-product-media img{
+  filter: blur(3px);
+  transform: scale(1.03);
+}

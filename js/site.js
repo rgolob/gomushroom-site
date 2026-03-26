@@ -486,23 +486,24 @@
 /* =========================
    STORITVE — anchor link odpre kartico
 ========================= */
+/* =========================
+   STORITVE — anchor link odpre kartico
+========================= */
 (function(){
   const grid = document.getElementById('services-grid');
   if(!grid) return;
 
-  const cards = Array.from(grid.querySelectorAll('.card.service'));
-  if(!cards.length) return;
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a.service-jump[data-open-service]');
+    if(!link) return;
 
-  document.querySelectorAll('a.service-jump[data-open-service]').forEach(link => {
-    link.addEventListener('click', (e) => {
-      const key = link.getAttribute('data-open-service');
-      if(!key) return;
+    const key = link.getAttribute('data-open-service');
+    if(!key) return;
 
-      const targetCard = cards.find(card => card.getAttribute('data-service') === key);
-      if(!targetCard) return;
+    const targetCard = grid.querySelector(`.card.service[data-service="${key}"]`);
+    if(!targetCard) return;
 
-      e.preventDefault();
-      targetCard.click();
-    });
+    e.preventDefault();
+    targetCard.click();
   });
 })();

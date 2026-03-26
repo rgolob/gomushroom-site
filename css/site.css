@@ -224,9 +224,79 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
   .li-icon{display:flex;align-items:flex-start;gap:8px}
   .li-icon svg{flex:0 0 auto;margin-top:2px}
 
-  /* STORITVE (hover) */
-  .card.service{cursor:pointer}
-  .hover-panel{
+ /* STORITVE (kartice + hover) */
+.card.service{
+  position:relative;
+  overflow:hidden;
+  --media-h: 240px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, opacity .18s ease, filter .18s ease;
+}
+
+.card.service .media{
+  height:var(--media-h);
+}
+
+.card.service .media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.card.service .body{
+  position:relative;
+  padding:12px 14px;
+}
+
+.card.service .body h3{
+  margin:0;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.card.service .body .card-desc{
+  margin:.38rem 0 0;
+  font-size:.93rem;
+  line-height:1.35;
+  opacity:.82;
+}
+
+.card.service .body .meta{
+  display:none;
+}
+
+.card.service .body::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:var(--card-img);
+  background-size:cover;
+  background-repeat:no-repeat;
+  background-position:center calc(26% - var(--media-h));
+  opacity:.35;
+  filter:blur(6px) saturate(115%);
+  transform:scale(1);
+  z-index:0;
+}
+
+.card.service .body::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.2);
+  z-index:0;
+}
+
+.card.service .body > *{
+  position:relative;
+  z-index:1;
+}
+
+/* hover panel */
+.hover-panel{
   position:absolute;
   inset:0;
   display:flex;
@@ -237,109 +307,87 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
   text-align:left;
   background:rgba(255,255,255,.85);
   border-top:1px solid rgba(0,0,0,.06);
-  backdrop-filter: blur(6px);
+  backdrop-filter:blur(6px);
   opacity:0;
   pointer-events:none;
   transition:opacity .18s ease;
   z-index:1;
-  }
-
-  .card.service:hover .hover-panel{
-  opacity:1;
-  pointer-events:auto;
-  }
-
-  .card.service:hover{
-  transform: translateY(-2px);
-  }
-  .hover-panel ul{margin:0;padding-left:18px}
-  @media (hover:hover){ .card.service:hover .hover-panel{opacity:1;pointer-events:auto} }
-
-  /* STORITVE – indikator odprte kartice + badge */
-  .card.service.is-active{
-    border-color: var(--accent);
-    box-shadow: 0 26px 64px rgba(0,0,0,.18), 0 0 0 2px rgba(177,133,86,.35) inset;
-    transform: translateY(-2px);
-  }
-  .card.service.is-active::after{
-    content: "ODPRTO";
-    position: absolute; top: 10px; right: 10px;
-    font-size: 11px; font-weight: 700; letter-spacing: .06em;
-    color: #fff; padding: 6px 8px; border-radius: 999px;
-    background: linear-gradient(135deg, var(--brand), var(--accent));
-    box-shadow: 0 6px 16px rgba(0,0,0,.18);
-    pointer-events: none;
-  }
-  #services-grid.has-open > .card.service:not(.is-active){
-    filter: grayscale(.12) brightness(.94);
-    opacity:.8;
-    transition:opacity .18s ease, filter .18s ease;
-  }
-
-  /* ===== STORITVE: velika slika + nizek spodnji del + faint "nadaljevanje" slike ===== */
-  .card.service{
-    overflow:hidden;
-    --media-h: 240px;
-  }
-  .card.service .media{ height: var(--media-h); }
-  .card.service .media img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-  .card.service .body{
-    position:relative;
-    padding: 12px 14px;
-  }
-  .card.service .body h3{
-    margin:0;
-    line-height:1.2;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-.card.service .body .card-desc{
-  margin:.38rem 0 0;
-  font-size:.93rem;
-  line-height:1.35;
-  opacity:.82;
 }
+
+.hover-panel ul{
+  margin:0;
+  padding-left:18px;
+  width:100%;
+}
+
 .card.service .hover-panel .card-cta{
   display:inline-block;
   margin-top:.75rem;
   font-weight:600;
   font-size:.9rem;
-  color: var(--brand);
+  color:var(--brand);
 }
-.card.service{
-  cursor:pointer;
+
+@media (hover:hover){
+  .card.service:hover .hover-panel{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .card.service:hover{
+    transform:translateY(-3px);
+    box-shadow:0 18px 42px rgba(0,0,0,.14);
+  }
 }
-  .card.service .body .meta{ display:none; }
-  .card.service .body::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    background-image: var(--card-img);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center calc(26% - var(--media-h));
-    opacity: .35;
-    filter: blur(6px) saturate(115%);
-    transform: scale(1.0);
-    z-index:0;
-  }
-  .card.service .body::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background: rgba(255,255,255,.2);
-    z-index:0;
-  }
-  .card.service .body > *{
-    position:relative;
-    z-index:1;
-  }
+
+/* indikator odprte kartice + badge */
+.card.service.is-active{
+  border-color:var(--accent);
+  box-shadow:0 26px 64px rgba(0,0,0,.18), 0 0 0 2px rgba(177,133,86,.35) inset;
+  transform:translateY(-2px);
+}
+
+.card.service.is-active::after{
+  content:"ODPRTO";
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.06em;
+  color:#fff;
+  padding:6px 8px;
+  border-radius:999px;
+  background:linear-gradient(135deg, var(--brand), var(--accent));
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  pointer-events:none;
+  z-index:3;
+}
+
+#services-grid.has-open > .card.service:not(.is-active){
+  filter:grayscale(.12) brightness(.94);
+  opacity:.8;
+}
+
+/* mali indikator klikabilnosti */
+.card.service .card-open-indicator{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:2;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.95rem;
+  font-weight:700;
+  background:rgba(255,255,255,.72);
+  color:var(--brand);
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  pointer-events:none;
+}
 
   /* FULL-WIDTH PANEL pod karticami storitev */
   .service-detail{

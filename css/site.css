@@ -738,21 +738,10 @@ body.gallery-open .gallery-backdrop{display:block}
     display:flex;align-items:center;justify-content:center;
     border-bottom:1px solid var(--line);overflow:hidden
   }
-.card.ref .media::after{
-  content:"";
-  position:absolute;
-  inset:0;
- background: linear-gradient(
-  to bottom,
-  rgba(255,255,255,0.04),
-  rgba(255,255,255,0.12)
-);
-  pointer-events:none;
-}
+
   .card.ref .media img{
     width:100%;height:100%;object-fit:contain;padding:10px;transition:filter .2s ease;
     position:relative; z-index:0; 
-    filter: contrast(.96) saturate(.92);
   }
   .card.ref .media *:not(.hover-panel):not(.detail-panel):not(.topbar):not(.qc-stamp-round){
   pointer-events:none;

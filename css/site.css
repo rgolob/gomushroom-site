@@ -1792,8 +1792,8 @@ body.gallery-open .gallery-backdrop{display:block}
 }
 
 #gomushroom-tinkture .gm-product-body h3{
-  margin:0 0 .45rem;
-  line-height:1.2;
+  font-size:1.15rem;
+  letter-spacing:.02em;
 }
 
 #gomushroom-tinkture .gm-product-body p{
@@ -1817,12 +1817,10 @@ body.gallery-open .gallery-backdrop{display:block}
 }
 
 #gomushroom-tinkture .gm-meta span::before{
-  content:"✔";
-  position:absolute;
-  left:0;
-  top:0;
-  font-size:.75rem;
+  content:"•";
   color:var(--accent);
+  font-size:1rem;
+
 }
 
 #gomushroom-tinkture .gm-note{
@@ -1841,4 +1839,14 @@ body.gallery-open .gallery-backdrop{display:block}
 .gm-product-media img{
   filter: blur(6px);
   transform: scale(1.03);
+}
+.gm-product-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15),
+    rgba(0,0,0,0.25)
+  );
 }

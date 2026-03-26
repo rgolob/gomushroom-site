@@ -1775,6 +1775,7 @@ body.gallery-open .gallery-backdrop{display:block}
 }
 
 #gomushroom-tinkture .gm-product-media{
+  position:relative;
   aspect-ratio:4 / 3;
   overflow:hidden;
   background:rgba(0,0,0,.03);
@@ -1785,6 +1786,20 @@ body.gallery-open .gallery-backdrop{display:block}
   height:100%;
   object-fit:cover;
   display:block;
+  filter:blur(3px);
+  transform:scale(1.03);
+}
+
+#gomushroom-tinkture .gm-product-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15),
+    rgba(0,0,0,0.25)
+  );
+  pointer-events:none;
 }
 
 #gomushroom-tinkture .gm-product-body{
@@ -1792,7 +1807,9 @@ body.gallery-open .gallery-backdrop{display:block}
 }
 
 #gomushroom-tinkture .gm-product-body h3{
+  margin:0 0 .45rem;
   font-size:1.15rem;
+  line-height:1.2;
   letter-spacing:.02em;
 }
 
@@ -1818,9 +1835,12 @@ body.gallery-open .gallery-backdrop{display:block}
 
 #gomushroom-tinkture .gm-meta span::before{
   content:"•";
+  position:absolute;
+  left:0;
+  top:0;
   color:var(--accent);
   font-size:1rem;
-
+  line-height:1;
 }
 
 #gomushroom-tinkture .gm-note{
@@ -1835,21 +1855,4 @@ body.gallery-open .gallery-backdrop{display:block}
   #gomushroom-tinkture .gm-products{
     grid-template-columns:1fr;
   }
-}
-#gomushroom-tinkture .gm-product-media img{
-  filter: blur(6px);
-  transform: scale(1.03);
-  position:relative;
-  overflow:hidden;
-}
-#gomushroom-tinkture .gm-product-media::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.15),
-    rgba(0,0,0,0.25)
-  );
- pointer-events:none;
 }

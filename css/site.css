@@ -347,7 +347,7 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
   transform:translateY(-2px);
 }
 
-.card.service.is-active::after{
+/*.card.service.is-active::after{
   content:"-";
   position:absolute;
   top:10px;
@@ -362,7 +362,7 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
   box-shadow:0 6px 16px rgba(0,0,0,.18);
   pointer-events:none;
   z-index:3;
-}
+}*/
 
 #services-grid.has-open > .card.service:not(.is-active){
   filter:grayscale(.12) brightness(.94);
@@ -370,23 +370,33 @@ h1{font-size:28px;line-height:1.08;letter-spacing:-0.02em;margin:.5rem 0 .7rem;}
 }
 
 /* mali indikator klikabilnosti */
-.card.service .card-open-indicator{
+/* indikator razširljivosti */
+.card.service::after{
+  content:"+";
   position:absolute;
   top:10px;
   right:10px;
-  z-index:2;
+  z-index:3;
   width:28px;
   height:28px;
   border-radius:999px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:.95rem;
+  font-size:1.05rem;
   font-weight:700;
+  line-height:1;
   background:rgba(255,255,255,.72);
   color:var(--brand);
   box-shadow:0 4px 12px rgba(0,0,0,.08);
   pointer-events:none;
+}
+
+.card.service.is-active::after{
+  content:"−";
+  background:linear-gradient(135deg, var(--brand), var(--accent));
+  color:#fff;
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
 }
 
   /* FULL-WIDTH PANEL pod karticami storitev */

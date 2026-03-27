@@ -272,58 +272,39 @@
 /* =========================
    O MENI — drawer/modal
 ========================= */
-(function(){
-  const link = document.getElementById('nav-about');
-  const modal = document.getElementById('about-modal');
-  const overlay = document.getElementById('about-overlay');
-  const closeBtn = document.getElementById('about-close');
-  const xBtn = document.getElementById('about-x');
-  const scrollEl = document.getElementById('about-scroll');
+function setOpenState(isOpen){
+  if(isOpen){
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden','false');
+    link.setAttribute('aria-expanded','true');
 
-  if(!link || !modal) return;
+    prevOverflow = document.documentElement.style.overflow || '';
+    document.documentElement.style.overflow = 'hidden';
 
-  let lastFocus = null;
-  let prevOverflow = '';
+    if(scrollEl) scrollEl.scrollTop = 0;
 
-  const focusableSelector = [
-    'a[href]',
-    'button:not([disabled])',
-    'textarea:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])'
-  ].join(',');
+    requestAnimationFrame(()=>{
+      const first = modal.querySelector(focusableSelector);
+      (first || xBtn || closeBtn || modal).focus?.();
+    });
 
-  function setOpenState(isOpen){
-    if(isOpen){
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden','false');
-      link.setAttribute('aria-expanded','true');
+    history.replaceState(null, '', '#o-meni');
+  } else {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden','true');
+    link.setAttribute('aria-expanded','false');
 
-      prevOverflow = document.documentElement.style.overflow || '';
-      document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overflow = prevOverflow;
 
-      if(scrollEl) scrollEl.scrollTop = 0;
-
-      requestAnimationFrame(()=>{
-        const first = modal.querySelector(focusableSelector);
-        (first || xBtn || closeBtn || modal).focus?.();
-      });
-
-      history.replaceState(null, '', '#o-meni');
-    } else {
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden','true');
-      link.setAttribute('aria-expanded','false');
-
-      document.documentElement.style.overflow = prevOverflow;
-
+    // hash pobriši samo, če je odprt modal hash
+    if (window.location.hash === '#o-meni') {
       const clean = window.location.pathname + window.location.search;
       history.replaceState(null, '', clean);
-
-      if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
     }
+
+    if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   }
+}
 
   function openModal(){
     lastFocus = document.activeElement;

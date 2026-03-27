@@ -28,7 +28,6 @@ td a,
   text-decoration-color: rgba(47,95,167,.35);
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
-  transition: color .18s ease, text-decoration-color .18s ease;
 }
 
 p a:hover,

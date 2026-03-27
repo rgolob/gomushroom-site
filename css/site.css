@@ -16,6 +16,30 @@
   a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
   .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 
+/* povezave znotraj vsebine*/
+p a,
+li a,
+td a,
+.meta a,
+.article-block a,
+.service-detail .content a{
+  color: var(--brand);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(43,10,57,.28);
+  transition: color .18s ease, border-color .18s ease;
+}
+
+p a:hover,
+li a:hover,
+td a:hover,
+.meta a:hover,
+.article-block a:hover,
+.service-detail .content a:hover{
+  color: #3a0f4d;
+  border-bottom-color: rgba(43,10,57,.6);
+}
+
+
 /* TOP NAVIGATION BAR */
 header{
   position:sticky; top:0; z-index:30;

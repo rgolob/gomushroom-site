@@ -272,44 +272,67 @@
 /* =========================
    O MENI — drawer/modal
 ========================= */
-function setOpenState(isOpen){
-  if(isOpen){
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden','false');
-    link.setAttribute('aria-expanded','true');
+(function(){
+  const link = document.getElementById('nav-about');
+  const modal = document.getElementById('about-modal');
+  const overlay = document.getElementById('about-overlay');
+  const closeBtn = document.getElementById('about-close');
+  const xBtn = document.getElementById('about-x');
+  const scrollEl = document.getElementById('about-scroll');
 
-    prevOverflow = document.documentElement.style.overflow || '';
-    document.documentElement.style.overflow = 'hidden';
+  if(!link || !modal) return;
 
-    if(scrollEl) scrollEl.scrollTop = 0;
+  let lastFocus = null;
+  let prevOverflow = '';
 
-    requestAnimationFrame(()=>{
-      const first = modal.querySelector(focusableSelector);
-      (first || xBtn || closeBtn || modal).focus?.();
-    });
+  const focusableSelector = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(',');
 
-    history.replaceState(null, '', '#o-meni');
-  } else {
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden','true');
-    link.setAttribute('aria-expanded','false');
+  function setOpenState(isOpen){
+    if(isOpen){
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden','false');
+      link.setAttribute('aria-expanded','true');
 
-    document.documentElement.style.overflow = prevOverflow;
+      prevOverflow = document.documentElement.style.overflow || '';
+      document.documentElement.style.overflow = 'hidden';
 
-    // hash pobriši samo, če je odprt modal hash
-    if (window.location.hash === '#o-meni') {
-      const clean = window.location.pathname + window.location.search;
-      history.replaceState(null, '', clean);
+      if(scrollEl) scrollEl.scrollTop = 0;
+
+      requestAnimationFrame(()=>{
+        const first = modal.querySelector(focusableSelector);
+        (first || xBtn || closeBtn || modal).focus?.();
+      });
+
+      history.replaceState(null, '', '#o-meni');
+    } else {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden','true');
+      link.setAttribute('aria-expanded','false');
+
+      document.documentElement.style.overflow = prevOverflow;
+
+      // hash pobriši samo, če je res odprt modal preko #o-meni
+      if (window.location.hash === '#o-meni') {
+        const clean = window.location.pathname + window.location.search;
+        history.replaceState(null, '', clean);
+      }
+
+      if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
     }
-
-    if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   }
-}
 
   function openModal(){
     lastFocus = document.activeElement;
     setOpenState(true);
   }
+
   function closeModal(){
     setOpenState(false);
   }
@@ -342,20 +365,24 @@ function setOpenState(isOpen){
       const last = focusables[focusables.length - 1];
 
       if(e.shiftKey && document.activeElement === first){
-        e.preventDefault(); last.focus();
+        e.preventDefault();
+        last.focus();
       } else if(!e.shiftKey && document.activeElement === last){
-        e.preventDefault(); first.focus();
+        e.preventDefault();
+        first.focus();
       }
     }
   });
 
+  // začetno stanje brez brisanja drugih hash povezav
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden','true');
+  link.setAttribute('aria-expanded','false');
+
   if(window.location.hash === '#o-meni'){
     openModal();
-  } else {
-    setOpenState(false);
   }
 })();
-
 
 /* =========================
    Card image CSS var (safety)

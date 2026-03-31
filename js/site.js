@@ -452,46 +452,46 @@
     document.body.appendChild(badge);
   }
 
-  // Shift + 5 klikov na logo = toggle trackinga
-  (function setupDevToggle() {
-    const logo = document.getElementById("site-logo");
-    if (!logo) return;
+  // Ctrl + Alt + 5 klikov na logo = toggle trackinga
+ (function setupDevToggle() {
+  const logo = document.getElementById("site-logo");
+  if (!logo) return;
 
-    let clickCount = 0;
-    let firstClickTime = 0;
-    const requiredClicks = 5;
-    const timeWindowMs = 2500;
+  let clickCount = 0;
+  let firstClickTime = 0;
+  const requiredClicks = 5;
+  const timeWindowMs = 2500;
 
-    logo.addEventListener("click", function (e) {
-      if (!e.shiftKey) {
-        clickCount = 0;
-        firstClickTime = 0;
-        return;
-      }
+  logo.addEventListener("mousedown", function (e) {
+    if (!(e.altKey && e.ctrlKey)) {
+      clickCount = 0;
+      firstClickTime = 0;
+      return;
+    }
 
-      const now = Date.now();
+    const now = Date.now();
 
-      if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
-        firstClickTime = now;
-        clickCount = 1;
-      } else {
-        clickCount += 1;
-      }
+    if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
+      firstClickTime = now;
+      clickCount = 1;
+    } else {
+      clickCount += 1;
+    }
 
-      if (clickCount >= requiredClicks) {
-        e.preventDefault();
+    if (clickCount >= requiredClicks) {
+      e.preventDefault();
 
-        const disabled = !isGADisabled();
-        setGADisabled(disabled);
+      const disabled = !isGADisabled();
+      setGADisabled(disabled);
 
-        clickCount = 0;
-        firstClickTime = 0;
+      clickCount = 0;
+      firstClickTime = 0;
 
-        location.reload();
-      }
-    });
-  })();
-
+      location.reload();
+    }
+  });
+})();
+   
   // URL override
   const params = new URLSearchParams(window.location.search);
   if (params.get("noga") === "1") setGADisabled(true);

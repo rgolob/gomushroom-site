@@ -430,6 +430,23 @@
   });
 
   setTimeout(loadGA, 4000);
+   
+ // TRACKING KLIKOV
+  document.addEventListener("click", function (e) {
+    const el = e.target.closest("[data-ga-click]");
+    if (!el) return;
+
+    loadGA(); // poskrbi, da je GA naložen tudi če je to prvi klik
+
+    if (window.gtag) {
+      gtag("event", "button_click", {
+        button_name: el.dataset.gaClick || "",
+        button_location: el.dataset.gaLocation || "",
+        button_text: (el.textContent || "").trim(),
+        link_url: el.href || ""
+      });
+    }
+  }, true);
 })();
 /* =========================
    QC tezke kovine

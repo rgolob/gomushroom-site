@@ -431,12 +431,12 @@
 
   setTimeout(loadGA, 4000);
    
- // TRACKING KLIKOV
+  // TRACKING KLIKOV: linki + nelink elementi
   document.addEventListener("click", function (e) {
     const el = e.target.closest("[data-ga-click]");
     if (!el) return;
 
-    loadGA(); // poskrbi, da je GA naložen tudi če je to prvi klik
+    loadGA();
 
     if (window.gtag) {
       gtag("event", "button_click", {

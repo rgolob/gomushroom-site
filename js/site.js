@@ -402,20 +402,23 @@
 
 
 /* =========================
-   GA4 lazy-load (po interakciji)
+   GA4 lazy-load + DEV toggle
 ========================= */
 (function () {
   const GA_ID = "G-L2PGE7VDHB";
 
-   /* koda za izklop trackinga po kliku na logo */
-
   function setCookie(name, value, days) {
     const maxAge = days * 24 * 60 * 60;
-    document.cookie = name + "=" + encodeURIComponent(value) + "; path=/; max-age=" + maxAge + "; SameSite=Lax";
+    document.cookie =
+      name + "=" + encodeURIComponent(value) +
+      "; path=/; max-age=" + maxAge +
+      "; SameSite=Lax";
   }
 
   function getCookie(name) {
-    const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)'));
+    const match = document.cookie.match(
+      new RegExp('(?:^|; )' + name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)')
+    );
     return match ? decodeURIComponent(match[1]) : null;
   }
 
@@ -427,45 +430,67 @@
     setCookie("ga_disable", disabled ? "1" : "0", 365);
   }
 
-  // ===== skriti DEV toggle na logotipu shift + 5 klikov izklopi tracking=====
- (function setupDevToggle() {
-  const logo = document.getElementById("site-logo");
-  if (!logo) return;
+  function showGABadge() {
+    if (document.getElementById("ga-dev-badge")) return;
 
-  let clickCount = 0;
-  let firstClickTime = 0;
-  const requiredClicks = 5;
-  const timeWindowMs = 2500;
+    const badge = document.createElement("div");
+    badge.id = "ga-dev-badge";
+    badge.textContent = "GA OFF";
+    badge.style.position = "fixed";
+    badge.style.bottom = "14px";
+    badge.style.right = "14px";
+    badge.style.zIndex = "99999";
+    badge.style.padding = "8px 12px";
+    badge.style.borderRadius = "999px";
+    badge.style.background = "#8b0000";
+    badge.style.color = "#fff";
+    badge.style.fontSize = "12px";
+    badge.style.fontWeight = "700";
+    badge.style.letterSpacing = "0.04em";
+    badge.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+    badge.style.pointerEvents = "none";
+    document.body.appendChild(badge);
+  }
 
-  logo.addEventListener("click", function (e) {
-    if (!e.shiftKey) {
-      clickCount = 0;
-      firstClickTime = 0;
-      return;
-    }
+  // Shift + 5 klikov na logo = toggle trackinga
+  (function setupDevToggle() {
+    const logo = document.getElementById("site-logo");
+    if (!logo) return;
 
-    const now = Date.now();
+    let clickCount = 0;
+    let firstClickTime = 0;
+    const requiredClicks = 5;
+    const timeWindowMs = 2500;
 
-    if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
-      firstClickTime = now;
-      clickCount = 1;
-    } else {
-      clickCount += 1;
-    }
+    logo.addEventListener("click", function (e) {
+      if (!e.shiftKey) {
+        clickCount = 0;
+        firstClickTime = 0;
+        return;
+      }
 
-    if (clickCount >= requiredClicks) {
-      e.preventDefault();
+      const now = Date.now();
 
-      const disabled = !isGADisabled();
-      setGADisabled(disabled);
+      if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
+        firstClickTime = now;
+        clickCount = 1;
+      } else {
+        clickCount += 1;
+      }
 
-      alert(disabled ? "GA tracking OFF" : "GA tracking ON");
+      if (clickCount >= requiredClicks) {
+        e.preventDefault();
 
-      clickCount = 0;
-      firstClickTime = 0;
-    }
-  });
-})();
+        const disabled = !isGADisabled();
+        setGADisabled(disabled);
+
+        clickCount = 0;
+        firstClickTime = 0;
+
+        location.reload();
+      }
+    });
+  })();
 
   // URL override
   const params = new URLSearchParams(window.location.search);
@@ -477,12 +502,15 @@
     location.hostname === "127.0.0.1";
 
   if (isDevHost || isGADisabled()) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", showGABadge);
+    } else {
+      showGABadge();
+    }
     console.log("GA disabled");
     return;
   }
 
-   /*stari del za tracking*/
-   
   let loaded = false;
 
   function loadGA() {
@@ -499,15 +527,15 @@
     window.gtag = gtag;
 
     gtag("js", new Date());
-    gtag("config", GA_ID, { anonymize_ip: true });
+    gtag("config", GA_ID);
   }
 
-  ["scroll","click","touchstart","keydown"].forEach(evt => {
+  ["scroll", "click", "touchstart", "keydown"].forEach(function (evt) {
     window.addEventListener(evt, loadGA, { once: true, passive: true });
   });
 
   setTimeout(loadGA, 4000);
-   
+
   // TRACKING KLIKOV: linki + nelink elementi
   document.addEventListener("click", function (e) {
     const el = e.target.closest("[data-ga-click]");
@@ -525,6 +553,11 @@
     }
   }, true);
 })();
+
+
+
+
+
 /* =========================
    QC tezke kovine
 ========================= */

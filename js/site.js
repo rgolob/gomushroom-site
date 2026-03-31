@@ -406,6 +406,83 @@
 ========================= */
 (function () {
   const GA_ID = "G-L2PGE7VDHB";
+
+   /* koda za izklop trackinga po kliku na logo */
+
+  function setCookie(name, value, days) {
+    const maxAge = days * 24 * 60 * 60;
+    document.cookie = name + "=" + encodeURIComponent(value) + "; path=/; max-age=" + maxAge + "; SameSite=Lax";
+  }
+
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  function isGADisabled() {
+    return getCookie("ga_disable") === "1";
+  }
+
+  function setGADisabled(disabled) {
+    setCookie("ga_disable", disabled ? "1" : "0", 365);
+  }
+
+  // ===== skriti DEV toggle na logotipu shift + 5 klikov izklopi tracking=====
+ (function setupDevToggle() {
+  const logo = document.getElementById("site-logo");
+  if (!logo) return;
+
+  let clickCount = 0;
+  let firstClickTime = 0;
+  const requiredClicks = 5;
+  const timeWindowMs = 2500;
+
+  logo.addEventListener("click", function (e) {
+    if (!e.shiftKey) {
+      clickCount = 0;
+      firstClickTime = 0;
+      return;
+    }
+
+    const now = Date.now();
+
+    if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
+      firstClickTime = now;
+      clickCount = 1;
+    } else {
+      clickCount += 1;
+    }
+
+    if (clickCount >= requiredClicks) {
+      e.preventDefault();
+
+      const disabled = !isGADisabled();
+      setGADisabled(disabled);
+
+      alert(disabled ? "GA tracking OFF" : "GA tracking ON");
+
+      clickCount = 0;
+      firstClickTime = 0;
+    }
+  });
+})();
+
+  // URL override
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("noga") === "1") setGADisabled(true);
+  if (params.get("noga") === "0") setGADisabled(false);
+
+  const isDevHost =
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1";
+
+  if (isDevHost || isGADisabled()) {
+    console.log("GA disabled");
+    return;
+  }
+
+   /*stari del za tracking*/
+   
   let loaded = false;
 
   function loadGA() {

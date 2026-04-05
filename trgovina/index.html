@@ -1,1 +1,42 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trgovina | GoMushroom</title>
+  <meta name="description" content="GoMushroom trgovina – premium tinkture medicinskih gob.">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/trgovina/css/trgovina.css">
+</head>
+<body>
+  <header class="gm-site-header">
+    <div class="gm-site-header__inner">
+      <a class="gm-logo" href="/">GoMushroom</a>
 
+      <nav class="gm-nav" aria-label="Glavna navigacija">
+        <a href="/">Domov</a>
+        <a href="/trgovina/" aria-current="page">Trgovina</a>
+        <a href="/trgovina/kosarica/" class="gm-cart-link">
+          Košarica
+          <span class="gm-cart-badge" data-cart-count></span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="gm-shop-page">
+    <section class="gm-shop-intro">
+      <p class="gm-eyebrow">GoMushroom</p>
+      <h1>Trgovina</h1>
+      <p class="gm-shop-intro__text">
+        Izberi tinkturo in varianto, ki ti ustreza.
+      </p>
+    </section>
+
+    <section id="shop-grid" class="gm-shop-grid" aria-label="Seznam produktov"></section>
+  </main>
+
+  <script src="/trgovina/js/cart.js"></script>
+  <script src="/trgovina/js/shop.js"></script>
+</body>
+</html>

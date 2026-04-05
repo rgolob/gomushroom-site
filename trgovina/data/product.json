@@ -1,0 +1,271 @@
+{
+  "products": [
+    {
+      "title": "Reishi",
+      "slug": "reishi",
+      "image": "/assets/uploads/reishi.jpg",
+      "excerpt": "Koncentriran ekstrakt reishija.",
+      "description": "Premium tinktura iz reishija, pripravljena z večstopenjskim ekstrakcijskim pristopom.",
+      "active": true,
+      "featured": true,
+      "details": {
+        "latin_name": "Ganoderma lucidum",
+        "category": "Prehransko dopolnilo",
+        "source": "GoMushroom",
+        "storage": "Shranjujte v hladnem, suhem in temnem prostoru.",
+        "sediment_note": "Prisotnost usedline je naravna in ne vpliva na kakovost izdelka.",
+        "general_note": "Pred uporabo pretresite."
+      },
+      "warnings": [
+        "Priporočene dnevne količine se ne sme prekoračiti.",
+        "Prehransko dopolnilo ni nadomestilo za uravnoteženo in raznovrstno prehrano.",
+        "Pomembna sta raznolika prehrana in zdrav življenjski slog.",
+        "Hraniti izven dosega otrok."
+      ],
+      "usage_protocol": {
+        "title": "Priporočen način uporabe",
+        "intro": "Priporočamo redno uporabo skozi daljše obdobje.",
+        "steps": [
+          "1 do 2 pipeti 1- do 2-krat dnevno.",
+          "Pred uporabo pretresite.",
+          "Lahko zaužijete samostojno ali z malo vode."
+        ],
+        "note": "Če ste občutljivi, začnite z manjšo količino."
+      },
+      "variants": [
+        {
+          "name": "Alkoholna",
+          "type": "alkoholna",
+          "price": 31.9,
+          "sku": "REI-A-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "etanol",
+            "ekstrakt reishija",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "30 % vol. alkohola"
+        },
+        {
+          "name": "Brezalkoholna",
+          "type": "brezalkoholna",
+          "price": 33.9,
+          "sku": "REI-G-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "rastlinski glicerin",
+            "ekstrakt reishija",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "brez alkohola"
+        }
+      ]
+    },
+    {
+      "title": "Bradovec",
+      "slug": "bradovec",
+      "image": "/assets/uploads/bradovec.jpg",
+      "excerpt": "Koncentriran ekstrakt resastega bradovca.",
+      "description": "Premium tinktura iz resastega bradovca, pripravljena z večstopenjskim ekstrakcijskim pristopom.",
+      "active": true,
+      "featured": true,
+      "details": {
+        "latin_name": "Hericium erinaceus",
+        "category": "Prehransko dopolnilo",
+        "source": "GoMushroom",
+        "storage": "Shranjujte v hladnem, suhem in temnem prostoru.",
+        "sediment_note": "Prisotnost usedline je naravna in ne vpliva na kakovost izdelka.",
+        "general_note": "Pred uporabo pretresite."
+      },
+      "warnings": [
+        "Priporočene dnevne količine se ne sme prekoračiti.",
+        "Prehransko dopolnilo ni nadomestilo za uravnoteženo in raznovrstno prehrano.",
+        "Pomembna sta raznolika prehrana in zdrav življenjski slog.",
+        "Hraniti izven dosega otrok."
+      ],
+      "usage_protocol": {
+        "title": "Priporočen način uporabe",
+        "intro": "Priporočamo redno uporabo skozi daljše obdobje.",
+        "steps": [
+          "1 do 2 pipeti 1- do 2-krat dnevno.",
+          "Pred uporabo pretresite.",
+          "Lahko zaužijete samostojno ali z malo vode."
+        ],
+        "note": "Če ste občutljivi, začnite z manjšo količino."
+      },
+      "variants": [
+        {
+          "name": "Alkoholna",
+          "type": "alkoholna",
+          "price": 31.9,
+          "sku": "BRA-A-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "etanol",
+            "ekstrakt resastega bradovca",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "30 % vol. alkohola"
+        },
+        {
+          "name": "Brezalkoholna",
+          "type": "brezalkoholna",
+          "price": 33.9,
+          "sku": "BRA-G-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "rastlinski glicerin",
+            "ekstrakt resastega bradovca",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "brez alkohola"
+        }
+      ]
+    },
+    {
+      "title": "Chaga",
+      "slug": "chaga",
+      "image": "/assets/uploads/chaga.jpg",
+      "excerpt": "Koncentriran ekstrakt čage.",
+      "description": "Premium tinktura iz čage, pripravljena z večstopenjskim ekstrakcijskim pristopom.",
+      "active": true,
+      "featured": true,
+      "details": {
+        "latin_name": "Inonotus obliquus",
+        "category": "Prehransko dopolnilo",
+        "source": "GoMushroom",
+        "storage": "Shranjujte v hladnem, suhem in temnem prostoru.",
+        "sediment_note": "Prisotnost usedline je naravna in ne vpliva na kakovost izdelka.",
+        "general_note": "Pred uporabo pretresite."
+      },
+      "warnings": [
+        "Priporočene dnevne količine se ne sme prekoračiti.",
+        "Prehransko dopolnilo ni nadomestilo za uravnoteženo in raznovrstno prehrano.",
+        "Pomembna sta raznolika prehrana in zdrav življenjski slog.",
+        "Hraniti izven dosega otrok."
+      ],
+      "usage_protocol": {
+        "title": "Priporočen način uporabe",
+        "intro": "Priporočamo redno uporabo skozi daljše obdobje.",
+        "steps": [
+          "1 do 2 pipeti 1- do 2-krat dnevno.",
+          "Pred uporabo pretresite.",
+          "Lahko zaužijete samostojno ali z malo vode."
+        ],
+        "note": "Če ste občutljivi, začnite z manjšo količino."
+      },
+      "variants": [
+        {
+          "name": "Alkoholna",
+          "type": "alkoholna",
+          "price": 31.9,
+          "sku": "CHA-A-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "etanol",
+            "ekstrakt čage",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "30 % vol. alkohola"
+        },
+        {
+          "name": "Brezalkoholna",
+          "type": "brezalkoholna",
+          "price": 33.9,
+          "sku": "CHA-G-50",
+          "volume_ml": 50,
+          "ingredients": [
+            "prečiščena voda",
+            "rastlinski glicerin",
+            "ekstrakt čage",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "brez alkohola"
+        }
+      ]
+    },
+    {
+      "title": "Trojček",
+      "slug": "trojcek",
+      "image": "/assets/uploads/trojcek.jpg",
+      "excerpt": "Komplet treh 50 ml tinktur.",
+      "description": "Izbrani komplet treh tinktur v enem paketu.",
+      "active": true,
+      "featured": true,
+      "details": {
+        "latin_name": "",
+        "category": "Prehransko dopolnilo",
+        "source": "GoMushroom",
+        "storage": "Shranjujte v hladnem, suhem in temnem prostoru.",
+        "sediment_note": "Prisotnost usedline je naravna in ne vpliva na kakovost izdelka.",
+        "general_note": "Pred uporabo posamezno stekleničko pretresite."
+      },
+      "warnings": [
+        "Priporočene dnevne količine se ne sme prekoračiti.",
+        "Prehransko dopolnilo ni nadomestilo za uravnoteženo in raznovrstno prehrano.",
+        "Pomembna sta raznolika prehrana in zdrav življenjski slog.",
+        "Hraniti izven dosega otrok."
+      ],
+      "usage_protocol": {
+        "title": "Priporočen način uporabe",
+        "intro": "Posamezne tinkture lahko uporabljate izmenično ali glede na svoj režim.",
+        "steps": [
+          "1 do 2 pipeti posamezne tinkture 1- do 2-krat dnevno.",
+          "Pred uporabo pretresite.",
+          "Lahko zaužijete samostojno ali z malo vode."
+        ],
+        "note": "Kombinacije uporabe lahko prilagodite svoji rutini."
+      },
+      "bundle_contents": [
+        "Reishi",
+        "Bradovec",
+        "Chaga"
+      ],
+      "variants": [
+        {
+          "name": "Alkoholni trojček",
+          "type": "alkoholna",
+          "price": 89.9,
+          "sku": "SET-A-150",
+          "volume_ml": 150,
+          "ingredients": [
+            "3 × 50 ml tinkture: Reishi, Bradovec, Chaga",
+            "prečiščena voda",
+            "etanol",
+            "ekstrakti medicinskih gob",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "alkoholna izvedba"
+        },
+        {
+          "name": "Brezalkoholni trojček",
+          "type": "brezalkoholna",
+          "price": 94.9,
+          "sku": "SET-G-150",
+          "volume_ml": 150,
+          "ingredients": [
+            "3 × 50 ml tinkture: Reishi, Bradovec, Chaga",
+            "prečiščena voda",
+            "rastlinski glicerin",
+            "ekstrakti medicinskih gob",
+            "sončnični lecitin",
+            "vitamin C"
+          ],
+          "label_note": "brezalkoholna izvedba"
+        }
+      ]
+    }
+  ]
+}

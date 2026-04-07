@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Reishi tinktura | GoMushroom</title>
+  <meta name="description" content="Laboratorijsko razvita Reishi tinktura iz lastno pridelane surovine. Lastna ekstrakcija, brez bližnjic, z jasnim poudarkom na kakovosti surovine, procesu in sledljivosti." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://gomushroom.si/reishi-tinktura/" />
+
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="Reishi tinktura | GoMushroom" />
+  <meta property="og:description" content="Koncentrirana tinktura iz lastno pridelanega Reishija, zasnovana skozi lasten ekstrakcijski proces — od surovine do končne formulacije." />
+  <meta property="og:url" content="https://gomushroom.si/reishi-tinktura/" />
+  <meta property="og:site_name" content="GoMushroom" />
+  <meta property="og:locale" content="sl_SI" />
+  <meta property="og:image" content="https://gomushroom.si/assets/img/reishi/reishi-tinktura-og.jpg" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Reishi tinktura | GoMushroom" />
+  <meta name="twitter:description" content="Lastna surovina. Lastna ekstrakcija. Majhne serije. Transparenten pristop do kakovosti." />
+  <meta name="twitter:image" content="https://gomushroom.si/assets/img/reishi/reishi-tinktura-og.jpg" />
+
+  <style>
+    :root{
+      --bg: #f7f4ef;
+      --surface: rgba(255,255,255,.72);
+      --surface-strong: #ffffff;
+      --line: rgba(43,11,57,.10);
+      --text: #241a28;
+      --muted: #5f5962;
+      --brand: #2b0b39;
+      --accent: #af8455;
+      --accent-soft: rgba(175,132,85,.12);
+      --shadow: 0 18px 50px rgba(43,11,57,.08);
+      --radius: 22px;
+      --max: 1180px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(175,132,85,.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(43,11,57,.06), transparent 30%),
+        var(--bg);
+      line-height:1.6;
+    }
+
+    img{max-width:100%;display:block}
+    a{color:inherit;text-decoration:none}
+
+    .container{
+      width:min(var(--max), calc(100% - 32px));
+      margin-inline:auto;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter: blur(14px);
+      background:rgba(247,244,239,.78);
+      border-bottom:1px solid var(--line);
+    }
+
+    .topbar-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      min-height:72px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:700;
+      letter-spacing:.02em;
+      color:var(--brand);
+    }
+
+    .brand-mark{
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:linear-gradient(135deg, var(--brand), #4a1e5f);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
+    }
+
+    .nav{
+      display:flex;
+      gap:20px;
+      flex-wrap:wrap;
+      font-size:.95rem;
+      color:var(--muted);
+    }
+
+    .nav a:hover{color:var(--brand)}
+
+    .hero{
+      padding:72px 0 42px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:34px;
+      align-items:center;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border:1px solid rgba(175,132,85,.24);
+      background:var(--accent-soft);
+      color:var(--brand);
+      border-radius:999px;
+      font-size:.84rem;
+      font-weight:600;
+      letter-spacing:.02em;
+      margin-bottom:18px;
+    }
+
+    h1,h2,h3{
+      line-height:1.12;
+      margin:0 0 16px;
+      letter-spacing:-.02em;
+    }
+
+    h1{
+      font-size:clamp(2.3rem, 5vw, 4.5rem);
+      color:var(--brand);
+    }
+
+    h2{
+      font-size:clamp(1.55rem, 2.5vw, 2.3rem);
+      color:var(--brand);
+      margin-bottom:14px;
+    }
+
+    h3{
+      font-size:1.15rem;
+      color:var(--brand);
+      margin-bottom:10px;
+    }
+
+    .lead{
+      font-size:1.08rem;
+      color:var(--muted);
+      max-width:62ch;
+    }
+
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      margin-top:28px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:50px;
+      padding:0 20px;
+      border-radius:999px;
+      font-weight:700;
+      transition:.2s ease;
+      border:1px solid transparent;
+    }
+
+    .btn-primary{
+      background:var(--brand);
+      color:#fff;
+      box-shadow:0 12px 28px rgba(43,11,57,.18);
+    }
+
+    .btn-primary:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-secondary{
+      border-color:var(--line);
+      background:rgba(255,255,255,.7);
+      color:var(--brand);
+    }
+
+    .hero-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.94));
+      border:1px solid var(--line);
+      border-radius:30px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero-image{
+      aspect-ratio: 4 / 4.5;
+      background:
+        linear-gradient(180deg, rgba(43,11,57,.08), rgba(43,11,57,.02)),
+        url("https://gomushroom.si/assets/img/reishi/reishi-tinktura.jpg") center/cover no-repeat;
+      min-height:420px;
+    }
+
+    .hero-meta{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:1px;
+      background:var(--line);
+    }
+
+    .hero-meta div{
+      padding:18px 18px 16px;
+      background:var(--surface-strong);
+    }
+
+    .meta-label{
+      display:block;
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+
+    .meta-value{
+      font-weight:700;
+      color:var(--brand);
+    }
+
+    section{
+      padding:34px 0;
+    }
+
+    .section-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.88));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:20px;
+    }
+
+    .feature{
+      padding:22px;
+      background:rgba(255,255,255,.78);
+      border:1px solid var(--line);
+      border-radius:18px;
+    }
+
+    .feature p,
+    .section-card p,
+    .faq-item p{
+      margin:0;
+      color:var(--muted);
+    }
+
+    .checklist{
+      list-style:none;
+      padding:0;
+      margin:18px 0 0;
+      display:grid;
+      gap:10px;
+    }
+
+    .checklist li{
+      position:relative;
+      padding-left:28px;
+      color:var(--text);
+    }
+
+    .checklist li::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:var(--accent);
+      position:absolute;
+      top:.48em;
+      left:4px;
+      box-shadow:0 0 0 4px rgba(175,132,85,.16);
+    }
+
+    .specs{
+      display:grid;
+      gap:12px;
+      margin-top:8px;
+    }
+
+    .spec-row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      padding:12px 0;
+      border-bottom:1px solid var(--line);
+    }
+
+    .spec-row:last-child{border-bottom:none}
+
+    .spec-label{
+      color:var(--muted);
+    }
+
+    .spec-value{
+      text-align:right;
+      font-weight:600;
+      color:var(--brand);
+    }
+
+    .quote-band{
+      padding:28px;
+      border-radius:26px;
+      background:linear-gradient(135deg, var(--brand), #46215a);
+      color:#fff;
+      box-shadow:0 18px 40px rgba(43,11,57,.18);
+    }
+
+    .quote-band strong{
+      display:block;
+      font-size:clamp(1.35rem, 2vw, 1.8rem);
+      line-height:1.2;
+      margin-bottom:8px;
+    }
+
+    .faq{
+      display:grid;
+      gap:14px;
+    }
+
+    .faq-item{
+      padding:20px 22px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.82);
+    }
+
+    .cta{
+      padding:28px;
+      border-radius:28px;
+      border:1px solid rgba(175,132,85,.2);
+      background:linear-gradient(180deg, rgba(175,132,85,.08), rgba(255,255,255,.92));
+      box-shadow:var(--shadow);
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:26px;
+      align-items:center;
+    }
+
+    .price-box{
+      padding:22px;
+      border-radius:20px;
+      background:#fff;
+      border:1px solid var(--line);
+    }
+
+    .price{
+      font-size:2rem;
+      font-weight:800;
+      color:var(--brand);
+      line-height:1;
+      margin-bottom:8px;
+    }
+
+    .small{
+      font-size:.92rem;
+      color:var(--muted);
+    }
+
+    footer{
+      padding:48px 0 64px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .footer-card{
+      border-top:1px solid var(--line);
+      padding-top:24px;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 980px){
+      .hero-grid,
+      .grid-2,
+      .grid-3,
+      .cta{
+        grid-template-columns:1fr;
+      }
+
+      .hero{
+        padding-top:46px;
+      }
+
+      .hero-image{
+        min-height:340px;
+      }
+    }
+
+    @media (max-width: 640px){
+      .topbar-inner{
+        min-height:64px;
+      }
+
+      .nav{
+        display:none;
+      }
+
+      .section-card,
+      .feature,
+      .faq-item,
+      .cta,
+      .price-box{
+        padding:20px;
+      }
+
+      .hero-meta{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Product",
+    "name":"Reishi tinktura",
+    "description":"Koncentrirana tinktura iz lastno pridelanega Reishija, zasnovana skozi lasten ekstrakcijski proces — od surovine do končne formulacije.",
+    "brand":{
+      "@type":"Brand",
+      "name":"GoMushroom"
+    },
+    "category":"Prehransko dopolnilo",
+    "url":"https://gomushroom.si/reishi-tinktura/",
+    "image":"https://gomushroom.si/assets/img/reishi/reishi-tinktura-og.jpg",
+    "additionalProperty":[
+      {
+        "@type":"PropertyValue",
+        "name":"Surovina",
+        "value":"Lastna pridelava"
+      },
+      {
+        "@type":"PropertyValue",
+        "name":"Vrsta",
+        "value":"Ganoderma lucidum"
+      },
+      {
+        "@type":"PropertyValue",
+        "name":"Različice",
+        "value":"Alkoholna / brezalkoholna"
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>GoMushroom</span>
+      </a>
+
+      <nav class="nav" aria-label="Glavna navigacija">
+        <a href="/#storitve">Storitve</a>
+        <a href="/#pristop">Pristop</a>
+        <a href="/trgovina/">Trgovina</a>
+        <a href="/qc/tezke-kovine/">QC</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">Ganoderma lucidum • lastna surovina • lasten proces</span>
+          <h1>Reishi tinktura</h1>
+          <p class="lead">
+            Koncentrirana tinktura iz lastno pridelanega Reishija, zasnovana skozi lasten ekstrakcijski proces — od surovine do končne formulacije.
+          </p>
+          <p class="lead">
+            Pri GoMushroom ne izhajamo iz že pripravljenih ekstraktov. Vsaka serija nastane iz skrbno pripravljene surovine in skozi lasten proces ekstrakcije, koncentracije in formulacije.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#nakup">Dodaj v košarico</a>
+            <a class="btn btn-secondary" href="#podrobnosti">Poglej podrobnosti</a>
+          </div>
+        </div>
+
+        <div class="hero-card" aria-label="Slika izdelka Reishi tinktura">
+          <div class="hero-image"></div>
+          <div class="hero-meta">
+            <div>
+              <span class="meta-label">Surovina</span>
+              <span class="meta-value">Lastna pridelava</span>
+            </div>
+            <div>
+              <span class="meta-label">Proces</span>
+              <span class="meta-value">Lastna ekstrakcija</span>
+            </div>
+            <div>
+              <span class="meta-label">Različice</span>
+              <span class="meta-value">Alkoholna / brezalkoholna</span>
+            </div>
+            <div>
+              <span class="meta-label">Poudarek</span>
+              <span class="meta-value">Sledljivost in kakovost</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="podrobnosti">
+      <div class="container">
+        <div class="section-card">
+          <h2>Kaj je ta izdelek</h2>
+          <p>
+            GoMushroom Reishi tinktura je prehransko dopolnilo iz gobe <strong>Ganoderma lucidum</strong>, pripravljeno z lastnim ekstrakcijskim pristopom.
+          </p>
+          <p style="margin-top:14px;">
+            Ne gre za generičen izdelek iz kupljenih ekstraktov, ampak za tinkturo, ki nastane iz lastne surovine in pod nadzorom celotnega procesa. To pomeni neposredno povezavo med surovino in končnim izdelkom, večjo sledljivost in bolj dosleden pristop med serijami.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container grid-3">
+        <article class="feature">
+          <h3>Lastna surovina</h3>
+          <p>
+            Reishi za naše tinkture gojimo sami. Nadzor se začne že pri surovini, ne šele pri končni steklenički.
+          </p>
+        </article>
+
+        <article class="feature">
+          <h3>Lastna ekstrakcija</h3>
+          <p>
+            Namesto že pripravljenih industrijskih ekstraktov uporabljamo lasten proces ekstrakcije, koncentracije in formulacije.
+          </p>
+        </article>
+
+        <article class="feature">
+          <h3>Majhne serije</h3>
+          <p>
+            Vsaka serija nastaja v omejenem obsegu, s poudarkom na nadzoru procesa, sledljivosti in končni kakovosti.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="container grid-2">
+        <div class="section-card">
+          <h2>Zakaj je drugačna</h2>
+          <ul class="checklist">
+            <li>jasen izvor surovine,</li>
+            <li>neposreden nadzor nad procesom,</li>
+            <li>lastna formulacija,</li>
+            <li>brez bližnjic v pripravi,</li>
+            <li>povezava med surovino in končnim izdelkom.</li>
+          </ul>
+        </div>
+
+        <div class="section-card">
+          <h2>Proces in pristop</h2>
+          <p>
+            Naš pristop temelji na lastni ekstrakciji in formulaciji, s ciljem pripraviti koncentriran izdelek iz celotne surovine.
+          </p>
+          <ul class="checklist">
+            <li>skrbna priprava surovine,</li>
+            <li>ekstrakcija iz lastne biomase,</li>
+            <li>ločena obdelava posameznih frakcij,</li>
+            <li>koncentracija pod nadzorovanimi pogoji,</li>
+            <li>končna formulacija v tinkturo.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="quote-band">
+          <strong>GoMushroom ni produkt. Je proces.</strong>
+          <span>
+            Pri takšnem izdelku kakovost ne nastane šele v steklenički, ampak že pri surovini in v načinu, kako je ekstrakt pripravljen.
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container grid-2">
+        <div class="section-card">
+          <h2>Formulacija</h2>
+          <p>
+            Reishi tinktura je na voljo v različnih formulacijah, odvisno od izbrane različice.
+          </p>
+          <div class="specs">
+            <div class="spec-row">
+              <span class="spec-label">Osnova</span>
+              <span class="spec-value">Alkoholna ali brezalkoholna</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Vrsta surovine</span>
+              <span class="spec-value">Ganoderma lucidum</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Pristop</span>
+              <span class="spec-value">Lastna ekstrakcija in formulacija</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Velikost</span>
+              <span class="spec-value">50 ml</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>Kako se uporablja</h2>
+          <p>
+            Priporočena uporaba je navedena na embalaži oziroma glede na izbrano formulacijo.
+          </p>
+          <ul class="checklist">
+            <li>pred uporabo pretresite,</li>
+            <li>upoštevajte navodila na embalaži,</li>
+            <li>izdelek hranite skladno z navodili proizvajalca.</li>
+          </ul>
+          <p style="margin-top:16px;">
+            Pri bolj koncentriranih tinkturah se lahko pojavi usedlina, naravna motnost ali ločevanje posameznih frakcij. To ni nujno znak slabše kakovosti, ampak pogosto posledica visoke vsebnosti ekstrahiranih snovi.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container grid-2">
+        <div class="section-card">
+          <h2>Kakovost in sledljivost</h2>
+          <p>
+            Pri GoMushroom dajemo velik poudarek na nadzor procesa, sledljivost serij, izvor surovine in transparentnost.
+          </p>
+          <p style="margin-top:14px;">
+            Neodvisno testiranje težkih kovin izvajamo na končnem koncentriranem izdelku.
+          </p>
+          <p style="margin-top:18px;">
+            <a class="btn btn-secondary" href="/qc/tezke-kovine/">Težke kovine in kontrola kakovosti</a>
+          </p>
+        </div>
+
+        <div class="section-card">
+          <h2>Komu je namenjena</h2>
+          <p>
+            Ta izdelek je namenjen tistim, ki iščejo premišljeno pripravljen izdelek, jasen izvor surovine, transparenten pristop in tinkturo, ki ni rezultat generične industrijske formule.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-card">
+          <h2>Pogosta vprašanja</h2>
+          <div class="faq">
+            <div class="faq-item">
+              <h3>Ali je usedlina normalna?</h3>
+              <p>Da. Pri bolj koncentriranih tinkturah je usedlina lahko normalen pojav. Pred uporabo stekleničko pretresite.</p>
+            </div>
+
+            <div class="faq-item">
+              <h3>Ali gre za izdelek iz kupljenega ekstrakta?</h3>
+              <p>Ne. Tinktura nastaja iz lastne surovine in skozi lasten proces ekstrakcije.</p>
+            </div>
+
+            <div class="faq-item">
+              <h3>Kakšna je razlika med alkoholno in brezalkoholno različico?</h3>
+              <p>Razlika je v topilu oziroma končni formulaciji. Obe različici sledita istemu pristopu kakovosti in nadzora procesa.</p>
+            </div>
+
+            <div class="faq-item">
+              <h3>Kje lahko preberem več o kontroli kakovosti?</h3>
+              <p>Na strani o testiranju težkih kovin in kakovostni kontroli.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="nakup">
+      <div class="container">
+        <div class="cta">
+          <div>
+            <h2>Reishi tinktura</h2>
+            <p class="lead" style="font-size:1rem;">
+              Koncentriran izdelek, zasnovan skozi lasten proces — od surovine do končne formulacije.
+            </p>
+            <ul class="checklist">
+              <li>lastna pridelava Reishija,</li>
+              <li>lastna ekstrakcija in formulacija,</li>
+              <li>majhne serije,</li>
+              <li>transparenten pristop do kakovosti.</li>
+            </ul>
+          </div>
+
+          <aside class="price-box" aria-label="Nakupni blok">
+            <div class="price">31,90 €</div>
+            <div class="small">50 ml • primer prikaza cene</div>
+
+            <div class="hero-actions" style="margin-top:18px;">
+              <a class="btn btn-primary" href="#" data-product="reishi">Dodaj v košarico</a>
+              <a class="btn btn-secondary" href="/trgovina/">Nazaj v trgovino</a>
+            </div>
+
+            <p class="small" style="margin-top:14px;">
+              Tukaj potem povežeš svoj JS za košarico ali Stripe checkout.
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-card">
+      <div>
+        <strong style="color:var(--brand);">GoMushroom</strong><br />
+        Ekstrakti in tinkture medicinskih gob
+      </div>
+      <div>
+        <a href="/qc/tezke-kovine/">QC</a> ·
+        <a href="/trgovina/">Trgovina</a> ·
+        <a href="/#o-meni">O meni</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

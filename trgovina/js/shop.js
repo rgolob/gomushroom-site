@@ -2,7 +2,7 @@ const PRODUCTS = [
   {
     name: "Reishi tinktura",
     latin: "Ganoderma lucidum",
-    image: "/assets/reishi-tinktura.webp",
+    image: "/assets/gomushroom-reishi-tinktura.webp",
     description: "Tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na surovini, formulaciji in sledljivosti.",
     origin: "Lastna pridelava",
     priceFrom: 31.90,
@@ -12,7 +12,7 @@ const PRODUCTS = [
   {
     name: "Chaga tinktura",
     latin: "Inonotus obliquus",
-    image: "/assets/chaga-tinktura.webp",
+    image: "/assets/gomushroom-chaga-tinktura.webp",
     description: "Tinktura iz Chage iz brezovih gozdov EU/izven EU, pripravljena skozi lasten ekstrakcijski proces in formulirana v majhnih serijah.",
     origin: "Brezovi gozdovi EU / izven EU",
     priceFrom: 31.90,
@@ -22,7 +22,7 @@ const PRODUCTS = [
   {
     name: "Resasti bradovec",
     latin: "Hericium erinaceus",
-    image: "/assets/bradovec-tinktura.webp",
+    image: "/assets/gomushroom-resasti-bradovec-tinktura.webp",
     description: "Tinktura iz slovenske surovine iz Pohorske gobarne, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na izvoru in kakovosti.",
     origin: "Pohorska gobarna, Slovenija",
     priceFrom: 31.90,

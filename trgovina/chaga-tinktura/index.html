@@ -11,7 +11,6 @@
 
   <link rel="canonical" href="https://gomushroom.si/trgovina/chaga-tinktura/" />
   <link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/chaga-tinktura/" />
-  <link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/chaga-tincture/" />
   <link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/chaga-tinktura/" />
 
   <meta property="og:title" content="Chaga tinktura | GoMushroom" />
@@ -44,72 +43,72 @@
     }
 
     .product-shell{
-      display: grid;
-      gap: 28px;
+      display:grid;
+      gap:28px;
     }
 
     .product-hero{
       display:grid;
-      grid-template-columns: minmax(0,1.05fr) minmax(320px,.95fr);
-      gap: 28px;
-      align-items: stretch;
+      grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+      gap:28px;
+      align-items:stretch;
     }
 
     .product-card{
-      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
-      border: 1px solid rgba(43,11,57,.08);
-      border-radius: 28px;
-      box-shadow: 0 18px 44px rgba(0,0,0,.06);
+      background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
+      border:1px solid rgba(43,11,57,.08);
+      border-radius:28px;
+      box-shadow:0 18px 44px rgba(0,0,0,.06);
     }
 
     .product-copy{
-      padding: clamp(24px, 4vw, 42px);
+      padding:clamp(24px, 4vw, 42px);
     }
 
     .product-kicker{
-      margin: 0 0 10px;
-      font-size: .86rem;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: #7b6044;
-      font-weight: 700;
+      margin:0 0 10px;
+      font-size:.86rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:#7b6044;
+      font-weight:700;
     }
 
     .product-title{
-      margin: 0 0 14px;
-      font-size: clamp(2rem, 4vw, 4rem);
-      line-height: 1.02;
-      color: #2b0b39;
-      letter-spacing: -.03em;
+      margin:0 0 14px;
+      font-size:clamp(2rem, 4vw, 4rem);
+      line-height:1.02;
+      color:#2b0b39;
+      letter-spacing:-.03em;
     }
 
     .product-sub{
-      margin: 0;
-      max-width: 60ch;
-      font-size: 1.05rem;
-      line-height: 1.72;
-      color: rgba(43,11,57,.78);
+      margin:0;
+      max-width:60ch;
+      font-size:1.05rem;
+      line-height:1.72;
+      color:rgba(43,11,57,.78);
     }
 
     .product-actions{
       display:flex;
       flex-wrap:wrap;
-      gap: 12px;
-      margin-top: 24px;
+      gap:12px;
+      margin-top:24px;
     }
 
     .gm-btn{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-height: 48px;
-      padding: 0 18px;
-      border-radius: 999px;
-      border: 1px solid rgba(43,11,57,.10);
+      min-height:48px;
+      padding:0 18px;
+      border-radius:999px;
+      border:1px solid rgba(43,11,57,.10);
       text-decoration:none;
-      font-weight: 700;
-      transition: .18s ease;
-      cursor: pointer;
+      font-weight:700;
+      transition:.18s ease;
+      cursor:pointer;
     }
 
     .gm-btn-primary{
@@ -119,156 +118,190 @@
     }
 
     .gm-btn-primary:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 12px 30px rgba(43,11,57,.18);
+      transform:translateY(-1px);
+      box-shadow:0 12px 30px rgba(43,11,57,.18);
     }
 
     .gm-btn-secondary{
-      background: rgba(255,255,255,.85);
+      background:rgba(255,255,255,.85);
       color:#2b0b39;
     }
 
     .product-media{
-      overflow: hidden;
+      overflow:hidden;
       display:grid;
-      grid-template-rows: 1fr auto;
-      gap: 14px;
-      padding: 14px;
+      grid-template-rows:1fr auto;
+      gap:14px;
+      padding:14px;
     }
 
     .product-visual{
-      min-height: 470px;
+      min-height:470px;
       background:
         linear-gradient(180deg, rgba(43,11,57,.10), rgba(43,11,57,.05)),
         url("https://gomushroom.si/assets/products/chaga-tinktura.webp") center/cover no-repeat;
-      border-radius: 22px;
+      border-radius:22px;
     }
 
     .hero-buy{
-      padding: 20px;
-      border-radius: 22px;
-      background: #fff;
-      border: 1px solid rgba(43,11,57,.08);
-      box-shadow: 0 12px 30px rgba(0,0,0,.04);
+      padding:20px;
+      border-radius:22px;
+      background:#fff;
+      border:1px solid rgba(43,11,57,.08);
+      box-shadow:0 12px 30px rgba(0,0,0,.04);
+    }
+
+    .variant-picker{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .variant-btn{
+      min-height:44px;
+      padding:0 16px;
+      border-radius:999px;
+      border:1px solid rgba(43,11,57,.12);
+      background:#fff;
+      color:#2b0b39;
+      font-weight:700;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+
+    .variant-btn.is-active{
+      background:#2b0b39;
+      color:#fff;
+      border-color:#2b0b39;
+    }
+
+    .variant-current{
+      margin:0 0 6px;
+      color:rgba(43,11,57,.64);
+      font-size:.88rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:700;
     }
 
     .hero-buy .price{
-      margin: 0 0 6px;
-      font-size: 2rem;
-      line-height: 1;
+      margin:0 0 6px;
+      font-size:2rem;
+      line-height:1;
       color:#2b0b39;
-      font-weight: 800;
+      font-weight:800;
     }
 
     .hero-buy .price-note{
-      margin: 0;
-      color: rgba(43,11,57,.62);
-      font-size: .95rem;
+      margin:0;
+      color:rgba(43,11,57,.62);
+      font-size:.95rem;
     }
 
     .hero-buy .mini-note{
-      margin: 12px 0 0;
-      font-size: .92rem;
-      color: rgba(43,11,57,.62);
-      line-height: 1.6;
+      margin:12px 0 0;
+      font-size:.92rem;
+      color:rgba(43,11,57,.62);
+      line-height:1.6;
     }
 
     .product-meta{
       display:grid;
-      grid-template-columns: repeat(4,1fr);
-      gap: 1px;
-      background: rgba(43,11,57,.08);
-      border-radius: 22px;
-      overflow: hidden;
+      grid-template-columns:repeat(4,1fr);
+      gap:1px;
+      background:rgba(43,11,57,.08);
+      border-radius:22px;
+      overflow:hidden;
     }
 
     .product-meta-item{
       background:#fff;
-      padding: 16px 18px;
+      padding:16px 18px;
     }
 
     .product-meta-label{
       display:block;
-      margin-bottom: 6px;
-      font-size: .78rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: rgba(43,11,57,.55);
+      margin-bottom:6px;
+      font-size:.78rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(43,11,57,.55);
     }
 
     .product-meta-value{
       color:#2b0b39;
-      font-weight: 700;
-      line-height: 1.4;
+      font-weight:700;
+      line-height:1.4;
     }
 
     .product-section{
-      padding: clamp(22px, 3vw, 34px);
+      padding:clamp(22px, 3vw, 34px);
     }
 
     .product-section h2{
-      margin: 0 0 12px;
-      font-size: clamp(1.45rem, 2vw, 2rem);
-      line-height: 1.1;
+      margin:0 0 12px;
+      font-size:clamp(1.45rem, 2vw, 2rem);
+      line-height:1.1;
       color:#2b0b39;
-      letter-spacing: -.02em;
+      letter-spacing:-.02em;
     }
 
     .product-section p{
-      margin: 0;
-      color: rgba(43,11,57,.78);
-      line-height: 1.75;
+      margin:0;
+      color:rgba(43,11,57,.78);
+      line-height:1.75;
     }
 
     .product-section p + p{
-      margin-top: 14px;
+      margin-top:14px;
     }
 
     .product-grid-2{
       display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 28px;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:28px;
     }
 
     .product-grid-3{
       display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 18px;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:18px;
     }
 
     .info-tile{
-      padding: 22px;
-      border: 1px solid rgba(43,11,57,.08);
-      border-radius: 22px;
-      background: rgba(255,255,255,.92);
-      box-shadow: 0 12px 30px rgba(0,0,0,.04);
+      padding:22px;
+      border:1px solid rgba(43,11,57,.08);
+      border-radius:22px;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 12px 30px rgba(0,0,0,.04);
     }
 
     .info-tile h3{
-      margin: 0 0 10px;
+      margin:0 0 10px;
       color:#2b0b39;
-      font-size: 1.05rem;
+      font-size:1.05rem;
     }
 
     .info-tile p{
-      margin: 0;
-      color: rgba(43,11,57,.76);
-      line-height: 1.7;
+      margin:0;
+      color:rgba(43,11,57,.76);
+      line-height:1.7;
     }
 
     .product-list{
-      margin: 16px 0 0;
-      padding: 0;
-      list-style: none;
+      margin:16px 0 0;
+      padding:0;
+      list-style:none;
       display:grid;
-      gap: 10px;
+      gap:10px;
     }
 
     .product-list li{
       position:relative;
-      padding-left: 24px;
+      padding-left:24px;
       color:#2b0b39;
-      line-height: 1.7;
+      line-height:1.7;
     }
 
     .product-list li::before{
@@ -280,72 +313,72 @@
       height:8px;
       border-radius:50%;
       background:#af8455;
-      box-shadow: 0 0 0 4px rgba(175,132,85,.14);
+      box-shadow:0 0 0 4px rgba(175,132,85,.14);
     }
 
     .product-quote{
-      padding: 28px;
-      border-radius: 28px;
-      background: linear-gradient(135deg, #2b0b39, #4a1f5d);
+      padding:28px;
+      border-radius:28px;
+      background:linear-gradient(135deg, #2b0b39, #4a1f5d);
       color:#fff;
-      box-shadow: 0 18px 42px rgba(43,11,57,.18);
+      box-shadow:0 18px 42px rgba(43,11,57,.18);
     }
 
     .product-quote strong{
       display:block;
-      font-size: clamp(1.3rem, 2.2vw, 1.9rem);
-      line-height: 1.15;
-      margin-bottom: 10px;
+      font-size:clamp(1.3rem, 2.2vw, 1.9rem);
+      line-height:1.15;
+      margin-bottom:10px;
     }
 
     .faq-list{
       display:grid;
-      gap: 14px;
-      margin-top: 16px;
+      gap:14px;
+      margin-top:16px;
     }
 
     .faq-item{
-      padding: 20px 22px;
-      border-radius: 20px;
-      border: 1px solid rgba(43,11,57,.08);
+      padding:20px 22px;
+      border-radius:20px;
+      border:1px solid rgba(43,11,57,.08);
       background:#fff;
     }
 
     .faq-item h3{
-      margin: 0 0 8px;
+      margin:0 0 8px;
       color:#2b0b39;
-      font-size: 1.02rem;
+      font-size:1.02rem;
     }
 
     .faq-item p{
       margin:0;
-      color: rgba(43,11,57,.76);
-      line-height: 1.7;
+      color:rgba(43,11,57,.76);
+      line-height:1.7;
     }
 
     @media (max-width: 980px){
       .product-hero,
       .product-grid-2,
       .product-grid-3{
-        grid-template-columns: 1fr;
+        grid-template-columns:1fr;
       }
 
       .product-visual{
-        min-height: 380px;
+        min-height:380px;
       }
 
       .product-meta{
-        grid-template-columns: repeat(2,1fr);
+        grid-template-columns:repeat(2,1fr);
       }
     }
 
     @media (max-width: 640px){
       .product-meta{
-        grid-template-columns: 1fr;
+        grid-template-columns:1fr;
       }
 
       .product-visual{
-        min-height: 300px;
+        min-height:300px;
       }
     }
   </style>
@@ -383,47 +416,6 @@
         "@type":"PropertyValue",
         "name":"Različice",
         "value":"Alkoholna in brezalkoholna"
-      }
-    ]
-  }
-  </script>
-
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"FAQPage",
-    "mainEntity":[
-      {
-        "@type":"Question",
-        "name":"Od kod izvira surovina za ta izdelek?",
-        "acceptedAnswer":{
-          "@type":"Answer",
-          "text":"Surovina za Chago prihaja iz brezovih gozdov EU/izven EU."
-        }
-      },
-      {
-        "@type":"Question",
-        "name":"Ali se Chaga lahko goji kot druge gobe?",
-        "acceptedAnswer":{
-          "@type":"Answer",
-          "text":"Chaga je vezana na žive breze in je drugačna od gob, ki jih je mogoče klasično gojiti na substratu. Prav zato je pri njej izvor surovine še posebej pomemben."
-        }
-      },
-      {
-        "@type":"Question",
-        "name":"Ali je usedlina normalna?",
-        "acceptedAnswer":{
-          "@type":"Answer",
-          "text":"Da. Pri bolj koncentriranih tinkturah je usedlina lahko normalen pojav. Pred uporabo stekleničko pretresite."
-        }
-      },
-      {
-        "@type":"Question",
-        "name":"Kakšna je razlika med alkoholno in brezalkoholno različico?",
-        "acceptedAnswer":{
-          "@type":"Answer",
-          "text":"Razlika je v topilu oziroma končni formulaciji. Obe različici sledita istemu pristopu kakovosti in nadzora procesa."
-        }
       }
     ]
   }
@@ -490,7 +482,7 @@
               </p>
 
               <div class="product-actions">
-                <a class="gm-btn gm-btn-primary" href="#nakup-top">Dodaj v košarico</a>
+                <a class="gm-btn gm-btn-primary" href="#nakup-top">Kupite zdaj</a>
                 <a class="gm-btn gm-btn-secondary" href="#podrobnosti">Poglej podrobnosti</a>
               </div>
             </div>
@@ -499,15 +491,30 @@
               <div class="product-visual" aria-label="Chaga tinktura"></div>
 
               <aside id="nakup-top" class="hero-buy" aria-label="Nakupni blok">
-                <p class="price">31,90 €</p>
-                <p class="price-note">50 ml • primer prikaza cene</p>
+                <div class="variant-picker" role="radiogroup" aria-label="Izbira različice">
+                  <button class="variant-btn is-active" type="button" data-variant-btn="alcohol">
+                    Alkoholna
+                  </button>
+                  <button class="variant-btn" type="button" data-variant-btn="glycerin">
+                    Brezalkoholna
+                  </button>
+                </div>
+
+                <p class="variant-current" data-variant-label>Alkoholna</p>
+                <p class="price" data-price>31,90 €</p>
+                <p class="price-note">50 ml</p>
 
                 <div class="product-actions" style="margin-top:16px;">
                   <button class="gm-btn gm-btn-primary"
                           type="button"
+                          id="add-to-cart-btn"
                           data-add-to-cart
                           data-slug="chaga"
-                          data-variant="alcohol">
+                          data-variant="alcohol"
+                          data-price="31.90"
+                          data-name="Chaga tinktura"
+                          data-variant-label="Alkoholna"
+                          data-sku="CHAGA-ALC-50">
                     Dodaj v košarico
                   </button>
 
@@ -516,8 +523,8 @@
                   </a>
                 </div>
 
-                <p class="mini-note">
-                  Nakup je namenoma že na vrhu strani, da ni treba scrollati do dna. Tukaj kasneje samo povežeš pravo varianto, ceno in logiko iz tvojega cart.js.
+                <p class="mini-note" data-variant-note>
+                  Alkoholna različica.
                 </p>
               </aside>
             </div>
@@ -733,6 +740,71 @@
   </footer>
 
   <script src="/trgovina/js/cart.js"></script>
+
+  <script>
+    const productData = {
+      slug: "chaga",
+      name: "Chaga tinktura",
+      variants: {
+        alcohol: {
+          label: "Alkoholna",
+          price: 31.90,
+          sku: "CHAGA-ALC-50",
+          cartVariant: "alcohol",
+          note: "Alkoholna različica."
+        },
+        glycerin: {
+          label: "Brezalkoholna",
+          price: 33.90,
+          sku: "CHAGA-GLY-50",
+          cartVariant: "glycerin",
+          note: "Brezalkoholna različica z glicerinom."
+        }
+      }
+    };
+
+    function formatPrice(value) {
+      return value.toLocaleString("sl-SI", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + " €";
+    }
+
+    function setVariant(variantKey) {
+      const variant = productData.variants[variantKey];
+      if (!variant) return;
+
+      document.querySelectorAll("[data-variant-btn]").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.variantBtn === variantKey);
+      });
+
+      const priceEl = document.querySelector("[data-price]");
+      const variantLabelEl = document.querySelector("[data-variant-label]");
+      const variantNoteEl = document.querySelector("[data-variant-note]");
+      const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+      if (priceEl) priceEl.textContent = formatPrice(variant.price);
+      if (variantLabelEl) variantLabelEl.textContent = variant.label;
+      if (variantNoteEl) variantNoteEl.textContent = variant.note || "";
+
+      if (addToCartBtn) {
+        addToCartBtn.dataset.slug = productData.slug;
+        addToCartBtn.dataset.variant = variant.cartVariant;
+        addToCartBtn.dataset.price = String(variant.price);
+        addToCartBtn.dataset.name = productData.name;
+        addToCartBtn.dataset.variantLabel = variant.label;
+        addToCartBtn.dataset.sku = variant.sku;
+      }
+    }
+
+    document.querySelectorAll("[data-variant-btn]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        setVariant(btn.dataset.variantBtn);
+      });
+    });
+
+    setVariant("alcohol");
+  </script>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();

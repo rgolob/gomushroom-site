@@ -5,17 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>Košarica | GoMushroom</title>
-  <meta name="description" content="Pregled izbranih izdelkov v GoMushroom košarici." />
+  <meta name="description" content="Pregled izbranih GoMushroom tinktur v košarici." />
   <meta name="author" content="GoMushroom — Rok Golob" />
   <meta name="robots" content="noindex,follow" />
 
   <link rel="canonical" href="https://gomushroom.si/trgovina/kosarica/" />
-  <link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/kosarica/" />
-  <link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/cart/" />
-  <link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/kosarica/" />
 
   <meta property="og:title" content="Košarica | GoMushroom" />
-  <meta property="og:description" content="Pregled izbranih izdelkov v GoMushroom košarici." />
+  <meta property="og:description" content="Pregled izbranih GoMushroom tinktur v košarici." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://gomushroom.si/trgovina/kosarica/" />
   <meta property="og:image" content="https://gomushroom.si/assets/og-shop.jpg" />
@@ -24,7 +21,7 @@
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Košarica | GoMushroom" />
-  <meta name="twitter:description" content="Pregled izbranih izdelkov v GoMushroom košarici." />
+  <meta name="twitter:description" content="Pregled izbranih GoMushroom tinktur v košarici." />
   <meta name="twitter:image" content="https://gomushroom.si/assets/og-shop.jpg" />
 
   <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
@@ -34,31 +31,6 @@
 
   <link rel="stylesheet" href="/css/site.css" />
   <link rel="stylesheet" href="/trgovina/css/trgovina.css" />
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "@id": "https://gomushroom.si/trgovina/kosarica/#webpage",
-    "name": "Košarica",
-    "description": "Pregled izbranih izdelkov v GoMushroom košarici.",
-    "url": "https://gomushroom.si/trgovina/kosarica/",
-    "inLanguage": "sl-SI",
-    "isPartOf": {
-      "@type": "WebSite",
-      "name": "GoMushroom",
-      "url": "https://gomushroom.si/"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "GoMushroom",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://gomushroom.si/assets/logo-horizontal.webp"
-      }
-    }
-  }
-  </script>
 </head>
 
 <body>
@@ -79,17 +51,8 @@
         <a href="https://gomushroom.si/trgovina/">Trgovina</a>
       </nav>
 
-      <div class="nav-actions" aria-label="Jezik in meni">
-        <div class="lang-switch" aria-label="Izbira jezika">
-          <a class="lang-flag" href="https://gomushroom.si/trgovina/kosarica/" aria-label="Slovenščina" lang="sl">
-            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-          </a>
-          <a class="lang-flag" href="https://gomushroom.si/en/shop/cart/" aria-label="English" lang="en">
-            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-          </a>
-        </div>
-
-        <a class="shop-cart-link" href="/trgovina/kosarica/" aria-label="Košarica" aria-current="page">
+      <div class="nav-actions" aria-label="Meni">
+        <a class="shop-cart-link" href="/trgovina/kosarica/" aria-label="Košarica">
           Košarica
           <span class="gm-cart-badge" data-cart-count></span>
         </a>
@@ -108,35 +71,41 @@
     <section class="shop-page">
       <div class="wrap">
         <div class="shop-shell">
-          <div class="shop-head">
-            <p class="shop-kicker">GoMushroom • Trgovina</p>
+          <div class="shop-head" style="text-align:left; margin:0 0 10px;">
+            <p class="shop-kicker">GoMushroom • Košarica</p>
             <h1 class="shop-title">Košarica</h1>
+            <p class="shop-sub">
+              Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.
+            </p>
           </div>
 
-          <div class="gm-cart-page">
-            <section class="gm-cart-main">
-              <p id="cart-empty" class="gm-cart-empty" style="display:none;">
-                Košarica je prazna.
-              </p>
-
-              <section id="cart-items" class="gm-cart-items" aria-label="Izdelki v košarici"></section>
-            </section>
+          <section class="gm-cart-page">
+            <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
 
             <aside class="gm-cart-summary">
+              <div class="gm-cart-summary__row">
+                <span>Izdelki</span>
+                <strong id="cart-count">0</strong>
+              </div>
+
               <div class="gm-cart-summary__row">
                 <span>Skupaj</span>
                 <strong id="cart-total">0,00 €</strong>
               </div>
 
-              <button class="gm-btn gm-btn--primary" type="button">
-                Nadaljuj na plačilo
-              </button>
-
               <a class="gm-btn gm-btn--secondary" href="/trgovina/">
                 Nadaljuj z nakupom
               </a>
+
+              <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn">
+                Na blagajno
+              </button>
+
+              <p class="gm-cart-empty" id="checkout-note" style="display:none;">
+                Košarica je prazna.
+              </p>
             </aside>
-          </div>
+          </section>
         </div>
       </div>
     </section>
@@ -160,7 +129,7 @@
       </nav>
 
       <p class="footer-tags">
-        Medicinske gobe · Reishi · Chaga · Resasti bradovec · košarica · trgovina
+        Medicinske gobe · Reishi · Chaga · Resasti bradovec · tinkture · brezalkoholna varianta · trgovina
       </p>
 
       <p class="footer-meta">
@@ -176,21 +145,21 @@
   </footer>
 
   <script src="/trgovina/js/cart.js"></script>
-  <script src="/trgovina/js/cart-page.js"></script>
+  <script src="/trgovina/js/kosarica.js"></script>
 
   <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
   <script>
-    const navToggle = document.getElementById('nav-toggle');
-    const siteHeader = document.getElementById('site-header');
+    const navToggle = document.getElementById("nav-toggle");
+    const siteHeader = document.getElementById("site-header");
 
     if (navToggle && siteHeader) {
-      navToggle.addEventListener('click', () => {
-        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!expanded));
-        siteHeader.classList.toggle('nav-open');
+      navToggle.addEventListener("click", () => {
+        const expanded = navToggle.getAttribute("aria-expanded") === "true";
+        navToggle.setAttribute("aria-expanded", String(!expanded));
+        siteHeader.classList.toggle("nav-open");
       });
     }
   </script>

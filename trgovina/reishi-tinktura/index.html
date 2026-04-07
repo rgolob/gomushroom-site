@@ -35,64 +35,242 @@
   <link rel="stylesheet" href="/trgovina/css/trgovina.css" />
 
   <style>
-    .product-page{
-      padding: clamp(28px, 4vw, 56px) 0 72px;
-      background:
-        radial-gradient(circle at top right, rgba(175,132,85,.10), transparent 24%),
-        radial-gradient(circle at top left, rgba(43,11,57,.06), transparent 26%);
-    }
+.product-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(360px,460px);
+  gap:24px;
+  align-items:start;
+}
 
-    .product-shell{
-      display:grid;
-      gap:28px;
-    }
+.product-card{
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
+  border:1px solid rgba(43,11,57,.07);
+  border-radius:28px;
+  box-shadow:0 16px 40px rgba(0,0,0,.05);
+}
 
-    .product-card{
-      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
-      border:1px solid rgba(43,11,57,.08);
-      border-radius:28px;
-      box-shadow:0 18px 44px rgba(0,0,0,.06);
-    }
+.product-copy{
+  padding:clamp(26px, 4vw, 42px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:100%;
+}
 
-    .product-hero{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(360px,460px);
-      gap:28px;
-      align-items:start;
-    }
+.product-kicker{
+  margin:0 0 12px;
+  font-size:.82rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#8a6a48;
+  font-weight:700;
+}
 
-    .product-copy{
-      padding:clamp(24px, 4vw, 40px);
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      min-height:100%;
-    }
+.product-title{
+  margin:0 0 18px;
+  font-size:clamp(2.4rem, 5vw, 4.6rem);
+  line-height:0.98;
+  color:#2b0b39;
+  letter-spacing:-.05em;
+}
 
-    .product-kicker{
-      margin:0 0 10px;
-      font-size:.86rem;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:#7b6044;
-      font-weight:700;
-    }
+.product-sub{
+  margin:0;
+  max-width:58ch;
+  font-size:1rem;
+  line-height:1.82;
+  color:rgba(43,11,57,.74);
+}
 
-    .product-title{
-      margin:0 0 14px;
-      font-size:clamp(2.3rem, 4.8vw, 4.5rem);
-      line-height:1.02;
-      color:#2b0b39;
-      letter-spacing:-.04em;
-    }
+.product-sub + .product-sub{
+  margin-top:14px;
+}
 
-    .product-sub{
-      margin:0;
-      max-width:54ch;
-      font-size:1.02rem;
-      line-height:1.72;
-      color:rgba(43,11,57,.78);
-    }
+.product-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:26px;
+}
+
+.gm-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:0 16px;
+  border-radius:999px;
+  border:1px solid rgba(43,11,57,.10);
+  text-decoration:none;
+  font-weight:600;
+  font-size:.98rem;
+  transition:.18s ease;
+  cursor:pointer;
+}
+
+.gm-btn-primary{
+  background:#2b0b39;
+  color:#fff;
+  border-color:#2b0b39;
+}
+
+.gm-btn-primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(43,11,57,.14);
+}
+
+.gm-btn-secondary{
+  background:rgba(255,255,255,.78);
+  color:#2b0b39;
+}
+
+.product-buy{
+  padding:14px;
+  position:sticky;
+  top:96px;
+}
+
+.product-buy-inner{
+  display:grid;
+  gap:14px;
+}
+
+.product-visual{
+  width:100%;
+  height:300px;
+  border-radius:22px;
+  border:1px solid rgba(43,11,57,.06);
+  overflow:hidden;
+  background-color:#e9e6e3;
+}
+
+.product-visual-reishi{
+  background-image:url("https://gomushroom.si/assets/products/reishi-tinktura.webp");
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center top;
+}
+
+/* če boš hotel še bolj “odrezati” spodnji del, uporabi to namesto cover:
+.product-visual-reishi{
+  background-image:url("https://gomushroom.si/assets/products/reishi-tinktura.webp");
+  background-repeat:no-repeat;
+  background-size:100% auto;
+  background-position:center top;
+}
+*/
+
+.hero-buy{
+  padding:20px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid rgba(43,11,57,.08);
+  box-shadow:0 10px 26px rgba(0,0,0,.04);
+}
+
+.variant-picker{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.variant-btn{
+  min-height:40px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(43,11,57,.10);
+  background:#fff;
+  color:#2b0b39;
+  font-weight:600;
+  font-size:.95rem;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.variant-btn.is-active{
+  background:#2b0b39;
+  color:#fff;
+  border-color:#2b0b39;
+}
+
+.variant-current{
+  margin:0 0 8px;
+  color:rgba(43,11,57,.56);
+  font-size:.8rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:700;
+}
+
+.hero-buy .price{
+  margin:0 0 4px;
+  font-size:2.05rem;
+  line-height:1;
+  color:#2b0b39;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+
+.hero-buy .price-note{
+  margin:0;
+  color:rgba(43,11,57,.56);
+  font-size:.98rem;
+}
+
+.product-actions-buy{
+  margin-top:18px;
+}
+
+.mini-note{
+  margin:12px 0 0;
+  font-size:.9rem;
+  color:rgba(43,11,57,.58);
+  line-height:1.6;
+}
+
+@media (max-width: 1100px){
+  .product-hero{
+    grid-template-columns:1fr;
+  }
+
+  .product-buy{
+    position:static;
+    top:auto;
+    padding:0;
+  }
+
+  .product-buy-inner{
+    grid-template-columns:1fr 1fr;
+    align-items:start;
+  }
+}
+
+@media (max-width: 760px){
+  .product-buy-inner{
+    grid-template-columns:1fr;
+  }
+
+  .product-visual{
+    height:260px;
+  }
+}
+
+@media (max-width: 640px){
+  .product-copy,
+  .hero-buy{
+    padding:20px;
+  }
+
+  .product-title{
+    font-size:clamp(2.1rem, 12vw, 3.2rem);
+  }
+
+  .product-sub{
+    font-size:.98rem;
+    line-height:1.74;
+  }
+
 
     .product-sub + .product-sub{
       margin-top:12px;
@@ -557,77 +735,73 @@
       <div class="wrap">
         <div class="product-shell">
 
-          <section class="product-hero">
-            <div class="product-card product-copy">
-              <p class="product-kicker">GoMushroom • Ganoderma lucidum</p>
-              <h1 class="product-title">Reishi tinktura</h1>
+<section class="product-hero">
+  <div class="product-card product-copy">
+    <p class="product-kicker">GoMushroom • Ganoderma lucidum</p>
+    <h1 class="product-title">Reishi tinktura</h1>
 
-              <p class="product-sub">
-                Koncentrirana tinktura iz Reishija, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na surovini, sledljivosti in kakovosti končnega izdelka.
-              </p>
+    <p class="product-sub">
+      Koncentrirana tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na surovini, sledljivosti in kakovosti končnega izdelka.
+    </p>
 
-              <p class="product-sub">
-                Surovina za ta izdelek je iz lastne pridelave, nato pa v GoMushroom procesu preide skozi ekstrakcijo, koncentracijo in formulacijo.
-              </p>
+    <p class="product-sub">
+      Reishi ima dolgo zgodovino uporabe v tradicionalnih vzhodnih praksah, kjer velja za eno najbolj prepoznavnih medicinskih gob. Danes ostaja zanimiva predvsem zaradi kompleksne sestave in svojega mesta v sodobnih ekstrakcijskih pristopih.
+    </p>
 
-              <div class="hero-badges" aria-label="Ključne lastnosti">
-                <span class="hero-badge">Ganoderma lucidum</span>
-                <span class="hero-badge">Lastna pridelava</span>
-                <span class="hero-badge">Alkoholna / brezalkoholna</span>
-              </div>
+    <p class="product-sub">
+      Pri GoMushroom ta izdelek izhaja iz lastne pridelave, nato pa v lastnem procesu preide skozi ekstrakcijo, koncentracijo in formulacijo.
+    </p>
 
-              <div class="product-actions">
-                <a class="gm-btn gm-btn-primary" href="#nakup-top">Kupite zdaj</a>
-                <a class="gm-btn gm-btn-secondary" href="#podrobnosti">Poglej podrobnosti</a>
-              </div>
-            </div>
+    <div class="product-actions">
+      <a class="gm-btn gm-btn-primary" href="#nakup-top">Izberi različico</a>
+      <a class="gm-btn gm-btn-secondary" href="#podrobnosti">Več o izdelku</a>
+    </div>
+  </div>
 
-            <div class="product-card product-buy">
-              <div class="product-buy-inner">
-                <div class="product-visual" aria-label="Reishi tinktura">
-                  <img src="/assets/gomushroom-reishi-tinktura.webp" alt="GoMushroom Reishi tinktura" />
-                </div>
+  <div class="product-card product-buy">
+    <div class="product-buy-inner">
+      <div class="product-visual product-visual-reishi" aria-label="Reishi tinktura"></div>
 
-                <aside id="nakup-top" class="hero-buy" aria-label="Nakupni blok">
-                  <div class="variant-picker" role="radiogroup" aria-label="Izbira različice">
-                    <button class="variant-btn is-active" type="button" data-variant-btn="alcohol">
-                      Alkoholna
-                    </button>
-                    <button class="variant-btn" type="button" data-variant-btn="glycerin">
-                      Brezalkoholna
-                    </button>
-                  </div>
+      <aside id="nakup-top" class="hero-buy" aria-label="Nakupni blok">
+        <div class="variant-picker" role="radiogroup" aria-label="Izbira različice">
+          <button class="variant-btn is-active" type="button" data-variant-btn="alcohol">
+            Alkoholna
+          </button>
+          <button class="variant-btn" type="button" data-variant-btn="glycerin">
+            Brezalkoholna
+          </button>
+        </div>
 
-                  <p class="variant-current" data-variant-label>Alkoholna</p>
-                  <p class="price" data-price>31,90 €</p>
-                  <p class="price-note">50 ml</p>
+        <p class="variant-current" data-variant-label>Alkoholna</p>
+        <p class="price" data-price>31,90 €</p>
+        <p class="price-note">50 ml</p>
 
-                  <div class="product-actions" style="margin-top:16px;">
-                    <button class="gm-btn gm-btn-primary"
-                            type="button"
-                            id="add-to-cart-btn"
-                            data-add-to-cart
-                            data-slug="reishi"
-                            data-variant="alcohol"
-                            data-price="31.90"
-                            data-name="Reishi tinktura"
-                            data-variant-label="Alkoholna"
-                            data-sku="REISHI-ALC-50">
-                      Dodaj v košarico
-                    </button>
+        <div class="product-actions product-actions-buy">
+          <button class="gm-btn gm-btn-primary"
+                  type="button"
+                  id="add-to-cart-btn"
+                  data-add-to-cart
+                  data-slug="reishi"
+                  data-variant="alcohol"
+                  data-price="31.90"
+                  data-name="Reishi tinktura"
+                  data-variant-label="Alkoholna"
+                  data-sku="REISHI-ALC-50">
+            Dodaj v košarico
+          </button>
 
-                    <a class="gm-btn gm-btn-secondary" href="/trgovina/">
-                      Nazaj v trgovino
-                    </a>
-                  </div>
+          <a class="gm-btn gm-btn-secondary" href="/trgovina/">
+            Nazaj v trgovino
+          </a>
+        </div>
 
-                  <p class="mini-note" data-variant-note>
-                    Alkoholna različica.
-                  </p>
-                </aside>
-              </div>
-            </div>
-          </section>
+        <p class="mini-note" data-variant-note>
+          Alkoholna različica.
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
 
           <section class="product-meta">
             <div class="product-meta-item">

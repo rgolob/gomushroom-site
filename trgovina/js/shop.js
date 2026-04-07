@@ -1,33 +1,66 @@
 const PRODUCTS = [
   {
+    key: "reishi",
     name: "Reishi tinktura",
     latin: "Ganoderma lucidum",
-    image: "/assets/gomushroom-reishi-tinktura.webp",
+    image: "/assets/reishi-tinktura.webp",
     description: "Tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na surovini, formulaciji in sledljivosti.",
     origin: "Lastna pridelava",
-    priceFrom: 31.90,
     detailUrl: "/trgovina/reishi-tinktura/",
-    buyUrl: "/trgovina/reishi-tinktura/#nakup-top"
+    variants: {
+      alcohol: {
+        label: "Alkoholna",
+        price: 31.90,
+        sku: "REISHI-ALC-50"
+      },
+      glycerin: {
+        label: "Brezalkoholna",
+        price: 33.90,
+        sku: "REISHI-GLY-50"
+      }
+    }
   },
   {
+    key: "chaga",
     name: "Chaga tinktura",
     latin: "Inonotus obliquus",
-    image: "/assets/gomushroom-chaga-tinktura.webp",
+    image: "/assets/chaga-tinktura.webp",
     description: "Tinktura iz Chage iz brezovih gozdov EU/izven EU, pripravljena skozi lasten ekstrakcijski proces in formulirana v majhnih serijah.",
     origin: "Brezovi gozdovi EU / izven EU",
-    priceFrom: 31.90,
     detailUrl: "/trgovina/chaga-tinktura/",
-    buyUrl: "/trgovina/chaga-tinktura/#nakup-top"
+    variants: {
+      alcohol: {
+        label: "Alkoholna",
+        price: 31.90,
+        sku: "CHAGA-ALC-50"
+      },
+      glycerin: {
+        label: "Brezalkoholna",
+        price: 33.90,
+        sku: "CHAGA-GLY-50"
+      }
+    }
   },
   {
+    key: "bradovec",
     name: "Resasti bradovec",
     latin: "Hericium erinaceus",
-    image: "/assets/gomushroom-resasti-bradovec-tinktura.webp",
+    image: "/assets/bradovec-tinktura.webp",
     description: "Tinktura iz slovenske surovine iz Pohorske gobarne, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na izvoru in kakovosti.",
     origin: "Pohorska gobarna, Slovenija",
-    priceFrom: 31.90,
     detailUrl: "/trgovina/resasti-bradovec-tinktura/",
-    buyUrl: "/trgovina/resasti-bradovec-tinktura/#nakup-top"
+    variants: {
+      alcohol: {
+        label: "Alkoholna",
+        price: 31.90,
+        sku: "BRADO-ALC-50"
+      },
+      glycerin: {
+        label: "Brezalkoholna",
+        price: 33.90,
+        sku: "BRADO-GLY-50"
+      }
+    }
   }
 ];
 
@@ -42,45 +75,111 @@ function renderShopGrid() {
   const grid = document.getElementById("shop-grid");
   if (!grid) return;
 
-  grid.innerHTML = PRODUCTS.map(product => `
-    <article class="gm-shop-card">
-      <a class="gm-shop-card__image" href="${product.detailUrl}" aria-label="${product.name}">
-        <img src="${product.image}" alt="${product.name}" loading="lazy">
-      </a>
+  grid.innerHTML = PRODUCTS.map(product => {
+    const defaultVariant = product.variants.alcohol;
 
-      <div class="gm-shop-card__body">
-        <div>
-          <h2 class="gm-shop-card__title">
-            <a href="${product.detailUrl}">${product.name}</a>
-          </h2>
-          <p class="gm-shop-card__latin">${product.latin}</p>
-        </div>
+    return `
+      <article class="gm-shop-card" data-product-card="${product.key}">
+        <a class="gm-shop-card__image" href="${product.detailUrl}" aria-label="${product.name}">
+          <img src="${product.image}" alt="${product.name}" loading="lazy">
+        </a>
 
-        <p class="gm-shop-card__excerpt">${product.description}</p>
+        <div class="gm-shop-card__body">
+          <div>
+            <h2 class="gm-shop-card__title">
+              <a href="${product.detailUrl}">${product.name}</a>
+            </h2>
+            <p class="gm-shop-card__latin">${product.latin}</p>
+          </div>
 
-        <div class="gm-shop-card__meta">
-          <div class="gm-shop-card__meta-row">
-            <span>Izvor surovine</span>
-            <strong>${product.origin}</strong>
+          <p class="gm-shop-card__excerpt">${product.description}</p>
+
+          <div class="gm-shop-card__meta">
+            <div class="gm-shop-card__meta-row">
+              <span>Izvor surovine</span>
+              <strong>${product.origin}</strong>
+            </div>
+          </div>
+
+          <div class="gm-shop-card__variant-picker" role="radiogroup" aria-label="Izbira različice za ${product.name}">
+            <button class="gm-variant-btn is-active" type="button" data-card-variant-btn="alcohol">
+              Alkoholna
+            </button>
+            <button class="gm-variant-btn" type="button" data-card-variant-btn="glycerin">
+              Brezalkoholna
+            </button>
+          </div>
+
+          <div>
+            <div class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price)}</div>
+            <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.label}</p>
+          </div>
+
+          <div class="gm-shop-card__actions">
+            <button
+              class="gm-btn gm-btn--primary"
+              type="button"
+              data-add-to-cart
+              data-slug="${product.key}"
+              data-name="${product.name}"
+              data-variant="alcohol"
+              data-variant-label="${defaultVariant.label}"
+              data-price="${defaultVariant.price}"
+              data-sku="${defaultVariant.sku}"
+              data-image="${product.image}">
+              Dodaj v košarico
+            </button>
+
+            <a class="gm-btn gm-btn--secondary" href="${product.detailUrl}">
+              Podrobnosti
+            </a>
           </div>
         </div>
+      </article>
+    `;
+  }).join("");
 
-        <div>
-          <div class="gm-shop-card__price">od ${formatPrice(product.priceFrom)}</div>
-          <p class="gm-shop-card__price-note">alkoholna / brezalkoholna različica</p>
-        </div>
+  bindVariantPickers();
+}
 
-        <div class="gm-shop-card__actions">
-          <a class="gm-btn gm-btn--primary" href="${product.buyUrl}">
-            Kupi
-          </a>
-          <a class="gm-btn gm-btn--secondary" href="${product.detailUrl}">
-            Podrobnosti
-          </a>
-        </div>
-      </div>
-    </article>
-  `).join("");
+function bindVariantPickers() {
+  document.querySelectorAll("[data-product-card]").forEach(card => {
+    const productKey = card.dataset.productCard;
+    const product = PRODUCTS.find(p => p.key === productKey);
+    if (!product) return;
+
+    const priceEl = card.querySelector("[data-card-price]");
+    const variantLabelEl = card.querySelector("[data-card-variant-label]");
+    const addToCartBtn = card.querySelector("[data-add-to-cart]");
+    const variantButtons = card.querySelectorAll("[data-card-variant-btn]");
+
+    function setVariant(variantKey) {
+      const variant = product.variants[variantKey];
+      if (!variant) return;
+
+      variantButtons.forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.cardVariantBtn === variantKey);
+      });
+
+      if (priceEl) priceEl.textContent = formatPrice(variant.price);
+      if (variantLabelEl) variantLabelEl.textContent = variant.label;
+
+      if (addToCartBtn) {
+        addToCartBtn.dataset.variant = variantKey;
+        addToCartBtn.dataset.variantLabel = variant.label;
+        addToCartBtn.dataset.price = String(variant.price);
+        addToCartBtn.dataset.sku = variant.sku;
+      }
+    }
+
+    variantButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        setVariant(btn.dataset.cardVariantBtn);
+      });
+    });
+
+    setVariant("alcohol");
+  });
 }
 
 renderShopGrid();

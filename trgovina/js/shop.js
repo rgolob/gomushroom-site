@@ -134,6 +134,29 @@ function renderShopGrid() {
               Podrobnosti
             </a>
           </div>
+<div class="gm-accordion">
+  <div class="gm-acc-item">
+    <button class="gm-acc-toggle" type="button">Sestavine</button>
+    <div class="gm-acc-content">
+      <p>${product.ingredients}</p>
+    </div>
+  </div>
+
+  <div class="gm-acc-item">
+    <button class="gm-acc-toggle" type="button">Način uporabe</button>
+    <div class="gm-acc-content">
+      <p>${product.usage}</p>
+    </div>
+  </div>
+
+  <div class="gm-acc-item">
+    <button class="gm-acc-toggle" type="button">Opozorila</button>
+    <div class="gm-acc-content">
+      <p>${product.warning}</p>
+    </div>
+  </div>
+</div>
+          
         </div>
       </article>
     `;

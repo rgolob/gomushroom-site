@@ -3,7 +3,8 @@ const CART_KEY = "gomushroom_cart";
 function getCart() {
   try {
     return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-  } catch {
+  } catch (error) {
+    console.warn("Napaka pri branju košarice:", error);
     return [];
   }
 }
@@ -13,13 +14,20 @@ function saveCart(cart) {
   updateCartBadge();
 }
 
+function formatPrice(value) {
+  return Number(value || 0).toLocaleString("sl-SI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + " €";
+}
+
 function updateCartBadge() {
   const cart = getCart();
   const count = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
-  document.querySelectorAll("[data-cart-count]").forEach(badge => {
+  document.querySelectorAll("[data-cart-count]").forEach((badge) => {
     if (count > 0) {
-      badge.textContent = count;
+      badge.textContent = String(count);
       badge.style.display = "inline-flex";
     } else {
       badge.textContent = "";
@@ -31,21 +39,35 @@ function updateCartBadge() {
 function addToCart(item) {
   const cart = getCart();
 
-  const existing = cart.find(cartItem =>
+  const existing = cart.find((cartItem) =>
     cartItem.slug === item.slug &&
     cartItem.variant === item.variant
   );
 
   if (existing) {
-    existing.quantity += item.quantity;
+    existing.quantity += Number(item.quantity || 1);
   } else {
-    cart.push(item);
+    cart.push({
+      slug: item.slug,
+      name: item.name,
+      variant: item.variant,
+      variantLabel: item.variantLabel || "",
+      price: Number(item.price || 0),
+      sku: item.sku || "",
+      image: item.image || "",
+      quantity: Number(item.quantity || 1)
+    });
   }
 
   saveCart(cart);
 }
 
 function handleAddToCartClick(button) {
+  const quantityInput = button
+    .closest("[data-product-root]")?.querySelector("[data-qty-input]");
+
+  const quantity = quantityInput ? Math.max(1, Number(quantityInput.value || 1)) : 1;
+
   const item = {
     slug: button.dataset.slug,
     name: button.dataset.name,
@@ -54,7 +76,7 @@ function handleAddToCartClick(button) {
     price: Number(button.dataset.price),
     sku: button.dataset.sku || "",
     image: button.dataset.image || "",
-    quantity: 1
+    quantity
   };
 
   if (!item.slug || !item.name || !item.variant || !item.price) {
@@ -74,7 +96,7 @@ function handleAddToCartClick(button) {
   }, 900);
 }
 
-document.addEventListener("click", event => {
+document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-add-to-cart]");
   if (!button) return;
 
@@ -82,5 +104,9 @@ document.addEventListener("click", event => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  updateCartBadge();
+});
+
+window.addEventListener("pageshow", () => {
   updateCartBadge();
 });

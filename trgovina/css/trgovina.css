@@ -205,15 +205,30 @@
   flex-wrap:wrap;
   margin-top:4px;
 }
+
+/* ACCORDION MENU */
+.gm-tagline{
+  margin:6px 0 2px;
+  font-size:.82rem;
+  color:rgba(43,11,57,.55);
+  line-height:1.5;
+}
+
 .gm-micro{
   margin:6px 0 0;
   font-size:.82rem;
   color:rgba(43,11,57,.55);
 }
 
-/* ACCORDION MENU */
+.gm-shop-card__variant-picker{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:2px;
+}
+
 .gm-accordion{
-  margin-top:18px;
+  margin-top:14px;
   border-top:1px solid rgba(0,0,0,.06);
 }
 
@@ -253,16 +268,15 @@
 }
 
 .gm-acc-item.open .gm-acc-content{
-  max-height:200px;
+  max-height:220px;
 }
 
 .gm-acc-content p{
   margin:0 0 14px;
   color:rgba(43,11,57,.7);
   line-height:1.7;
+  font-size:.94rem;
 }
-
-
 
 /* BUTTONS */
 

@@ -205,6 +205,64 @@
   flex-wrap:wrap;
   margin-top:4px;
 }
+.gm-micro{
+  margin:6px 0 0;
+  font-size:.82rem;
+  color:rgba(43,11,57,.55);
+}
+
+/* ACCORDION MENU */
+.gm-accordion{
+  margin-top:18px;
+  border-top:1px solid rgba(0,0,0,.06);
+}
+
+.gm-acc-item{
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+
+.gm-acc-toggle{
+  width:100%;
+  text-align:left;
+  background:none;
+  border:none;
+  padding:14px 0;
+  font:inherit;
+  font-weight:600;
+  color:#2b0b39;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.gm-acc-toggle::after{
+  content:"+";
+  font-size:1.2rem;
+  opacity:.6;
+}
+
+.gm-acc-item.open .gm-acc-toggle::after{
+  content:"–";
+}
+
+.gm-acc-content{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .25s ease;
+}
+
+.gm-acc-item.open .gm-acc-content{
+  max-height:200px;
+}
+
+.gm-acc-content p{
+  margin:0 0 14px;
+  color:rgba(43,11,57,.7);
+  line-height:1.7;
+}
+
+
 
 /* BUTTONS */
 
@@ -215,41 +273,36 @@
   min-height:44px;
   padding:0 16px;
   border-radius:999px;
-  border:1px solid var(--gm-line-strong);
+  border:1px solid rgba(43,11,57,.10);
   text-decoration:none;
-  cursor:pointer;
   font:inherit;
   font-weight:600;
-  font-size:.96rem;
-  transition:
-    transform .18s ease,
-    box-shadow .18s ease,
-    background-color .18s ease,
-    border-color .18s ease,
-    color .18s ease;
+  font-size:.95rem;
+  cursor:pointer;
+  transition:.18s ease;
 }
 
-.gm-btn:hover{
-  transform:translateY(-1px);
-}
-
+/* PRIMARY – bolj subtilen */
 .gm-btn--primary{
-  background:var(--gm-dark);
+  background:rgba(43,11,57,.92);
   color:#fff;
-  border-color:var(--gm-dark);
+  border-color:rgba(43,11,57,.92);
 }
 
 .gm-btn--primary:hover{
-  box-shadow:0 10px 24px rgba(43,11,57,.14);
+  background:#2b0b39;
+  box-shadow:0 6px 16px rgba(43,11,57,.12);
 }
 
+/* SECONDARY – bolj čist */
 .gm-btn--secondary{
   background:#fff;
-  color:var(--gm-dark);
+  color:#2b0b39;
+  border-color:rgba(43,11,57,.12);
 }
 
 .gm-btn--secondary:hover{
-  border-color:rgba(43,11,57,.18);
+  background:rgba(43,11,57,.04);
 }
 
 /* PRODUCT PAGE */

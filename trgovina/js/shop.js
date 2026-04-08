@@ -3,8 +3,10 @@ const PRODUCTS = [
     key: "reishi",
     name: "Reishi tinktura",
     latin: "Ganoderma lucidum",
-    image: "/assets/gomushroom-reishi-tinktura.webp",
-    description: "Tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na surovini, formulaciji in sledljivosti.",
+    image: "/assets/reishi-tinktura.webp",
+    description:
+      "Tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces. Poudarek je na surovini, sledljivosti in formulaciji končnega izdelka — brez bližnjic.",
+    tagline: "Lastna pridelava · Lasten proces · Majhne serije",
     origin: "Lastna pridelava",
     detailUrl: "/trgovina/reishi-tinktura/",
     variants: {
@@ -18,14 +20,22 @@ const PRODUCTS = [
         price: 33.90,
         sku: "REISHI-GLY-50"
       }
-    }
+    },
+    ingredients:
+      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Ganoderma lucidum, sončnični lecitin, vitamin C.",
+    usage:
+      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
+    warning:
+      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
   },
   {
     key: "chaga",
     name: "Chaga tinktura",
     latin: "Inonotus obliquus",
-    image: "/assets/gomushroom-chaga-tinktura.webp",
-    description: "Tinktura iz Chage iz brezovih gozdov EU/izven EU, pripravljena skozi lasten ekstrakcijski proces in formulirana v majhnih serijah.",
+    image: "/assets/chaga-tinktura.webp",
+    description:
+      "Tinktura iz Chage iz brezovih gozdov EU / izven EU, pripravljena skozi lasten ekstrakcijski proces. Posebnost izdelka je surovina, njeno poreklo in skrbno vodena formulacija.",
+    tagline: "Brezovi gozdovi · Lasten proces · Majhne serije",
     origin: "Brezovi gozdovi EU / izven EU",
     detailUrl: "/trgovina/chaga-tinktura/",
     variants: {
@@ -39,14 +49,22 @@ const PRODUCTS = [
         price: 33.90,
         sku: "CHAGA-GLY-50"
       }
-    }
+    },
+    ingredients:
+      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Inonotus obliquus, sončnični lecitin, vitamin C.",
+    usage:
+      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
+    warning:
+      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
   },
   {
     key: "bradovec",
     name: "Resasti bradovec",
     latin: "Hericium erinaceus",
-    image: "/assets/gomushroom-resasti-bradovec-tinktura.webp",
-    description: "Tinktura iz slovenske surovine iz Pohorske gobarne, pripravljena skozi lasten ekstrakcijski proces z jasnim poudarkom na izvoru in kakovosti.",
+    image: "/assets/bradovec-tinktura.webp",
+    description:
+      "Tinktura iz slovenske surovine iz Pohorske gobarne, pripravljena skozi lasten ekstrakcijski proces. Poudarek je na izvoru, formulaciji in kakovosti končnega izdelka.",
+    tagline: "Slovenska surovina · Lasten proces · Majhne serije",
     origin: "Pohorska gobarna, Slovenija",
     detailUrl: "/trgovina/resasti-bradovec-tinktura/",
     variants: {
@@ -60,12 +78,18 @@ const PRODUCTS = [
         price: 33.90,
         sku: "BRADO-GLY-50"
       }
-    }
+    },
+    ingredients:
+      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Hericium erinaceus, sončnični lecitin, vitamin C.",
+    usage:
+      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
+    warning:
+      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
   }
 ];
 
 function formatPrice(value) {
-  return value.toLocaleString("sl-SI", {
+  return Number(value || 0).toLocaleString("sl-SI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }) + " €";
@@ -75,7 +99,7 @@ function renderShopGrid() {
   const grid = document.getElementById("shop-grid");
   if (!grid) return;
 
-  grid.innerHTML = PRODUCTS.map(product => {
+  grid.innerHTML = PRODUCTS.map((product) => {
     const defaultVariant = product.variants.alcohol;
 
     return `
@@ -90,6 +114,7 @@ function renderShopGrid() {
               <a href="${product.detailUrl}">${product.name}</a>
             </h2>
             <p class="gm-shop-card__latin">${product.latin}</p>
+            <p class="gm-tagline">${product.tagline}</p>
           </div>
 
           <p class="gm-shop-card__excerpt">${product.description}</p>
@@ -113,6 +138,7 @@ function renderShopGrid() {
           <div>
             <div class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price)}</div>
             <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.label}</p>
+            <p class="gm-micro">Na zalogi · Majhna serija</p>
           </div>
 
           <div class="gm-shop-card__actions">
@@ -134,41 +160,42 @@ function renderShopGrid() {
               Podrobnosti
             </a>
           </div>
-<div class="gm-accordion">
-  <div class="gm-acc-item">
-    <button class="gm-acc-toggle" type="button">Sestavine</button>
-    <div class="gm-acc-content">
-      <p>${product.ingredients}</p>
-    </div>
-  </div>
 
-  <div class="gm-acc-item">
-    <button class="gm-acc-toggle" type="button">Način uporabe</button>
-    <div class="gm-acc-content">
-      <p>${product.usage}</p>
-    </div>
-  </div>
+          <div class="gm-accordion">
+            <div class="gm-acc-item">
+              <button class="gm-acc-toggle" type="button">Sestavine</button>
+              <div class="gm-acc-content">
+                <p>${product.ingredients}</p>
+              </div>
+            </div>
 
-  <div class="gm-acc-item">
-    <button class="gm-acc-toggle" type="button">Opozorila</button>
-    <div class="gm-acc-content">
-      <p>${product.warning}</p>
-    </div>
-  </div>
-</div>
-          
+            <div class="gm-acc-item">
+              <button class="gm-acc-toggle" type="button">Način uporabe</button>
+              <div class="gm-acc-content">
+                <p>${product.usage}</p>
+              </div>
+            </div>
+
+            <div class="gm-acc-item">
+              <button class="gm-acc-toggle" type="button">Opozorila</button>
+              <div class="gm-acc-content">
+                <p>${product.warning}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
     `;
   }).join("");
 
   bindVariantPickers();
+  bindAccordions();
 }
 
 function bindVariantPickers() {
-  document.querySelectorAll("[data-product-card]").forEach(card => {
+  document.querySelectorAll("[data-product-card]").forEach((card) => {
     const productKey = card.dataset.productCard;
-    const product = PRODUCTS.find(p => p.key === productKey);
+    const product = PRODUCTS.find((p) => p.key === productKey);
     if (!product) return;
 
     const priceEl = card.querySelector("[data-card-price]");
@@ -180,7 +207,7 @@ function bindVariantPickers() {
       const variant = product.variants[variantKey];
       if (!variant) return;
 
-      variantButtons.forEach(btn => {
+      variantButtons.forEach((btn) => {
         btn.classList.toggle("is-active", btn.dataset.cardVariantBtn === variantKey);
       });
 
@@ -195,7 +222,7 @@ function bindVariantPickers() {
       }
     }
 
-    variantButtons.forEach(btn => {
+    variantButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         setVariant(btn.dataset.cardVariantBtn);
       });
@@ -205,4 +232,16 @@ function bindVariantPickers() {
   });
 }
 
-renderShopGrid();
+function bindAccordions() {
+  document.querySelectorAll(".gm-acc-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.closest(".gm-acc-item");
+      if (!item) return;
+      item.classList.toggle("open");
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderShopGrid();
+});

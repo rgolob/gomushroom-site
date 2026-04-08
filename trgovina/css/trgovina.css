@@ -87,11 +87,11 @@
 }
 
 .gm-shop-card{
-  border:1px solid var(--gm-line);
-  border-radius:28px;
+  border:1px solid rgba(43,11,57,.06);
+  border-radius:24px;
   overflow:hidden;
-  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.91));
-  box-shadow:var(--gm-shadow);
+  background:rgba(255,255,255,.94));
+  box-shadow:0 8px 24px rgba(0,0,0,.035);
   display:flex;
   flex-direction:column;
   min-height:100%;
@@ -129,16 +129,16 @@
 .gm-shop-card__body{
   display:flex;
   flex-direction:column;
-  gap:14px;
-  padding:22px;
+  gap:10px;
+  padding:18px;
   flex:1;
 }
 
 .gm-shop-card__title{
   margin:0;
-  font-size:1.65rem;
-  line-height:1.02;
-  letter-spacing:-.03em;
+  font-size:1.25rem;
+  line-height:1.08;
+  letter-spacing:-.02em;
 }
 
 .gm-shop-card__title a{
@@ -151,16 +151,17 @@
 }
 
 .gm-shop-card__latin{
-  margin:-6px 0 0;
-  color:rgba(43,11,57,.52);
-  font-size:.92rem;
-  letter-spacing:.03em;
+  margin:2px 0 0;
+  color:rgba(43,11,57,.46);
+  font-size:.84rem;
+  letter-spacing:.02em;
 }
 
 .gm-shop-card__excerpt{
-  margin:0;
-  color:var(--gm-neutral);
-  line-height:1.72;
+  margin:2px 0 0;
+  color:rgba(43,11,57,.70);
+  line-height:1.58;
+  font-size:.94rem;
 }
 
 .gm-shop-card__meta{

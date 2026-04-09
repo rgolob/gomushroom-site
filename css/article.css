@@ -48,7 +48,7 @@
   opacity: .92;
   font-size: 15px;
   line-height: 1.75;
-  max-width: 92ch;
+  max-width: 94ch;
 }
 
 .article-badges{
@@ -114,7 +114,7 @@
 .article-block p,
 .article-block ul,
 .article-block ol{
-  max-width: 90ch;
+  max-width: 92ch;
 }
 
 .article-block p{

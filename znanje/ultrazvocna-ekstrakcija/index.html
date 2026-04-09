@@ -63,6 +63,7 @@
   <style>
 .article-figure{
   margin: 28px 0;
+  text-align: center;
 }
 
 .article-figure--narrow{
@@ -70,13 +71,14 @@
   margin: 28px auto;
 }
 
-.article-figure picture,
-.article-figure img{
-  display: block;
-  width: 100%;
+.article-figure picture{
+  display: inline-block;
 }
 
 .article-figure img{
+  display: block;
+  width: auto;
+  max-width: 100%;
   height: auto;
   border-radius: 18px;
   box-shadow: 0 12px 30px rgba(0,0,0,.08);
@@ -190,13 +192,13 @@
               To je posebej pomembno pri gobah, kjer celična stena ni enostavna, temveč sestavljena iz hitina, beta-glukanov in proteinov, ki skupaj tvorijo mehansko stabilno mrežo.
             </p>
 
-<figure class="article-figure">
+<figure class="article-figure article-figure--narrow">
   <picture>
     <img
       src="/assets/articles/akusticna-kavitacija-ultrazvocna-ekstrakcija-sl.webp"
       alt="Shema akustične kavitacije pri ultrazvočni ekstrakciji: kolaps mehurčkov in sproščanje bioaktivnih spojin."
-      width="1368"
-      height="768"
+      width="680"
+      height="383"
       loading="lazy"
       decoding="async"
     >

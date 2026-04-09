@@ -63,22 +63,16 @@
   <style>
 .article-figure{
   margin: 28px 0;
-  text-align: center;
 }
 
-.article-figure--narrow{
-  max-width: 480px;
-  margin: 28px auto;
-}
-
-.article-figure picture{
-  display: inline-block;
+.article-figure--left{
+  max-width: 800px;
+  margin: 28px 0; /* levo poravnano */
 }
 
 .article-figure img{
   display: block;
-  width: auto;
-  max-width: 100%;
+  width: 100%;
   height: auto;
   border-radius: 18px;
   box-shadow: 0 12px 30px rgba(0,0,0,.08);
@@ -89,7 +83,6 @@
   font-size: .95rem;
   line-height: 1.5;
   color: #6a6670;
-  text-align: center;
 }
   </style>
 </head>
@@ -191,20 +184,17 @@
             <p>
               To je posebej pomembno pri gobah, kjer celična stena ni enostavna, temveč sestavljena iz hitina, beta-glukanov in proteinov, ki skupaj tvorijo mehansko stabilno mrežo.
             </p>
-
-<figure class="article-figure article-figure--narrow">
-  <picture>
-    <img
-      src="/assets/articles/akusticna-kavitacija-ultrazvocna-ekstrakcija-sl.webp"
-      alt="Shema akustične kavitacije pri ultrazvočni ekstrakciji: kolaps mehurčkov in sproščanje bioaktivnih spojin."
-      width="680"
-      height="383"
-      loading="lazy"
-      decoding="async"
-    >
-  </picture>
-  <figcaption>Akustična kavitacija pri ultrazvočni ekstrakciji.</figcaption>
-</figure>
+              <figure class="article-figure article-figure--left">
+                  <img
+                    src="/assets/articles/akusticna-kavitacija-ultrazvocna-ekstrakcija-sl.webp"
+                    alt="Shema akustične kavitacije pri ultrazvočni ekstrakciji: kolaps mehurčkov in sproščanje bioaktivnih spojin."
+                      width="800"
+                      height="450"
+                      loading="lazy"
+                      decoding="async"
+                  >
+                <figcaption>Akustična kavitacija pri ultrazvočni ekstrakciji.</figcaption>
+              </figure>
           </section>
 
           <section class="article-block">

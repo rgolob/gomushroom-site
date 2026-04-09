@@ -147,7 +147,7 @@
   }
 }
 
-.article-panel{
+.article-card{
   background: rgba(255,255,255,.92);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -155,12 +155,12 @@
   box-shadow: 0 10px 22px rgba(0,0,0,.06);
 }
 
-.article-panel--bg{
+.article-card--bg{
   position: relative;
   overflow: hidden;
 }
 
-.article-panel--bg::before{
+.article-card--bg::before{
   content:"";
   position:absolute;
   inset:-1px;
@@ -172,7 +172,7 @@
   opacity: .9;
 }
 
-.article-panel > *{
+.article-card > *{
   position: relative;
   z-index: 1;
 }

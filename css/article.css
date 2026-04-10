@@ -285,6 +285,15 @@
     margin-right: 0;
   }
 }
+/*o avtorju */
+.article-final{
+  margin: 8px 0 6px;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.5;
+  font-weight: 600;
+  color: #2b0b39;
+  max-width: 42ch;
+}
 
 
 /*Slike pri člankih*/

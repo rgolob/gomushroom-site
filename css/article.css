@@ -286,21 +286,22 @@
   }
 }
 
-/*.article-figure{
+.article-figure{
   margin: 28px 0;
+   max-width: 680px;
 }
 
 .article-figure--left{
-  max-width: 800px;
+  max-width: 680px;
   margin: 28px 0; /* levo poravnano */
 }
-/*
+
 .article-figure img{
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+ /* border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.08);*/
 }
 
 .article-figure figcaption{
@@ -309,4 +310,4 @@
   line-height: 1.5;
   color: #6a6670;
 }
-*/
+

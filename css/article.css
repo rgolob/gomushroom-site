@@ -294,7 +294,16 @@
   color: #2b0b39;
   max-width: 42ch;
 }
+.article-divider{
+  width: 52px;
+  height: 1px;
+  margin: 24px 0 0;
+  background: rgba(43,11,57,.18);
+}
 
+.article-block--author{
+  padding-bottom: 28px;
+}
 
 /*Slike pri člankih*/
 

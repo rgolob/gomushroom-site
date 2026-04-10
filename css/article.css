@@ -219,12 +219,12 @@
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
-  max-width: 72ch;
+  max-width: 92ch;
 }
 
 .article-note{
   margin-top: 18px;
-  max-width: 74ch;
+  max-width: 92ch;
   padding: 16px 18px;
   border-left: 4px solid var(--brand-accent, #af8455);
   background: rgba(177,133,86,.08);
@@ -285,6 +285,9 @@
     margin-right: 0;
   }
 }
+
+
+/*Slike pri člankih*/
 
 .article-figure{
   margin: 28px 0;

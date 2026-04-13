@@ -679,7 +679,7 @@ let orderChannel='malo',orderTier=null;
 let expandedBatches=new Set();
 let currentTab='zaloga';
 
-const EMOJI={'Resasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁'};
+const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
 const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
 
@@ -1663,7 +1663,19 @@ function buildInvoiceHTML(group, qrDataURL){
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?'SI00 '+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
-  const showQR=!!(qrDataURL&&isRevenue&&total>0);
+
+  // QR: use passed-in dataURL, or fall back to Google Charts API
+  let qrImgTag='';
+  if(isRevenue&&total>0){
+    const upnString=buildUpnString(total,upnRef,'Plačilo '+invNum);
+    if(qrDataURL&&qrDataURL.length>100){
+      qrImgTag=`<img src="${qrDataURL}" width="140" height="140" style="display:block;image-rendering:pixelated">`;
+    } else {
+      // Google Charts QR — works in any browser, no JS needed
+      const encoded=encodeURIComponent(upnString);
+      qrImgTag=`<img src="https://chart.googleapis.com/chart?chs=140x140&cht=qr&chl=${encoded}&choe=UTF-8&chld=M|1" width="140" height="140" style="display:block">`;
+    }
+  }
 
   const tableRows=(group.lines||[]).map(l=>{
     const rows=[];
@@ -1755,19 +1767,19 @@ ${extRefs}
   <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' \u20AC':'\u2013'}</span></div>
 </div>
 
-${showQR?`
+${qrImgTag?`
 <div class="qr-section">
   <div class="qr-wrap">
     <div class="qr-label">UPN QR</div>
-    <img src="${qrDataURL}" width="128" height="128" style="display:block;image-rendering:pixelated">
+    ${qrImgTag}
   </div>
   <div class="qr-info">
-    <strong>Podatki za pla\u010dilo</strong>
+    <strong>Podatki za plačilo</strong>
     Prejemnik: ${UPN_NAME}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
-    Znesek: <strong>${total.toFixed(2)} \u20AC</strong><br>
+    Znesek: <strong>${total.toFixed(2)} €</strong><br>
     Referenca: ${upnRef}<br>
-    Namen: Pla\u010dilo ${invNum}
+    Namen: Plačilo ${invNum}
   </div>
 </div>`:''}
 
@@ -1786,13 +1798,14 @@ function savePDF(){document.title='${invNum||'Dobavnica'}';window.print();}
 </body></html>`;
 }
 
-// Load qrcodejs once into main app (not in blob)
+// Load QR library — use kjua which reliably returns canvas
 let _qrLibLoaded=false;
 let _qrLibLoading=null;
 function loadQRLib(){
   if(_qrLibLoaded)return Promise.resolve();
   if(_qrLibLoading)return _qrLibLoading;
   _qrLibLoading=new Promise((res,rej)=>{
+    // Try qrcodejs first
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
     s.onload=()=>{_qrLibLoaded=true;res();};
@@ -1804,24 +1817,51 @@ function loadQRLib(){
 
 function generateQRDataURL(text){
   return new Promise((res)=>{
+    // Create offscreen container
     const div=document.createElement('div');
-    div.style.cssText='position:fixed;left:-9999px;top:-9999px;width:140px;height:140px';
+    div.style.cssText='position:fixed;left:-9999px;top:-9999px;width:160px;height:160px;background:white';
     document.body.appendChild(div);
     try{
-      new QRCode(div,{text,width:140,height:140,colorDark:'#1a1209',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-      // Wait up to 2s for QR to render
-      let waited=0;
-      const check=setInterval(()=>{
-        waited+=100;
+      const qr=new QRCode(div,{
+        text,width:160,height:160,
+        colorDark:'#000000',colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.M
+      });
+      // Poll until we get a valid image
+      let attempts=0;
+      const poll=setInterval(()=>{
+        attempts++;
+        // qrcodejs creates either canvas or img depending on browser
         const canvas=div.querySelector('canvas');
         const img=div.querySelector('img');
         let dataURL='';
-        if(canvas&&canvas.width>1) dataURL=canvas.toDataURL('image/png');
-        else if(img&&img.src&&img.src.startsWith('data:')) dataURL=img.src;
-        if(dataURL||waited>=2000){
-          clearInterval(check);
+        if(canvas&&canvas.width>10){
+          try{dataURL=canvas.toDataURL('image/png');}catch(e){}
+        }
+        if(!dataURL&&img){
+          // img.src might be a data URL or object URL
+          if(img.complete&&img.naturalWidth>0){
+            if(img.src.startsWith('data:')){
+              dataURL=img.src;
+            } else {
+              // Convert to data URL via canvas
+              try{
+                const c=document.createElement('canvas');
+                c.width=160;c.height=160;
+                c.getContext('2d').drawImage(img,0,0);
+                dataURL=c.toDataURL('image/png');
+              }catch(e){}
+            }
+          }
+        }
+        if(dataURL&&dataURL.length>100){
+          clearInterval(poll);
           if(document.body.contains(div))document.body.removeChild(div);
           res(dataURL);
+        } else if(attempts>=30){
+          clearInterval(poll);
+          if(document.body.contains(div))document.body.removeChild(div);
+          res('');
         }
       },100);
     }catch(e){
@@ -1832,10 +1872,11 @@ function generateQRDataURL(text){
 }
 
 async function printInvoice(group){
-  const upnRef=group.invoiceNum?'SI00 '+group.invoiceNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
   const isRevenue=group.channel==='malo'||group.channel==='velo';
   const total=group.total||0;
-  const upnString=isRevenue&&total>0?buildUpnString(total,upnRef,'Plačilo '+(group.invoiceNum||'')):'';
+  const invNum=group.invoiceNum||'';
+  const upnRef=invNum?'SI00 '+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnString=isRevenue&&total>0?buildUpnString(total,upnRef,'Plačilo '+invNum):'';
 
   let qrDataURL='';
   if(upnString){
@@ -1843,7 +1884,11 @@ async function printInvoice(group){
     try{
       await loadQRLib();
       qrDataURL=await generateQRDataURL(upnString);
-    }catch(e){qrDataURL='';}
+      if(!qrDataURL)toast('⚠ QR ni uspel — račun brez QR');
+    }catch(e){
+      toast('⚠ QR ni uspel — račun brez QR');
+      qrDataURL='';
+    }
   }
 
   const html=buildInvoiceHTML(group,qrDataURL);

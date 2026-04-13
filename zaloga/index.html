@@ -58,7 +58,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:1.1rem 1rem calc(var(--sab)+80px);max-width:720px;margin:0 auto}
+.scroll-body{padding:1.1rem 1rem calc(var(--sab)+90px);max-width:720px;margin:0 auto}
 .view{display:none}.view.active{display:block}
 
 /* STATS */
@@ -338,6 +338,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <span id="syncStatus" style="font-size:.65rem;color:rgba(245,240,232,.5);letter-spacing:.05em;min-width:80px;text-align:right"></span>
     <button class="hbtn" onclick="exportCSV()">↓ CSV</button>
     <label class="hbtn" style="cursor:pointer">↑ Uvoz<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
+    <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
 </header>
@@ -625,7 +626,28 @@ async function doLogin(){
   if(h===PASSWORD_HASH){localStorage.setItem('gm_auth',h);document.getElementById('loginScreen').style.display='none';appInit();}
   else{err.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(()=>err.textContent='',2500);}
 }
-async function checkAuth(){
+async function clearAllData(){
+  const ok=await showConfirm('Izbriši VSE podatke?\n\nSerije, prodaje, računi — vse bo izgubljeno.\nTega ni mogoče razveljaviti.','🗑 Izbriši vse');
+  if(!ok)return;
+  const ok2=await showConfirm('Si prepričan? Vsi podatki bodo trajno izbrisani.','Da, izbriši');
+  if(!ok2)return;
+  products=[];batches=[];saleGroups=[];invoices=[];invCounters={malo:0,velo:0,dar:0,int:0};
+  ['gm_products','gm_batches','gm_saleGroups','gm_invoices','gm_invCounters'].forEach(k=>localStorage.removeItem(k));
+  // Also clear from Supabase
+  try{
+    await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.gm_data`,{
+      method:'DELETE',headers:SB_HEADERS
+    });
+  }catch(e){}
+  renderStats();renderInventory();
+  if(currentTab==='serije'){renderProductMgmt();renderBatches();}
+  if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  if(currentTab==='narocilo')renderOrderRows();
+  toast('Vsi podatki izbrisani');
+}
+
+
   if(localStorage.getItem('gm_auth')===PASSWORD_HASH){document.getElementById('loginScreen').style.display='none';appInit();}
   else setTimeout(()=>document.getElementById('loginPwd').focus(),300);
 }
@@ -1789,15 +1811,21 @@ function generateQRDataURL(text){
     document.body.appendChild(div);
     try{
       new QRCode(div,{text,width:140,height:140,colorDark:'#1a1209',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-      setTimeout(()=>{
+      // Wait up to 2s for QR to render
+      let waited=0;
+      const check=setInterval(()=>{
+        waited+=100;
         const canvas=div.querySelector('canvas');
         const img=div.querySelector('img');
         let dataURL='';
-        if(canvas) dataURL=canvas.toDataURL('image/png');
-        else if(img) dataURL=img.src;
-        document.body.removeChild(div);
-        res(dataURL);
-      },200);
+        if(canvas&&canvas.width>1) dataURL=canvas.toDataURL('image/png');
+        else if(img&&img.src&&img.src.startsWith('data:')) dataURL=img.src;
+        if(dataURL||waited>=2000){
+          clearInterval(check);
+          if(document.body.contains(div))document.body.removeChild(div);
+          res(dataURL);
+        }
+      },100);
     }catch(e){
       if(document.body.contains(div))document.body.removeChild(div);
       res('');
@@ -1813,6 +1841,7 @@ async function printInvoice(group){
 
   let qrDataURL='';
   if(upnString){
+    toast('⟳ Generiram račun…');
     try{
       await loadQRLib();
       qrDataURL=await generateQRDataURL(upnString);

@@ -1631,27 +1631,37 @@ const UPN_ADDRESS = 'Prapreče pri Straži 22';
 const UPN_CITY    = '8351 Straža';
 
 function buildUpnString(amount, reference, purpose){
-  // UPN QR format (Slovenian standard)
-  // UPNQR\n<payer_iban>\n<payer_ref>\n<payer_name>\n<payer_address>\n<payer_city>\n
-  // <amount_cents>\n<date>\n<urgent>\n<purpose_code>\n<purpose>\n<due_date>\n
-  // <recv_iban>\n<recv_ref>\n<recv_name>\n<recv_address>\n<recv_city>
+  // UPN QR — točna struktura po tehničnem standardu ZBS
+  // 19 polj, vsako končano z \n, polje 20 = kontrolna vsota (dolžina stringa skupaj s poljem 20)
   const cents=Math.round((amount||0)*100).toString().padStart(11,'0');
+  // Referenca: model (SI00) + sklic ločena s presledkom, skupaj max 26 znakov
   const ref=reference||'';
-  return [
-    'UPNQR',
-    '','','','','',   // payer fields (empty)
-    cents,
-    '',               // date
-    '',               // urgent
-    'GDSV',           // purpose code — goods/services
-    purpose||'Plačilo računa',
-    '',               // due date
-    UPN_IBAN,
-    ref,
-    UPN_NAME,
-    UPN_ADDRESS,
-    UPN_CITY,
-  ].join('\n')+'\n';
+  const fields=[
+    'UPNQR',          // 1  konstanta
+    '',               // 2  IBAN plačnika
+    '',               // 3  Koda namena
+    '',               // 4  Rok plačila
+    '',               // 5  Datum plačila
+    '',               // 6  Nujno (prazno)
+    '',               // 7  Referenca plačnika
+    '',               // 8  Ime plačnika
+    '',               // 9  Ulica plačnika
+    '',               // 10 Kraj plačnika
+    cents,            // 11 Znesek (11 cifer)
+    '',               // 12 Datum valute
+    'GDSV',           // 13 Koda namena plačila
+    purpose||'Placilo racuna', // 14 Namen plačila (brez šumnikov!)
+    '',               // 15 Rok plačila prejemnika
+    UPN_IBAN,         // 16 IBAN prejemnika (brez presledkov)
+    ref,              // 17 Referenca prejemnika (SI00 + sklic)
+    UPN_NAME,         // 18 Ime prejemnika
+    UPN_ADDRESS+', '+UPN_CITY, // 19 Naslov prejemnika
+  ];
+  // Sestavimo string brez kontrolne vsote
+  const body=fields.map(f=>f+'\n').join('');
+  // Kontrolna vsota = dolžina body + dolžina polja 20 (3 cifre + \n = 4 znaki)
+  const checksum=String(body.length+4).padStart(3,'0');
+  return body+checksum+'\n';
 }
 
 // ── QR CDN URL ──
@@ -1662,7 +1672,7 @@ function buildInvoiceHTML(group, qrDataURL){
   const isRevenue=group.channel==='malo'||group.channel==='velo';
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
-  const upnRef=invNum?'SI00 '+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnRef=invNum?'SI00'+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
 
   // QR: vedno prikaži za maloprodajo/veleprodajo
   let qrImgTag='';
@@ -1778,7 +1788,7 @@ ${qrImgTag?`
     Prejemnik: ${UPN_NAME}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
     Znesek: <strong>${total.toFixed(2)} €</strong><br>
-    Referenca: ${upnRef}<br>
+    Referenca: SI00 ${invNum?invNum.replace(/[^0-9]/g,'').padStart(12,'0'):''}<br>
     Namen: Plačilo ${invNum}
   </div>
 </div>`:''}
@@ -1875,7 +1885,7 @@ async function printInvoice(group){
   const isRevenue=group.channel==='malo'||group.channel==='velo';
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
-  const upnRef=invNum?'SI00 '+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnRef=invNum?'SI00'+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
   const upnString=isRevenue&&total>0?buildUpnString(total,upnRef,'Plačilo '+invNum):'';
 
   let qrDataURL='';

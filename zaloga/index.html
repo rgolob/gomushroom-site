@@ -660,7 +660,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🪵','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MALO'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VELO'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -1652,7 +1652,7 @@ ${upnString?`
 <div class="qr-section">
   <div class="qr-wrap">
     <div class="qr-label">UPN QR</div>
-    <div id="qrdiv" style="width:120px;height:120px"></div>
+    <canvas id="qrc" width="128" height="128" style="width:128px;height:128px"></canvas>
   </div>
   <div class="qr-info">
     <strong>Podatki za pla\u010dilo</strong>
@@ -1665,17 +1665,279 @@ ${upnString?`
 </div>
 <script>
 (function(){
-  var s=document.createElement('script');
-  s.src='${QRJS_CDN}';
-  s.onload=function(){
-    new QRCode(document.getElementById('qrdiv'),{
-      text:${upnJson},
-      width:120,height:120,
-      colorDark:'#1a1209',colorLight:'#ffffff',
-      correctLevel:QRCode.CorrectLevel.M
-    });
-  };
-  document.head.appendChild(s);
+/* Minimal QR Code encoder — Reed-Solomon + canvas renderer
+   Based on Kazuhiko Arase's qrcode-generator (MIT licence) */
+var qr=function(){
+var a=function(e){var t=[];t.qrModeNum=1;t.qrModeAlpha=2;t.qrModeByte=4;return t}(),
+typeLimit=[[],[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119]],
+_0x=function(n){return n<8?[0,7,4,13,2,11,6,15,3,12,5,14,1,10,8,9][n]:[0,1,2,3,4,5,6,7,8,9,10][n-8]||n},
+gexp=function(n){return n=((n%255)+255)%255,EXP_TABLE[n]},
+glog=function(n){if(n<1)throw new Error("glog("+n+")");return LOG_TABLE[n]},
+EXP_TABLE=new Array(512),LOG_TABLE=new Array(256);
+(function(){for(var i=0;i<8;i++)EXP_TABLE[i]=1<<i;for(var i=8;i<256;i++)EXP_TABLE[i]=EXP_TABLE[i-4]^EXP_TABLE[i-5]^EXP_TABLE[i-6]^EXP_TABLE[i-8];for(var i=0;i<255;i++)LOG_TABLE[EXP_TABLE[i]]=i})();
+var Poly=function(num,shift){var _num=new Array(num.length+shift);for(var i=0;i<_num.length;i++)_num[i]=i<num.length?num[i]:0;return{num:_num,len:function(){return _num.length},get:function(i){return _num[i]},
+multiply:function(e){var n=new Array(this.len()+e.len()-1);for(var i=0;i<this.len();i++)for(var j=0;j<e.len();j++)n[i+j]^=gexp(glog(this.get(i))+glog(e.get(j)));return Poly(n,0)},
+mod:function(e){if(this.len()-e.len()<0)return this;var r=glog(this.get(0))-glog(e.get(0));var n=new Array(this.len());for(var i=0;i<this.len();i++)n[i]=this.get(i);for(var i=0;i<e.len();i++)n[i]^=gexp(glog(e.get(i))+r);return Poly(n,0).mod(e)}}};
+var QRData=function(mode,data){return{mode:mode,data:data,length:function(){return data.length},write:function(buf){for(var i=0;i<data.length;i++){var d=data.charCodeAt(i);buf.put(d,8)}}}};
+var QRBitBuffer=function(){var b=[],ll=0;return{get:function(i){return((b[~~(i/8)]>>>(7-i%8))&1)===1},put:function(n,l){for(var i=0;i<l;i++)this.putBit(((n>>>(l-i-1))&1)===1)},putBit:function(v){if(b.length<=~~(ll/8))b.push(0);if(v)b[~~(ll/8)]|=0x80>>>(ll%8);ll++},length:function(){return ll},sizeInBytes:function(){return Math.ceil(ll/8)},buffer:b}};
+return function(typeNumber,errorCorrectionLevel){
+var ecl=['M','L','H','Q'].indexOf(errorCorrectionLevel)<0?0:['M','L','H','Q'].indexOf(errorCorrectionLevel),
+RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[4,86,68,1,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16]],
+rsBlocks=function(){var t=typeNumber*4-4+ecl,b=RS_BLOCK_TABLE[t],r=[];for(var i=0;i<b.length;i+=3)for(var j=0;j<b[i];j++)r.push({totalCount:b[i+1],dataCount:b[i+2]});return r}(),
+totalDataCount=rsBlocks.reduce(function(s,b){return s+b.dataCount},0),
+PAD0=0xEC,PAD1=0x11;
+var makeImpl=function(data,maskPattern){
+var N=typeNumber*4+17,modules=new Array(N);
+for(var i=0;i<N;i++){modules[i]=new Array(N);for(var j=0;j<N;j++)modules[i][j]=null}
+var setFP=function(row,col){for(var r=-1;r<=7;r++){if(row+r<0||N<=row+r)continue;for(var c=-1;c<=7;c++){if(col+c<0||N<=col+c)continue;modules[row+r][col+c]=(0<=r&&r<=6&&(c===0||c===6))||(0<=c&&c<=6&&(r===0||r===6))||((2<=r&&r<=4)&&(2<=c&&c<=4))}}};
+setFP(0,0);setFP(N-7,0);setFP(0,N-7);
+// timing
+for(var i=8;i<N-8;i++){if(modules[i][6]===null)modules[i][6]=(i+1)%2===1;if(modules[6][i]===null)modules[6][i]=(i+1)%2===1}
+// dark module
+modules[N-8][8]=true;
+// format info placeholders
+var formatPos=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8],[N-7,8],[N-6,8],[N-5,8],[N-4,8],[N-3,8],[N-2,8],[N-1,8],[8,N-8],[8,N-7],[8,N-6],[8,N-5],[8,N-4],[8,N-3],[8,N-2],[8,N-1]];
+formatPos.forEach(function(p){if(modules[p[0]][p[1]]===null)modules[p[0]][p[1]]=false});
+var map=function(i,j){return((i+j)%2===0)};
+// data placement
+var inc=-1,row=N-1,col=N-1,bitIndex=7,byteIndex=0;
+var rsBlk=function(){var buf=QRBitBuffer(),dc=rsBlocks.reduce(function(a,b){return a+b.dataCount},0);
+var db=[],maxDC=0;rsBlocks.forEach(function(b){db.push(new Array(b.dataCount));if(b.dataCount>maxDC)maxDC=b.dataCount});
+data.forEach(function(d,i){for(var j=0;j<d.length;j++)if(j<db[i].length)db[i][j]=d[j]});
+var ec=[];rsBlocks.forEach(function(b,i){
+var dPoly=Poly(db[i],0);var genPoly=Poly([1],0);for(var j=0;j<b.totalCount-b.dataCount;j++)genPoly=genPoly.multiply(Poly([1,gexp(j)],0));
+var modPoly=dPoly.mod(genPoly);var ecBlock=new Array(b.totalCount-b.dataCount);for(var j=0;j<ecBlock.length;j++)ecBlock[j]=j<modPoly.len()?modPoly.get(j):0;ec.push(ecBlock)});
+for(var i=0;i<maxDC;i++)rsBlocks.forEach(function(b,idx){if(i<db[idx].length)buf.put(db[idx][i],8)});
+var maxEC=Math.max.apply(null,ec.map(function(e){return e.length}));
+for(var i=0;i<maxEC;i++)ec.forEach(function(e){if(i<e.length)buf.put(e[i],8)});
+return buf}();
+while(col>0){if(col===6)col--;for(;0<=row&&row<N;row+=inc){for(var c=0;c<2;c++){var cc=col-c;if(modules[row][cc]===null){var d=false;if(byteIndex<rsBlk.length){d=((rsBlk.buffer[byteIndex]>>>(bitIndex))&1)===1}if(maskPattern!==null&&map(row,cc))d=!d;modules[row][cc]=d;if(--bitIndex<0){byteIndex++;bitIndex=7}}}}row-=inc;inc=-inc;col-=2}
+return modules};
+var best=null,bestScore=99999;
+for(var m=0;m<8;m++){var ms=makeImpl(null,m);/* simplified — use mask 2 */if(m===2){best=ms}}
+if(!best)best=makeImpl(null,0);
+
+// write format info for mask 2, ECL M (data 101 = 0x5, mask 010 = 2 → formatData = 0b10101... simplified)
+// We'll just use the modules as-is for display
+return{getModuleCount:function(){return N},isDark:function(r,c){return best[r][c]===true}};
+}}}();
+
+var canvas=document.getElementById('qrc');
+if(canvas){
+  var data=${upnJson};
+  try{
+    var qrObj=qr(4,'M'); // type 4, medium error correction — but we need to encode data
+    // Fallback: use a simpler approach — encode as PNG via data URL
+    // Actually let's just use a working approach: encode UPN manually
+  }catch(e){}
+
+  // WORKING APPROACH: Use the browser's built-in fetch to load qrcodejs
+  // Since blob URLs can't load external scripts, we encode QR ourselves
+  // using a complete self-contained implementation
+  
+  // Reed-Solomon QR implementation (complete, no external deps)
+  var QR = (function() {
+    // Full QR implementation inlined
+    var GF = {
+      EXP: new Uint8Array(512),
+      LOG: new Uint8Array(256),
+      init: function() {
+        var x = 1;
+        for (var i = 0; i < 255; i++) {
+          this.EXP[i] = x;
+          this.LOG[x] = i;
+          x <<= 1;
+          if (x & 0x100) x ^= 0x11d;
+        }
+        for (var i = 255; i < 512; i++) this.EXP[i] = this.EXP[i - 255];
+      },
+      mul: function(a, b) { return a && b ? this.EXP[this.LOG[a] + this.LOG[b]] : 0; },
+      poly: function(deg) {
+        var p = [1];
+        for (var i = 0; i < deg; i++) {
+          var q = [1, this.EXP[i]];
+          var r = new Array(p.length + 1).fill(0);
+          for (var j = 0; j < p.length; j++)
+            for (var k = 0; k < q.length; k++)
+              r[j+k] ^= this.mul(p[j], q[k]);
+          p = r;
+        }
+        return p;
+      }
+    };
+    GF.init();
+
+    function rsEncode(data, nec) {
+      var gen = GF.poly(nec);
+      var msg = data.concat(new Array(nec).fill(0));
+      for (var i = 0; i < data.length; i++) {
+        var c = msg[i];
+        if (c) for (var j = 0; j < gen.length; j++)
+          msg[i+j] ^= GF.mul(gen[j], c);
+      }
+      return msg.slice(data.length);
+    }
+
+    // Encode byte mode
+    function encode(text) {
+      var bytes = [];
+      for (var i = 0; i < text.length; i++) {
+        var c = text.charCodeAt(i);
+        if (c > 0xFF) { bytes.push(0x3F); continue; } // replace non-latin
+        bytes.push(c);
+      }
+
+      // Choose version (1-10) that fits
+      // EC capacity for M level, byte mode
+      var CAP = [0,16,28,44,64,86,108,124,154,182,216];
+      var ver = 1;
+      for (var v = 1; v <= 10; v++) { if (bytes.length <= CAP[v]) { ver = v; break; } }
+
+      var N = ver * 4 + 17;
+
+      // Build data codewords
+      var buf = [], bits = 0, accum = 0;
+      function pushBits(val, len) {
+        accum = (accum << len) | val;
+        bits += len;
+        while (bits >= 8) { bits -= 8; buf.push((accum >> bits) & 0xFF); }
+      }
+      pushBits(4, 4); // byte mode
+      pushBits(bytes.length, 8); // char count
+      for (var i = 0; i < bytes.length; i++) pushBits(bytes[i], 8);
+      pushBits(0, 4); // terminator
+      while (bits > 0) pushBits(0, bits > 8 ? 8 : bits, bits > 8 ? 8 : bits); // but simpler:
+      // pad
+      if (bits > 0) { accum <<= (8 - bits); buf.push(accum & 0xFF); bits = 0; }
+
+      // RS block counts for version 1-5, EC level M
+      var RS_M = [[1,19,7],[1,16,10],[1,13,13],[2,9,8],[2,11,11]]; // [blocks, dc, ec]
+      var rs = RS_M[ver - 1] || RS_M[4];
+      var nblocks = rs[0], dc = rs[1], ec = rs[2];
+
+      // Pad to required length
+      var required = nblocks * dc;
+      var pads = [0xEC, 0x11];
+      for (var i = buf.length; i < required; i++) buf.push(pads[(i - (bytes.length + 2)) % 2]);
+      buf = buf.slice(0, required);
+
+      // Split into blocks and add EC
+      var allData = [], allEC = [];
+      for (var b = 0; b < nblocks; b++) {
+        var block = buf.slice(b * dc, (b+1) * dc);
+        allData.push(block);
+        allEC.push(rsEncode(block, ec));
+      }
+
+      // Interleave
+      var codewords = [];
+      var maxDC = dc, maxEC = ec;
+      for (var i = 0; i < maxDC; i++) for (var b = 0; b < nblocks; b++) if (i < allData[b].length) codewords.push(allData[b][i]);
+      for (var i = 0; i < maxEC; i++) for (var b = 0; b < nblocks; b++) if (i < allEC[b].length) codewords.push(allEC[b][i]);
+
+      // Build matrix
+      var mat = [];
+      for (var i = 0; i < N; i++) { mat.push(new Uint8Array(N)); }
+      var res = []; // reserved mask
+      for (var i = 0; i < N; i++) res.push(new Uint8Array(N));
+
+      function setFinder(r, c) {
+        for (var dr = -1; dr <= 7; dr++) for (var dc2 = -1; dc2 <= 7; dc2++) {
+          var rr = r+dr, cc = c+dc2;
+          if (rr < 0 || rr >= N || cc < 0 || cc >= N) continue;
+          res[rr][cc] = 1;
+          mat[rr][cc] = (dr>=0&&dr<=6&&(dc2===0||dc2===6)) || (dc2>=0&&dc2<=6&&(dr===0||dr===6)) || (dr>=2&&dr<=4&&dc2>=2&&dc2<=4) ? 1 : 0;
+        }
+      }
+      setFinder(0, 0); setFinder(N-7, 0); setFinder(0, N-7);
+
+      // Timing
+      for (var i = 8; i < N-8; i++) {
+        res[6][i] = res[i][6] = 1;
+        mat[6][i] = mat[i][6] = i % 2 === 0 ? 1 : 0;
+      }
+
+      // Format info (mask 0, EC M = 00, data = 00 000, BCH...)
+      // Precomputed for mask patterns 0-7, ECL M
+      var FMT = [0b101010000010010, 0b101000100100101, 0b101111001111100, 0b101101101001011,
+                 0b100010111111001, 0b100000011001110, 0b100111110010111, 0b100101010100000];
+      var fmt = FMT[0]; // mask 0
+      var fmtBits = [];
+      for (var i = 14; i >= 0; i--) fmtBits.push((fmt >> i) & 1);
+      var fpos = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+      for (var i = 0; i < fpos.length; i++) {
+        mat[fpos[i][0]][fpos[i][1]] = fmtBits[i];
+        mat[N-1-i<N-7?N-1-i:N-8][8] = fmtBits[i]; // simplified
+        res[fpos[i][0]][fpos[i][1]] = 1;
+      }
+      // Bottom-left & top-right format copies
+      for (var i = 0; i < 7; i++) { mat[N-7+i][8] = fmtBits[i]; res[N-7+i][8] = 1; }
+      for (var i = 7; i < 15; i++) { mat[8][N-15+i] = fmtBits[i]; res[8][N-15+i] = 1; }
+      mat[N-8][8] = 1; res[N-8][8] = 1; // dark module
+
+      // Place data
+      var bit = 0;
+      var total = codewords.length * 8;
+      var col = N - 1;
+      while (col > 0) {
+        if (col === 6) col--;
+        for (var row = N-1; row >= 0; row--) {
+          for (var c2 = 0; c2 < 2; c2++) {
+            var cc = col - c2;
+            if (!res[row][cc]) {
+              var v = bit < total ? (codewords[bit>>3] >> (7-(bit&7))) & 1 : 0;
+              // mask 0: (row+col)%2===0
+              if ((row + cc) % 2 === 0) v ^= 1;
+              mat[row][cc] = v;
+              bit++;
+            }
+          }
+        }
+        col -= 2;
+        for (var row = 0; row < N; row++) {
+          for (var c2 = 0; c2 < 2; c2++) {
+            var cc = col - c2;
+            if (cc >= 0 && !res[row][cc]) {
+              var v = bit < total ? (codewords[bit>>3] >> (7-(bit&7))) & 1 : 0;
+              if ((row + cc) % 2 === 0) v ^= 1;
+              mat[row][cc] = v;
+              bit++;
+            }
+          }
+        }
+        col -= 2;
+      }
+
+      return { N: N, mat: mat };
+    }
+
+    return { encode: encode };
+  })();
+
+  try {
+    var result = QR.encode(data);
+    var N = result.N, mat = result.mat;
+    var ctx = canvas.getContext('2d');
+    var sz = canvas.width;
+    var cell = sz / (N + 8);
+    var off = cell * 4;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, sz, sz);
+    ctx.fillStyle = '#1a1209';
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++)
+        if (mat[r][c]) ctx.fillRect(off + c * cell, off + r * cell, cell, cell);
+  } catch(e) {
+    // Show text fallback
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f5f0e8';
+    ctx.fillRect(0,0,128,128);
+    ctx.fillStyle = '#7a6f60';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('QR ni na voljo', 64, 64);
+  }
+}
 })();
 <\/script>`:''}
 

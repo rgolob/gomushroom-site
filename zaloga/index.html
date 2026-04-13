@@ -626,6 +626,12 @@ async function doLogin(){
   if(h===PASSWORD_HASH){localStorage.setItem('gm_auth',h);document.getElementById('loginScreen').style.display='none';appInit();}
   else{err.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(()=>err.textContent='',2500);}
 }
+async function checkAuth(){
+  if(localStorage.getItem('gm_auth')===PASSWORD_HASH){document.getElementById('loginScreen').style.display='none';appInit();}
+  else setTimeout(()=>document.getElementById('loginPwd').focus(),300);
+}
+function doLogout(){localStorage.removeItem('gm_auth');document.getElementById('loginPwd').value='';document.getElementById('loginScreen').style.display='flex';setTimeout(()=>document.getElementById('loginPwd').focus(),300);}
+
 async function clearAllData(){
   const ok=await showConfirm('Izbriši VSE podatke?\n\nSerije, prodaje, računi — vse bo izgubljeno.\nTega ni mogoče razveljaviti.','🗑 Izbriši vse');
   if(!ok)return;
@@ -633,11 +639,8 @@ async function clearAllData(){
   if(!ok2)return;
   products=[];batches=[];saleGroups=[];invoices=[];invCounters={malo:0,velo:0,dar:0,int:0};
   ['gm_products','gm_batches','gm_saleGroups','gm_invoices','gm_invCounters'].forEach(k=>localStorage.removeItem(k));
-  // Also clear from Supabase
   try{
-    await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.gm_data`,{
-      method:'DELETE',headers:SB_HEADERS
-    });
+    await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.gm_data`,{method:'DELETE',headers:SB_HEADERS});
   }catch(e){}
   renderStats();renderInventory();
   if(currentTab==='serije'){renderProductMgmt();renderBatches();}
@@ -647,11 +650,6 @@ async function clearAllData(){
   toast('Vsi podatki izbrisani');
 }
 
-
-  if(localStorage.getItem('gm_auth')===PASSWORD_HASH){document.getElementById('loginScreen').style.display='none';appInit();}
-  else setTimeout(()=>document.getElementById('loginPwd').focus(),300);
-}
-function doLogout(){localStorage.removeItem('gm_auth');document.getElementById('loginPwd').value='';document.getElementById('loginScreen').style.display='flex';setTimeout(()=>document.getElementById('loginPwd').focus(),300);}
 
 // ── CENIK ──
 const TIERS=[

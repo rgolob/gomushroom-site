@@ -58,7 +58,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:1.1rem 1rem calc(var(--sab)+90px);max-width:720px;margin:0 auto}
+.scroll-body{padding:1.1rem 1rem calc(var(--sab)+100px);max-width:600px;margin:0 auto}
 .view{display:none}.view.active{display:block}
 
 /* STATS */
@@ -221,7 +221,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .empty .es{font-size:.82rem}
 
 /* FAB */
-.fab{position:fixed;right:1.25rem;bottom:calc(var(--sab)+74px);width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--ink);border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(175,132,85,.45);display:flex;align-items:center;justify-content:center;z-index:90;transition:transform .15s}
+.fab{position:fixed;right:1.25rem;bottom:calc(var(--sab)+68px);width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--ink);border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(175,132,85,.45);display:flex;align-items:center;justify-content:center;z-index:90;transition:transform .15s}
 .fab:active{transform:scale(.93)}
 
 /* SHEET */
@@ -349,6 +349,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+  <button class="dtab" onclick="switchTab('porocila',this)">📊 Poročila</button>
 </nav>
 
 <div class="scroll-body">
@@ -474,14 +475,89 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="plist" id="invoiceList"></div>
   </div>
 
-</div>
+  <!-- POROČILA -->
+  <div class="view" id="view-porocila">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:1.1rem">Poročila</div>
 
-<nav class="bottom-nav">
+    <!-- Zaloga -->
+    <div class="batch-card" style="margin-bottom:.75rem">
+      <div class="batch-card-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bch-chevron').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
+        <div class="bch-icon">📦</div>
+        <div class="bch-info"><div class="bch-batch">Stanje zaloge</div><div class="bch-prod">Trenutno stanje po produktih in serijah</div></div>
+        <div class="bch-right"><div class="bch-chevron">▼</div></div>
+      </div>
+      <div class="batch-subcards" style="display:none;grid-template-columns:1fr">
+        <div style="padding:.85rem 1rem;background:white">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rz-cene" checked> Prikaži cene</label>
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rz-serije" checked> Razčlenitev po serijah</label>
+          </div>
+          <button class="bsave" style="width:100%;margin-bottom:.5rem" onclick="genReport('zaloga')">📄 Predogled / Natisni</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Serije -->
+    <div class="batch-card" style="margin-bottom:.75rem">
+      <div class="batch-card-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bch-chevron').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
+        <div class="bch-icon">🏷</div>
+        <div class="bch-info"><div class="bch-batch">Poročilo serij</div><div class="bch-prod">Proizvedene serije z zalogo in prodanimi količinami</div></div>
+        <div class="bch-right"><div class="bch-chevron">▼</div></div>
+      </div>
+      <div class="batch-subcards" style="display:none;grid-template-columns:1fr">
+        <div style="padding:.85rem 1rem;background:white">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rs-cene" checked> Prikaži cene</label>
+            <select id="rs-prod" class="fpill" style="font-size:.75rem"><option value="">Vsi produkti</option></select>
+          </div>
+          <button class="bsave" style="width:100%;margin-bottom:.5rem" onclick="genReport('serije')">📄 Predogled / Natisni</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prodaja -->
+    <div class="batch-card" style="margin-bottom:.75rem">
+      <div class="batch-card-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bch-chevron').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
+        <div class="bch-icon">🛒</div>
+        <div class="bch-info"><div class="bch-batch">Poročilo prodaje</div><div class="bch-prod">Prodaja po kanalih, produktih in datumih</div></div>
+        <div class="bch-right"><div class="bch-chevron">▼</div></div>
+      </div>
+      <div class="batch-subcards" style="display:none;grid-template-columns:1fr">
+        <div style="padding:.85rem 1rem;background:white;display:grid;gap:.65rem">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rp-cene" checked> S cenami</label>
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rp-malo" checked> 🛒 Maloprodaja</label>
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rp-velo" checked> 🏪 Veleprodaja</label>
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rp-dar" checked> 🎁 Podaritev</label>
+            <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;cursor:pointer"><input type="checkbox" id="rp-int" checked> 🔬 Interni</label>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <div>
+              <div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem">Od</div>
+              <input type="date" id="rp-od" class="fpill">
+            </div>
+            <div>
+              <div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem">Do</div>
+              <input type="date" id="rp-do" class="fpill">
+            </div>
+            <div>
+              <div style="font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem">Produkt</div>
+              <select id="rp-prod" class="fpill"><option value="">Vsi</option></select>
+            </div>
+          </div>
+          <button class="bsave" style="width:100%" onclick="genReport('prodaja')">📄 Predogled / Natisni</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-narocilo"  onclick="switchTab('narocilo',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Prodaje</button>
   <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
+  <button class="nitem"        id="nav-porocila"  onclick="switchTab('porocila',this)"><span class="nicon">📊</span>Poročila</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
 
@@ -890,6 +966,7 @@ function switchTab(id,el){
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){renderSalesSummary();renderSales();}
   if(id==='racuni'){renderInvStats();renderInvoices();}
+  if(id==='porocila'){populateReportDropdowns();}
 }
 
 // ── STATS ──
@@ -1951,7 +2028,233 @@ function importCSV(e){
   };r.readAsText(file);
 }
 
-// ── SHEETS ──
+// ── POROČILA ──
+function populateReportDropdowns(){
+  const opts='<option value="">Vsi</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+function reportCSS(){
+  return`<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:2rem;max-width:900px;margin:0 auto;color:#1a1209;font-size:13px}
+h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:.05em;margin-bottom:.25rem}
+h1 span{color:#af8455}
+.subtitle{font-size:.72rem;color:#7a6f60;margin-bottom:1.5rem;letter-spacing:.05em}
+h2{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;margin:1.5rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid #ede6d6}
+table{width:100%;border-collapse:collapse;margin-bottom:1.25rem;font-size:.8rem}
+th{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;padding:.4rem .5rem;border-bottom:1px solid #ede6d6;text-align:left}
+td{padding:.4rem .5rem;border-bottom:1px solid rgba(175,132,85,.1);vertical-align:top}
+td.num{text-align:right}.td-bold{font-weight:500}
+.badge{display:inline-block;font-size:.65rem;padding:.15rem .5rem;border-radius:8px;font-weight:500}
+.b-malo{background:rgba(42,90,139,.1);color:#2a5a8b}
+.b-velo{background:rgba(58,107,74,.1);color:#3a6b4a}
+.b-dar{background:rgba(139,106,42,.1);color:#8b6a2a}
+.b-int{background:rgba(90,58,107,.1);color:#5a3a6b}
+.b-ok{background:rgba(58,107,74,.1);color:#3a6b4a}
+.b-low{background:rgba(184,92,42,.1);color:#b85c2a}
+.b-zero{background:rgba(139,58,42,.1);color:#8b3a2a}
+.summary-box{background:#f5f0e8;border:1px solid rgba(175,132,85,.2);border-radius:8px;padding:1rem;margin-bottom:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem}
+.s-item{}.s-label{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.2rem}
+.s-val{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300}
+.footer-line{border:none;border-top:1px solid #1a1209;margin:2rem 0 .75rem}
+.footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;color:#7a6f60;text-align:center}
+.printbtn{display:block;margin:1.5rem auto 0;font-family:'Jost',sans-serif;font-size:.75rem;padding:.65rem 1.5rem;background:#af8455;color:#1a1209;border:none;border-radius:5px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase}
+@media print{.printbtn{display:none}body{padding:1rem}}
+</style>`;
+}
+
+function reportHeader(title,subtitle){
+  return`<h1>Go<span>Mushroom</span></h1>
+<div class="subtitle">gomushroom.si · ${fmtDateSl(todayISO())}</div>
+<h2>${title}</h2>
+${subtitle?`<div style="font-size:.75rem;color:#7a6f60;margin-bottom:.75rem">${subtitle}</div>`:''}`;
+}
+
+function genReport(type){
+  let html='';
+  const now=fmtDateSl(todayISO());
+
+  if(type==='zaloga'){
+    const showPrices=document.getElementById('rz-cene').checked;
+    const showBatches=document.getElementById('rz-serije').checked;
+    let rows='';
+    products.forEach(p=>{
+      const st=productStock(p.id);
+      const status=stockStatus(st.alc,st.gly);
+      const statusCls=status==='zero'?'b-zero':status==='low'?'b-low':'b-ok';
+      const statusLbl=statusLabel(status);
+      const pb=batches.filter(b=>b.productId===p.id);
+      const alcPrice=showPrices?latestPrice(p.id,'alc'):null;
+      const glyPrice=showPrices?latestPrice(p.id,'gly'):null;
+      const vrednost=showPrices?(st.alc*(alcPrice||0)+st.gly*(glyPrice||0)):null;
+
+      rows+=`<tr>
+        <td class="td-bold">${moji(p.name)} ${p.name}</td>
+        <td class="num">${st.alc}</td>
+        <td class="num">${st.gly}</td>
+        <td class="num">${st.alc+st.gly}</td>
+        ${showPrices?`<td class="num">${vrednost?vrednost.toFixed(2)+' €':'—'}</td>`:''}
+        <td><span class="badge ${statusCls}">${statusLbl}</span></td>
+      </tr>`;
+
+      if(showBatches){
+        (st.batchStock||[]).filter(b=>b.alcRem>0||b.glyRem>0).forEach(b=>{
+          rows+=`<tr style="font-size:.75rem;color:#7a6f60">
+            <td style="padding-left:1.5rem">🏷 ${b.batchNum} ${b.date?'· '+b.date.split('-').reverse().join('.'):''}</td>
+            <td class="num">${b.alcRem}</td>
+            <td class="num">${b.glyRem}</td>
+            <td class="num">${b.alcRem+b.glyRem}</td>
+            ${showPrices?`<td></td>`:''}
+            <td></td>
+          </tr>`;
+        });
+      }
+    });
+
+    const totAlc=products.reduce((s,p)=>s+productStock(p.id).alc,0);
+    const totGly=products.reduce((s,p)=>s+productStock(p.id).gly,0);
+    let totVal=0;
+    if(showPrices)products.forEach(p=>{const st=productStock(p.id);totVal+=st.alc*latestPrice(p.id,'alc')+st.gly*latestPrice(p.id,'gly');});
+
+    html=`<div class="summary-box">
+      <div class="s-item"><div class="s-label">🥃 Alkohol</div><div class="s-val">${totAlc} kom.</div></div>
+      <div class="s-item"><div class="s-label">🌿 Glicerin</div><div class="s-val">${totGly} kom.</div></div>
+      <div class="s-item"><div class="s-label">Skupaj</div><div class="s-val">${totAlc+totGly} kom.</div></div>
+      ${showPrices?`<div class="s-item"><div class="s-label">Vrednost zaloge</div><div class="s-val">${totVal.toFixed(2)} €</div></div>`:''}
+    </div>
+    <table>
+      <tr><th>Produkt</th><th style="text-align:right">Alkohol</th><th style="text-align:right">Glicerin</th><th style="text-align:right">Skupaj</th>${showPrices?'<th style="text-align:right">Vrednost</th>':''}<th>Status</th></tr>
+      ${rows}
+    </table>`;
+  }
+
+  else if(type==='serije'){
+    const showPrices=document.getElementById('rs-cene').checked;
+    const filterProd=document.getElementById('rs-prod').value;
+    const filtered=batches.filter(b=>!filterProd||b.productId===filterProd);
+    let rows='';
+    filtered.forEach(b=>{
+      const soldAlc=saleGroups.reduce((s,g)=>{
+        const l=g.lines?.find(l=>l.productId===b.productId);
+        if(!l)return s;
+        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
+      },0);
+      const soldGly=saleGroups.reduce((s,g)=>{
+        const l=g.lines?.find(l=>l.productId===b.productId);
+        if(!l)return s;
+        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);
+      },0);
+      const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
+      const remGly=Math.max(0,(b.gly?.qty||0)-soldGly);
+      rows+=`<tr>
+        <td class="td-bold">${moji(b.productName)} ${b.productName}</td>
+        <td>${b.batchNum}</td>
+        <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
+        <td class="num">${b.alc?.qty||0} / ${b.gly?.qty||0}</td>
+        <td class="num">${soldAlc} / ${soldGly}</td>
+        <td class="num td-bold">${remAlc} / ${remGly}</td>
+        ${showPrices?`<td class="num">${b.alc?.priceMalo?b.alc.priceMalo.toFixed(2)+' €':'—'} / ${b.gly?.priceMalo?b.gly.priceMalo.toFixed(2)+' €':'—'}</td>`:''}
+      </tr>`;
+    });
+    html=`<table>
+      <tr><th>Produkt</th><th>Batch</th><th>Datum</th><th style="text-align:right">Izdelano (alc/gly)</th><th style="text-align:right">Prodano (alc/gly)</th><th style="text-align:right">Ostalo (alc/gly)</th>${showPrices?'<th style="text-align:right">Cena malo</th>':''}</tr>
+      ${rows||'<tr><td colspan="7" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij</td></tr>'}
+    </table>`;
+  }
+
+  else if(type==='prodaja'){
+    const showPrices=document.getElementById('rp-cene').checked;
+    const chFilter=[];
+    if(document.getElementById('rp-malo').checked)chFilter.push('malo');
+    if(document.getElementById('rp-velo').checked)chFilter.push('velo');
+    if(document.getElementById('rp-dar').checked)chFilter.push('dar');
+    if(document.getElementById('rp-int').checked)chFilter.push('int');
+    const od=document.getElementById('rp-od').value;
+    const doVal=document.getElementById('rp-do').value;
+    const filterProd=document.getElementById('rp-prod').value;
+
+    const filtered=saleGroups.filter(g=>
+      chFilter.includes(g.channel)&&
+      (!od||g.date>=od)&&(!doVal||g.date<=doVal)&&
+      (!filterProd||g.lines?.some(l=>l.productId===filterProd))
+    );
+
+    // Summary per channel
+    const chSummary={};
+    chFilter.forEach(ch=>{
+      const cg=filtered.filter(g=>g.channel===ch);
+      const alcQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.alc||0),0),0);
+      const glyQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.gly||0),0),0);
+      const rev=cg.reduce((s,g)=>s+(g.total||0),0);
+      if(alcQ||glyQ)chSummary[ch]={alcQ,glyQ,rev,n:cg.length};
+    });
+
+    const summaryHtml=Object.entries(chSummary).map(([ch,v])=>`
+      <div class="s-item">
+        <div class="s-label">${CH[ch].icon} ${CH[ch].label}</div>
+        <div class="s-val">${v.alcQ+v.glyQ} kom.</div>
+        ${showPrices&&(ch==='malo'||ch==='velo')?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
+      </div>`).join('');
+
+    const totalRev=filtered.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>s+(g.total||0),0);
+    const totalQty=filtered.reduce((s,g)=>s+(g.qty||0),0);
+
+    let rows='';
+    filtered.forEach(g=>{
+      const ch=CH[g.channel]||CH.malo;
+      (g.lines||[]).filter(l=>!filterProd||l.productId===filterProd).forEach(l=>{
+        const batchStr=(l.batchBreakdown||[]).map(bb=>`${bb.batchNum}`).join(', ');
+        rows+=`<tr>
+          <td>${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
+          <td>${g.buyer||'—'}</td>
+          <td>${moji(l.productName)} ${l.productName}${batchStr?`<div style="font-size:.65rem;color:#7a6f60">🏷 ${batchStr}</div>`:''}</td>
+          <td><span class="badge b-${g.channel}">${ch.icon}</span></td>
+          <td class="num">${l.alc||0}</td>
+          <td class="num">${l.gly||0}</td>
+          ${showPrices?`<td class="num">${l.lineTotal?(g.channel==='malo'||g.channel==='velo'?l.lineTotal.toFixed(2)+' €':'—'):'—'}</td>`:''}
+        </tr>`;
+      });
+    });
+
+    html=`<div class="summary-box">
+      ${summaryHtml}
+      <div class="s-item"><div class="s-label">Skupaj kom.</div><div class="s-val">${totalQty}</div></div>
+      ${showPrices?`<div class="s-item"><div class="s-label">Skupaj €</div><div class="s-val" style="color:#3a6b4a">${totalRev.toFixed(2)} €</div></div>`:''}
+    </div>
+    <table>
+      <tr><th>Datum</th><th>Kupec</th><th>Produkt</th><th>Kanal</th><th style="text-align:right">Alc</th><th style="text-align:right">Gly</th>${showPrices?'<th style="text-align:right">Znesek</th>':''}</tr>
+      ${rows||'<tr><td colspan="7" style="text-align:center;color:#7a6f60;padding:1rem">Ni prodaj za izbrane filtre</td></tr>'}
+    </table>`;
+  }
+
+  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
+  const subtitles={
+    zaloga:'Trenutno stanje po produktih',
+    serije:'Proizvedene serije z ostanki',
+    prodaja:`Obdobje: ${document.getElementById('rp-od')?.value?fmtDateSl(document.getElementById('rp-od').value):'začetek'} – ${document.getElementById('rp-do')?.value?fmtDateSl(document.getElementById('rp-do').value):'danes'}`
+  };
+
+  const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${titles[type]}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+${reportCSS()}
+</head><body>
+${reportHeader(titles[type],subtitles[type])}
+${html}
+<hr class="footer-line">
+<div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
+<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+</body></html>`;
+
+  const blob=new Blob([full],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+
 function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
 function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 function maybeClose(e,id){if(e.target===document.getElementById(id))closeSheet(id);}

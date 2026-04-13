@@ -430,6 +430,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
   <!-- SERIJE -->
   <div class="view" id="view-serije">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300">Serije</div>
+      <button class="bsave blue" style="padding:.55rem 1.1rem;font-size:.75rem" onclick="openBatchSheet()">＋ Nova serija</button>
+    </div>
     <div id="productMgmt" style="margin-bottom:1.1rem"></div>
     <div class="search-row">
       <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="renderBatches()"></div>
@@ -892,6 +896,22 @@ function productStock(productId){
       soldAlc+=(l.alc||0);soldGly+=(l.gly||0);
     }
   }));
+  // For legacy sales (no batchBreakdown), distribute sold qty across batches FIFO
+  // so batchStock shows reasonable estimates
+  const legacySoldAlc=soldAlc-Object.values(soldPerBatch).reduce((s,x)=>s+x.alc,0);
+  const legacySoldGly=soldGly-Object.values(soldPerBatch).reduce((s,x)=>s+x.gly,0);
+  if(legacySoldAlc>0||legacySoldGly>0){
+    let remA=legacySoldAlc,remG=legacySoldGly;
+    // oldest first (batches array is newest-first, so reverse)
+    [...pb].reverse().forEach(b=>{
+      if(remA<=0&&remG<=0)return;
+      if(!soldPerBatch[b.id])soldPerBatch[b.id]={alc:0,gly:0};
+      const takeA=Math.min(remA,b.alc?.qty||0);
+      const takeG=Math.min(remG,b.gly?.qty||0);
+      soldPerBatch[b.id].alc+=takeA;soldPerBatch[b.id].gly+=takeG;
+      remA-=takeA;remG-=takeG;
+    });
+  }
   // per purpose alloc (prod = prodaja, int = interno)
   let allocProdAlc=0,allocIntAlc=0,allocProdGly=0,allocIntGly=0;
   pb.forEach(b=>{
@@ -961,7 +981,7 @@ function switchTab(id,el){
   const mn=document.getElementById('nav-'+id);if(mn)mn.classList.add('active');
   document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
   if(el&&el.classList.contains('dtab'))el.classList.add('active');
-  document.getElementById('fab').style.display=id==='serije'?'flex':'none';
+  document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){renderSalesSummary();renderSales();}
@@ -1220,9 +1240,27 @@ function renderBatches(){
 }
 async function deleteBatch(id){
   const b=batches.find(x=>x.id===id);if(!b)return;
-  const ok=await showConfirm(`Izbriši serijo ${b.batchNum}?`,'Izbriši');
-  if(!ok)return;
-  batches=batches.filter(x=>x.id!==id);expandedBatches.delete(id);save();renderStats();renderInventory();renderBatches();toast('Serija izbrisana');
+  // Check if any sales reference this batch
+  const hasSales=saleGroups.some(g=>g.lines?.some(l=>l.batchBreakdown?.some(bb=>bb.batchId===id)));
+  const soldAlc=saleGroups.reduce((s,g)=>{
+    const l=g.lines?.find(l=>l.productId===b.productId);
+    if(!l)return s;
+    return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===id)?.alc||0);
+  },0);
+  const soldGly=saleGroups.reduce((s,g)=>{
+    const l=g.lines?.find(l=>l.productId===b.productId);
+    if(!l)return s;
+    return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===id)?.gly||0);
+  },0);
+  if(hasSales){
+    const ok=await showConfirm(`Serija ${b.batchNum} ima evidentirane prodaje (🥃${soldAlc} 🌿${soldGly} kom.).\n\nBrisanje bo porušilo zalogo in zgodovino.\n\nSi prepričan?`,'Vseeno izbriši');
+    if(!ok)return;
+  } else {
+    const ok=await showConfirm(`Izbriši serijo ${b.batchNum}?`,'Izbriši');
+    if(!ok)return;
+  }
+  batches=batches.filter(x=>x.id!==id);expandedBatches.delete(id);
+  save();renderStats();renderInventory();renderBatches();toast('Serija izbrisana');
 }
 
 // ── ORDER ──

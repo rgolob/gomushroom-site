@@ -1546,119 +1546,151 @@ function buildUpnString(amount, reference, purpose){
   ].join('\n')+'\n';
 }
 
-// Tiny QR encoder — uses qrcodejs via CDN (loaded inline in invoice)
+// ── QR CDN URL ──
+const QRJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
 function buildInvoiceHTML(group){
   const ch=CH[group.channel]||CH.malo;
   const isRevenue=group.channel==='malo'||group.channel==='velo';
   const total=group.total||0;
-  const tableRows=(group.lines||[]).map(l=>{
-    const rows=[];
-    if(l.alc>0)rows.push(`<tr><td>${l.productName} 🥃 Alkohol</td><td style="text-align:center">${l.alc}</td><td style="text-align:right">${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €</td><td style="text-align:right">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`);
-    if(l.gly>0)rows.push(`<tr><td>${l.productName} 🌿 Glicerin</td><td style="text-align:center">${l.gly}</td><td style="text-align:right">${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €</td><td style="text-align:right">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`);
-    return rows.join('');
-  }).join('');
-
-  // UPN reference: SI00 + invoice number (digits only) or just invoiceNum
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?'SI00 '+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
   const upnString=isRevenue&&total>0?buildUpnString(total,upnRef,'Plačilo '+invNum):'';
+  const upnJson=JSON.stringify(upnString);
 
-  return`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${invNum||'Dobavnica'}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-${upnString?'<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>':''}
+  const tableRows=(group.lines||[]).map(l=>{
+    const rows=[];
+    const batchInfo=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly)
+      .map(bb=>`${bb.batchNum}${bb.alc?` \u{1F942}${bb.alc}`:''}${bb.gly?` \u{1F33F}${bb.gly}`:''}`)
+      .join(', ');
+    const bCell=batchInfo?`<div style="font-size:.65rem;color:#7a6f60;margin-top:1px">Serija: ${batchInfo}</div>`:'';
+    if(l.alc>0)rows.push(`<tr><td><div>${l.productName} \u{1F942} Alkohol</div>${bCell}</td><td>${l.alc}</td><td>${l.alcPrice!=null?l.alcPrice.toFixed(2):'\u2013'} \u20AC</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} \u20AC</td></tr>`);
+    if(l.gly>0)rows.push(`<tr><td><div>${l.productName} \u{1F33F} Glicerin</div>${l.alc?'':bCell}</td><td>${l.gly}</td><td>${l.glyPrice!=null?l.glyPrice.toFixed(2):'\u2013'} \u20AC</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} \u20AC</td></tr>`);
+    return rows.join('');
+  }).join('');
+
+  const discountLine=(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span>\u2013${((total)/(1-(group.discount||0)/100)*(group.discount||0)/100).toFixed(2)} \u20AC</span></div>`:'';
+  const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
+  const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
+
+  return`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${invNum||'Dobavnica'}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Jost',sans-serif;padding:2rem;max-width:680px;margin:0 auto;color:#1a1209;font-size:14px}
-.logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;letter-spacing:.06em}
+body{font-family:'Jost',sans-serif;padding:2.5rem;max-width:700px;margin:0 auto;color:#1a1209;font-size:13.5px;line-height:1.5}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;letter-spacing:.06em}
 .logo span{color:#af8455}
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #1a1209}
-.meta{text-align:right;font-size:.75rem;color:#7a6f60;line-height:1.8}
-.parties{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
-.plabel{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.25rem}
-.pname{font-weight:500}
-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
-th{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;padding:.4rem .5rem;border-bottom:1px solid #ede6d6;text-align:left}
-th:last-child,td:last-child{text-align:right}th:nth-child(2),td:nth-child(2){text-align:center}
-td{padding:.5rem .5rem;border-bottom:1px solid rgba(175,132,85,.15);font-size:.82rem}
-.totals{border-top:1px solid #1a1209;padding-top:.75rem;display:flex;flex-direction:column;gap:.3rem;align-items:flex-end}
-.trow{display:flex;gap:2rem;font-size:.82rem}
-.grand{font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-top:.3rem}
-.refs{margin-top:.75rem;font-size:.75rem;color:#7a6f60;display:flex;gap:1.5rem;flex-wrap:wrap}
-.footer{margin-top:1.5rem;font-size:.7rem;color:#7a6f60;border-top:1px solid #ede6d6;padding-top:.75rem}
-.qr-section{margin-top:1.5rem;padding:1rem;border:1px solid #ede6d6;border-radius:8px;display:flex;gap:1.25rem;align-items:flex-start;page-break-inside:avoid}
-.qr-box{flex-shrink:0}
-.qr-info{font-size:.75rem;color:#7a6f60;line-height:1.7}
-.qr-info strong{color:#1a1209;display:block;font-size:.78rem;margin-bottom:.2rem}
-.qr-label{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.5rem}
-.printbtn{display:block;margin:2rem auto 0;font-family:'Jost',sans-serif;font-size:.8rem;padding:.7rem 1.75rem;background:#af8455;color:#1a1209;border:none;border-radius:6px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase}
-@media print{.printbtn{display:none}body{padding:1.5rem}}
+.meta{text-align:right;font-size:.72rem;color:#7a6f60;line-height:1.9}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.plabel{font-size:.6rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.pname{font-weight:500;font-size:.9rem}
+.pdetail{font-size:.75rem;color:#7a6f60;line-height:1.65}
+table{width:100%;border-collapse:collapse;margin-bottom:1.25rem}
+th{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;padding:.45rem .6rem;border-bottom:1px solid #ede6d6;text-align:left}
+th:last-child,td:last-child{text-align:right}
+th:nth-child(2),th:nth-child(3),td:nth-child(2),td:nth-child(3){text-align:center}
+td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.82rem;vertical-align:top}
+.totals{border-top:1.5px solid #1a1209;padding-top:.85rem;display:flex;flex-direction:column;gap:.35rem;align-items:flex-end}
+.trow{display:flex;gap:2.5rem;font-size:.82rem}
+.grand{font-family:'Cormorant Garamond',serif;font-size:1.35rem;margin-top:.25rem}
+.refs{margin:.75rem 0;font-size:.72rem;color:#7a6f60;display:flex;gap:1.5rem;flex-wrap:wrap}
+.qr-section{margin-top:1.5rem;padding:1rem 1.25rem;border:1px solid #ede6d6;border-radius:6px;display:flex;gap:1.5rem;align-items:flex-start;page-break-inside:avoid}
+.qr-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.qr-label{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60}
+.qr-info{font-size:.72rem;color:#7a6f60;line-height:1.75;flex:1}
+.qr-info strong{color:#1a1209;font-size:.78rem;display:block;margin-bottom:.25rem}
+.footer-line{border:none;border-top:1px solid #1a1209;margin:2rem 0 .85rem}
+.footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.88rem;color:#7a6f60;text-align:center;letter-spacing:.02em}
+.actions{display:flex;gap:.75rem;justify-content:center;margin-top:1.75rem;flex-wrap:wrap}
+.btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn-print{background:#af8455;color:#1a1209}
+.btn-pdf{background:#1a1209;color:#f5f0e8}
+.btn-email{background:#3a6b4a;color:white}
+@media print{.actions{display:none}body{padding:1.5rem}}
 </style></head><body>
+
 <div class="hdr">
-  <div><div class="logo">Go<span>Mushroom</span></div><div style="font-size:.72rem;color:#7a6f60;margin-top:.2rem">gomushroom.si</div></div>
+  <div><div class="logo">Go<span>Mushroom</span></div><div style="font-size:.7rem;color:#7a6f60;margin-top:.25rem">gomushroom.si</div></div>
   <div class="meta">
-    <div><strong>${invNum||'Dobavnica'}</strong></div>
+    <div><strong>${invNum||'Dobavnica / Izdaja'}</strong></div>
     <div>${fmtDateSl(group.date)}</div>
     <div>${ch.label}</div>
     ${group.discount?`<div>Popust: ${group.discount}%</div>`:''}
-    ${group.note&&!group.note.startsWith('Razred')?`<div>${group.note}</div>`:''}
   </div>
 </div>
+
 <div class="parties">
   <div>
     <div class="plabel">Izdajatelj</div>
     <div class="pname">${UPN_NAME}</div>
-    <div style="font-size:.75rem;color:#7a6f60">${UPN_ADDRESS}, ${UPN_CITY}</div>
-    <div style="font-size:.75rem;color:#7a6f60">gomushroom.si</div>
+    <div class="pdetail">${UPN_ADDRESS}<br>${UPN_CITY}<br>gomushroom.si</div>
   </div>
   <div>
     <div class="plabel">Kupec / Prejemnik</div>
-    <div class="pname">${group.buyer||'—'}</div>
-    ${group.address?`<div style="font-size:.75rem;color:#7a6f60">${group.address}</div>`:''}
-    ${group.email?`<div style="font-size:.75rem;color:#7a6f60">${group.email}</div>`:''}
-    ${group.phone?`<div style="font-size:.75rem;color:#7a6f60">${group.phone}</div>`:''}
+    <div class="pname">${group.buyer||'\u2014'}</div>
+    <div class="pdetail">${[group.address,group.email,group.phone].filter(Boolean).join('<br>')}</div>
   </div>
 </div>
-${(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji račun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:''}
-<br>
+
+${extRefs}
+
 <table>
   <tr><th>Opis</th><th>Kom.</th><th>Cena/kom.</th><th>Znesek</th></tr>
   ${tableRows}
 </table>
+
 <div class="totals">
-  ${(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span>–${((total)/(1-(group.discount||0)/100)*(group.discount||0)/100).toFixed(2)} €</span></div>`:''}
-  <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' €':'–'}</span></div>
+  ${discountLine}
+  <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' \u20AC':'\u2013'}</span></div>
 </div>
 
 ${upnString?`
 <div class="qr-section">
-  <div class="qr-box">
-    <div class="qr-label">UPN QR plačilo</div>
-    <div id="qrcode"></div>
+  <div class="qr-wrap">
+    <div class="qr-label">UPN QR</div>
+    <div id="qrdiv" style="width:120px;height:120px"></div>
   </div>
   <div class="qr-info">
-    <strong>Podatki za plačilo</strong>
+    <strong>Podatki za pla\u010dilo</strong>
     Prejemnik: ${UPN_NAME}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
-    Znesek: ${total.toFixed(2)} €<br>
+    Znesek: <strong>${total.toFixed(2)} \u20AC</strong><br>
     Referenca: ${upnRef}<br>
-    Namen: Plačilo ${invNum}
+    Namen: Pla\u010dilo ${invNum}
   </div>
 </div>
 <script>
-window.addEventListener('load',function(){
-  if(typeof QRCode!=='undefined'){
-    new QRCode(document.getElementById('qrcode'),{
-      text:${JSON.stringify(upnString)},
+(function(){
+  var s=document.createElement('script');
+  s.src='${QRJS_CDN}';
+  s.onload=function(){
+    new QRCode(document.getElementById('qrdiv'),{
+      text:${upnJson},
       width:120,height:120,
       colorDark:'#1a1209',colorLight:'#ffffff',
       correctLevel:QRCode.CorrectLevel.M
     });
-  }
-});
+  };
+  document.head.appendChild(s);
+})();
 <\/script>`:''}
 
-<div class="footer">GoMushroom · ${fmtDateSl(group.date)}${invNum?' · '+invNum:''}</div>
-<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+<hr class="footer-line">
+<div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob \u2014 GoMushroom ni produkt, je proces.</div>
+
+<div class="actions">
+  <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
+  <button class="btn btn-pdf" onclick="savePDF()">\u{1F4C4} Shrani PDF</button>
+  ${emailBtn}
+</div>
+
+<script>
+function savePDF(){document.title='${invNum||'Dobavnica'}';window.print();}
+<\/script>
 </body></html>`;
 }
 

@@ -2,7 +2,7 @@
   "name": "GoMushroom Zaloga",
   "short_name": "Zaloga",
   "description": "Upravljanje zaloge in prodaj — GoMushroom",
-  "start_url": "./zaloga.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#1a1209",

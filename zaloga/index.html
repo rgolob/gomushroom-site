@@ -327,6 +327,257 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   .toast{bottom:1.5rem}
   .batch-subcards.open{grid-template-columns:1fr 1fr}
 }
+  /* =========================================
+   MOBILE FIXES
+========================================= */
+html,body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+body{
+  width:100%;
+}
+
+.scroll-body,
+.view,
+.plist,
+.stats-grid,
+.search-row,
+.pcard,
+.batch-card,
+.sale-group,
+.inv-list-card,
+.order-row,
+.order-summary,
+.info-card,
+.sale-summary-box,
+.sheet,
+.confirm-box{
+  width:100%;
+  max-width:100%;
+}
+
+.pcard,
+.batch-card,
+.sale-group,
+.inv-list-card,
+.order-row,
+.order-summary,
+.info-card,
+.sale-summary-box,
+.stat-card{
+  overflow:hidden;
+}
+
+.pcard-top,
+.batch-card-header,
+.sg-header,
+.inv-list-card,
+.order-row,
+.view-header,
+.search-row,
+.app-header,
+.shdr,
+.shfoot,
+.order-actions,
+.confirm-btns{
+  min-width:0;
+}
+
+.pinfo,
+.bch-info,
+.sg-info,
+.order-row-info,
+.inv-num,
+.ext-ref,
+.view-title{
+  min-width:0;
+}
+
+/* da dolgi teksti/gumbi ne potisnejo layouta čez rob */
+.pname,
+.bch-batch,
+.sg-buyer,
+.inv-num,
+.view-title,
+.ext-ref{
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* HEADER MOBILE */
+.app-header{
+  padding:calc(var(--sat)+.75rem) .9rem .75rem;
+  gap:.6rem;
+}
+
+.logo{
+  font-size:1.15rem;
+  min-width:0;
+  flex:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.hbtn{
+  font-size:.62rem;
+  padding:.38rem .65rem;
+  letter-spacing:.06em;
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+/* SEARCH ROW */
+.search-row{
+  gap:.45rem;
+}
+
+.fpill{
+  font-size:.7rem;
+  padding:.5rem .7rem;
+  max-width:42vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* PRODUCT CARD */
+.pcard{
+  padding:.9rem;
+}
+
+.pcard-top{
+  gap:.7rem;
+}
+
+.pavatar{
+  width:40px;
+  height:40px;
+  font-size:1.2rem;
+}
+
+.pright{
+  min-width:56px;
+}
+
+.stock-total{
+  font-size:1.2rem;
+}
+
+.stock-sub{
+  font-size:.6rem;
+}
+
+/* BATCH / SALE / INVOICE CARD */
+.batch-card-header,
+.sg-header,
+.inv-list-card{
+  padding:.85rem .9rem;
+}
+
+.bch-total,
+.sg-total,
+.inv-total{
+  font-size:1.05rem;
+}
+
+.bch-right,
+.sg-right,
+.inv-right{
+  min-width:auto;
+}
+
+/* ORDER ROW */
+.order-row{
+  padding:.7rem .8rem;
+  gap:.55rem;
+}
+
+.order-row-inputs{
+  gap:.3rem;
+}
+
+.qty-input{
+  width:44px;
+  font-size:.85rem;
+  padding:.35rem .2rem;
+}
+
+/* VIEW HEADER */
+.view-header{
+  gap:.45rem;
+  align-items:center;
+}
+
+.view-title{
+  font-size:1.1rem;
+}
+
+.hbtn2{
+  font-size:.62rem;
+  padding:.4rem .65rem;
+  letter-spacing:.06em;
+  max-width:42vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* BUTTON GROUPS */
+.order-actions,
+.confirm-btns,
+.shfoot{
+  flex-wrap:wrap;
+}
+
+.order-btn,
+.confirm-btn-cancel,
+.confirm-btn-ok,
+.bcancel,
+.bsave{
+  min-width:0;
+}
+
+/* SHEET */
+.shdr,
+.shbody,
+.shfoot{
+  padding-left:1rem;
+  padding-right:1rem;
+}
+
+.sheet{
+  max-width:100%;
+}
+
+/* 2-column stvari naj na zelo ozkem telefonu padejo v 1 stolpec */
+@media (max-width:420px){
+  .stats-grid{
+    grid-template-columns:1fr;
+  }
+
+  .frow{
+    grid-template-columns:1fr;
+  }
+
+  .ch-selector,
+  .batch-subcards.open{
+    grid-template-columns:1fr;
+  }
+
+  .batch-subcard{
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
+
+  .batch-subcard:last-child{
+    border-bottom:none;
+  }
+
+  .ch-stock-grid{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 </head>
 <body>

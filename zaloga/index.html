@@ -447,17 +447,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="view" id="view-serije">
     <div class="view-header">
       <div class="view-title">🏷 Serije</div>
-      <div style="display:flex;gap:.5rem">
+      <div style="display:flex;gap:.5rem;align-items:center">
         <button class="hbtn2" onclick="openReportSheet('serije')">📊 Poročilo</button>
-        <button class="bsave blue" style="padding:.5rem 1rem;font-size:.75rem" onclick="openBatchSheet()">＋ Nova</button>
+        <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
-    <div id="productMgmt" style="margin-bottom:1.1rem"></div>
+    <div id="productMgmt" style="margin-bottom:.75rem"></div>
     <div class="search-row">
       <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="renderBatches()"></div>
       <select class="fpill" id="batchFilterProd" onchange="renderBatches()"><option value="">Vsi produkti</option></select>
       <select class="fpill" id="batchFilterStatus" onchange="renderBatches()">
-        <option value="active">Aktivne</option>
+        <option value="active">Na zalogi</option>
         <option value="all">Vse</option>
         <option value="sold">Prodane</option>
       </select>
@@ -1249,76 +1249,97 @@ function getBatchBuyers(batchId){
 
 function batchSoldStatus(b){
   const sold=getSoldPerBatch(b.id,b.productId);
-  const totalMade=(b.alc?.qty||0)+(b.gly?.qty||0);
-  const totalSold=sold.alc+sold.gly;
-  const remaining=Math.max(0,totalMade-totalSold);
-  if(totalMade===0)return'active';
-  if(remaining===0&&totalSold>0)return'sold';
-  if(totalSold>0)return'partial';
-  return'active';
+  const made=(b.alc?.qty||0)+(b.gly?.qty||0);
+  const soldTotal=sold.alc+sold.gly;
+  if(made===0)return'active';
+  if(soldTotal===0)return'active';
+  if(Math.max(0,made-soldTotal)===0)return'sold';
+  return'partial';
 }
 
 function renderBatches(){
-  const q=document.getElementById('batchSearch').value.toLowerCase();
-  const fp=document.getElementById('batchFilterProd').value;
+  const q=(document.getElementById('batchSearch')?.value||'').toLowerCase();
+  const fp=document.getElementById('batchFilterProd')?.value||'';
   const fs=document.getElementById('batchFilterStatus')?.value||'active';
-  let rows=batches.filter(b=>{
-    if(!(!q||b.batchNum.toLowerCase().includes(q)||b.productName.toLowerCase().includes(q)))return false;
+
+  const rows=batches.filter(b=>{
+    if(q&&!b.batchNum.toLowerCase().includes(q)&&!b.productName.toLowerCase().includes(q))return false;
     if(fp&&b.productId!==fp)return false;
     const st=batchSoldStatus(b);
     if(fs==='active')return st==='active'||st==='partial';
     if(fs==='sold')return st==='sold';
-    return true; // all
+    return true;
   });
+
   const el=document.getElementById('batchList');
   if(!rows.length){
     const msg=fs==='sold'?'Ni prodanih serij':fs==='active'?'Ni aktivnih serij':'Ni serij';
-    el.innerHTML=`<div class="empty"><div class="ei">🏷</div><div class="et">${msg}</div><div class="es">Dodaj z ＋</div></div>`;
+    el.innerHTML=`<div class="empty"><div class="ei">🏷</div><div class="et">${msg}</div><div class="es">Dodaj z ＋ Nova</div></div>`;
     return;
   }
+
   el.innerHTML=rows.map(b=>{
     const isOpen=expandedBatches.has(b.id);
-    const total=(b.alc?.qty||0)+(b.gly?.qty||0);
     const sold=getSoldPerBatch(b.id,b.productId);
-    const totalSold=sold.alc+sold.gly;
-    const remaining=Math.max(0,total-totalSold);
-    const soldStatus=batchSoldStatus(b);
-    const statusBadge=soldStatus==='sold'
-      ?`<span class="sbadge zero" style="font-size:.58rem">Prodana</span>`
-      :soldStatus==='partial'
-      ?`<span class="sbadge low" style="font-size:.58rem">Delno</span>`
-      :'';
+    const made=(b.alc?.qty||0)+(b.gly?.qty||0);
+    const remaining=Math.max(0,made-sold.alc-sold.gly);
+    const soldSt=batchSoldStatus(b);
+    const statusBadge=
+      soldSt==='sold'?`<span class="sbadge zero" style="font-size:.55rem;padding:.1rem .4rem">Prodana</span>`:
+      soldSt==='partial'?`<span class="sbadge low" style="font-size:.55rem;padding:.1rem .4rem">Delno</span>`:'';
+
     const mkSub=(type,data,bg)=>{
       if(!data?.qty)return`<div class="batch-subcard" style="background:${bg};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem">Ni ${type==='alc'?'alkoholne':'glicerinske'}</div>`;
       const alloc=data.alloc||{};
       const prod=alloc.prod!=null?alloc.prod:(alloc.malo||0)+(alloc.velo||0);
       const int_=(alloc.int||0)+(alloc.dar||0);
-      const allocSum=prod+int_;
       const soldVar=type==='alc'?sold.alc:sold.gly;
-      const remaining=Math.max(0,data.qty-soldVar);
-      const chHtml=[
-        prod>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-malo)">🛒 Prodaja</span><span class="bsc-alloc-val">${prod}</span></div>`:'',
-        int_>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-int)">🔬 Interno</span><span class="bsc-alloc-val">${int_}</span></div>`:'',
-      ].join('');
-      return `<div class="batch-subcard" style="background:${bg}">
+      const rem=Math.max(0,data.qty-soldVar);
+      return`<div class="batch-subcard" style="background:${bg}">
         <div class="bsc-type" style="color:var(--${type==='alc'?'alc':'gly'})">${type==='alc'?'🥃 Alkohol':'🌿 Glicerin'}</div>
         <div class="bsc-qty">${data.qty}</div>
         <div class="bsc-sku">${data.sku||''}${data.vol?' · '+data.vol+' ml':''}</div>
         <div class="bsc-price">${data.priceMalo?data.priceMalo.toFixed(2)+' €/kom.':''}</div>
-        ${soldVar>0?`<div style="font-size:.7rem;margin-top:.3rem">Prodano: <strong>${soldVar}</strong> · Ostalo: <strong style="color:${remaining>0?'var(--success)':'var(--danger)'}">${remaining}</strong></div>`:''}
-        ${chHtml?`<div class="bsc-alloc" style="margin-top:.5rem">${chHtml}</div>`:''}
-        ${allocSum>0&&allocSum<data.qty?`<div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Nerazporejeno: ${data.qty-allocSum}</div>`:''}
+        ${soldVar>0?`<div style="font-size:.7rem;margin-top:.3rem">Prodano: <strong>${soldVar}</strong> · Ostalo: <strong style="color:${rem>0?'var(--success)':'var(--danger)'}">${rem}</strong></div>`:''}
+        ${prod>0||int_>0?`<div class="bsc-alloc" style="margin-top:.5rem">
+          ${prod>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-malo)">🛒 Prodaja</span><span class="bsc-alloc-val">${prod}</span></div>`:''}
+          ${int_>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-int)">🔬 Interno</span><span class="bsc-alloc-val">${int_}</span></div>`:''}
+        </div>`:''}
       </div>`;
     };
-    // Buyers for this batch (when expanded)
-    const buyersHtml=isOpen?getBatchBuyers(b.id):'';
-    return `<div class="batch-card" style="${soldStatus==='sold'?'opacity:.75':''}">
+
+    // Buyers list (only when open)
+    let buyersSection='';
+    if(isOpen){
+      const buyers=saleGroups.filter(g=>
+        g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id))
+      );
+      if(buyers.length){
+        const buyerRows=buyers.map(g=>{
+          let aQ=0,gQ=0;
+          (g.lines||[]).forEach(l=>{
+            const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);
+            if(bb){aQ+=(bb.alc||0);gQ+=(bb.gly||0);}
+          });
+          const ch=CH[g.channel]||CH.malo;
+          return`<div style="display:flex;justify-content:space-between;font-size:.77rem;padding:.2rem 0;border-bottom:1px solid var(--border)">
+            <div><span style="font-weight:500">${g.buyer||'—'}</span><span style="color:var(--muted);font-size:.68rem;margin-left:.4rem">${g.date?g.date.split('-').reverse().join('.'):''}</span> <span class="ch-pill ${ch.cls}">${ch.icon}</span></div>
+            <div style="color:var(--muted);font-size:.7rem">${aQ>0?'🥃'+aQ:''} ${gQ>0?'🌿'+gQ:''}</div>
+          </div>`;
+        }).join('');
+        buyersSection=`<div style="border-top:1px solid var(--border);padding:.6rem .9rem;background:var(--parchment)">
+          <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Kupci te serije</div>
+          ${buyerRows}
+        </div>`;
+      }
+    }
+
+    return`<div class="batch-card" style="${soldSt==='sold'?'opacity:.7':''}">
       <div class="batch-card-header" onclick="toggleBatch('${b.id}')">
         <div class="bch-icon">${moji(b.productName)}</div>
         <div class="bch-info">
-          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-            <span class="bch-batch">${b.batchNum}</span>
-            ${statusBadge}
+          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+            <span class="bch-batch">${b.batchNum}</span>${statusBadge}
           </div>
           <div class="bch-prod">${b.productName}</div>
           ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}</div>`:''}
@@ -1328,20 +1349,20 @@ function renderBatches(){
           </div>
         </div>
         <div class="bch-right">
-          <div class="bch-total" style="${soldStatus==='sold'?'color:var(--muted)':''}">${remaining}</div>
+          <div class="bch-total" style="${soldSt==='sold'?'color:var(--danger)':remaining>0?'color:var(--success)':''}">${remaining}</div>
           <div class="bch-sub">ostalo</div>
           <div class="bch-chevron">${isOpen?'▲':'▼'}</div>
         </div>
       </div>
-      <div class="batch-subcards ${isOpen?'open':''}">
+      <div class="batch-subcards${isOpen?' open':''}">
         ${mkSub('alc',b.alc,'rgba(122,74,26,.03)')}
         ${mkSub('gly',b.gly,'rgba(42,107,90,.03)')}
       </div>
-      ${isOpen&&buyersHtml?`<div style="border-top:1px solid var(--border);padding:.65rem .9rem;background:var(--parchment)">
-        <div style="font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Kupci te serije</div>
-        ${buyersHtml}
+      ${buyersSection}
+      ${isOpen?`<div class="batch-footer">
+        <button class="tbtn" onclick="openBatchSheet('${b.id}')">✎ Uredi</button>
+        <button class="tbtn del" onclick="deleteBatch('${b.id}')">Izbriši</button>
       </div>`:''}
-      ${isOpen?`<div class="batch-footer"><button class="tbtn" onclick="openBatchSheet('${b.id}')">✎ Uredi</button><button class="tbtn del" onclick="deleteBatch('${b.id}')">Izbriši</button></div>`:''}
     </div>`;
   }).join('');
 }

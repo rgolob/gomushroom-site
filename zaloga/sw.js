@@ -1,5 +1,5 @@
 const CACHE = 'gm-v1';
-const ASSETS = ['./zaloga.html', './manifest.json'];
+const ASSETS = ['./', './manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

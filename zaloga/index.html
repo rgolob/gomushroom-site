@@ -949,7 +949,6 @@ function switchTab(id,el){
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){renderSalesSummary();renderSales();}
 }
-}
 
 // ── STATS ──
 function renderStats(){
@@ -1892,13 +1891,10 @@ ${qrImgTag?`
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
-  <button class="btn btn-pdf" onclick="savePDF()">\u{1F4C4} Shrani PDF</button>
+  <button class="btn btn-pdf" onclick="document.title='${invNum||'Dobavnica'}';window.print()">\u{1F4C4} Shrani PDF</button>
   ${emailBtn}
 </div>
 
-<script>
-function savePDF(){document.title='${invNum||'Dobavnica'}';window.print();}
-<\/script>
 </body></html>`;
 }
 

@@ -2350,7 +2350,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // make orderExtRefSection always visible
-document.getElementById('orderExtRefSection').style.display='';
+const _extRef=document.getElementById('orderExtRefSection');if(_extRef)_extRef.style.display='';
 
 document.addEventListener('click',e=>{
   if(!e.target.closest('#orderBuyer')&&!e.target.closest('#buyerDropdown')){

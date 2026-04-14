@@ -345,8 +345,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="logo">Go<em>Mushroom</em></div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.65rem;color:rgba(245,240,232,.5);letter-spacing:.05em;min-width:80px;text-align:right"></span>
+    <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
+    <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="exportCSV()">↓ CSV</button>
-    <label class="hbtn" style="cursor:pointer">↑ Uvoz<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
+    <label class="hbtn" style="cursor:pointer">↑ CSV<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
@@ -2042,7 +2044,70 @@ async function printInvoice(group){
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
-// ── EXPORT / IMPORT ──
+// ── BACKUP / RESTORE ──
+function backupJSON(){
+  const backup={
+    version:2,
+    exportedAt:new Date().toISOString(),
+    products,
+    batches,
+    saleGroups,
+    invoices,
+    invCounters,
+  };
+  const json=JSON.stringify(backup,null,2);
+  const date=todayISO().replace(/-/g,'');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  a.download=`gomushroom-backup-${date}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+  toast('💾 Backup shranjen');
+}
+
+async function restoreJSON(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  e.target.value='';
+  const ok=await showConfirm(
+    'Obnovi podatke iz backup fajla?\n\nVSI obstoječi podatki bodo zamenjani.\nTega ni mogoče razveljaviti.',
+    '📂 Obnovi'
+  );
+  if(!ok)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      // Validate
+      if(!data.products||!data.batches||!data.saleGroups){
+        alert('Napaka: fajl ni veljaven GoMushroom backup.');
+        return;
+      }
+      // Restore
+      products=data.products||[];
+      batches=data.batches||[];
+      saleGroups=data.saleGroups||[];
+      invoices=data.invoices||[];
+      invCounters=data.invCounters||{malo:0,velo:0,dar:0,int:0};
+      // Ensure invCounters has all keys
+      ['malo','velo','dar','int'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
+      // Save everywhere
+      save();
+      // Re-render everything
+      renderStats();renderInventory();
+      if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
+      if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+      if(currentTab==='narocilo')renderOrderRows();
+      const exportedAt=data.exportedAt?new Date(data.exportedAt).toLocaleString('sl-SI'):'neznano';
+      toast(`✓ Obnovljeno ${products.length} prod. · ${batches.length} serij · ${saleGroups.length} prodaj`);
+    }catch(err){
+      alert('Napaka pri branju fajla: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+
 function dl(data,fname){const csv=data.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));a.download=fname;a.click();}
 function exportCSV(){
   const rows=[];
@@ -2177,8 +2242,18 @@ function genReport(type){
       const alcPrice=showPrices?latestPrice(p.id,'alc'):0;
       const glyPrice=showPrices?latestPrice(p.id,'gly'):0;
       // choose what to show based on filter
-      const alcShow=showProd&&showInt?st.alc:showProd?st.prodAlc:showInt?st.intAlc:st.alc;
-      const glyShow=showProd&&showInt?st.gly:showProd?st.prodGly:showInt?st.intGly:st.gly;
+      // If alloc not set, fall back to total stock
+      const hasAlloc=(st.prodAlc+st.intAlc)>0||(st.prodGly+st.intGly)>0;
+      let alcShow, glyShow;
+      if(!hasAlloc||(!showProd&&!showInt)){
+        alcShow=st.alc; glyShow=st.gly;
+      } else if(showProd&&showInt){
+        alcShow=st.alc; glyShow=st.gly;
+      } else if(showProd){
+        alcShow=st.prodAlc; glyShow=st.prodGly;
+      } else {
+        alcShow=st.intAlc; glyShow=st.intGly;
+      }
       const vrednost=showPrices?(alcShow*(alcPrice||0)+glyShow*(glyPrice||0)):null;
       const purposeLabel=showProd&&showInt?'Skupaj':showProd?'🛒 Prodaja':'🔬 Interno';
       rows+=`<tr>
@@ -2202,8 +2277,18 @@ function genReport(type){
         });
       }
     });
-    const totAlc=products.reduce((s,p)=>{const st=productStock(p.id);return s+(showProd&&showInt?st.alc:showProd?st.prodAlc:st.intAlc);},0);
-    const totGly=products.reduce((s,p)=>{const st=productStock(p.id);return s+(showProd&&showInt?st.gly:showProd?st.prodGly:st.intGly);},0);
+    const totAlc=products.reduce((s,p)=>{
+      const st=productStock(p.id);
+      const hasAlloc=(st.prodAlc+st.intAlc)>0||(st.prodGly+st.intGly)>0;
+      if(!hasAlloc||(!showProd&&!showInt)||(showProd&&showInt))return s+st.alc;
+      return s+(showProd?st.prodAlc:st.intAlc);
+    },0);
+    const totGly=products.reduce((s,p)=>{
+      const st=productStock(p.id);
+      const hasAlloc=(st.prodAlc+st.intAlc)>0||(st.prodGly+st.intGly)>0;
+      if(!hasAlloc||(!showProd&&!showInt)||(showProd&&showInt))return s+st.gly;
+      return s+(showProd?st.prodGly:st.intGly);
+    },0);
     let totVal=0;
     if(showPrices)products.forEach(p=>{const st=productStock(p.id);const a=showProd&&showInt?st.alc:showProd?st.prodAlc:st.intAlc;const g=showProd&&showInt?st.gly:showProd?st.prodGly:st.intGly;totVal+=a*latestPrice(p.id,'alc')+g*latestPrice(p.id,'gly');});
     const purposeLabel=showProd&&showInt?'Skupaj':showProd?'🛒 Prodaja':'🔬 Interno';

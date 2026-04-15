@@ -2685,7 +2685,8 @@ document.addEventListener('click',e=>{
   }
 });
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+// SW disabled - causes caching issues
+// if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', checkAuth);

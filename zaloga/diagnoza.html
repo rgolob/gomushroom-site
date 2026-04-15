@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoMushroom Diagnoza</title>
+<style>
+body{font-family:monospace;background:#1a1209;color:#f5f0e8;padding:1.5rem;font-size:14px;line-height:1.6}
+h2{color:#af8455;margin-bottom:1rem}
+.ok{color:#4caf50}.err{color:#f44336}.warn{color:#ff9800}.info{color:#90caf9}
+.box{background:#2a1a09;border:1px solid #af8455;border-radius:8px;padding:1rem;margin-bottom:1rem}
+input{width:100%;padding:.6rem;background:#2a1a09;border:1px solid #af8455;color:#f5f0e8;border-radius:4px;font-family:monospace;font-size:14px;margin:.5rem 0;box-sizing:border-box}
+button{background:#af8455;color:#1a1209;border:none;padding:.6rem 1.2rem;border-radius:4px;font-size:14px;cursor:pointer;margin:.3rem .3rem 0 0}
+#log{white-space:pre-wrap;word-break:break-all}
+</style>
+</head>
+<body>
+<h2>🍄 GoMushroom Diagnoza</h2>
+
+<div class="box">
+  <div><strong>Test gesla</strong></div>
+  <input type="password" id="testPwd" placeholder="Vnesi geslo za test...">
+  <button onclick="testLogin()">Testiraj</button>
+  <button onclick="clearLS()">Pobriši localStorage</button>
+  <button onclick="runDiag()">Osveži diagnozo</button>
+</div>
+
+<div class="box">
+  <div><strong>Log:</strong></div>
+  <div id="log"></div>
+</div>
+
+<script>
+const PASSWORD_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+const AUTH_KEY='gm_auth';
+
+function log(msg, cls='info'){
+  const el=document.getElementById('log');
+  const t=new Date().toLocaleTimeString('sl');
+  el.innerHTML+=`<span class="${cls}">[${t}] ${msg}</span>\n`;
+}
+
+async function hashStr(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+async function runDiag(){
+  document.getElementById('log').innerHTML='';
+  log('=== DIAGNOZA ===');
+
+  // 1. Browser info
+  log('Browser: '+navigator.userAgent.substring(0,80));
+
+  // 2. crypto.subtle
+  if(window.crypto&&window.crypto.subtle){
+    log('crypto.subtle: ✓ na voljo','ok');
+  } else {
+    log('crypto.subtle: ✗ NI NA VOLJO — to je vzrok!','err');
+  }
+
+  // 3. localStorage
+  try{
+    localStorage.setItem('_test','1');
+    localStorage.removeItem('_test');
+    log('localStorage: ✓ deluje','ok');
+  } catch(e){
+    log('localStorage: ✗ NAPAKA — '+e.message,'err');
+  }
+
+  // 4. Current auth value
+  try{
+    const val=localStorage.getItem(AUTH_KEY);
+    if(val===null) log('gm_auth: ni shranjen (potrebna prijava)','warn');
+    else if(val===PASSWORD_HASH) log('gm_auth: ✓ veljavno geslo shranjeno','ok');
+    else log('gm_auth: ✗ vrednost ne ustreza hashu! Pobriši in prijavi se znova.','err');
+    log('gm_auth vrednost: '+(val?val.substring(0,20)+'...':'null'));
+    log('pričakovan hash: '+PASSWORD_HASH.substring(0,20)+'...');
+  } catch(e){
+    log('gm_auth branje: napaka — '+e.message,'err');
+  }
+
+  // 5. Hash test
+  try{
+    const h=await hashStr('gomushroom2024');
+    log('hash("gomushroom2024"): '+h.substring(0,20)+'...');
+    if(h===PASSWORD_HASH) log('Hash privzetega gesla: ✓ ustreza','ok');
+    else log('Hash privzetega gesla: ✗ NE USTREZA! Problem s crypto.','err');
+  } catch(e){
+    log('hashStr napaka: '+e.message,'err');
+  }
+
+  // 6. Service workers
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      if(regs.length===0){
+        log('Service workerji: nobeden registriran','warn');
+      } else {
+        regs.forEach(r=>log('SW registriran: '+r.scope,'warn'));
+        log('⚠ Service workerji lahko cachirajo star JS!','warn');
+      }
+    }
+  } catch(e){
+    log('SW check napaka: '+e.message);
+  }
+
+  // 7. Page URL
+  log('URL: '+window.location.href);
+  log('Origin: '+window.location.origin);
+  log('Pathname: '+window.location.pathname);
+
+  log('=== KONEC ===');
+}
+
+async function testLogin(){
+  const pwd=document.getElementById('testPwd').value;
+  if(!pwd){log('Vnesi geslo!','warn');return;}
+  log('Testiram geslo...');
+  try{
+    const h=await hashStr(pwd);
+    log('Izračunan hash: '+h);
+    log('Pričakovan hash: '+PASSWORD_HASH);
+    if(h===PASSWORD_HASH){
+      log('✓ Geslo PRAVILNO!','ok');
+      try{
+        localStorage.setItem(AUTH_KEY,h);
+        log('✓ Shranjeno v localStorage','ok');
+      } catch(e){
+        log('✗ Shranjevanje neuspešno: '+e.message,'err');
+      }
+    } else {
+      log('✗ Geslo NAPAČNO','err');
+    }
+  } catch(e){
+    log('✗ Napaka pri hashiranju: '+e.message,'err');
+  }
+}
+
+async function clearLS(){
+  try{
+    localStorage.removeItem(AUTH_KEY);
+    log('localStorage počiščen','ok');
+  } catch(e){
+    log('Napaka: '+e.message,'err');
+  }
+}
+
+// Unregister all service workers
+async function clearSW(){
+  if('serviceWorker' in navigator){
+    const regs=await navigator.serviceWorker.getRegistrations();
+    for(const r of regs){
+      await r.unregister();
+      log('SW odregistriran: '+r.scope,'ok');
+    }
+    log('Osvezi stran!','warn');
+  }
+}
+
+// Auto run
+runDiag();
+</script>
+
+<button onclick="clearSW()" style="background:#f44336;margin-top:.5rem">🗑 Odstrani vse Service Workerje</button>
+
+</body>
+</html>

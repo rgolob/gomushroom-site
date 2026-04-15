@@ -2656,7 +2656,11 @@ document.addEventListener('click',e=>{
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}
-  if(auth==='1'){
+  // Accept both new '1' and old SHA-256 hash
+  const validHash='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+  if(auth==='1'||auth===validHash){
+    // Normalize to new format
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
     const ls=document.getElementById('loginScreen');
     if(ls)ls.style.display='none';
     appInit();

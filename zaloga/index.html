@@ -337,7 +337,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
-    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();offerFaceIdRegistration();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
+    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
       style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
     <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
   </div>
@@ -2450,6 +2450,12 @@ function exportBuyersCsv(){
   a.click();
 }
 
+function populateReportDropdowns(){
+  const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  updateRsBatchList();
+}
+
 function updateRsBatchList(){
   const prodId=document.getElementById('rs-prod')?.value||'';
   const sel=document.getElementById('rs-batch');
@@ -2459,7 +2465,7 @@ function updateRsBatchList(){
     filtered.map(b=>`<option value="${b.id}">${b.batchNum} · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}</option>`).join('');
 }
 
-
+function populateReportDropdowns(){
   const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }

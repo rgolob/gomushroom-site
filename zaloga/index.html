@@ -721,7 +721,15 @@ async function doLogin(){
     const screen=document.getElementById('loginScreen');
     if(screen)screen.style.display='none';
     console.log('[login] success, calling appInit');
-    appInit();
+    try{
+      await appInit();
+    }catch(e){
+      console.error('[appInit] napaka:',e);
+      // Show error on screen so mobile users can see it
+      const errEl=document.getElementById('loginErr');
+      if(screen)screen.style.display='flex';
+      if(errEl)errEl.textContent='Napaka: '+e.message;
+    }
   } else {
     console.log('[login] wrong password');
     if(errEl){errEl.textContent='Napačno geslo.';setTimeout(()=>{if(errEl)errEl.textContent='';},2500);}
@@ -904,7 +912,6 @@ async function appInit(){
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
       if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
-      if(currentTab==='racuni'){renderInvStats();renderInvoices();}
       setSyncStatus('✓ Sinhronizirano');
       setTimeout(()=>setSyncStatus(''),3000);
     } else {

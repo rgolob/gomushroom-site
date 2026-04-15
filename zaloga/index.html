@@ -2650,7 +2650,7 @@ document.addEventListener('click',e=>{
 });
 
 // SW disabled - causes caching issues
-// if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
 // ── INIT ──
 (function(){

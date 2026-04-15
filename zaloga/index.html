@@ -335,7 +335,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="login-sub">Upravljanje zaloge</div>
     <input class="login-input" type="password" id="loginPwd" placeholder="Geslo…"
       autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Vstopi</button>
+    <button class="login-btn" onclick="if(typeof doLogin==='function'){doLogin();}else{document.getElementById('loginErr').textContent='Napaka: doLogin ni definiran. JS se ni naložil.';}">Vstopi</button>
     <div class="login-err" id="loginErr"></div>
     <div class="login-hint">Privzeto geslo: <strong style="color:rgba(255,255,255,.4)">gomushroom2024</strong><br>Spremenite v zaloga.html (PASSWORD_HASH)</div>
   </div>

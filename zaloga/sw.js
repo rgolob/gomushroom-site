@@ -1,4 +1,4 @@
-const CACHE = 'gm-v3';
+const CACHE = 'gm-v5';
 const ASSETS = ['/zaloga/', '/zaloga/index.html', '/zaloga/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -18,8 +18,6 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
-
-
 
 
 // Minimal SW - no caching, always fetch fresh

@@ -691,6 +691,28 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <div class="toast" id="toast"></div>
 
 <script>
+// ── LOGIN ──
+const LOGIN_PWD='Z29tdXNocm9vbTIwMjQ='; // btoa('gomushroom2024')
+function doLogin(){
+  const pwd=document.getElementById('loginPwd')?.value||'';
+  const err=document.getElementById('loginErr');
+  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
+  if(btoa(pwd)===LOGIN_PWD){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    document.getElementById('loginScreen').style.display='none';
+    if(err)err.textContent='';
+    if(typeof appInit==='function')appInit();
+  } else {
+    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
+    document.getElementById('loginPwd').value='';
+  }
+}
+function doLogout(){
+  try{localStorage.removeItem('gm_auth');}catch(e){}
+  const ls=document.getElementById('loginScreen');
+  if(ls)ls.style.display='flex';
+}
+
 // ── GESLO ──
 
 
@@ -2630,38 +2652,13 @@ document.addEventListener('click',e=>{
 // SW disabled - causes caching issues
 // if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-// ── LOGIN ──
-// Simple login - password stored as btoa encoded string
-// Change password: set LOGIN_PWD to btoa('yourpassword')
-const LOGIN_PWD = btoa('gomushroom2024'); // = "Z29tdXNocm9vbTIwMjQ="
-
-function doLogin(){
-  const pwd = document.getElementById('loginPwd')?.value||'';
-  const err = document.getElementById('loginErr');
-  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
-  if(btoa(pwd)===LOGIN_PWD){
-    try{localStorage.setItem('gm_auth','1');}catch(e){}
-    document.getElementById('loginScreen').style.display='none';
-    if(err)err.textContent='';
-    appInit();
-  } else {
-    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
-    document.getElementById('loginPwd').value='';
-  }
-}
-
-function doLogout(){
-  try{localStorage.removeItem('gm_auth');}catch(e){}
-  document.getElementById('loginScreen').style.display='flex';
-  setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
-}
-
-// Check if already logged in
+// ── INIT ──
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}
   if(auth==='1'){
-    document.getElementById('loginScreen').style.display='none';
+    const ls=document.getElementById('loginScreen');
+    if(ls)ls.style.display='none';
     appInit();
   } else {
     setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);

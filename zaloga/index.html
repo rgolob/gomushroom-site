@@ -30,10 +30,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.4rem) .75rem .4rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.35rem;min-width:0}
+.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.35rem) .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
-.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:.3rem .5rem;border-radius:16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .hbtn:active{background:rgba(175,132,85,.35)}
 
 /* DESKTOP TABS */
@@ -49,7 +49,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:.75rem .75rem calc(var(--sab)+80px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden}
+.scroll-body{padding:.75rem .75rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden}
 .view{display:none;min-width:0}.view.active{display:block}
 
 /* STATS */
@@ -2591,26 +2591,60 @@ function genReport(type){
     const showKupci=document.getElementById('rs-kupci')?.checked??false;
     const thHtml=ths.map((t,i)=>`<th${i>2?' style="text-align:right"':''}>${t}</th>`).join('');
     const colCount=ths.length;
-    // Build buyers sub-rows if needed
+
+    // Collect all buyers across filtered batches for email export
+    const allBuyers=[];
+    const seenBuyers=new Set();
+
     let finalRows='';
     filtered.forEach((b,idx)=>{
-      // re-use already computed rows string — append buyers
       const rowHtml=rows.split('</tr>')[idx]+'</tr>';
       finalRows+=rowHtml;
       if(showKupci){
         const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
         if(buyers.length){
-          const buyersList=buyers.map(g=>{
+          const buyerRows=buyers.map(g=>{
             let alcQ=0,glyQ=0;
             g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
             const ch=CH[g.channel]||CH.malo;
-            return `${g.buyer||'—'} (${ch.icon}${g.date?' · '+g.date.split('-').reverse().join('.'):''}) 🥃${alcQ} 🌿${glyQ}`;
-          }).join('<br>');
-          finalRows+=`<tr style="background:#f5f0e8"><td colspan="${colCount}" style="font-size:.72rem;color:#7a6f60;padding:.3rem .5rem .5rem 1.5rem">${buyersList}</td></tr>`;
+            // collect for email export
+            const key=(g.buyer||'')+(g.email||'');
+            if(!seenBuyers.has(key)){
+              seenBuyers.add(key);
+              allBuyers.push({name:g.buyer||'—',email:g.email||'',phone:g.phone||'',channel:ch.label,batch:b.batchNum,alc:alcQ,gly:glyQ});
+            }
+            return `<tr style="background:#f5f0e8">
+              <td style="padding:.3rem .5rem .3rem 1.5rem;font-size:.75rem" colspan="2">
+                <strong>${g.buyer||'—'}</strong>
+                ${g.email?`<span style="color:#7a6f60;margin-left:.5rem">✉ ${g.email}</span>`:''}
+                ${g.phone?`<span style="color:#7a6f60;margin-left:.5rem">📞 ${g.phone}</span>`:''}
+              </td>
+              <td style="font-size:.72rem;color:#7a6f60;padding:.3rem .5rem">${ch.icon} ${g.date?g.date.split('-').reverse().join('.'):''}</td>
+              ${ths.slice(3).map(()=>`<td style="font-size:.72rem;text-align:right;padding:.3rem .5rem">🥃${alcQ} 🌿${glyQ}</td>`).join('')}
+            </tr>`;
+          }).join('');
+          finalRows+=buyerRows;
         }
       }
     });
-    html=`<table>
+
+    // Email CSV export button
+    const emailCsvBtn=showKupci&&allBuyers.length?`
+      <div style="margin-bottom:1rem;display:flex;gap:.75rem;align-items:center">
+        <span style="font-size:.75rem;color:#7a6f60">${allBuyers.length} kupcev · ${allBuyers.filter(b=>b.email).length} z emailom</span>
+        <button class="printbtn" style="margin:0;padding:.4rem 1rem;font-size:.7rem" onclick="exportBuyersCsv()">📧 Izvozi email CSV</button>
+      </div>
+      <script>
+      function exportBuyersCsv(){
+        const buyers=${JSON.stringify(allBuyers)};
+        const csv='Ime,Email,Telefon,Kanal,Serija,Alkohol,Glicerin\\n'+
+          buyers.map(b=>[b.name,b.email,b.phone,b.channel,b.batch,b.alc,b.gly].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\\n');
+        const a=document.createElement('a');
+        a.href='data:text/csv;charset=utf-8,\\uFEFF'+encodeURIComponent(csv);
+        a.download='kupci_serij.csv';a.click();
+      }
+      <\/script>`:'';
+    html=`${emailCsvBtn||''}<table>
       <tr>${thHtml}</tr>
       ${finalRows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
     </table>`;

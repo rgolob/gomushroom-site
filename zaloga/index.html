@@ -326,8 +326,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div style="font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem">Upravljanje zaloge</div>
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
-      onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()"
+      onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
+    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
       style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
     <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
   </div>
@@ -2650,7 +2650,7 @@ document.addEventListener('click',e=>{
 });
 
 // SW disabled - causes caching issues
- if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+// if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
 // ── INIT ──
 (function(){

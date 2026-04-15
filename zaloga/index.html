@@ -2437,6 +2437,19 @@ function importCSV(e){
 }
 
 // ── POROČILA ──
+function exportBuyersCsv(){
+  const data=window._lastBuyersData||[];
+  const batchNum=window._lastBatchNum||'serija';
+  if(!data.length){toast('Ni podatkov za izvoz.');return;}
+  const csv='Ime,Email,Telefon,Kanal,Produkt,Serija,Datum,Alkohol,Glicerin\n'+
+    data.map(r=>[r.name,r.email,r.phone,r.channel,r.product,r.batch,r.date,r.alc,r.gly]
+      .map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='kupci_'+batchNum+'.csv';
+  a.click();
+}
+
 function updateRsBatchList(){
   const prodId=document.getElementById('rs-prod')?.value||'';
   const sel=document.getElementById('rs-batch');
@@ -2686,17 +2699,10 @@ function genReport(type){
         ${buyerRows.length?`<table>
           <tr><th>Kupec</th><th>Datum · Kanal</th><th style="text-align:right">Količina</th></tr>
           ${buyerRows.join('')}
-        </table>`:'<p style="color:#7a6f60;font-size:.82rem">Ni kupcev za to serijo.</p>'}
-        <script>
-        function exportBuyersCsv(){
-          const d=${JSON.stringify(allBuyers)};
-          const csv='Ime,Email,Telefon,Kanal,Produkt,Serija,Datum,Alkohol,Glicerin\\n'+
-            d.map(r=>[r.name,r.email,r.phone,r.channel,r.product,r.batch,r.date,r.alc,r.gly].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\\n');
-          const a=document.createElement('a');
-          a.href='data:text/csv;charset=utf-8,\\uFEFF'+encodeURIComponent(csv);
-          a.download='kupci_${b.batchNum}.csv';a.click();
-        }
-        <\/script>`;
+        </table>`:'<p style="color:#7a6f60;font-size:.82rem">Ni kupcev za to serijo.</p>'}`;
+        // Store buyers data for CSV export
+        window._lastBuyersData=allBuyers;
+        window._lastBatchNum=b.batchNum;
       }
     }
 

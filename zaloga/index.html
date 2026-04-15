@@ -2669,7 +2669,6 @@ function genReport(type){
         ${showOstalo?`<td class="num td-bold" style="color:${remAlc+remGly>0?'#3a6b4a':'#8b3a2a'}">${remAlc} / ${remGly}</td>`:''}
       </tr>`;
     });
-    const showKupci=document.getElementById('rs-kupci')?.checked??false;
     const selectedBatchId=document.getElementById('rs-batch')?.value||'';
 
     // Validate kupci selection

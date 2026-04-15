@@ -30,10 +30,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.5rem) .75rem .5rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.35rem;min-width:0}
-.logo{display:none}
+.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.7rem) .9rem .7rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:.5rem;min-width:0}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
 .logo em{color:var(--accent);font-style:normal}
-.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:.3rem .5rem;border-radius:16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.35rem .6rem;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .hbtn:active{background:rgba(175,132,85,.35)}
 
 /* DESKTOP TABS */
@@ -302,8 +302,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* DESKTOP */
 @media(min-width:700px){
-  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem;justify-content:space-between}
-  .logo{display:block;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
+  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem}
+  .logo{font-size:1.35rem}
   .hbtn{font-size:.7rem;padding:.45rem .9rem}
   .bottom-nav,.fab{display:none}
   .desktop-tabs{display:flex}
@@ -346,7 +346,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <header class="app-header">
   <div class="logo">Go<em>Mushroom</em></div>
   <div style="display:flex;gap:.5rem;align-items:center">
-    <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
+    <span id="syncStatus" style="font-size:.65rem;color:rgba(245,240,232,.5);letter-spacing:.05em;min-width:80px;text-align:right"></span>
     <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="exportCSV()">↓ CSV</button>

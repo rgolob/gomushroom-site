@@ -30,10 +30,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.4rem) .75rem .4rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.35rem;min-width:0}
-.logo{display:none}
+.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.7rem) .9rem .7rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:.5rem;min-width:0}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
 .logo em{color:var(--accent);font-style:normal}
-.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:.3rem .5rem;border-radius:16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.35rem .6rem;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .hbtn:active{background:rgba(175,132,85,.35)}
 
 /* DESKTOP TABS */
@@ -302,8 +302,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* DESKTOP */
 @media(min-width:700px){
-  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem;justify-content:space-between}
-  .logo{display:block;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
+  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem}
+  .logo{font-size:1.35rem}
   .hbtn{font-size:.7rem;padding:.45rem .9rem}
   .bottom-nav,.fab{display:none}
   .desktop-tabs{display:flex}
@@ -324,20 +324,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div style="width:100%;max-width:340px;text-align:center">
     <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:#f5f0e8;margin-bottom:.35rem">Go<em style="color:#af8455;font-style:normal">Mushroom</em></div>
     <div style="font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem">Upravljanje zaloge</div>
-
-    <!-- Face ID gumb -->
-    <div id="faceIdSection" style="display:none;margin-bottom:1.25rem">
-      <button id="faceIdBtn" onclick="loginWithFaceId()"
-        style="width:100%;padding:1rem;border:1px solid rgba(175,132,85,.4);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;background:rgba(175,132,85,.12);color:#f5f0e8;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem">
-        <span style="font-size:1.4rem">🔒</span> Prijava z Face ID
-      </button>
-      <div style="font-size:.68rem;color:rgba(245,240,232,.3);margin-top:.6rem">ali</div>
-    </div>
-
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
-    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();offerFaceIdRegistration();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
+    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
       style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
     <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
   </div>
@@ -346,13 +336,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <header class="app-header">
   <div class="logo">Go<em>Mushroom</em></div>
   <div style="display:flex;gap:.5rem;align-items:center">
-    <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
+    <span id="syncStatus" style="font-size:.65rem;color:rgba(245,240,232,.5);letter-spacing:.05em;min-width:80px;text-align:right"></span>
     <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="exportCSV()">↓ CSV</button>
     <label class="hbtn" style="cursor:pointer">↑ CSV<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
-    <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
 </header>
@@ -702,125 +691,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <div class="toast" id="toast"></div>
 
 <script>
-// ── FACE ID / WEBAUTHN ──
-const WA_KEY='gm_faceid_cred';
-
-function b64ToArr(b64){const s=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(s,c=>c.charCodeAt(0));}
-function arrToB64(arr){return btoa(String.fromCharCode(...new Uint8Array(arr))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
-
-function isFaceIdAvailable(){
-  return window.PublicKeyCredential && 
-         typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
-}
-
-async function checkFaceIdAvailable(){
-  try{
-    if(!isFaceIdAvailable())return false;
-    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  }catch(e){return false;}
-}
-
-async function registerFaceId(){
-  try{
-    const challenge=crypto.getRandomValues(new Uint8Array(32));
-    const cred=await navigator.credentials.create({publicKey:{
-      challenge,
-      rp:{name:'GoMushroom',id:location.hostname},
-      user:{id:new TextEncoder().encode('gm_user'),name:'gm_user',displayName:'GoMushroom'},
-      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
-      timeout:60000,
-    }});
-    // Store credential ID
-    localStorage.setItem(WA_KEY, arrToB64(cred.rawId));
-    return true;
-  }catch(e){
-    console.log('Face ID registration failed:', e.message);
-    return false;
-  }
-}
-
-async function loginWithFaceId(){
-  const btn=document.getElementById('faceIdBtn');
-  const err=document.getElementById('loginErr');
-  const credId=localStorage.getItem(WA_KEY);
-  if(!credId){err.textContent='Face ID ni registriran.';return;}
-  try{
-    if(btn)btn.textContent='🔒 Preverjam…';
-    const challenge=crypto.getRandomValues(new Uint8Array(32));
-    await navigator.credentials.get({publicKey:{
-      challenge,
-      rpId:location.hostname,
-      allowCredentials:[{type:'public-key',id:b64ToArr(credId)}],
-      userVerification:'required',
-      timeout:60000,
-    }});
-    // Success
-    localStorage.setItem('gm_auth','1');
-    document.getElementById('loginScreen').style.display='none';
-    if(err)err.textContent='';
-    if(typeof appInit==='function')appInit();
-  }catch(e){
-    if(btn)btn.innerHTML='<span style="font-size:1.4rem">🔒</span> Prijava z Face ID';
-    err.textContent='Face ID ni uspel. Uporabi geslo.';
-    setTimeout(()=>err.textContent='',3000);
-  }
-}
-
-async function offerFaceIdRegistration(){
-  // Called after successful password login - offer to set up Face ID
-  const hasCredential=localStorage.getItem(WA_KEY);
-  if(hasCredential)return; // already registered
-  const available=await checkFaceIdAvailable();
-  if(!available)return;
-  // Show toast offer
-  setTimeout(()=>{
-    toast('🔒 Nastavi Face ID za hitrejšo prijavo — pojdi v ⏻ meni');
-  },1500);
-}
-
-async function setupFaceId(){
-  const available=await checkFaceIdAvailable();
-  if(!available){toast('Face ID ni na voljo na tej napravi.');return;}
-  const ok=await registerFaceId();
-  if(ok){
-    toast('✓ Face ID nastavljen!');
-    showFaceIdBtn();
-  } else {
-    toast('Face ID registracija ni uspela.');
-  }
-}
-
-function removeFaceId(){
-  localStorage.removeItem(WA_KEY);
-  hideFaceIdBtn();
-  toast('Face ID odstranjen.');
-}
-
-function showFaceIdBtn(){
-  const s=document.getElementById('faceIdSection');
-  if(s)s.style.display='';
-}
-function hideFaceIdBtn(){
-  const s=document.getElementById('faceIdSection');
-  if(s)s.style.display='none';
-}
-
-// Face ID check - runs after auth check sets login screen visibility
-async function initFaceId(){
-  const credId=localStorage.getItem(WA_KEY);
-  if(!credId)return;
-  const available=await checkFaceIdAvailable();
-  if(!available)return;
-  showFaceIdBtn();
-  // Auto-trigger if login screen is visible
-  const ls=document.getElementById('loginScreen');
-  if(ls&&ls.style.display!=='none'){
-    setTimeout(loginWithFaceId, 600);
-  }
-}
-
-
+// ── LOGIN ──
 const LOGIN_PWD='Z29tdXNocm9vbTIwMjQ='; // btoa('gomushroom2024')
 function doLogin(){
   const pwd=document.getElementById('loginPwd')?.value||'';
@@ -973,7 +844,6 @@ function loadFromLocal(){
 }
 
 async function appInit(){
-  alert('appInit start');
   setSyncStatus('⟳ Nalagam podatke…');
   // First load from localStorage for instant render
   loadFromLocal();
@@ -2779,25 +2649,22 @@ document.addEventListener('click',e=>{
   }
 });
 
-// Unregister all service workers - no caching
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));
-}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/zaloga/sw.js').catch(()=>{});
 
 // ── INIT ──
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}
+  // Accept both new '1' and old SHA-256 hash
   const validHash='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
   if(auth==='1'||auth===validHash){
+    // Normalize to new format
     try{localStorage.setItem('gm_auth','1');}catch(e){}
     const ls=document.getElementById('loginScreen');
     if(ls)ls.style.display='none';
-    try{appInit();}catch(e){alert('Napaka appInit: '+e.message);}
+    appInit();
   } else {
     setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
-    // Show Face ID button if registered
-  //  initFaceId();
   }
 })();
 </script>

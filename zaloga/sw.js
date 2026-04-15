@@ -1,4 +1,4 @@
-const CACHE = 'gm-v5';
+const CACHE = 'gm-v6';
 const ASSETS = ['/zaloga/', '/zaloga/index.html', '/zaloga/manifest.json'];
 
 self.addEventListener('install', e => {

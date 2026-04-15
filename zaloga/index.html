@@ -1238,7 +1238,7 @@ function getBatchBuyers(batchId){
   }).join('');
 }
 
-
+function batchRemainingStatus(b){
   const sold=getSoldPerBatch(b.id,b.productId);
   const totalMade=(b.alc?.qty||0)+(b.gly?.qty||0);
   const totalSold=sold.alc+sold.gly;
@@ -2649,7 +2649,7 @@ document.addEventListener('click',e=>{
   }
 });
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('/zaloga/sw.js').catch(()=>{});
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));}
 
 // ── INIT ──
 (function(){

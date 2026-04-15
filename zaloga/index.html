@@ -643,14 +643,20 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <!-- SERIJE filters -->
     <div id="rsFilters" class="shbody" style="display:none">
       <div class="slabel">Produkt</div>
-      <select id="rs-prod" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none"><option value="">Vsi produkti</option></select>
+      <select id="rs-prod" onchange="updateRsBatchList()" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none"><option value="">Vsi produkti</option></select>
       <div class="slabel">Prikaži stolpce</div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-narejeno" checked> Narejeno</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-prodaja" checked> Za prodajo</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-interno" checked> Interno</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-ostalo" checked> Ostalo</label>
-        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-kupci"> Kupci serije</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-kupci" onchange="document.getElementById('rs-batch-section').style.display=this.checked?'':'none'"> Kupci serije</label>
+      </div>
+      <div id="rs-batch-section" style="display:none">
+        <div class="slabel">Izberi serijo <span style="color:var(--danger)">*</span></div>
+        <select id="rs-batch" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none">
+          <option value="">— Izberi serijo —</option>
+        </select>
       </div>
       <div class="slabel">Obdobje</div>
       <div class="frow">
@@ -1473,10 +1479,6 @@ function renderBatches(){
           </div>
           <div class="bch-prod">${b.productName}</div>
           ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}</div>`:''}
-          <div class="bch-pills">
-            ${(b.alc?.qty||0)>0?`<span class="vpill vpill-alc">🥃 ${b.alc.qty}${b.alc.sku?' · '+b.alc.sku:''}</span>`:''}
-            ${(b.gly?.qty||0)>0?`<span class="vpill vpill-gly">🌿 ${b.gly.qty}${b.gly.sku?' · '+b.gly.sku:''}</span>`:''}
-          </div>
         </div>
         <div class="bch-right">
           <div class="bch-total" style="${soldSt==='sold'?'color:var(--danger)':remaining>0?'color:var(--success)':''}">${remaining}</div>
@@ -1639,7 +1641,7 @@ function clearOrder(){
 
 // ── FIFO BATCH ALLOCATION ──
 // Returns [{batchId, batchNum, alc, gly}] for a product+qty request
-function fifoAllocate(productId, reqAlc, reqGly){
+function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
   // batches sorted oldest first (by date then array order reversed)
   const pb=[...batches.filter(b=>b.productId===productId)].reverse();
   // compute already sold per batch
@@ -1654,11 +1656,38 @@ function fifoAllocate(productId, reqAlc, reqGly){
   }));
   const result=[];
   let remAlc=reqAlc,remGly=reqGly;
+  const warnings=[];
+
   for(const b of pb){
     if(remAlc<=0&&remGly<=0)break;
     const sold=soldPerBatch[b.id]||{alc:0,gly:0};
-    const avAlc=Math.max(0,(b.alc?.qty||0)-sold.alc);
-    const avGly=Math.max(0,(b.gly?.qty||0)-sold.gly);
+    // Total available in this batch
+    const totalAvAlc=Math.max(0,(b.alc?.qty||0)-sold.alc);
+    const totalAvGly=Math.max(0,(b.gly?.qty||0)-sold.gly);
+    // For internal purpose - only take from internally allocated qty
+    let avAlc,avGly;
+    if(purpose==='int'){
+      const allocInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+      // internally available = allocated for internal - already sold internally
+      const soldInt=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldIntGly=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      avAlc=Math.max(0,Math.min(allocInt-soldInt, totalAvAlc));
+      avGly=Math.max(0,Math.min(allocIntGly-soldIntGly, totalAvGly));
+    } else {
+      // For prod - only take from prod-allocated qty, never from internal allocation
+      const allocProd=b.alc?.alloc?.prod!=null?b.alc.alloc.prod:(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0);
+      const allocProdGly=b.gly?.alloc?.prod!=null?b.gly.alloc.prod:(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0);
+      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      // If no alloc set, use total available
+      avAlc=allocProd>0?Math.max(0,Math.min(allocProd-soldProd,totalAvAlc)):totalAvAlc;
+      avGly=allocProdGly>0?Math.max(0,Math.min(allocProdGly-soldProdGly,totalAvGly)):totalAvGly;
+    }
     const takeAlc=Math.min(remAlc,avAlc);
     const takeGly=Math.min(remGly,avGly);
     if(takeAlc>0||takeGly>0){
@@ -1666,12 +1695,15 @@ function fifoAllocate(productId, reqAlc, reqGly){
       remAlc-=takeAlc;remGly-=takeGly;
     }
   }
-  // if still remaining (oversell) add to last batch entry or create dummy
+  // Check if we couldn't fulfill the request
+  if(remAlc>0) warnings.push(`Alkohol: zahtevano ${reqAlc}, na voljo ${reqAlc-remAlc} za ${purpose==='int'?'interno':'prodajo'}`);
+  if(remGly>0) warnings.push(`Glicerin: zahtevano ${reqGly}, na voljo ${reqGly-remGly} za ${purpose==='int'?'interno':'prodajo'}`);
+  // Still add dummy entries so order can be saved (with warning)
   if(remAlc>0||remGly>0){
     if(result.length>0){result[result.length-1].alc+=remAlc;result[result.length-1].gly+=remGly;}
     else result.push({batchId:'?',batchNum:'–',alc:remAlc,gly:remGly});
   }
-  return result;
+  return {alloc:result, warnings};
 }
 
 // pendingBatchAlloc: {productId: [{batchId,batchNum,alc,gly}]}
@@ -1682,9 +1714,16 @@ let editingBatchAllocProductId=null;
 function computePendingAlloc(){
   pendingBatchAlloc={};
   const lines=collectOrderLines();
+  const purpose=(orderChannel==='int'||orderChannel==='dar')?'int':'prod';
+  const allWarnings=[];
   lines.forEach(l=>{
-    pendingBatchAlloc[l.p.id]=fifoAllocate(l.p.id,l.alc,l.gly);
+    const result=fifoAllocate(l.p.id,l.alc,l.gly,purpose);
+    pendingBatchAlloc[l.p.id]=result.alloc;
+    if(result.warnings.length){
+      allWarnings.push(`${l.p.name}: ${result.warnings.join(', ')}`);
+    }
   });
+  return allWarnings;
 }
 
 // ── BATCH ALLOC SHEET ──
@@ -1795,7 +1834,13 @@ async function confirmOrder(withInvoice){
     if(v.gly>st.gly){const ok=await showConfirm(`${v.p.name}: glicerin ${v.gly} > zaloga ${st.gly}. Nadaljuješ?`,'Nadaljuj');if(!ok)return;}
   }
   // compute batch allocation if not already set (FIFO default)
-  if(!Object.keys(pendingBatchAlloc).length)computePendingAlloc();
+  if(!Object.keys(pendingBatchAlloc).length){
+    const warnings=computePendingAlloc();
+    if(warnings.length){
+      const ok=await showConfirm(`⚠ Opozorilo o zalogi:\n\n${warnings.join('\n')}\n\nŽeliš nadaljevati?`,'Nadaljuj');
+      if(!ok){pendingBatchAlloc={};return;}
+    }
+  }
   const grandTotal=lines.reduce((a,l)=>a+l.lineTotal,0);
   const totalQty=lines.reduce((a,l)=>a+l.alc+l.gly,0);
   // create sale group
@@ -2392,7 +2437,16 @@ function importCSV(e){
 }
 
 // ── POROČILA ──
-function populateReportDropdowns(){
+function updateRsBatchList(){
+  const prodId=document.getElementById('rs-prod')?.value||'';
+  const sel=document.getElementById('rs-batch');
+  if(!sel)return;
+  const filtered=batches.filter(b=>!prodId||b.productId===prodId);
+  sel.innerHTML='<option value="">— Izberi serijo —</option>'+
+    filtered.map(b=>`<option value="${b.id}">${b.batchNum} · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}</option>`).join('');
+}
+
+
   const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
@@ -2411,6 +2465,9 @@ function openReportSheet(type){
     document.getElementById('rzFilters').style.display='';
   } else if(type==='serije'){
     document.getElementById('rsFilters').style.display='';
+    document.getElementById('rs-kupci').checked=false;
+    document.getElementById('rs-batch-section').style.display='none';
+    updateRsBatchList();
     const d=new Date();
     document.getElementById('rs-do').value=todayISO();
     d.setFullYear(d.getFullYear()-1);
@@ -2551,6 +2608,11 @@ function genReport(type){
     const showOstalo=document.getElementById('rs-ostalo')?.checked??true;
     const od=document.getElementById('rs-od')?.value??'';
     const doVal=document.getElementById('rs-do')?.value??'';
+    const showKupci=document.getElementById('rs-kupci')?.checked??false;
+
+    // For kupci report - use ALL batches (ignore date filter), only product filter
+    const allBatchesForKupci=batches.filter(b=>(!filterProd||b.productId===filterProd));
+
     const filtered=batches.filter(b=>
       (!filterProd||b.productId===filterProd)&&
       (!od||b.date>=od)&&(!doVal||b.date<=doVal)
@@ -2589,65 +2651,66 @@ function genReport(type){
       </tr>`;
     });
     const showKupci=document.getElementById('rs-kupci')?.checked??false;
-    const thHtml=ths.map((t,i)=>`<th${i>2?' style="text-align:right"':''}>${t}</th>`).join('');
-    const colCount=ths.length;
+    const selectedBatchId=document.getElementById('rs-batch')?.value||'';
 
-    // Collect all buyers across filtered batches for email export
-    const allBuyers=[];
-    const seenBuyers=new Set();
+    // Validate kupci selection
+    if(showKupci&&!selectedBatchId){
+      alert('Za prikaz kupcev moraš izbrati serijo.');
+      openReportSheet('serije');
+      return;
+    }
+
+    // Kupci - only for the ONE selected batch
+    let kupciHtml='';
+    if(showKupci&&selectedBatchId){
+      const b=batches.find(x=>x.id===selectedBatchId);
+      if(b){
+        const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===selectedBatchId)));
+        const allBuyers=[];
+        const buyerRows=buyers.map(g=>{
+          let alcQ=0,glyQ=0;
+          g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===selectedBatchId);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
+          const ch=CH[g.channel]||CH.malo;
+          allBuyers.push({name:g.buyer||'—',email:g.email||'',phone:g.phone||'',channel:ch.label,batch:b.batchNum,product:b.productName,alc:alcQ,gly:glyQ,date:g.date||''});
+          return`<tr>
+            <td><strong>${g.buyer||'—'}</strong>${g.email?`<div style="font-size:.68rem;color:#7a6f60">✉ ${g.email}</div>`:''}${g.phone?`<div style="font-size:.68rem;color:#7a6f60">📞 ${g.phone}</div>`:''}</td>
+            <td style="font-size:.75rem">${ch.icon} ${g.date?g.date.split('-').reverse().join('.'):''}</td>
+            <td class="num" style="font-size:.75rem">🥃${alcQ} 🌿${glyQ}</td>
+          </tr>`;
+        });
+        kupciHtml=`<h2>Kupci serije ${b.batchNum} — ${b.productName}</h2>
+        <div style="margin-bottom:.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+          <span style="font-size:.78rem;color:#7a6f60">${allBuyers.length} kupcev · ${allBuyers.filter(x=>x.email).length} z emailom</span>
+          ${allBuyers.filter(x=>x.email).length>0?`<button class="printbtn" style="margin:0;padding:.4rem 1rem;font-size:.7rem" onclick="exportBuyersCsv()">📧 Izvozi email CSV</button>`:''}
+        </div>
+        ${buyerRows.length?`<table>
+          <tr><th>Kupec</th><th>Datum · Kanal</th><th style="text-align:right">Količina</th></tr>
+          ${buyerRows.join('')}
+        </table>`:'<p style="color:#7a6f60;font-size:.82rem">Ni kupcev za to serijo.</p>'}
+        <script>
+        function exportBuyersCsv(){
+          const d=${JSON.stringify(allBuyers)};
+          const csv='Ime,Email,Telefon,Kanal,Produkt,Serija,Datum,Alkohol,Glicerin\\n'+
+            d.map(r=>[r.name,r.email,r.phone,r.channel,r.product,r.batch,r.date,r.alc,r.gly].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\\n');
+          const a=document.createElement('a');
+          a.href='data:text/csv;charset=utf-8,\\uFEFF'+encodeURIComponent(csv);
+          a.download='kupci_${b.batchNum}.csv';a.click();
+        }
+        <\/script>`;
+      }
+    }
 
     let finalRows='';
+    const thHtml=ths.map((t,i)=>`<th${i>2?' style="text-align:right"':''}>${t}</th>`).join('');
+    const colCount=ths.length;
     filtered.forEach((b,idx)=>{
       const rowHtml=rows.split('</tr>')[idx]+'</tr>';
       finalRows+=rowHtml;
-      if(showKupci){
-        const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
-        if(buyers.length){
-          const buyerRows=buyers.map(g=>{
-            let alcQ=0,glyQ=0;
-            g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
-            const ch=CH[g.channel]||CH.malo;
-            // collect for email export
-            const key=(g.buyer||'')+(g.email||'');
-            if(!seenBuyers.has(key)){
-              seenBuyers.add(key);
-              allBuyers.push({name:g.buyer||'—',email:g.email||'',phone:g.phone||'',channel:ch.label,batch:b.batchNum,alc:alcQ,gly:glyQ});
-            }
-            return `<tr style="background:#f5f0e8">
-              <td style="padding:.3rem .5rem .3rem 1.5rem;font-size:.75rem" colspan="2">
-                <strong>${g.buyer||'—'}</strong>
-                ${g.email?`<span style="color:#7a6f60;margin-left:.5rem">✉ ${g.email}</span>`:''}
-                ${g.phone?`<span style="color:#7a6f60;margin-left:.5rem">📞 ${g.phone}</span>`:''}
-              </td>
-              <td style="font-size:.72rem;color:#7a6f60;padding:.3rem .5rem">${ch.icon} ${g.date?g.date.split('-').reverse().join('.'):''}</td>
-              ${ths.slice(3).map(()=>`<td style="font-size:.72rem;text-align:right;padding:.3rem .5rem">🥃${alcQ} 🌿${glyQ}</td>`).join('')}
-            </tr>`;
-          }).join('');
-          finalRows+=buyerRows;
-        }
-      }
     });
-
-    // Email CSV export button
-    const emailCsvBtn=showKupci&&allBuyers.length?`
-      <div style="margin-bottom:1rem;display:flex;gap:.75rem;align-items:center">
-        <span style="font-size:.75rem;color:#7a6f60">${allBuyers.length} kupcev · ${allBuyers.filter(b=>b.email).length} z emailom</span>
-        <button class="printbtn" style="margin:0;padding:.4rem 1rem;font-size:.7rem" onclick="exportBuyersCsv()">📧 Izvozi email CSV</button>
-      </div>
-      <script>
-      function exportBuyersCsv(){
-        const buyers=${JSON.stringify(allBuyers)};
-        const csv='Ime,Email,Telefon,Kanal,Serija,Alkohol,Glicerin\\n'+
-          buyers.map(b=>[b.name,b.email,b.phone,b.channel,b.batch,b.alc,b.gly].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\\n');
-        const a=document.createElement('a');
-        a.href='data:text/csv;charset=utf-8,\\uFEFF'+encodeURIComponent(csv);
-        a.download='kupci_serij.csv';a.click();
-      }
-      <\/script>`:'';
-    html=`${emailCsvBtn||''}<table>
+    html=`<table>
       <tr>${thHtml}</tr>
       ${finalRows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
-    </table>`;
+    </table>${kupciHtml}`;
   }
 
   else if(type==='prodaja'){

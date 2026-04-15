@@ -2792,7 +2792,7 @@ if('serviceWorker' in navigator){
     try{localStorage.setItem('gm_auth','1');}catch(e){}
     const ls=document.getElementById('loginScreen');
     if(ls)ls.style.display='none';
-    appInit();
+    try{appInit();}catch(e){alert('Napaka appInit: '+e.message);}
   } else {
     setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
     // Show Face ID button if registered

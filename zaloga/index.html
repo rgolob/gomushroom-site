@@ -27,17 +27,8 @@ html{height:100%}
 body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-height:100%;overscroll-behavior:none}
 
 /* LOGIN */
-#loginScreen{position:fixed;inset:0;background:var(--ink);z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem}
-.login-box{width:100%;max-width:340px;text-align:center}
-.login-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:var(--cream);margin-bottom:.35rem}
 .login-logo em{color:var(--accent);font-style:normal}
-.login-sub{font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem}
-.login-input{width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:var(--cream);outline:none;-webkit-appearance:none;margin-bottom:1rem}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
-.login-btn{width:100%;padding:.9rem;border:none;border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:var(--accent);color:var(--ink);cursor:pointer}
-.login-err{font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em}
-.login-hint{font-size:.62rem;color:rgba(245,240,232,.2);margin-top:1.75rem;line-height:1.7}
-
 /* HEADER */
 .app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.7rem) .9rem .7rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:.5rem;min-width:0}
 .logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
@@ -328,18 +319,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="login-logo">Go<em>Mushroom</em></div>
-    <div class="login-sub">Upravljanje zaloge</div>
-    <input class="login-input" type="password" id="loginPwd" placeholder="Geslo…"
-      autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="if(typeof doLogin==='function'){doLogin();}else{document.getElementById('loginErr').textContent='Napaka: doLogin ni definiran. JS se ni naložil.';}">Vstopi</button>
-    <div class="login-err" id="loginErr"></div>
-    <div class="login-hint">Privzeto geslo: <strong style="color:rgba(255,255,255,.4)">gomushroom2024</strong><br>Spremenite v zaloga.html (PASSWORD_HASH)</div>
-  </div>
-</div>
 
 <header class="app-header">
   <div class="logo">Go<em>Mushroom</em></div>
@@ -350,7 +329,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="hbtn" onclick="exportCSV()">↓ CSV</button>
     <label class="hbtn" style="cursor:pointer">↑ CSV<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
-    <button class="hbtn" onclick="doLogout()">⏻</button>
+    
   </div>
 </header>
 
@@ -700,67 +679,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <script>
 // ── GESLO ──
-const PASSWORD_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
-const AUTH_KEY='gm_auth';
 
-async function hashStr(s){
-  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
-}
 
-async function doLogin(){
-  const pwdEl=document.getElementById('loginPwd');
-  const errEl=document.getElementById('loginErr');
-  const pwd=pwdEl?.value||'';
-  console.log('[login] attempt, pwd length='+pwd.length);
-  if(!pwd){if(errEl)errEl.textContent='Vnesite geslo.';return;}
-  const h=await hashStr(pwd);
-  console.log('[login] hash computed, match='+(h===PASSWORD_HASH));
-  if(h===PASSWORD_HASH){
-    try{localStorage.setItem(AUTH_KEY,h);}catch(e){console.warn('[login] localStorage write failed:',e);}
-    const screen=document.getElementById('loginScreen');
-    if(screen)screen.style.display='none';
-    console.log('[login] success, calling appInit');
-    try{
-      await appInit();
-    }catch(e){
-      console.error('[appInit] napaka:',e);
-      // Show error on screen so mobile users can see it
-      const errEl=document.getElementById('loginErr');
-      if(screen)screen.style.display='flex';
-      if(errEl)errEl.textContent='Napaka: '+e.message;
-    }
-  } else {
-    console.log('[login] wrong password');
-    if(errEl){errEl.textContent='Napačno geslo.';setTimeout(()=>{if(errEl)errEl.textContent='';},2500);}
-    if(pwdEl)pwdEl.value='';
-  }
-}
 
-async function checkAuth(){
-  console.log('[checkAuth] running');
-  let stored=null;
-  try{stored=localStorage.getItem(AUTH_KEY);}catch(e){console.warn('[checkAuth] localStorage read failed:',e);}
-  console.log('[checkAuth] stored match='+(stored===PASSWORD_HASH));
-  if(stored===PASSWORD_HASH){
-    const screen=document.getElementById('loginScreen');
-    if(screen)screen.style.display='none';
-    console.log('[checkAuth] auto-login, calling appInit');
-    appInit();
-  } else {
-    setTimeout(()=>{const el=document.getElementById('loginPwd');if(el)el.focus();},300);
-  }
-}
 
-function doLogout(){
-  try{localStorage.removeItem(AUTH_KEY);}catch(e){}
-  const pwdEl=document.getElementById('loginPwd');
-  const screen=document.getElementById('loginScreen');
-  if(pwdEl)pwdEl.value='';
-  if(screen)screen.style.display='flex';
-  setTimeout(()=>{const el=document.getElementById('loginPwd');if(el)el.focus();},300);
-  console.log('[logout] done');
-}
 
 async function clearAllData(){
   const ok=await showConfirm('Izbriši VSE podatke?\n\nSerije, prodaje, računi — vse bo izgubljeno.\nTega ni mogoče razveljaviti.','🗑 Izbriši vse');
@@ -2089,7 +2011,7 @@ ${qrImgTag?`
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
-  <button class="btn btn-pdf" onclick="document.title='${invNum||'\u0044obavnica'}';window.print()">\u{1F4C4} Shrani PDF</button>
+  <button class="btn btn-pdf" data-title="${invNum||'Dobavnica'}" onclick="document.title=this.getAttribute('data-title');window.print()">\u{1F4C4} Shrani PDF</button>
   ${emailBtn}
 </div>
 
@@ -2695,11 +2617,7 @@ document.addEventListener('click',e=>{
 // SW disabled - causes caching issues
 // if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', checkAuth);
-} else {
-  checkAuth();
-}
+appInit();
 </script>
 </body>
 </html>

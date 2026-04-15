@@ -1,8 +1,8 @@
-const CACHE = 'gm-v2';
-const ASSETS = ['./index.html', './manifest.json'];
+const CACHE = 'gm-v3';
+const ASSETS = ['/zaloga/', '/zaloga/index.html', '/zaloga/manifest.json'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})));
   self.skipWaiting();
 });
 
@@ -15,6 +15,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });

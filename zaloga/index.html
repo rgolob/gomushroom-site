@@ -701,20 +701,58 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <script>
 // ── GESLO ──
 const PASSWORD_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
-async function hashStr(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+const AUTH_KEY='gm_auth';
+
+async function hashStr(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
 async function doLogin(){
-  const pwd=document.getElementById('loginPwd').value;
-  const err=document.getElementById('loginErr');
-  if(!pwd){err.textContent='Vnesite geslo.';return;}
+  const pwdEl=document.getElementById('loginPwd');
+  const errEl=document.getElementById('loginErr');
+  const pwd=pwdEl?.value||'';
+  console.log('[login] attempt, pwd length='+pwd.length);
+  if(!pwd){if(errEl)errEl.textContent='Vnesite geslo.';return;}
   const h=await hashStr(pwd);
-  if(h===PASSWORD_HASH){localStorage.setItem('gm_auth',h);document.getElementById('loginScreen').style.display='none';appInit();}
-  else{err.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(()=>err.textContent='',2500);}
+  console.log('[login] hash computed, match='+(h===PASSWORD_HASH));
+  if(h===PASSWORD_HASH){
+    try{localStorage.setItem(AUTH_KEY,h);}catch(e){console.warn('[login] localStorage write failed:',e);}
+    const screen=document.getElementById('loginScreen');
+    if(screen)screen.style.display='none';
+    console.log('[login] success, calling appInit');
+    appInit();
+  } else {
+    console.log('[login] wrong password');
+    if(errEl){errEl.textContent='Napačno geslo.';setTimeout(()=>{if(errEl)errEl.textContent='';},2500);}
+    if(pwdEl)pwdEl.value='';
+  }
 }
+
 async function checkAuth(){
-  if(localStorage.getItem('gm_auth')===PASSWORD_HASH){document.getElementById('loginScreen').style.display='none';appInit();}
-  else setTimeout(()=>document.getElementById('loginPwd').focus(),300);
+  console.log('[checkAuth] running');
+  let stored=null;
+  try{stored=localStorage.getItem(AUTH_KEY);}catch(e){console.warn('[checkAuth] localStorage read failed:',e);}
+  console.log('[checkAuth] stored match='+(stored===PASSWORD_HASH));
+  if(stored===PASSWORD_HASH){
+    const screen=document.getElementById('loginScreen');
+    if(screen)screen.style.display='none';
+    console.log('[checkAuth] auto-login, calling appInit');
+    appInit();
+  } else {
+    setTimeout(()=>{const el=document.getElementById('loginPwd');if(el)el.focus();},300);
+  }
 }
-function doLogout(){localStorage.removeItem('gm_auth');document.getElementById('loginPwd').value='';document.getElementById('loginScreen').style.display='flex';setTimeout(()=>document.getElementById('loginPwd').focus(),300);}
+
+function doLogout(){
+  try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  const pwdEl=document.getElementById('loginPwd');
+  const screen=document.getElementById('loginScreen');
+  if(pwdEl)pwdEl.value='';
+  if(screen)screen.style.display='flex';
+  setTimeout(()=>{const el=document.getElementById('loginPwd');if(el)el.focus();},300);
+  console.log('[logout] done');
+}
 
 async function clearAllData(){
   const ok=await showConfirm('Izbriši VSE podatke?\n\nSerije, prodaje, računi — vse bo izgubljeno.\nTega ni mogoče razveljaviti.','🗑 Izbriši vse');
@@ -2648,7 +2686,12 @@ document.addEventListener('click',e=>{
 });
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-checkAuth();
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+  checkAuth();
+}
 </script>
 </body>
 </html>

@@ -27,8 +27,17 @@ html{height:100%}
 body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-height:100%;overscroll-behavior:none}
 
 /* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--ink);z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-box{width:100%;max-width:340px;text-align:center}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:var(--cream);margin-bottom:.35rem}
 .login-logo em{color:var(--accent);font-style:normal}
+.login-sub{font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem}
+.login-input{width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:var(--cream);outline:none;-webkit-appearance:none;margin-bottom:1rem}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
+.login-btn{width:100%;padding:.9rem;border:none;border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:var(--accent);color:var(--ink);cursor:pointer}
+.login-err{font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em}
+.login-hint{font-size:.62rem;color:rgba(245,240,232,.2);margin-top:1.75rem;line-height:1.7}
+
 /* HEADER */
 .app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.7rem) .9rem .7rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:.5rem;min-width:0}
 .logo{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
@@ -320,16 +329,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen" style="position:fixed;inset:0;background:#1a1209;z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem">
-  <div style="width:100%;max-width:340px;text-align:center">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:#f5f0e8;margin-bottom:.35rem">Go<em style="color:#af8455;font-style:normal">Mushroom</em></div>
-    <div style="font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem">Upravljanje zaloge</div>
-    <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
-      style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
-      onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
-    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
-      style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
-    <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Go<em>Mushroom</em></div>
+    <div class="login-sub">Upravljanje zaloge</div>
+    <input class="login-input" type="password" id="loginPwd" placeholder="Geslo…"
+      autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Vstopi</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-hint">Privzeto geslo: <strong style="color:rgba(255,255,255,.4)">gomushroom2024</strong><br>Spremenite v zaloga.html (PASSWORD_HASH)</div>
   </div>
 </div>
 
@@ -439,20 +447,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="view" id="view-serije">
     <div class="view-header">
       <div class="view-title">🏷 Serije</div>
-      <div style="display:flex;gap:.5rem;align-items:center">
+      <div style="display:flex;gap:.5rem">
         <button class="hbtn2" onclick="openReportSheet('serije')">📊 Poročilo</button>
-        <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
+        <button class="bsave blue" style="padding:.5rem 1rem;font-size:.75rem" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
-    <div id="productMgmt" style="margin-bottom:.75rem"></div>
+    <div id="productMgmt" style="margin-bottom:1.1rem"></div>
     <div class="search-row">
       <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="renderBatches()"></div>
       <select class="fpill" id="batchFilterProd" onchange="renderBatches()"><option value="">Vsi produkti</option></select>
-      <select class="fpill" id="batchFilterStatus" onchange="renderBatches()">
-        <option value="active">Na zalogi</option>
-        <option value="all">Vse</option>
-        <option value="sold">Prodane</option>
-      </select>
     </div>
     <div class="plist" id="batchList"></div>
   </div>
@@ -639,7 +642,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-prodaja" checked> Za prodajo</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-interno" checked> Interno</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-ostalo" checked> Ostalo</label>
-        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-kupci"> Kupci serije</label>
       </div>
       <div class="slabel">Obdobje</div>
       <div class="frow">
@@ -691,33 +693,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <div class="toast" id="toast"></div>
 
 <script>
-// ── LOGIN ──
-const LOGIN_PWD='Z29tdXNocm9vbTIwMjQ='; // btoa('gomushroom2024')
-function doLogin(){
-  const pwd=document.getElementById('loginPwd')?.value||'';
-  const err=document.getElementById('loginErr');
-  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
-  if(btoa(pwd)===LOGIN_PWD){
-    try{localStorage.setItem('gm_auth','1');}catch(e){}
-    document.getElementById('loginScreen').style.display='none';
-    if(err)err.textContent='';
-    if(typeof appInit==='function')appInit();
-  } else {
-    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
-    document.getElementById('loginPwd').value='';
-  }
-}
-function doLogout(){
-  try{localStorage.removeItem('gm_auth');}catch(e){}
-  const ls=document.getElementById('loginScreen');
-  if(ls)ls.style.display='flex';
-}
-
 // ── GESLO ──
-
-
-
-
+const PASSWORD_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+async function hashStr(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function doLogin(){
+  const pwd=document.getElementById('loginPwd').value;
+  const err=document.getElementById('loginErr');
+  if(!pwd){err.textContent='Vnesite geslo.';return;}
+  const h=await hashStr(pwd);
+  if(h===PASSWORD_HASH){localStorage.setItem('gm_auth',h);document.getElementById('loginScreen').style.display='none';appInit();}
+  else{err.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(()=>err.textContent='',2500);}
+}
+async function checkAuth(){
+  if(localStorage.getItem('gm_auth')===PASSWORD_HASH){document.getElementById('loginScreen').style.display='none';appInit();}
+  else setTimeout(()=>document.getElementById('loginPwd').focus(),300);
+}
+function doLogout(){localStorage.removeItem('gm_auth');document.getElementById('loginPwd').value='';document.getElementById('loginScreen').style.display='flex';setTimeout(()=>document.getElementById('loginPwd').focus(),300);}
 
 async function clearAllData(){
   const ok=await showConfirm('Izbriši VSE podatke?\n\nSerije, prodaje, računi — vse bo izgubljeno.\nTega ni mogoče razveljaviti.','🗑 Izbriši vse');
@@ -869,6 +860,7 @@ async function appInit(){
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
       if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+      if(currentTab==='racuni'){renderInvStats();renderInvoices();}
       setSyncStatus('✓ Sinhronizirano');
       setTimeout(()=>setSyncStatus(''),3000);
     } else {
@@ -1210,139 +1202,44 @@ function populateBatchFilter(){
   const sel=document.getElementById('batchFilterProd'),cur=sel.value;
   sel.innerHTML='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}"${p.id===cur?' selected':''}>${p.name}</option>`).join('');
 }
-function getBatchBuyers(batchId){
-  // Find all sale groups that have lines with this batch
-  const sales=saleGroups.filter(g=>
-    g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===batchId))
-  );
-  if(!sales.length)return'';
-  return sales.map(g=>{
-    const ch=CH[g.channel]||CH.malo;
-    // find qty from this batch across all lines in this group
-    let alcQty=0,glyQty=0;
-    g.lines.forEach(l=>{
-      const bb=(l.batchBreakdown||[]).find(x=>x.batchId===batchId);
-      if(bb){alcQty+=(bb.alc||0);glyQty+=(bb.gly||0);}
-    });
-    return `<div style="display:flex;align-items:center;justify-content:space-between;font-size:.78rem;padding:.25rem 0;border-bottom:1px solid var(--border)">
-      <div>
-        <span style="font-weight:500">${g.buyer||'—'}</span>
-        <span style="color:var(--muted);margin-left:.5rem;font-size:.68rem">${g.date?g.date.split('-').reverse().join('.'):''}
-        </span>
-        <span class="ch-pill ${ch.cls}" style="margin-left:.35rem">${ch.icon}</span>
-      </div>
-      <div style="color:var(--muted);font-size:.72rem;flex-shrink:0">
-        ${alcQty>0?`🥃${alcQty}`:''}${glyQty>0?` 🌿${glyQty}`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-
-  const sold=getSoldPerBatch(b.id,b.productId);
-  const totalMade=(b.alc?.qty||0)+(b.gly?.qty||0);
-  const totalSold=sold.alc+sold.gly;
-  const remaining=Math.max(0,totalMade-totalSold);
-  if(totalMade===0)return'active';
-  if(remaining===0&&totalSold>0)return'sold';
-  if(totalSold>0)return'partial';
-  return'active';
-}
-
-function batchSoldStatus(b){
-  const sold=getSoldPerBatch(b.id,b.productId);
-  const made=(b.alc?.qty||0)+(b.gly?.qty||0);
-  const soldTotal=sold.alc+sold.gly;
-  if(made===0)return'active';
-  if(soldTotal===0)return'active';
-  if(Math.max(0,made-soldTotal)===0)return'sold';
-  return'partial';
-}
-
 function renderBatches(){
-  const q=(document.getElementById('batchSearch')?.value||'').toLowerCase();
-  const fp=document.getElementById('batchFilterProd')?.value||'';
-  const fs=document.getElementById('batchFilterStatus')?.value||'active';
-
-  const rows=batches.filter(b=>{
-    if(q&&!b.batchNum.toLowerCase().includes(q)&&!b.productName.toLowerCase().includes(q))return false;
-    if(fp&&b.productId!==fp)return false;
-    const st=batchSoldStatus(b);
-    if(fs==='active')return st==='active'||st==='partial';
-    if(fs==='sold')return st==='sold';
-    return true;
-  });
-
+  const q=document.getElementById('batchSearch').value.toLowerCase();
+  const fp=document.getElementById('batchFilterProd').value;
+  const rows=batches.filter(b=>(!q||b.batchNum.toLowerCase().includes(q)||b.productName.toLowerCase().includes(q))&&(!fp||b.productId===fp));
   const el=document.getElementById('batchList');
-  if(!rows.length){
-    const msg=fs==='sold'?'Ni prodanih serij':fs==='active'?'Ni aktivnih serij':'Ni serij';
-    el.innerHTML=`<div class="empty"><div class="ei">🏷</div><div class="et">${msg}</div><div class="es">Dodaj z ＋ Nova</div></div>`;
-    return;
-  }
-
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🏷</div><div class="et">Ni serij</div><div class="es">Dodaj z ＋</div></div>`;return;}
   el.innerHTML=rows.map(b=>{
     const isOpen=expandedBatches.has(b.id);
-    const sold=getSoldPerBatch(b.id,b.productId);
-    const made=(b.alc?.qty||0)+(b.gly?.qty||0);
-    const remaining=Math.max(0,made-sold.alc-sold.gly);
-    const soldSt=batchSoldStatus(b);
-    const statusBadge=
-      soldSt==='sold'?`<span class="sbadge zero" style="font-size:.55rem;padding:.1rem .4rem">Prodana</span>`:
-      soldSt==='partial'?`<span class="sbadge low" style="font-size:.55rem;padding:.1rem .4rem">Delno</span>`:'';
-
+    const total=(b.alc?.qty||0)+(b.gly?.qty||0);
     const mkSub=(type,data,bg)=>{
       if(!data?.qty)return`<div class="batch-subcard" style="background:${bg};display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem">Ni ${type==='alc'?'alkoholne':'glicerinske'}</div>`;
       const alloc=data.alloc||{};
+      // support both old 4-way and new 2-way
       const prod=alloc.prod!=null?alloc.prod:(alloc.malo||0)+(alloc.velo||0);
       const int_=(alloc.int||0)+(alloc.dar||0);
+      const allocSum=prod+int_;
+      const sold=getSoldPerBatch(b.id,b.productId);
       const soldVar=type==='alc'?sold.alc:sold.gly;
-      const rem=Math.max(0,data.qty-soldVar);
-      return`<div class="batch-subcard" style="background:${bg}">
+      const remaining=Math.max(0,data.qty-soldVar);
+      const chHtml=[
+        prod>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-malo)">🛒 Prodaja</span><span class="bsc-alloc-val">${prod}</span></div>`:'',
+        int_>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-int)">🔬 Interno</span><span class="bsc-alloc-val">${int_}</span></div>`:'',
+      ].join('');
+      return `<div class="batch-subcard" style="background:${bg}">
         <div class="bsc-type" style="color:var(--${type==='alc'?'alc':'gly'})">${type==='alc'?'🥃 Alkohol':'🌿 Glicerin'}</div>
         <div class="bsc-qty">${data.qty}</div>
         <div class="bsc-sku">${data.sku||''}${data.vol?' · '+data.vol+' ml':''}</div>
         <div class="bsc-price">${data.priceMalo?data.priceMalo.toFixed(2)+' €/kom.':''}</div>
-        ${soldVar>0?`<div style="font-size:.7rem;margin-top:.3rem">Prodano: <strong>${soldVar}</strong> · Ostalo: <strong style="color:${rem>0?'var(--success)':'var(--danger)'}">${rem}</strong></div>`:''}
-        ${prod>0||int_>0?`<div class="bsc-alloc" style="margin-top:.5rem">
-          ${prod>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-malo)">🛒 Prodaja</span><span class="bsc-alloc-val">${prod}</span></div>`:''}
-          ${int_>0?`<div class="bsc-alloc-row"><span class="bsc-alloc-label" style="color:var(--ch-int)">🔬 Interno</span><span class="bsc-alloc-val">${int_}</span></div>`:''}
-        </div>`:''}
+        ${soldVar>0?`<div style="font-size:.7rem;margin-top:.3rem">Prodano: <strong>${soldVar}</strong> · Ostalo: <strong style="color:${remaining>0?'var(--success)':'var(--danger)'}">${remaining}</strong></div>`:''}
+        ${chHtml?`<div class="bsc-alloc" style="margin-top:.5rem">${chHtml}</div>`:''}
+        ${allocSum<data.qty?`<div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Nerazporejeno: ${data.qty-allocSum}</div>`:''}
       </div>`;
     };
-
-    // Buyers list (only when open)
-    let buyersSection='';
-    if(isOpen){
-      const buyers=saleGroups.filter(g=>
-        g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id))
-      );
-      if(buyers.length){
-        const buyerRows=buyers.map(g=>{
-          let aQ=0,gQ=0;
-          (g.lines||[]).forEach(l=>{
-            const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);
-            if(bb){aQ+=(bb.alc||0);gQ+=(bb.gly||0);}
-          });
-          const ch=CH[g.channel]||CH.malo;
-          return`<div style="display:flex;justify-content:space-between;font-size:.77rem;padding:.2rem 0;border-bottom:1px solid var(--border)">
-            <div><span style="font-weight:500">${g.buyer||'—'}</span><span style="color:var(--muted);font-size:.68rem;margin-left:.4rem">${g.date?g.date.split('-').reverse().join('.'):''}</span> <span class="ch-pill ${ch.cls}">${ch.icon}</span></div>
-            <div style="color:var(--muted);font-size:.7rem">${aQ>0?'🥃'+aQ:''} ${gQ>0?'🌿'+gQ:''}</div>
-          </div>`;
-        }).join('');
-        buyersSection=`<div style="border-top:1px solid var(--border);padding:.6rem .9rem;background:var(--parchment)">
-          <div style="font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Kupci te serije</div>
-          ${buyerRows}
-        </div>`;
-      }
-    }
-
-    return`<div class="batch-card" style="${soldSt==='sold'?'opacity:.7':''}">
+    return `<div class="batch-card">
       <div class="batch-card-header" onclick="toggleBatch('${b.id}')">
         <div class="bch-icon">${moji(b.productName)}</div>
         <div class="bch-info">
-          <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-            <span class="bch-batch">${b.batchNum}</span>${statusBadge}
-          </div>
+          <div class="bch-batch">${b.batchNum}</div>
           <div class="bch-prod">${b.productName}</div>
           ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}</div>`:''}
           <div class="bch-pills">
@@ -1350,21 +1247,13 @@ function renderBatches(){
             ${(b.gly?.qty||0)>0?`<span class="vpill vpill-gly">🌿 ${b.gly.qty}${b.gly.sku?' · '+b.gly.sku:''}</span>`:''}
           </div>
         </div>
-        <div class="bch-right">
-          <div class="bch-total" style="${soldSt==='sold'?'color:var(--danger)':remaining>0?'color:var(--success)':''}">${remaining}</div>
-          <div class="bch-sub">ostalo</div>
-          <div class="bch-chevron">${isOpen?'▲':'▼'}</div>
-        </div>
+        <div class="bch-right"><div class="bch-total">${total}</div><div class="bch-sub">skupaj</div><div class="bch-chevron">${isOpen?'▲':'▼'}</div></div>
       </div>
-      <div class="batch-subcards${isOpen?' open':''}">
+      <div class="batch-subcards ${isOpen?'open':''}">
         ${mkSub('alc',b.alc,'rgba(122,74,26,.03)')}
         ${mkSub('gly',b.gly,'rgba(42,107,90,.03)')}
       </div>
-      ${buyersSection}
-      ${isOpen?`<div class="batch-footer">
-        <button class="tbtn" onclick="openBatchSheet('${b.id}')">✎ Uredi</button>
-        <button class="tbtn del" onclick="deleteBatch('${b.id}')">Izbriši</button>
-      </div>`:''}
+      ${isOpen?`<div class="batch-footer"><button class="tbtn" onclick="openBatchSheet('${b.id}')">✎ Uredi</button><button class="tbtn del" onclick="deleteBatch('${b.id}')">Izbriši</button></div>`:''}
     </div>`;
   }).join('');
 }
@@ -2046,7 +1935,7 @@ ${qrImgTag?`
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
-  <button class="btn btn-pdf" data-title="${invNum||'Dobavnica'}" onclick="document.title=this.getAttribute('data-title');window.print()">\u{1F4C4} Shrani PDF</button>
+  <button class="btn btn-pdf" onclick="document.title='${invNum||'Dobavnica'}';window.print()">\u{1F4C4} Shrani PDF</button>
   ${emailBtn}
 </div>
 
@@ -2460,31 +2349,11 @@ function genReport(type){
         ${showOstalo?`<td class="num td-bold" style="color:${remAlc+remGly>0?'#3a6b4a':'#8b3a2a'}">${remAlc} / ${remGly}</td>`:''}
       </tr>`;
     });
-    const showKupci=document.getElementById('rs-kupci')?.checked??false;
     const thHtml=ths.map((t,i)=>`<th${i>2?' style="text-align:right"':''}>${t}</th>`).join('');
     const colCount=ths.length;
-    // Build buyers sub-rows if needed
-    let finalRows='';
-    filtered.forEach((b,idx)=>{
-      // re-use already computed rows string — append buyers
-      const rowHtml=rows.split('</tr>')[idx]+'</tr>';
-      finalRows+=rowHtml;
-      if(showKupci){
-        const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
-        if(buyers.length){
-          const buyersList=buyers.map(g=>{
-            let alcQ=0,glyQ=0;
-            g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
-            const ch=CH[g.channel]||CH.malo;
-            return `${g.buyer||'—'} (${ch.icon}${g.date?' · '+g.date.split('-').reverse().join('.'):''}) 🥃${alcQ} 🌿${glyQ}`;
-          }).join('<br>');
-          finalRows+=`<tr style="background:#f5f0e8"><td colspan="${colCount}" style="font-size:.72rem;color:#7a6f60;padding:.3rem .5rem .5rem 1.5rem">${buyersList}</td></tr>`;
-        }
-      }
-    });
     html=`<table>
       <tr>${thHtml}</tr>
-      ${finalRows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
+      ${rows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
     </table>`;
   }
 
@@ -2649,25 +2518,8 @@ document.addEventListener('click',e=>{
   }
 });
 
-// SW disabled - causes caching issues
-// if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-
-// ── INIT ──
-(function(){
-  let auth=null;
-  try{auth=localStorage.getItem('gm_auth');}catch(e){}
-  // Accept both new '1' and old SHA-256 hash
-  const validHash='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
-  if(auth==='1'||auth===validHash){
-    // Normalize to new format
-    try{localStorage.setItem('gm_auth','1');}catch(e){}
-    const ls=document.getElementById('loginScreen');
-    if(ls)ls.style.display='none';
-    appInit();
-  } else {
-    setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
-  }
-})();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+checkAuth();
 </script>
 </body>
 </html>

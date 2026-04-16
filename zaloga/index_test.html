@@ -849,7 +849,7 @@ function doLogin(){
   }
 }
 // ── POŠTNE ŠTEVILKE ──
-const POST_SI={"1000":"Ljubljana","1001":"Ljubljana","1002":"Ljubljana","1210":"Ljubljana - Šentvid","1211":"Ljubljana - Šmartno","1215":"Medvode","1216":"Smlednik","1217":"Vodice","1218":"Komenda","1220":"Škofljica","1225":"Lukovica","1230":"Domžale","1233":"Dob","1234":"Mengeš","1235":"Radomlje","1236":"Trzin","1241":"Kamnik","1242":"Stahovica","1243":"Blagovica","1251":"Moravče","1261":"Ljubljana - Dobrunje","1262":"Dol pri Ljubljani","1270":"Litija","1290":"Grosuplje","1291":"Šmarje - Sap","1292":"Ig","1295":"Ivančna Gorica","1296":"Šentvid pri Stični","1303":"Brezovica pri Ljubljani","1310":"Ribnica","1315":"Velike Lašče","1317":"Sodražica","1318":"Loški Potok","1330":"Kočevje","1333":"Semič","1351":"Brezovica","1353":"Borovnica","1354":"Horjul","1355":"Polhov Gradec","1356":"Dobrova","1360":"Vrhnika","1364":"Logatec","1370":"Logatec","1380":"Cerknica","1381":"Rakek","1390":"Postojna","1396":"Pivka","1410":"Zagorje ob Savi","1420":"Trbovlje","1430":"Hrastnik","1433":"Radeče","2000":"Maribor","2100":"Šentilj v Slov. goricah","2120":"Ruše","2130":"Slovenska Bistrica","2200":"Ptuj","2230":"Lenart v Slov. goricah","2240":"Radlje ob Dravi","2270":"Ormož","2310":"Slovenska Bistrica","2380":"Slovenj Gradec","2390":"Ravne na Koroškem","2391":"Prevalje","2392":"Mežica","2393":"Črna na Koroškem","3000":"Celje","3210":"Slovenske Konjice","3212":"Vojnik","3220":"Štore","3230":"Šentjur","3240":"Šmarje pri Jelšah","3250":"Rogaška Slatina","3252":"Rogatec","3260":"Kozje","3270":"Laško","3310":"Žalec","3311":"Šempeter v Savinjski dolini","3312":"Prebold","3313":"Polzela","3320":"Velenje","3325":"Šoštanj","3330":"Mozirje","3331":"Nazarje","3333":"Ljubno ob Savinji","3334":"Luče","3335":"Solčava","4000":"Kranj","4200":"Domžale","4202":"Naklo","4205":"Preddvor","4207":"Cerklje na Gorenjskem","4208":"Šenčur","4216":"Škofja Loka","4220":"Škofja Loka","4223":"Poljane nad Škofjo Loko","4224":"Gorenja vas","4226":"Železniki","4240":"Radovljica","4248":"Lesce","4249":"Žirovnica","4250":"Kranjska Gora","4260":"Bled","4263":"Bohinjska Bistrica","4270":"Jesenice","4275":"Begunje na Gorenjskem","4290":"Tržič","5000":"Nova Gorica","5220":"Tolmin","5222":"Kobarid","5230":"Bovec","5270":"Ajdovščina","5271":"Vipava","5280":"Idrija","5290":"Šempeter pri Gorici","6000":"Koper","6210":"Sežana","6215":"Divača","6220":"Postojna","6230":"Postojna","6250":"Ilirska Bistrica","6257":"Pivka","6280":"Ankaran","6310":"Izola","6320":"Portorož","6330":"Piran","7000":"Novo mesto","8000":"Novo mesto","8210":"Trebnje","8216":"Mirna Peč","8220":"Šmarješke Toplice","8230":"Mokronog","8250":"Brežice","8270":"Krško","8280":"Brestanica","8290":"Sevnica","8310":"Šentjernej","8311":"Kostanjevica na Krki","8330":"Metlika","8333":"Semič","8340":"Črnomelj","8350":"Dolenjske Toplice","8351":"Straža","8360":"Žužemberk","8370":"Trebnje","9000":"Murska Sobota","9220":"Lendava","9230":"Beltinci","9240":"Ljutomer","9250":"Gornja Radgona","9252":"Radenci"};
+const POST_SI=undefined;
 
 function postAutofill(inputEl, targetEl){
   const val=(inputEl.value||'').trim();
@@ -2338,23 +2338,29 @@ function generateQRDataURL(text){
 }
 
 async function printInvoice(group){
-  const isRevenue=true;
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?'SI00'+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
   const hasPayment=group.channel==='malo'||group.channel==='velo';
   const upnString=hasPayment&&total>0?buildUpnString(total,upnRef,'Placilo '+invNum):'';
 
+  // Use api.qrserver.com directly - works in all browsers including iOS
   let qrDataURL='';
   if(upnString){
     toast('⟳ Generiram račun…');
+    const encoded=encodeURIComponent(upnString);
+    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=M&data=${encoded}`;
+    // Pre-fetch QR as data URL so it works in blob window
     try{
-      await loadQRLib();
-      qrDataURL=await generateQRDataURL(upnString);
-      if(!qrDataURL)toast('⚠ QR ni uspel — račun brez QR');
+      const resp=await fetch(qrUrl);
+      const blob=await resp.blob();
+      qrDataURL=await new Promise(res=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result);
+        r.readAsDataURL(blob);
+      });
     }catch(e){
-      toast('⚠ QR ni uspel — račun brez QR');
-      qrDataURL='';
+      qrDataURL=''; // will use img tag fallback
     }
   }
 

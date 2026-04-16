@@ -2503,11 +2503,6 @@ function updateRsBatchList(){
     filtered.map(b=>`<option value="${b.id}">${b.batchNum} · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}</option>`).join('');
 }
 
-function populateReportDropdowns(){
-  const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
-}
-
 let _currentReportType='';
 
 function openReportSheet(type){

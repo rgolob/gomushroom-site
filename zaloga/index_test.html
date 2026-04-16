@@ -532,6 +532,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="field"><label>Opomba</label><input id="bNote" placeholder="npr. ekstrakcija #12…"></div>
       <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
+      <div class="frow">
+        <div class="field"><label>Varnostna zaloga alc (kom.)</label><input type="number" id="bSafetyAlc" min="0" placeholder="10" inputmode="numeric"></div>
+        <div class="field"><label>Varnostna zaloga gly (kom.)</label><input type="number" id="bSafetyGly" min="0" placeholder="10" inputmode="numeric"></div>
+      </div>
       <!-- ALC -->
       <div class="slabel" style="color:var(--alc)">🥃 Alkohol</div>
       <div class="var-panel alc">
@@ -1166,11 +1170,15 @@ function productStock(productId){
     alcRem:Math.max(0,(b.alc?.qty||0)-(soldPerBatch[b.id]?.alc||0)),
     glyRem:Math.max(0,(b.gly?.qty||0)-(soldPerBatch[b.id]?.gly||0)),
   }));
+  // Safety stock from latest batch of this product
+  const latestBatch=[...pb].sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+  const safetyAlc=latestBatch?.safetyAlc??10;
+  const safetyGly=latestBatch?.safetyGly??10;
   return{
     alc:Math.max(0,bAlc-soldAlc),gly:Math.max(0,bGly-soldGly),
     prodAlc:remProdAlc,intAlc:remIntAlc,
     prodGly:remProdGly,intGly:remIntGly,
-    batchStock,
+    batchStock,safetyAlc,safetyGly,
   };
 }
 
@@ -1230,7 +1238,11 @@ function switchTab(id,el){
 function renderStats(){
   let tAlc=0,tGly=0,alerts=0;
   const mo=todayISO().slice(0,7);
-  products.forEach(p=>{const st=productStock(p.id);tAlc+=st.alc;tGly+=st.gly;if(stockStatus(st.alc,st.gly)!=='ok')alerts++;});
+  products.forEach(p=>{
+    const st=productStock(p.id);
+    tAlc+=st.alc;tGly+=st.gly;
+    if(st.prodAlc<=st.safetyAlc||st.prodGly<=st.safetyGly)alerts++;
+  });
   const moRev=saleGroups.filter(g=>g.date&&g.date.slice(0,7)===mo).reduce((s,g)=>s+(g.total||0),0);
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${tAlc}</div></div>
@@ -1247,8 +1259,13 @@ function renderInventory(){
   if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🍄</div><div class="et">Ni produktov</div><div class="es">Dodaj serijo pod zavihkom Serije.</div></div>`;return;}
   el.innerHTML=rows.map(p=>{
     const st=productStock(p.id);
-    const status=stockStatus(st.alc,st.gly);
-    const cls=status==='zero'?'no-stock':status==='low'?'low-stock':'';
+    // Use safety stock thresholds (prod-allocated only)
+    const alcLow=st.prodAlc<=st.safetyAlc;
+    const glyLow=st.prodGly<=st.safetyGly;
+    const isLow=alcLow||glyLow;
+    const isZero=st.prodAlc<=0&&st.prodGly<=0;
+    const cls=isZero?'no-stock':isLow?'low-stock':'';
+    const safetyWarn=isLow&&!isZero?`<div style="font-size:.7rem;color:var(--low);margin:.3rem 0 0">⚠ Varnostna zaloga: ${alcLow?`🥃 ≤${st.safetyAlc}`:''}${alcLow&&glyLow?' · ':''}${glyLow?`🌿 ≤${st.safetyGly}`:''}</div>`:'';
     // per-batch remaining stock
     const batchRows=(st.batchStock||[]).filter(b=>b.alcRem>0||b.glyRem>0).map(b=>
       `<div style="display:flex;justify-content:space-between;align-items:center;font-size:.72rem;padding:.2rem 0;border-bottom:1px solid var(--border)">
@@ -1284,11 +1301,12 @@ function renderInventory(){
           </div>
         </div>
         <div class="pright">
-          <span class="sbadge ${status}">${statusLabel(status)}</span>
+          <span class="sbadge ${isZero?'zero':isLow?'low':'ok'}">${isZero?'Ni na zalogi':isLow?'Nizka zaloga':'Na zalogi'}</span>
           <div class="stock-total">${st.alc+st.gly}</div>
           <div class="stock-sub">skupaj</div>
         </div>
       </div>
+      ${safetyWarn}
       ${chBreakdown}
     </div>`;
   }).join('');
@@ -1401,6 +1419,7 @@ function openBatchSheet(id=null){
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
     document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
+    document.getElementById('bSafetyAlc').value=b.safetyAlc??10;document.getElementById('bSafetyGly').value=b.safetyGly??10;
     // Lock batch number if batch has sales
     const hasSales=saleGroups.some(g=>(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
     const lockWarn=document.getElementById('bBatchLockWarn');
@@ -1419,6 +1438,11 @@ function openBatchSheet(id=null){
     ['bBatch','bNote','bWorkOrder','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('bBatch').removeAttribute('readonly');
     document.getElementById('bBatchLockWarn').style.display='none';
+    // Prefill safety stock from last batch of selected product
+    const selProd=document.getElementById('bProductSel').value;
+    const lastB=selProd?[...batches].filter(x=>x.productId===selProd).sort((a,b)=>b.date?.localeCompare(a.date||''))[0]:null;
+    document.getElementById('bSafetyAlc').value=lastB?.safetyAlc??10;
+    document.getElementById('bSafetyGly').value=lastB?.safetyGly??10;
     document.getElementById('bProductSel').value='';document.getElementById('bDate').value=todayISO();
     clearAllocFields('Alc');clearAllocFields('Gly');
   }
@@ -1437,7 +1461,7 @@ function saveBatch(){
   const alcAlloc=getAlloc('Alc'),glyAlloc=getAlloc('Gly');
   if((alcAlloc.prod+alcAlloc.int)>alcQty){alert('Alkohol: razporejenih preveč.');return;}
   if((glyAlloc.prod+glyAlloc.int)>glyQty){alert('Glicerin: razporejenih preveč.');return;}
-  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),
+  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
     alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
     gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
   };

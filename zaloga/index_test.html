@@ -1964,13 +1964,23 @@ async function confirmOrder(withInvoice){
   const extInvoice=document.getElementById('orderExtInvoice').value.trim();
   const extDelivery=document.getElementById('orderExtDelivery').value.trim();
   const ch=orderChannel;const isRevenue=true;const tier=getActiveTier();
-  // stock check
+  // stock check per channel
   const byProduct={};
   lines.forEach(l=>{byProduct[l.p.id]={p:l.p,alc:l.alc,gly:l.gly};});
+  const isProdCh=ch==='malo'||ch==='velo';
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
-    if(v.alc>st.alc){const ok=await showConfirm(`${v.p.name}: alkohol ${v.alc} > zaloga ${st.alc}. Nadaljuješ?`,'Nadaljuj');if(!ok)return;}
-    if(v.gly>st.gly){const ok=await showConfirm(`${v.p.name}: glicerin ${v.gly} > zaloga ${st.gly}. Nadaljuješ?`,'Nadaljuj');if(!ok)return;}
+    const avAlc=isProdCh?st.prodAlc:st.intAlc;
+    const avGly=isProdCh?st.prodGly:st.intGly;
+    const chanName=isProdCh?'prodaja':'interno';
+    if(v.alc>avAlc){
+      alert(`⛔ ${v.p.name}: zahtevano 🥃${v.alc}, na voljo za ${chanName}: ${avAlc}.\n\nProdaja ni mogoča.`);
+      return;
+    }
+    if(v.gly>avGly){
+      alert(`⛔ ${v.p.name}: zahtevano 🌿${v.gly}, na voljo za ${chanName}: ${avGly}.\n\nProdaja ni mogoča.`);
+      return;
+    }
   }
   // compute batch allocation if not already set (FIFO default)
   if(!Object.keys(pendingBatchAlloc).length){

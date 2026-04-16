@@ -527,6 +527,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Datum izdelave</label><input id="bDate" type="date"></div>
       </div>
       <div class="field"><label>Opomba</label><input id="bNote" placeholder="npr. ekstrakcija #12…"></div>
+      <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
       <!-- ALC -->
       <div class="slabel" style="color:var(--alc)">🥃 Alkohol</div>
       <div class="var-panel alc">
@@ -1395,13 +1396,13 @@ function openBatchSheet(id=null){
     const b=batches.find(x=>x.id===id);if(!b)return;
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
-    document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';
+    document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
     document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=b.alc?.qty||'';document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
     document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=b.gly?.qty||'';document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
-    ['bBatch','bNote','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    ['bBatch','bNote','bWorkOrder','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('bProductSel').value='';document.getElementById('bDate').value=todayISO();
     clearAllocFields('Alc');clearAllocFields('Gly');
   }
@@ -1420,7 +1421,7 @@ function saveBatch(){
   const alcAlloc=getAlloc('Alc'),glyAlloc=getAlloc('Gly');
   if((alcAlloc.prod+alcAlloc.int)>alcQty){alert('Alkohol: razporejenih preveč.');return;}
   if((glyAlloc.prod+glyAlloc.int)>glyQty){alert('Glicerin: razporejenih preveč.');return;}
-  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),
+  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),
     alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
     gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
   };
@@ -1570,7 +1571,7 @@ function renderBatches(){
             <span class="bch-batch">${b.batchNum}</span>${statusBadge}
           </div>
           <div class="bch-prod">${b.productName}</div>
-          ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}</div>`:''}
+          ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}${b.workOrder?' · DN: '+b.workOrder:''}</div>`:''}
         </div>
         <div class="bch-right">
           <div class="bch-total" style="${soldSt==='sold'?'color:var(--danger)':remaining>0?'color:var(--success)':''}">${remaining}</div>
@@ -1673,7 +1674,6 @@ function renderOrderRows(){
     return `<div class="order-row">
       <div class="order-row-info">
         <div class="order-row-name">${moji(p.name)} ${p.name}</div>
-        <div class="order-row-meta">Skupaj: 🥃 ${st.alc} · 🌿 ${st.gly}</div>
         <div class="order-row-meta" style="color:var(--ch-${isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
       </div>
       <div class="order-row-inputs">
@@ -1790,12 +1790,8 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
   // Check if we couldn't fulfill the request
   if(remAlc>0) warnings.push(`Alkohol: zahtevano ${reqAlc}, na voljo ${reqAlc-remAlc} za ${purpose==='int'?'interno':'prodajo'}`);
   if(remGly>0) warnings.push(`Glicerin: zahtevano ${reqGly}, na voljo ${reqGly-remGly} za ${purpose==='int'?'interno':'prodajo'}`);
-  // Still add dummy entries so order can be saved (with warning)
-  if(remAlc>0||remGly>0){
-    if(result.length>0){result[result.length-1].alc+=remAlc;result[result.length-1].gly+=remGly;}
-    else result.push({batchId:'?',batchNum:'–',alc:remAlc,gly:remGly});
-  }
-  return {alloc:result, warnings};
+  const unfulfilled = remAlc>0||remGly>0;
+  return {alloc:result, warnings, unfulfilled};
 }
 
 // pendingBatchAlloc: {productId: [{batchId,batchNum,alc,gly}]}
@@ -1808,14 +1804,16 @@ function computePendingAlloc(){
   const lines=collectOrderLines();
   const purpose=(orderChannel==='int'||orderChannel==='dar')?'int':'prod';
   const allWarnings=[];
+  let hasUnfulfilled=false;
   lines.forEach(l=>{
     const result=fifoAllocate(l.p.id,l.alc,l.gly,purpose);
     pendingBatchAlloc[l.p.id]=result.alloc;
     if(result.warnings.length){
       allWarnings.push(`${l.p.name}: ${result.warnings.join(', ')}`);
     }
+    if(result.unfulfilled)hasUnfulfilled=true;
   });
-  return allWarnings;
+  return {warnings:allWarnings, unfulfilled:hasUnfulfilled};
 }
 
 // ── BATCH ALLOC SHEET ──
@@ -1936,8 +1934,17 @@ async function confirmOrder(withInvoice){
   }
   // compute batch allocation if not already set (FIFO default)
   if(!Object.keys(pendingBatchAlloc).length){
-    const warnings=computePendingAlloc();
-    if(warnings.length){
+    const {warnings, unfulfilled}=computePendingAlloc();
+    if(unfulfilled){
+      // Not enough stock for this channel - block and offer alternatives
+      const isProd=orderChannel==='malo'||orderChannel==='velo';
+      const altMsg=isProd
+        ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
+        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Prodaj prek maloprodaje namesto interno';
+      await showConfirm(`⛔ Ni dovolj zalog:\n\n${warnings.join('\n')}${altMsg}`,'Zapri');
+      pendingBatchAlloc={};
+      return;
+    } else if(warnings.length){
       const ok=await showConfirm(`⚠ Opozorilo o zalogi:\n\n${warnings.join('\n')}\n\nŽeliš nadaljevati?`,'Nadaljuj');
       if(!ok){pendingBatchAlloc={};return;}
     }

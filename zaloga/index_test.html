@@ -130,6 +130,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* SALE GROUP CARDS */
 .sale-group{background:white;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.sg-storno{opacity:.6;border-color:rgba(139,58,42,.3);background:#fdf8f6}
 .sale-group.has-invoice{border-left:3px solid var(--success)}
 .sg-header{padding:.75rem .9rem;display:flex;gap:.7rem;align-items:flex-start;min-width:0}
 .sg-datecol{display:flex;flex-direction:column;align-items:center;min-width:32px;padding-top:2px;flex-shrink:0}
@@ -492,6 +493,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="velo">🏪 Veleprodaja</option>
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
+      </select>
+      <select class="fpill" id="salesFilterBatch" onchange="renderSales()" style="max-width:130px">
+        <option value="">Vse serije</option>
       </select>
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
     </div>
@@ -1206,7 +1210,7 @@ function switchTab(id,el){
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-  if(id==='prodaje'){renderSalesSummary();renderSales();}
+  if(id==='prodaje'){renderSalesSummary();populateSalesBatchFilter();renderSales();}
 }
 
 // ── STATS ──
@@ -1973,56 +1977,61 @@ function renderSales(){
   const q=document.getElementById('salesSearch').value.toLowerCase();
   const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
   const fCh=document.getElementById('salesFilterCh').value;
-  // group by buyer+date+channel
+  const fBatch=document.getElementById('salesFilterBatch')?.value||'';
   let groups=saleGroups.filter(g=>{
     const mq=!q||(g.buyer||'').toLowerCase().includes(q)||(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q));
-    return mq&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
+    const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===fBatch));
+    return mq&&mBatch&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
   });
   const el=document.getElementById('salesList');
   if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;return;}
   el.innerHTML=groups.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
+    const isExpanded=expandedSales.has(g.id);
     const itemsHtml=(g.lines||[]).map(l=>{
       const parts=[l.alc>0?`🥃 ${l.alc} × ${l.alcPrice?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${l.glyPrice?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
       const batchHtml=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>`<span style="font-size:.65rem;color:var(--muted);margin-left:.5rem">🏷 ${bb.batchNum}${bb.alc?` 🥃${bb.alc}`:''}${bb.gly?` 🌿${bb.gly}`:''}</span>`).join('');
       return `<div class="sg-item"><span class="sg-item-label">${l.productName}</span><span class="sg-item-val">${parts}</span></div>${batchHtml?`<div style="padding:.1rem 0 .2rem">${batchHtml}</div>`:''}`;
     }).join('');
     const hasInvoice=!!g.invoiceNum;
-    return `<div class="sale-group${hasInvoice?' has-invoice':''}">
+    const isStorno=g.status==='stornirano';
+    // Compact summary line for collapsed view
+    const prodSummary=(g.lines||[]).map(l=>[l.alc>0?`🥃${l.alc}`:null,l.gly>0?`🌿${l.gly}`:null].filter(Boolean).join('+')).join(' · ');
+    return `<div class="sale-group${hasInvoice?' has-invoice':''}${isStorno?' sg-storno':''}" style="cursor:pointer" onclick="toggleSaleCard('${g.id}',event)">
       <div class="sg-header">
         <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
         <div class="sg-div"></div>
         <div class="sg-info">
-          <div class="sg-buyer">${g.buyer||'—'}</div>
-          <div class="sg-meta">
+          <div class="sg-buyer">${g.buyer||'—'}${isStorno?` <span style="font-size:.6rem;background:#8b3a2a;color:white;padding:.1rem .35rem;border-radius:6px;vertical-align:middle">⊘</span>`:''}</div>
+          ${isExpanded?`<div class="sg-meta">
             ${g.email?`<span style="font-size:.72rem;color:var(--muted)">✉ ${g.email}</span>`:''}
             ${g.phone?`<span style="font-size:.72rem;color:var(--muted)">📞 ${g.phone}</span>`:''}
-            ${g.address?`<span style="font-size:.72rem;color:var(--muted)">📍 ${g.address}</span>`:''}
+            ${(g.street||g.address)?`<span style="font-size:.72rem;color:var(--muted)">📍 ${g.street||g.address}${g.post?', '+g.post:''}</span>`:''}
           </div>
           <div class="sg-meta">
             <span class="ch-pill ${ch.cls}">${ch.icon} ${ch.label}${g.discount?` –${g.discount}%`:''}</span>
             ${g.note?`<span style="font-size:.68rem;color:var(--muted)">${g.note}</span>`:''}
-          </div>
+          </div>`:`<div class="sg-meta"><span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem">${ch.icon}</span><span style="font-size:.72rem;color:var(--muted)">${prodSummary}</span></div>`}
         </div>
         <div class="sg-right">
           <div class="sg-total">${isRevenue&&g.total?g.total.toFixed(2)+' €':'—'}</div>
           <div class="sg-qty">${g.qty||0} kom.</div>
         </div>
       </div>
-      <div class="sg-items">${itemsHtml}</div>
-      <div class="sg-footer">
+      ${isExpanded?`<div class="sg-items">${itemsHtml}</div>
+      <div class="sg-footer" onclick="event.stopPropagation()">
         ${hasInvoice?`<span class="invoice-badge">🧾 ${g.invoiceNum}</span>`:''}
         ${g.extInvoice?`<span class="ext-ref">R: ${g.extInvoice}</span>`:''}
         ${g.extDelivery?`<span class="ext-ref">D: ${g.extDelivery}</span>`:''}
-        ${g.status==='stornirano'?`<span style="background:#8b3a2a;color:white;font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px">⊘ STORNIRANO${g.stornoDate?' · '+g.stornoDate.split('-').reverse().join('.'):''}${g.stornoRazlog?' · '+g.stornoRazlog:''}</span>`:''}
+        ${isStorno?`<span style="background:#8b3a2a;color:white;font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px">⊘ STORNIRANO${g.stornoDate?' · '+g.stornoDate.split('-').reverse().join('.'):''}${g.stornoRazlog?' · '+g.stornoRazlog:''}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:.35rem">
-          ${!hasInvoice&&g.status!=='stornirano'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
-          ${hasInvoice&&g.status!=='stornirano'?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
-          ${g.status!=='stornirano'?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
-          ${g.status!=='stornirano'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
+          ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
+          ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
+          ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
+          ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>
-      </div>
+      </div>`:''}
     </div>`;
   }).join('');
 }
@@ -2078,7 +2087,29 @@ async function deleteSaleGroup(id){
   saleGroups=saleGroups.filter(x=>x.id!==id);
   save();renderStats();renderInventory();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}toast('Prodaja izbrisana');
 }
-function clearSalesFilters(){['salesSearch','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');document.getElementById('salesFilterCh').value='';renderSales();}
+const expandedSales=new Set();
+
+function toggleSaleCard(id, e){
+  if(e&&e.target.closest('button'))return; // don't toggle on button click
+  if(expandedSales.has(id))expandedSales.delete(id);
+  else expandedSales.add(id);
+  renderSales();
+}
+
+function populateSalesBatchFilter(){
+  const sel=document.getElementById('salesFilterBatch');
+  if(!sel)return;
+  const cur=sel.value;
+  // Collect all batches that appear in any sale
+  const seen=new Map();
+  saleGroups.forEach(g=>(g.lines||[]).forEach(l=>(l.batchBreakdown||[]).forEach(bb=>{
+    if(!seen.has(bb.batchId))seen.set(bb.batchId,bb.batchNum);
+  })));
+  sel.innerHTML='<option value="">Vse serije</option>'+
+    [...seen.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,num])=>`<option value="${id}"${id===cur?' selected':''}>${num}</option>`).join('');
+}
+
+function clearSalesFilters(){['salesSearch','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');document.getElementById('salesFilterCh').value='';document.getElementById('salesFilterBatch').value='';renderSales();}
 
 // ── INVOICES VIEW ──
 function renderInvStats(){

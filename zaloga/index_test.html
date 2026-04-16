@@ -1256,7 +1256,7 @@ function renderInventory(){
     const chBreakdown=hasAlloc?`
       <div class="ch-stock-grid">
         <div class="ch-stock-row">
-          <span class="ch-stock-label" style="color:var(--ch-malo)">🛒 Prodaja</span>
+          <span class="ch-stock-label" style="color:var(--ch-malo)">🛒 Za prodajo</span>
           <span class="ch-stock-val">🥃${st.prodAlc} 🌿${st.prodGly}</span>
         </div>
         <div class="ch-stock-row">
@@ -1270,8 +1270,8 @@ function renderInventory(){
         <div class="pinfo">
           <div class="pname">${p.name}</div>
           <div class="var-pills">
-            <span class="vpill vpill-alc">🥃 ${st.alc} kom.</span>
-            <span class="vpill vpill-gly">🌿 ${st.gly} kom.</span>
+            <span class="vpill vpill-alc">🥃 ${st.prodAlc} kom.</span>
+            <span class="vpill vpill-gly">🌿 ${st.prodGly} kom.</span>
           </div>
           ${batchRows?`<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)">${batchRows}</div>`:''}
           <div class="pactions">

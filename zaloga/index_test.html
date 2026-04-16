@@ -1622,8 +1622,8 @@ async function deleteBatch(id){
     return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===id)?.gly||0);
   },0);
   if(hasSales){
-    const ok=await showConfirm(`Serija ${b.batchNum} ima evidentirane prodaje (🥃${soldAlc} 🌿${soldGly} kom.).\n\nBrisanje bo porušilo zalogo in zgodovino.\n\nSi prepričan?`,'Vseeno izbriši');
-    if(!ok)return;
+    await showConfirm(`⛔ Serija ${b.batchNum} ima evidentirane prodaje (🥃${soldAlc} 🌿${soldGly} kom.).\n\nBrisanje ni dovoljeno — serija je del zgodovine prodaj.`,'Zapri');
+    return;
   } else {
     const ok=await showConfirm(`Izbriši serijo ${b.batchNum}?`,'Izbriši');
     if(!ok)return;
@@ -2790,6 +2790,12 @@ function genReport(type){
     const doVal=document.getElementById('rs-do')?.value??'';
     const showKupci=document.getElementById('rs-kupci')?.checked??false;
 
+    // Warn if both prod/int unchecked
+    if(!showProdaja&&!showInterno){
+      alert('Izberi vsaj eno možnost: Za prodajo ali Interno.');
+      return;
+    }
+
     // For kupci report - use ALL batches (ignore date filter), only product filter
     const allBatchesForKupci=batches.filter(b=>(!filterProd||b.productId===filterProd));
 
@@ -2805,7 +2811,16 @@ function genReport(type){
     if(showOstalo)ths.push('Ostalo (alc/gly)');
     let rows='';
     filtered.forEach(b=>{
-      // sold from this batch
+      // Filter rows by prod/int selection
+      const allocProdAlc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+      const allocIntAlc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+      const allocProdGly=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
+      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+      const hasProd=(allocProdAlc+allocProdGly)>0;
+      const hasInt=(allocIntAlc+allocIntGly)>0;
+      // Skip row if doesn't match filter
+      if(!showProdaja&&hasProd&&!hasInt)return;
+      if(!showInterno&&hasInt&&!hasProd)return;
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       // sold by purpose (prod/int)
@@ -2815,11 +2830,6 @@ function genReport(type){
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
       const remGly=Math.max(0,(b.gly?.qty||0)-soldGly);
-      // alloc
-      const allocProdAlc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-      const allocIntAlc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-      const allocProdGly=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
-      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
       rows+=`<tr>
         <td class="td-bold">${moji(b.productName)} ${b.productName}</td>
         <td>${b.batchNum}</td>

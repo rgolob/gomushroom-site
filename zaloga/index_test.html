@@ -494,9 +494,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
       </select>
-      <select class="fpill" id="salesFilterBatch" onchange="renderSales()" style="max-width:130px">
-        <option value="">Vse serije</option>
-      </select>
+      <div class="swrap" style="min-width:100px"><span class="sicon">🏷</span><input type="text" id="salesFilterBatch" placeholder="Serija…" oninput="renderSales()"></div>
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
     </div>
     <div class="plist" id="salesList"></div>
@@ -1210,7 +1208,17 @@ function switchTab(id,el){
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-  if(id==='prodaje'){renderSalesSummary();populateSalesBatchFilter();renderSales();}
+  if(id==='prodaje'){
+    // Set default filter to current month if not already set
+    const from=document.getElementById('dateFrom');
+    const to=document.getElementById('dateTo');
+    if(!from.value&&!to.value){
+      const now=new Date();
+      from.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+      to.value=todayISO();
+    }
+    renderSalesSummary();renderSales();
+  }
 }
 
 // ── STATS ──
@@ -1959,30 +1967,31 @@ async function confirmOrder(withInvoice){
 function confirmAndInvoice(){confirmOrder(true);}
 
 // ── SALES VIEW ──
-function renderSalesSummary(){
-  const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
-  const f=saleGroups.filter(g=>(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo));
-  const rev=f.reduce((a,g)=>a+(g.total||0),0);
-  const alcQ=f.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
-  const glyQ=f.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+function renderSalesSummary(filteredGroups){
+  const f=filteredGroups||saleGroups;
+  const active=f.filter(g=>g.status!=='stornirano');
+  const rev=active.reduce((a,g)=>a+(g.total||0),0);
+  const alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+  const glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+  const storno=f.filter(g=>g.status==='stornirano').length;
   document.getElementById('salesStatsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
     <div class="stat-card"><div class="stat-label">Prihodki</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>`;
 }
 
 function renderSales(){
-  renderSalesSummary();
   const q=document.getElementById('salesSearch').value.toLowerCase();
   const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
   const fCh=document.getElementById('salesFilterCh').value;
-  const fBatch=document.getElementById('salesFilterBatch')?.value||'';
+  const fBatch=(document.getElementById('salesFilterBatch')?.value||'').toLowerCase();
   let groups=saleGroups.filter(g=>{
     const mq=!q||(g.buyer||'').toLowerCase().includes(q)||(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q));
-    const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===fBatch));
+    const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)));
     return mq&&mBatch&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
   });
+  renderSalesSummary(groups);
   const el=document.getElementById('salesList');
   if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;return;}
   el.innerHTML=groups.map(g=>{
@@ -2109,7 +2118,15 @@ function populateSalesBatchFilter(){
     [...seen.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,num])=>`<option value="${id}"${id===cur?' selected':''}>${num}</option>`).join('');
 }
 
-function clearSalesFilters(){['salesSearch','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');document.getElementById('salesFilterCh').value='';document.getElementById('salesFilterBatch').value='';renderSales();}
+function clearSalesFilters(){
+  const now=new Date();
+  document.getElementById('salesSearch').value='';
+  document.getElementById('salesFilterBatch').value='';
+  document.getElementById('salesFilterCh').value='';
+  document.getElementById('dateFrom').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+  document.getElementById('dateTo').value=todayISO();
+  renderSales();
+}
 
 // ── INVOICES VIEW ──
 function renderInvStats(){

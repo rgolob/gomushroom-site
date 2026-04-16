@@ -526,6 +526,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Batch številka</label><input id="bBatch" placeholder="B200330" autocapitalize="characters"></div>
         <div class="field"><label>Datum izdelave</label><input id="bDate" type="date"></div>
       </div>
+      <div id="bBatchLockWarn" style="display:none;background:rgba(224,112,96,.12);border:1px solid rgba(224,112,96,.35);border-radius:8px;padding:.6rem .9rem;font-size:.75rem;color:#e07060;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+        <span>🔒 Serija ima prodaje — batch številka je zaklenjena</span>
+        <button onclick="document.getElementById('bBatch').removeAttribute('readonly');document.getElementById('bBatchLockWarn').style.display='none';" style="background:rgba(224,112,96,.2);border:1px solid rgba(224,112,96,.4);color:#e07060;border-radius:6px;padding:.2rem .5rem;font-size:.7rem;cursor:pointer;white-space:nowrap">🔓 Odkleni</button>
+      </div>
       <div class="field"><label>Opomba</label><input id="bNote" placeholder="npr. ekstrakcija #12…"></div>
       <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
       <!-- ALC -->
@@ -980,7 +984,7 @@ let orderChannel='malo',orderTier=null;
 let expandedBatches=new Set();
 let currentTab='zaloga';
 
-const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🪵','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁'};
+const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
 const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
 
@@ -1397,12 +1401,24 @@ function openBatchSheet(id=null){
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
     document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
+    // Lock batch number if batch has sales
+    const hasSales=saleGroups.some(g=>(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
+    const lockWarn=document.getElementById('bBatchLockWarn');
+    if(hasSales){
+      document.getElementById('bBatch').setAttribute('readonly','true');
+      lockWarn.style.display='flex';
+    } else {
+      document.getElementById('bBatch').removeAttribute('readonly');
+      lockWarn.style.display='none';
+    }
     document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=b.alc?.qty||'';document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
     document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=b.gly?.qty||'';document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
     ['bBatch','bNote','bWorkOrder','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('bBatch').removeAttribute('readonly');
+    document.getElementById('bBatchLockWarn').style.display='none';
     document.getElementById('bProductSel').value='';document.getElementById('bDate').value=todayISO();
     clearAllocFields('Alc');clearAllocFields('Gly');
   }

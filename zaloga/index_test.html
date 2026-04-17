@@ -3101,9 +3101,21 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 
 // ── HEADER SAFE AREA FIX ──
 (function(){
-  // Add padding to body top = safe area inset
-  document.body.style.paddingTop='env(safe-area-inset-top,0px)';
   document.body.style.background='#1a1209';
+  // Use max of env() and fixed fallback for iOS PWA
+  const el=document.querySelector('.app-header');
+  if(!el)return;
+  // Create a test element to measure actual safe area
+  const tester=document.createElement('div');
+  tester.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden';
+  document.body.appendChild(tester);
+  setTimeout(()=>{
+    const sat=tester.getBoundingClientRect().top;
+    document.body.removeChild(tester);
+    const padding=Math.max(sat, 0)+4;
+    el.style.paddingTop=padding+'px';
+    document.body.style.paddingTop=sat+'px';
+  },100);
 })();
 
 

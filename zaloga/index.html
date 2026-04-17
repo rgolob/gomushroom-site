@@ -2093,6 +2093,7 @@ function renderSales(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
+          ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 Partner</button>`:''}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
@@ -2112,7 +2113,63 @@ function issueInvoiceForGroup(groupId){
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
 }
 
-function reprintInvoice(groupId){
+function exportPartnerCSV(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  // Build CSV rows - one row per product line with batch breakdown
+  const rows=[
+    ['# GoMushroom Partner CSV'],
+    ['# Dobavitelj: GoMushroom, Rok Golob s.p.'],
+    ['# Datum izvoza: '+todayISO()],
+    ['# Račun: '+(g.invoiceNum||'—')],
+    ['# Datum: '+g.date],
+    ['# Kupec: '+g.buyer],
+    ['#'],
+    ['produkt','sku_alc','kolicina_alc','sku_gly','kolicina_gly','cena_alc','cena_gly','batch','datum_batch','opomba_batch'],
+  ];
+  (g.lines||[]).forEach(l=>{
+    // Get batch info from breakdown
+    const batches=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly);
+    if(batches.length===0){
+      // No batch breakdown - single row
+      const b=window.batches?.find(b=>b.productId===l.productId);
+      rows.push([
+        l.productName,
+        b?.alc?.sku||'',l.alc||0,
+        b?.gly?.sku||'',l.gly||0,
+        l.alcPrice||l.alcP||'',
+        l.glyPrice||l.glyP||'',
+        '','',''
+      ]);
+    } else {
+      // One row per batch
+      batches.forEach(bb=>{
+        const batchData=window.batches?.find(b=>b.id===bb.batchId);
+        rows.push([
+          l.productName,
+          batchData?.alc?.sku||'',bb.alc||0,
+          batchData?.gly?.sku||'',bb.gly||0,
+          l.alcPrice||l.alcP||'',
+          l.glyPrice||l.glyP||'',
+          bb.batchNum||'',
+          batchData?.date||'',
+          batchData?.note||''
+        ]);
+      });
+    }
+  });
+  const csv=rows.map(r=>r.map(v=>{
+    const s=String(v);
+    return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='partner_'+(g.invoiceNum||g.date)+'_'+g.buyer.replace(/\s+/g,'_')+'.csv';
+  a.click();
+  toast('📦 Partner CSV izvožen');
+}
+
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;printInvoice(g);
 }
 

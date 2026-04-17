@@ -30,8 +30,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.35rem) .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
-@media all and (display-mode:standalone){.app-header{padding-top:var(--sat)}}
+.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
 .hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -3100,7 +3099,19 @@ document.addEventListener('click',e=>{
 
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));}
 
-// ── INIT ──
+// ── HEADER SAFE AREA FIX ──
+// CSS env() safe-area-inset-top doesn't always work reliably in iOS PWA
+// Use a fixed spacer div approach instead
+(function(){
+  const spacer=document.createElement('div');
+  spacer.style.cssText='height:env(safe-area-inset-top,0px);background:#1a1209;position:fixed;top:0;left:0;right:0;z-index:101';
+  document.body.prepend(spacer);
+  // Also push header down
+  const h=document.querySelector('.app-header');
+  if(h)h.style.marginTop='env(safe-area-inset-top,0px)';
+})();
+
+
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}

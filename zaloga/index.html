@@ -30,7 +30,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:fixed;top:0;left:0;right:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
 .hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -49,7 +49,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:.75rem .75rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden}
+.scroll-body{padding:.75rem 1rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
 .view{display:none;min-width:0}.view.active{display:block}
 
 /* STATS */
@@ -3109,10 +3109,14 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
   setTimeout(()=>{
     const sat=tester.getBoundingClientRect().top;
     document.body.removeChild(tester);
-    const padding=Math.max(sat,0)+4;
-    el.style.paddingTop=padding+'px';
-    document.body.style.paddingTop=sat+'px';
-  },100);
+    const headerPad=Math.max(sat,0)+4;
+    el.style.paddingTop=headerPad+'px';
+    const headerH=el.offsetHeight;
+    // Set scroll body top padding = header height
+    document.querySelectorAll('.scroll-body').forEach(sb=>{
+      sb.style.paddingTop=(headerH+8)+'px';
+    });
+  },150);
 })();
 
 

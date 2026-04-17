@@ -2,7 +2,7 @@
 <html lang="sl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zaloga">
@@ -239,7 +239,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* FIELDS */
 .field{display:grid;gap:.3rem}
 .field label{font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.field input,.field select,.field textarea{width:100%;padding:.5rem .7rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
+.field input,.field select,.field textarea{width:100%;padding:.38rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:56px;font-size:.9rem}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
@@ -3101,9 +3101,18 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 
 // ── HEADER SAFE AREA FIX ──
 (function(){
-  // Add padding to body top = safe area inset
-  document.body.style.paddingTop='env(safe-area-inset-top,0px)';
-  document.body.style.background='#1a1209';
+  const el=document.querySelector('.app-header');
+  if(!el)return;
+  const tester=document.createElement('div');
+  tester.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden';
+  document.body.appendChild(tester);
+  setTimeout(()=>{
+    const sat=tester.getBoundingClientRect().top;
+    document.body.removeChild(tester);
+    const padding=Math.max(sat,0)+4;
+    el.style.paddingTop=padding+'px';
+    document.body.style.paddingTop=sat+'px';
+  },100);
 })();
 
 

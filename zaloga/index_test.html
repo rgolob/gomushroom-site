@@ -2,7 +2,7 @@
 <html lang="sl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zaloga">
@@ -30,7 +30,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:fixed;top:0;left:0;right:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
 .hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -49,7 +49,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:.75rem .75rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden}
+.scroll-body{padding:.75rem 1rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
 .view{display:none;min-width:0}.view.active{display:block}
 
 /* STATS */
@@ -239,7 +239,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* FIELDS */
 .field{display:grid;gap:.3rem}
 .field label{font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.field input,.field select,.field textarea{width:100%;padding:.5rem .7rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
+.field input,.field select,.field textarea{width:100%;padding:.38rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:56px;font-size:.9rem}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
@@ -350,10 +350,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
     <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
-    <button class="hbtn" onclick="exportCSV()">↓ CSV</button>
-    <label class="hbtn" style="cursor:pointer">↑ CSV<input type="file" accept=".csv" style="display:none" onchange="importCSV(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
+    <button class="hbtn" onclick="openPartnerMgmt()" title="Upravljanje partnerjev">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
 </header>
@@ -410,6 +409,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="flex:1;min-width:120px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Telefon</div>
         <input id="orderPhone" type="tel" placeholder="+386 …" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="tel">
+      </div>
+      <div style="flex:1;min-width:130px">
+        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Davčna št.</div>
+        <input id="orderVat" placeholder="SI12345678" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="off" oninput="checkPartnerVat(this.value)">
+        <div id="orderPartnerHint" style="display:none;font-size:.7rem;color:#3a6b4a;margin-top:.2rem;font-weight:500"></div>
       </div>
       <div style="flex:2;min-width:200px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
@@ -713,6 +717,28 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- CONFIRM -->
+<!-- PARTNER MANAGEMENT -->
+<div class="overlay" id="partnerOverlay" onclick="maybeClose(event,'partnerOverlay')">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">🤝 Partnerji</span><button class="shclose" onclick="closeSheet('partnerOverlay')">✕</button></div>
+    <div class="shbody">
+      <div class="slabel">Registrirani partnerji</div>
+      <div id="partnerList"></div>
+      <div class="slabel" style="margin-top:.5rem">Dodaj partnerja</div>
+      <div class="frow">
+        <div class="field"><label>Ime partnerja</label><input id="pName" placeholder="npr. Naravni d.o.o."></div>
+        <div class="field"><label>Davčna številka</label><input id="pVat" placeholder="SI12345678" autocapitalize="characters"></div>
+      </div>
+      <div class="field"><label>Partner ID</label><input id="pId" placeholder="npr. partner_1" autocapitalize="none"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('partnerOverlay')">Zapri</button>
+      <button class="bsave blue" onclick="addPartner()">Dodaj partnerja</button>
+    </div>
+  </div>
+</div>
+
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
     <div class="confirm-msg" id="confirmMsg"></div>
@@ -1004,6 +1030,173 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+// ── PARTNER MANAGEMENT ──
+// Partners stored in localStorage
+function getPartners(){
+  try{return JSON.parse(localStorage.getItem('gm_partners')||'[]');}catch(e){return[];}
+}
+function savePartners(p){localStorage.setItem('gm_partners',JSON.stringify(p));}
+
+function findPartnerByVat(vat){
+  if(!vat)return null;
+  const v=vat.trim().toUpperCase();
+  return getPartners().find(p=>p.vat&&p.vat.toUpperCase()===v)||null;
+}
+
+function checkPartnerVat(vat){
+  const p=findPartnerByVat(vat);
+  const hint=document.getElementById('orderPartnerHint');
+  if(hint){
+    if(p){hint.textContent='🤝 Partner: '+p.name;hint.style.display='';}
+    else{hint.textContent='';hint.style.display='none';}
+  }
+}
+
+function openPartnerMgmt(){
+  renderPartnerList();
+  openSheet('partnerOverlay');
+}
+
+function renderPartnerList(){
+  const partners=getPartners();
+  const el=document.getElementById('partnerList');
+  if(!partners.length){
+    el.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:.5rem 0">Ni registriranih partnerjev.</div>';
+    return;
+  }
+  el.innerHTML=partners.map((p,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:.88rem;font-weight:500">${p.name}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${p.vat} · ID: ${p.id}</div>
+      </div>
+      <button class="tbtn del" onclick="deletePartner(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addPartner(){
+  const name=document.getElementById('pName').value.trim();
+  const vat=document.getElementById('pVat').value.trim().toUpperCase();
+  const id=document.getElementById('pId').value.trim().toLowerCase().replace(/\s+/g,'_');
+  if(!name||!vat||!id){alert('Izpolni vsa polja.');return;}
+  const partners=getPartners();
+  if(partners.find(p=>p.vat===vat)){alert('Partner s to davčno številko že obstaja.');return;}
+  if(partners.find(p=>p.id===id)){alert('Partner s tem ID-jem že obstaja.');return;}
+  partners.push({id,name,vat});
+  savePartners(partners);
+  document.getElementById('pName').value='';
+  document.getElementById('pVat').value='';
+  document.getElementById('pId').value='';
+  renderPartnerList();
+  toast('Partner '+name+' dodan');
+}
+
+function deletePartner(idx){
+  const partners=getPartners();
+  const p=partners[idx];
+  if(!p)return;
+  partners.splice(idx,1);
+  savePartners(partners);
+  renderPartnerList();
+  toast('Partner odstranjen');
+}
+
+
+
+
+
+async function sbPartnerGet(partnerId,key){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/partner_data?partner_id=eq.${partnerId}&key=eq.${key}&select=value`,{headers:SB_HEADERS});
+    if(!r.ok)return null;
+    const d=await r.json();
+    return d.length?JSON.parse(d[0].value):null;
+  }catch(e){return null;}
+}
+
+async function sbPartnerSet(partnerId,key,value){
+  try{
+    await fetch(`${SB_URL}/rest/v1/partner_data`,{
+      method:'POST',
+      headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({partner_id:partnerId,key,value:JSON.stringify(value),updated_at:new Date().toISOString()})
+    });
+  }catch(e){console.error('sbPartnerSet error',e);}
+}
+
+async function sendToPartner(groupId, partnerId='partner_1'){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  const partner=PARTNERS[partnerId];
+
+  // Load partner's current data
+  setSyncStatus('⟳ Pošiljam partnerju…');
+  let pData=await sbPartnerGet(partnerId,'gm_data');
+  if(!pData)pData={products:[],batches:[],saleGroups:[],invoices:[],invCounters:{malo:0,velo:0,dar:0,int:0}};
+
+  // For each line in the sale - create/update batch in partner's data
+  let added=0;
+  for(const l of (g.lines||[])){
+    for(const bb of (l.batchBreakdown||[])){
+      if(!bb.alc&&!bb.gly)continue;
+      const srcBatch=batches.find(b=>b.id===bb.batchId);
+
+      // Check if partner already has this batch
+      const existingIdx=pData.batches.findIndex(b=>b.batchNum===bb.batchNum&&b.productName===l.productName);
+
+      const pBatch={
+        id:bb.batchId+'_'+partnerId,
+        productId:bb.batchId+'_p_'+l.productId,
+        productName:l.productName,
+        batchNum:bb.batchNum,
+        date:g.date,
+        note:'Prejeto od GoMushroom · '+g.invoiceNum||g.date,
+        workOrder:srcBatch?.workOrder||'',
+        safetyAlc:srcBatch?.safetyAlc??10,
+        safetyGly:srcBatch?.safetyGly??10,
+        alc:{
+          sku:srcBatch?.alc?.sku||'',
+          qty:bb.alc||0,
+          priceMalo:l.alcPrice||l.alcP||0,
+          vol:srcBatch?.alc?.vol||null,
+          alloc:{prod:bb.alc||0,int:0}
+        },
+        gly:{
+          sku:srcBatch?.gly?.sku||'',
+          qty:bb.gly||0,
+          priceMalo:l.glyPrice||l.glyP||0,
+          vol:srcBatch?.gly?.vol||null,
+          alloc:{prod:bb.gly||0,int:0}
+        },
+      };
+
+      // Add product if not exists
+      if(!pData.products.find(p=>p.id===pBatch.productId)){
+        pData.products.push({id:pBatch.productId,name:l.productName});
+      }
+
+      if(existingIdx!==-1){
+        // Update existing - add quantities
+        pData.batches[existingIdx].alc.qty+=(bb.alc||0);
+        pData.batches[existingIdx].alc.alloc.prod+=(bb.alc||0);
+        pData.batches[existingIdx].gly.qty+=(bb.gly||0);
+        pData.batches[existingIdx].gly.alloc.prod+=(bb.gly||0);
+      } else {
+        pData.batches.unshift(pBatch);
+        added++;
+      }
+    }
+  }
+
+  await sbPartnerSet(partnerId,'gm_data',pData);
+  setSyncStatus('✓ Sinhronizirano');
+  toast(`✓ Poslano partnerju ${partner.name}: ${added} serij`);
+  // Mark sale as sent to partner
+  g.sentToPartner=partnerId;
+  g.sentToPartnerDate=todayISO();
+  save();renderSales();
+}
 
 async function sbGet(key){
   try{
@@ -1955,6 +2148,7 @@ async function confirmOrder(withInvoice){
   const buyer=document.getElementById('orderBuyer').value.trim();
   const email=document.getElementById('orderEmail').value.trim();
   const phone=document.getElementById('orderPhone').value.trim();
+  const vat=document.getElementById('orderVat')?.value.trim()||'';
   const address=document.getElementById('orderAddress')?.value.trim()||'';
   const street=document.getElementById('orderStreet')?.value.trim()||'';
   const post=document.getElementById('orderPost')?.value.trim()||'';
@@ -2009,7 +2203,7 @@ async function confirmOrder(withInvoice){
     invoiceId=uid();
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery});
   }
-  const group={id:groupId,buyer,email,phone,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:tier?'Razred '+tier.label:'',invoiceNum,invoiceId,
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:tier?'Razred '+tier.label:'',invoiceNum,invoiceId,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -2093,6 +2287,14 @@ function renderSales(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
+          ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 CSV</button>`:''}
+          ${(()=>{
+            if(g.channel!=='velo'||isStorno)return '';
+            if(g.sentToPartner)return `<span style="font-size:.65rem;color:#3a6b4a;padding:.2rem .4rem;border:1px solid rgba(60,107,74,.3);border-radius:8px">✓ Poslano ${g.sentToPartnerDate||''}</span>`;
+            const partner=findPartnerByVat(g.vat);
+            if(!partner)return '';
+            return `<button class="tbtn" style="background:rgba(60,107,74,.25);color:#3a6b4a;border-color:rgba(60,107,74,.5)" onclick="sendToPartner('${g.id}','${partner.id}')" title="Pošlji zalogo partnerju ${partner.name}">🤝 ${partner.name}</button>`;
+          })()}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
@@ -2110,6 +2312,63 @@ function issueInvoiceForGroup(groupId){
   invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery});
   save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
+}
+
+function exportPartnerCSV(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  // Build CSV rows - one row per product line with batch breakdown
+  const rows=[
+    ['# GoMushroom Partner CSV'],
+    ['# Dobavitelj: GoMushroom, Rok Golob s.p.'],
+    ['# Datum izvoza: '+todayISO()],
+    ['# Račun: '+(g.invoiceNum||'—')],
+    ['# Datum: '+g.date],
+    ['# Kupec: '+g.buyer],
+    ['#'],
+    ['produkt','sku_alc','kolicina_alc','sku_gly','kolicina_gly','cena_alc','cena_gly','batch','datum_batch','opomba_batch'],
+  ];
+  (g.lines||[]).forEach(l=>{
+    // Get batch info from breakdown
+    const batches=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly);
+    if(batches.length===0){
+      // No batch breakdown - single row
+      const b=window.batches?.find(b=>b.productId===l.productId);
+      rows.push([
+        l.productName,
+        b?.alc?.sku||'',l.alc||0,
+        b?.gly?.sku||'',l.gly||0,
+        l.alcPrice||l.alcP||'',
+        l.glyPrice||l.glyP||'',
+        '','',''
+      ]);
+    } else {
+      // One row per batch
+      batches.forEach(bb=>{
+        const batchData=window.batches?.find(b=>b.id===bb.batchId);
+        rows.push([
+          l.productName,
+          batchData?.alc?.sku||'',bb.alc||0,
+          batchData?.gly?.sku||'',bb.gly||0,
+          l.alcPrice||l.alcP||'',
+          l.glyPrice||l.glyP||'',
+          bb.batchNum||'',
+          batchData?.date||'',
+          batchData?.note||''
+        ]);
+      });
+    }
+  });
+  const csv=rows.map(r=>r.map(v=>{
+    const s=String(v);
+    return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='partner_'+(g.invoiceNum||g.date)+'_'+g.buyer.replace(/\s+/g,'_')+'.csv';
+  a.click();
+  toast('📦 Partner CSV izvožen');
 }
 
 function reprintInvoice(groupId){
@@ -3101,21 +3360,22 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 
 // ── HEADER SAFE AREA FIX ──
 (function(){
-  document.body.style.background='#1a1209';
-  // Use max of env() and fixed fallback for iOS PWA
   const el=document.querySelector('.app-header');
   if(!el)return;
-  // Create a test element to measure actual safe area
   const tester=document.createElement('div');
   tester.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden';
   document.body.appendChild(tester);
   setTimeout(()=>{
     const sat=tester.getBoundingClientRect().top;
     document.body.removeChild(tester);
-    const padding=Math.max(sat, 0)+4;
-    el.style.paddingTop=padding+'px';
-    document.body.style.paddingTop=sat+'px';
-  },100);
+    const headerPad=Math.max(sat,0)+4;
+    el.style.paddingTop=headerPad+'px';
+    const headerH=el.offsetHeight;
+    // Set scroll body top padding = header height
+    document.querySelectorAll('.scroll-body').forEach(sb=>{
+      sb.style.paddingTop=(headerH+8)+'px';
+    });
+  },150);
 })();
 
 

@@ -31,6 +31,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
 .app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.35rem) .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media all and (display-mode:standalone){.app-header{padding-top:var(--sat)}}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
 .hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}

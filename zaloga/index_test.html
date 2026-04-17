@@ -3100,15 +3100,10 @@ document.addEventListener('click',e=>{
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));}
 
 // ── HEADER SAFE AREA FIX ──
-// CSS env() safe-area-inset-top doesn't always work reliably in iOS PWA
-// Use a fixed spacer div approach instead
 (function(){
-  const spacer=document.createElement('div');
-  spacer.style.cssText='height:env(safe-area-inset-top,0px);background:#1a1209;position:fixed;top:0;left:0;right:0;z-index:101';
-  document.body.prepend(spacer);
-  // Also push header down
-  const h=document.querySelector('.app-header');
-  if(h)h.style.marginTop='env(safe-area-inset-top,0px)';
+  // Add padding to body top = safe area inset
+  document.body.style.paddingTop='env(safe-area-inset-top,0px)';
+  document.body.style.background='#1a1209';
 })();
 
 

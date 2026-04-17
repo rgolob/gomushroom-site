@@ -41,6 +41,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .dtab{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:.9rem 1rem;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .dtab.active{color:var(--ink);border-bottom-color:var(--accent)}
 .dtab:hover:not(.active){color:var(--ink)}
+.header-tabs{display:none;align-items:center;gap:.25rem;flex:1;justify-content:center}
+.htab{font-family:'Jost',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .75rem;cursor:pointer;border:none;background:rgba(255,255,255,.08);color:rgba(245,240,232,.5);border-radius:20px;white-space:nowrap;transition:all .2s}
+.htab.active{background:var(--accent);color:#1a1209}
+.htab:hover:not(.active){background:rgba(255,255,255,.15);color:var(--cream)}
 
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--ink);border-top:1px solid rgba(175,132,85,.2);padding-bottom:var(--sab);display:flex;z-index:100}
@@ -303,11 +307,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* DESKTOP */
 @media(min-width:700px){
-  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem;justify-content:space-between}
+  .app-header{padding-top:1rem;padding-left:2rem;padding-right:2rem;justify-content:space-between;flex-wrap:nowrap;gap:1rem}
   .logo{display:block;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;letter-spacing:.06em;flex-shrink:0}
   .hbtn{font-size:.7rem;padding:.45rem .9rem}
   .bottom-nav,.fab{display:none}
-  .desktop-tabs{display:flex}
+  .desktop-tabs{display:none} /* hidden - tabs moved into header */
+  .header-tabs{display:flex!important}
   .scroll-body{padding:1.5rem 2rem 3rem;max-width:1100px}
   .stats-grid{grid-template-columns:repeat(4,1fr)}
   .sheet{position:fixed;inset:auto;top:50%;left:50%;transform:translate(-50%,calc(-50%+16px));width:560px;border-radius:var(--r);max-height:90vh;padding-bottom:0}
@@ -346,6 +351,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <header class="app-header">
   <div class="logo">Go<em>Mushroom</em></div>
+  <div class="header-tabs">
+    <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
+    <button class="htab" onclick="switchTab('narocilo',this)">🛒 Prodaja</button>
+    <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
+    <button class="htab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
+  </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
     <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
@@ -483,7 +494,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">📋 Prodaje</div>
       <div style="display:flex;gap:.5rem">
         <button class="hbtn2" onclick="openReportSheet('prodaja')">📊 Poročilo</button>
-        <button class="fpill" onclick="exportSalesCSV()">↓ CSV</button>
       </div>
     </div>
     <div class="stats-grid" id="salesStatsGrid"></div>
@@ -1411,6 +1421,10 @@ function switchTab(id,el){
   const mn=document.getElementById('nav-'+id);if(mn)mn.classList.add('active');
   document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
   if(el&&el.classList.contains('dtab'))el.classList.add('active');
+  // Also update header tabs
+  document.querySelectorAll('.htab').forEach(t=>t.classList.remove('active'));
+  if(el&&el.classList.contains('htab'))el.classList.add('active');
+  else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
@@ -2490,12 +2504,6 @@ async function deleteInvoice(id){
   invoices=invoices.filter(x=>x.id!==id);
   save();renderInvStats();renderInvoices();if(currentTab==='prodaje')renderSales();toast('Račun izbrisan');
 }
-function exportInvoicesCSV(){
-  const fCh=document.getElementById('invFilterCh').value;
-  const rows=invoices.filter(i=>!fCh||i.channel===fCh);
-  dl([['Št. računa','Kanal','Kupec','Datum','Skupaj €','Ext. račun','Dobavnica'],...rows.map(i=>[i.num,CH[i.channel]?.label||'',i.buyer||'',i.date||'',i.total?i.total.toFixed(2):'0',i.extInvoice||'',i.extDelivery||''])],'gomushroom-racuni-'+todayISO()+'.csv');
-  toast('CSV izvožen');
-}
 
 // ── PRINT INVOICE ──
 // ── UPN QR ──────────────────────────────────────────
@@ -2852,48 +2860,7 @@ async function restoreJSON(e){
 
 
 function dl(data,fname){const csv=data.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));a.download=fname;a.click();}
-function exportCSV(){
-  const rows=[];
-  batches.forEach(b=>{
-    const aA=b.alc?.alloc||{};const aG=b.gly?.alloc||{};
-    rows.push([b.productName,b.batchNum,b.date||'','Alkohol',b.alc?.sku||'',b.alc?.qty||0,b.alc?.priceMalo||'',b.alc?.vol||'',aA.malo||0,aA.velo||0,aA.dar||0,aA.int||0,b.note||'']);
-    rows.push([b.productName,b.batchNum,b.date||'','Glicerin',b.gly?.sku||'',b.gly?.qty||0,b.gly?.priceMalo||'',b.gly?.vol||'',aG.malo||0,aG.velo||0,aG.dar||0,aG.int||0,b.note||'']);
-  });
-  dl([['Produkt','Batch','Datum','Varianta','SKU','Qty','Cena malo','Vol ml','Malo','Velo','Dar','Int','Opomba'],...rows],'gomushroom-serije-'+todayISO()+'.csv');
-  toast('CSV izvožen');
-}
-function exportSalesCSV(){
-  const rows=[];
-  saleGroups.forEach(g=>{
-    (g.lines||[]).forEach(l=>{
-      rows.push([g.date,g.buyer||'',g.email||'',g.phone||'',g.address||'',l.productName,CH[g.channel]?.label||'',l.alc||0,l.gly||0,l.alcPrice||'',l.glyPrice||'',l.lineTotal||0,g.discount||0,g.invoiceNum||'',g.extInvoice||'',g.extDelivery||'',g.note||'']);
-    });
-  });
-  dl([['Datum','Kupec','Email','Telefon','Naslov','Produkt','Kanal','Alc','Gly','Cena Alc','Cena Gly','Znesek','Popust%','Račun','Ext.račun','Dobavnica','Opomba'],...rows],'gomushroom-prodaje-'+todayISO()+'.csv');
-  toast('CSV izvožen');
-}
-function importCSV(e){
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    const lines=ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
-    let n=0;
-    lines.slice(1).forEach(line=>{
-      const c=line.split(',').map(x=>x.replace(/^"|"$/g,'').replace(/""/g,'"'));
-      if(c.length<6||!c[0])return;
-      const pName=c[0];let p=products.find(x=>x.name===pName);
-      if(!p){p={id:uid(),name:pName};products.push(p);}
-      const variant=c[3]==='Glicerin'?'gly':'alc';
-      let b=batches.find(x=>x.productId===p.id&&x.batchNum===c[1]);
-      if(!b){b={id:uid(),productId:p.id,productName:p.name,batchNum:c[1],date:c[2],note:c[12]||'',
-        alc:{sku:'',qty:0,priceMalo:0,vol:null,alloc:{malo:0,velo:0,dar:0,int:0}},
-        gly:{sku:'',qty:0,priceMalo:0,vol:null,alloc:{malo:0,velo:0,dar:0,int:0}}};batches.unshift(b);}
-      b[variant]={sku:c[4],qty:parseInt(c[5])||0,priceMalo:parseFloat(c[6])||0,vol:parseInt(c[7])||null,alloc:{malo:parseInt(c[8])||0,velo:parseInt(c[9])||0,dar:parseInt(c[10])||0,int:parseInt(c[11])||0}};
-      n++;
-    });
-    save();renderStats();renderInventory();if(currentTab==='serije')renderBatches();if(currentTab==='narocilo')renderOrderRows();toast(`${n} vrstic uvoženih`);e.target.value='';
-  };r.readAsText(file);
-}
+
 
 // ── POROČILA ──
 function exportBuyersCsv(){

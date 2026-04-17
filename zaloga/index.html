@@ -1005,6 +1005,103 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
+// ── PARTNER SUPABASE ──
+const PARTNERS={
+  partner_1:{id:'partner_1',name:'Partner 1'},
+};
+
+async function sbPartnerGet(partnerId,key){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/partner_data?partner_id=eq.${partnerId}&key=eq.${key}&select=value`,{headers:SB_HEADERS});
+    if(!r.ok)return null;
+    const d=await r.json();
+    return d.length?JSON.parse(d[0].value):null;
+  }catch(e){return null;}
+}
+
+async function sbPartnerSet(partnerId,key,value){
+  try{
+    await fetch(`${SB_URL}/rest/v1/partner_data`,{
+      method:'POST',
+      headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({partner_id:partnerId,key,value:JSON.stringify(value),updated_at:new Date().toISOString()})
+    });
+  }catch(e){console.error('sbPartnerSet error',e);}
+}
+
+async function sendToPartner(groupId, partnerId='partner_1'){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  const partner=PARTNERS[partnerId];
+
+  // Load partner's current data
+  setSyncStatus('⟳ Pošiljam partnerju…');
+  let pData=await sbPartnerGet(partnerId,'gm_data');
+  if(!pData)pData={products:[],batches:[],saleGroups:[],invoices:[],invCounters:{malo:0,velo:0,dar:0,int:0}};
+
+  // For each line in the sale - create/update batch in partner's data
+  let added=0;
+  for(const l of (g.lines||[])){
+    for(const bb of (l.batchBreakdown||[])){
+      if(!bb.alc&&!bb.gly)continue;
+      const srcBatch=batches.find(b=>b.id===bb.batchId);
+
+      // Check if partner already has this batch
+      const existingIdx=pData.batches.findIndex(b=>b.batchNum===bb.batchNum&&b.productName===l.productName);
+
+      const pBatch={
+        id:bb.batchId+'_'+partnerId,
+        productId:bb.batchId+'_p_'+l.productId,
+        productName:l.productName,
+        batchNum:bb.batchNum,
+        date:g.date,
+        note:'Prejeto od GoMushroom · '+g.invoiceNum||g.date,
+        workOrder:srcBatch?.workOrder||'',
+        safetyAlc:srcBatch?.safetyAlc??10,
+        safetyGly:srcBatch?.safetyGly??10,
+        alc:{
+          sku:srcBatch?.alc?.sku||'',
+          qty:bb.alc||0,
+          priceMalo:l.alcPrice||l.alcP||0,
+          vol:srcBatch?.alc?.vol||null,
+          alloc:{prod:bb.alc||0,int:0}
+        },
+        gly:{
+          sku:srcBatch?.gly?.sku||'',
+          qty:bb.gly||0,
+          priceMalo:l.glyPrice||l.glyP||0,
+          vol:srcBatch?.gly?.vol||null,
+          alloc:{prod:bb.gly||0,int:0}
+        },
+      };
+
+      // Add product if not exists
+      if(!pData.products.find(p=>p.id===pBatch.productId)){
+        pData.products.push({id:pBatch.productId,name:l.productName});
+      }
+
+      if(existingIdx!==-1){
+        // Update existing - add quantities
+        pData.batches[existingIdx].alc.qty+=(bb.alc||0);
+        pData.batches[existingIdx].alc.alloc.prod+=(bb.alc||0);
+        pData.batches[existingIdx].gly.qty+=(bb.gly||0);
+        pData.batches[existingIdx].gly.alloc.prod+=(bb.gly||0);
+      } else {
+        pData.batches.unshift(pBatch);
+        added++;
+      }
+    }
+  }
+
+  await sbPartnerSet(partnerId,'gm_data',pData);
+  setSyncStatus('✓ Sinhronizirano');
+  toast(`✓ Poslano partnerju ${partner.name}: ${added} serij`);
+  // Mark sale as sent to partner
+  g.sentToPartner=partnerId;
+  g.sentToPartnerDate=todayISO();
+  save();renderSales();
+}
+
 async function sbGet(key){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.${key}&select=value`,{headers:SB_HEADERS});
@@ -2093,7 +2190,8 @@ function renderSales(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
-          ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 Partner</button>`:''}
+          ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 CSV</button>`:''}
+          ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.25);color:#3a6b4a;border-color:rgba(60,107,74,.4)" onclick="sendToPartner('${g.id}')" title="Pošlji zalogo partnerju">${g.sentToPartner?'✓ Poslano':'🤝 Partner'}</button>`:''}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
@@ -2170,6 +2268,7 @@ function exportPartnerCSV(groupId){
   toast('📦 Partner CSV izvožen');
 }
 
+function reprintInvoice(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;printInvoice(g);
 }
 

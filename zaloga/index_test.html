@@ -75,8 +75,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .plist{display:flex;flex-direction:column;gap:.5rem;min-width:0}
 
 .pcard{background:white;border:1px solid var(--border);border-radius:var(--r);padding:.75rem .9rem;box-shadow:var(--shadow);min-width:0;overflow:hidden}
-.pcard.low-stock{border-left:3px solid var(--low)}
-.pcard.no-stock{border-left:3px solid var(--danger)}
+.pcard.low-stock{border-left:4px solid var(--low);background:rgba(184,92,42,.04)}
+.pcard.no-stock{border-left:4px solid var(--danger);background:rgba(139,58,42,.04)}
 .pcard-top{display:flex;align-items:flex-start;gap:.7rem;min-width:0}
 .pavatar{width:38px;height:38px;border-radius:8px;background:var(--parchment);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
 .pinfo{flex:1;min-width:0}
@@ -355,7 +355,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('narocilo',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
-    <button class="htab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
+    <button class="htab" onclick="switchTab('prodaje',this)">📋 Računi</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
@@ -372,7 +372,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
   <button class="dtab" onclick="switchTab('narocilo',this)">🛒 Nova prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
-  <button class="dtab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
+  <button class="dtab" onclick="switchTab('prodaje',this)">📋 Računi</button>
   
 </nav>
 
@@ -491,7 +491,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <!-- PRODAJE -->
   <div class="view" id="view-prodaje">
     <div class="view-header">
-      <div class="view-title">📋 Prodaje</div>
+      <div class="view-title">📋 Računi</div>
       <div style="display:flex;gap:.5rem">
         <button class="hbtn2" onclick="openReportSheet('prodaja')">📊 Poročilo</button>
       </div>
@@ -520,7 +520,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-narocilo"  onclick="switchTab('narocilo',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
-  <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Prodaje</button>
+  <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Računi</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
 
@@ -1102,10 +1102,16 @@ function addPartner(){
   toast('Partner '+name+' dodan');
 }
 
-function deletePartner(idx){
+async function deletePartner(idx){
   const partners=getPartners();
   const p=partners[idx];
   if(!p)return;
+  const ok=await showConfirm(`Izbriši partnerja "${p.name}"?\n\nTo bo odstranilo partnerja iz seznama. Obstoječi podatki v Supabase ostanejo nedotaknjeni.`,'Nadaljuj');
+  if(!ok)return;
+  // Require password
+  const pwd=prompt('Vnesi geslo za potrditev izbrisa:');
+  if(!pwd){toast('Izbris preklican.');return;}
+  if(btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo — izbris preklican.');return;}
   partners.splice(idx,1);
   savePartners(partners);
   renderPartnerList();
@@ -1454,7 +1460,11 @@ function renderStats(){
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${tAlc}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${tGly}</div></div>
-    <div class="stat-card"><div class="stat-label">Opozorila</div><div class="stat-value ${alerts?'warn':'ok'}">${alerts}</div></div>
+    <div class="stat-card ${alerts?'clickable':''}" ${alerts?'onclick="scrollToLowStock()" title="Klikni za ogled nizke zaloge" style="cursor:pointer"':''}>
+      <div class="stat-label">⚠ Opozorila</div>
+      <div class="stat-value ${alerts?'warn':'ok'}">${alerts}</div>
+      ${alerts?`<div style="font-size:.62rem;color:var(--low);margin-top:.15rem">Klikni za ogled</div>`:''}
+    </div>
     <div class="stat-card"><div class="stat-label">Prodaja mesec</div><div class="stat-value ok">${moRev.toFixed(0)} €</div></div>`;
 }
 
@@ -1519,10 +1529,18 @@ function renderInventory(){
   }).join('');
 }
 
+function scrollToLowStock(){
+  const card=document.querySelector('.pcard.low-stock, .pcard.no-stock');
+  if(card){
+    card.scrollIntoView({behavior:'smooth',block:'center'});
+    card.style.transition='box-shadow .3s';
+    card.style.boxShadow='0 0 0 3px var(--low)';
+    setTimeout(()=>card.style.boxShadow='',1500);
+  }
+}
+
 function goToOrder(){
-  switchTab('narocilo',document.querySelector('.dtab:nth-child(2)')||null);
-  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('active'));
-  const mn=document.getElementById('nav-narocilo');if(mn)mn.classList.add('active');
+  switchTab('narocilo',null);
 }
 
 // ── PRODUCT MGMT ──

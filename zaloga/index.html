@@ -30,7 +30,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-logo em{color:var(--accent);font-style:normal}
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 /* HEADER */
-.app-header{background:var(--ink);color:var(--cream);padding:calc(var(--sat)+.35rem) .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.app-header{background:var(--ink);color:var(--cream);padding:.35rem .5rem .35rem;display:flex;align-items:center;justify-content:flex-end;position:sticky;top:0;z-index:100;gap:.3rem;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .logo{display:none}
 .logo em{color:var(--accent);font-style:normal}
 .hbtn{background:rgba(175,132,85,.18);border:1px solid rgba(175,132,85,.35);color:var(--cream);font-family:'Jost',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;padding:.28rem .45rem;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -130,6 +130,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* SALE GROUP CARDS */
 .sale-group{background:white;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.sg-storno{opacity:.6;border-color:rgba(139,58,42,.3);background:#fdf8f6}
 .sale-group.has-invoice{border-left:3px solid var(--success)}
 .sg-header{padding:.75rem .9rem;display:flex;gap:.7rem;align-items:flex-start;min-width:0}
 .sg-datecol{display:flex;flex-direction:column;align-items:center;min-width:32px;padding-top:2px;flex-shrink:0}
@@ -231,14 +232,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .shdr{padding:1rem 1.25rem .75rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--cream);z-index:2}
 .shtitle{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:300;letter-spacing:.03em}
 .shclose{background:var(--parchment);border:none;width:28px;height:28px;border-radius:50%;font-size:.9rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.shbody{padding:1.1rem 1.25rem;display:grid;gap:.9rem}
+.shbody{padding:.75rem 1rem;display:grid;gap:.6rem}
 .shfoot{padding:.75rem 1.25rem 1rem;display:flex;gap:.75rem;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--cream);z-index:2}
 .slabel{font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.1rem 0;border-bottom:1px solid var(--border)}
 
 /* FIELDS */
 .field{display:grid;gap:.3rem}
 .field label{font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.field input,.field select,.field textarea{width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
+.field input,.field select,.field textarea{width:100%;padding:.5rem .7rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;-webkit-appearance:none;transition:border-color .15s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:56px;font-size:.9rem}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
@@ -411,8 +412,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <input id="orderPhone" type="tel" placeholder="+386 …" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="tel">
       </div>
       <div style="flex:2;min-width:200px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Naslov</div>
-        <input id="orderAddress" placeholder="Ulica 1, 1000 Ljubljana" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
+        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
+        <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
+      </div>
+      <div style="min-width:150px">
+        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
+        <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
       </div>
       <div>
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
@@ -489,6 +494,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
       </select>
+      <div class="swrap" style="min-width:100px"><span class="sicon">🏷</span><input type="text" id="salesFilterBatch" placeholder="Serija…" oninput="renderSales()"></div>
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
     </div>
     <div class="plist" id="salesList"></div>
@@ -520,7 +526,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Batch številka</label><input id="bBatch" placeholder="B200330" autocapitalize="characters"></div>
         <div class="field"><label>Datum izdelave</label><input id="bDate" type="date"></div>
       </div>
+      <div id="bBatchLockWarn" style="display:none;background:rgba(224,112,96,.12);border:1px solid rgba(224,112,96,.35);border-radius:8px;padding:.6rem .9rem;font-size:.75rem;color:#e07060;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+        <span>🔒 Serija ima prodaje — batch številka je zaklenjena</span>
+        <button onclick="document.getElementById('bBatch').removeAttribute('readonly');document.getElementById('bBatchLockWarn').style.display='none';" style="background:rgba(224,112,96,.2);border:1px solid rgba(224,112,96,.4);color:#e07060;border-radius:6px;padding:.2rem .5rem;font-size:.7rem;cursor:pointer;white-space:nowrap">🔓 Odkleni</button>
+      </div>
       <div class="field"><label>Opomba</label><input id="bNote" placeholder="npr. ekstrakcija #12…"></div>
+      <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
+      <div class="frow">
+        <div class="field"><label>Varnostna zaloga alc (kom.)</label><input type="number" id="bSafetyAlc" min="0" placeholder="10" inputmode="numeric"></div>
+        <div class="field"><label>Varnostna zaloga gly (kom.)</label><input type="number" id="bSafetyGly" min="0" placeholder="10" inputmode="numeric"></div>
+      </div>
       <!-- ALC -->
       <div class="slabel" style="color:var(--alc)">🥃 Alkohol</div>
       <div class="var-panel alc">
@@ -594,7 +609,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>E-mail</label><input id="egEmail" type="email" placeholder="kupec@email.com" autocomplete="email"></div>
         <div class="field"><label>Telefon</label><input id="egPhone" type="tel" placeholder="+386 …" autocomplete="tel"></div>
       </div>
-      <div class="field"><label>Naslov</label><input id="egAddress" placeholder="Ulica 1, 1000 Ljubljana" autocomplete="street-address"></div>
+      <div class="frow">
+        <div class="field" style="flex:2"><label>Ulica</label><input id="egStreet" placeholder="Ulica in hišna št." autocomplete="street-address"></div>
+        <div class="field"><label>Pošta</label><input id="egPost" placeholder="8351 Straža" autocomplete="postal-code" oninput="postInputHandler(event)"></div>
+      </div>
       <div class="slabel">Referenčne številke</div>
       <div class="field"><label>Št. zunanjega računa</label><input id="egExtInvoice" placeholder="npr. R-2024-001"></div>
       <div class="field"><label>Št. dobavnice</label><input id="egExtDelivery" placeholder="npr. D-2024-001"></div>
@@ -841,6 +859,76 @@ function doLogin(){
     document.getElementById('loginPwd').value='';
   }
 }
+// ── POŠTNE ŠTEVILKE ──
+const POST_SI={"1000":"Ljubljana","1001":"Ljubljana","1002":"Ljubljana","1210":"Ljubljana - Šentvid","1211":"Ljubljana - Šmartno","1215":"Medvode","1216":"Smlednik","1217":"Vodice","1218":"Komenda","1219":"Laze v Tuhinju","1220":"Škofljica","1221":"Škofljica","1222":"Vnanje Gorice","1225":"Lukovica","1230":"Domžale","1231":"Ljubljana - Črnuče","1233":"Dob","1234":"Mengeš","1235":"Radomlje","1236":"Trzin","1241":"Kamnik","1242":"Stahovica","1243":"Blagovica","1251":"Moravče","1252":"Vače","1261":"Ljubljana - Dobrunje","1262":"Dol pri Ljubljani","1263":"Ljubljana - Polje","1270":"Litija","1272":"Polšnik","1273":"Dole pri Litiji","1274":"Šmartno pri Litiji","1275":"Šmartno pri Litiji","1276":"Primskovo","1281":"Kresnice","1282":"Sava","1290":"Grosuplje","1291":"Šmarje - Sap","1292":"Ig","1293":"Škrilje","1294":"Višnja Gora","1295":"Ivančna Gorica","1296":"Šentvid pri Stični","1301":"Krašnja","1303":"Brezovica pri Ljubljani","1310":"Ribnica","1311":"Turjak","1312":"Videm - Dobrepolje","1313":"Struge","1314":"Rob","1315":"Velike Lašče","1316":"Ortnek","1317":"Sodražica","1318":"Loški Potok","1319":"Draga","1330":"Kočevje","1331":"Dolenja vas","1332":"Stara Cerkev","1333":"Semič","1336":"Kostel","1337":"Osilnica","1338":"Kočevska Reka","1351":"Brezovica","1352":"Preserje","1353":"Borovnica","1354":"Horjul","1355":"Polhov Gradec","1356":"Dobrova","1357":"Notranje Gorice","1358":"Log pri Brezovici","1360":"Vrhnika","1362":"Verd","1363":"Podlipa","1370":"Logatec","1372":"Hotedršica","1373":"Rovte","1380":"Cerknica","1381":"Rakek","1382":"Begunje pri Cerknici","1384":"Grahovo","1385":"Nova vas","1386":"Stari trg pri Ložu","1390":"Postojna","1391":"Planina","1392":"Razdrto","1393":"Štivan","1394":"Hruševje","1395":"Knežak","1396":"Pivka","1410":"Zagorje ob Savi","1411":"Izlake","1412":"Kisovec","1413":"Čemšenik","1414":"Podkum","1420":"Trbovlje","1423":"Dobovec","1430":"Hrastnik","1431":"Dol pri Hrastniku","1432":"Zidani Most","1433":"Radeče","1434":"Loka pri Zidanem Mostu","2000":"Maribor","2100":"Šentilj v Slov. goricah","2102":"Šentilj v Slov. goricah","2107":"Šentilj v Slov. goricah","2120":"Ruše","2123":"Ruše","2126":"Ruše","2130":"Slovenska Bistrica","2131":"Slovenska Bistrica","2133":"Slovenska Bistrica","2136":"Slovenska Bistrica","2200":"Ptuj","2210":"Starše","2212":"Starše","2220":"Hajdina","2222":"Hajdina","2230":"Lenart v Slov. goricah","2232":"Lenart v Slov. goricah","2240":"Radlje ob Dravi","2242":"Radlje ob Dravi","2250":"Ptuj","2252":"Ptuj","2270":"Ormož","2272":"Ormož","2281":"Markovci","2282":"Cirkulane","2283":"Zavrč","2284":"Videm pri Ptuju","2285":"Zgornja Hajdina","2286":"Podlehnik","2287":"Žetale","2289":"Stoperce","2310":"Slovenska Bistrica","2311":"Hoče","2312":"Orehova vas","2313":"Fram","2314":"Zgornja Polskava","2315":"Šmartno na Pohorju","2316":"Zreče","2317":"Oplotnica","2318":"Lože","2321":"Makole","2322":"Majšperk","2323":"Ptujska Gora","2324":"Lovrenc na Dravskem polju","2325":"Kidričevo","2326":"Cirkovce","2327":"Rače","2331":"Pragersko","2332":"Lenart v Slov. goricah","2333":"Sv. Ana v Slov. goricah","2334":"Sv. Trojica v Slov. goricah","2335":"Sv. Jurij v Slov. goricah","2341":"Limbuš","2342":"Ruše","2343":"Fala","2344":"Lovrenc na Pohorju","2345":"Bistrica ob Dravi","2351":"Kamnica","2352":"Selnica ob Dravi","2353":"Sv. Duh na Ostrem vrhu","2354":"Bresternica","2355":"Duplek","2356":"Kungota","2357":"Šentilj v Slov. goricah","2358":"Korena","2359":"Pernica","2360":"Radlje ob Dravi","2361":"Ožbalt","2362":"Kapla","2363":"Podvelka","2365":"Vuhred","2366":"Muta","2367":"Vuzenica","2370":"Dravograd","2371":"Trbonje","2372":"Libeliče","2373":"Šentjanž pri Dravogradu","2380":"Slovenj Gradec","2382":"Mislinja","2383":"Šmartno pri Slovenj Gradcu","2390":"Ravne na Koroškem","2391":"Prevalje","2392":"Mežica","2393":"Črna na Koroškem","2394":"Kotlje","3000":"Celje","3210":"Slovenske Konjice","3211":"Škofja vas","3212":"Vojnik","3213":"Frankolovo","3214":"Zreče","3215":"Loče","3220":"Štore","3221":"Teharje","3222":"Dramlje","3223":"Loka pri Žusmu","3224":"Dobje pri Planini","3225":"Dobrna","3230":"Šentjur","3231":"Grobelno","3232":"Ponikva","3233":"Kalobje","3240":"Šmarje pri Jelšah","3241":"Podplat","3250":"Rogaška Slatina","3252":"Rogatec","3253":"Pristava pri Mestinju","3255":"Buče","3256":"Bistrica ob Sotli","3257":"Podsreda","3260":"Kozje","3270":"Laško","3271":"Šentrupert","3272":"Rimske Toplice","3273":"Jurklošter","3301":"Petrovče","3302":"Griže","3303":"Gomilsko","3304":"Tabor","3305":"Vransko","3306":"Braslovče","3310":"Žalec","3311":"Šempeter v Savinjski dolini","3312":"Prebold","3313":"Polzela","3314":"Braslovče","3320":"Velenje","3325":"Šoštanj","3326":"Topolšica","3327":"Šmartno ob Paki","3330":"Mozirje","3331":"Nazarje","3332":"Rečica ob Savinji","3333":"Ljubno ob Savinji","3334":"Luče","3335":"Solčava","4000":"Kranj","4202":"Naklo","4203":"Duplje","4204":"Golnik","4205":"Preddvor","4207":"Cerklje na Gorenjskem","4208":"Šenčur","4209":"Žabnica","4211":"Mavčiče","4212":"Visoko","4213":"Trboje","4215":"Medvode","4216":"Škofja Loka","4220":"Škofja Loka","4223":"Poljane nad Škofjo Loko","4224":"Gorenja vas","4226":"Železniki","4227":"Selca","4229":"Sorica","4240":"Radovljica","4242":"Brezje","4244":"Podnart","4245":"Kropa","4246":"Kamna Gorica","4247":"Zgornje Jezersko","4248":"Lesce","4249":"Žirovnica","4250":"Kranjska Gora","4252":"Mojstrana","4253":"Gozd Martuljek","4254":"Dovje","4260":"Bled","4262":"Bohinjska Bela","4263":"Bohinjska Bistrica","4265":"Bohinjsko jezero","4270":"Jesenice","4272":"Hrušica","4273":"Blejska Dobrava","4274":"Žirovnica","4275":"Begunje na Gorenjskem","4276":"Zabreznica","4280":"Kranjska Gora","4281":"Mojstrana","4282":"Gozd Martuljek","4283":"Rateče - Planica","4290":"Tržič","4292":"Tržič","4293":"Bistrica pri Tržiču","4294":"Križe","5000":"Nova Gorica","5210":"Deskle","5211":"Kojsko","5212":"Dobrovo v Brdih","5213":"Kanal","5214":"Kal nad Kanalom","5216":"Most na Soči","5220":"Tolmin","5222":"Kobarid","5223":"Breginj","5224":"Srpenica","5230":"Bovec","5231":"Log pod Mangartom","5232":"Soča","5242":"Grahovo ob Bači","5243":"Podbrdo","5250":"Solkan","5251":"Grgar","5252":"Trnovo pri Gorici","5253":"Čepovan","5261":"Šempas","5262":"Črniče","5263":"Dobravlje","5270":"Ajdovščina","5271":"Vipava","5272":"Podnanos","5273":"Col","5280":"Idrija","5290":"Šempeter pri Gorici","5291":"Miren","5292":"Renče","5293":"Volčja Draga","5294":"Dornberk","5295":"Branik","5296":"Kostanjevica na Krasu","5297":"Prvačina","6000":"Koper","6210":"Sežana","6211":"Dutovlje","6212":"Štanjel","6213":"Lokev","6215":"Divača","6216":"Lipica","6217":"Vremski Britof","6218":"Materija","6219":"Lokev","6220":"Postojna","6223":"Planina","6224":"Senožeče","6225":"Hruševje","6230":"Postojna","6240":"Kozina","6241":"Obrov","6242":"Materija","6243":"Lokev","6244":"Podgrad","6250":"Ilirska Bistrica","6255":"Prem","6256":"Košana","6257":"Pivka","6258":"Zagorje","6272":"Gračišče","6273":"Marezige","6274":"Šmarje","6275":"Malija","6276":"Pobegi","6280":"Ankaran","6281":"Škofije","6310":"Izola","6320":"Portorož","6330":"Piran","6333":"Sečovlje","7000":"Novo mesto","8210":"Trebnje","8211":"Dobrnič","8212":"Velika Loka","8213":"Veliki Gaber","8216":"Mirna Peč","8220":"Šmarješke Toplice","8221":"Mačkovec","8222":"Otočec","8230":"Mokronog","8231":"Trebelno","8232":"Šentrupert","8233":"Mirna","8250":"Brežice","8251":"Čatež ob Savi","8252":"Senovo","8253":"Artiče","8254":"Globoko","8255":"Pišece","8256":"Sromlje","8257":"Dobova","8258":"Kapele","8259":"Bizeljsko","8261":"Jesenice na Dolenjskem","8262":"Krška vas","8263":"Cerklje ob Krki","8270":"Krško","8273":"Leskovec pri Krškem","8280":"Brestanica","8281":"Senovo","8282":"Koprivnica","8283":"Blanca","8290":"Sevnica","8292":"Zabukovje","8293":"Studenec","8294":"Boštanj","8295":"Tržišče","8296":"Šentjanž","8310":"Šentjernej","8311":"Kostanjevica na Krki","8312":"Podbočje","8321":"Brusnice","8322":"Stopiče","8330":"Metlika","8332":"Gradac","8333":"Semič","8340":"Črnomelj","8341":"Adlešiči","8342":"Stari trg ob Kolpi","8343":"Dragatuš","8344":"Vinica","8345":"Paka","8350":"Dolenjske Toplice","8351":"Straža","8360":"Žužemberk","8361":"Dvor","8362":"Hinje","8363":"Podturn","8370":"Trebnje","8372":"Korenitka","8373":"Mirna Peč","9000":"Murska Sobota","9220":"Lendava","9221":"Lendava","9224":"Turnišče","9225":"Dobrovnik","9230":"Beltinci","9232":"Črenšovci","9240":"Ljutomer","9241":"Veržej","9242":"Križevci pri Ljutomeru","9243":"Mala Nedelja","9244":"Sveti Jurij ob Ščavnici","9245":"Spodnji Ivanjci","9250":"Gornja Radgona","9251":"Tišina","9252":"Radenci","9253":"Apače","9260":"Ljutomer","9262":"Rogašovci","9263":"Kuzma","9264":"Grad","9265":"Bodonci","9266":"Rogašovci","9267":"Tišina","9268":"Tišina"};
+
+function migrateInvoiceNums(){
+  // Migrate old format (MP-0001) to new (MP-26-0001) using invoice/sale date
+  let changed=false;
+  const migrate=(obj)=>{
+    if(!obj.num)return;
+    // Already new format if has 3 parts
+    if(obj.num.split('-').length>=3)return;
+    const parts=obj.num.split('-');
+    const prefix=parts[0];
+    const num=parts[1];
+    const date=obj.date||todayISO();
+    const yr=(new Date(date)).getFullYear().toString().slice(2);
+    obj.num=prefix+'-'+yr+'-'+num;
+    changed=true;
+  };
+  saleGroups.forEach(g=>{if(g.invoiceNum){const fake={num:g.invoiceNum,date:g.date};migrate(fake);if(changed){g.invoiceNum=fake.num;changed=false;changed=true;}}});
+  invoices.forEach(i=>migrate(i));
+  if(changed){save();}
+}
+
+function stornoSale(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g){toast('Prodaja ni najdena.');return;}
+  if(g.status==='stornirano'){toast('Prodaja je že stornirana.');return;}
+  showPromptConfirm('Razlog stornacije (neobvezno):', razlog=>{
+    const stornoDate=todayISO();
+    // Return stock by exact batches
+    g.status='stornirano';
+    g.stornoDate=stornoDate;
+    g.stornoRazlog=razlog||'';
+    // Stock is restored automatically since getSoldPerBatch filters stornirano
+    save();
+    renderStats();renderInventory();
+    if(currentTab==='serije'){renderBatches();}
+    if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+    toast('✓ Prodaja stornirana — zaloga vrnjena');
+  });
+}
+
+function showPromptConfirm(label, cb){
+  // Simple prompt overlay
+  const existing=document.getElementById('promptOverlay');
+  if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.id='promptOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.5rem 1.25rem calc(var(--sab)+1.5rem);width:100%;max-width:480px">
+    <div style="font-size:.82rem;font-weight:500;color:var(--ink);margin-bottom:.75rem">${label}</div>
+    <textarea id="promptInput" rows="3" style="width:100%;padding:.75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;resize:none;outline:none;box-sizing:border-box" placeholder="Npr. napačen vnos, kupec odpovedal…"></textarea>
+    <div style="display:flex;gap:.75rem;margin-top:.75rem">
+      <button onclick="document.getElementById('promptOverlay').remove()" style="flex:1;padding:.75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+      <button onclick="(function(){const v=document.getElementById('promptInput').value.trim();document.getElementById('promptOverlay').remove();window._promptCb(v);})()" style="flex:2;padding:.75rem;border:none;border-radius:8px;background:#8b3a2a;color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Storniraj</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  window._promptCb=cb;
+  setTimeout(()=>document.getElementById('promptInput')?.focus(),100);
+}
+
+function postInputHandler(e){
+  const val=e.target.value.trim();
+  const num=val.match(/^\d{4}/)?val.match(/^\d{4}/)[0]:null;
+  if(num&&POST_SI[num]&&val===num){
+    e.target.value=num+' '+POST_SI[num];
+  }
+}
+
 function doLogout(){
   try{localStorage.removeItem('gm_auth');}catch(e){}
   const ls=document.getElementById('loginScreen');
@@ -900,7 +988,7 @@ let orderChannel='malo',orderTier=null;
 let expandedBatches=new Set();
 let currentTab='zaloga';
 
-const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🪵','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁'};
+const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
 const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
 
@@ -981,6 +1069,7 @@ async function appInit(){
   setSyncStatus('⟳ Nalagam podatke…');
   // First load from localStorage for instant render
   loadFromLocal();
+  migrateInvoiceNums();
   seed();
   renderStats();renderInventory();
   document.getElementById('orderDate').value=todayISO();
@@ -1023,7 +1112,9 @@ function productStock(productId){
   // sold totals — use batchBreakdown if available, fallback to line totals
   let soldAlc=0,soldGly=0;
   const soldPerBatch={};
-  saleGroups.forEach(g=>(g.lines||[]).forEach(l=>{
+  saleGroups.forEach(g=>{
+    if(g.status==='stornirano')return; // ignore stornated sales
+    (g.lines||[]).forEach(l=>{
     if(l.productId!==productId)return;
     if(l.batchBreakdown?.length){
       l.batchBreakdown.forEach(bb=>{
@@ -1035,7 +1126,7 @@ function productStock(productId){
     } else {
       soldAlc+=(l.alc||0);soldGly+=(l.gly||0);
     }
-  }));
+  })});
   // For legacy sales (no batchBreakdown), distribute sold qty across batches FIFO
   // so batchStock shows reasonable estimates
   const legacySoldAlc=soldAlc-Object.values(soldPerBatch).reduce((s,x)=>s+x.alc,0);
@@ -1079,11 +1170,15 @@ function productStock(productId){
     alcRem:Math.max(0,(b.alc?.qty||0)-(soldPerBatch[b.id]?.alc||0)),
     glyRem:Math.max(0,(b.gly?.qty||0)-(soldPerBatch[b.id]?.gly||0)),
   }));
+  // Safety stock from latest batch of this product
+  const latestBatch=[...pb].sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+  const safetyAlc=latestBatch?.safetyAlc??10;
+  const safetyGly=latestBatch?.safetyGly??10;
   return{
     alc:Math.max(0,bAlc-soldAlc),gly:Math.max(0,bGly-soldGly),
     prodAlc:remProdAlc,intAlc:remIntAlc,
     prodGly:remProdGly,intGly:remIntGly,
-    batchStock,
+    batchStock,safetyAlc,safetyGly,
   };
 }
 
@@ -1126,14 +1221,28 @@ function switchTab(id,el){
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-  if(id==='prodaje'){renderSalesSummary();renderSales();}
+  if(id==='prodaje'){
+    // Set default filter to current month if not already set
+    const from=document.getElementById('dateFrom');
+    const to=document.getElementById('dateTo');
+    if(!from.value&&!to.value){
+      const now=new Date();
+      from.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+      to.value=todayISO();
+    }
+    renderSalesSummary();renderSales();
+  }
 }
 
 // ── STATS ──
 function renderStats(){
   let tAlc=0,tGly=0,alerts=0;
   const mo=todayISO().slice(0,7);
-  products.forEach(p=>{const st=productStock(p.id);tAlc+=st.alc;tGly+=st.gly;if(stockStatus(st.alc,st.gly)!=='ok')alerts++;});
+  products.forEach(p=>{
+    const st=productStock(p.id);
+    tAlc+=st.alc;tGly+=st.gly;
+    if(st.prodAlc<=st.safetyAlc||st.prodGly<=st.safetyGly)alerts++;
+  });
   const moRev=saleGroups.filter(g=>g.date&&g.date.slice(0,7)===mo).reduce((s,g)=>s+(g.total||0),0);
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${tAlc}</div></div>
@@ -1150,8 +1259,13 @@ function renderInventory(){
   if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🍄</div><div class="et">Ni produktov</div><div class="es">Dodaj serijo pod zavihkom Serije.</div></div>`;return;}
   el.innerHTML=rows.map(p=>{
     const st=productStock(p.id);
-    const status=stockStatus(st.alc,st.gly);
-    const cls=status==='zero'?'no-stock':status==='low'?'low-stock':'';
+    // Use safety stock thresholds (prod-allocated only)
+    const alcLow=st.prodAlc<=st.safetyAlc;
+    const glyLow=st.prodGly<=st.safetyGly;
+    const isLow=alcLow||glyLow;
+    const isZero=st.prodAlc<=0&&st.prodGly<=0;
+    const cls=isZero?'no-stock':isLow?'low-stock':'';
+    const safetyWarn=isLow&&!isZero?`<div style="font-size:.7rem;color:var(--low);margin:.3rem 0 0">⚠ Varnostna zaloga: ${alcLow?`🥃 ≤${st.safetyAlc}`:''}${alcLow&&glyLow?' · ':''}${glyLow?`🌿 ≤${st.safetyGly}`:''}</div>`:'';
     // per-batch remaining stock
     const batchRows=(st.batchStock||[]).filter(b=>b.alcRem>0||b.glyRem>0).map(b=>
       `<div style="display:flex;justify-content:space-between;align-items:center;font-size:.72rem;padding:.2rem 0;border-bottom:1px solid var(--border)">
@@ -1164,7 +1278,7 @@ function renderInventory(){
     const chBreakdown=hasAlloc?`
       <div class="ch-stock-grid">
         <div class="ch-stock-row">
-          <span class="ch-stock-label" style="color:var(--ch-malo)">🛒 Prodaja</span>
+          <span class="ch-stock-label" style="color:var(--ch-malo)">🛒 Za prodajo</span>
           <span class="ch-stock-val">🥃${st.prodAlc} 🌿${st.prodGly}</span>
         </div>
         <div class="ch-stock-row">
@@ -1178,8 +1292,8 @@ function renderInventory(){
         <div class="pinfo">
           <div class="pname">${p.name}</div>
           <div class="var-pills">
-            <span class="vpill vpill-alc">🥃 ${st.alc} kom.</span>
-            <span class="vpill vpill-gly">🌿 ${st.gly} kom.</span>
+            <span class="vpill vpill-alc">🥃 ${st.prodAlc} kom.</span>
+            <span class="vpill vpill-gly">🌿 ${st.prodGly} kom.</span>
           </div>
           ${batchRows?`<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)">${batchRows}</div>`:''}
           <div class="pactions">
@@ -1187,11 +1301,12 @@ function renderInventory(){
           </div>
         </div>
         <div class="pright">
-          <span class="sbadge ${status}">${statusLabel(status)}</span>
+          <span class="sbadge ${isZero?'zero':isLow?'low':'ok'}">${isZero?'Ni na zalogi':isLow?'Nizka zaloga':'Na zalogi'}</span>
           <div class="stock-total">${st.alc+st.gly}</div>
           <div class="stock-sub">skupaj</div>
         </div>
       </div>
+      ${safetyWarn}
       ${chBreakdown}
     </div>`;
   }).join('');
@@ -1303,13 +1418,31 @@ function openBatchSheet(id=null){
     const b=batches.find(x=>x.id===id);if(!b)return;
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
-    document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';
+    document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
+    document.getElementById('bSafetyAlc').value=b.safetyAlc??10;document.getElementById('bSafetyGly').value=b.safetyGly??10;
+    // Lock batch number if batch has sales
+    const hasSales=saleGroups.some(g=>(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
+    const lockWarn=document.getElementById('bBatchLockWarn');
+    if(hasSales){
+      document.getElementById('bBatch').setAttribute('readonly','true');
+      lockWarn.style.display='flex';
+    } else {
+      document.getElementById('bBatch').removeAttribute('readonly');
+      lockWarn.style.display='none';
+    }
     document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=b.alc?.qty||'';document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
     document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=b.gly?.qty||'';document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
-    ['bBatch','bNote','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    ['bBatch','bNote','bWorkOrder','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('bBatch').removeAttribute('readonly');
+    document.getElementById('bBatchLockWarn').style.display='none';
+    // Prefill safety stock from last batch of selected product
+    const selProd=document.getElementById('bProductSel').value;
+    const lastB=selProd?[...batches].filter(x=>x.productId===selProd).sort((a,b)=>b.date?.localeCompare(a.date||''))[0]:null;
+    document.getElementById('bSafetyAlc').value=lastB?.safetyAlc??10;
+    document.getElementById('bSafetyGly').value=lastB?.safetyGly??10;
     document.getElementById('bProductSel').value='';document.getElementById('bDate').value=todayISO();
     clearAllocFields('Alc');clearAllocFields('Gly');
   }
@@ -1328,7 +1461,7 @@ function saveBatch(){
   const alcAlloc=getAlloc('Alc'),glyAlloc=getAlloc('Gly');
   if((alcAlloc.prod+alcAlloc.int)>alcQty){alert('Alkohol: razporejenih preveč.');return;}
   if((glyAlloc.prod+glyAlloc.int)>glyQty){alert('Glicerin: razporejenih preveč.');return;}
-  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),
+  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
     alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
     gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
   };
@@ -1478,7 +1611,7 @@ function renderBatches(){
             <span class="bch-batch">${b.batchNum}</span>${statusBadge}
           </div>
           <div class="bch-prod">${b.productName}</div>
-          ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}</div>`:''}
+          ${b.date?`<div class="bch-date">${b.date.split('-').reverse().join('.')}${b.note?' · '+b.note:''}${b.workOrder?' · DN: '+b.workOrder:''}</div>`:''}
         </div>
         <div class="bch-right">
           <div class="bch-total" style="${soldSt==='sold'?'color:var(--danger)':remaining>0?'color:var(--success)':''}">${remaining}</div>
@@ -1513,8 +1646,8 @@ async function deleteBatch(id){
     return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===id)?.gly||0);
   },0);
   if(hasSales){
-    const ok=await showConfirm(`Serija ${b.batchNum} ima evidentirane prodaje (🥃${soldAlc} 🌿${soldGly} kom.).\n\nBrisanje bo porušilo zalogo in zgodovino.\n\nSi prepričan?`,'Vseeno izbriši');
-    if(!ok)return;
+    await showConfirm(`⛔ Serija ${b.batchNum} ima evidentirane prodaje (🥃${soldAlc} 🌿${soldGly} kom.).\n\nBrisanje ni dovoljeno — serija je del zgodovine prodaj.`,'Zapri');
+    return;
   } else {
     const ok=await showConfirm(`Izbriši serijo ${b.batchNum}?`,'Izbriši');
     if(!ok)return;
@@ -1581,7 +1714,6 @@ function renderOrderRows(){
     return `<div class="order-row">
       <div class="order-row-info">
         <div class="order-row-name">${moji(p.name)} ${p.name}</div>
-        <div class="order-row-meta">Skupaj: 🥃 ${st.alc} · 🌿 ${st.gly}</div>
         <div class="order-row-meta" style="color:var(--ch-${isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
       </div>
       <div class="order-row-inputs">
@@ -1634,7 +1766,7 @@ function renderOrderSummary(){
 
 function clearOrder(){
   products.forEach(p=>{const a=document.getElementById('oalc-'+p.id);const g=document.getElementById('ogly-'+p.id);if(a)a.value='';if(g)g.value='';});
-  document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderAddress').value='';document.getElementById('orderDiscount').value='';
+  document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';document.getElementById('orderDiscount').value='';
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
   orderTier=null;pendingBatchAlloc={};renderOrderSummary();toast('Počiščeno');
 }
@@ -1698,12 +1830,8 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
   // Check if we couldn't fulfill the request
   if(remAlc>0) warnings.push(`Alkohol: zahtevano ${reqAlc}, na voljo ${reqAlc-remAlc} za ${purpose==='int'?'interno':'prodajo'}`);
   if(remGly>0) warnings.push(`Glicerin: zahtevano ${reqGly}, na voljo ${reqGly-remGly} za ${purpose==='int'?'interno':'prodajo'}`);
-  // Still add dummy entries so order can be saved (with warning)
-  if(remAlc>0||remGly>0){
-    if(result.length>0){result[result.length-1].alc+=remAlc;result[result.length-1].gly+=remGly;}
-    else result.push({batchId:'?',batchNum:'–',alc:remAlc,gly:remGly});
-  }
-  return {alloc:result, warnings};
+  const unfulfilled = remAlc>0||remGly>0;
+  return {alloc:result, warnings, unfulfilled};
 }
 
 // pendingBatchAlloc: {productId: [{batchId,batchNum,alc,gly}]}
@@ -1716,14 +1844,16 @@ function computePendingAlloc(){
   const lines=collectOrderLines();
   const purpose=(orderChannel==='int'||orderChannel==='dar')?'int':'prod';
   const allWarnings=[];
+  let hasUnfulfilled=false;
   lines.forEach(l=>{
     const result=fifoAllocate(l.p.id,l.alc,l.gly,purpose);
     pendingBatchAlloc[l.p.id]=result.alloc;
     if(result.warnings.length){
       allWarnings.push(`${l.p.name}: ${result.warnings.join(', ')}`);
     }
+    if(result.unfulfilled)hasUnfulfilled=true;
   });
-  return allWarnings;
+  return {warnings:allWarnings, unfulfilled:hasUnfulfilled};
 }
 
 // ── BATCH ALLOC SHEET ──
@@ -1772,10 +1902,13 @@ function openBatchAllocSheet(){
 
 function getSoldPerBatch(batchId,productId){
   const r={alc:0,gly:0};
-  saleGroups.forEach(g=>(g.lines||[]).forEach(l=>{
-    if(l.productId!==productId)return;
-    (l.batchBreakdown||[]).filter(bb=>bb.batchId===batchId).forEach(bb=>{r.alc+=(bb.alc||0);r.gly+=(bb.gly||0);});
-  }));
+  saleGroups.forEach(g=>{
+    if(g.status==='stornirano')return; // ignore stornated sales
+    (g.lines||[]).forEach(l=>{
+      if(l.productId!==productId)return;
+      (l.batchBreakdown||[]).filter(bb=>bb.batchId===batchId).forEach(bb=>{r.alc+=(bb.alc||0);r.gly+=(bb.gly||0);});
+    });
+  });
   return r;
 }
 
@@ -1808,9 +1941,12 @@ function updateAllBatchAllocHints(){
 }
 
 
-function nextInvNum(ch){
-  invCounters[ch]=(invCounters[ch]||0)+1;
-  return CH[ch].short+'-'+String(invCounters[ch]).padStart(4,'0');
+function nextInvNum(ch, date){
+  const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
+  const key=ch+'_'+yr;
+  if(!invCounters[key])invCounters[key]=0;
+  invCounters[key]++;
+  return CH[ch].short+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
 async function confirmOrder(withInvoice){
@@ -1819,24 +1955,46 @@ async function confirmOrder(withInvoice){
   const buyer=document.getElementById('orderBuyer').value.trim();
   const email=document.getElementById('orderEmail').value.trim();
   const phone=document.getElementById('orderPhone').value.trim();
-  const address=document.getElementById('orderAddress').value.trim();
+  const address=document.getElementById('orderAddress')?.value.trim()||'';
+  const street=document.getElementById('orderStreet')?.value.trim()||'';
+  const post=document.getElementById('orderPost')?.value.trim()||'';
+  const fullAddress=street&&post?street+', '+post:street||post||address;
   const date=document.getElementById('orderDate').value||todayISO();
   const discount=parseNum(document.getElementById('orderDiscount').value);
   const extInvoice=document.getElementById('orderExtInvoice').value.trim();
   const extDelivery=document.getElementById('orderExtDelivery').value.trim();
   const ch=orderChannel;const isRevenue=true;const tier=getActiveTier();
-  // stock check
+  // stock check per channel
   const byProduct={};
   lines.forEach(l=>{byProduct[l.p.id]={p:l.p,alc:l.alc,gly:l.gly};});
+  const isProdCh=ch==='malo'||ch==='velo';
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
-    if(v.alc>st.alc){const ok=await showConfirm(`${v.p.name}: alkohol ${v.alc} > zaloga ${st.alc}. Nadaljuješ?`,'Nadaljuj');if(!ok)return;}
-    if(v.gly>st.gly){const ok=await showConfirm(`${v.p.name}: glicerin ${v.gly} > zaloga ${st.gly}. Nadaljuješ?`,'Nadaljuj');if(!ok)return;}
+    const avAlc=isProdCh?st.prodAlc:st.intAlc;
+    const avGly=isProdCh?st.prodGly:st.intGly;
+    const chanName=isProdCh?'prodaja':'interno';
+    if(v.alc>avAlc){
+      alert(`⛔ ${v.p.name}: zahtevano 🥃${v.alc}, na voljo za ${chanName}: ${avAlc}.\n\nProdaja ni mogoča.`);
+      return;
+    }
+    if(v.gly>avGly){
+      alert(`⛔ ${v.p.name}: zahtevano 🌿${v.gly}, na voljo za ${chanName}: ${avGly}.\n\nProdaja ni mogoča.`);
+      return;
+    }
   }
   // compute batch allocation if not already set (FIFO default)
   if(!Object.keys(pendingBatchAlloc).length){
-    const warnings=computePendingAlloc();
-    if(warnings.length){
+    const {warnings, unfulfilled}=computePendingAlloc();
+    if(unfulfilled){
+      // Not enough stock for this channel - block and offer alternatives
+      const isProd=orderChannel==='malo'||orderChannel==='velo';
+      const altMsg=isProd
+        ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
+        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Prodaj prek maloprodaje namesto interno';
+      await showConfirm(`⛔ Ni dovolj zalog:\n\n${warnings.join('\n')}${altMsg}`,'Zapri');
+      pendingBatchAlloc={};
+      return;
+    } else if(warnings.length){
       const ok=await showConfirm(`⚠ Opozorilo o zalogi:\n\n${warnings.join('\n')}\n\nŽeliš nadaljevati?`,'Nadaljuj');
       if(!ok){pendingBatchAlloc={};return;}
     }
@@ -1847,11 +2005,11 @@ async function confirmOrder(withInvoice){
   const groupId=uid();
   let invoiceNum=null,invoiceId=null;
   if(withInvoice){
-    invoiceNum=nextInvNum(ch);
+    invoiceNum=nextInvNum(ch,date);
     invoiceId=uid();
-    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address,date,total:grandTotal,groupId,extInvoice,extDelivery});
+    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery});
   }
-  const group={id:groupId,buyer,email,phone,address,date,channel:ch,discount,extInvoice,extDelivery,note:tier?'Razred '+tier.label:'',invoiceNum,invoiceId,
+  const group={id:groupId,buyer,email,phone,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:tier?'Razred '+tier.label:'',invoiceNum,invoiceId,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -1866,79 +2024,87 @@ async function confirmOrder(withInvoice){
 function confirmAndInvoice(){confirmOrder(true);}
 
 // ── SALES VIEW ──
-function renderSalesSummary(){
-  const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
-  const f=saleGroups.filter(g=>(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo));
-  const rev=f.reduce((a,g)=>a+(g.total||0),0);
-  const alcQ=f.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
-  const glyQ=f.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+function renderSalesSummary(filteredGroups){
+  const f=filteredGroups||saleGroups;
+  const active=f.filter(g=>g.status!=='stornirano');
+  const rev=active.reduce((a,g)=>a+(g.total||0),0);
+  const alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+  const glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+  const storno=f.filter(g=>g.status==='stornirano').length;
   document.getElementById('salesStatsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
     <div class="stat-card"><div class="stat-label">Prihodki</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>`;
 }
 
 function renderSales(){
-  renderSalesSummary();
   const q=document.getElementById('salesSearch').value.toLowerCase();
   const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
   const fCh=document.getElementById('salesFilterCh').value;
-  // group by buyer+date+channel
+  const fBatch=(document.getElementById('salesFilterBatch')?.value||'').toLowerCase();
   let groups=saleGroups.filter(g=>{
     const mq=!q||(g.buyer||'').toLowerCase().includes(q)||(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q));
-    return mq&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
+    const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)));
+    return mq&&mBatch&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
   });
+  renderSalesSummary(groups);
   const el=document.getElementById('salesList');
   if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;return;}
   el.innerHTML=groups.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
+    const isExpanded=expandedSales.has(g.id);
     const itemsHtml=(g.lines||[]).map(l=>{
       const parts=[l.alc>0?`🥃 ${l.alc} × ${l.alcPrice?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${l.glyPrice?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
       const batchHtml=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>`<span style="font-size:.65rem;color:var(--muted);margin-left:.5rem">🏷 ${bb.batchNum}${bb.alc?` 🥃${bb.alc}`:''}${bb.gly?` 🌿${bb.gly}`:''}</span>`).join('');
       return `<div class="sg-item"><span class="sg-item-label">${l.productName}</span><span class="sg-item-val">${parts}</span></div>${batchHtml?`<div style="padding:.1rem 0 .2rem">${batchHtml}</div>`:''}`;
     }).join('');
     const hasInvoice=!!g.invoiceNum;
-    return `<div class="sale-group${hasInvoice?' has-invoice':''}">
+    const isStorno=g.status==='stornirano';
+    // Compact summary line for collapsed view
+    const prodSummary=(g.lines||[]).map(l=>[l.alc>0?`🥃${l.alc}`:null,l.gly>0?`🌿${l.gly}`:null].filter(Boolean).join('+')).join(' · ');
+    return `<div class="sale-group${hasInvoice?' has-invoice':''}${isStorno?' sg-storno':''}" style="cursor:pointer" onclick="toggleSaleCard('${g.id}',event)">
       <div class="sg-header">
         <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
         <div class="sg-div"></div>
         <div class="sg-info">
-          <div class="sg-buyer">${g.buyer||'—'}</div>
-          <div class="sg-meta">
+          <div class="sg-buyer">${g.buyer||'—'}${isStorno?` <span style="font-size:.6rem;background:#8b3a2a;color:white;padding:.1rem .35rem;border-radius:6px;vertical-align:middle">⊘</span>`:''}</div>
+          ${isExpanded?`<div class="sg-meta">
             ${g.email?`<span style="font-size:.72rem;color:var(--muted)">✉ ${g.email}</span>`:''}
             ${g.phone?`<span style="font-size:.72rem;color:var(--muted)">📞 ${g.phone}</span>`:''}
-            ${g.address?`<span style="font-size:.72rem;color:var(--muted)">📍 ${g.address}</span>`:''}
+            ${(g.street||g.address)?`<span style="font-size:.72rem;color:var(--muted)">📍 ${g.street||g.address}${g.post?', '+g.post:''}</span>`:''}
           </div>
           <div class="sg-meta">
             <span class="ch-pill ${ch.cls}">${ch.icon} ${ch.label}${g.discount?` –${g.discount}%`:''}</span>
             ${g.note?`<span style="font-size:.68rem;color:var(--muted)">${g.note}</span>`:''}
-          </div>
+          </div>`:`<div class="sg-meta"><span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem">${ch.icon}</span><span style="font-size:.72rem;color:var(--muted)">${prodSummary}</span></div>`}
         </div>
         <div class="sg-right">
           <div class="sg-total">${isRevenue&&g.total?g.total.toFixed(2)+' €':'—'}</div>
           <div class="sg-qty">${g.qty||0} kom.</div>
         </div>
       </div>
-      <div class="sg-items">${itemsHtml}</div>
-      <div class="sg-footer">
+      ${isExpanded?`<div class="sg-items">${itemsHtml}</div>
+      <div class="sg-footer" onclick="event.stopPropagation()">
         ${hasInvoice?`<span class="invoice-badge">🧾 ${g.invoiceNum}</span>`:''}
         ${g.extInvoice?`<span class="ext-ref">R: ${g.extInvoice}</span>`:''}
         ${g.extDelivery?`<span class="ext-ref">D: ${g.extDelivery}</span>`:''}
+        ${isStorno?`<span style="background:#8b3a2a;color:white;font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px">⊘ STORNIRANO${g.stornoDate?' · '+g.stornoDate.split('-').reverse().join('.'):''}${g.stornoRazlog?' · '+g.stornoRazlog:''}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:.35rem">
-          ${!hasInvoice?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
-          ${hasInvoice?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
-          <button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>
+          ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
+          ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
+          ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
+          ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>
-      </div>
+      </div>`:''}
     </div>`;
   }).join('');
 }
 
 function issueInvoiceForGroup(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
-  const invoiceNum=nextInvNum(g.channel);
+  const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
   invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery});
@@ -1956,7 +2122,8 @@ function openEditGroup(id){
   document.getElementById('egBuyer').value=g.buyer||'';
   document.getElementById('egEmail').value=g.email||'';
   document.getElementById('egPhone').value=g.phone||'';
-  document.getElementById('egAddress').value=g.address||'';
+  document.getElementById('egStreet').value=g.street||g.address||'';
+  document.getElementById('egPost').value=g.post||'';
   document.getElementById('egExtInvoice').value=g.extInvoice||'';
   document.getElementById('egExtDelivery').value=g.extDelivery||'';
   document.getElementById('egNote').value=g.note||'';
@@ -1968,7 +2135,10 @@ function saveEditGroup(){
   g.buyer=document.getElementById('egBuyer').value.trim();
   g.email=document.getElementById('egEmail').value.trim();
   g.phone=document.getElementById('egPhone').value.trim();
-  g.address=document.getElementById('egAddress').value.trim();
+  const egStreet=document.getElementById('egStreet').value.trim();
+  const egPost=document.getElementById('egPost').value.trim();
+  g.street=egStreet;g.post=egPost;
+  g.address=egStreet&&egPost?egStreet+', '+egPost:egStreet||egPost||g.address||'';
   g.extInvoice=document.getElementById('egExtInvoice').value.trim();
   g.extDelivery=document.getElementById('egExtDelivery').value.trim();
   g.note=document.getElementById('egNote').value.trim();
@@ -1983,7 +2153,37 @@ async function deleteSaleGroup(id){
   saleGroups=saleGroups.filter(x=>x.id!==id);
   save();renderStats();renderInventory();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}toast('Prodaja izbrisana');
 }
-function clearSalesFilters(){['salesSearch','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');document.getElementById('salesFilterCh').value='';renderSales();}
+const expandedSales=new Set();
+
+function toggleSaleCard(id, e){
+  if(e&&e.target.closest('button'))return; // don't toggle on button click
+  if(expandedSales.has(id))expandedSales.delete(id);
+  else expandedSales.add(id);
+  renderSales();
+}
+
+function populateSalesBatchFilter(){
+  const sel=document.getElementById('salesFilterBatch');
+  if(!sel)return;
+  const cur=sel.value;
+  // Collect all batches that appear in any sale
+  const seen=new Map();
+  saleGroups.forEach(g=>(g.lines||[]).forEach(l=>(l.batchBreakdown||[]).forEach(bb=>{
+    if(!seen.has(bb.batchId))seen.set(bb.batchId,bb.batchNum);
+  })));
+  sel.innerHTML='<option value="">Vse serije</option>'+
+    [...seen.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,num])=>`<option value="${id}"${id===cur?' selected':''}>${num}</option>`).join('');
+}
+
+function clearSalesFilters(){
+  const now=new Date();
+  document.getElementById('salesSearch').value='';
+  document.getElementById('salesFilterBatch').value='';
+  document.getElementById('salesFilterCh').value='';
+  document.getElementById('dateFrom').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+  document.getElementById('dateTo').value=todayISO();
+  renderSales();
+}
 
 // ── INVOICES VIEW ──
 function renderInvStats(){
@@ -2465,11 +2665,6 @@ function updateRsBatchList(){
     filtered.map(b=>`<option value="${b.id}">${b.batchNum} · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}</option>`).join('');
 }
 
-function populateReportDropdowns(){
-  const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
-}
-
 let _currentReportType='';
 
 function openReportSheet(type){
@@ -2629,6 +2824,12 @@ function genReport(type){
     const doVal=document.getElementById('rs-do')?.value??'';
     const showKupci=document.getElementById('rs-kupci')?.checked??false;
 
+    // Warn if both prod/int unchecked
+    if(!showProdaja&&!showInterno){
+      alert('Izberi vsaj eno možnost: Za prodajo ali Interno.');
+      return;
+    }
+
     // For kupci report - use ALL batches (ignore date filter), only product filter
     const allBatchesForKupci=batches.filter(b=>(!filterProd||b.productId===filterProd));
 
@@ -2644,7 +2845,16 @@ function genReport(type){
     if(showOstalo)ths.push('Ostalo (alc/gly)');
     let rows='';
     filtered.forEach(b=>{
-      // sold from this batch
+      // Filter rows by prod/int selection
+      const allocProdAlc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+      const allocIntAlc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+      const allocProdGly=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
+      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+      const hasProd=(allocProdAlc+allocProdGly)>0;
+      const hasInt=(allocIntAlc+allocIntGly)>0;
+      // Skip row if doesn't match filter
+      if(!showProdaja&&hasProd&&!hasInt)return;
+      if(!showInterno&&hasInt&&!hasProd)return;
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       // sold by purpose (prod/int)
@@ -2654,11 +2864,6 @@ function genReport(type){
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
       const remGly=Math.max(0,(b.gly?.qty||0)-soldGly);
-      // alloc
-      const allocProdAlc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-      const allocIntAlc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-      const allocProdGly=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
-      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
       rows+=`<tr>
         <td class="td-bold">${moji(b.productName)} ${b.productName}</td>
         <td>${b.batchNum}</td>
@@ -2853,7 +3058,14 @@ function selectBuyer(b){
   document.getElementById('orderBuyer').value=b.name;
   if(b.email)document.getElementById('orderEmail').value=b.email;
   if(b.phone)document.getElementById('orderPhone').value=b.phone;
-  if(b.address)document.getElementById('orderAddress').value=b.address;
+  if(b.street){
+    document.getElementById('orderStreet').value=b.street;
+  } else if(b.address){
+    const m=b.address.match(/^(.+),\s*(\d{4}\s*.+)$/);
+    if(m){document.getElementById('orderStreet').value=m[1].trim();document.getElementById('orderPost').value=m[2].trim();}
+    else{document.getElementById('orderStreet').value=b.address;}
+  }
+  if(b.post)document.getElementById('orderPost').value=b.post;
   const dd=document.getElementById('buyerDropdown');if(dd)dd.style.display='none';
   renderOrderSummary();
 }
@@ -2887,7 +3099,14 @@ document.addEventListener('click',e=>{
 
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));}
 
-// ── INIT ──
+// ── HEADER SAFE AREA FIX ──
+(function(){
+  // Add padding to body top = safe area inset
+  document.body.style.paddingTop='env(safe-area-inset-top,0px)';
+  document.body.style.background='#1a1209';
+})();
+
+
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}

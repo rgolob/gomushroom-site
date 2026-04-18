@@ -464,12 +464,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <!-- Ext ref section removed - now in velo fields above -->
     <div class="order-products" id="orderProductRows"></div>
     <div class="order-summary" id="orderSummary" style="display:none"></div>
-    <div class="order-actions">
-      <button class="order-btn order-btn-clear" onclick="clearOrder()">Počisti</button>
-      <button class="order-btn" style="background:var(--parchment);color:var(--ink);flex:0 0 auto;padding:.85rem 1rem;font-size:.72rem" onclick="openBatchAllocSheet()">🏷 Serije</button>
-      <button class="order-btn order-btn-invoice" onclick="confirmAndInvoice()">📄 Potrdi + Račun</button>
-      <button class="order-btn order-btn-confirm" onclick="confirmOrder(false)">✓ Potrdi</button>
-    </div>
+    <div style="height:80px"></div><!-- spacer for fixed bar -->
+  </div>
+
+  <!-- FIXED ORDER ACTION BAR -->
+  <div id="orderActionBar" style="position:fixed;bottom:calc(var(--sab) + 56px);left:0;right:0;padding:.5rem .4rem;background:var(--cream);border-top:1px solid var(--border);display:flex;gap:.4rem;z-index:90;display:none">
+    <button class="order-btn order-btn-clear" onclick="clearOrder()" style="flex:0 0 auto;padding:.7rem .75rem;font-size:.7rem">Počisti</button>
+    <button class="order-btn" style="background:var(--parchment);color:var(--ink);flex:0 0 auto;padding:.7rem .75rem;font-size:.68rem" onclick="openBatchAllocSheet()">🏷 Serije</button>
+    <button class="order-btn order-btn-invoice" onclick="confirmAndInvoice()" style="font-size:.72rem;padding:.7rem .5rem">📄 Račun</button>
+    <button class="order-btn order-btn-confirm" onclick="confirmOrder(false)" style="font-size:.72rem;padding:.7rem .5rem">✓ Potrdi</button>
   </div>
 
   <!-- SERIJE -->
@@ -1445,6 +1448,9 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
+  // Show/hide order action bar
+  const oab=document.getElementById('orderActionBar');
+  if(oab)oab.style.display=id==='narocilo'?'flex':'none';
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){
     // Set default filter to current month if not already set

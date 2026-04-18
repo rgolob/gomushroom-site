@@ -2990,13 +2990,9 @@ function genReport(type){
     let rows='';
     products.forEach(p=>{
       const st=productStock(p.id);
-      const status=stockStatus(st.alc,st.gly);
-      const statusCls=status==='zero'?'b-zero':status==='low'?'b-low':'b-ok';
-      const statusLbl=statusLabel(status);
       const alcPrice=showPrices?latestPrice(p.id,'alc'):0;
       const glyPrice=showPrices?latestPrice(p.id,'gly'):0;
       // choose what to show based on filter
-      // If alloc not set, fall back to total stock
       const hasAlloc=(st.prodAlc+st.intAlc)>0||(st.prodGly+st.intGly)>0;
       let alcShow, glyShow;
       if(!hasAlloc||(!showProd&&!showInt)){
@@ -3008,6 +3004,10 @@ function genReport(type){
       } else {
         alcShow=st.intAlc; glyShow=st.intGly;
       }
+      // Status based on filtered quantities
+      const status=alcShow+glyShow<=0?'zero':(alcShow<=st.safetyAlc||glyShow<=st.safetyGly)?'low':'ok';
+      const statusCls=status==='zero'?'b-zero':status==='low'?'b-low':'b-ok';
+      const statusLbl=status==='zero'?'Ni na zalogi':status==='low'?'Nizka zaloga':'Na zalogi';
       const vrednost=showPrices?(alcShow*(alcPrice||0)+glyShow*(glyPrice||0)):null;
       const purposeLabel=showProd&&showInt?'Skupaj':showProd?'🛒 Prodaja':'🔬 Interno';
       rows+=`<tr>
@@ -3356,9 +3356,11 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
     const headerPad=Math.max(sat,0)+4;
     el.style.paddingTop=headerPad+'px';
     const headerH=el.offsetHeight;
-    // Set scroll body top padding = header height
+    // Set scroll body top padding only - preserve horizontal padding
     document.querySelectorAll('.scroll-body').forEach(sb=>{
       sb.style.paddingTop=(headerH+8)+'px';
+      sb.style.paddingLeft='1rem';
+      sb.style.paddingRight='1rem';
     });
   },150);
 })();

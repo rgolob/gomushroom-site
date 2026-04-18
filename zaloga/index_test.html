@@ -53,7 +53,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:.75rem 1rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
+.scroll-body{padding:.75rem .4rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
 .view{display:none;min-width:0}.view.active{display:block}
 
 /* STATS */
@@ -397,65 +397,73 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">🛒 Nova prodaja</div>
     </div>
     <div class="ch-selector-h" id="orderChannelSel">
-      <div class="ch-opt-h sel-malo" id="och-malo" onclick="orderSelectChannel('malo')">🛒 Maloprodaja</div>
-      <div class="ch-opt-h" id="och-velo" onclick="orderSelectChannel('velo')">🏪 Veleprodaja</div>
-      <div class="ch-opt-h" id="och-dar" onclick="orderSelectChannel('dar')">🎁 Podaritev</div>
-      <div class="ch-opt-h" id="och-int" onclick="orderSelectChannel('int')">🔬 Interni</div>
+      <div class="ch-opt-h sel-malo" id="och-malo" onclick="orderSelectChannel('malo')">🛒 Malo</div>
+      <div class="ch-opt-h" id="och-velo" onclick="orderSelectChannel('velo')">🏪 Vele</div>
+      <div class="ch-opt-h" id="och-dar" onclick="orderSelectChannel('dar')">🎁 Promo</div>
+      <div class="ch-opt-h" id="och-int" onclick="orderSelectChannel('int')">🔬 Interno</div>
     </div>
     <div id="orderTierSection" style="display:none;margin-bottom:.85rem">
       <div class="slabel" style="margin-bottom:.5rem">Cenovni razred</div>
       <div class="tier-pills" id="tierPills"></div>
       <div class="tier-hint" id="tierAutoHint"></div>
     </div>
-    <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
-      <div style="flex:1;min-width:160px;position:relative">
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">
+      <div style="flex:1;min-width:140px;position:relative">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Kupec / prejemnik</div>
         <input id="orderBuyer" placeholder="Ime kupca…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="buyerAutocomplete(this.value);renderOrderSummary()" autocomplete="off">
         <div id="buyerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:var(--rs);box-shadow:var(--shadow);z-index:300;max-height:200px;overflow-y:auto;margin-top:2px"></div>
       </div>
-      <div style="flex:1;min-width:140px">
+      <div style="flex:1;min-width:120px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">E-mail</div>
         <input id="orderEmail" type="email" placeholder="kupec@email.com" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="email">
       </div>
-      <div style="flex:1;min-width:120px">
+      <div style="flex:1;min-width:100px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Telefon</div>
         <input id="orderPhone" type="tel" placeholder="+386 …" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="tel">
-      </div>
-      <div style="flex:1;min-width:130px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Davčna št.</div>
-        <input id="orderVat" placeholder="SI12345678" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="off" oninput="checkPartnerVat(this.value)">
-        <div id="orderPartnerHint" style="display:none;font-size:.7rem;color:#3a6b4a;margin-top:.2rem;font-weight:500"></div>
-      </div>
-      <div style="flex:2;min-width:200px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
-        <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
-      </div>
-      <div style="min-width:150px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
-        <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
       </div>
       <div>
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
         <input type="date" id="orderDate" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
       </div>
-      <div style="flex:1;min-width:100px">
+      <div style="flex:1;min-width:80px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Popust (%)</div>
         <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
       </div>
     </div>
-    <!-- Št. računa / dobavnice -->
-    <div id="orderExtRefSection" style="display:none;margin-bottom:1rem">
-      <div class="frow">
-        <div>
+    <!-- Velo-only fields -->
+    <div id="orderVeloFields" style="display:none;margin-bottom:.6rem">
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:130px">
+          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Davčna št.</div>
+          <input id="orderVat" placeholder="SI12345678" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="off" oninput="checkPartnerVat(this.value)">
+          <div id="orderPartnerHint" style="display:none;font-size:.7rem;color:#3a6b4a;margin-top:.2rem;font-weight:500"></div>
+        </div>
+        <div style="flex:2;min-width:180px">
+          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
+          <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
+        </div>
+        <div style="min-width:130px">
+          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
+          <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
+        </div>
+      </div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+        <div style="flex:1;min-width:150px">
           <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. zunanjega računa</div>
           <input id="orderExtInvoice" placeholder="npr. R-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
         </div>
-        <div>
+        <div style="flex:1;min-width:150px">
           <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. dobavnice</div>
           <input id="orderExtDelivery" placeholder="npr. D-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
         </div>
       </div>
     </div>
+    <!-- Opomba - always visible -->
+    <div style="margin-bottom:.6rem">
+      <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Opomba</div>
+      <input id="orderNote" placeholder="Opomba k naročilu…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;box-sizing:border-box">
+    </div>
+    <!-- Ext ref section removed - now in velo fields above -->
     <div class="order-products" id="orderProductRows"></div>
     <div class="order-summary" id="orderSummary" style="display:none"></div>
     <div class="order-actions">
@@ -1912,8 +1920,9 @@ function orderSelectChannel(ch){
   Object.keys(CH).forEach(k=>document.getElementById('och-'+k).className='ch-opt-h'+(k===ch?' sel-'+k:''));
   const isVelo=ch==='velo';
   document.getElementById('orderTierSection').style.display=isVelo?'':'none';
+  document.getElementById('orderVeloFields').style.display=isVelo?'':'none';
   if(isVelo)renderTierPills();
-  renderOrderRows(); // refresh so channel stock info updates
+  renderOrderRows();
 }
 
 function renderTierPills(){
@@ -1997,8 +2006,11 @@ function renderOrderSummary(){
 
 function clearOrder(){
   products.forEach(p=>{const a=document.getElementById('oalc-'+p.id);const g=document.getElementById('ogly-'+p.id);if(a)a.value='';if(g)g.value='';});
-  document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';document.getElementById('orderDiscount').value='';
+  document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
+  document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
+  document.getElementById('orderNote').value='';
+  const hint=document.getElementById('orderPartnerHint');if(hint)hint.style.display='none';
   orderTier=null;pendingBatchAlloc={};renderOrderSummary();toast('Počiščeno');
 }
 
@@ -2187,6 +2199,7 @@ async function confirmOrder(withInvoice){
   const email=document.getElementById('orderEmail').value.trim();
   const phone=document.getElementById('orderPhone').value.trim();
   const vat=document.getElementById('orderVat')?.value.trim()||'';
+  const orderNoteVal=document.getElementById('orderNote')?.value.trim()||'';
   const address=document.getElementById('orderAddress')?.value.trim()||'';
   const street=document.getElementById('orderStreet')?.value.trim()||'';
   const post=document.getElementById('orderPost')?.value.trim()||'';
@@ -2241,7 +2254,7 @@ async function confirmOrder(withInvoice){
     invoiceId=uid();
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery});
   }
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:tier?'Razred '+tier.label:'',invoiceNum,invoiceId,
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -3373,8 +3386,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// make orderExtRefSection always visible
-const _extRef=document.getElementById('orderExtRefSection');if(_extRef)_extRef.style.display='';
+// make orderExtRefSection always visible - removed, now velo-only
 
 document.addEventListener('click',e=>{
   if(!e.target.closest('#orderBuyer')&&!e.target.closest('#buyerDropdown')){
@@ -3400,8 +3412,8 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
     // Set scroll body top padding only - preserve horizontal padding
     document.querySelectorAll('.scroll-body').forEach(sb=>{
       sb.style.paddingTop=(headerH+8)+'px';
-      sb.style.paddingLeft='1rem';
-      sb.style.paddingRight='1rem';
+      sb.style.paddingLeft='.4rem';
+      sb.style.paddingRight='.4rem';
     });
   },150);
 })();

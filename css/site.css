@@ -1626,7 +1626,7 @@ body.gallery-open .gallery-backdrop{display:block}
   object-fit:cover;
   object-position:center top; /* pokaže zgornji del slike */
   display:block;
-  filter:blur(3px);
+  /*filter:blur(3px);*/
   transform:scale(1.03);
 }
 

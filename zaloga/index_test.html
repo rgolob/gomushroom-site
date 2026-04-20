@@ -702,6 +702,35 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: UREDI SKUPINO PRODAJ -->
+<!-- SHEET: ADD ARTIKEL -->
+<div class="overlay" id="addArtikelOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">+ Dodaj artikel k računu</span><button class="shclose" onclick="closeSheet('addArtikelOverlay')">✕</button></div>
+    <div class="shbody">
+      <div id="addArtikelInfo" style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem"></div>
+      <div class="field"><label>Produkt</label>
+        <select id="aaAddProd" onchange="aaUpdatePrices()" style="width:100%;padding:.38rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink)">
+          <option value="">— Izberi —</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="field"><label>🥃 Alkohol (kom.)</label><input type="number" id="aaAddAlc" min="0" placeholder="0" inputmode="numeric" value="0"></div>
+        <div class="field"><label>🌿 Glicerin (kom.)</label><input type="number" id="aaAddGly" min="0" placeholder="0" inputmode="numeric" value="0"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Cena alc (€)</label><input type="text" id="aaAddAlcPrice" placeholder="0.00" inputmode="decimal"></div>
+        <div class="field"><label>Cena gly (€)</label><input type="text" id="aaAddGlyPrice" placeholder="0.00" inputmode="decimal"></div>
+      </div>
+      <div id="aaAddedLines"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('addArtikelOverlay')">Zapri</button>
+      <button class="bsave blue" onclick="aaAddArticle()">+ Dodaj artikel</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="editGroupOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -2801,6 +2830,7 @@ function renderSales(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
+          ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
           ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 CSV</button>`:''}
           ${(()=>{
             if(g.channel!=='velo'||isStorno)return '';
@@ -2887,6 +2917,76 @@ function exportPartnerCSV(groupId){
   toast('📦 Partner CSV izvožen');
 }
 
+let _addArtikelGroupId=null;
+
+function openAddArtikel(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
+  _addArtikelGroupId=groupId;
+  document.getElementById('addArtikelInfo').textContent=
+    `Račun: ${g.invoiceNum} · ${g.buyer||'—'} · ${g.date?g.date.split('-').reverse().join('.'):''}`;
+  const sel=document.getElementById('aaAddProd');
+  sel.innerHTML='<option value="">— Izberi —</option>'+products.map(p=>`<option value="${p.id}">${moji(p.name)} ${p.name}</option>`).join('');
+  document.getElementById('aaAddAlc').value='0';
+  document.getElementById('aaAddGly').value='0';
+  document.getElementById('aaAddAlcPrice').value='';
+  document.getElementById('aaAddGlyPrice').value='';
+  document.getElementById('aaAddedLines').innerHTML='';
+  openSheet('addArtikelOverlay');
+}
+
+function aaUpdatePrices(){
+  const pid=document.getElementById('aaAddProd').value;
+  if(!pid)return;
+  const alcP=latestPrice(pid,'alc');
+  const glyP=latestPrice(pid,'gly');
+  if(alcP)document.getElementById('aaAddAlcPrice').value=alcP.toFixed(2);
+  if(glyP)document.getElementById('aaAddGlyPrice').value=glyP.toFixed(2);
+}
+
+function aaAddArticle(){
+  const g=saleGroups.find(x=>x.id===_addArtikelGroupId);if(!g)return;
+  const pid=document.getElementById('aaAddProd').value;
+  if(!pid){toast('Izberi produkt.');return;}
+  const p=products.find(x=>x.id===pid);if(!p)return;
+  const alc=parseInt(document.getElementById('aaAddAlc').value)||0;
+  const gly=parseInt(document.getElementById('aaAddGly').value)||0;
+  if(!alc&&!gly){toast('Vnesi vsaj eno količino.');return;}
+  const alcP=parseNum(document.getElementById('aaAddAlcPrice').value)||0;
+  const glyP=parseNum(document.getElementById('aaAddGlyPrice').value)||0;
+  const lineTotal=(alc*alcP)+(gly*glyP);
+  const st=productStock(pid);
+  const isProd=g.channel==='malo'||g.channel==='velo';
+  const avAlc=isProd?st.prodAlc:st.intAlc;
+  const avGly=isProd?st.prodGly:st.intGly;
+  if(alc>avAlc){toast(`⛔ Ni dovolj 🥃 na zalogi (na voljo: ${avAlc})`);return;}
+  if(gly>avGly){toast(`⛔ Ni dovolj 🌿 na zalogi (na voljo: ${avGly})`);return;}
+  const alloc=fifoAllocate(pid,alc,gly,isProd?'prod':'int');
+  const existing=g.lines?.find(l=>l.productId===pid);
+  if(existing){
+    existing.alc=(existing.alc||0)+alc;
+    existing.gly=(existing.gly||0)+gly;
+    existing.lineTotal=(existing.lineTotal||0)+lineTotal;
+    alloc.alloc.forEach(bb=>{
+      const ex=(existing.batchBreakdown||[]).find(x=>x.batchId===bb.batchId);
+      if(ex){ex.alc=(ex.alc||0)+bb.alc;ex.gly=(ex.gly||0)+bb.gly;}
+      else{if(!existing.batchBreakdown)existing.batchBreakdown=[];existing.batchBreakdown.push(bb);}
+    });
+  } else {
+    if(!g.lines)g.lines=[];
+    g.lines.push({productId:pid,productName:p.name,alc,gly,alcPrice:alcP,glyPrice:glyP,lineTotal,batchBreakdown:alloc.alloc});
+  }
+  g.total=(g.total||0)+lineTotal;
+  g.qty=(g.qty||0)+alc+gly;
+  save();renderStats();renderInventory();renderSales();
+  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  const div=document.getElementById('aaAddedLines');
+  div.innerHTML+=`<div style="font-size:.75rem;color:#3a6b4a;padding:.3rem .5rem;background:rgba(58,107,74,.08);border-radius:6px;margin-top:.3rem">
+    ✓ ${moji(p.name)} ${p.name}${alc?' 🥃'+alc:''}${gly?' 🌿'+gly:''} · ${lineTotal.toFixed(2)} €</div>`;
+  document.getElementById('aaAddAlc').value='0';
+  document.getElementById('aaAddGly').value='0';
+  toast('Artikel dodan k računu');
+}
+
 function reprintInvoice(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;printInvoice(g);
 }
@@ -2904,6 +3004,7 @@ function openEditGroup(id){
   document.getElementById('egNote').value=g.note||'';
   openSheet('editGroupOverlay');
 }
+
 function saveEditGroup(){
   const g=saleGroups.find(x=>x.id===editingGroupId);if(!g)return;
   g.date=document.getElementById('egDate').value;

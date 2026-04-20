@@ -575,7 +575,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <!-- CUSTOMER EDIT SHEET -->
-  <div class="overlay" id="customerEditOverlay" onclick="maybeClose(event,'customerEditOverlay')">
+  <div class="overlay" id="customerEditOverlay">
     <div class="sheet">
       <div class="shandle"></div>
       <div class="shdr"><span class="shtitle">✎ Uredi stranko</span><button class="shclose" onclick="closeSheet('customerEditOverlay')">✕</button></div>
@@ -615,7 +615,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
 
 <!-- SHEET: BATCH -->
-<div class="overlay" id="batchOverlay" onclick="maybeClose(event,'batchOverlay')">
+<div class="overlay" id="batchOverlay">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shdr"><span class="shtitle" id="batchSheetTitle">Nova serija</span><button class="shclose" onclick="closeSheet('batchOverlay')">✕</button></div>
@@ -690,7 +690,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: UREDI PRODUKT -->
-<div class="overlay" id="productOverlay" onclick="maybeClose(event,'productOverlay')">
+<div class="overlay" id="productOverlay">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shdr"><span class="shtitle">Uredi produkt</span><button class="shclose" onclick="closeSheet('productOverlay')">✕</button></div>
@@ -702,7 +702,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: UREDI SKUPINO PRODAJ -->
-<div class="overlay" id="editGroupOverlay" onclick="maybeClose(event,'editGroupOverlay')">
+<div class="overlay" id="editGroupOverlay">
   <div class="sheet">
     <div class="shandle"></div>
     <div class="shdr"><span class="shtitle">Uredi zapis</span><button class="shclose" onclick="closeSheet('editGroupOverlay')">✕</button></div>

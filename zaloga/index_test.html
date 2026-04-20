@@ -3189,6 +3189,16 @@ function aaAddArticle(){
   toast('Artikel dodan k računu');
 }
 
+function issueInvoiceForGroup(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
+  const invoiceNum=nextInvNum(g.channel,g.date);
+  const invoiceId=uid();
+  g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
+  invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery});
+  save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  printInvoice(g);toast('Račun izdan: '+invoiceNum);
+}
+
 function reprintInvoice(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;printInvoice(g);
 }

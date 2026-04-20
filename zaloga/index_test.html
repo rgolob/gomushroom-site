@@ -70,6 +70,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .swrap input:focus{border-color:var(--accent)}
 .sicon{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;pointer-events:none}
 .fpill{padding:.45rem .7rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:.7rem;background:white;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;white-space:nowrap;flex-shrink:0}
+.fpill.active{background:var(--accent);border-color:var(--accent);color:var(--ink);font-weight:600}
 
 /* PRODUCT CARDS */
 .plist{display:flex;flex-direction:column;gap:.5rem;min-width:0}
@@ -531,19 +532,39 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="plist" id="salesList"></div>
   </div>
 
-</div>
-
   <!-- STRANKE -->
   <div class="view" id="view-stranke">
     <div class="view-hdr">
       <div class="view-title">👥 Stranke</div>
-      <div style="display:flex;gap:.5rem">
-        <div class="swrap" style="min-width:140px;flex:1"><span class="sicon">⌕</span><input type="text" id="customerSearch" placeholder="Išči stranko…" oninput="renderCustomers()"></div>
-      </div>
     </div>
     <div class="stats-grid" id="customerStatsGrid"></div>
-    <div id="customerList" style="margin-top:.75rem"></div>
+    <!-- Filters -->
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.75rem 0 .5rem">
+      <div class="swrap" style="min-width:140px;flex:2"><span class="sicon">⌕</span><input type="text" id="customerSearch" placeholder="Išči po imenu, emailu…" oninput="customerPage=0;renderCustomers()"></div>
+      <select id="customerChFilter" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+        <option value="">Vsi kanali</option>
+        <option value="malo">Maloprodaja</option>
+        <option value="velo">Veleprodaja</option>
+        <option value="dar">Promo</option>
+        <option value="int">Interno</option>
+      </select>
+      <select id="customerTypeFilter" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+        <option value="">Vse stranke</option>
+        <option value="returning">Stalne (2+ nakupov)</option>
+        <option value="new">Enkratne</option>
+      </select>
+      <select id="customerSort" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+        <option value="date">Zadnji nakup</option>
+        <option value="name">Po abecedi</option>
+        <option value="value">Po vrednosti</option>
+        <option value="orders">Po št. nakupov</option>
+      </select>
+    </div>
+    <div id="customerList"></div>
+    <div id="customerPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
   </div>
+
+</div>
 
   <!-- CUSTOMER DETAIL SHEET -->
   <div class="overlay" id="customerOverlay" onclick="maybeClose(event,'customerOverlay')">
@@ -1248,27 +1269,58 @@ function renderCustomerStats(){
     <div class="stat-card"><div class="stat-label">Enkratne</div><div class="stat-value">${customers.filter(c=>c.orders.length===1).length}</div></div>`;
 }
 
+let customerPage=0;
+const CUSTOMERS_PER_PAGE=10;
+
 function renderCustomers(){
   const q=(document.getElementById('customerSearch')?.value||'').toLowerCase();
+  const chFilter=document.getElementById('customerChFilter')?.value||'';
+  const typeFilter=document.getElementById('customerTypeFilter')?.value||'';
+  const sort=document.getElementById('customerSort')?.value||'date';
+
   let customers=buildCustomers();
+
+  // Filter by search
   if(q)customers=customers.filter(c=>
     c.name.toLowerCase().includes(q)||
-    c.email.toLowerCase().includes(q)||
-    c.phone.includes(q)
+    (c.email||'').toLowerCase().includes(q)||
+    (c.phone||'').includes(q)
   );
+
+  // Filter by channel
+  if(chFilter)customers=customers.filter(c=>c.channels[chFilter]);
+
+  // Filter by type
+  if(typeFilter==='returning')customers=customers.filter(c=>c.orders.length>1);
+  if(typeFilter==='new')customers=customers.filter(c=>c.orders.length===1);
+
+  // Sort
+  if(sort==='name')customers.sort((a,b)=>a.name.localeCompare(b.name,'sl'));
+  else if(sort==='value')customers.sort((a,b)=>b.total-a.total);
+  else if(sort==='orders')customers.sort((a,b)=>b.orders.length-a.orders.length);
+  // default: date (already sorted)
+
+  const total=customers.length;
+  const pages=Math.ceil(total/CUSTOMERS_PER_PAGE);
+  if(customerPage>=pages)customerPage=Math.max(0,pages-1);
+  const page=customers.slice(customerPage*CUSTOMERS_PER_PAGE,(customerPage+1)*CUSTOMERS_PER_PAGE);
+
   const el=document.getElementById('customerList');
   if(!el)return;
   if(!customers.length){
     el.innerHTML=`<div class="empty"><div class="ei">👥</div><div class="et">${q?'Ni rezultatov':'Ni strank'}</div></div>`;
+    document.getElementById('customerPager').innerHTML='';
     return;
   }
-  el.innerHTML=customers.map(c=>{
+
+  el.innerHTML=page.map(c=>{
     const topProduct=Object.entries(c.products).sort((a,b)=>b[1]-a[1])[0];
     const chLabels=Object.keys(c.channels).map(ch=>CH[ch]?.short||ch).join(', ');
     const isReturning=c.orders.length>1;
+    const isPartner=c.partner_id||getPartners().find(p=>p.vat&&p.vat===c.vat);
     return `<div class="sg-card" onclick="openCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}" style="cursor:pointer;margin-bottom:.5rem">
       <div class="sg-header">
-        <div style="min-width:2rem;text-align:center;font-size:1.3rem">${isReturning?'⭐':'👤'}</div>
+        <div style="min-width:2rem;text-align:center;font-size:1.3rem">${isPartner?'🤝':isReturning?'⭐':'👤'}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:.95rem">${c.name}</div>
           ${c.email?`<div style="font-size:.72rem;color:var(--muted)">${c.email}</div>`:''}
@@ -1276,17 +1328,29 @@ function renderCustomers(){
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:.85rem;font-weight:600;color:var(--success)">${c.total.toFixed(2)} €</div>
-          <div style="font-size:.68rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length>1?'ov':''}</div>
+          <div style="font-size:.68rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length!==1?'ov':''}</div>
           <div style="font-size:.65rem;color:var(--muted)">${c.lastDate?c.lastDate.split('-').reverse().join('.'):'—'}</div>
         </div>
       </div>
       <div style="padding:.3rem .9rem .5rem;display:flex;gap:.4rem;flex-wrap:wrap">
         ${chLabels?`<span style="font-size:.65rem;background:rgba(175,132,85,.12);padding:.15rem .4rem;border-radius:8px">${chLabels}</span>`:''}
         ${topProduct?`<span style="font-size:.65rem;background:rgba(58,107,74,.1);padding:.15rem .4rem;border-radius:8px">🏆 ${topProduct[0]}</span>`:''}
-        ${isReturning?`<span style="font-size:.65rem;background:rgba(42,90,139,.1);color:var(--ch-malo);padding:.15rem .4rem;border-radius:8px">Stalna stranka</span>`:''}
+        ${isPartner?`<span style="font-size:.65rem;background:rgba(60,107,74,.15);color:#3a6b4a;padding:.15rem .4rem;border-radius:8px">🤝 Partner</span>`:''}
+        ${isReturning&&!isPartner?`<span style="font-size:.65rem;background:rgba(42,90,139,.1);color:var(--ch-malo);padding:.15rem .4rem;border-radius:8px">Stalna</span>`:''}
       </div>
     </div>`;
   }).join('');
+
+  // Pager
+  const pager=document.getElementById('customerPager');
+  if(pages<=1){pager.innerHTML='';return;}
+  let html=`<span style="font-size:.72rem;color:var(--muted);align-self:center">${total} strank</span>`;
+  if(customerPage>0)html+=`<button class="fpill" onclick="customerPage--;renderCustomers()">‹</button>`;
+  for(let i=0;i<pages;i++){
+    html+=`<button class="fpill${i===customerPage?' active':''}" onclick="customerPage=${i};renderCustomers()">${i+1}</button>`;
+  }
+  if(customerPage<pages-1)html+=`<button class="fpill" onclick="customerPage++;renderCustomers()">›</button>`;
+  pager.innerHTML=html;
 }
 
 function openCustomer(key){

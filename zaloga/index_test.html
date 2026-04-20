@@ -551,12 +551,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">Promo</option>
         <option value="int">Interno</option>
       </select>
-      <select id="customerTypeFilter" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+      <select id="customerTypeFilter" onchange="customerPage=0;renderCustomerStats();renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
         <option value="">Vse stranke</option>
-        <option value="returning">Stalne (2+ nakupov)</option>
-        <option value="new">Enkratne</option>
-        <option value="stars4">★★★★+ (odlične)</option>
-        <option value="stars2">★★★ (dobre)</option>
+        <option value="new">Enkratne (1 nakup)</option>
+        <option value="returning">2+ nakupov</option>
+        <option value="stars2">★★★ Dobre</option>
+        <option value="stars4">★★★★ Odlične</option>
       </select>
       <select id="customerSort" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
         <option value="date">Zadnji nakup</option>
@@ -1305,13 +1305,32 @@ function renderCustomerStats(){
   const thisMonth=todayISO().slice(0,7);
   const newThisMonth=customers.filter(c=>c.lastDate.startsWith(thisMonth)).length;
   const returning=customers.filter(c=>c.orders.length>1).length;
+  const enkratne=customers.filter(c=>c.orders.length===1).length;
   const el=document.getElementById('customerStatsGrid');
   if(!el)return;
+  const activeFilter=document.getElementById('customerTypeFilter')?.value||'';
+  const cardStyle=(val)=>`cursor:pointer;${activeFilter===val?'border:1.5px solid var(--accent);background:rgba(175,132,85,.08)':''}`;
   el.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Skupaj strank</div><div class="stat-value">${customers.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Vračajoče se</div><div class="stat-value ok">${returning}</div></div>
-    <div class="stat-card"><div class="stat-label">Aktivne ta mesec</div><div class="stat-value ok">${newThisMonth}</div></div>
-    <div class="stat-card"><div class="stat-label">Enkratne</div><div class="stat-value">${customers.filter(c=>c.orders.length===1).length}</div></div>`;
+    <div class="stat-card" style="${cardStyle('')}" onclick="setCustomerFilter('')">
+      <div class="stat-label">Skupaj strank</div><div class="stat-value">${customers.length}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('returning')}" onclick="setCustomerFilter('returning')">
+      <div class="stat-label">Vračajoče se</div><div class="stat-value ok">${returning}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('active')}" onclick="setCustomerFilter('active')">
+      <div class="stat-label">Aktivne ta mesec</div><div class="stat-value ok">${newThisMonth}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('new')}" onclick="setCustomerFilter('new')">
+      <div class="stat-label">Enkratne</div><div class="stat-value">${enkratne}</div>
+    </div>`;
+}
+
+function setCustomerFilter(val){
+  const sel=document.getElementById('customerTypeFilter');
+  if(sel){sel.value=val;}
+  customerPage=0;
+  renderCustomerStats();
+  renderCustomers();
 }
 
 let customerPage=0;
@@ -1364,6 +1383,7 @@ function renderCustomers(){
   // Filter by type
   if(typeFilter==='returning')customers=customers.filter(c=>c.orders.length>1);
   if(typeFilter==='new')customers=customers.filter(c=>c.orders.length===1);
+  if(typeFilter==='active'){const m=todayISO().slice(0,7);customers=customers.filter(c=>c.lastDate.startsWith(m));}
   if(typeFilter==='stars4')customers=customers.filter(c=>customerRating(c)>=4);
   if(typeFilter==='stars2')customers=customers.filter(c=>customerRating(c)>=2);
 
@@ -1548,6 +1568,18 @@ async function saveCustomerEdit(){
     partner_id:partnerId,
   };
   await upsertCustomer(data);
+
+  // If name changed, update matching saleGroups so buildCustomers merges correctly
+  const oldRecord=_customers?.find(c=>c.id===id);
+  if(oldRecord&&oldRecord.name&&name&&oldRecord.name!==name){
+    const oldKey=oldRecord.name.toLowerCase().trim();
+    let changed=false;
+    saleGroups.forEach(g=>{
+      if((g.buyer||'').toLowerCase().trim()===oldKey){g.buyer=name;changed=true;}
+    });
+    if(changed)save();
+  }
+
   closeSheet('customerEditOverlay');
   toast('✓ Stranka shranjena');
   // Refresh customer list and detail

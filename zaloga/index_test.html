@@ -3659,25 +3659,35 @@ function genReport(type){
     if(showOstalo)ths.push('Ostalo (alc/gly)');
     let rows='';
     filtered.forEach(b=>{
-      // Filter rows by prod/int selection
       const allocProdAlc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
       const allocIntAlc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
       const allocProdGly=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
       const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
       const hasProd=(allocProdAlc+allocProdGly)>0;
       const hasInt=(allocIntAlc+allocIntGly)>0;
-      // Skip row if doesn't match filter
-      if(!showProdaja&&hasProd&&!hasInt)return;
-      if(!showInterno&&hasInt&&!hasProd)return;
+      const hasAny=hasProd||hasInt;
+
+      // Filter: če je odkljukano samo "Za prodajo" prikaži samo serije s prod alokacijo
+      // Če je odkljukano samo "Interno" prikaži samo serije z int alokacijo
+      // Če sta obe ali nobena — prikaži vse
+      if(!showProdaja&&!showInterno)return; // obe izklopljeni — nič
+      if(!showProdaja&&hasAny&&!hasInt)return; // samo int — izpusti prod-only
+      if(!showInterno&&hasAny&&!hasProd)return; // samo prod — izpusti int-only
+
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      // sold by purpose (prod/int)
       const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
       const remGly=Math.max(0,(b.gly?.qty||0)-soldGly);
+
+      // showNarejeno filter: če ni odkljukano, prikaži samo serije ki so bile prodane
+      if(!showNarejeno&&soldAlc===0&&soldGly===0)return;
+      // showOstalo filter: če je odkljukano samo ostalo, prikaži samo serije z ostankom
+      if(!showNarejeno&&!showProdaja&&!showInterno&&showOstalo&&remAlc===0&&remGly===0)return;
+
       rows+=`<tr>
         <td class="td-bold">${moji(b.productName)} ${b.productName}</td>
         <td>${b.batchNum}</td>

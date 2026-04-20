@@ -438,7 +438,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div style="flex:1;min-width:80px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Popust (%)</div>
-        <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
+        <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onDiscountChange();renderOrderSummary()">
+      </div>
+      <div style="flex:1;min-width:80px">
+        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Cena (€)</div>
+        <input type="text" id="orderFinalPrice" placeholder="avtom." inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onFinalPriceChange()">
       </div>
     </div>
     <!-- Velo-only fields: davčna, ext račun, dobavnica -->
@@ -547,10 +551,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">Promo</option>
         <option value="int">Interno</option>
       </select>
-      <select id="customerTypeFilter" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+      <select id="customerTypeFilter" onchange="customerPage=0;renderCustomerStats();renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
         <option value="">Vse stranke</option>
-        <option value="returning">Stalne (2+ nakupov)</option>
-        <option value="new">Enkratne</option>
+        <option value="new">Enkratne (1 nakup)</option>
+        <option value="returning">2+ nakupov</option>
+        <option value="stars2">★★★ Dobre</option>
+        <option value="stars4">★★★★ Odlične</option>
       </select>
       <select id="customerSort" onchange="customerPage=0;renderCustomers()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
         <option value="date">Zadnji nakup</option>
@@ -1299,17 +1305,62 @@ function renderCustomerStats(){
   const thisMonth=todayISO().slice(0,7);
   const newThisMonth=customers.filter(c=>c.lastDate.startsWith(thisMonth)).length;
   const returning=customers.filter(c=>c.orders.length>1).length;
+  const enkratne=customers.filter(c=>c.orders.length===1).length;
   const el=document.getElementById('customerStatsGrid');
   if(!el)return;
+  const activeFilter=document.getElementById('customerTypeFilter')?.value||'';
+  const cardStyle=(val)=>`cursor:pointer;${activeFilter===val?'border:1.5px solid var(--accent);background:rgba(175,132,85,.08)':''}`;
   el.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Skupaj strank</div><div class="stat-value">${customers.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Vračajoče se</div><div class="stat-value ok">${returning}</div></div>
-    <div class="stat-card"><div class="stat-label">Aktivne ta mesec</div><div class="stat-value ok">${newThisMonth}</div></div>
-    <div class="stat-card"><div class="stat-label">Enkratne</div><div class="stat-value">${customers.filter(c=>c.orders.length===1).length}</div></div>`;
+    <div class="stat-card" style="${cardStyle('')}" onclick="setCustomerFilter('')">
+      <div class="stat-label">Skupaj strank</div><div class="stat-value">${customers.length}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('returning')}" onclick="setCustomerFilter('returning')">
+      <div class="stat-label">Vračajoče se</div><div class="stat-value ok">${returning}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('active')}" onclick="setCustomerFilter('active')">
+      <div class="stat-label">Aktivne ta mesec</div><div class="stat-value ok">${newThisMonth}</div>
+    </div>
+    <div class="stat-card" style="${cardStyle('new')}" onclick="setCustomerFilter('new')">
+      <div class="stat-label">Enkratne</div><div class="stat-value">${enkratne}</div>
+    </div>`;
+}
+
+function setCustomerFilter(val){
+  const sel=document.getElementById('customerTypeFilter');
+  if(sel){sel.value=val;}
+  customerPage=0;
+  renderCustomerStats();
+  renderCustomers();
 }
 
 let customerPage=0;
 const CUSTOMERS_PER_PAGE=10;
+const expandedCustomers=new Set();
+
+function toggleCustomer(key){
+  if(expandedCustomers.has(key))expandedCustomers.delete(key);
+  else expandedCustomers.add(key);
+  renderCustomers();
+}
+
+function customerRating(c){
+  // 1-5 stars based on total spend and order frequency in last 12 months
+  const now=new Date();
+  const year=new Date(now);year.setFullYear(now.getFullYear()-1);
+  const yearStr=year.toISOString().slice(0,10);
+  const recentOrders=c.orders.filter(o=>o.date>=yearStr);
+  const recentTotal=recentOrders.reduce((s,o)=>s+(o.total||0),0);
+  // Score: up to 3 stars for spend, up to 2 for frequency
+  let stars=0;
+  if(recentTotal>=500)stars+=3;
+  else if(recentTotal>=200)stars+=2;
+  else if(recentTotal>=50)stars+=1;
+  if(recentOrders.length>=6)stars+=2;
+  else if(recentOrders.length>=3)stars+=1;
+  return Math.min(5,Math.max(0,stars));
+}
+
+
 
 function renderCustomers(){
   const q=(document.getElementById('customerSearch')?.value||'').toLowerCase();
@@ -1332,6 +1383,9 @@ function renderCustomers(){
   // Filter by type
   if(typeFilter==='returning')customers=customers.filter(c=>c.orders.length>1);
   if(typeFilter==='new')customers=customers.filter(c=>c.orders.length===1);
+  if(typeFilter==='active'){const m=todayISO().slice(0,7);customers=customers.filter(c=>c.lastDate.startsWith(m));}
+  if(typeFilter==='stars4')customers=customers.filter(c=>customerRating(c)>=4);
+  if(typeFilter==='stars2')customers=customers.filter(c=>customerRating(c)>=2);
 
   // Sort
   if(sort==='name')customers.sort((a,b)=>a.name.localeCompare(b.name,'sl'));
@@ -1353,30 +1407,50 @@ function renderCustomers(){
   }
 
   el.innerHTML=page.map(c=>{
-    const topProduct=Object.entries(c.products).sort((a,b)=>b[1]-a[1])[0];
-    const chLabels=Object.keys(c.channels).map(ch=>CH[ch]?.short||ch).join(', ');
-    const isReturning=c.orders.length>1;
     const isPartner=c.partner_id||getPartners().find(p=>p.vat&&p.vat===c.vat);
-    return `<div class="sg-card" onclick="openCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}" style="cursor:pointer;margin-bottom:.5rem">
-      <div class="sg-header">
-        <div style="min-width:2rem;text-align:center;font-size:1.3rem">${isPartner?'🤝':isReturning?'⭐':'👤'}</div>
+    const stars=customerRating(c);
+    const starsHtml='★'.repeat(stars)+'☆'.repeat(5-stars);
+    const isExpanded=expandedCustomers.has(c.key);
+    const topProduct=Object.entries(c.products).sort((a,b)=>b[1]-a[1])[0];
+    const orders=[...c.orders].sort((a,b)=>b.date.localeCompare(a.date));
+
+    const expandedHtml=isExpanded?`
+      <div style="padding:.5rem .9rem .75rem;border-top:1px solid var(--border)">
+        ${c.email||c.phone||c.street?`<div style="display:flex;flex-direction:column;gap:.2rem;margin-bottom:.6rem">
+          ${c.email?`<div style="font-size:.75rem">✉ <a href="mailto:${c.email}" style="color:var(--accent)">${c.email}</a></div>`:''}
+          ${c.phone?`<div style="font-size:.75rem">📞 <a href="tel:${c.phone}" style="color:var(--accent)">${c.phone}</a></div>`:''}
+          ${c.street?`<div style="font-size:.72rem;color:var(--muted)">📍 ${c.street}${c.post?', '+c.post:''}</div>`:''}
+        </div>`:''}
+        ${isPartner?`<div style="font-size:.72rem;background:rgba(60,107,74,.1);border-radius:6px;padding:.3rem .6rem;margin-bottom:.6rem;color:#3a6b4a">🤝 Partner ID: ${typeof isPartner==='object'?isPartner.id:c.partner_id}</div>`:''}
+        <div class="slabel" style="margin-bottom:.3rem">Nakupi</div>
+        ${orders.map(g=>`<div style="padding:.4rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <span style="font-size:.72rem;font-weight:600">${g.date?g.date.split('-').reverse().join('.'):'—'}</span>
+            <span class="ch-pill ${CH[g.channel]?.cls||''}" style="margin-left:.3rem;font-size:.6rem;padding:.1rem .35rem">${CH[g.channel]?.icon||''}</span>
+            ${g.invoiceNum?`<span style="font-size:.62rem;color:var(--muted);margin-left:.2rem">${g.invoiceNum}</span>`:''}
+            <div style="font-size:.68rem;color:var(--muted);margin-top:.15rem">${(g.lines||[]).map(l=>`${moji(l.productName)} ${l.productName}${l.alc?' 🥃'+l.alc:''}${l.gly?' 🌿'+l.gly:''}`).join(' · ')}</div>
+          </div>
+          <div style="font-size:.82rem;font-weight:600;color:var(--success);flex-shrink:0;margin-left:.5rem">${(g.total||0).toFixed(2)} €</div>
+        </div>`).join('')}
+        <div style="display:flex;gap:.4rem;margin-top:.6rem">
+          <button class="tbtn" onclick="event.stopPropagation();openCustomerEdit('${c.key.replace(/'/g,"\\'")}')">✎ Uredi</button>
+        </div>
+      </div>`:''
+
+    return `<div class="sale-group" style="margin-bottom:.5rem">
+      <div class="sg-header" style="cursor:pointer" onclick="toggleCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}">
+        <div style="font-size:1.1rem;width:1.6rem;text-align:center;flex-shrink:0">${isPartner?'🤝':c.orders.length>1?'⭐':'👤'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:.95rem">${c.name}</div>
-          ${c.email?`<div style="font-size:.72rem;color:var(--muted)">${c.email}</div>`:''}
-          ${c.phone?`<div style="font-size:.72rem;color:var(--muted)">${c.phone}</div>`:''}
+          <div style="font-weight:600;font-size:.92rem">${c.name}</div>
+          <div style="font-size:.65rem;color:var(--muted)">${starsHtml}${topProduct?` · 🏆 ${topProduct[0]}`:''}</div>
         </div>
-        <div style="text-align:right;flex-shrink:0">
+        <div style="text-align:right;flex-shrink:0;margin-right:.3rem">
           <div style="font-size:.85rem;font-weight:600;color:var(--success)">${c.total.toFixed(2)} €</div>
-          <div style="font-size:.68rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length!==1?'ov':''}</div>
-          <div style="font-size:.65rem;color:var(--muted)">${c.lastDate?c.lastDate.split('-').reverse().join('.'):'—'}</div>
+          <div style="font-size:.65rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length!==1?'ov':''} · ${c.lastDate?c.lastDate.split('-').reverse().join('.'):'—'}</div>
         </div>
+        <div style="font-size:.7rem;color:var(--muted);align-self:center">${isExpanded?'▲':'▼'}</div>
       </div>
-      <div style="padding:.3rem .9rem .5rem;display:flex;gap:.4rem;flex-wrap:wrap">
-        ${chLabels?`<span style="font-size:.65rem;background:rgba(175,132,85,.12);padding:.15rem .4rem;border-radius:8px">${chLabels}</span>`:''}
-        ${topProduct?`<span style="font-size:.65rem;background:rgba(58,107,74,.1);padding:.15rem .4rem;border-radius:8px">🏆 ${topProduct[0]}</span>`:''}
-        ${isPartner?`<span style="font-size:.65rem;background:rgba(60,107,74,.15);color:#3a6b4a;padding:.15rem .4rem;border-radius:8px">🤝 Partner</span>`:''}
-        ${isReturning&&!isPartner?`<span style="font-size:.65rem;background:rgba(42,90,139,.1);color:var(--ch-malo);padding:.15rem .4rem;border-radius:8px">Stalna</span>`:''}
-      </div>
+      ${expandedHtml}
     </div>`;
   }).join('');
 
@@ -1473,7 +1547,6 @@ async function saveCustomerEdit(){
   if(partnerId&&partnerId!==(oldRecord?.partner_id||'')){
     const pwd=prompt('Partner ID sprememba zahteva geslo:');
     if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
-    // Also update partners list
     if(partnerId){
       const partners=getPartners();
       if(!partners.find(p=>p.id===partnerId)){
@@ -1494,6 +1567,17 @@ async function saveCustomerEdit(){
     partner_id:partnerId,
   };
   await upsertCustomer(data);
+
+  // If name changed, update matching saleGroups so buildCustomers merges correctly
+  if(oldRecord&&oldRecord.name&&name&&oldRecord.name!==name){
+    const oldKey=oldRecord.name.toLowerCase().trim();
+    let changed=false;
+    saleGroups.forEach(g=>{
+      if((g.buyer||'').toLowerCase().trim()===oldKey){g.buyer=name;changed=true;}
+    });
+    if(changed)save();
+  }
+
   closeSheet('customerEditOverlay');
   toast('✓ Stranka shranjena');
   // Refresh customer list and detail
@@ -1834,11 +1918,11 @@ function productStock(productId){
     allocProdGly+=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0);
     allocIntGly +=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
   });
-  // sold per purpose: malo+velo = prodaja, dar+int = interno
+  // sold per purpose: malo+velo+dar = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   saleGroups.forEach(g=>{
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
   });
@@ -1906,7 +1990,13 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
-  if(id==='stranke'){renderCustomerStats();renderCustomers();}
+  if(id==='stranke'){
+    if(!_customers){
+      loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
+    } else {
+      renderCustomerStats();renderCustomers();
+    }
+  }
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
   if(oab)oab.style.display=id==='narocilo'?'flex':'none';
@@ -2438,13 +2528,100 @@ function renderOrderRows(){
         <div class="order-row-name">${moji(p.name)} ${p.name}</div>
         <div class="order-row-meta" style="color:var(--ch-${isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
       </div>
-      <div class="order-row-inputs">
-        <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');renderOrderSummary()"></div>
-        <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');renderOrderSummary()"></div>
+      <div style="display:flex;flex-direction:column;gap:.3rem;flex-shrink:0">
+        <div class="order-row-inputs">
+          <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
+          <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
+        </div>
+        <div style="display:flex;gap:.3rem;align-items:center">
+          <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€ skupaj:</span>
+          <input type="text" id="oprice-${p.id}" placeholder="auto" inputmode="decimal"
+            style="width:65px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;color:var(--ink);outline:none"
+            oninput="onFinalPriceChange('${p.id}');renderOrderSummary()" title="Vnesi končni znesek — popust se izračuna avtomatično">
+        </div>
       </div>
     </div>
-    <div id="owarn-${p.id}" style="font-size:.7rem;color:var(--low);padding:.15rem 1rem .4rem;display:none"></div>`;
+    <div id="owarn-${p.id}" style="font-size:.7rem;padding:.15rem 1rem .4rem;display:none"></div>`;
   }).join('');
+  renderOrderSummary();
+}
+
+function onQtyChange(productId){
+  const priceEl=document.getElementById('oprice-'+productId);
+  if(priceEl?.value)onFinalPriceChange(productId);
+  // Also update global final price field if discount is set
+  syncFinalPrice();
+}
+
+function onDiscountChange(){
+  // When discount changes, update final price field
+  syncFinalPrice();
+}
+
+function syncFinalPrice(){
+  // Calculate full total and apply discount to fill final price field
+  const discount=parseNum(document.getElementById('orderDiscount').value);
+  if(!discount){
+    // Don't clear final price if user typed it
+    return;
+  }
+  const fullTotal=getFullTotal();
+  if(!fullTotal)return;
+  const finalPrice=fullTotal*(1-discount/100);
+  const fp=document.getElementById('orderFinalPrice');
+  if(fp&&document.activeElement!==fp){
+    fp.value=finalPrice.toFixed(2);
+  }
+}
+
+function getFullTotal(){
+  // Full total without any discount
+  const tier=getActiveTier();
+  const isVelo=orderChannel==='velo';
+  return products.reduce((sum,p)=>{
+    const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
+    const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
+    if(!alc&&!gly)return sum;
+    let alcP,glyP;
+    if(isVelo&&tier){alcP=tier.alc;glyP=tier.gly;}
+    else{alcP=latestPrice(p.id,'alc');glyP=latestPrice(p.id,'gly');}
+    return sum+alc*alcP+gly*glyP;
+  },0);
+}
+
+function onFinalPriceChange(productId){
+  if(productId){
+    // Per-product hint (existing logic)
+    const finalTotal=parseNum(document.getElementById('oprice-'+productId)?.value||'');
+    const warn=document.getElementById('owarn-'+productId);
+    if(!warn)return;
+    if(!finalTotal){warn.style.display='none';return;}
+    const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
+    const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
+    if(!alc&&!gly){warn.style.display='none';return;}
+    const alcP=latestPrice(productId,'alc');
+    const glyP=latestPrice(productId,'gly');
+    const fullTotal=alc*alcP+gly*glyP;
+    if(!fullTotal){warn.style.display='none';return;}
+    const disc=((1-finalTotal/fullTotal)*100);
+    if(disc>0){warn.textContent=`Popust: ${disc.toFixed(2)}% (redna: ${fullTotal.toFixed(2)} €)`;warn.style.color='var(--ch-velo)';warn.style.display='';}
+    else{warn.style.display='none';}
+    return;
+  }
+  // Global final price field — calculate discount
+  const finalPrice=parseNum(document.getElementById('orderFinalPrice')?.value||'');
+  const discEl=document.getElementById('orderDiscount');
+  if(!finalPrice){
+    // Cleared — reset discount
+    if(discEl&&document.activeElement===document.getElementById('orderFinalPrice'))discEl.value='';
+    return;
+  }
+  const fullTotal=getFullTotal();
+  if(!fullTotal)return;
+  const disc=((1-finalPrice/fullTotal)*100);
+  if(discEl&&document.activeElement!==discEl){
+    discEl.value=disc>0?disc.toFixed(2):'0';
+  }
   renderOrderSummary();
 }
 
@@ -2453,15 +2630,29 @@ function collectOrderLines(){
   const discMult=1-discount/100;
   const tier=getActiveTier();
   const isVelo=orderChannel==='velo';
-  const isRevenue=true;
   return products.map(p=>{
     const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
-    let alcP,glyP;
-    if(isVelo&&tier){alcP=tier.alc*discMult;glyP=tier.gly*discMult;}
-    else{alcP=latestPrice(p.id,'alc')*discMult;glyP=latestPrice(p.id,'gly')*discMult;}
-    const lineTotal=isRevenue?(alc*alcP+gly*glyP):0;
+    const customTotal=parseNum(document.getElementById('oprice-'+p.id)?.value||'');
+    let alcP,glyP,lineTotal;
+    if(customTotal){
+      // Custom total — distribute proportionally between alc and gly
+      const alcBase=latestPrice(p.id,'alc');
+      const glyBase=latestPrice(p.id,'gly');
+      const fullTotal=alc*alcBase+gly*glyBase;
+      const ratio=fullTotal>0?customTotal/fullTotal:1;
+      alcP=alcBase*ratio;
+      glyP=glyBase*ratio;
+      lineTotal=customTotal;
+    } else if(isVelo&&tier){
+      alcP=tier.alc*discMult;glyP=tier.gly*discMult;
+      lineTotal=alc*alcP+gly*glyP;
+    } else {
+      alcP=latestPrice(p.id,'alc')*discMult;
+      glyP=latestPrice(p.id,'gly')*discMult;
+      lineTotal=alc*alcP+gly*glyP;
+    }
     return{p,alc,gly,alcP,glyP,lineTotal};
   }).filter(Boolean);
 }
@@ -2476,18 +2667,29 @@ function renderOrderSummary(){
   const grandTotal=lines.reduce((a,l)=>a+l.lineTotal,0);
   const totalQty=lines.reduce((a,l)=>a+l.alc+l.gly,0);
   if(orderChannel==='velo'){const auto=autoTier(totalQty);document.getElementById('tierAutoHint').textContent=orderTier?`Ročno: ${orderTier.label} · Samodejno: ${auto?auto.label:'–'}`:`Samodejno: ${auto?auto.label:'pod minimumom'}`;}
+  // Sync final price field if discount is active and user isn't editing it
+  const fp=document.getElementById('orderFinalPrice');
+  if(fp&&discount>0&&document.activeElement!==fp){
+    fp.value=grandTotal.toFixed(2);
+  }
   box.style.display='';
-  const linesHtml=lines.map(l=>`<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}</span><span class="os-val">${isRevenue?l.lineTotal.toFixed(2)+' €':'–'}</span></div>`).join('');
+  const linesHtml=lines.map(l=>`<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}</span><span class="os-val">${l.lineTotal.toFixed(2)+' €'}</span></div>`).join('');
+  const fullTotal=getFullTotal();
   box.innerHTML=`<div class="os-title">Povzetek</div><div class="os-lines">${linesHtml}
-    ${discount>0?`<div class="os-line"><span class="os-label">Popust ${discount}%</span><span class="os-val" style="color:var(--success)">–${(grandTotal/(1-discount/100)*discount/100).toFixed(2)} €</span></div>`:''}
+    ${discount>0?`<div class="os-line"><span class="os-label">Popust ${discount}%</span><span class="os-val" style="color:var(--success)">–${(fullTotal-grandTotal).toFixed(2)} €</span></div>`:''}
     ${tier&&orderChannel==='velo'?`<div class="os-line"><span class="os-label">Razred</span><span style="color:var(--ch-velo)">${tier.label}</span></div>`:''}
     <div class="os-divider"></div>
-    <div class="os-total-row"><span class="os-total-label">Skupaj (${totalQty} kom.)</span><span class="os-total-val">${isRevenue?grandTotal.toFixed(2)+' €':'–'}</span></div>
+    <div class="os-total-row"><span class="os-total-label">Skupaj (${totalQty} kom.)</span><span class="os-total-val">${grandTotal.toFixed(2)+' €'}</span></div>
   </div>`;
 }
 
 function clearOrder(){
-  products.forEach(p=>{const a=document.getElementById('oalc-'+p.id);const g=document.getElementById('ogly-'+p.id);if(a)a.value='';if(g)g.value='';});
+  products.forEach(p=>{
+    const a=document.getElementById('oalc-'+p.id);
+    const g=document.getElementById('ogly-'+p.id);
+    const pr=document.getElementById('oprice-'+p.id);
+    if(a)a.value='';if(g)g.value='';if(pr)pr.value='';
+  });;
   document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
@@ -2567,7 +2769,7 @@ let editingBatchAllocProductId=null;
 function computePendingAlloc(){
   pendingBatchAlloc={};
   const lines=collectOrderLines();
-  const purpose=(orderChannel==='int'||orderChannel==='dar')?'int':'prod';
+  const purpose=(orderChannel==='int')?'int':'prod';
   const allWarnings=[];
   let hasUnfulfilled=false;
   lines.forEach(l=>{
@@ -2985,6 +3187,16 @@ function aaAddArticle(){
   document.getElementById('aaAddAlc').value='0';
   document.getElementById('aaAddGly').value='0';
   toast('Artikel dodan k računu');
+}
+
+function issueInvoiceForGroup(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
+  const invoiceNum=nextInvNum(g.channel,g.date);
+  const invoiceId=uid();
+  g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
+  invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery});
+  save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  printInvoice(g);toast('Račun izdan: '+invoiceNum);
 }
 
 function reprintInvoice(groupId){
@@ -3777,8 +3989,8 @@ function genReport(type){
 
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);

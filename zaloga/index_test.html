@@ -1079,17 +1079,27 @@ async function clearAllData(){
   if(!ok)return;
   const ok2=await showConfirm('Si prepričan? Vsi podatki bodo trajno izbrisani.','Da, izbriši');
   if(!ok2)return;
+  // Ask about customers separately
+  const delCustomers=await showConfirm('Izbriši tudi bazo strank?\n\nIme, email, telefon, opombe — vse kontaktne podatke.\n\nČe izbereš NE, stranke ostanejo v bazi.','Da, izbriši tudi stranke');
+
   products=[];batches=[];saleGroups=[];invoices=[];invCounters={malo:0,velo:0,dar:0,int:0};
   ['gm_products','gm_batches','gm_saleGroups','gm_invoices','gm_invCounters'].forEach(k=>localStorage.removeItem(k));
-  try{
-    await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.gm_data`,{method:'DELETE',headers:SB_HEADERS});
-  }catch(e){}
+  try{await fetch(`${SB_URL}/rest/v1/gm_data?key=eq.gm_data`,{method:'DELETE',headers:SB_HEADERS});}catch(e){}
+
+  if(delCustomers){
+    try{await fetch(`${SB_URL}/rest/v1/gm_customers?id=neq.null`,{method:'DELETE',headers:SB_HEADERS});}catch(e){}
+    _customers=[];
+    toast('Vsi podatki izbrisani (vključno s strankami)');
+  } else {
+    toast('Podatki izbrisani · stranke ohranjene');
+  }
+
   renderStats();renderInventory();
   if(currentTab==='serije'){renderProductMgmt();renderBatches();}
   if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
   if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   if(currentTab==='narocilo')renderOrderRows();
-  toast('Vsi podatki izbrisani');
+  if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
 }
 
 
@@ -3258,15 +3268,18 @@ async function printInvoice(group){
 }
 
 // ── BACKUP / RESTORE ──
-function backupJSON(){
+async function backupJSON(){
+  // Load fresh customers from Supabase
+  let customersBackup=_customers||[];
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_customers?select=*`,{headers:SB_HEADERS});
+    if(r.ok)customersBackup=await r.json();
+  }catch(e){}
   const backup={
-    version:2,
+    version:3,
     exportedAt:new Date().toISOString(),
-    products,
-    batches,
-    saleGroups,
-    invoices,
-    invCounters,
+    products,batches,saleGroups,invoices,invCounters,
+    customers:customersBackup,
   };
   const json=JSON.stringify(backup,null,2);
   const date=todayISO().replace(/-/g,'');
@@ -3275,7 +3288,7 @@ function backupJSON(){
   a.download=`gomushroom-backup-${date}.json`;
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),10000);
-  toast('💾 Backup shranjen');
+  toast('💾 Backup shranjen (vključno s strankami)');
 }
 
 async function restoreJSON(e){
@@ -3296,23 +3309,36 @@ async function restoreJSON(e){
         alert('Napaka: fajl ni veljaven GoMushroom backup.');
         return;
       }
-      // Restore
+      // Restore gm_data
       products=data.products||[];
       batches=data.batches||[];
       saleGroups=data.saleGroups||[];
       invoices=data.invoices||[];
       invCounters=data.invCounters||{malo:0,velo:0,dar:0,int:0};
-      // Ensure invCounters has all keys
       ['malo','velo','dar','int'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
-      // Save everywhere
       save();
+      // Restore customers if present in backup
+      if(data.customers?.length){
+        setSyncStatus('⟳ Obnavjam stranke…');
+        for(const c of data.customers){
+          try{
+            await fetch(`${SB_URL}/rest/v1/gm_customers`,{
+              method:'POST',
+              headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
+              body:JSON.stringify({...c,updated_at:new Date().toISOString()})
+            });
+          }catch(e){}
+        }
+        _customers=data.customers;
+        setSyncStatus('');
+      }
       // Re-render everything
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
       if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
       if(currentTab==='narocilo')renderOrderRows();
-      const exportedAt=data.exportedAt?new Date(data.exportedAt).toLocaleString('sl-SI'):'neznano';
-      toast(`✓ Obnovljeno ${products.length} prod. · ${batches.length} serij · ${saleGroups.length} prodaj`);
+      if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
+      toast(`✓ Obnovljeno · ${products.length} prod · ${batches.length} serij · ${saleGroups.length} prodaj${data.customers?.length?' · '+data.customers.length+' strank':''}`);
     }catch(err){
       alert('Napaka pri branju fajla: '+err.message);
     }

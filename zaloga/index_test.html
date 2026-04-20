@@ -1266,7 +1266,7 @@ function renderCustomers(){
     const topProduct=Object.entries(c.products).sort((a,b)=>b[1]-a[1])[0];
     const chLabels=Object.keys(c.channels).map(ch=>CH[ch]?.short||ch).join(', ');
     const isReturning=c.orders.length>1;
-    return `<div class="sg-card" onclick="openCustomer(${JSON.stringify(c.key)})" style="cursor:pointer;margin-bottom:.5rem">
+    return `<div class="sg-card" onclick="openCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}" style="cursor:pointer;margin-bottom:.5rem">
       <div class="sg-header">
         <div style="min-width:2rem;text-align:center;font-size:1.3rem">${isReturning?'⭐':'👤'}</div>
         <div style="flex:1;min-width:0">
@@ -3779,7 +3779,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
   },150);
 })();
 
- 
+
 (function(){
   let auth=null;
   try{auth=localStorage.getItem('gm_auth');}catch(e){}

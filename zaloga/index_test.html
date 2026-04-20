@@ -1838,11 +1838,11 @@ function productStock(productId){
     allocProdGly+=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0);
     allocIntGly +=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
   });
-  // sold per purpose: malo+velo = prodaja, dar+int = interno
+  // sold per purpose: malo+velo+dar = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   saleGroups.forEach(g=>{
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
   });
@@ -2683,7 +2683,7 @@ let editingBatchAllocProductId=null;
 function computePendingAlloc(){
   pendingBatchAlloc={};
   const lines=collectOrderLines();
-  const purpose=(orderChannel==='int'||orderChannel==='dar')?'int':'prod';
+  const purpose=(orderChannel==='int')?'int':'prod';
   const allWarnings=[];
   let hasUnfulfilled=false;
   lines.forEach(l=>{
@@ -3893,8 +3893,8 @@ function genReport(type){
 
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);

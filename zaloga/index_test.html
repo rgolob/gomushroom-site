@@ -438,7 +438,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div style="flex:1;min-width:80px">
         <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Popust (%)</div>
-        <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
+        <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onDiscountChange();renderOrderSummary()">
+      </div>
+      <div style="flex:1;min-width:80px">
+        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Končna cena (€)</div>
+        <input type="text" id="orderFinalPrice" placeholder="avtom." inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onFinalPriceChange()">
       </div>
     </div>
     <!-- Velo-only fields: davčna, ext račun, dobavnica -->
@@ -2438,13 +2442,100 @@ function renderOrderRows(){
         <div class="order-row-name">${moji(p.name)} ${p.name}</div>
         <div class="order-row-meta" style="color:var(--ch-${isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
       </div>
-      <div class="order-row-inputs">
-        <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');renderOrderSummary()"></div>
-        <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');renderOrderSummary()"></div>
+      <div style="display:flex;flex-direction:column;gap:.3rem;flex-shrink:0">
+        <div class="order-row-inputs">
+          <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
+          <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
+        </div>
+        <div style="display:flex;gap:.3rem;align-items:center">
+          <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€ skupaj:</span>
+          <input type="text" id="oprice-${p.id}" placeholder="auto" inputmode="decimal"
+            style="width:65px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;color:var(--ink);outline:none"
+            oninput="onFinalPriceChange('${p.id}');renderOrderSummary()" title="Vnesi končni znesek — popust se izračuna avtomatično">
+        </div>
       </div>
     </div>
-    <div id="owarn-${p.id}" style="font-size:.7rem;color:var(--low);padding:.15rem 1rem .4rem;display:none"></div>`;
+    <div id="owarn-${p.id}" style="font-size:.7rem;padding:.15rem 1rem .4rem;display:none"></div>`;
   }).join('');
+  renderOrderSummary();
+}
+
+function onQtyChange(productId){
+  const priceEl=document.getElementById('oprice-'+productId);
+  if(priceEl?.value)onFinalPriceChange(productId);
+  // Also update global final price field if discount is set
+  syncFinalPrice();
+}
+
+function onDiscountChange(){
+  // When discount changes, update final price field
+  syncFinalPrice();
+}
+
+function syncFinalPrice(){
+  // Calculate full total and apply discount to fill final price field
+  const discount=parseNum(document.getElementById('orderDiscount').value);
+  if(!discount){
+    // Don't clear final price if user typed it
+    return;
+  }
+  const fullTotal=getFullTotal();
+  if(!fullTotal)return;
+  const finalPrice=fullTotal*(1-discount/100);
+  const fp=document.getElementById('orderFinalPrice');
+  if(fp&&document.activeElement!==fp){
+    fp.value=finalPrice.toFixed(2);
+  }
+}
+
+function getFullTotal(){
+  // Full total without any discount
+  const tier=getActiveTier();
+  const isVelo=orderChannel==='velo';
+  return products.reduce((sum,p)=>{
+    const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
+    const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
+    if(!alc&&!gly)return sum;
+    let alcP,glyP;
+    if(isVelo&&tier){alcP=tier.alc;glyP=tier.gly;}
+    else{alcP=latestPrice(p.id,'alc');glyP=latestPrice(p.id,'gly');}
+    return sum+alc*alcP+gly*glyP;
+  },0);
+}
+
+function onFinalPriceChange(productId){
+  if(productId){
+    // Per-product hint (existing logic)
+    const finalTotal=parseNum(document.getElementById('oprice-'+productId)?.value||'');
+    const warn=document.getElementById('owarn-'+productId);
+    if(!warn)return;
+    if(!finalTotal){warn.style.display='none';return;}
+    const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
+    const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
+    if(!alc&&!gly){warn.style.display='none';return;}
+    const alcP=latestPrice(productId,'alc');
+    const glyP=latestPrice(productId,'gly');
+    const fullTotal=alc*alcP+gly*glyP;
+    if(!fullTotal){warn.style.display='none';return;}
+    const disc=((1-finalTotal/fullTotal)*100);
+    if(disc>0){warn.textContent=`Popust: ${disc.toFixed(2)}% (redna: ${fullTotal.toFixed(2)} €)`;warn.style.color='var(--ch-velo)';warn.style.display='';}
+    else{warn.style.display='none';}
+    return;
+  }
+  // Global final price field — calculate discount
+  const finalPrice=parseNum(document.getElementById('orderFinalPrice')?.value||'');
+  const discEl=document.getElementById('orderDiscount');
+  if(!finalPrice){
+    // Cleared — reset discount
+    if(discEl&&document.activeElement===document.getElementById('orderFinalPrice'))discEl.value='';
+    return;
+  }
+  const fullTotal=getFullTotal();
+  if(!fullTotal)return;
+  const disc=((1-finalPrice/fullTotal)*100);
+  if(discEl&&document.activeElement!==discEl){
+    discEl.value=disc>0?disc.toFixed(2):'0';
+  }
   renderOrderSummary();
 }
 
@@ -2453,15 +2544,29 @@ function collectOrderLines(){
   const discMult=1-discount/100;
   const tier=getActiveTier();
   const isVelo=orderChannel==='velo';
-  const isRevenue=true;
   return products.map(p=>{
     const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
-    let alcP,glyP;
-    if(isVelo&&tier){alcP=tier.alc*discMult;glyP=tier.gly*discMult;}
-    else{alcP=latestPrice(p.id,'alc')*discMult;glyP=latestPrice(p.id,'gly')*discMult;}
-    const lineTotal=isRevenue?(alc*alcP+gly*glyP):0;
+    const customTotal=parseNum(document.getElementById('oprice-'+p.id)?.value||'');
+    let alcP,glyP,lineTotal;
+    if(customTotal){
+      // Custom total — distribute proportionally between alc and gly
+      const alcBase=latestPrice(p.id,'alc');
+      const glyBase=latestPrice(p.id,'gly');
+      const fullTotal=alc*alcBase+gly*glyBase;
+      const ratio=fullTotal>0?customTotal/fullTotal:1;
+      alcP=alcBase*ratio;
+      glyP=glyBase*ratio;
+      lineTotal=customTotal;
+    } else if(isVelo&&tier){
+      alcP=tier.alc*discMult;glyP=tier.gly*discMult;
+      lineTotal=alc*alcP+gly*glyP;
+    } else {
+      alcP=latestPrice(p.id,'alc')*discMult;
+      glyP=latestPrice(p.id,'gly')*discMult;
+      lineTotal=alc*alcP+gly*glyP;
+    }
     return{p,alc,gly,alcP,glyP,lineTotal};
   }).filter(Boolean);
 }
@@ -2476,18 +2581,29 @@ function renderOrderSummary(){
   const grandTotal=lines.reduce((a,l)=>a+l.lineTotal,0);
   const totalQty=lines.reduce((a,l)=>a+l.alc+l.gly,0);
   if(orderChannel==='velo'){const auto=autoTier(totalQty);document.getElementById('tierAutoHint').textContent=orderTier?`Ročno: ${orderTier.label} · Samodejno: ${auto?auto.label:'–'}`:`Samodejno: ${auto?auto.label:'pod minimumom'}`;}
+  // Sync final price field if discount is active and user isn't editing it
+  const fp=document.getElementById('orderFinalPrice');
+  if(fp&&discount>0&&document.activeElement!==fp){
+    fp.value=grandTotal.toFixed(2);
+  }
   box.style.display='';
-  const linesHtml=lines.map(l=>`<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}</span><span class="os-val">${isRevenue?l.lineTotal.toFixed(2)+' €':'–'}</span></div>`).join('');
+  const linesHtml=lines.map(l=>`<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}</span><span class="os-val">${l.lineTotal.toFixed(2)+' €'}</span></div>`).join('');
+  const fullTotal=getFullTotal();
   box.innerHTML=`<div class="os-title">Povzetek</div><div class="os-lines">${linesHtml}
-    ${discount>0?`<div class="os-line"><span class="os-label">Popust ${discount}%</span><span class="os-val" style="color:var(--success)">–${(grandTotal/(1-discount/100)*discount/100).toFixed(2)} €</span></div>`:''}
+    ${discount>0?`<div class="os-line"><span class="os-label">Popust ${discount}%</span><span class="os-val" style="color:var(--success)">–${(fullTotal-grandTotal).toFixed(2)} €</span></div>`:''}
     ${tier&&orderChannel==='velo'?`<div class="os-line"><span class="os-label">Razred</span><span style="color:var(--ch-velo)">${tier.label}</span></div>`:''}
     <div class="os-divider"></div>
-    <div class="os-total-row"><span class="os-total-label">Skupaj (${totalQty} kom.)</span><span class="os-total-val">${isRevenue?grandTotal.toFixed(2)+' €':'–'}</span></div>
+    <div class="os-total-row"><span class="os-total-label">Skupaj (${totalQty} kom.)</span><span class="os-total-val">${grandTotal.toFixed(2)+' €'}</span></div>
   </div>`;
 }
 
 function clearOrder(){
-  products.forEach(p=>{const a=document.getElementById('oalc-'+p.id);const g=document.getElementById('ogly-'+p.id);if(a)a.value='';if(g)g.value='';});
+  products.forEach(p=>{
+    const a=document.getElementById('oalc-'+p.id);
+    const g=document.getElementById('ogly-'+p.id);
+    const pr=document.getElementById('oprice-'+p.id);
+    if(a)a.value='';if(g)g.value='';if(pr)pr.value='';
+  });;
   document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';

@@ -1437,18 +1437,18 @@ function renderCustomers(){
         </div>
       </div>`:''
 
-    return `<div class="sg-card" style="margin-bottom:.4rem;cursor:pointer" onclick="toggleCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}">
-      <div class="sg-header" style="padding:.6rem .9rem">
-        <div style="font-size:1.1rem;flex-shrink:0">${isPartner?'🤝':c.orders.length>1?'⭐':'👤'}</div>
+    return `<div class="sale-group" style="margin-bottom:.5rem">
+      <div class="sg-header" style="cursor:pointer" onclick="toggleCustomer(this.dataset.key)" data-key="${c.key.replace(/"/g,'&quot;')}">
+        <div style="font-size:1.1rem;width:1.6rem;text-align:center;flex-shrink:0">${isPartner?'🤝':c.orders.length>1?'⭐':'👤'}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:.92rem">${c.name}</div>
-          <div style="font-size:.65rem;color:${stars>=4?'#b8860b':stars>=2?'var(--muted)':'var(--muted)'};letter-spacing:.05em">${starsHtml}${topProduct?` · 🏆 ${topProduct[0]}`:''}</div>
+          <div style="font-size:.65rem;color:var(--muted)">${starsHtml}${topProduct?` · 🏆 ${topProduct[0]}`:''}</div>
         </div>
-        <div style="text-align:right;flex-shrink:0">
+        <div style="text-align:right;flex-shrink:0;margin-right:.3rem">
           <div style="font-size:.85rem;font-weight:600;color:var(--success)">${c.total.toFixed(2)} €</div>
           <div style="font-size:.65rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length!==1?'ov':''} · ${c.lastDate?c.lastDate.split('-').reverse().join('.'):'—'}</div>
         </div>
-        <div style="font-size:.7rem;color:var(--muted);margin-left:.4rem">${isExpanded?'▲':'▼'}</div>
+        <div style="font-size:.7rem;color:var(--muted);align-self:center">${isExpanded?'▲':'▼'}</div>
       </div>
       ${expandedHtml}
     </div>`;
@@ -1990,7 +1990,13 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
-  if(id==='stranke'){renderCustomerStats();renderCustomers();}
+  if(id==='stranke'){
+    if(!_customers){
+      loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
+    } else {
+      renderCustomerStats();renderCustomers();
+    }
+  }
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
   if(oab)oab.style.display=id==='narocilo'?'flex':'none';

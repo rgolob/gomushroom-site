@@ -1547,7 +1547,6 @@ async function saveCustomerEdit(){
   if(partnerId&&partnerId!==(oldRecord?.partner_id||'')){
     const pwd=prompt('Partner ID sprememba zahteva geslo:');
     if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
-    // Also update partners list
     if(partnerId){
       const partners=getPartners();
       if(!partners.find(p=>p.id===partnerId)){
@@ -1570,7 +1569,6 @@ async function saveCustomerEdit(){
   await upsertCustomer(data);
 
   // If name changed, update matching saleGroups so buildCustomers merges correctly
-  const oldRecord=_customers?.find(c=>c.id===id);
   if(oldRecord&&oldRecord.name&&name&&oldRecord.name!==name){
     const oldKey=oldRecord.name.toLowerCase().trim();
     let changed=false;

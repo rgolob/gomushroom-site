@@ -33,7 +33,7 @@ img{max-width:100%;display:block}
 a{color:var(--brand);text-decoration:none}
 a:hover{text-decoration:underline}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
-
+.nowrap-link{white-space:nowrap;}
 p{
   line-height:var(--lh-body);
 }
@@ -2065,7 +2065,7 @@ footer.site-footer{
 
 #gomushroom-tinkture .gm-product-media{
   position:relative;
-  aspect-ratio:4 / 2.7;
+  aspect-ratio:4 / 2,7;
   overflow:hidden;
   background:rgba(0,0,0,.03);
 }

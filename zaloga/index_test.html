@@ -493,17 +493,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
-    <div id="productMgmt" style="margin-bottom:.75rem"></div>
     <div class="search-row">
-      <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="renderBatches()"></div>
-      <select class="fpill" id="batchFilterProd" onchange="renderBatches()"><option value="">Vsi produkti</option></select>
-      <select class="fpill" id="batchFilterStatus" onchange="renderBatches()">
+      <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="batchPage=0;renderBatches()"></div>
+      <select class="fpill" id="batchFilterProd" onchange="batchPage=0;renderBatches()"><option value="">Vsi produkti</option></select>
+      <select class="fpill" id="batchFilterStatus" onchange="batchPage=0;renderBatches()">
         <option value="active">Na zalogi</option>
         <option value="all">Vse</option>
         <option value="sold">Prodane</option>
       </select>
     </div>
     <div class="plist" id="batchList"></div>
+    <div id="batchPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap;align-items:center"></div>
   </div>
 
   <!-- PRODAJE -->
@@ -781,10 +781,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rs-kupci" onchange="document.getElementById('rs-batch-section').style.display=this.checked?'':'none'"> Kupci serije</label>
       </div>
       <div id="rs-batch-section" style="display:none">
-        <div class="slabel">Izberi serijo <span style="color:var(--danger)">*</span></div>
-        <select id="rs-batch" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none">
-          <option value="">— Izberi serijo —</option>
-        </select>
+        <div class="slabel">Išči serijo <span style="color:var(--danger)">*</span></div>
+        <div class="swrap" style="margin-bottom:.4rem"><span class="sicon">⌕</span><input type="text" id="rs-batch-search" placeholder="Vnesi batch številko…" oninput="filterRsBatchList(this.value)" autocomplete="off"></div>
+        <div id="rs-batch-results" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rs);background:white;display:none"></div>
+        <input type="hidden" id="rs-batch">
+        <div id="rs-batch-selected" style="display:none;font-size:.78rem;color:#3a6b4a;padding:.3rem .5rem;background:rgba(58,107,74,.08);border-radius:6px;margin-top:.3rem"></div>
       </div>
       <div class="slabel">Obdobje</div>
       <div class="frow">
@@ -2198,6 +2199,9 @@ function batchSoldStatus(b){
   return'partial';
 }
 
+let batchPage=0;
+const BATCHES_PER_PAGE=10;
+
 function renderBatches(){
   const q=(document.getElementById('batchSearch')?.value||'').toLowerCase();
   const fp=document.getElementById('batchFilterProd')?.value||'';
@@ -2216,10 +2220,16 @@ function renderBatches(){
   if(!rows.length){
     const msg=fs==='sold'?'Ni prodanih serij':fs==='active'?'Ni aktivnih serij':'Ni serij';
     el.innerHTML=`<div class="empty"><div class="ei">🏷</div><div class="et">${msg}</div><div class="es">Dodaj z ＋ Nova</div></div>`;
+    document.getElementById('batchPager').innerHTML='';
     return;
   }
 
-  el.innerHTML=rows.map(b=>{
+  const total=rows.length;
+  const pages=Math.ceil(total/BATCHES_PER_PAGE);
+  if(batchPage>=pages)batchPage=Math.max(0,pages-1);
+  const page=rows.slice(batchPage*BATCHES_PER_PAGE,(batchPage+1)*BATCHES_PER_PAGE);
+
+  el.innerHTML=page.map(b=>{
     const isOpen=expandedBatches.has(b.id);
     const sold=getSoldPerBatch(b.id,b.productId);
     const made=(b.alc?.qty||0)+(b.gly?.qty||0);
@@ -2302,6 +2312,16 @@ function renderBatches(){
       </div>`:''}
     </div>`;
   }).join('');
+
+  // Pager
+  const pager=document.getElementById('batchPager');
+  if(!pager)return;
+  if(pages<=1){pager.innerHTML=`<span style="font-size:.72rem;color:var(--muted)">${total} serij</span>`;return;}
+  let ph=`<span style="font-size:.72rem;color:var(--muted);align-self:center">${total} serij</span>`;
+  if(batchPage>0)ph+=`<button class="fpill" onclick="batchPage--;renderBatches()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===batchPage?' active':''}" onclick="batchPage=${i};renderBatches()">${i+1}</button>`;
+  if(batchPage<pages-1)ph+=`<button class="fpill" onclick="batchPage++;renderBatches()">›</button>`;
+  pager.innerHTML=ph;
 }
 async function deleteBatch(id){
   const b=batches.find(x=>x.id===id);if(!b)return;
@@ -3380,14 +3400,49 @@ function populateReportDropdowns(){
   updateRsBatchList();
 }
 
+
 function updateRsBatchList(){
-  const prodId=document.getElementById('rs-prod')?.value||'';
-  const sel=document.getElementById('rs-batch');
-  if(!sel)return;
-  const filtered=batches.filter(b=>!prodId||b.productId===prodId);
-  sel.innerHTML='<option value="">— Izberi serijo —</option>'+
-    filtered.map(b=>`<option value="${b.id}">${b.batchNum} · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}</option>`).join('');
+  // Reset search when product filter changes
+  const search=document.getElementById('rs-batch-search');
+  if(search)search.value='';
+  const hidden=document.getElementById('rs-batch');
+  if(hidden)hidden.value='';
+  const sel=document.getElementById('rs-batch-selected');
+  if(sel){sel.textContent='';sel.style.display='none';}
+  const res=document.getElementById('rs-batch-results');
+  if(res)res.style.display='none';
 }
+
+function filterRsBatchList(q){
+  const prodId=document.getElementById('rs-prod')?.value||'';
+  const res=document.getElementById('rs-batch-results');
+  const hidden=document.getElementById('rs-batch');
+  const selected=document.getElementById('rs-batch-selected');
+  if(!res)return;
+  const filtered=batches.filter(b=>
+    (!prodId||b.productId===prodId)&&
+    (!q||b.batchNum.toLowerCase().includes(q.toLowerCase())||b.productName.toLowerCase().includes(q.toLowerCase()))
+  ).slice(0,20);
+  if(!q||!filtered.length){res.style.display='none';return;}
+  res.style.display='';
+  res.innerHTML=filtered.map(b=>`
+    <div onclick="selectRsBatch('${b.id}','${b.batchNum} · ${b.productName}')"
+      style="padding:.5rem .75rem;cursor:pointer;font-size:.82rem;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='#f5f0e8'" onmouseout="this.style.background=''">
+      <strong>${b.batchNum}</strong> · ${b.productName}${b.date?' · '+b.date.split('-').reverse().join('.'):''}
+    </div>`).join('');
+}
+
+function selectRsBatch(id,label){
+  document.getElementById('rs-batch').value=id;
+  document.getElementById('rs-batch-search').value='';
+  const sel=document.getElementById('rs-batch-selected');
+  sel.textContent='✓ '+label;
+  sel.style.display='';
+  document.getElementById('rs-batch-results').style.display='none';
+}
+
+
 
 let _currentReportType='';
 

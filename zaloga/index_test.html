@@ -357,6 +357,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('narocilo',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('prodaje',this)">📋 Računi</button>
+    <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
@@ -364,7 +365,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
-    <button class="hbtn" onclick="openPartnerMgmt()" title="Upravljanje partnerjev">🤝</button>
+    <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
 </header>
@@ -471,7 +472,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="order-btn order-btn-invoice" onclick="confirmAndInvoice()">📄 Potrdi + Račun</button>
       <button class="order-btn order-btn-confirm" onclick="confirmOrder(false)">✓ Potrdi</button>
     </div>
-    <div style="height:60px"></div><!-- spacer for mobile fixed bar -->
+    <div style="height:120px"></div><!-- spacer for mobile fixed bar -->
   </div>
 
   <!-- FIXED ORDER ACTION BAR - mobile only -->
@@ -532,11 +533,33 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 </div>
 
+  <!-- STRANKE -->
+  <div class="view" id="view-stranke">
+    <div class="view-hdr">
+      <div class="view-title">👥 Stranke</div>
+      <div style="display:flex;gap:.5rem">
+        <div class="swrap" style="min-width:140px;flex:1"><span class="sicon">⌕</span><input type="text" id="customerSearch" placeholder="Išči stranko…" oninput="renderCustomers()"></div>
+      </div>
+    </div>
+    <div class="stats-grid" id="customerStatsGrid"></div>
+    <div id="customerList" style="margin-top:.75rem"></div>
+  </div>
+
+  <!-- CUSTOMER DETAIL SHEET -->
+  <div class="overlay" id="customerOverlay" onclick="maybeClose(event,'customerOverlay')">
+    <div class="sheet" style="max-height:90vh">
+      <div class="shandle"></div>
+      <div class="shdr"><span class="shtitle" id="customerSheetTitle">Stranka</span><button class="shclose" onclick="closeSheet('customerOverlay')">✕</button></div>
+      <div class="shbody" id="customerSheetBody"></div>
+    </div>
+  </div>
+
 <nav class="bottom-nav">
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-narocilo"  onclick="switchTab('narocilo',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Računi</button>
+  <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
 
@@ -1063,8 +1086,187 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
-// ── PARTNER MANAGEMENT ──
+// ── STRANKE ──
+function buildCustomers(){
+  const map={};
+  saleGroups.forEach(g=>{
+    if(g.status==='stornirano')return;
+    const key=(g.email||g.buyer||'').toLowerCase().trim()||g.buyer?.toLowerCase().trim();
+    if(!key)return;
+    if(!map[key]){
+      map[key]={
+        key,
+        name:g.buyer||'—',
+        email:g.email||'',
+        phone:g.phone||'',
+        address:(g.street&&g.post)?g.street+', '+g.post:g.address||'',
+        orders:[],
+        total:0,
+        lastDate:'',
+        channels:{},
+        products:{},
+      };
+    }
+    const c=map[key];
+    // Update name/contact if more recent
+    if(g.date>=(c.lastDate||'')){
+      if(g.buyer)c.name=g.buyer;
+      if(g.email)c.email=g.email;
+      if(g.phone)c.phone=g.phone;
+      if(g.street&&g.post)c.address=g.street+', '+g.post;
+    }
+    c.orders.push(g);
+    c.total+=(g.total||0);
+    if(g.date>c.lastDate)c.lastDate=g.date;
+    c.channels[g.channel]=(c.channels[g.channel]||0)+1;
+    (g.lines||[]).forEach(l=>{
+      c.products[l.productName]=(c.products[l.productName]||0)+(l.alc||0)+(l.gly||0);
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.lastDate.localeCompare(a.lastDate));
+}
+
+function renderCustomerStats(){
+  const customers=buildCustomers();
+  const thisMonth=todayISO().slice(0,7);
+  const newThisMonth=customers.filter(c=>c.lastDate.startsWith(thisMonth)).length;
+  const returning=customers.filter(c=>c.orders.length>1).length;
+  const el=document.getElementById('customerStatsGrid');
+  if(!el)return;
+  el.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Skupaj strank</div><div class="stat-value">${customers.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Vračajoče se</div><div class="stat-value ok">${returning}</div></div>
+    <div class="stat-card"><div class="stat-label">Aktivne ta mesec</div><div class="stat-value ok">${newThisMonth}</div></div>
+    <div class="stat-card"><div class="stat-label">Enkratne</div><div class="stat-value">${customers.filter(c=>c.orders.length===1).length}</div></div>`;
+}
+
+function renderCustomers(){
+  const q=(document.getElementById('customerSearch')?.value||'').toLowerCase();
+  let customers=buildCustomers();
+  if(q)customers=customers.filter(c=>
+    c.name.toLowerCase().includes(q)||
+    c.email.toLowerCase().includes(q)||
+    c.phone.includes(q)
+  );
+  const el=document.getElementById('customerList');
+  if(!el)return;
+  if(!customers.length){
+    el.innerHTML=`<div class="empty"><div class="ei">👥</div><div class="et">${q?'Ni rezultatov':'Ni strank'}</div></div>`;
+    return;
+  }
+  el.innerHTML=customers.map(c=>{
+    const topProduct=Object.entries(c.products).sort((a,b)=>b[1]-a[1])[0];
+    const chLabels=Object.keys(c.channels).map(ch=>CH[ch]?.short||ch).join(', ');
+    const isReturning=c.orders.length>1;
+    return `<div class="sg-card" onclick="openCustomer(${JSON.stringify(c.key)})" style="cursor:pointer;margin-bottom:.5rem">
+      <div class="sg-header">
+        <div style="min-width:2rem;text-align:center;font-size:1.3rem">${isReturning?'⭐':'👤'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:.95rem">${c.name}</div>
+          ${c.email?`<div style="font-size:.72rem;color:var(--muted)">${c.email}</div>`:''}
+          ${c.phone?`<div style="font-size:.72rem;color:var(--muted)">${c.phone}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:.85rem;font-weight:600;color:var(--success)">${c.total.toFixed(2)} €</div>
+          <div style="font-size:.68rem;color:var(--muted)">${c.orders.length} nakup${c.orders.length>1?'ov':''}</div>
+          <div style="font-size:.65rem;color:var(--muted)">${c.lastDate?c.lastDate.split('-').reverse().join('.'):'—'}</div>
+        </div>
+      </div>
+      <div style="padding:.3rem .9rem .5rem;display:flex;gap:.4rem;flex-wrap:wrap">
+        ${chLabels?`<span style="font-size:.65rem;background:rgba(175,132,85,.12);padding:.15rem .4rem;border-radius:8px">${chLabels}</span>`:''}
+        ${topProduct?`<span style="font-size:.65rem;background:rgba(58,107,74,.1);padding:.15rem .4rem;border-radius:8px">🏆 ${topProduct[0]}</span>`:''}
+        ${isReturning?`<span style="font-size:.65rem;background:rgba(42,90,139,.1);color:var(--ch-malo);padding:.15rem .4rem;border-radius:8px">Stalna stranka</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCustomer(key){
+  const customers=buildCustomers();
+  const c=customers.find(x=>x.key===key);
+  if(!c)return;
+  document.getElementById('customerSheetTitle').textContent=c.name;
+  const orders=[...c.orders].sort((a,b)=>b.date.localeCompare(a.date));
+  const topProds=Object.entries(c.products).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('customerSheetBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem">
+      <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value ok" style="font-size:1.1rem">${c.total.toFixed(2)} €</div></div>
+      <div class="stat-card"><div class="stat-label">Nakupov</div><div class="stat-value" style="font-size:1.1rem">${c.orders.length}</div></div>
+    </div>
+    ${c.email||c.phone?`<div style="font-size:.8rem;margin-bottom:.75rem;display:flex;flex-direction:column;gap:.25rem">
+      ${c.email?`<div>✉ <a href="mailto:${c.email}" style="color:var(--accent)">${c.email}</a></div>`:''}
+      ${c.phone?`<div>📞 <a href="tel:${c.phone}" style="color:var(--accent)">${c.phone}</a></div>`:''}
+      ${c.address?`<div>📍 ${c.address}</div>`:''}
+    </div>`:''}
+    ${(()=>{
+      const partners=getPartners();
+      const vat=c.orders.find(o=>o.vat)?.vat||'';
+      const isPartner=vat&&partners.find(p=>p.vat===vat);
+      if(isPartner){
+        return `<div style="background:rgba(60,107,74,.1);border:1px solid rgba(60,107,74,.3);border-radius:8px;padding:.6rem .9rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:.75rem;font-weight:600;color:#3a6b4a">🤝 Partner: ${isPartner.name}</div><div style="font-size:.68rem;color:var(--muted)">ID: ${isPartner.id} · DAV: ${vat}</div></div>
+          <button class="tbtn" onclick="removePartnerStatus('${vat}')" style="font-size:.65rem">Odstrani</button>
+        </div>`;
+      } else {
+        return `<button onclick="setPartnerStatus('${c.key}')" style="width:100%;padding:.6rem;border:1px dashed rgba(60,107,74,.4);border-radius:8px;background:transparent;color:#3a6b4a;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer;margin-bottom:.75rem">🤝 Nastavi kot partnerja</button>`;
+      }
+    })()}
+    ${topProds.length?`<div class="slabel">Najljubši produkti</div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem">
+      ${topProds.map(([name,qty])=>`<span style="font-size:.75rem;background:white;border:1px solid var(--border);padding:.25rem .6rem;border-radius:20px">${moji(name)} ${name} · ${qty} kom</span>`).join('')}
+    </div>`:''}
+    <div class="slabel">Zgodovina nakupov</div>
+    ${orders.map(g=>`
+      <div style="padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-size:.72rem;font-weight:600">${g.date?g.date.split('-').reverse().join('.'):'—'}</span>
+            <span class="ch-badge ${g.channel}" style="margin-left:.4rem;font-size:.62rem">${CH[g.channel]?.label||g.channel}</span>
+            ${g.invoiceNum?`<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">${g.invoiceNum}</span>`:''}
+          </div>
+          <div style="font-weight:600;font-size:.85rem">${(g.total||0).toFixed(2)} €</div>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">
+          ${(g.lines||[]).map(l=>`${moji(l.productName)} ${l.productName}${l.alc?' 🥃'+l.alc:''}${l.gly?' 🌿'+l.gly:''}`).join(' · ')}
+        </div>
+      </div>`).join('')}`;
+  openSheet('customerOverlay');
+}
+
+
 // Partners stored in localStorage
+async function setPartnerStatus(customerKey){
+  const pwd=prompt('Vnesi geslo za dodajanje partnerja:');
+  if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+  const customers=buildCustomers();
+  const c=customers.find(x=>x.key===customerKey);
+  if(!c)return;
+  const vat=c.orders.find(o=>o.vat)?.vat||'';
+  const name=prompt('Ime partnerja:',c.name);
+  if(!name)return;
+  const vatInput=prompt('Davčna številka:',vat);
+  if(!vatInput)return;
+  const id=prompt('Partner ID (npr. partner_1):','p_'+c.name.toLowerCase().replace(/\s+/g,'_').slice(0,10));
+  if(!id)return;
+  const partners=getPartners();
+  if(partners.find(p=>p.vat===vatInput.trim().toUpperCase())){toast('Partner s to davčno že obstaja.');return;}
+  partners.push({id:id.trim(),name,vat:vatInput.trim().toUpperCase()});
+  savePartners(partners);
+  toast('✓ '+name+' dodan kot partner');
+  openCustomer(customerKey);
+}
+
+async function removePartnerStatus(vat){
+  const ok=await showConfirm(`Odstrani partner status?`,'Odstrani');
+  if(!ok)return;
+  const pwd=prompt('Vnesi geslo:');
+  if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+  savePartners(getPartners().filter(p=>p.vat!==vat));
+  toast('Partner status odstranjen');
+  closeSheet('customerOverlay');
+  renderCustomers();
+}
+
 function getPartners(){
   try{return JSON.parse(localStorage.getItem('gm_partners')||'[]');}catch(e){return[];}
 }
@@ -1455,6 +1657,7 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='narocilo')renderOrderRows();
+  if(id==='stranke'){renderCustomerStats();renderCustomers();}
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
   if(oab)oab.style.display=id==='narocilo'?'flex':'none';

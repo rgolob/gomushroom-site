@@ -516,10 +516,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div class="stats-grid" id="salesStatsGrid"></div>
     <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px">
-      <div class="swrap" style="min-width:130px;flex:1"><span class="sicon">⌕</span><input type="text" id="salesSearch" placeholder="Kupec, produkt…" oninput="renderSales()"></div>
-      <input type="date" class="fpill" id="dateFrom" onchange="renderSales()">
-      <input type="date" class="fpill" id="dateTo" onchange="renderSales()">
-      <select class="fpill" id="salesFilterCh" onchange="renderSales()">
+      <div class="swrap" style="min-width:130px;flex:1"><span class="sicon">⌕</span><input type="text" id="salesSearch" placeholder="Kupec, produkt…" oninput="salesPage=0;renderSales()"></div>
+      <input type="date" class="fpill" id="dateFrom" onchange="salesPage=0;renderSales()">
+      <input type="date" class="fpill" id="dateTo" onchange="salesPage=0;renderSales()">
+      <select class="fpill" id="salesFilterCh" onchange="salesPage=0;renderSales()">
         <option value="">Vsi kanali</option>
         <option value="malo">🛒 Maloprodaja</option>
         <option value="velo">🏪 Veleprodaja</option>
@@ -530,9 +530,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
     </div>
     <div class="plist" id="salesList"></div>
+    <div id="salesPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
   </div>
-
-  <!-- STRANKE -->
   <div class="view" id="view-stranke">
     <div class="view-hdr">
       <div class="view-title">👥 Stranke</div>
@@ -2718,6 +2717,9 @@ function renderSalesSummary(filteredGroups){
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>`;
 }
 
+let salesPage=0;
+const SALES_PER_PAGE=10;
+
 function renderSales(){
   const q=document.getElementById('salesSearch').value.toLowerCase();
   const fFrom=document.getElementById('dateFrom').value,fTo=document.getElementById('dateTo').value;
@@ -2730,8 +2732,14 @@ function renderSales(){
   });
   renderSalesSummary(groups);
   const el=document.getElementById('salesList');
-  if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;return;}
-  el.innerHTML=groups.map(g=>{
+  if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;
+    document.getElementById('salesPager').innerHTML='';return;}
+
+  const total=groups.length;
+  const pages=Math.ceil(total/SALES_PER_PAGE);
+  if(salesPage>=pages)salesPage=Math.max(0,pages-1);
+  const page=groups.slice(salesPage*SALES_PER_PAGE,(salesPage+1)*SALES_PER_PAGE);
+  el.innerHTML=page.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
     const isExpanded=expandedSales.has(g.id);
     const itemsHtml=(g.lines||[]).map(l=>{
@@ -2788,9 +2796,19 @@ function renderSales(){
       </div>`:''}
     </div>`;
   }).join('');
-}
 
-function issueInvoiceForGroup(groupId){
+  // Pager
+  const pager=document.getElementById('salesPager');
+  if(!pager)return;
+  if(pages<=1){pager.innerHTML='';return;}
+  let pagerHtml=`<span style="font-size:.72rem;color:var(--muted);align-self:center">${total} zapisov</span>`;
+  if(salesPage>0)pagerHtml+=`<button class="fpill" onclick="salesPage--;renderSales()">‹</button>`;
+  for(let i=0;i<pages;i++){
+    pagerHtml+=`<button class="fpill${i===salesPage?' active':''}" onclick="salesPage=${i};renderSales()">${i+1}</button>`;
+  }
+  if(salesPage<pages-1)pagerHtml+=`<button class="fpill" onclick="salesPage++;renderSales()">›</button>`;
+  pager.innerHTML=pagerHtml;
+}
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
   const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();

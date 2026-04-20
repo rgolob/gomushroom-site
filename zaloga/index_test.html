@@ -3707,50 +3707,48 @@ function genReport(type){
       return;
     }
 
-    // Kupci - only for the ONE selected batch
-    let kupciHtml='';
+    // KUPCI MODE — samo kupci izbrane serije, brez tabele serij
     if(showKupci&&selectedBatchId){
       const b=batches.find(x=>x.id===selectedBatchId);
-      if(b){
-        const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===selectedBatchId)));
-        const allBuyers=[];
-        const buyerRows=buyers.map(g=>{
-          let alcQ=0,glyQ=0;
-          g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===selectedBatchId);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
-          const ch=CH[g.channel]||CH.malo;
-          allBuyers.push({name:g.buyer||'—',email:g.email||'',phone:g.phone||'',channel:ch.label,batch:b.batchNum,product:b.productName,alc:alcQ,gly:glyQ,date:g.date||''});
-          return`<tr>
-            <td><strong>${g.buyer||'—'}</strong>${g.email?`<div style="font-size:.68rem;color:#7a6f60">✉ ${g.email}</div>`:''}${g.phone?`<div style="font-size:.68rem;color:#7a6f60">📞 ${g.phone}</div>`:''}</td>
-            <td style="font-size:.75rem">${ch.icon} ${g.date?g.date.split('-').reverse().join('.'):''}</td>
-            <td class="num" style="font-size:.75rem">🥃${alcQ} 🌿${glyQ}</td>
-          </tr>`;
-        });
-        kupciHtml=`<h2>Kupci serije ${b.batchNum} — ${b.productName}</h2>
-        <div style="margin-bottom:.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-          <span style="font-size:.78rem;color:#7a6f60">${allBuyers.length} kupcev · ${allBuyers.filter(x=>x.email).length} z emailom</span>
-          ${allBuyers.filter(x=>x.email).length>0?`<button class="printbtn" style="margin:0;padding:.4rem 1rem;font-size:.7rem" onclick="exportBuyersCsv()">📧 Izvozi email CSV</button>`:''}
-        </div>
-        ${buyerRows.length?`<table>
-          <tr><th>Kupec</th><th>Datum · Kanal</th><th style="text-align:right">Količina</th></tr>
-          ${buyerRows.join('')}
-        </table>`:'<p style="color:#7a6f60;font-size:.82rem">Ni kupcev za to serijo.</p>'}`;
-        // Store buyers data for CSV export
-        window._lastBuyersData=allBuyers;
-        window._lastBatchNum=b.batchNum;
-      }
+      if(!b){html='<p>Serija ni najdena.</p>';return;}
+      const buyers=saleGroups.filter(g=>g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===selectedBatchId)));
+      const allBuyers=[];
+      const buyerRows=buyers.map(g=>{
+        let alcQ=0,glyQ=0;
+        g.lines.forEach(l=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===selectedBatchId);if(bb){alcQ+=(bb.alc||0);glyQ+=(bb.gly||0);}});
+        const ch=CH[g.channel]||CH.malo;
+        allBuyers.push({name:g.buyer||'—',email:g.email||'',phone:g.phone||'',channel:ch.label,batch:b.batchNum,product:b.productName,alc:alcQ,gly:glyQ,date:g.date||''});
+        return`<tr>
+          <td><strong>${g.buyer||'—'}</strong>${g.email?`<div style="font-size:.68rem;color:#7a6f60">✉ ${g.email}</div>`:''}${g.phone?`<div style="font-size:.68rem;color:#7a6f60">📞 ${g.phone}</div>`:''}</td>
+          <td style="font-size:.75rem">${ch.icon} ${ch.label}</td>
+          <td style="font-size:.75rem">${g.date?g.date.split('-').reverse().join('.'):''}</td>
+          <td class="num" style="font-size:.75rem">🥃${alcQ} 🌿${glyQ}</td>
+        </tr>`;
+      });
+      window._lastBuyersData=allBuyers;
+      window._lastBatchNum=b.batchNum;
+      html=`<div class="summary-box">
+        <div class="s-item"><div class="s-label">Serija</div><div class="s-val">${b.batchNum}</div></div>
+        <div class="s-item"><div class="s-label">Produkt</div><div class="s-val">${b.productName}</div></div>
+        <div class="s-item"><div class="s-label">Kupcev</div><div class="s-val">${allBuyers.length}</div></div>
+      </div>
+      <div style="margin-bottom:.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        ${allBuyers.filter(x=>x.email).length>0?`<button class="printbtn" style="margin:0;padding:.4rem 1rem;font-size:.7rem" onclick="exportBuyersCsv()">📧 Izvozi email CSV</button>`:''}
+      </div>
+      ${buyerRows.length?`<table>
+        <tr><th>Kupec</th><th>Kanal</th><th>Datum</th><th style="text-align:right">Količina</th></tr>
+        ${buyerRows.join('')}
+      </table>`:'<p style="color:#7a6f60;font-size:.82rem">Ni kupcev za to serijo.</p>'}`;
+      showReport(type,html); return;
     }
 
-    let finalRows='';
+    // NORMALNI NAČIN — tabela serij
     const thHtml=ths.map((t,i)=>`<th${i>2?' style="text-align:right"':''}>${t}</th>`).join('');
     const colCount=ths.length;
-    filtered.forEach((b,idx)=>{
-      const rowHtml=rows.split('</tr>')[idx]+'</tr>';
-      finalRows+=rowHtml;
-    });
     html=`<table>
       <tr>${thHtml}</tr>
-      ${finalRows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
-    </table>${kupciHtml}`;
+      ${rows||`<tr><td colspan="${colCount}" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrane filtre</td></tr>`}
+    </table>`;
   }
 
   else if(type==='prodaja'){
@@ -3819,6 +3817,11 @@ function genReport(type){
   }
 
   const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
+  showReport(type,html);
+}
+
+function showReport(type,html){
+  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
   const subtitles={
     zaloga:'Trenutno stanje po produktih',
     serije:'Proizvedene serije z ostanki',
@@ -3849,15 +3852,34 @@ ${html}
 function getKnownBuyers(){
   const seen=new Set();
   const buyers=[];
+  // First from Supabase customers
+  if(_customers){
+    _customers.forEach(c=>{
+      if(!c.name)return;
+      const key=c.name.toLowerCase().trim();
+      if(!seen.has(key)){
+        seen.add(key);
+        buyers.push({
+          name:c.name,
+          email:c.email||'',
+          phone:c.phone||'',
+          street:c.street||'',
+          post:c.post||'',
+          vat:c.vat||'',
+        });
+      }
+    });
+  }
+  // Then from saleGroups (for any not in customers yet)
   [...saleGroups].forEach(g=>{
     if(!g.buyer)return;
     const key=g.buyer.toLowerCase().trim();
     if(!seen.has(key)){
       seen.add(key);
-      buyers.push({name:g.buyer,email:g.email||'',phone:g.phone||'',address:g.address||''});
+      buyers.push({name:g.buyer,email:g.email||'',phone:g.phone||'',street:g.street||'',post:g.post||'',vat:g.vat||''});
     }
   });
-  return buyers;
+  return buyers.sort((a,b)=>a.name.localeCompare(b.name,'sl'));
 }
 
 function buyerAutocomplete(val){
@@ -3867,9 +3889,8 @@ function buyerAutocomplete(val){
   const q=val.toLowerCase();
   const matches=getKnownBuyers().filter(b=>b.name.toLowerCase().includes(q));
   if(!matches.length){dd.style.display='none';return;}
-  dd.innerHTML=matches.slice(0,6).map(b=>{
-    const bJson=JSON.stringify(b).replace(/'/g,"\\'");
-    const meta=[b.email,b.phone,b.address].filter(Boolean).join(' · ');
+  dd.innerHTML=matches.slice(0,8).map(b=>{
+    const meta=[b.email,b.phone,b.vat].filter(Boolean).join(' · ');
     return`<div class="buyer-option" onclick='selectBuyer(${JSON.stringify(b)})'>
       <div class="buyer-name">${b.name}</div>
       ${meta?`<div class="buyer-meta">${meta}</div>`:''}
@@ -3882,15 +3903,16 @@ function selectBuyer(b){
   document.getElementById('orderBuyer').value=b.name;
   if(b.email)document.getElementById('orderEmail').value=b.email;
   if(b.phone)document.getElementById('orderPhone').value=b.phone;
-  if(b.street){
-    document.getElementById('orderStreet').value=b.street;
-  } else if(b.address){
+  if(b.vat)document.getElementById('orderVat').value=b.vat;
+  if(b.street)document.getElementById('orderStreet').value=b.street;
+  else if(b.address){
     const m=b.address.match(/^(.+),\s*(\d{4}\s*.+)$/);
     if(m){document.getElementById('orderStreet').value=m[1].trim();document.getElementById('orderPost').value=m[2].trim();}
-    else{document.getElementById('orderStreet').value=b.address;}
+    else document.getElementById('orderStreet').value=b.address;
   }
   if(b.post)document.getElementById('orderPost').value=b.post;
   const dd=document.getElementById('buyerDropdown');if(dd)dd.style.display='none';
+  checkPartnerVat(b.vat||'');
   renderOrderSummary();
 }
 

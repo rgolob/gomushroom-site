@@ -1191,6 +1191,20 @@ async function loadCustomers(){
     const r=await fetch(`${SB_URL}/rest/v1/gm_customers?select=*&order=updated_at.desc`,{headers:SB_HEADERS});
     if(!r.ok)return;
     _customers=await r.json();
+    // Sync buyer names in saleGroups — email is the reliable key
+    let changed=false;
+    if(_customers){
+      _customers.forEach(c=>{
+        if(!c.name||!c.email)return;
+        const emailKey=c.email.toLowerCase().trim();
+        saleGroups.forEach(g=>{
+          if((g.email||'').toLowerCase().trim()===emailKey&&g.buyer!==c.name){
+            g.buyer=c.name;changed=true;
+          }
+        });
+      });
+      if(changed){save();}
+    }
   }catch(e){console.error('loadCustomers',e);}
 }
 

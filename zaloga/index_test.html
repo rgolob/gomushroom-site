@@ -4426,43 +4426,48 @@ function runIntegrityCheck(){
   const activeBatchRows=batchRows.filter(r=>!r.fullyDone||r.hasIssues);
   const doneBatchRows=batchRows.filter(r=>r.fullyDone&&!r.hasIssues);
 
-  const cell=(v,color)=>`<td style="text-align:right;padding:.25rem .35rem;${color?'color:'+color:''}">${v}</td>`;
+  const cell=(v,color,bold)=>`<td style="text-align:right;padding:.25rem .35rem;${color?'color:'+color:''}${bold?';font-weight:600':''}">${v}</td>`;
+
   const hdr=`<tr style="border-bottom:2px solid var(--border);font-size:.6rem;color:var(--muted)">
-    <th style="text-align:left;padding:.25rem .35rem">Serija</th>
-    <th style="text-align:left;padding:.25rem .35rem">Produkt</th>
+    <th style="text-align:left;padding:.25rem .35rem;width:25%">Serija · Produkt</th>
     <th style="text-align:right;padding:.25rem .35rem" colspan="2">Narejeno</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Prodaja aloc.</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Prodano</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Zaloga prod.</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Int. aloc.</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Int. porab.</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Zaloga int.</th>
+    <th style="text-align:center;padding:.25rem .35rem;color:var(--border)" style="border-left:2px solid var(--border)">│</th>
+    <th style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.06)" colspan="3">🛒 Prodaja</th>
+    <th style="text-align:center;padding:.25rem .35rem;color:var(--border)">│</th>
+    <th style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.06)" colspan="3">🔬 Interno</th>
   </tr>
   <tr style="font-size:.55rem;color:var(--muted);border-bottom:1px solid var(--border)">
-    <td colspan="2"></td>
+    <td></td>
     <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td></td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(90,122,138,.04)">Aloc.</td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(90,122,138,.04)">Prodano</td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(90,122,138,.04)">Zaloga</td>
+    <td></td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(122,111,96,.04)">Aloc.</td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(122,111,96,.04)">Porab.</td>
+    <td style="text-align:right;padding:.1rem .35rem;background:rgba(122,111,96,.04)">Zaloga</td>
   </tr>`;
 
   const makeRow=(r)=>{
-    const bg=r.hasIssues?'background:rgba(139,58,42,.06)':r.fullyDone?'background:rgba(58,107,74,.04);opacity:.7':'';
-    const zProdColor=r.zAlcProd+r.zGlyProd>0?'#1a4a2a':'#8b3a2a';
-    const zIntColor=r.zAlcInt+r.zGlyInt>0?'#5a5040':'#8b3a2a';
-    return`<tr style="border-bottom:1px solid var(--border);font-size:.68rem;${bg}">
-      <td style="padding:.25rem .35rem;font-weight:500">${r.b.batchNum}${r.hasIssues?' ❌':r.fullyDone?' ✓':''}</td>
-      <td style="padding:.25rem .35rem;color:var(--muted)">${r.pName}</td>
+    const bg=r.hasIssues?'background:rgba(139,58,42,.06)':r.fullyDone?'background:rgba(58,107,74,.04);opacity:.75':'';
+    const zProdOk=r.zAlcProd+r.zGlyProd>=0;
+    const zIntOk=r.zAlcInt+r.zGlyInt>=0;
+    const statusIcon=r.hasIssues?'❌':r.fullyDone?'<span style="color:#3a6b4a">✓</span>':'';
+    return`<tr style="border-bottom:1px solid var(--border);font-size:.7rem;${bg}">
+      <td style="padding:.3rem .35rem">
+        <span style="font-weight:600">${r.b.batchNum}</span> ${statusIcon}
+        <div style="font-size:.62rem;color:var(--muted)">${r.pName}</div>
+      </td>
       ${cell(r.alcIn,'')}${cell(r.glyIn,'')}
-      ${cell(r.alcProdAlloc,'#5a7a8a')}${cell(r.glyProdAlloc,'#5a7a8a')}
-      ${cell(r.soldAlcProd,'#3a6b4a')}${cell(r.soldGlyProd,'#3a6b4a')}
-      ${cell(r.zAlcProd,zProdColor)}${cell(r.zGlyProd,zProdColor)}
-      ${cell(r.alcIntAlloc,'#7a6f60')}${cell(r.glyIntAlloc,'#7a6f60')}
-      ${cell(r.soldAlcInt,'#7a6f60')}${cell(r.soldGlyInt,'#7a6f60')}
-      ${cell(r.zAlcInt,zIntColor)}${cell(r.zGlyInt,zIntColor)}
+      <td style="border-left:2px solid var(--border);padding:0"></td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.04);color:#5a7a8a">${r.alcProdAlloc} / ${r.glyProdAlloc}</td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.04);color:#3a6b4a">${r.soldAlcProd} / ${r.soldGlyProd}</td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.04);font-weight:600;color:${zProdOk?'#1a4a2a':'#8b3a2a'}">${r.zAlcProd} / ${r.zGlyProd}</td>
+      <td style="border-left:2px solid var(--border);padding:0"></td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.04);color:#7a6f60">${r.alcIntAlloc} / ${r.glyIntAlloc}</td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.04);color:#7a6f60">${r.soldAlcInt} / ${r.soldGlyInt}</td>
+      <td style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.04);font-weight:600;color:${zIntOk?'#5a5040':'#8b3a2a'}">${r.zAlcInt} / ${r.zGlyInt}</td>
     </tr>`;
   };
 

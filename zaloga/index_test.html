@@ -366,6 +366,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
+    <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
   </div>
@@ -855,11 +856,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shfoot">
     <!-- TROŠARINE filters -->
     <div id="rtFilters" class="shbody" style="display:none">
-      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Poročilo prikazuje alkoholne tinkture — serije narejene v izbranem mesecu, prodane količine po kupcih in stanje zaloge (samo prod alokacija).</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Poročilo prikazuje alkoholne tinkture — serije narejene v izbranem mesecu, prodane količine v istem mesecu po kupcih in stanje zaloge na zadnji dan meseca.</div>
       <div class="slabel">Mesec poročila</div>
       <div class="frow">
-        <div class="field"><label>Od (začetek meseca)</label><input type="date" id="rt-od"></div>
-        <div class="field"><label>Do (datum izpisa)</label><input type="date" id="rt-do"></div>
+        <div class="field"><label>Od (1. dan meseca)</label><input type="date" id="rt-od"></div>
+        <div class="field"><label>Do (zadnji dan meseca)</label><input type="date" id="rt-do"></div>
       </div>
       <div class="slabel">Produkt</div>
       <select id="rt-prod" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none">
@@ -870,6 +871,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="bcancel" onclick="closeSheet('reportOverlay')">Prekliči</button>
       <button class="bsave" id="reportGenBtn" onclick="closeSheet('reportOverlay');genReportFromSheet()">📄 Ustvari poročilo</button>
     </div>
+  </div>
+</div>
+
+<!-- INTEGRITY CHECK -->
+<div class="overlay" id="integrityOverlay" onclick="maybeClose(event,'integrityOverlay')">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">✓ Preverjanje podatkov</span><button class="shclose" onclick="closeSheet('integrityOverlay')">✕</button></div>
+    <div class="shbody" id="integrityBody"></div>
   </div>
 </div>
 
@@ -1889,7 +1899,7 @@ async function appInit(){
       if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
       setSyncStatus('✓ Sinhronizirano');
       setTimeout(()=>setSyncStatus(''),3000);
-    } else {
+      setTimeout(()=>runIntegrityCheckSilent(),1000);
       setSyncStatus('✓ Lokalni podatki');
       setTimeout(()=>setSyncStatus(''),3000);
     }
@@ -3814,12 +3824,11 @@ function openReportSheet(type){
     document.getElementById('rp-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
   } else if(type==='trosarine'){
     document.getElementById('rtFilters').style.display='';
-    // Default: previous month
     const d=new Date();
-    const prevMonth=new Date(d.getFullYear(),d.getMonth()-1,1);
-    document.getElementById('rt-od').value=prevMonth.toISOString().slice(0,10);
-    document.getElementById('rt-do').value=todayISO();
-    // Populate product dropdown
+    const firstOfPrevMonth=new Date(d.getFullYear(),d.getMonth()-1,1);
+    const lastOfPrevMonth=new Date(d.getFullYear(),d.getMonth(),0);
+    document.getElementById('rt-od').value=firstOfPrevMonth.toISOString().slice(0,10);
+    document.getElementById('rt-do').value=lastOfPrevMonth.toISOString().slice(0,10);
     const sel=document.getElementById('rt-prod');
     if(sel)sel.innerHTML='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   }
@@ -4181,32 +4190,47 @@ function genReport(type){
       (!filterProd||b.productId===filterProd)
     );
 
-    // Za vsako serijo: prod alokacija, prodano do doVal, ostalo
-    let totalNarejeno=0,totalProdano=0,totalOstalo=0;
+    // Vse prod prodaje DO konca obdobja (za izračun stanja zaloge na zadnji dan)
+    const allProdSalesUntilEnd=saleGroups.filter(g=>
+      (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
+      g.date<=doVal&&g.status!=='stornirano'
+    );
+
+    // Prodaje V obdobju (za poročanje prodanih količin)
+    const salesInPeriod=saleGroups.filter(g=>
+      (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
+      g.date>=od&&g.date<=doVal&&g.status!=='stornirano'
+    );
+
+    let totalNarejeno=0,totalProdanoVObdobju=0,totalOstaloKonecObdobja=0;
     let batchRows='';
 
     filteredBatches.forEach(b=>{
       const allocProd=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-      if(!allocProd)return; // preskoči če ni prod alokacije
+      if(!allocProd)return;
 
-      // Prodano do doVal — samo prod kanali (malo+velo+dar)
-      const prodSales=saleGroups.filter(g=>
-        (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
-        g.date<=doVal&&g.status!=='stornirano'
-      );
-      const soldAlc=prodSales.reduce((s,g)=>{
+      // Prodano v obdobju (za poročilo)
+      const soldInPeriod=salesInPeriod.reduce((s,g)=>{
         const l=g.lines?.find(l=>l.productId===b.productId);
         if(!l)return s;
         return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
       },0);
-      const ostaloAlc=Math.max(0,allocProd-soldAlc);
+
+      // Prodano do konca obdobja (za stanje zaloge na zadnji dan)
+      const soldUntilEnd=allProdSalesUntilEnd.reduce((s,g)=>{
+        const l=g.lines?.find(l=>l.productId===b.productId);
+        if(!l)return s;
+        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
+      },0);
+
+      const ostaloKonecObdobja=Math.max(0,allocProd-soldUntilEnd);
 
       totalNarejeno+=allocProd;
-      totalProdano+=soldAlc;
-      totalOstalo+=ostaloAlc;
+      totalProdanoVObdobju+=soldInPeriod;
+      totalOstaloKonecObdobja+=ostaloKonecObdobja;
 
-      // Kupci te serije v obdobju
-      const batchBuyers=prodSales.filter(g=>
+      // Kupci v obdobju
+      const batchBuyers=salesInPeriod.filter(g=>
         g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&bb.alc>0))
       );
 
@@ -4229,10 +4253,10 @@ function genReport(type){
         <td class="td-bold">${b.productName}</td>
         <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
         <td class="num">${allocProd}</td>
-        <td class="num" style="color:#3a6b4a">${soldAlc}</td>
-        <td class="num" style="color:${ostaloAlc>0?'#1a4a2a':'#8b3a2a'};font-weight:600">${ostaloAlc}</td>
+        <td class="num" style="color:#3a6b4a">${soldInPeriod}</td>
+        <td class="num" style="color:${ostaloKonecObdobja>0?'#1a4a2a':'#8b3a2a'};font-weight:600">${ostaloKonecObdobja}</td>
       </tr>
-      ${buyerRows?`<tr><td colspan="6" style="padding:0 0 .5rem .5rem">
+      ${buyerRows?`<tr><td colspan="6" style="padding:0 0 .5rem 1rem">
         <table style="width:100%;margin:0">
           <tr style="font-size:.62rem;color:#7a6f60"><th>Datum</th><th>Kupec</th><th>Kanal</th><th style="text-align:right">Alc kom.</th></tr>
           ${buyerRows}
@@ -4243,12 +4267,12 @@ function genReport(type){
     const dateLabel=`${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}`;
     html=`<div class="summary-box">
       <div class="s-item"><div class="s-label">Serij v obdobju</div><div class="s-val">${filteredBatches.length}</div></div>
-      <div class="s-item"><div class="s-label">Narejeno (prod alc)</div><div class="s-val">${totalNarejeno} kom.</div></div>
-      <div class="s-item"><div class="s-label">Prodano do ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#3a6b4a">${totalProdano} kom.</div></div>
-      <div class="s-item"><div class="s-label">Ostalo na zalogi</div><div class="s-val" style="color:${totalOstalo>0?'#1a4a2a':'#8b3a2a'}">${totalOstalo} kom.</div></div>
+      <div class="s-item"><div class="s-label">Narejeno v obdobju</div><div class="s-val">${totalNarejeno} kom.</div></div>
+      <div class="s-item"><div class="s-label">Prodano v obdobju</div><div class="s-val" style="color:#3a6b4a">${totalProdanoVObdobju} kom.</div></div>
+      <div class="s-item"><div class="s-label">Stanje ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:${totalOstaloKonecObdobja>0?'#1a4a2a':'#8b3a2a'}">${totalOstaloKonecObdobja} kom.</div></div>
     </div>
     <table>
-      <tr><th>Serija</th><th>Produkt</th><th>Datum izdelave</th><th style="text-align:right">Narejeno (prod)</th><th style="text-align:right">Prodano</th><th style="text-align:right">Ostalo</th></tr>
+      <tr><th>Serija</th><th>Produkt</th><th>Datum izdelave</th><th style="text-align:right">Narejeno (prod alc)</th><th style="text-align:right">Prodano v obdobju</th><th style="text-align:right">Stanje ${doVal.split('-').reverse().join('.')}</th></tr>
       ${batchRows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrano obdobje</td></tr>'}
     </table>`;
   }
@@ -4286,7 +4310,172 @@ ${html}
 }
 
 
-// ── BUYER AUTOCOMPLETE ──
+// ── INTEGRITY CHECK ──
+function runIntegrityCheckSilent(){
+  const issues=[];
+  products.forEach(p=>{
+    const pb=batches.filter(b=>b.productId===p.id);
+    const totalAlcIn=pb.reduce((s,b)=>s+(b.alc?.qty||0),0);
+    const totalGlyIn=pb.reduce((s,b)=>s+(b.gly?.qty||0),0);
+    const totalAlcAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0)+(b.alc?.alloc?.int||0),0);
+    const totalGlyAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0)+(b.gly?.alloc?.int||0),0);
+    if(totalAlcAlloc>totalAlcIn||totalGlyAlloc>totalGlyIn)issues.push(1);
+    const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
+    let soldAlc=0,soldGly=0;
+    activeSales.forEach(g=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;soldAlc+=(l.alc||0);soldGly+=(l.gly||0);});
+    if(soldAlc>totalAlcAlloc||soldGly>totalGlyAlloc)issues.push(1);
+  });
+  const invNums={};
+  saleGroups.filter(g=>g.invoiceNum).forEach(g=>{if(invNums[g.invoiceNum])issues.push(1);else invNums[g.invoiceNum]=true;});
+  const btn=document.getElementById('integrityBtn');
+  if(btn){
+    if(issues.length){
+      btn.textContent='⚠';btn.style.background='rgba(139,58,42,.25)';btn.style.borderColor='rgba(139,58,42,.4)';
+      btn.title='Najdene nepravilnosti — klikni za podrobnosti';
+    } else {
+      btn.textContent='✓';btn.style.background='rgba(58,107,74,.15)';btn.style.borderColor='rgba(58,107,74,.3)';
+      btn.title='Podatki so konsistentni';
+    }
+  }
+}
+
+function runIntegrityCheck(){
+  const issues=[];
+  const warnings=[];
+  const infos=[];
+
+  products.forEach(p=>{
+    // Vse serije tega produkta
+    const pb=batches.filter(b=>b.productId===p.id);
+
+    // Skupna vhodna količina (narejeno)
+    const totalAlcIn=pb.reduce((s,b)=>s+(b.alc?.qty||0),0);
+    const totalGlyIn=pb.reduce((s,b)=>s+(b.gly?.qty||0),0);
+
+    // Skupna prod alokacija
+    const totalAlcProdAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0),0);
+    const totalGlyProdAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0),0);
+    const totalAlcIntAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.int||0),0);
+    const totalGlyIntAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.int||0),0);
+
+    // Skupna alokacija ne sme presegati narejene količine
+    if(totalAlcProdAlloc+totalAlcIntAlloc>totalAlcIn){
+      issues.push(`❌ ${p.name} — alkohol: alokacija (${totalAlcProdAlloc+totalAlcIntAlloc}) presega narejeno (${totalAlcIn})`);
+    }
+    if(totalGlyProdAlloc+totalGlyIntAlloc>totalGlyIn){
+      issues.push(`❌ ${p.name} — glicerin: alokacija (${totalGlyProdAlloc+totalGlyIntAlloc}) presega narejeno (${totalGlyIn})`);
+    }
+
+    // Prodane količine
+    const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
+    let soldAlcProd=0,soldGlyProd=0,soldAlcInt=0,soldGlyInt=0;
+    activeSales.forEach(g=>{
+      const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;
+      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
+      if(isProd){soldAlcProd+=(l.alc||0);soldGlyProd+=(l.gly||0);}
+      else{soldAlcInt+=(l.alc||0);soldGlyInt+=(l.gly||0);}
+    });
+
+    // Prodano ne sme presegati prod alokacije
+    if(soldAlcProd>totalAlcProdAlloc){
+      issues.push(`❌ ${p.name} — alkohol prodaja: prodano (${soldAlcProd}) presega prod alokacijo (${totalAlcProdAlloc})`);
+    }
+    if(soldGlyProd>totalGlyProdAlloc){
+      issues.push(`❌ ${p.name} — glicerin prodaja: prodano (${soldGlyProd}) presega prod alokacijo (${totalGlyProdAlloc})`);
+    }
+    if(soldAlcInt>totalAlcIntAlloc){
+      issues.push(`❌ ${p.name} — alkohol interno: porabljeno (${soldAlcInt}) presega int alokacijo (${totalAlcIntAlloc})`);
+    }
+    if(soldGlyInt>totalGlyIntAlloc){
+      issues.push(`❌ ${p.name} — glicerin interno: porabljeno (${soldGlyInt}) presega int alokacijo (${totalGlyIntAlloc})`);
+    }
+
+    // Batch breakdown konsistentnost
+    activeSales.forEach(g=>{
+      const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;
+      (l.batchBreakdown||[]).forEach(bb=>{
+        const b=batches.find(x=>x.id===bb.batchId);
+        if(!b){
+          issues.push(`❌ Prodaja ${g.invoiceNum||g.id.slice(0,8)} — serija ${bb.batchNum||bb.batchId} ne obstaja več`);
+          return;
+        }
+        // Skupno prodano iz te serije ne sme presegati alokacije
+        const totalFromBatchAlc=activeSales.reduce((s,g2)=>{
+          const l2=g2.lines?.find(l=>l.productId===p.id);if(!l2)return s;
+          return s+((l2.batchBreakdown||[]).find(x=>x.batchId===bb.batchId)?.alc||0);
+        },0);
+        const totalFromBatchGly=activeSales.reduce((s,g2)=>{
+          const l2=g2.lines?.find(l=>l.productId===p.id);if(!l2)return s;
+          return s+((l2.batchBreakdown||[]).find(x=>x.batchId===bb.batchId)?.gly||0);
+        },0);
+        if(totalFromBatchAlc>(b.alc?.qty||0)){
+          issues.push(`❌ Serija ${b.batchNum} (${p.name}) — prodano alkohola (${totalFromBatchAlc}) presega narejeno (${b.alc?.qty||0})`);
+        }
+        if(totalFromBatchGly>(b.gly?.qty||0)){
+          issues.push(`❌ Serija ${b.batchNum} (${p.name}) — prodano glicerina (${totalFromBatchGly}) presega narejeno (${b.gly?.qty||0})`);
+        }
+      });
+    });
+
+    // Opozorila — zaloga pod varnostno mejo
+    const st=productStock(p.id);
+    const safetyAlc=pb.length?pb[0].safetyAlc||10:10;
+    if(st.prodAlc<safetyAlc&&totalAlcIn>0){
+      warnings.push(`⚠ ${p.name} — alkohol pod varnostno zalogo (${st.prodAlc} < ${safetyAlc})`);
+    }
+
+    // Info — skupna slika
+    const remAlc=totalAlcProdAlloc-soldAlcProd;
+    const remGly=totalGlyProdAlloc-soldGlyProd;
+    infos.push({name:p.name,totalAlcIn,totalGlyIn,soldAlcProd,soldGlyProd,remAlc,remGly});
+  });
+
+  // Preveri podvojene invoice številke
+  const invNums={};
+  saleGroups.filter(g=>g.invoiceNum).forEach(g=>{
+    if(invNums[g.invoiceNum]){issues.push(`❌ Podvojena številka računa: ${g.invoiceNum}`);}
+    else invNums[g.invoiceNum]=true;
+  });
+
+  // Posodobi gumb v headerju
+  const btn=document.getElementById('integrityBtn');
+  if(btn){
+    if(issues.length){btn.textContent='⚠';btn.style.background='rgba(139,58,42,.25)';btn.style.borderColor='rgba(139,58,42,.4)';}
+    else{btn.textContent='✓';btn.style.background='';btn.style.borderColor='';}
+  }
+
+  // Prikaži rezultate
+  const ok=issues.length===0;
+  document.getElementById('integrityBody').innerHTML=`
+    <div style="padding:.5rem 0 .75rem">
+      <div style="font-size:1rem;font-weight:600;color:${ok?'#3a6b4a':'#8b3a2a'};margin-bottom:.5rem">
+        ${ok?'✅ Vsi podatki so konsistentni':'⚠ Najdene nepravilnosti'}
+      </div>
+      ${issues.length?`<div class="slabel" style="margin-bottom:.3rem">Napake (${issues.length})</div>
+        ${issues.map(i=>`<div style="font-size:.75rem;padding:.3rem .5rem;background:rgba(139,58,42,.08);border-radius:6px;margin-bottom:.3rem;color:#8b3a2a">${i}</div>`).join('')}`:''}
+      ${warnings.length?`<div class="slabel" style="margin:.5rem 0 .3rem">Opozorila (${warnings.length})</div>
+        ${warnings.map(w=>`<div style="font-size:.75rem;padding:.3rem .5rem;background:rgba(175,132,85,.12);border-radius:6px;margin-bottom:.3rem">${w}</div>`).join('')}`:''}
+      <div class="slabel" style="margin:.75rem 0 .3rem">Pregled po produktih</div>
+      <table style="width:100%;border-collapse:collapse;font-size:.73rem">
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:.3rem .4rem;color:var(--muted)">Produkt</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Narejeno</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Prodano</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Ostalo</th>
+        </tr>
+        ${infos.map(r=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.3rem .4rem">${r.name}</td>
+          <td style="text-align:right;padding:.3rem .4rem">🥃${r.totalAlcIn} 🌿${r.totalGlyIn}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">🥃${r.soldAlcProd} 🌿${r.soldGlyProd}</td>
+          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlc+r.remGly>0?'#1a4a2a':'#8b3a2a'}">🥃${r.remAlc} 🌿${r.remGly}</td>
+        </tr>`).join('')}
+      </table>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.75rem">Zadnje preverjanje: ${new Date().toLocaleString('sl-SI')}</div>
+    </div>`;
+  openSheet('integrityOverlay');
+}
+
+
 function getKnownBuyers(){
   const seen=new Set();
   const buyers=[];

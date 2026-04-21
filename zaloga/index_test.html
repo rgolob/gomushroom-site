@@ -4251,112 +4251,111 @@ function genReport(type){
         </tr>`);
       });
 
-      // Zaloga konec + po serijah z vsemi kupci
+      // Zaloga konec obdobja
       let zalogaEnd=0;
-      const zalogoPoSerijah=[];
-      // Za končno zalogo upoštevamo samo serije narejene DO konca obdobja
       allBatches.forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         if(!alloc)return;
-
-        // Prodano skupaj do konca obdobja
-        const soldTotal=salesUntilEnd.reduce((s,g)=>{
+        const soldEnd=salesUntilEnd.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
         },0);
-        const rem=Math.max(0,alloc-soldTotal);
-        zalogaEnd+=rem;
-        grandZaloga+=rem;
+        zalogaEnd+=Math.max(0,alloc-soldEnd);
+      });
+      grandZaloga+=zalogaEnd;
 
-        // Prikaži serijo če ima alokacijo (tudi prodane v celoti)
-        // Prikaži samo serije narejene od začetka leta DO konca obdobja
-        const yearStart=od.slice(0,4)+'-01-01';
-        if(b.date<yearStart||b.date>doVal)return;
+      // ── MATERIALNA KARTICA — kronološka tabela ──
+      // Sestavimo vse vrstice: začetna zaloga + vhodi + izhodi, sortirano po datumu
+      const karticaRows=[];
+      let tekocaZaloga=zalogaStart;
 
-        // Kupci te serije — vsi do konca obdobja (da je viden celoten tok)
-        const batchBuyers=salesUntilEnd.filter(g=>
-          g.lines?.some(l=>l.productId===p.id&&(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&(bb.alc||0)>0))
-        ).sort((a,b2)=>a.date.localeCompare(b2.date));
+      // Vse serije in prodaje od začetka leta do konca obdobja, sortirano po datumu
+      const yearStart=od.slice(0,4)+'-01-01';
+      const allBatchesYear=batches.filter(b=>b.productId===p.id&&b.date>=yearStart&&b.date<=doVal&&(b.alc?.qty||0)>0);
+      const allSalesYear=saleGroups.filter(g=>isProdChannel(g)&&g.date>=yearStart&&g.date<=doVal);
 
-        const buyerLines=batchBuyers.map(g=>{
-          const alcQ=g.lines.reduce((s,l)=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);return s+(bb?.alc||0);},0);
-          if(!alcQ)return'';
-          const inPeriod=g.date>=od&&g.date<=doVal;
-          return`<div style="font-size:.65rem;color:${inPeriod?'#5a4a3a':'#9a8a7a'};padding:.1rem 0">${g.date.split('-').reverse().join('.')} · ${g.buyer||'—'} · ${CH[g.channel]?.label||''} · ${g.invoiceNum||'—'} · <strong>${alcQ} kom.</strong>${!inPeriod?' <span style="font-size:.58rem;color:#9a8a7a">(pred obdobjem)</span>':''}</div>`;
-        }).filter(Boolean).join('');
+      // Zberi vse dogodke
+      const events=[];
+      allBatchesYear.forEach(b=>{
+        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        if(alloc>0)events.push({date:b.date,type:'prod',batchNum:b.batchNum,qty:alloc,doc:b.batchNum,buyer:''});
+      });
+      allSalesYear.forEach(g=>{
+        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
+        events.push({date:g.date,type:'sale',batchNum:'',qty:l.alc||0,doc:g.invoiceNum||'—',buyer:g.buyer||'—'});
+      });
+      events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
-        // Prodano v mesecu iz te serije
-        const soldInPeriod=salesInPeriod.reduce((s,g)=>{
-          const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
-          return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
-        },0);
+      // Začetna zaloga (samo če > 0 ali je to prenosna zaloga)
+      if(zalogaStart>0){
+        karticaRows.push(`<tr class="prenosna">
+          <td>${od.split('-').reverse().join('.')}</td>
+          <td colspan="2">Prenosna zaloga</td>
+          <td class="num">${zalogaStart}</td>
+          <td class="num">—</td>
+          <td class="num">${zalogaStart}</td>
+          <td></td>
+        </tr>`);
+      }
 
-        zalogoPoSerijah.push(`<tr style="font-size:.75rem${rem===0?';opacity:.7':''}">
-          <td style="font-weight:600">${b.batchNum}</td>
-          <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
-          <td class="num">${alloc}</td>
-          <td class="num" style="color:${soldInPeriod>0?'#8b3a2a':'#7a6f60'}">${soldInPeriod||0}</td>
-          <td class="num" style="font-weight:600;color:${rem>0?'#1a4a2a':'#8b3a2a'}">${rem>0?rem:'✓ 0'}</td>
-        </tr>
-        ${buyerLines?`<tr><td colspan="5" style="padding:.1rem .5rem .4rem 1rem;background:#fafafa">${buyerLines}</td></tr>`:''}`);
+      // Dogodki
+      events.forEach(ev=>{
+        if(ev.type==='prod'){
+          tekocaZaloga+=ev.qty;
+          const inPeriod=ev.date>=od;
+          karticaRows.push(`<tr class="vhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
+            <td>${ev.date.split('-').reverse().join('.')}</td>
+            <td>Proizvodnja</td>
+            <td>${ev.batchNum}</td>
+            <td class="num" style="color:#1a4a2a;font-weight:600">+${ev.qty}</td>
+            <td class="num">—</td>
+            <td class="num" style="font-weight:600">${tekocaZaloga}</td>
+            <td style="font-size:.65rem;color:#9a8a7a">${!inPeriod?'pred mesecem':''}</td>
+          </tr>`);
+        } else {
+          tekocaZaloga-=ev.qty;
+          const inPeriod=ev.date>=od;
+          karticaRows.push(`<tr class="izhod" style="${!inPeriod?'opacity:.65':''}">
+            <td>${ev.date.split('-').reverse().join('.')}</td>
+            <td>Prodaja</td>
+            <td>${ev.doc}</td>
+            <td class="num">—</td>
+            <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
+            <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
+            <td>${ev.buyer}${!inPeriod?' <span style="font-size:.6rem;color:#9a8a7a">(pred mesecem)</span>':''}</td>
+          </tr>`);
+        }
       });
 
       productCards+=`
-        <div style="border:1px solid #ede6d6;border-radius:6px;margin-bottom:1.5rem;overflow:hidden;page-break-inside:avoid">
-          <div style="background:#f5f0e8;padding:.6rem 1rem;border-bottom:1px solid #ede6d6;display:flex;justify-content:space-between;align-items:center">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem">${moji(p.name)} ${p.name} — Alkoholna tinktura</div>
-            <div style="font-size:.68rem;color:#7a6f60">Materialna kartica · ${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}</div>
+        <div class="product-section">
+          <div class="product-header">
+            <div class="product-name">${moji(p.name)} ${p.name} — Alkoholna tinktura</div>
+            <div class="product-sub">Materialna kartica · ${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}</div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:1px solid #ede6d6">
-            <div style="padding:.5rem .75rem;border-right:1px solid #ede6d6;text-align:center">
-              <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:#7a6f60">Zaloga na ${od.split('-').reverse().join('.')}</div>
-              <div style="font-size:1.3rem;font-weight:600;font-family:'Cormorant Garamond',serif">${zalogaStart}</div>
-            </div>
-            <div style="padding:.5rem .75rem;border-right:1px solid #ede6d6;text-align:center">
-              <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:#1a4a2a">Narejeno v mesecu</div>
-              <div style="font-size:1.3rem;font-weight:600;font-family:'Cormorant Garamond',serif;color:#1a4a2a">+${totalNarejeno}</div>
-            </div>
-            <div style="padding:.5rem .75rem;border-right:1px solid #ede6d6;text-align:center">
-              <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:#8b3a2a">Prodano v mesecu</div>
-              <div style="font-size:1.3rem;font-weight:600;font-family:'Cormorant Garamond',serif;color:#8b3a2a">−${totalProdano}</div>
-            </div>
-            <div style="padding:.5rem .75rem;text-align:center">
-              <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:#7a6f60">Zaloga na ${doVal.split('-').reverse().join('.')}</div>
-              <div style="font-size:1.3rem;font-weight:600;font-family:'Cormorant Garamond',serif;color:${zalogaEnd>0?'#1a4a2a':'#8b3a2a'}">${zalogaEnd}</div>
-            </div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Zaloga ${od.split('-').reverse().join('.')}</div><div class="kpi-val">${zalogaStart}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#1a4a2a">+ Narejeno</div><div class="kpi-val" style="color:#1a4a2a">+${totalNarejeno}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− Prodano</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdano}</div></div>
+            <div class="kpi"><div class="kpi-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="kpi-val" style="color:${zalogaEnd>0?'#1a4a2a':'#5a4a3a'}">${zalogaEnd}</div></div>
           </div>
-
-          ${vhodiRows||izhodiRows.length?`<div style="padding:.5rem .75rem;border-bottom:1px solid #ede6d6">
-            <div style="font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem">Gibanje zaloge v mesecu</div>
-            <table>
-              <tr style="font-size:.6rem">
-                <th>Datum</th><th>Opis / Kupec</th>
-                <th style="text-align:right;color:#1a4a2a">Vhod</th>
-                <th style="text-align:right;color:#8b3a2a">Izhod</th>
-                <th style="text-align:right;color:#7a6f60">Dokument</th>
-              </tr>
-              ${vhodiRows}
-              ${izhodiRows.join('')}
-              <tr style="border-top:2px solid #ede6d6;font-weight:600;background:#f5f0e8">
-                <td colspan="2">Skupaj v obdobju</td>
-                <td class="num" style="color:#1a4a2a">+${totalNarejeno}</td>
-                <td class="num" style="color:#8b3a2a">−${totalProdano}</td>
-                <td></td>
-              </tr>
-            </table>
-          </div>`:''}
-
-          <div style="padding:.5rem .75rem">
-            <div style="font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem">Stanje zaloge po serijah na ${doVal.split('-').reverse().join('.')} · z vsemi kupci</div>
-            <table>
-              <tr style="font-size:.6rem"><th>Serija</th><th>Datum</th><th style="text-align:right">Aloc.</th><th style="text-align:right;color:#8b3a2a">Prod. v mesecu</th><th style="text-align:right">Ostalo</th></tr>
-              ${zalogoPoSerijah.join('')}
-              <tr style="border-top:2px solid #ede6d6;font-weight:600;background:#f5f0e8">
-                <td colspan="4">Zaloga skupaj na ${doVal.split('-').reverse().join('.')}</td>
-                <td class="num" style="color:${zalogaEnd>0?'#1a4a2a':'#8b3a2a'}">${zalogaEnd}</td>
-              </tr>
-            </table>
-          </div>
+          <table>
+            <tr>
+              <th style="width:9%">Datum</th>
+              <th style="width:13%">Vrsta premika</th>
+              <th style="width:13%">Lot / Dokument</th>
+              <th style="text-align:right;width:7%;color:#1a4a2a">Vhod</th>
+              <th style="text-align:right;width:7%;color:#8b3a2a">Izhod</th>
+              <th style="text-align:right;width:7%">Zaloga</th>
+              <th>Kupec</th>
+            </tr>
+            ${karticaRows.join('')}
+            <tr class="subtotal">
+              <td colspan="5" style="padding:.3rem .4rem">Zaloga skupaj na ${doVal.split('-').reverse().join('.')}</td>
+              <td class="num" style="color:${zalogaEnd>0?'#1a4a2a':'#5a4a3a'}">${zalogaEnd}</td>
+              <td></td>
+            </tr>
+          </table>
         </div>`;
     });
 
@@ -4383,13 +4382,66 @@ function showReport(type,html){
   const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titles[type]}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-${reportCSS()}
+${type==='trosarine'?`<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:960px;margin:0 auto;color:#1a1209;font-size:12px}
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #1a1209}
+.doc-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;letter-spacing:.05em}.doc-logo span{color:#af8455}
+.doc-meta{text-align:right;font-size:.7rem;color:#7a6f60}
+.doc-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;margin-bottom:.2rem;color:#1a1209}
+.doc-period{font-size:.75rem;color:#7a6f60;margin-bottom:1rem}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1.25rem}
+.sum-box{border:1px solid #ede6d6;border-radius:4px;padding:.4rem .6rem;text-align:center}
+.sum-label{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;margin-bottom:.15rem}
+.sum-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400}
+.product-section{margin-bottom:1.25rem;page-break-inside:avoid}
+.product-header{background:#f5f0e8;padding:.4rem .75rem;border-bottom:1px solid #ede6d6;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ede6d6}
+.product-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400}
+.product-sub{font-size:.6rem;color:#7a6f60}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ede6d6}
+.kpi{padding:.35rem .6rem;text-align:center;border-right:1px solid #ede6d6}
+.kpi:last-child{border-right:none}
+.kpi-label{font-size:.52rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:1.1rem}
+table{width:100%;border-collapse:collapse}
+th{font-size:.58rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60;padding:.25rem .4rem;border-bottom:1px solid #ede6d6;text-align:left;background:#f9f7f3}
+td{padding:.22rem .4rem;border-bottom:1px solid #f0ebe0;vertical-align:middle}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.vhod{background:#f0f6f2}
+tr.izhod td{background:white}
+tr.prenosna{background:#f9f6f0;font-style:italic;color:#7a6f60}
+tr.subtotal{background:#f5f0e8;font-weight:600;border-top:2px solid #ede6d6}
+.sign-section{margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+.sign-box{border-top:1px solid #1a1209;padding-top:.4rem;font-size:.68rem;color:#7a6f60}
+.printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
+@media print{.printbtn{display:none}body{padding:.5rem 1rem}page{size:A4;margin:1.5cm}}
+</style>`:reportCSS()}
 </head><body>
-${reportHeader(titles[type],subtitles[type])}
+${type==='trosarine'?`
+<div class="doc-header">
+  <div>
+    <div class="doc-logo">Go<span>Mushroom</span></div>
+    <div style="font-size:.65rem;color:#7a6f60">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža</div>
+  </div>
+  <div class="doc-meta">
+    <div style="font-size:.8rem;font-weight:500">Poročilo trošarin</div>
+    <div>Alkoholne tinkture medicinskih gob</div>
+    <div style="margin-top:.2rem">Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+  </div>
+</div>
+<div class="doc-title">Evidenca proizvodnje in prometa — alkoholne tinkture</div>
+<div class="doc-period">${subtitles[type]}</div>
+`:reportHeader(titles[type],subtitles[type])}
 ${html}
-<hr class="footer-line">
-<div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
+${type==='trosarine'?`
+<div class="sign-section">
+  <div class="sign-box">Odgovorna oseba: Rok Golob<br><br></div>
+  <div class="sign-box">Datum in podpis:<br><br></div>
+</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+`:`<hr class="footer-line">
+<div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
+<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>`}
 </body></html>`;
 
   const blob=new Blob([full],{type:'text/html;charset=utf-8'});

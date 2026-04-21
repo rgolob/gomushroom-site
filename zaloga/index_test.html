@@ -4325,206 +4325,170 @@ ${html}
 
 
 // ── INTEGRITY CHECK ──
-function runIntegrityCheckSilent(){
+function _calcBatchIntegrity(){
+  // Returns {issues, batchRows} — checks per batch
   const issues=[];
-  products.forEach(p=>{
-    const pb=batches.filter(b=>b.productId===p.id);
-    const totalAlcIn=pb.reduce((s,b)=>s+(b.alc?.qty||0),0);
-    const totalGlyIn=pb.reduce((s,b)=>s+(b.gly?.qty||0),0);
-    const totalAlcAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0)+(b.alc?.alloc?.int||0),0);
-    const totalGlyAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0)+(b.gly?.alloc?.int||0),0);
-    if(totalAlcAlloc>totalAlcIn||totalGlyAlloc>totalGlyIn)issues.push(1);
-    const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
-    let soldAlc=0,soldGly=0;
-    activeSales.forEach(g=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;soldAlc+=(l.alc||0);soldGly+=(l.gly||0);});
-    if(soldAlc>totalAlcAlloc||soldGly>totalGlyAlloc)issues.push(1);
+  const batchRows=[];
+  const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
+
+  batches.forEach(b=>{
+    const p=products.find(x=>x.id===b.productId);
+    const pName=p?.name||b.productName||'?';
+
+    const alcIn=b.alc?.qty||0;
+    const glyIn=b.gly?.qty||0;
+    const alcProdAlloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+    const glyProdAlloc=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
+    const alcIntAlloc=b.alc?.alloc?.int||0;
+    const glyIntAlloc=b.gly?.alloc?.int||0;
+
+    // Prodano iz te serije po kanalu
+    let soldAlcProd=0,soldGlyProd=0,soldAlcInt=0,soldGlyInt=0;
+    activeSales.forEach(g=>{
+      const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return;
+      const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(!bb)return;
+      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
+      if(isProd){soldAlcProd+=(bb.alc||0);soldGlyProd+=(bb.gly||0);}
+      else{soldAlcInt+=(bb.alc||0);soldGlyInt+=(bb.gly||0);}
+    });
+
+    const zaloгаAlcProd=alcProdAlloc-soldAlcProd;
+    const zaloгаGlyProd=glyProdAlloc-soldGlyProd;
+    const zaloгаAlcInt=alcIntAlloc-soldAlcInt;
+    const zaloгаGlyInt=glyIntAlloc-soldGlyInt;
+
+    // Serija je v celoti prodana in OK — preskoči napake
+    const fullyDone=(zaloгаAlcProd<=0&&zaloгаGlyProd<=0&&zaloгаAlcInt<=0&&zaloгаGlyInt<=0);
+
+    // Preveri napake
+    const batchIssues=[];
+    if(alcProdAlloc+alcIntAlloc>alcIn) batchIssues.push(`alok. alc (${alcProdAlloc+alcIntAlloc}) > narejeno (${alcIn})`);
+    if(glyProdAlloc+glyIntAlloc>glyIn) batchIssues.push(`alok. gly (${glyProdAlloc+glyIntAlloc}) > narejeno (${glyIn})`);
+    if(soldAlcProd>alcProdAlloc) batchIssues.push(`prodano alc (${soldAlcProd}) > prod alok. (${alcProdAlloc})`);
+    if(soldGlyProd>glyProdAlloc) batchIssues.push(`prodano gly (${soldGlyProd}) > prod alok. (${glyProdAlloc})`);
+    if(soldAlcInt>alcIntAlloc) batchIssues.push(`int alc (${soldAlcInt}) > int alok. (${alcIntAlloc})`);
+    if(soldGlyInt>glyIntAlloc) batchIssues.push(`int gly (${soldGlyInt}) > int alok. (${glyIntAlloc})`);
+
+    batchIssues.forEach(i=>issues.push(`❌ ${pName} · ${b.batchNum}: ${i}`));
+
+    batchRows.push({
+      b,pName,fullyDone,hasIssues:batchIssues.length>0,
+      alcIn,glyIn,
+      alcProdAlloc,glyProdAlloc,
+      alcIntAlloc,glyIntAlloc,
+      soldAlcProd,soldGlyProd,
+      soldAlcInt,soldGlyInt,
+      zAlcProd:zaloгаAlcProd,zGlyProd:zaloгаGlyProd,
+      zAlcInt:zaloгаAlcInt,zGlyInt:zaloгаGlyInt,
+    });
   });
+
+  // Podvojeni računi
   const invNums={};
-  saleGroups.filter(g=>g.invoiceNum).forEach(g=>{if(invNums[g.invoiceNum])issues.push(1);else invNums[g.invoiceNum]=true;});
+  saleGroups.filter(g=>g.invoiceNum).forEach(g=>{
+    if(invNums[g.invoiceNum])issues.push(`❌ Podvojena št. računa: ${g.invoiceNum}`);
+    else invNums[g.invoiceNum]=true;
+  });
+
+  return{issues,batchRows};
+}
+
+function runIntegrityCheckSilent(){
+  const {issues}=_calcBatchIntegrity();
   const btn=document.getElementById('integrityBtn');
-  if(btn){
-    if(issues.length){
-      btn.textContent='⚠';btn.style.background='rgba(139,58,42,.25)';btn.style.borderColor='rgba(139,58,42,.4)';
-      btn.title='Najdene nepravilnosti — klikni za podrobnosti';
-    } else {
-      btn.textContent='✓';btn.style.background='rgba(58,107,74,.15)';btn.style.borderColor='rgba(58,107,74,.3)';
-      btn.title='Podatki so konsistentni';
-    }
+  if(!btn)return;
+  if(issues.length){
+    btn.textContent='⚠';btn.style.background='rgba(139,58,42,.25)';btn.style.borderColor='rgba(139,58,42,.4)';
+    btn.title=`${issues.length} nepravilnosti — klikni za podrobnosti`;
+  } else {
+    btn.textContent='✓';btn.style.background='rgba(58,107,74,.15)';btn.style.borderColor='rgba(58,107,74,.3)';
+    btn.title='Podatki so konsistentni';
   }
 }
 
 function runIntegrityCheck(){
-  const issues=[];
+  const {issues,batchRows}=_calcBatchIntegrity();
+
+  // Warnings — varnostna zaloga
   const warnings=[];
-  const infos=[];
-
   products.forEach(p=>{
-    // Vse serije tega produkta
-    const pb=batches.filter(b=>b.productId===p.id);
-
-    // Skupna vhodna količina (narejeno)
-    const totalAlcIn=pb.reduce((s,b)=>s+(b.alc?.qty||0),0);
-    const totalGlyIn=pb.reduce((s,b)=>s+(b.gly?.qty||0),0);
-
-    // Skupna prod alokacija
-    const totalAlcProdAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0),0);
-    const totalGlyProdAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0),0);
-    const totalAlcIntAlloc=pb.reduce((s,b)=>s+(b.alc?.alloc?.int||0),0);
-    const totalGlyIntAlloc=pb.reduce((s,b)=>s+(b.gly?.alloc?.int||0),0);
-
-    // Skupna alokacija ne sme presegati narejene količine
-    if(totalAlcProdAlloc+totalAlcIntAlloc>totalAlcIn){
-      issues.push(`❌ ${p.name} — alkohol: alokacija (${totalAlcProdAlloc+totalAlcIntAlloc}) presega narejeno (${totalAlcIn})`);
-    }
-    if(totalGlyProdAlloc+totalGlyIntAlloc>totalGlyIn){
-      issues.push(`❌ ${p.name} — glicerin: alokacija (${totalGlyProdAlloc+totalGlyIntAlloc}) presega narejeno (${totalGlyIn})`);
-    }
-
-    // Prodane količine
-    const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
-    let soldAlcProd=0,soldGlyProd=0,soldAlcInt=0,soldGlyInt=0;
-    activeSales.forEach(g=>{
-      const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;
-      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
-      if(isProd){soldAlcProd+=(l.alc||0);soldGlyProd+=(l.gly||0);}
-      else{soldAlcInt+=(l.alc||0);soldGlyInt+=(l.gly||0);}
-    });
-
-    // Prodano ne sme presegati prod alokacije
-    if(soldAlcProd>totalAlcProdAlloc){
-      issues.push(`❌ ${p.name} — alkohol prodaja: prodano (${soldAlcProd}) presega prod alokacijo (${totalAlcProdAlloc})`);
-    }
-    if(soldGlyProd>totalGlyProdAlloc){
-      issues.push(`❌ ${p.name} — glicerin prodaja: prodano (${soldGlyProd}) presega prod alokacijo (${totalGlyProdAlloc})`);
-    }
-    if(soldAlcInt>totalAlcIntAlloc){
-      issues.push(`❌ ${p.name} — alkohol interno: porabljeno (${soldAlcInt}) presega int alokacijo (${totalAlcIntAlloc})`);
-    }
-    if(soldGlyInt>totalGlyIntAlloc){
-      issues.push(`❌ ${p.name} — glicerin interno: porabljeno (${soldGlyInt}) presega int alokacijo (${totalGlyIntAlloc})`);
-    }
-
-    // Batch breakdown konsistentnost
-    activeSales.forEach(g=>{
-      const l=g.lines?.find(l=>l.productId===p.id);if(!l)return;
-      (l.batchBreakdown||[]).forEach(bb=>{
-        const b=batches.find(x=>x.id===bb.batchId);
-        if(!b){
-          issues.push(`❌ Prodaja ${g.invoiceNum||g.id.slice(0,8)} — serija ${bb.batchNum||bb.batchId} ne obstaja več`);
-          return;
-        }
-        // Skupno prodano iz te serije ne sme presegati alokacije
-        const totalFromBatchAlc=activeSales.reduce((s,g2)=>{
-          const l2=g2.lines?.find(l=>l.productId===p.id);if(!l2)return s;
-          return s+((l2.batchBreakdown||[]).find(x=>x.batchId===bb.batchId)?.alc||0);
-        },0);
-        const totalFromBatchGly=activeSales.reduce((s,g2)=>{
-          const l2=g2.lines?.find(l=>l.productId===p.id);if(!l2)return s;
-          return s+((l2.batchBreakdown||[]).find(x=>x.batchId===bb.batchId)?.gly||0);
-        },0);
-        if(totalFromBatchAlc>(b.alc?.qty||0)){
-          issues.push(`❌ Serija ${b.batchNum} (${p.name}) — prodano alkohola (${totalFromBatchAlc}) presega narejeno (${b.alc?.qty||0})`);
-        }
-        if(totalFromBatchGly>(b.gly?.qty||0)){
-          issues.push(`❌ Serija ${b.batchNum} (${p.name}) — prodano glicerina (${totalFromBatchGly}) presega narejeno (${b.gly?.qty||0})`);
-        }
-      });
-    });
-
-    // Opozorila — zaloga pod varnostno mejo
     const st=productStock(p.id);
-    const safetyAlc=pb.length?pb[0].safetyAlc||10:10;
-    if(st.prodAlc<safetyAlc&&totalAlcIn>0){
-      warnings.push(`⚠ ${p.name} — alkohol pod varnostno zalogo (${st.prodAlc} < ${safetyAlc})`);
-    }
-
-    // Info — skupna slika
-    const remAlcProd=totalAlcProdAlloc-soldAlcProd;
-    const remGlyProd=totalGlyProdAlloc-soldGlyProd;
-    const remAlcInt=totalAlcIntAlloc-soldAlcInt;
-    const remGlyInt=totalGlyIntAlloc-soldGlyInt;
-    infos.push({
-      name:p.name,
-      totalAlcIn,totalGlyIn,
-      totalAlcProdAlloc,totalGlyProdAlloc,
-      totalAlcIntAlloc,totalGlyIntAlloc,
-      soldAlcProd,soldGlyProd,
-      soldAlcInt,soldGlyInt,
-      remAlcProd,remGlyProd,
-      remAlcInt,remGlyInt,
-    });
+    const pb=batches.filter(b=>b.productId===p.id);
+    const safety=pb.find(b=>b.safetyAlc)?.safetyAlc||10;
+    if(st.prodAlc<safety&&st.prodAlc+st.prodGly>=0)
+      warnings.push(`⚠ ${p.name} — alkohol pod varnostno zalogo (${st.prodAlc} < ${safety})`);
   });
 
-  // Preveri podvojene invoice številke
-  const invNums={};
-  saleGroups.filter(g=>g.invoiceNum).forEach(g=>{
-    if(invNums[g.invoiceNum]){issues.push(`❌ Podvojena številka računa: ${g.invoiceNum}`);}
-    else invNums[g.invoiceNum]=true;
-  });
-
-  // Posodobi gumb v headerju
-  const btn=document.getElementById('integrityBtn');
-  if(btn){
-    if(issues.length){btn.textContent='⚠';btn.style.background='rgba(139,58,42,.25)';btn.style.borderColor='rgba(139,58,42,.4)';}
-    else{btn.textContent='✓';btn.style.background='';btn.style.borderColor='';}
-  }
-
-  // Prikaži rezultate
+  runIntegrityCheckSilent();
   const ok=issues.length===0;
+
+  // Build per-batch table — skip fully-done-and-ok batches
+  const activeBatchRows=batchRows.filter(r=>!r.fullyDone||r.hasIssues);
+  const doneBatchRows=batchRows.filter(r=>r.fullyDone&&!r.hasIssues);
+
+  const cell=(v,color)=>`<td style="text-align:right;padding:.25rem .35rem;${color?'color:'+color:''}">${v}</td>`;
+  const hdr=`<tr style="border-bottom:2px solid var(--border);font-size:.6rem;color:var(--muted)">
+    <th style="text-align:left;padding:.25rem .35rem">Serija</th>
+    <th style="text-align:left;padding:.25rem .35rem">Produkt</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Narejeno</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Prodaja aloc.</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Prodano</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Zaloga prod.</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Int. aloc.</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Int. porab.</th>
+    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Zaloga int.</th>
+  </tr>
+  <tr style="font-size:.55rem;color:var(--muted);border-bottom:1px solid var(--border)">
+    <td colspan="2"></td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+  </tr>`;
+
+  const makeRow=(r)=>{
+    const bg=r.hasIssues?'background:rgba(139,58,42,.06)':r.fullyDone?'background:rgba(58,107,74,.04);opacity:.7':'';
+    const zProdColor=r.zAlcProd+r.zGlyProd>0?'#1a4a2a':'#8b3a2a';
+    const zIntColor=r.zAlcInt+r.zGlyInt>0?'#5a5040':'#8b3a2a';
+    return`<tr style="border-bottom:1px solid var(--border);font-size:.68rem;${bg}">
+      <td style="padding:.25rem .35rem;font-weight:500">${r.b.batchNum}${r.hasIssues?' ❌':r.fullyDone?' ✓':''}</td>
+      <td style="padding:.25rem .35rem;color:var(--muted)">${r.pName}</td>
+      ${cell(r.alcIn,'')}${cell(r.glyIn,'')}
+      ${cell(r.alcProdAlloc,'#5a7a8a')}${cell(r.glyProdAlloc,'#5a7a8a')}
+      ${cell(r.soldAlcProd,'#3a6b4a')}${cell(r.soldGlyProd,'#3a6b4a')}
+      ${cell(r.zAlcProd,zProdColor)}${cell(r.zGlyProd,zProdColor)}
+      ${cell(r.alcIntAlloc,'#7a6f60')}${cell(r.glyIntAlloc,'#7a6f60')}
+      ${cell(r.soldAlcInt,'#7a6f60')}${cell(r.soldGlyInt,'#7a6f60')}
+      ${cell(r.zAlcInt,zIntColor)}${cell(r.zGlyInt,zIntColor)}
+    </tr>`;
+  };
+
   document.getElementById('integrityBody').innerHTML=`
     <div style="padding:.5rem 0 .75rem">
       <div style="font-size:1rem;font-weight:600;color:${ok?'#3a6b4a':'#8b3a2a'};margin-bottom:.5rem">
-        ${ok?'✅ Vsi podatki so konsistentni':'⚠ Najdene nepravilnosti'}
+        ${ok?'✅ Vsi podatki so konsistentni':`⚠ ${issues.length} nepravilnosti`}
       </div>
-      ${issues.length?`<div class="slabel" style="margin-bottom:.3rem">Napake (${issues.length})</div>
-        ${issues.map(i=>`<div style="font-size:.75rem;padding:.3rem .5rem;background:rgba(139,58,42,.08);border-radius:6px;margin-bottom:.3rem;color:#8b3a2a">${i}</div>`).join('')}`:''}
-      ${warnings.length?`<div class="slabel" style="margin:.5rem 0 .3rem">Opozorila (${warnings.length})</div>
-        ${warnings.map(w=>`<div style="font-size:.75rem;padding:.3rem .5rem;background:rgba(175,132,85,.12);border-radius:6px;margin-bottom:.3rem">${w}</div>`).join('')}`:''}
-      <div class="slabel" style="margin:.75rem 0 .3rem">Pregled po produktih</div>
-      <table style="width:100%;border-collapse:collapse;font-size:.7rem">
-        <tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:.3rem .4rem;color:var(--muted)">Produkt</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Narejeno</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Aloc. prodaja</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Aloc. interno</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Prodano</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Ostalo prod.</th>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);font-size:.6rem;color:var(--muted)">
-          <td></td>
-          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
-          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
-          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
-          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
-          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
-        </tr>
-        ${infos.map(r=>`<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.3rem .4rem;font-weight:500">${r.name}</td>
-          <td style="text-align:right;padding:.3rem .4rem">${r.totalAlcIn}</td>
-          <td style="text-align:right;padding:.3rem .4rem">${r.totalGlyIn}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${r.totalAlcProdAlloc}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${r.totalGlyProdAlloc}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${r.totalAlcIntAlloc}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${r.totalGlyIntAlloc}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${r.soldAlcProd}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${r.soldGlyProd}</td>
-          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlcProd+r.remGlyProd>0?'#1a4a2a':'#8b3a2a'}">${r.remAlcProd}</td>
-          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlcProd+r.remGlyProd>0?'#1a4a2a':'#8b3a2a'}">${r.remGlyProd}</td>
-        </tr>`).join('')}
-        <tr style="border-top:2px solid var(--border);font-weight:600;background:rgba(175,132,85,.06)">
-          <td style="padding:.3rem .4rem">Skupaj</td>
-          <td style="text-align:right;padding:.3rem .4rem">${infos.reduce((s,r)=>s+r.totalAlcIn,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem">${infos.reduce((s,r)=>s+r.totalGlyIn,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${infos.reduce((s,r)=>s+r.totalAlcProdAlloc,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${infos.reduce((s,r)=>s+r.totalGlyProdAlloc,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${infos.reduce((s,r)=>s+r.totalAlcIntAlloc,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${infos.reduce((s,r)=>s+r.totalGlyIntAlloc,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${infos.reduce((s,r)=>s+r.soldAlcProd,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${infos.reduce((s,r)=>s+r.soldGlyProd,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#1a4a2a">${infos.reduce((s,r)=>s+r.remAlcProd,0)}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#1a4a2a">${infos.reduce((s,r)=>s+r.remGlyProd,0)}</td>
-        </tr>
-      </table>
+      ${issues.length?`<div class="slabel" style="margin-bottom:.3rem">Napake</div>
+        ${issues.map(i=>`<div style="font-size:.73rem;padding:.3rem .5rem;background:rgba(139,58,42,.08);border-radius:6px;margin-bottom:.3rem;color:#8b3a2a">${i}</div>`).join('')}`:''}
+      ${warnings.length?`<div class="slabel" style="margin:.5rem 0 .3rem">Opozorila</div>
+        ${warnings.map(w=>`<div style="font-size:.73rem;padding:.3rem .5rem;background:rgba(175,132,85,.12);border-radius:6px;margin-bottom:.3rem">${w}</div>`).join('')}`:''}
+      <div class="slabel" style="margin:.75rem 0 .3rem">Aktivne serije (${activeBatchRows.length})</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.7rem;min-width:600px">
+          ${hdr}
+          ${activeBatchRows.length?activeBatchRows.map(makeRow).join(''):'<tr><td colspan="16" style="text-align:center;color:var(--muted);padding:.5rem">Ni aktivnih serij</td></tr>'}
+        </table>
+      </div>
+      ${doneBatchRows.length?`<div class="slabel" style="margin:.75rem 0 .3rem;color:var(--muted)">Prodane serije — brez napak (${doneBatchRows.length})</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.7rem;min-width:600px">
+          ${hdr}
+          ${doneBatchRows.map(makeRow).join('')}
+        </table>
+      </div>`:''}
       <div style="font-size:.68rem;color:var(--muted);margin-top:.75rem">Zadnje preverjanje: ${new Date().toLocaleString('sl-SI')}</div>
     </div>`;
   openSheet('integrityOverlay');

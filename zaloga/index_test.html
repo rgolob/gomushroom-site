@@ -4194,20 +4194,23 @@ function genReport(type){
     let productCards='';
 
     prodList.forEach(p=>{
-      const allBatches=batches.filter(b=>b.productId===p.id&&(b.alc?.qty||0)>0);
+      // Samo serije narejene DO konca obdobja (ne po!)
+      const allBatches=batches.filter(b=>b.productId===p.id&&b.date<=doVal&&(b.alc?.qty||0)>0);
 
       // Prod alokacija skupaj — preskoči produkt brez nje
       const totalProdAlloc=allBatches.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0),0);
       if(!totalProdAlloc)return;
 
+      // Serije narejene V mesecu
       const batchesInPeriod=allBatches.filter(b=>b.date>=od&&b.date<=doVal);
 
-      // Zaloga začetek — prod aloc minus prodano PRED obdobjem
+      // Zaloga začetek = serije narejene PRED mesecem minus prodano pred mesecem
       const dayBefore=new Date(od);dayBefore.setDate(dayBefore.getDate()-1);
       const dayBeforeStr=dayBefore.toISOString().slice(0,10);
+      const batchesBeforePeriod=batches.filter(b=>b.productId===p.id&&b.date<=dayBeforeStr&&(b.alc?.qty||0)>0);
       const salesBefore=saleGroups.filter(g=>isProdChannel(g)&&g.date<=dayBeforeStr);
       let zalogaStart=0;
-      allBatches.forEach(b=>{
+      batchesBeforePeriod.forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         const sold=salesBefore.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
@@ -4251,11 +4254,12 @@ function genReport(type){
       // Zaloga konec + po serijah z vsemi kupci
       let zalogaEnd=0;
       const zalogoPoSerijah=[];
+      // Za končno zalogo upoštevamo samo serije narejene DO konca obdobja
       allBatches.forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         if(!alloc)return;
 
-        // Prodano skupaj do konca obdobja (za izračun ostanka)
+        // Prodano skupaj do konca obdobja
         const soldTotal=salesUntilEnd.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);

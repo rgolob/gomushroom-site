@@ -4254,6 +4254,8 @@ function genReport(type){
       allBatches.forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         if(!alloc)return;
+
+        // Prodano skupaj do konca obdobja (za izračun ostanka)
         const soldTotal=salesUntilEnd.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
@@ -4262,8 +4264,11 @@ function genReport(type){
         zalogaEnd+=rem;
         grandZaloga+=rem;
 
-        // Kupci te serije (vsi do konca obdobja)
-        const batchBuyers=salesUntilEnd.filter(g=>
+        // Prikaži serijo samo če ima ostanke na koncu obdobja
+        if(rem===0)return;
+
+        // Kupci te serije SAMO v obdobju (ne pred)
+        const batchBuyers=salesInPeriod.filter(g=>
           g.lines?.some(l=>l.productId===p.id&&(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&(bb.alc||0)>0))
         ).sort((a,b2)=>a.date.localeCompare(b2.date));
 
@@ -4273,12 +4278,18 @@ function genReport(type){
           return`<div style="font-size:.65rem;color:#7a6f60;padding:.1rem 0">${g.date.split('-').reverse().join('.')} · ${g.buyer||'—'} · ${CH[g.channel]?.label||''} · ${g.invoiceNum||'—'} · <strong>${alcQ} kom.</strong></div>`;
         }).filter(Boolean).join('');
 
+        // Prodano v mesecu iz te serije
+        const soldInPeriod=salesInPeriod.reduce((s,g)=>{
+          const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
+          return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
+        },0);
+
         zalogoPoSerijah.push(`<tr style="font-size:.75rem">
           <td style="font-weight:600">${b.batchNum}</td>
           <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
           <td class="num">${alloc}</td>
-          <td class="num" style="color:#8b3a2a">${soldTotal}</td>
-          <td class="num" style="font-weight:600;color:${rem>0?'#1a4a2a':'#8b3a2a'}">${rem}</td>
+          <td class="num" style="color:${soldInPeriod>0?'#8b3a2a':'#7a6f60'}">${soldInPeriod||0}</td>
+          <td class="num" style="font-weight:600;color:#1a4a2a">${rem}</td>
         </tr>
         ${buyerLines?`<tr><td colspan="5" style="padding:.1rem .5rem .4rem 1rem;background:#fafafa">${buyerLines}</td></tr>`:''}`);
       });
@@ -4331,7 +4342,7 @@ function genReport(type){
           <div style="padding:.5rem .75rem">
             <div style="font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem">Stanje zaloge po serijah na ${doVal.split('-').reverse().join('.')} · z vsemi kupci</div>
             <table>
-              <tr style="font-size:.6rem"><th>Serija</th><th>Datum</th><th style="text-align:right">Skupaj</th><th style="text-align:right;color:#8b3a2a">Prodano</th><th style="text-align:right">Ostalo</th></tr>
+              <tr style="font-size:.6rem"><th>Serija</th><th>Datum</th><th style="text-align:right">Aloc.</th><th style="text-align:right;color:#8b3a2a">Prod. v mesecu</th><th style="text-align:right">Ostalo</th></tr>
               ${zalogoPoSerijah.join('')}
               <tr style="border-top:2px solid #ede6d6;font-weight:600;background:#f5f0e8">
                 <td colspan="4">Zaloga skupaj na ${doVal.split('-').reverse().join('.')}</td>
@@ -4484,23 +4495,24 @@ function runIntegrityCheck(){
   const activeBatchRows=batchRows.filter(r=>!r.fullyDone||r.hasIssues);
   const doneBatchRows=batchRows.filter(r=>r.fullyDone&&!r.hasIssues);
 
-  const hdr=`<tr style="border-bottom:2px solid var(--border);font-size:.6rem;color:var(--muted)">
-    <th style="text-align:left;padding:.25rem .35rem;width:30%">Serija · Produkt</th>
-    <th style="text-align:right;padding:.25rem .35rem" colspan="2">Narejeno</th>
-    <th style="padding:.25rem .1rem;border-left:2px solid var(--border)"></th>
-    <th style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.06)" colspan="2">🛒 Zaloga prodaja</th>
-    <th style="padding:.25rem .1rem;border-left:2px solid var(--border)"></th>
-    <th style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.06)" colspan="2">🔬 Zaloga interno</th>
+  const p2='padding:.15rem .3rem';
+  const hdr=`<tr style="border-bottom:2px solid var(--border);font-size:.58rem;color:var(--muted)">
+    <th style="text-align:left;${p2};width:35%">Serija · Produkt</th>
+    <th style="text-align:right;${p2}" colspan="2">Narejeno</th>
+    <th style="padding:0;border-left:2px solid var(--border);width:3px"></th>
+    <th style="text-align:right;${p2};background:rgba(90,122,138,.06)" colspan="2">🛒 Zaloga prod.</th>
+    <th style="padding:0;border-left:2px solid var(--border);width:3px"></th>
+    <th style="text-align:right;${p2};background:rgba(122,111,96,.06)" colspan="2">🔬 Zaloga int.</th>
   </tr>
-  <tr style="font-size:.55rem;color:var(--muted);border-bottom:1px solid var(--border)">
+  <tr style="font-size:.52rem;color:var(--muted);border-bottom:1px solid var(--border)">
     <td></td>
-    <td style="text-align:right;padding:.1rem .35rem">🥃</td><td style="text-align:right;padding:.1rem .35rem">🌿</td>
+    <td style="text-align:right;${p2}">🥃</td><td style="text-align:right;${p2}">🌿</td>
     <td></td>
-    <td style="text-align:right;padding:.1rem .35rem;background:rgba(90,122,138,.04)">🥃</td>
-    <td style="text-align:right;padding:.1rem .35rem;background:rgba(90,122,138,.04)">🌿</td>
+    <td style="text-align:right;${p2};background:rgba(90,122,138,.04)">🥃</td>
+    <td style="text-align:right;${p2};background:rgba(90,122,138,.04)">🌿</td>
     <td></td>
-    <td style="text-align:right;padding:.1rem .35rem;background:rgba(122,111,96,.04)">🥃</td>
-    <td style="text-align:right;padding:.1rem .35rem;background:rgba(122,111,96,.04)">🌿</td>
+    <td style="text-align:right;${p2};background:rgba(122,111,96,.04)">🥃</td>
+    <td style="text-align:right;${p2};background:rgba(122,111,96,.04)">🌿</td>
   </tr>`;
 
   const makeRow=(r)=>{
@@ -4508,19 +4520,16 @@ function runIntegrityCheck(){
     const zProdOk=r.zAlcProd>=0&&r.zGlyProd>=0;
     const zIntOk=r.zAlcInt>=0&&r.zGlyInt>=0;
     const statusIcon=r.hasIssues?'❌':r.fullyDone?'<span style="color:#3a6b4a">✓</span>':'';
-    return`<tr style="border-bottom:1px solid var(--border);font-size:.7rem;${bg}">
-      <td style="padding:.3rem .35rem">
-        <span style="font-weight:600">${r.b.batchNum}</span> ${statusIcon}
-        <span style="font-size:.62rem;color:var(--muted);margin-left:.3rem">${r.pName}</span>
-      </td>
-      <td style="text-align:right;padding:.25rem .35rem">${r.alcIn}</td>
-      <td style="text-align:right;padding:.25rem .35rem">${r.glyIn}</td>
+    return`<tr style="border-bottom:1px solid var(--border);font-size:.68rem;${bg}">
+      <td style="${p2}"><span style="font-weight:600">${r.b.batchNum}</span> ${statusIcon} <span style="font-size:.6rem;color:var(--muted)">${r.pName}</span></td>
+      <td style="text-align:right;${p2}">${r.alcIn}</td>
+      <td style="text-align:right;${p2}">${r.glyIn}</td>
       <td style="border-left:2px solid var(--border);padding:0"></td>
-      <td style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.04);font-weight:600;color:${zProdOk?'#1a4a2a':'#8b3a2a'}">${r.zAlcProd}</td>
-      <td style="text-align:right;padding:.25rem .35rem;background:rgba(90,122,138,.04);font-weight:600;color:${zProdOk?'#1a4a2a':'#8b3a2a'}">${r.zGlyProd}</td>
+      <td style="text-align:right;${p2};background:rgba(90,122,138,.04);font-weight:600;color:${zProdOk?'#1a4a2a':'#8b3a2a'}">${r.zAlcProd}</td>
+      <td style="text-align:right;${p2};background:rgba(90,122,138,.04);font-weight:600;color:${zProdOk?'#1a4a2a':'#8b3a2a'}">${r.zGlyProd}</td>
       <td style="border-left:2px solid var(--border);padding:0"></td>
-      <td style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.04);font-weight:600;color:${zIntOk?'#5a5040':'#8b3a2a'}">${r.zAlcInt}</td>
-      <td style="text-align:right;padding:.25rem .35rem;background:rgba(122,111,96,.04);font-weight:600;color:${zIntOk?'#5a5040':'#8b3a2a'}">${r.zGlyInt}</td>
+      <td style="text-align:right;${p2};background:rgba(122,111,96,.04);font-weight:600;color:${zIntOk?'#5a5040':'#8b3a2a'}">${r.zAlcInt}</td>
+      <td style="text-align:right;${p2};background:rgba(122,111,96,.04);font-weight:600;color:${zIntOk?'#5a5040':'#8b3a2a'}">${r.zGlyInt}</td>
     </tr>`;
   };
 
@@ -4535,14 +4544,14 @@ function runIntegrityCheck(){
         ${warnings.map(w=>`<div style="font-size:.73rem;padding:.3rem .5rem;background:rgba(175,132,85,.12);border-radius:6px;margin-bottom:.3rem">${w}</div>`).join('')}`:''}
       <div class="slabel" style="margin:.75rem 0 .3rem">Aktivne serije (${activeBatchRows.length})</div>
       <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:.7rem;min-width:600px">
+        <table style="width:100%;border-collapse:collapse;font-size:.68rem">
           ${hdr}
           ${activeBatchRows.length?activeBatchRows.map(makeRow).join(''):'<tr><td colspan="16" style="text-align:center;color:var(--muted);padding:.5rem">Ni aktivnih serij</td></tr>'}
         </table>
       </div>
       ${doneBatchRows.length?`<div class="slabel" style="margin:.75rem 0 .3rem;color:var(--muted)">Prodane serije — brez napak (${doneBatchRows.length})</div>
       <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:.7rem;min-width:600px">
+        <table style="width:100%;border-collapse:collapse;font-size:.68rem">
           ${hdr}
           ${doneBatchRows.map(makeRow).join('')}
         </table>

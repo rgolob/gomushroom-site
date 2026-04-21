@@ -494,6 +494,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">🏷 Serije</div>
       <div style="display:flex;gap:.5rem;align-items:center">
         <button class="hbtn2" onclick="openReportSheet('serije')">📊 Poročilo</button>
+        <button class="hbtn2" onclick="openReportSheet('trosarine')">📋 Trošarine</button>
         <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
@@ -852,6 +853,20 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
 
     <div class="shfoot">
+    <!-- TROŠARINE filters -->
+    <div id="rtFilters" class="shbody" style="display:none">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Poročilo prikazuje alkoholne tinkture — serije narejene v izbranem mesecu, prodane količine po kupcih in stanje zaloge (samo prod alokacija).</div>
+      <div class="slabel">Mesec poročila</div>
+      <div class="frow">
+        <div class="field"><label>Od (začetek meseca)</label><input type="date" id="rt-od"></div>
+        <div class="field"><label>Do (datum izpisa)</label><input type="date" id="rt-do"></div>
+      </div>
+      <div class="slabel">Produkt</div>
+      <select id="rt-prod" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none">
+        <option value="">Vsi produkti</option>
+      </select>
+    </div>
+
       <button class="bcancel" onclick="closeSheet('reportOverlay')">Prekliči</button>
       <button class="bsave" id="reportGenBtn" onclick="closeSheet('reportOverlay');genReportFromSheet()">📄 Ustvari poročilo</button>
     </div>
@@ -3776,10 +3791,10 @@ let _currentReportType='';
 function openReportSheet(type){
   populateReportDropdowns();
   _currentReportType=type;
-  ['rzFilters','rsFilters','rpFilters'].forEach(id=>{
+  ['rzFilters','rsFilters','rpFilters','rtFilters'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
-  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
+  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin'};
   document.getElementById('reportSheetTitle').textContent=titles[type]||'Poročilo';
   if(type==='zaloga'){
     document.getElementById('rzFilters').style.display='';
@@ -3797,6 +3812,16 @@ function openReportSheet(type){
     const d=new Date();
     document.getElementById('rp-do').value=todayISO();
     document.getElementById('rp-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
+  } else if(type==='trosarine'){
+    document.getElementById('rtFilters').style.display='';
+    // Default: previous month
+    const d=new Date();
+    const prevMonth=new Date(d.getFullYear(),d.getMonth()-1,1);
+    document.getElementById('rt-od').value=prevMonth.toISOString().slice(0,10);
+    document.getElementById('rt-do').value=todayISO();
+    // Populate product dropdown
+    const sel=document.getElementById('rt-prod');
+    if(sel)sel.innerHTML='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   }
   openSheet('reportOverlay');
 }
@@ -4143,15 +4168,101 @@ function genReport(type){
     </table>`;
   }
 
+  else if(type==='trosarine'){
+    const od=document.getElementById('rt-od').value;
+    const doVal=document.getElementById('rt-do').value;
+    const filterProd=document.getElementById('rt-prod').value;
+    if(!od||!doVal){alert('Izberi datumsko obdobje.');return;}
+
+    // Serije narejene v obdobju — samo alkohol, samo prod alokacija
+    const filteredBatches=batches.filter(b=>
+      b.date>=od&&b.date<=doVal&&
+      (b.alc?.qty||0)>0&&
+      (!filterProd||b.productId===filterProd)
+    );
+
+    // Za vsako serijo: prod alokacija, prodano do doVal, ostalo
+    let totalNarejeno=0,totalProdano=0,totalOstalo=0;
+    let batchRows='';
+
+    filteredBatches.forEach(b=>{
+      const allocProd=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+      if(!allocProd)return; // preskoči če ni prod alokacije
+
+      // Prodano do doVal — samo prod kanali (malo+velo+dar)
+      const prodSales=saleGroups.filter(g=>
+        (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
+        g.date<=doVal&&g.status!=='stornirano'
+      );
+      const soldAlc=prodSales.reduce((s,g)=>{
+        const l=g.lines?.find(l=>l.productId===b.productId);
+        if(!l)return s;
+        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
+      },0);
+      const ostaloAlc=Math.max(0,allocProd-soldAlc);
+
+      totalNarejeno+=allocProd;
+      totalProdano+=soldAlc;
+      totalOstalo+=ostaloAlc;
+
+      // Kupci te serije v obdobju
+      const batchBuyers=prodSales.filter(g=>
+        g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&bb.alc>0))
+      );
+
+      const buyerRows=batchBuyers.map(g=>{
+        const alcQ=g.lines.reduce((s,l)=>{
+          const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);
+          return s+(bb?.alc||0);
+        },0);
+        if(!alcQ)return'';
+        return`<tr style="font-size:.75rem">
+          <td style="padding:.2rem .5rem;color:#7a6f60">${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
+          <td style="padding:.2rem .5rem">${g.buyer||'—'}</td>
+          <td style="padding:.2rem .5rem;color:#7a6f60">${CH[g.channel]?.label||g.channel}</td>
+          <td style="padding:.2rem .5rem;text-align:right;font-weight:500">${alcQ}</td>
+        </tr>`;
+      }).join('');
+
+      batchRows+=`<tr style="background:#faf7f0">
+        <td class="td-bold">${b.batchNum}</td>
+        <td class="td-bold">${b.productName}</td>
+        <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
+        <td class="num">${allocProd}</td>
+        <td class="num" style="color:#3a6b4a">${soldAlc}</td>
+        <td class="num" style="color:${ostaloAlc>0?'#1a4a2a':'#8b3a2a'};font-weight:600">${ostaloAlc}</td>
+      </tr>
+      ${buyerRows?`<tr><td colspan="6" style="padding:0 0 .5rem .5rem">
+        <table style="width:100%;margin:0">
+          <tr style="font-size:.62rem;color:#7a6f60"><th>Datum</th><th>Kupec</th><th>Kanal</th><th style="text-align:right">Alc kom.</th></tr>
+          ${buyerRows}
+        </table>
+      </td></tr>`:''}`;
+    });
+
+    const dateLabel=`${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}`;
+    html=`<div class="summary-box">
+      <div class="s-item"><div class="s-label">Serij v obdobju</div><div class="s-val">${filteredBatches.length}</div></div>
+      <div class="s-item"><div class="s-label">Narejeno (prod alc)</div><div class="s-val">${totalNarejeno} kom.</div></div>
+      <div class="s-item"><div class="s-label">Prodano do ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#3a6b4a">${totalProdano} kom.</div></div>
+      <div class="s-item"><div class="s-label">Ostalo na zalogi</div><div class="s-val" style="color:${totalOstalo>0?'#1a4a2a':'#8b3a2a'}">${totalOstalo} kom.</div></div>
+    </div>
+    <table>
+      <tr><th>Serija</th><th>Produkt</th><th>Datum izdelave</th><th style="text-align:right">Narejeno (prod)</th><th style="text-align:right">Prodano</th><th style="text-align:right">Ostalo</th></tr>
+      ${batchRows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrano obdobje</td></tr>'}
+    </table>`;
+  }
+
   const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
   showReport(type,html);
 }
 
 function showReport(type,html){
-  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
+  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin — alkoholne tinkture'};
   const subtitles={
     zaloga:'Trenutno stanje po produktih',
     serije:'Proizvedene serije z ostanki',
+    trosarine:`Obdobje: ${document.getElementById('rt-od')?.value?fmtDateSl(document.getElementById('rt-od').value):'—'} – ${document.getElementById('rt-do')?.value?fmtDateSl(document.getElementById('rt-do').value):'danes'}`,
     prodaja:`Obdobje: ${document.getElementById('rp-od')?.value?fmtDateSl(document.getElementById('rp-od').value):'začetek'} – ${document.getElementById('rp-do')?.value?fmtDateSl(document.getElementById('rp-do').value):'danes'}`
   };
 

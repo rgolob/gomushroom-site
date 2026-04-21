@@ -4183,101 +4183,115 @@ function genReport(type){
     const filterProd=document.getElementById('rt-prod').value;
     if(!od||!doVal){alert('Izberi datumsko obdobje.');return;}
 
-    // Serije narejene v obdobju — samo alkohol, samo prod alokacija
-    const filteredBatches=batches.filter(b=>
-      b.date>=od&&b.date<=doVal&&
-      (b.alc?.qty||0)>0&&
-      (!filterProd||b.productId===filterProd)
-    );
+    const prodList=filterProd?products.filter(p=>p.id===filterProd):products;
 
-    // Vse prod prodaje DO konca obdobja (za izračun stanja zaloge na zadnji dan)
-    const allProdSalesUntilEnd=saleGroups.filter(g=>
-      (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
-      g.date<=doVal&&g.status!=='stornirano'
-    );
-
-    // Prodaje V obdobju (za poročanje prodanih količin)
+    // Prodaje V obdobju — samo prod kanali
     const salesInPeriod=saleGroups.filter(g=>
       (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
       g.date>=od&&g.date<=doVal&&g.status!=='stornirano'
     );
+    // Vse prod prodaje DO konca obdobja (za stanje zaloge)
+    const salesUntilEnd=saleGroups.filter(g=>
+      (g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&
+      g.date<=doVal&&g.status!=='stornirano'
+    );
 
-    let totalNarejeno=0,totalProdanoVObdobju=0,totalOstaloKonecObdobja=0;
-    let batchRows='';
+    let productSections='';
+    let grandNarejeno=0,grandProdano=0,grandZaloga=0;
 
-    filteredBatches.forEach(b=>{
-      const allocProd=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-      if(!allocProd)return;
-
-      // Prodano v obdobju (za poročilo)
-      const soldInPeriod=salesInPeriod.reduce((s,g)=>{
-        const l=g.lines?.find(l=>l.productId===b.productId);
-        if(!l)return s;
-        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
-      },0);
-
-      // Prodano do konca obdobja (za stanje zaloge na zadnji dan)
-      const soldUntilEnd=allProdSalesUntilEnd.reduce((s,g)=>{
-        const l=g.lines?.find(l=>l.productId===b.productId);
-        if(!l)return s;
-        return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
-      },0);
-
-      const ostaloKonecObdobja=Math.max(0,allocProd-soldUntilEnd);
-
-      totalNarejeno+=allocProd;
-      totalProdanoVObdobju+=soldInPeriod;
-      totalOstaloKonecObdobja+=ostaloKonecObdobja;
-
-      // Kupci v obdobju
-      const batchBuyers=salesInPeriod.filter(g=>
-        g.lines?.some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&bb.alc>0))
+    prodList.forEach(p=>{
+      // Serije narejene v obdobju
+      const batchesInPeriod=batches.filter(b=>
+        b.productId===p.id&&b.date>=od&&b.date<=doVal&&(b.alc?.qty||0)>0
       );
 
-      const buyerRows=batchBuyers.map(g=>{
-        const alcQ=g.lines.reduce((s,l)=>{
-          const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);
-          return s+(bb?.alc||0);
-        },0);
-        if(!alcQ)return'';
-        return`<tr style="font-size:.75rem">
-          <td style="padding:.2rem .5rem;color:#7a6f60">${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
-          <td style="padding:.2rem .5rem">${g.buyer||'—'}</td>
-          <td style="padding:.2rem .5rem;color:#7a6f60">${CH[g.channel]?.label||g.channel}</td>
-          <td style="padding:.2rem .5rem;text-align:right;font-weight:500">${alcQ}</td>
+      // Vse serije tega produkta (za stanje zaloge)
+      const allBatches=batches.filter(b=>b.productId===p.id&&(b.alc?.qty||0)>0);
+
+      if(!batchesInPeriod.length&&!salesInPeriod.some(g=>g.lines?.some(l=>l.productId===p.id)))return;
+
+      // 1. NAREJENO V OBDOBJU
+      const narejenoRows=batchesInPeriod.map(b=>{
+        const allocProd=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        grandNarejeno+=allocProd;
+        return`<tr>
+          <td>${b.batchNum}</td>
+          <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
+          <td class="num">${b.alc?.qty||0}</td>
+          <td class="num">${allocProd}</td>
         </tr>`;
       }).join('');
 
-      batchRows+=`<tr style="background:#faf7f0">
-        <td class="td-bold">${b.batchNum}</td>
-        <td class="td-bold">${b.productName}</td>
-        <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
-        <td class="num">${allocProd}</td>
-        <td class="num" style="color:#3a6b4a">${soldInPeriod}</td>
-        <td class="num" style="color:${ostaloKonecObdobja>0?'#1a4a2a':'#8b3a2a'};font-weight:600">${ostaloKonecObdobja}</td>
-      </tr>
-      ${buyerRows?`<tr><td colspan="6" style="padding:0 0 .5rem 1rem">
-        <table style="width:100%;margin:0">
-          <tr style="font-size:.62rem;color:#7a6f60"><th>Datum</th><th>Kupec</th><th>Kanal</th><th style="text-align:right">Alc kom.</th></tr>
-          ${buyerRows}
-        </table>
-      </td></tr>`:''}`;
+      // 2. PRODANO V OBDOBJU — po kupcih
+      const prodanoRows=[];
+      let totalProdano=0;
+      salesInPeriod.forEach(g=>{
+        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
+        totalProdano+=(l.alc||0);
+        grandProdano+=(l.alc||0);
+        prodanoRows.push(`<tr>
+          <td>${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
+          <td>${g.buyer||'—'}</td>
+          <td style="font-size:.72rem;color:#7a6f60">${CH[g.channel]?.label||g.channel}</td>
+          <td>${g.invoiceNum||'—'}</td>
+          <td class="num">${l.alc||0}</td>
+        </tr>`);
+      });
+
+      // 3. STANJE ZALOGE na zadnji dan obdobja — po serijah
+      const zalogoRows=[];
+      let totalZaloga=0;
+      allBatches.forEach(b=>{
+        const allocProd=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        if(!allocProd)return;
+        const soldFromBatch=salesUntilEnd.reduce((s,g)=>{
+          const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
+          return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
+        },0);
+        const rem=Math.max(0,allocProd-soldFromBatch);
+        totalZaloga+=rem;
+        grandZaloga+=rem;
+        if(allocProd>0)zalogoRows.push(`<tr>
+          <td>${b.batchNum}</td>
+          <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
+          <td class="num">${allocProd}</td>
+          <td class="num">${soldFromBatch}</td>
+          <td class="num" style="font-weight:600;color:${rem>0?'#1a4a2a':'#8b3a2a'}">${rem}</td>
+        </tr>`);
+      });
+
+      productSections+=`
+        <h2>🌿 ${p.name}</h2>
+
+        <h3 style="font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60;margin:.75rem 0 .3rem">1. Proizvedeno v obdobju</h3>
+        ${narejenoRows?`<table>
+          <tr><th>Serija</th><th>Datum izdelave</th><th style="text-align:right">Skupaj alc (kom.)</th><th style="text-align:right">Za prodajo (kom.)</th></tr>
+          ${narejenoRows}
+        </table>`:'<p style="font-size:.8rem;color:#7a6f60">Ni serij narejenih v tem obdobju.</p>'}
+
+        <h3 style="font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60;margin:.75rem 0 .3rem">2. Prodano v obdobju</h3>
+        ${prodanoRows.length?`<table>
+          <tr><th>Datum</th><th>Kupec</th><th>Kanal</th><th>Račun</th><th style="text-align:right">Alc (kom.)</th></tr>
+          ${prodanoRows.join('')}
+          <tr style="border-top:1px solid #ede6d6;font-weight:600"><td colspan="4">Skupaj prodano</td><td class="num">${totalProdano}</td></tr>
+        </table>`:'<p style="font-size:.8rem;color:#7a6f60">Ni prodaj v tem obdobju.</p>'}
+
+        <h3 style="font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60;margin:.75rem 0 .3rem">3. Stanje zaloge na dan ${doVal.split('-').reverse().join('.')}</h3>
+        ${zalogoRows.length?`<table>
+          <tr><th>Serija</th><th>Datum izdelave</th><th style="text-align:right">Prod. alokacija</th><th style="text-align:right">Prodano skupaj</th><th style="text-align:right">Ostalo</th></tr>
+          ${zalogoRows.join('')}
+          <tr style="border-top:1px solid #ede6d6;font-weight:600"><td colspan="4">Zaloga skupaj</td><td class="num" style="color:#1a4a2a">${totalZaloga}</td></tr>
+        </table>`:'<p style="font-size:.8rem;color:#7a6f60">Ni zaloge.</p>'}`;
     });
 
-    const dateLabel=`${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}`;
     html=`<div class="summary-box">
-      <div class="s-item"><div class="s-label">Serij v obdobju</div><div class="s-val">${filteredBatches.length}</div></div>
-      <div class="s-item"><div class="s-label">Narejeno v obdobju</div><div class="s-val">${totalNarejeno} kom.</div></div>
-      <div class="s-item"><div class="s-label">Prodano v obdobju</div><div class="s-val" style="color:#3a6b4a">${totalProdanoVObdobju} kom.</div></div>
-      <div class="s-item"><div class="s-label">Stanje ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:${totalOstaloKonecObdobja>0?'#1a4a2a':'#8b3a2a'}">${totalOstaloKonecObdobja} kom.</div></div>
+      <div class="s-item"><div class="s-label">Obdobje</div><div class="s-val">${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}</div></div>
+      <div class="s-item"><div class="s-label">Narejeno za prodajo</div><div class="s-val">${grandNarejeno} kom.</div></div>
+      <div class="s-item"><div class="s-label">Prodano v obdobju</div><div class="s-val" style="color:#3a6b4a">${grandProdano} kom.</div></div>
+      <div class="s-item"><div class="s-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#1a4a2a">${grandZaloga} kom.</div></div>
     </div>
-    <table>
-      <tr><th>Serija</th><th>Produkt</th><th>Datum izdelave</th><th style="text-align:right">Narejeno (prod alc)</th><th style="text-align:right">Prodano v obdobju</th><th style="text-align:right">Stanje ${doVal.split('-').reverse().join('.')}</th></tr>
-      ${batchRows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni serij za izbrano obdobje</td></tr>'}
-    </table>`;
+    ${productSections||'<p style="color:#7a6f60">Ni podatkov za izbrano obdobje.</p>'}`;
   }
-
-  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje'};
   showReport(type,html);
 }
 
@@ -4425,9 +4439,20 @@ function runIntegrityCheck(){
     }
 
     // Info — skupna slika
-    const remAlc=totalAlcProdAlloc-soldAlcProd;
-    const remGly=totalGlyProdAlloc-soldGlyProd;
-    infos.push({name:p.name,totalAlcIn,totalGlyIn,soldAlcProd,soldGlyProd,remAlc,remGly});
+    const remAlcProd=totalAlcProdAlloc-soldAlcProd;
+    const remGlyProd=totalGlyProdAlloc-soldGlyProd;
+    const remAlcInt=totalAlcIntAlloc-soldAlcInt;
+    const remGlyInt=totalGlyIntAlloc-soldGlyInt;
+    infos.push({
+      name:p.name,
+      totalAlcIn,totalGlyIn,
+      totalAlcProdAlloc,totalGlyProdAlloc,
+      totalAlcIntAlloc,totalGlyIntAlloc,
+      soldAlcProd,soldGlyProd,
+      soldAlcInt,soldGlyInt,
+      remAlcProd,remGlyProd,
+      remAlcInt,remGlyInt,
+    });
   });
 
   // Preveri podvojene invoice številke
@@ -4456,19 +4481,49 @@ function runIntegrityCheck(){
       ${warnings.length?`<div class="slabel" style="margin:.5rem 0 .3rem">Opozorila (${warnings.length})</div>
         ${warnings.map(w=>`<div style="font-size:.75rem;padding:.3rem .5rem;background:rgba(175,132,85,.12);border-radius:6px;margin-bottom:.3rem">${w}</div>`).join('')}`:''}
       <div class="slabel" style="margin:.75rem 0 .3rem">Pregled po produktih</div>
-      <table style="width:100%;border-collapse:collapse;font-size:.73rem">
-        <tr style="border-bottom:1px solid var(--border)">
+      <table style="width:100%;border-collapse:collapse;font-size:.7rem">
+        <tr style="border-bottom:2px solid var(--border)">
           <th style="text-align:left;padding:.3rem .4rem;color:var(--muted)">Produkt</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Narejeno</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Prodano</th>
-          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)">Ostalo</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Narejeno</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Aloc. prodaja</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Aloc. interno</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Prodano</th>
+          <th style="text-align:right;padding:.3rem .4rem;color:var(--muted)" colspan="2">Ostalo prod.</th>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);font-size:.6rem;color:var(--muted)">
+          <td></td>
+          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
+          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
+          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
+          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
+          <td style="text-align:right;padding:.1rem .4rem">🥃</td><td style="text-align:right;padding:.1rem .4rem">🌿</td>
         </tr>
         ${infos.map(r=>`<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:.3rem .4rem">${r.name}</td>
-          <td style="text-align:right;padding:.3rem .4rem">🥃${r.totalAlcIn} 🌿${r.totalGlyIn}</td>
-          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">🥃${r.soldAlcProd} 🌿${r.soldGlyProd}</td>
-          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlc+r.remGly>0?'#1a4a2a':'#8b3a2a'}">🥃${r.remAlc} 🌿${r.remGly}</td>
+          <td style="padding:.3rem .4rem;font-weight:500">${r.name}</td>
+          <td style="text-align:right;padding:.3rem .4rem">${r.totalAlcIn}</td>
+          <td style="text-align:right;padding:.3rem .4rem">${r.totalGlyIn}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${r.totalAlcProdAlloc}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${r.totalGlyProdAlloc}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${r.totalAlcIntAlloc}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${r.totalGlyIntAlloc}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${r.soldAlcProd}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${r.soldGlyProd}</td>
+          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlcProd+r.remGlyProd>0?'#1a4a2a':'#8b3a2a'}">${r.remAlcProd}</td>
+          <td style="text-align:right;padding:.3rem .4rem;font-weight:600;color:${r.remAlcProd+r.remGlyProd>0?'#1a4a2a':'#8b3a2a'}">${r.remGlyProd}</td>
         </tr>`).join('')}
+        <tr style="border-top:2px solid var(--border);font-weight:600;background:rgba(175,132,85,.06)">
+          <td style="padding:.3rem .4rem">Skupaj</td>
+          <td style="text-align:right;padding:.3rem .4rem">${infos.reduce((s,r)=>s+r.totalAlcIn,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem">${infos.reduce((s,r)=>s+r.totalGlyIn,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${infos.reduce((s,r)=>s+r.totalAlcProdAlloc,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#5a7a8a">${infos.reduce((s,r)=>s+r.totalGlyProdAlloc,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${infos.reduce((s,r)=>s+r.totalAlcIntAlloc,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#7a6f60">${infos.reduce((s,r)=>s+r.totalGlyIntAlloc,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${infos.reduce((s,r)=>s+r.soldAlcProd,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#3a6b4a">${infos.reduce((s,r)=>s+r.soldGlyProd,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#1a4a2a">${infos.reduce((s,r)=>s+r.remAlcProd,0)}</td>
+          <td style="text-align:right;padding:.3rem .4rem;color:#1a4a2a">${infos.reduce((s,r)=>s+r.remGlyProd,0)}</td>
+        </tr>
       </table>
       <div style="font-size:.68rem;color:var(--muted);margin-top:.75rem">Zadnje preverjanje: ${new Date().toLocaleString('sl-SI')}</div>
     </div>`;

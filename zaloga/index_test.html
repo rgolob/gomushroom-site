@@ -4268,18 +4268,21 @@ function genReport(type){
         zalogaEnd+=rem;
         grandZaloga+=rem;
 
-        // Prikaži serijo samo če ima ostanke na koncu obdobja
-        if(rem===0)return;
+        // Prikaži serijo če ima alokacijo (tudi prodane v celoti)
+        // Prikaži samo serije narejene od začetka leta DO konca obdobja
+        const yearStart=od.slice(0,4)+'-01-01';
+        if(b.date<yearStart||b.date>doVal)return;
 
-        // Kupci te serije SAMO v obdobju (ne pred)
-        const batchBuyers=salesInPeriod.filter(g=>
+        // Kupci te serije — vsi do konca obdobja (da je viden celoten tok)
+        const batchBuyers=salesUntilEnd.filter(g=>
           g.lines?.some(l=>l.productId===p.id&&(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id&&(bb.alc||0)>0))
         ).sort((a,b2)=>a.date.localeCompare(b2.date));
 
         const buyerLines=batchBuyers.map(g=>{
           const alcQ=g.lines.reduce((s,l)=>{const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);return s+(bb?.alc||0);},0);
           if(!alcQ)return'';
-          return`<div style="font-size:.65rem;color:#7a6f60;padding:.1rem 0">${g.date.split('-').reverse().join('.')} · ${g.buyer||'—'} · ${CH[g.channel]?.label||''} · ${g.invoiceNum||'—'} · <strong>${alcQ} kom.</strong></div>`;
+          const inPeriod=g.date>=od&&g.date<=doVal;
+          return`<div style="font-size:.65rem;color:${inPeriod?'#5a4a3a':'#9a8a7a'};padding:.1rem 0">${g.date.split('-').reverse().join('.')} · ${g.buyer||'—'} · ${CH[g.channel]?.label||''} · ${g.invoiceNum||'—'} · <strong>${alcQ} kom.</strong>${!inPeriod?' <span style="font-size:.58rem;color:#9a8a7a">(pred obdobjem)</span>':''}</div>`;
         }).filter(Boolean).join('');
 
         // Prodano v mesecu iz te serije
@@ -4288,12 +4291,12 @@ function genReport(type){
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
         },0);
 
-        zalogoPoSerijah.push(`<tr style="font-size:.75rem">
+        zalogoPoSerijah.push(`<tr style="font-size:.75rem${rem===0?';opacity:.7':''}">
           <td style="font-weight:600">${b.batchNum}</td>
           <td>${b.date?b.date.split('-').reverse().join('.'):'—'}</td>
           <td class="num">${alloc}</td>
           <td class="num" style="color:${soldInPeriod>0?'#8b3a2a':'#7a6f60'}">${soldInPeriod||0}</td>
-          <td class="num" style="font-weight:600;color:#1a4a2a">${rem}</td>
+          <td class="num" style="font-weight:600;color:${rem>0?'#1a4a2a':'#8b3a2a'}">${rem>0?rem:'✓ 0'}</td>
         </tr>
         ${buyerLines?`<tr><td colspan="5" style="padding:.1rem .5rem .4rem 1rem;background:#fafafa">${buyerLines}</td></tr>`:''}`);
       });

@@ -177,6 +177,44 @@
   z-index: 1;
 }
 
+/*zamegljene kartice*/
+.learn-card--locked {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.72;
+  overflow: hidden;
+}
+
+.learn-card--locked .body {
+  filter: blur(1.6px);
+  transform: scale(1.01);
+}
+
+.learn-card--locked::after {
+  content: "V pripravi";
+  position: absolute;
+  inset: auto 18px 18px auto;
+  z-index: 2;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(43, 10, 57, 0.88);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.learn-card--locked::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(1px);
+}
+
+
 .article-media{
   margin-top: 18px;
   padding: 1.2rem 1.5rem;

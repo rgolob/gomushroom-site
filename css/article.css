@@ -190,7 +190,7 @@
   transform: scale(1.01);
 }
 
-.learn-card--locked::after {
+/*.learn-card--locked::after {
   content: "V pripravi";
   position: absolute;
   inset: auto 18px 18px auto;
@@ -203,7 +203,7 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-}
+}*/
 
 .learn-card--locked::before {
   content: "";

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <title>Medicinal Mushroom Extraction – triple extraction, ultrasonics, concentration | GoMushroom</title>
+  <title>Medicinal Mushroom Extraction – triple extraction, ultrasound, concentration | GoMushroom</title>
 
-  <meta name="description" content="Practical explanation of medicinal mushroom extraction: triple extraction, ultrasonic extraction, vacuum concentration, tincture formulation and quality control." />
+  <meta name="description" content="A practical explanation of medicinal mushroom extraction: triple extraction, ultrasonic extraction, vacuum concentration, tincture formulation and quality control." />
   <meta name="author" content="GoMushroom — Rok Golob" />
 
   <link rel="canonical" href="https://gomushroom.si/en/learn/" />
@@ -15,7 +15,7 @@
   <link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/" />
 
   <meta property="og:title" content="Medicinal Mushroom Extraction | GoMushroom Learn" />
-  <meta property="og:description" content="Triple extraction, ultrasonic extraction, vacuum concentration and tincture formulation – a practical GoMushroom approach." />
+  <meta property="og:description" content="Triple extraction, ultrasonic extraction, vacuum concentration and tincture formulation – a practical explanation of the GoMushroom process." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://gomushroom.si/en/learn/" />
   <meta property="og:image" content="https://gomushroom.si/assets/og-hero.jpg" />
@@ -26,19 +26,24 @@
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Medicinal Mushroom Extraction | GoMushroom Learn" />
-  <meta name="twitter:description" content="Understanding extraction processes: triple extraction, ultrasonics, vacuum concentration and formulation." />
+  <meta name="twitter:description" content="Explanation of medicinal mushroom extraction processes: triple extraction, ultrasound, vacuum concentration and tincture formulation." />
   <meta name="twitter:image" content="https://gomushroom.si/assets/og-hero.jpg" />
+
+  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/assets/favicon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="/assets/favicon-180.png" />
 
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/article.css"> 
-
+  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "name": "Learn – medicinal mushroom extraction",
     "url": "https://gomushroom.si/en/learn/",
-    "description": "Practical explanations of medicinal mushroom extraction processes, tincture formulation and quality control.",
+    "description": "A practical explanation of medicinal mushroom extraction processes, tincture formulation and quality control.",
     "isPartOf": {
       "@type": "WebSite",
       "@id": "https://gomushroom.si/#website"
@@ -48,41 +53,54 @@
       { "@type": "Thing", "name": "Triple extraction" },
       { "@type": "Thing", "name": "Ultrasonic extraction" },
       { "@type": "Thing", "name": "Vacuum concentration" },
-      { "@type": "Thing", "name": "Mushroom tinctures" }
+      { "@type": "Thing", "name": "Medicinal mushroom tinctures" }
     ]
   }
   </script>
 </head>
 
 <body>
+  <!-- SVG symbols for icons -->
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-drop" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M12 2c.7 2.5 5.8 7.3 5.8 11.4A5.8 5.8 0 1 1 6.2 13.4C6.2 9.3 11.3 4.5 12 2z"/>
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z"/>
+        <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9"/>
+      </symbol>
+    </defs>
+  </svg>
 
 <header id="site-header">
   <div class="wrap nav">
     <div class="brand">
-      <a href="/en/"><img src="/assets/logo-horizontal.webp" alt="GoMushroom"></a>
+      <!-- logo unchanged -->
+      <a href="https://gomushroom.si/en/" lang="en"><img src="/assets/logo-horizontal.webp" alt="GoMushroom"></a>
     </div>
 
     <nav id="primary-nav" aria-label="Main navigation">
       <a href="/en/">Home</a>
       <a href="/en/learn/">Learn</a>
-      <a href="#o-meni" id="nav-about">About</a>
+      <a href="#about" id="nav-about" aria-expanded="false" role="button">About</a>
     </nav>
 
-    <!-- desno: zastavici + hamburger -->
-    <div class="nav-actions" aria-label="Jezik in meni">
-      <div class="lang-switch" aria-label="Jezik">
-        <!-- povezava na slovensko različico -->
-        <a class="lang-flag" href="https://gomushroom.si/znanje/" aria-label="Slovenščina" lang="sl">
-          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
+    <!-- right: flags + hamburger -->
+    <div class="nav-actions" aria-label="Language and menu">
+      <div class="lang-switch" aria-label="Language">
+        <!-- link to Slovenian version -->
+        <a class="lang-flag" href="https://gomushroom.si/znanje/" aria-label="Slovenian" lang="sl">
+          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenian" width="34" height="34" loading="lazy">
         </a>
-        <!-- povezava na angleško različico -->
+        <!-- link to English version -->
         <a class="lang-flag" href="https://gomushroom.si/en/learn/" aria-label="English" lang="en">
           <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
         </a>
       </div>
 
       <button class="nav-toggle" id="nav-toggle" type="button"
-              aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+              aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
         </svg>
@@ -92,52 +110,109 @@
 </header>
 
 <main>
-
 <section class="hero">
+  <div class="slides">
+    <!-- SLIDE 1 -->
+    <div class="slide active">
+      <img
+        src="/assets/rotovap_720.webp"
+        srcset="/assets/rotovap_480.webp 480w,
+                /assets/rotovap_720.webp 720w,
+                /assets/rotovap_960.webp 960w,
+                /assets/rotovap_1600.webp 1600w"
+        sizes="100vw"
+        alt="Vacuum distillation using a rotary evaporator"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
+    </div>
+
+    <!-- SLIDE 2 -->
+    <div class="slide">
+      <img
+        src="/assets/ultrasonic-probe_720.webp"
+        srcset="/assets/ultrasonic-probe_480.webp 480w,
+                /assets/ultrasonic-probe_720.webp 720w,
+                /assets/ultrasonic-probe_960.webp 960w,
+                /assets/ultrasonic-probe_1600.webp 1600w"
+        sizes="100vw"
+        alt="Ultrasonic probe"
+        fetchpriority="low"
+        loading="eager"
+        decoding="async"
+        width="1600"
+        height="900"
+      >
+    </div>
+  </div>
+
+  <button class="arrow prev" aria-label="Previous">‹</button>
+  <button class="arrow next" aria-label="Next">›</button>
+
+  <div class="dots">
+    <button class="dot active" data-idx="0" aria-label="Image 1"></button>
+    <button class="dot" data-idx="1" aria-label="Image 2"></button>
+  </div>
+
   <div class="inner wrap">
     <div class="headline">
       <div class="kicker">LEARN • PROCESSES • PRACTICAL APPROACH</div>
       <h1>Medicinal mushroom extraction: processes, principles and formulation</h1>
       <p class="lead">
-        A practical breakdown of triple extraction, ultrasonic extraction, vacuum concentration
-        and tincture formulation based on real production experience.
+        An explanation of triple extraction, ultrasonic extraction, vacuum concentration and tincture formulation
+        based on practical experience and a laboratory approach.
       </p>
 
       <div class="hero-badges">
-        <div class="hero-badge">🍄 Own cultivation</div>
-        <div class="hero-badge">🧪 Laboratory approach</div>
-        <div class="hero-badge">🔬 <a href="/en/qc/heavy-metals/">Heavy metal tested</a></div>
+        <div class="hero-badge"><span class="icon">🍄</span><span>Own cultivation</span></div>
+        <div class="hero-badge"><span class="icon">🧪</span><span>Laboratory approach</span></div>
+        <div class="hero-badge"><span class="icon">🔬</span><span><a href="/en/qc/heavy-metals/">Heavy metal tested</a></span></div>
       </div>
     </div>
   </div>
 </section>
 
-<section>
+<section id="learn-intro">
   <div class="wrap">
-    <h2>Understanding medicinal mushroom extraction</h2>
+    <div class="section-head">
+      <div>
+        <h2>Knowledge about medicinal mushroom extraction</h2>
+        <div class="under"></div>
+      </div>
+      <p class="lead2">
+        A practical explanation of medicinal mushroom extraction from the perspective of real production, not just theory.
+      </p>
+    </div>
 
     <p>
-      Medicinal mushroom extraction is a complex process where different solvents and physical conditions
-      are used to isolate distinct groups of bioactive compounds.
+      Medicinal mushroom extraction is a complex process in which different solvents and physical conditions
+      are used to obtain different groups of bioactive compounds. Simple methods often do not allow full extraction efficiency,
+      which is why multi-stage approaches such as triple extraction, ultrasonic assistance
+      and low-temperature vacuum concentration are used in practice.
     </p>
 
     <p>
-      Simple extraction methods often fail to achieve full spectrum extraction. In practice,
-      multi-stage approaches such as triple extraction, ultrasonic assistance and low-temperature
-      vacuum concentration are required.
-    </p>
-
-    <p>
-      This section explains the processes behind <a href="/#gomushroom-tinkture">GoMushroom tinctures</a>
-      and highlights why process control, standardization and quality control are critical
-      for the final product.
+      This page brings together explanations of the processes we use in the development of extracts and
+      <a href="/en/#gomushroom-tinctures">GoMushroom tinctures</a>, and explains why process control,
+      standardization and quality control are important for the final product.
     </p>
   </div>
 </section>
 
-<section>
+<section id="learn-articles">
   <div class="wrap">
-    <h2>Topics and articles</h2>
+    <div class="section-head">
+      <div>
+        <h2>Topics and articles</h2>
+        <div class="under"></div>
+      </div>
+      <p class="lead2">
+        The processes behind medicinal mushroom extracts and tinctures.
+      </p>
+    </div>
 
     <div class="grid learn-grid">
 
@@ -146,10 +221,12 @@
           <div class="learn-kicker">Extraction</div>
           <h3>Dual vs triple extraction of medicinal mushrooms</h3>
           <p class="meta">
-            Why one solvent is not enough and how a multi-stage approach improves extraction
-            of polysaccharides, triterpenes and other key fractions.
+            Why one solvent is not enough and how a multi-stage approach allows better extraction of polysaccharides,
+            triterpenes and other target fractions.
           </p>
-          <a href="/en/learn/triple-extraction/">Read article</a>
+          <p class="learn-link">
+            <a href="/en/learn/triple-extraction/">Read article</a>
+          </p>
         </div>
       </article>
 
@@ -158,82 +235,183 @@
           <div class="learn-kicker">Extraction</div>
           <h3>Ultrasonic extraction</h3>
           <p class="meta">
-            How acoustic cavitation improves cell wall disruption and enhances
-            transfer of bioactive compounds into the extract.
+            How ultrasound, through acoustic cavitation, improves disruption of the mushroom cell matrix
+            and enables more efficient transfer of bioactive compounds into the extract.
           </p>
-          <a href="/en/learn/ultrasonic-extraction/">Read article</a>
+          <p class="learn-link">
+            <a href="/en/learn/ultrasonic-extraction/">Read article</a>
+          </p>
+        </div>
+      </article>
+
+      <article class="card learn-card learn-card--locked" aria-disabled="true">
+        <div class="body">
+          <div class="learn-kicker">Beta-glucans</div>
+          <h3>Beta-glucans: what the numbers actually mean</h3>
+          <p class="meta">
+            Why beta-glucan content alone does not define the full quality of an extract, and how structure,
+            chain length and the extraction process determine their actual functionality.
+          </p>
+          <p class="learn-link">
+            <a href="/en/learn/beta-glucans/">Read article</a>
+          </p>
+        </div>
+      </article>
+
+<!-- 
+      <article class="card learn-card">
+        <div class="body">
+          <div class="learn-kicker">Process</div>
+          <h3>Vacuum concentration of extracts</h3>
+          <p class="meta">
+            Why solvent removal is a key step in extract preparation and how vacuum allows concentration
+            at lower temperatures without overheating sensitive compounds.
+          </p>
+          <p class="learn-link">
+            <a href="/en/learn/vacuum-concentration/">Read article</a>
+          </p>
         </div>
       </article>
 
       <article class="card learn-card">
         <div class="body">
-          <div class="learn-kicker">Beta-glucans</div>
-          <h3>Beta-glucans: what the numbers really mean</h3>
+          <div class="learn-kicker">Quality</div>
+          <h3>Sediment in tinctures: sign or defect?</h3>
           <p class="meta">
-            Why beta-glucan content alone does not define extract quality and how structure,
-            chain length and extraction determine functionality.
+            Why sediment often appears in high-quality extracts and how it is connected to the presence
+            of resins, polysaccharides and concentrated fractions.
           </p>
-          <a href="/en/learn/beta-glucans/">Read article</a>
+          <p class="learn-link">
+            <a href="/en/learn/sediment-in-tinctures/">Read article</a>
+          </p>
         </div>
       </article>
 
+      <article class="card learn-card">
+        <div class="body">
+          <div class="learn-kicker">Quality control</div>
+          <h3>How we evaluate extract quality</h3>
+          <p class="meta">
+            From raw material to analysis: how process, traceability and laboratory testing
+            together define the real quality of medicinal mushroom extracts.
+          </p>
+          <p class="learn-link">
+            <a href="/en/learn/quality-control/">Read article</a>
+          </p>
+        </div>
+      </article>
+
+      <article class="card learn-card">
+        <div class="body">
+          <div class="learn-kicker">Raw material</div>
+          <h3>Reishi cultivation and raw material quality</h3>
+          <p class="meta">
+            How our own Reishi cultivation affects repeatability, traceability and the quality of the starting material
+            for further extraction.
+          </p>
+          <p class="learn-link">
+            <a href="/en/learn/reishi-cultivation/">Read article</a>
+          </p>
+        </div>
+      </article>
+-->
     </div>
   </div>
 </section>
 
-<section>
+<section id="learn-links">
   <div class="wrap">
-    <h2>Related to the GoMushroom approach</h2>
+    <div class="section-head">
+      <div>
+        <h2>Connected to the GoMushroom approach</h2>
+        <div class="under"></div>
+      </div>
+    </div>
 
     <p>
-      Learn more about practical applications in our
-      <a href="/#services">extraction services</a>,
-      <a href="/#approach">laboratory approach</a> and
-      <a href="/#gomushroom-tinctures">tinctures</a>.
+      You can learn more about the practical application of these processes in our
+      <a href="/en/#services">medicinal mushroom extraction services</a>,
+      in the presentation of our <a href="/en/#approach">laboratory approach</a> and in the
+      <a href="/en/#gomushroom-tinctures">GoMushroom tinctures</a> section.
     </p>
 
     <p>
-      Quality control and testing are explained in more detail on the
-      <a href="/en/qc/heavy-metals/">heavy metals testing</a> page.
+      More about quality control and final product analysis is also available on the
+      <a href="/en/qc/heavy-metals/">heavy metal testing</a> page.
     </p>
   </div>
 </section>
 
-<section>
+<section id="learn-contact">
   <div class="wrap">
-    <h2>Contact for collaboration</h2>
+    <div class="section-head">
+      <div>
+        <h2>Contact for collaboration</h2>
+        <div class="under"></div>
+      </div>
+      <p class="lead2">
+        Interested in collaboration, product development or custom extraction?
+      </p>
+    </div>
 
     <p>
-      Interested in product development, extraction or custom formulation?
-      Get in touch and briefly describe your project.
+      If you are interested in product development, extraction, tincture formulation or collaboration in the
+      distribution of GoMushroom products, contact us and briefly describe your project.
     </p>
 
-    <a class="btn brand" href="/#kontakt">Contact us</a>
+    <p class="cta-inline">
+      <a class="btn brand" href="/en/#contact">Contact for collaboration</a>
+    </p>
   </div>
 </section>
 
 </main>
 
-<footer class="site-footer">
+<!-- FOOTER -->
+<footer id="footer" class="site-footer">
   <div class="footer-inner">
+    <div class="footer-social" aria-label="Social media">
+      <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+        <span>Wa</span>
+      </a>
+      <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+        <span>Fb</span>
+      </a>
+      <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <span>IG</span>
+      </a>
+      <a href="mailto:info@gomushroom.si" aria-label="Email">
+        <span>@</span>
+      </a>
+    </div>
 
-    <nav class="footer-nav">
-      <a href="#services">Services</a>
-      <a href="#approach">Approach</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#references">References</a>
-      <a href="#contact">Contact</a>
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="/en/#services">Services</a>
+      <a href="/en/#approach">Approach</a>
+      <a href="/en/#gallery">Gallery</a>
+      <a href="/en/#references">References</a>
+      <a href="/en/#contact">Contact</a>
     </nav>
 
     <p class="footer-tags">
       Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction ·
-      ultrasonic extraction · vacuum concentration · small batch · traceability
+      ultrasonic extraction · vacuum concentration · small batches · traceability
     </p>
+
+    <p class="footer-meta">
+      GoMushroom, mushroom cultivation, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
+    </p>
+
+    <div class="footer-line" aria-hidden="true"></div>
 
     <p class="footer-copy">
       © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
     </p>
   </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </footer>
 
 </body>

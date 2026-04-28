@@ -2116,7 +2116,9 @@ footer.site-footer{
   font-size:.85rem;
   color:#5a605b;
 }
-
+.gm-meta > *{
+  flex-basis:100%;
+}
 .gm-meta span{
   position:relative;
   padding-left:16px;

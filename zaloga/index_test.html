@@ -1960,6 +1960,7 @@ function productStock(productId){
   // sold per purpose: malo+velo+dar = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   saleGroups.forEach(g=>{
+    if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
     const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
@@ -2062,7 +2063,7 @@ function renderStats(){
     tAlc+=st.alc;tGly+=st.gly;
     if(st.prodAlc<=st.safetyAlc||st.prodGly<=st.safetyGly)alerts++;
   });
-  const moRev=saleGroups.filter(g=>g.date&&g.date.slice(0,7)===mo).reduce((s,g)=>s+(g.total||0),0);
+  const moRev=saleGroups.filter(g=>g.date&&g.date.slice(0,7)===mo&&g.status!=='stornirano').reduce((s,g)=>s+(g.total||0),0);
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${tAlc}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${tGly}</div></div>

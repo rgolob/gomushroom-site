@@ -556,26 +556,24 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">🧾 Računi</div>
     </div>
     <div class="stats-grid" id="invStatsGrid"></div>
-    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.5rem;overflow-x:auto;padding-bottom:2px">
-      <div class="swrap" style="min-width:120px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec, račun…" oninput="renderInvoices()"></div>
-      <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()">
-      <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()">
-      <button class="fpill" onclick="clearInvFilters()">✕</button>
-    </div>
-    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap">
-      <select class="fpill" id="invFilterCh" onchange="renderInvoices()">
+    <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
+      <div class="swrap" style="min-width:100px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec…" oninput="renderInvoices()"></div>
+      <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+      <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+      <select class="fpill" id="invFilterCh" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
         <option value="">Vsi kanali</option>
-        <option value="malo">🛒 Maloprodaja</option>
-        <option value="velo">🏪 Veleprodaja</option>
-        <option value="dar">🎁 Podaritev</option>
-        <option value="int">🔬 Interni</option>
+        <option value="malo">🛒 MP</option>
+        <option value="velo">🏪 VP</option>
+        <option value="dar">🎁 Promo</option>
+        <option value="int">🔬 Int</option>
       </select>
-      <select class="fpill" id="invFilterStatus" onchange="renderInvoices()">
+      <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
         <option value="">Vsi statusi</option>
         <option value="caka">🟡 Čaka</option>
         <option value="placano">🟢 Plačano</option>
         <option value="predano">📦 Predano</option>
       </select>
+      <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
     </div>
     <div id="invoiceList"></div>
     <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>

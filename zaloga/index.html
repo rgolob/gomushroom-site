@@ -369,6 +369,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
+    <button class="hbtn" onclick="openChangelog()" title="Changelog">📋 v2</button>
   </div>
 </header>
 
@@ -3346,7 +3347,7 @@ function renderInvoices(){
         <span class="ch-pill ${ch.cls} inv-ch">${ch.icon} ${ch.label}</span>
         <div style="display:flex;gap:.35rem;margin-top:.25rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨 Natisni</button>
-          <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">✎</button>
+          <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
       </div>
@@ -4756,7 +4757,53 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
     setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
   }
 })();
-// ── UREDI RAČUN ──
+// ── CHANGELOG ──
+const CHANGELOG=[
+  {v:'v2',datum:'01.05.2026',spremembe:[
+    'Popravek: storniran račun zdaj pravilno vrne zalogo',
+    'Popravek: mesečni promet ne vključuje storniranih računov',
+    'Novo: urejanje zneska na obstoječem računu (gumb € ✎)',
+    'Novo: trošarino poročilo — kronološka materialna kartica',
+    'Novo: prikaz zaloge po serijah v trošarino poročilu',
+    'Popravek: logika datumov v trošarino poročilu',
+  ]},
+  {v:'v1',datum:'01.01.2026',spremembe:[
+    'Osnovna verzija — zaloga, prodaja, serije, računi, stranke',
+    'FIFO alokacija serij',
+    'UPN QR kode na računih',
+    'Supabase sync',
+    'Trošarino poročilo',
+  ]},
+];
+
+function openChangelog(){
+  const existing=document.getElementById('changelogOverlay');
+  if(existing){existing.remove();return;}
+  const el=document.createElement('div');
+  el.id='changelogOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  el.onclick=e=>{if(e.target===el)el.remove();};
+  el.innerHTML=`
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">GoMushroom Zaloga — Changelog</div>
+        <button onclick="document.getElementById('changelogOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
+      </div>
+      ${CHANGELOG.map(c=>`
+        <div style="margin-bottom:1rem">
+          <div style="display:flex;gap:.5rem;align-items:baseline;margin-bottom:.4rem">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600">${c.v}</span>
+            <span style="font-size:.7rem;color:var(--muted)">${c.datum}</span>
+          </div>
+          <ul style="padding-left:1.1rem;display:flex;flex-direction:column;gap:.25rem">
+            ${c.spremembe.map(s=>`<li style="font-size:.78rem;color:var(--ink)">${s}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('<hr style="border:none;border-top:1px solid var(--border);margin:.5rem 0">')}
+    </div>`;
+  document.body.appendChild(el);
+}
+
 function openEditInvoice(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}

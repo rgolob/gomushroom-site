@@ -4882,8 +4882,18 @@ function openChangelog(){
 
 function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
-  const cycle={caka:'placano',placano:'predano',predano:'caka'};
-  i.invStatus=cycle[i.invStatus||'caka'];
+  const cur=i.invStatus||'caka';
+  // Predano → Čaka zahteva geslo
+  if(cur==='predano'){
+    const pwd=prompt('Vnesi geslo za razveljavitev statusa "Predano":');
+    if(!pwd)return;
+    // Uporabi isto geslo kot za Face ID / admin
+    if(btoa(pwd)!=='Z29tdXNocm9vbTIwMjQ='){toast('⛔ Napačno geslo');return;}
+    i.invStatus='caka';
+  } else {
+    const cycle={caka:'placano',placano:'predano'};
+    i.invStatus=cycle[cur]||'caka';
+  }
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
   save();renderInvoices();renderInvStats();
   toast(labels[i.invStatus]);

@@ -556,8 +556,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">🧾 Računi</div>
     </div>
     <div class="stats-grid" id="invStatsGrid"></div>
-    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px">
-      <div class="swrap" style="min-width:130px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec, račun…" oninput="renderInvoices()"></div>
+    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.5rem;overflow-x:auto;padding-bottom:2px">
+      <div class="swrap" style="min-width:120px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec, račun…" oninput="renderInvoices()"></div>
+      <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()">
+      <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()">
+      <button class="fpill" onclick="clearInvFilters()">✕</button>
+    </div>
+    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap">
       <select class="fpill" id="invFilterCh" onchange="renderInvoices()">
         <option value="">Vsi kanali</option>
         <option value="malo">🛒 Maloprodaja</option>
@@ -3360,14 +3365,26 @@ function renderInvStats(){
     <div class="stat-card"><div class="stat-label">Skupaj €</div><div class="stat-value ok">${total.toFixed(2)} €</div></div>
     ${byChannel}`;
 }
+function clearInvFilters(){
+  document.getElementById('invSearch').value='';
+  document.getElementById('invDateFrom').value='';
+  document.getElementById('invDateTo').value='';
+  document.getElementById('invFilterCh').value='';
+  document.getElementById('invFilterStatus').value='';
+  renderInvoices();
+}
+
 function renderInvoices(){
   const q=document.getElementById('invSearch').value.toLowerCase();
   const fCh=document.getElementById('invFilterCh').value;
   const fSt=document.getElementById('invFilterStatus')?.value||'';
+  const fFrom=document.getElementById('invDateFrom')?.value||'';
+  const fTo=document.getElementById('invDateTo')?.value||'';
   const rows=invoices.filter(i=>{
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
     const ms=!fSt||(i.invStatus||'caka')===fSt;
-    return mq&&(!fCh||i.channel===fCh)&&ms;
+    const md=(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo);
+    return mq&&(!fCh||i.channel===fCh)&&ms&&md;
   }).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
 
   const el=document.getElementById('invoiceList');
@@ -3383,19 +3400,26 @@ function renderInvoices(){
     const ch=CH[i.channel]||CH.malo;
     const st=i.invStatus||'caka';
     const s=STATUS[st]||STATUS.caka;
-    const cardCls=st==='placano'?'inv-placano':st==='predano'?'inv-predano':'';
-    return `<div class="inv-list-card ${cardCls}">
-      <div>
-        <div class="inv-num">🧾 ${i.num}</div>
-        <div class="inv-meta">${i.buyer||'—'} · ${i.date?i.date.split('-').reverse().join('.'):''}</div>
-        ${i.extInvoice?`<div class="inv-meta">R: ${i.extInvoice}</div>`:''}
-        ${i.extDelivery?`<div class="inv-meta">D: ${i.extDelivery}</div>`:''}
+    return `<div class="sg-card" style="margin-bottom:.5rem">
+      <div class="sg-header" style="cursor:default">
+        <div class="sg-info">
+          <div class="sg-buyer">🧾 ${i.num}
+            <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;margin-left:.4rem">${ch.icon} ${ch.label}</span>
+          </div>
+          <div class="sg-meta">
+            <span>${i.buyer||'—'}</span>
+            ${i.date?`<span>${i.date.split('-').reverse().join('.')}</span>`:''}
+            ${i.extInvoice?`<span>R: ${i.extInvoice}</span>`:''}
+            ${i.extDelivery?`<span>D: ${i.extDelivery}</span>`:''}
+          </div>
+        </div>
+        <div class="sg-right">
+          <div class="sg-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
+          <button class="inv-status ${s.cls}" onclick="cycleInvStatus('${i.id}')">${s.label}</button>
+        </div>
       </div>
-      <div class="inv-right">
-        <div class="inv-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
-        <span class="ch-pill ${ch.cls} inv-ch">${ch.icon} ${ch.label}</span>
-        <button class="inv-status ${s.cls}" onclick="cycleInvStatus('${i.id}')" title="Klikni za spremembo statusa">${s.label}</button>
-        <div style="display:flex;gap:.35rem;margin-top:.1rem">
+      <div class="sg-footer" onclick="event.stopPropagation()">
+        <div style="margin-left:auto;display:flex;gap:.35rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨 Natisni</button>
           <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>

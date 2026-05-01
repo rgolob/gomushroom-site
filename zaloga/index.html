@@ -163,11 +163,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* INVOICE LIST */
 .inv-list-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1.1rem;box-shadow:var(--shadow);display:flex;align-items:center;gap:.85rem}
+.inv-list-card.inv-placano{border-left:3px solid #3a6b4a}
+.inv-list-card.inv-predano{border-left:3px solid #2a5a8b;opacity:.8}
 .inv-num{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;flex:1;min-width:0}
 .inv-meta{font-size:.72rem;color:var(--muted)}
 .inv-right{display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;flex-shrink:0}
 .inv-total{font-family:'Cormorant Garamond',serif;font-size:1.1rem}
 .inv-ch{font-size:.65rem}
+.inv-status{font-size:.62rem;font-weight:600;padding:.15rem .5rem;border-radius:10px;cursor:pointer;border:none;font-family:'Jost',sans-serif}
+.inv-status-caka{background:rgba(175,132,85,.15);color:#7a5a2a}
+.inv-status-placano{background:rgba(58,107,74,.15);color:#3a6b4a}
+.inv-status-predano{background:rgba(42,90,139,.15);color:#2a5a8b}
 
 /* ORDER */
 .ch-selector-h{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
@@ -558,6 +564,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="velo">🏪 Veleprodaja</option>
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
+      </select>
+      <select class="fpill" id="invFilterStatus" onchange="renderInvoices()">
+        <option value="">Vsi statusi</option>
+        <option value="caka">🟡 Čaka</option>
+        <option value="placano">🟢 Plačano</option>
+        <option value="predano">📦 Predano</option>
       </select>
     </div>
     <div id="invoiceList"></div>
@@ -3351,15 +3363,28 @@ function renderInvStats(){
 function renderInvoices(){
   const q=document.getElementById('invSearch').value.toLowerCase();
   const fCh=document.getElementById('invFilterCh').value;
+  const fSt=document.getElementById('invFilterStatus')?.value||'';
   const rows=invoices.filter(i=>{
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
-    return mq&&(!fCh||i.channel===fCh);
-  });
+    const ms=!fSt||(i.invStatus||'caka')===fSt;
+    return mq&&(!fCh||i.channel===fCh)&&ms;
+  }).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
+
   const el=document.getElementById('invoiceList');
   if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🧾</div><div class="et">Ni računov</div><div class="es">Račun izstavi pri potrditvi prodaje.</div></div>`;return;}
+
+  const STATUS={
+    caka:{label:'🟡 Čaka',cls:'inv-status-caka',next:'placano'},
+    placano:{label:'🟢 Plačano',cls:'inv-status-placano',next:'predano'},
+    predano:{label:'📦 Predano',cls:'inv-status-predano',next:'caka'},
+  };
+
   el.innerHTML=rows.map(i=>{
     const ch=CH[i.channel]||CH.malo;
-    return `<div class="inv-list-card">
+    const st=i.invStatus||'caka';
+    const s=STATUS[st]||STATUS.caka;
+    const cardCls=st==='placano'?'inv-placano':st==='predano'?'inv-predano':'';
+    return `<div class="inv-list-card ${cardCls}">
       <div>
         <div class="inv-num">🧾 ${i.num}</div>
         <div class="inv-meta">${i.buyer||'—'} · ${i.date?i.date.split('-').reverse().join('.'):''}</div>
@@ -3369,7 +3394,8 @@ function renderInvoices(){
       <div class="inv-right">
         <div class="inv-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
         <span class="ch-pill ${ch.cls} inv-ch">${ch.icon} ${ch.label}</span>
-        <div style="display:flex;gap:.35rem;margin-top:.25rem">
+        <button class="inv-status ${s.cls}" onclick="cycleInvStatus('${i.id}')" title="Klikni za spremembo statusa">${s.label}</button>
+        <div style="display:flex;gap:.35rem;margin-top:.1rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨 Natisni</button>
           <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
@@ -4828,6 +4854,15 @@ function openChangelog(){
       `).join('<hr style="border:none;border-top:1px solid var(--border);margin:.5rem 0">')}
     </div>`;
   document.body.appendChild(el);
+}
+
+function cycleInvStatus(invId){
+  const i=invoices.find(x=>x.id===invId);if(!i)return;
+  const cycle={caka:'placano',placano:'predano',predano:'caka'};
+  i.invStatus=cycle[i.invStatus||'caka'];
+  const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
+  save();renderInvoices();renderInvStats();
+  toast(labels[i.invStatus]);
 }
 
 function openEditInvoice(invId){

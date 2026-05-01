@@ -4935,10 +4935,11 @@ function openZalogaSettings(){
         <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
       </div>
 
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Email — Resend API</div>
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Email — Resend</div>
       <input id="zsResendKey" type="password" value="${getZS('resendKey')}"
-        placeholder="re_xxxxxxxxxxxx"
+        placeholder="re_xxxxxxxxxxxx — ni potreben če si na gomushroom.si"
         style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
+      <div style="font-size:.65rem;color:var(--muted);margin-bottom:.4rem">API ključ je nastavljen na Netlify strežniku — tega polja ni treba izpolniti.</div>
       <input id="zsEmailFrom" type="text" value="${getZS('emailFrom')}"
         placeholder="GoMushroom <info@gomushroom.si>"
         style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
@@ -5043,12 +5044,12 @@ async function sendInvoiceEmail(invId){
 
   toast('📧 Pošiljam…');
   try{
-    const r=await fetch('https://api.resend.com/emails',{
+    const r=await fetch('/.netlify/functions/send-email',{
       method:'POST',
-      headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         from:getZS('emailFrom'),
-        to:[email],
+        to:email,
         subject,
         html:htmlBody,
       })

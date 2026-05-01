@@ -3346,7 +3346,7 @@ function renderInvoices(){
         <span class="ch-pill ${ch.cls} inv-ch">${ch.icon} ${ch.label}</span>
         <div style="display:flex;gap:.35rem;margin-top:.25rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨 Natisni</button>
-          <button class="tbtn" onclick="openEditInvoice('${i.id}')">✎</button>
+          <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
       </div>

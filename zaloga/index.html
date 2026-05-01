@@ -355,7 +355,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="logo">Go<em>Mushroom</em></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
-    <button class="htab" onclick="switchTab('narocilo',this)">🛒 Prodaja</button>
+    <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
@@ -376,7 +376,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <nav class="desktop-tabs">
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
-  <button class="dtab" onclick="switchTab('narocilo',this)">🛒 Nova prodaja</button>
+  <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
@@ -399,9 +399,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <!-- NOVA PRODAJA -->
-  <div class="view" id="view-narocilo">
+  <div class="view" id="view-prodaja">
     <div class="view-header">
       <div class="view-title">🛒 Nova prodaja</div>
+      <button class="hbtn2" onclick="switchTab('prodaje',null)">📋 Vse prodaje</button>
     </div>
     <div class="ch-selector-h" id="orderChannelSel">
       <div class="ch-opt-h sel-malo" id="och-malo" onclick="orderSelectChannel('malo')">🛒 Malo</div>
@@ -518,8 +519,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <!-- PRODAJE -->
   <div class="view" id="view-prodaje">
     <div class="view-header">
-      <div class="view-title">📋 Računi</div>
+      <div class="view-title">📋 Prodaje</div>
       <div style="display:flex;gap:.5rem">
+        <button class="hbtn2" onclick="switchTab('prodaja',null)">+ Nova</button>
         <button class="hbtn2" onclick="openReportSheet('prodaja')">📊 Poročilo</button>
       </div>
     </div>
@@ -638,7 +640,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <nav class="bottom-nav">
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
-  <button class="nitem"        id="nav-narocilo"  onclick="switchTab('narocilo',this)"><span class="nicon">🛒</span>Prodaja</button>
+  <button class="nitem"        id="nav-prodaja"  onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Prodaje</button>
   <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
@@ -1182,7 +1184,7 @@ async function clearAllData(){
   if(currentTab==='serije'){renderProductMgmt();renderBatches();}
   if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
   if(currentTab==='racuni'){renderInvStats();renderInvoices();}
-  if(currentTab==='narocilo')renderOrderRows();
+  if(currentTab==='prodaja')renderOrderRows();
   if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
 }
 
@@ -2053,7 +2055,7 @@ function switchTab(id,el){
   if(el&&el.classList.contains('htab'))el.classList.add('active');
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
-  if(id==='narocilo')renderOrderRows();
+  if(id==='prodaja')renderOrderRows();
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
@@ -2063,7 +2065,7 @@ function switchTab(id,el){
   }
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
-  if(oab)oab.style.display=id==='narocilo'?'flex':'none';
+  if(oab)oab.style.display=id==='prodaja'?'flex':'none';
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){
     const from=document.getElementById('dateFrom');
@@ -2171,7 +2173,7 @@ function scrollToLowStock(){
 }
 
 function goToOrder(){
-  switchTab('narocilo',null);
+  switchTab('prodaja',null);
 }
 
 // ── PRODUCT MGMT ──
@@ -2193,7 +2195,7 @@ function saveProductName(){
   const old=p.name;p.name=name;
   batches.forEach(b=>{if(b.productId===editingProductId)b.productName=name;});
   saleGroups.forEach(g=>{if(g.lines)g.lines.forEach(l=>{if(l.productId===editingProductId)l.productName=name;});});
-  save();closeSheet('productOverlay');renderProductMgmt();renderInventory();renderStats();if(currentTab==='serije')renderBatches();if(currentTab==='narocilo')renderOrderRows();
+  save();closeSheet('productOverlay');renderProductMgmt();renderInventory();renderStats();if(currentTab==='serije')renderBatches();if(currentTab==='prodaja')renderOrderRows();
   toast(`"${old}" → "${name}"`);
 }
 async function deleteProduct(id){
@@ -2201,7 +2203,7 @@ async function deleteProduct(id){
   const ok=await showConfirm(`Izbriši produkt "${p.name}"?\nIzbrisane bodo tudi vse serije tega produkta.`,'Izbriši');
   if(!ok)return;
   products=products.filter(x=>x.id!==id);batches=batches.filter(x=>x.productId!==id);
-  save();renderStats();renderInventory();renderProductMgmt();if(currentTab==='serije')renderBatches();if(currentTab==='narocilo')renderOrderRows();toast('Produkt izbrisan');
+  save();renderStats();renderInventory();renderProductMgmt();if(currentTab==='serije')renderBatches();if(currentTab==='prodaja')renderOrderRows();toast('Produkt izbrisan');
 }
 
 // ── BATCH SHEET ──
@@ -2323,7 +2325,7 @@ function saveBatch(){
   };
   if(editingBatchId){const i=batches.findIndex(x=>x.id===editingBatchId);if(i!==-1)batches[i]={...batches[i],...bData};}
   else batches.unshift({id:uid(),...bData});
-  save();closeSheet('batchOverlay');renderStats();renderInventory();if(currentTab==='serije')renderBatches();if(currentTab==='narocilo')renderOrderRows();
+  save();closeSheet('batchOverlay');renderStats();renderInventory();if(currentTab==='serije')renderBatches();if(currentTab==='prodaja')renderOrderRows();
   toast(editingBatchId?'Serija posodobljena':'Serija dodana');
 }
 
@@ -3009,9 +3011,10 @@ async function confirmOrder(withInvoice){
   saleGroups.unshift(group);
   pendingBatchAlloc={};
   save();renderStats();renderInventory();clearOrder();
-  syncCustomerFromSale(group); // async - runs in background
+  syncCustomerFromSale(group);
   if(withInvoice){printInvoice(group);if(currentTab==='racuni'){renderInvStats();renderInvoices();}}
-  if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+  switchTab('prodaje',null);
+  renderSalesSummary();renderSales();
   toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
 }
 
@@ -3744,7 +3747,7 @@ async function restoreJSON(e){
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
       if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
-      if(currentTab==='narocilo')renderOrderRows();
+      if(currentTab==='prodaja')renderOrderRows();
       if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
       toast(`✓ Obnovljeno · ${products.length} prod · ${batches.length} serij · ${saleGroups.length} prodaj${data.customers?.length?' · '+data.customers.length+' strank':''}`);
     }catch(err){

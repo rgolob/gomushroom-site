@@ -355,9 +355,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="logo">Go<em>Mushroom</em></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
-    <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
-    <button class="htab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
   </div>
@@ -376,9 +374,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <nav class="desktop-tabs">
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
-  <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
-  <button class="dtab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
   
 </nav>
@@ -398,91 +394,93 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="plist" id="productList"></div>
   </div>
 
-  <!-- NOVA PRODAJA -->
-  <div class="view" id="view-prodaja">
-    <div class="view-header">
-      <div class="view-title">🛒 Nova prodaja</div>
-      <button class="hbtn2" onclick="switchTab('prodaje',null)">📋 Vse prodaje</button>
-    </div>
-    <div class="ch-selector-h" id="orderChannelSel">
-      <div class="ch-opt-h sel-malo" id="och-malo" onclick="orderSelectChannel('malo')">🛒 Malo</div>
-      <div class="ch-opt-h" id="och-velo" onclick="orderSelectChannel('velo')">🏪 Vele</div>
-      <div class="ch-opt-h" id="och-dar" onclick="orderSelectChannel('dar')">🎁 Promo</div>
-      <div class="ch-opt-h" id="och-int" onclick="orderSelectChannel('int')">🔬 Interno</div>
-    </div>
-    <div id="orderTierSection" style="display:none;margin-bottom:.85rem">
-      <div class="slabel" style="margin-bottom:.5rem">Cenovni razred</div>
-      <div class="tier-pills" id="tierPills"></div>
-      <div class="tier-hint" id="tierAutoHint"></div>
-    </div>
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">
-      <div style="flex:1;min-width:140px;position:relative">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Kupec / prejemnik</div>
-        <input id="orderBuyer" placeholder="Ime kupca…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="buyerAutocomplete(this.value);renderOrderSummary()" autocomplete="off">
-        <div id="buyerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:var(--rs);box-shadow:var(--shadow);z-index:300;max-height:200px;overflow-y:auto;margin-top:2px"></div>
+  <!-- NOVA PRODAJA - kot overlay sheet -->
+  <div class="overlay" id="novaProdajaOverlay" style="z-index:150">
+    <div class="sheet" style="height:96vh">
+      <div class="shandle"></div>
+      <div class="shdr">
+        <span class="shtitle">🛒 Nova prodaja</span>
+        <button class="shclose" onclick="closeNovaProdaja()">✕</button>
       </div>
-      <div style="flex:1;min-width:120px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">E-mail</div>
-        <input id="orderEmail" type="email" placeholder="kupec@email.com" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="email">
-      </div>
-      <div style="flex:1;min-width:100px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Telefon</div>
-        <input id="orderPhone" type="tel" placeholder="+386 …" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="tel">
-      </div>
-      <div style="flex:2;min-width:180px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
-        <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
-      </div>
-      <div style="min-width:130px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
-        <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
-      </div>
-      <div>
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
-        <input type="date" id="orderDate" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
-      </div>
-      <div style="flex:1;min-width:80px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Popust (%)</div>
-        <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onDiscountChange();renderOrderSummary()">
-      </div>
-      <div style="flex:1;min-width:80px">
-        <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Cena (€)</div>
-        <input type="text" id="orderFinalPrice" placeholder="avtom." inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onFinalPriceChange()">
-      </div>
-    </div>
-    <!-- Velo-only fields: davčna, ext račun, dobavnica -->
-    <div id="orderVeloFields" style="display:none;margin-bottom:.6rem">
-      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-        <div style="flex:1;min-width:130px">
-          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Davčna št.</div>
-          <input id="orderVat" placeholder="SI12345678" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="off" oninput="checkPartnerVat(this.value)">
-          <div id="orderPartnerHint" style="display:none;font-size:.7rem;color:#3a6b4a;margin-top:.2rem;font-weight:500"></div>
+      <div class="shbody" style="padding:.5rem .75rem">
+        <div class="ch-selector-h" id="orderChannelSel">
+          <div class="ch-opt-h sel-malo" id="och-malo" onclick="orderSelectChannel('malo')">🛒 Malo</div>
+          <div class="ch-opt-h" id="och-velo" onclick="orderSelectChannel('velo')">🏪 Vele</div>
+          <div class="ch-opt-h" id="och-dar" onclick="orderSelectChannel('dar')">🎁 Promo</div>
+          <div class="ch-opt-h" id="och-int" onclick="orderSelectChannel('int')">🔬 Interno</div>
         </div>
-        <div style="flex:1;min-width:150px">
-          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. zunanjega računa</div>
-          <input id="orderExtInvoice" placeholder="npr. R-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
+        <div id="orderTierSection" style="display:none;margin-bottom:.85rem">
+          <div class="slabel" style="margin-bottom:.5rem">Cenovni razred</div>
+          <div class="tier-pills" id="tierPills"></div>
+          <div class="tier-hint" id="tierAutoHint"></div>
         </div>
-        <div style="flex:1;min-width:150px">
-          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. dobavnice</div>
-          <input id="orderExtDelivery" placeholder="npr. D-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">
+          <div style="flex:1;min-width:140px;position:relative">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Kupec / prejemnik</div>
+            <input id="orderBuyer" placeholder="Ime kupca…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="buyerAutocomplete(this.value);renderOrderSummary()" autocomplete="off">
+            <div id="buyerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:var(--rs);box-shadow:var(--shadow);z-index:300;max-height:200px;overflow-y:auto;margin-top:2px"></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">E-mail</div>
+            <input id="orderEmail" type="email" placeholder="kupec@email.com" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="email">
+          </div>
+          <div style="flex:1;min-width:100px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Telefon</div>
+            <input id="orderPhone" type="tel" placeholder="+386 …" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="tel">
+          </div>
+          <div style="flex:2;min-width:180px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
+            <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
+          </div>
+          <div style="min-width:130px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
+            <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
+          </div>
+          <div>
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
+            <input type="date" id="orderDate" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
+          </div>
+          <div style="flex:1;min-width:80px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Popust (%)</div>
+            <input type="text" id="orderDiscount" placeholder="0" inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onDiscountChange();renderOrderSummary()">
+          </div>
+          <div style="flex:1;min-width:80px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Cena (€)</div>
+            <input type="text" id="orderFinalPrice" placeholder="avtom." inputmode="decimal" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="onFinalPriceChange()">
+          </div>
         </div>
+        <div id="orderVeloFields" style="display:none;margin-bottom:.6rem">
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:130px">
+              <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Davčna št.</div>
+              <input id="orderVat" placeholder="SI12345678" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="off" oninput="checkPartnerVat(this.value)">
+              <div id="orderPartnerHint" style="display:none;font-size:.7rem;color:#3a6b4a;margin-top:.2rem;font-weight:500"></div>
+            </div>
+            <div style="flex:1;min-width:150px">
+              <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. zunanjega računa</div>
+              <input id="orderExtInvoice" placeholder="npr. R-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
+            </div>
+            <div style="flex:1;min-width:150px">
+              <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Št. dobavnice</div>
+              <input id="orderExtDelivery" placeholder="npr. D-2024-001" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none">
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:.6rem">
+          <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Opomba</div>
+          <input id="orderNote" placeholder="Opomba k naročilu…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;box-sizing:border-box">
+        </div>
+        <div class="order-products" id="orderProductRows"></div>
+        <div class="order-summary" id="orderSummary" style="display:none"></div>
+        <div style="height:80px"></div>
+      </div>
+      <div class="shfoot" style="gap:.4rem">
+        <button class="order-btn order-btn-clear" onclick="clearOrder()" style="flex:0 0 auto;padding:.65rem .75rem;font-size:.72rem">Počisti</button>
+        <button class="order-btn" style="background:var(--parchment);color:var(--ink);flex:0 0 auto;padding:.65rem .75rem;font-size:.72rem" onclick="openBatchAllocSheet()">🏷 Serije</button>
+        <button class="order-btn order-btn-invoice" onclick="confirmAndInvoice()" style="font-size:.72rem">📄 Račun</button>
+        <button class="order-btn order-btn-confirm" onclick="confirmOrder(false)" style="font-size:.72rem">✓ Potrdi</button>
       </div>
     </div>
-    <!-- Opomba - always visible -->
-    <div style="margin-bottom:.6rem">
-      <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Opomba</div>
-      <input id="orderNote" placeholder="Opomba k naročilu…" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;box-sizing:border-box">
-    </div>
-    <!-- Ext ref section removed - now in velo fields above -->
-    <div class="order-products" id="orderProductRows"></div>
-    <div class="order-summary" id="orderSummary" style="display:none"></div>
-    <div class="order-actions">
-      <button class="order-btn order-btn-clear" onclick="clearOrder()">Počisti</button>
-      <button class="order-btn" style="background:var(--parchment);color:var(--ink);flex:0 0 auto;padding:.85rem 1rem;font-size:.72rem" onclick="openBatchAllocSheet()">🏷 Serije</button>
-      <button class="order-btn order-btn-invoice" onclick="confirmAndInvoice()">📄 Potrdi + Račun</button>
-      <button class="order-btn order-btn-confirm" onclick="confirmOrder(false)">✓ Potrdi</button>
-    </div>
-    <div style="height:120px"></div><!-- spacer for mobile fixed bar -->
   </div>
 
   <!-- FIXED ORDER ACTION BAR - mobile only -->
@@ -517,11 +515,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <!-- PRODAJE -->
-  <div class="view" id="view-prodaje">
+  <div class="view" id="view-prodaja">
     <div class="view-header">
-      <div class="view-title">📋 Prodaje</div>
+      <div class="view-title">🛒 Prodaja</div>
       <div style="display:flex;gap:.5rem">
-        <button class="hbtn2" onclick="switchTab('prodaja',null)">+ Nova</button>
+        <button class="hbtn2" onclick="openNovaProdaja()">+ Nova</button>
         <button class="hbtn2" onclick="openReportSheet('prodaja')">📊 Poročilo</button>
       </div>
     </div>
@@ -642,7 +640,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-prodaja"  onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
-  <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Prodaje</button>
+  <button class="nitem"        id="nav-prodaja"   onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>
@@ -1115,7 +1113,7 @@ function stornoSale(groupId){
     save();
     renderStats();renderInventory();
     if(currentTab==='serije'){renderBatches();}
-    if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+    if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
     toast('✓ Prodaja stornirana — zaloga vrnjena');
   });
 }
@@ -1182,7 +1180,7 @@ async function clearAllData(){
 
   renderStats();renderInventory();
   if(currentTab==='serije'){renderProductMgmt();renderBatches();}
-  if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+  if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
   if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   if(currentTab==='prodaja')renderOrderRows();
   if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
@@ -1922,7 +1920,7 @@ async function appInit(){
       // Re-render with cloud data
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-      if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+      if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
       setSyncStatus('✓ Sinhronizirano');
       setTimeout(()=>setSyncStatus(''),3000);
       setTimeout(()=>runIntegrityCheckSilent(),1000);
@@ -2065,18 +2063,9 @@ function switchTab(id,el){
   }
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
-  if(oab)oab.style.display=id==='prodaja'?'flex':'none';
+  if(oab)oab.style.display='none';
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-  if(id==='prodaje'){
-    const from=document.getElementById('dateFrom');
-    const to=document.getElementById('dateTo');
-    if(!from.value&&!to.value){
-      const now=new Date();
-      from.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
-      to.value=todayISO();
-    }
-    renderSalesSummary();renderSales();
-  }
+  if(id==='prodaja'){renderSalesSummary();renderSales();}
   if(id==='racuni'){renderInvStats();renderInvoices();}
 }
 
@@ -2172,9 +2161,17 @@ function scrollToLowStock(){
   }
 }
 
-function goToOrder(){
-  switchTab('prodaja',null);
+function openNovaProdaja(){
+  document.getElementById('novaProdajaOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderOrderRows();
+  document.getElementById('orderDate').value=document.getElementById('orderDate').value||todayISO();
 }
+function closeNovaProdaja(){
+  document.getElementById('novaProdajaOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function goToOrder(){openNovaProdaja();}
 
 // ── PRODUCT MGMT ──
 function renderProductMgmt(){
@@ -3013,7 +3010,7 @@ async function confirmOrder(withInvoice){
   save();renderStats();renderInventory();clearOrder();
   syncCustomerFromSale(group);
   if(withInvoice){printInvoice(group);if(currentTab==='racuni'){renderInvStats();renderInvoices();}}
-  switchTab('prodaje',null);
+  closeNovaProdaja();
   renderSalesSummary();renderSales();
   toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
 }
@@ -3385,7 +3382,7 @@ async function deleteInvoice(id){
   const inv=invoices.find(x=>x.id===id);
   if(inv?.groupId){const g=saleGroups.find(x=>x.id===inv.groupId);if(g){g.invoiceNum=null;g.invoiceId=null;}}
   invoices=invoices.filter(x=>x.id!==id);
-  save();renderInvStats();renderInvoices();if(currentTab==='prodaje')renderSales();toast('Račun izbrisan');
+  save();renderInvStats();renderInvoices();if(currentTab==='prodaja')renderSales();toast('Račun izbrisan');
 }
 
 // ── PRINT INVOICE ──
@@ -3746,7 +3743,7 @@ async function restoreJSON(e){
       // Re-render everything
       renderStats();renderInventory();
       if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-      if(currentTab==='prodaje'){renderSalesSummary();renderSales();}
+      if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
       if(currentTab==='prodaja')renderOrderRows();
       if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
       toast(`✓ Obnovljeno · ${products.length} prod · ${batches.length} serij · ${saleGroups.length} prodaj${data.customers?.length?' · '+data.customers.length+' strank':''}`);
@@ -4892,7 +4889,7 @@ function saveEditInvoice(invId){
   document.getElementById('editInvOverlay').remove();
   save();
   renderInvStats();renderInvoices();
-  if(currentTab==='prodaje')renderSales();
+  if(currentTab==='prodaja')renderSales();
   renderStats();
   toast(`✓ Znesek posodobljen: ${stariZnesek.toFixed(2)} € → ${noviZnesek.toFixed(2)} €`);
 }

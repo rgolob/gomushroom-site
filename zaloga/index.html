@@ -355,6 +355,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="logo">Go<em>Mushroom</em></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
+    <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
@@ -374,6 +375,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <nav class="desktop-tabs">
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
+  <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
   
@@ -638,9 +640,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <nav class="bottom-nav">
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
-  <button class="nitem"        id="nav-prodaja"  onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
-  <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-prodaja"   onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
+  <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>

@@ -3404,6 +3404,7 @@ function renderInvoices(){
         <div class="sg-info">
           <div class="sg-buyer">🧾 ${i.num}
             <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;margin-left:.4rem">${ch.icon} ${ch.label}</span>
+            ${i.emailSent?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem" title="Email poslan ${new Date(i.emailSent).toLocaleDateString('sl-SI')}">📧 ✓</span>`:''}
           </div>
           <div class="sg-meta">
             <span>${i.buyer||'—'}</span>
@@ -4881,6 +4882,38 @@ function openChangelog(){
 }
 
 // ── NASTAVITVE ZALOGA ──
+const ZS_DEFAULTS={
+  resendKey:'',
+  emailFrom:'GoMushroom <info@gomushroom.si>',
+  emailSubject:'Račun {{invoiceNum}} — GoMushroom',
+  emailBody:`Spoštovani {{buyer}},
+
+v prilogi vam pošiljamo račun {{invoiceNum}} z dne {{date}} v vrednosti {{total}} €.
+
+Prosimo, da plačilo izvedete v roku 8 dni na naš TRR:
+SI56 XXXX XXXX XXXX XXX
+Referenca: {{invoiceNum}}
+
+Za morebitna vprašanja smo vam na voljo.
+
+Hvala za zaupanje!
+
+Lep pozdrav,
+GoMushroom, Rok Golob s.p.
+gomushroom.si`,
+  trosarinaEUR:1412.40,
+};
+
+function getZS(key){
+  const saved=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
+  return saved[key]??ZS_DEFAULTS[key];
+}
+function saveZS(obj){
+  const saved=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
+  Object.assign(saved,obj);
+  localStorage.setItem('gm_zaloga_settings',JSON.stringify(saved));
+}
+
 function openZalogaSettings(){
   const existing=document.getElementById('zalogaSettingsOverlay');
   if(existing){existing.remove();return;}
@@ -4888,19 +4921,40 @@ function openZalogaSettings(){
   el.id='zalogaSettingsOverlay';
   el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
   el.onclick=e=>{if(e.target===el)el.remove();};
-  const resendKey=localStorage.getItem('gm_resend_key')||'';
   el.innerHTML=`
-    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:520px">
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">⚙️ Nastavitve</div>
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
       </div>
-      <div style="font-size:.68rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Email (Resend API ključ)</div>
-      <input id="zsResendKey" type="password" value="${resendKey}"
+
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Trošarina</div>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem">
+        <input id="zsTrosarina" type="text" inputmode="decimal" value="${getZS('trosarinaEUR')}"
+          style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
+      </div>
+
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Email — Resend API</div>
+      <input id="zsResendKey" type="password" value="${getZS('resendKey')}"
         placeholder="re_xxxxxxxxxxxx"
-        style="width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.25rem">
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:1rem">Resend.com → API Keys. Shrani se lokalno v brskalnik.</div>
-      <div style="display:flex;gap:.75rem">
+        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
+      <input id="zsEmailFrom" type="text" value="${getZS('emailFrom')}"
+        placeholder="GoMushroom <info@gomushroom.si>"
+        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
+      
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Zadeva emaila</div>
+      <input id="zsEmailSubject" type="text" value="${getZS('emailSubject')}"
+        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
+
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">
+        Besedilo emaila
+        <span style="font-size:.6rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)"> — spremenljivke: {{buyer}} {{invoiceNum}} {{date}} {{total}}</span>
+      </div>
+      <textarea id="zsEmailBody" rows="10"
+        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;line-height:1.5">${getZS('emailBody')}</textarea>
+
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()"
           style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Zapri</button>
         <button onclick="saveZalogaSettings()"
@@ -4911,9 +4965,15 @@ function openZalogaSettings(){
 }
 
 function saveZalogaSettings(){
-  const key=document.getElementById('zsResendKey').value.trim();
-  if(key)localStorage.setItem('gm_resend_key',key);
-  else localStorage.removeItem('gm_resend_key');
+  saveZS({
+    resendKey:document.getElementById('zsResendKey').value.trim(),
+    emailFrom:document.getElementById('zsEmailFrom').value.trim(),
+    emailSubject:document.getElementById('zsEmailSubject').value.trim(),
+    emailBody:document.getElementById('zsEmailBody').value,
+    trosarinaEUR:parseFloat(document.getElementById('zsTrosarina').value.replace(',','.'))||1412.40,
+  });
+  // Backward compat
+  if(getZS('resendKey'))localStorage.setItem('gm_resend_key',getZS('resendKey'));
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
 }
@@ -4925,12 +4985,8 @@ async function sendInvoiceEmail(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}
 
-  const key=getResendKey();
-  if(!key){
-    toast('⚠ Nastavi Resend API ključ v ⚙️ Nastavitve');
-    openZalogaSettings();
-    return;
-  }
+  const key=getZS('resendKey')||localStorage.getItem('gm_resend_key')||'';
+  if(!key){toast('⚠ Nastavi Resend API ključ v ⚙️ Nastavitve');openZalogaSettings();return;}
 
   const email=inv.email;
   if(!email){toast('⚠ Kupec nima e-maila');return;}
@@ -4938,73 +4994,77 @@ async function sendInvoiceEmail(invId){
   const g=saleGroups.find(x=>x.id===inv.groupId);
   const bruto=g?.lines?.reduce((s,l)=>s+(l.lineTotal||((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0))),0)||0;
   const popust=bruto>inv.total?bruto-inv.total:0;
+  const dateStr=inv.date?inv.date.split('-').reverse().join('.'):'—';
 
-  // Zgradi HTML računa
+  // Zamenjaj spremenljivke v predlogi
+  const replace=t=>t.replace(/\{\{buyer\}\}/g,inv.buyer||'—')
+    .replace(/\{\{invoiceNum\}\}/g,inv.num||'—')
+    .replace(/\{\{date\}\}/g,dateStr)
+    .replace(/\{\{total\}\}/g,(inv.total||0).toFixed(2));
+
+  const subject=replace(getZS('emailSubject'));
+  const bodyText=replace(getZS('emailBody'));
+
+  // HTML verzija emaila
   const htmlBody=`<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
-  body{font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;color:#1a1209}
+  body{font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;color:#1a1209;background:#f5f0e8}
   .logo{font-size:1.8rem;font-weight:300;letter-spacing:.05em;margin-bottom:.25rem}
   .logo span{color:#af8455}
   .meta{font-size:.8rem;color:#7a6f60;margin-bottom:2rem}
+  .body-text{white-space:pre-line;font-size:.9rem;line-height:1.7;margin-bottom:2rem;background:white;padding:1.5rem;border-radius:8px}
   h2{font-size:1.1rem;font-weight:400;border-bottom:1px solid #ede6d6;padding-bottom:.5rem;margin-bottom:1rem}
-  table{width:100%;border-collapse:collapse;margin:1rem 0}
-  th{text-align:left;font-size:.75rem;color:#7a6f60;border-bottom:1px solid #ede6d6;padding:.4rem}
-  td{padding:.4rem;border-bottom:1px solid #f5f0e8;font-size:.85rem}
-  .total-row{font-weight:600;font-size:1rem}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;background:white;border-radius:8px;overflow:hidden}
+  th{text-align:left;font-size:.75rem;color:#7a6f60;background:#f5f0e8;padding:.5rem .75rem;border-bottom:1px solid #ede6d6}
+  td{padding:.5rem .75rem;border-bottom:1px solid #f5f0e8;font-size:.85rem}
   .footer{margin-top:2rem;font-size:.75rem;color:#7a6f60;border-top:1px solid #ede6d6;padding-top:1rem}
 </style></head><body>
 <div class="logo">Go<span>Mushroom</span></div>
 <div class="meta">GoMushroom, Rok Golob s.p. · gomushroom.si</div>
-
+<div class="body-text">${bodyText}</div>
 <h2>Račun ${inv.num}</h2>
 <table>
   <tr><th>Kupec</th><td>${inv.buyer||'—'}</td></tr>
-  <tr><th>Datum</th><td>${inv.date?inv.date.split('-').reverse().join('.'):'—'}</td></tr>
+  <tr><th>Datum</th><td>${dateStr}</td></tr>
   ${inv.address?`<tr><th>Naslov</th><td>${inv.address}</td></tr>`:''}
 </table>
-
 <h2>Postavke</h2>
 <table>
   <tr><th>Artikel</th><th style="text-align:right">Kol.</th><th style="text-align:right">Cena</th><th style="text-align:right">Skupaj</th></tr>
   ${(g?.lines||[]).map(l=>`
-    ${l.alc?`<tr><td>${l.productName} — alkoholna</td><td style="text-align:right">${l.alc} kom</td><td style="text-align:right">${l.alcPrice?.toFixed(2)} €</td><td style="text-align:right">${(l.alc*l.alcPrice).toFixed(2)} €</td></tr>`:''}
-    ${l.gly?`<tr><td>${l.productName} — glicerinska</td><td style="text-align:right">${l.gly} kom</td><td style="text-align:right">${l.glyPrice?.toFixed(2)} €</td><td style="text-align:right">${(l.gly*l.glyPrice).toFixed(2)} €</td></tr>`:''}
+    ${l.alc?`<tr><td>${l.productName} — alkoholna</td><td style="text-align:right">${l.alc} kom</td><td style="text-align:right">${(l.alcPrice||0).toFixed(2)} €</td><td style="text-align:right">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+    ${l.gly?`<tr><td>${l.productName} — glicerinska</td><td style="text-align:right">${l.gly} kom</td><td style="text-align:right">${(l.glyPrice||0).toFixed(2)} €</td><td style="text-align:right">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
   `).join('')}
   ${popust>0?`<tr><td colspan="3" style="color:#3a6b4a">Popust</td><td style="text-align:right;color:#3a6b4a">−${popust.toFixed(2)} €</td></tr>`:''}
-  <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td style="text-align:right">${inv.total?.toFixed(2)} €</td></tr>
+  <tr style="font-weight:600;background:#f5f0e8"><td colspan="3">Skupaj za plačilo</td><td style="text-align:right">${(inv.total||0).toFixed(2)} €</td></tr>
 </table>
-
-<div class="footer">
-  GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža<br>
-  gomushroom.si · Hvala za vaše naročilo!
-</div>
+<div class="footer">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža<br>gomushroom.si</div>
 </body></html>`;
 
   toast('📧 Pošiljam…');
   try{
     const r=await fetch('https://api.resend.com/emails',{
       method:'POST',
-      headers:{'Authorization':`Bearer ${localStorage.getItem('gm_resend_key')}`,'Content-Type':'application/json'},
+      headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
       body:JSON.stringify({
-        from:'GoMushroom <noreply@gomushroom.si>',
+        from:getZS('emailFrom'),
         to:[email],
-        subject:`Račun ${inv.num} — GoMushroom`,
+        subject,
         html:htmlBody,
       })
     });
     const data=await r.json();
     if(r.ok){
-      toast(`✓ Email poslan na ${email}`);
+      // Označi kot poslano
+      inv.emailSent=new Date().toISOString();
+      save();
+      renderInvoices();
+      toast(`✓ Email poslan → ${email}`);
     } else {
-      console.error('Resend error:',data);
-      if(data.message?.includes('domain')){
-        toast('⚠ Domena ni verificirana — uporabi testni način');
-      } else {
-        toast('⚠ Napaka: '+( data.message||r.status));
-      }
+      toast('⚠ '+(data.message||r.status));
     }
   }catch(e){
-    toast('⚠ Napaka pri pošiljanju: '+e.message);
+    toast('⚠ '+e.message);
   }
 }
 

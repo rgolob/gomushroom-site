@@ -357,7 +357,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('narocilo',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
-    <button class="htab" onclick="switchTab('prodaje',this)">📋 Računi</button>
+    <button class="htab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
+    <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
@@ -369,7 +370,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
-    <button class="hbtn" onclick="openChangelog()" title="Changelog">📋 v2</button>
+    <button class="hbtn" onclick="openChangelog()" title="Changelog">📋 v2.1</button>
   </div>
 </header>
 
@@ -377,7 +378,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
   <button class="dtab" onclick="switchTab('narocilo',this)">🛒 Nova prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
-  <button class="dtab" onclick="switchTab('prodaje',this)">📋 Računi</button>
+  <button class="dtab" onclick="switchTab('prodaje',this)">📋 Prodaje</button>
+  <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
   
 </nav>
 
@@ -539,6 +541,26 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="plist" id="salesList"></div>
     <div id="salesPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
   </div>
+
+  <!-- RAČUNI -->
+  <div class="view" id="view-racuni">
+    <div class="view-header">
+      <div class="view-title">🧾 Računi</div>
+    </div>
+    <div class="stats-grid" id="invStatsGrid"></div>
+    <div class="filter-row" style="display:flex;gap:.5rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px">
+      <div class="swrap" style="min-width:130px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec, račun…" oninput="renderInvoices()"></div>
+      <select class="fpill" id="invFilterCh" onchange="renderInvoices()">
+        <option value="">Vsi kanali</option>
+        <option value="malo">🛒 Maloprodaja</option>
+        <option value="velo">🏪 Veleprodaja</option>
+        <option value="dar">🎁 Podaritev</option>
+        <option value="int">🔬 Interni</option>
+      </select>
+    </div>
+    <div id="invoiceList"></div>
+    <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
+  </div>
   <div class="view" id="view-stranke">
     <div class="view-hdr">
       <div class="view-title">👥 Stranke</div>
@@ -618,7 +640,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-narocilo"  onclick="switchTab('narocilo',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
-  <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Računi</button>
+  <button class="nitem"        id="nav-prodaje"   onclick="switchTab('prodaje',this)"><span class="nicon">📋</span>Prodaje</button>
+  <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
@@ -2043,7 +2066,6 @@ function switchTab(id,el){
   if(oab)oab.style.display=id==='narocilo'?'flex':'none';
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaje'){
-    // Set default filter to current month if not already set
     const from=document.getElementById('dateFrom');
     const to=document.getElementById('dateTo');
     if(!from.value&&!to.value){
@@ -2053,6 +2075,7 @@ function switchTab(id,el){
     }
     renderSalesSummary();renderSales();
   }
+  if(id==='racuni'){renderInvStats();renderInvoices();}
 }
 
 // ── STATS ──
@@ -4759,20 +4782,22 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 })();
 // ── CHANGELOG ──
 const CHANGELOG=[
-  {v:'v2',datum:'01.05.2026',spremembe:[
-    'Popravek: storniran račun zdaj pravilno vrne zalogo',
+  {v:'v2.1',datum:'01.05.2026',spremembe:[
+    'Novo: ločen zavihek 🧾 Računi (neodvisen od Prodaj)',
+    'Novo: urejanje zneska na računu (gumb € ✎)',
+    'Popravek: storniran račun pravilno vrne zalogo',
     'Popravek: mesečni promet ne vključuje storniranih računov',
-    'Novo: urejanje zneska na obstoječem računu (gumb € ✎)',
+  ]},
+  {v:'v2.0',datum:'21.04.2026',spremembe:[
     'Novo: trošarino poročilo — kronološka materialna kartica',
     'Novo: prikaz zaloge po serijah v trošarino poročilu',
     'Popravek: logika datumov v trošarino poročilu',
   ]},
-  {v:'v1',datum:'01.01.2026',spremembe:[
+  {v:'v1.0',datum:'01.01.2026',spremembe:[
     'Osnovna verzija — zaloga, prodaja, serije, računi, stranke',
     'FIFO alokacija serij',
     'UPN QR kode na računih',
     'Supabase sync',
-    'Trošarino poročilo',
   ]},
 ];
 

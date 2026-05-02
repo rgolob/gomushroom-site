@@ -5035,87 +5035,110 @@ GoMushroom, Rok Golob s.p.
 gomushroom.si`;
 
   // HTML verzija emaila
+  // Generiraj QR kodo URL za email
+  const upnRef=inv.num?'SI00'+inv.num.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnString=buildUpnString(inv.total||0,upnRef,'Placilo '+(inv.num||'racuna'));
+  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
+
   const htmlBody=`<!DOCTYPE html>
 <html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Račun ${inv.num}</title>
+<title>${isPaid?'Račun':'Predračun'} ${inv.num}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased}
   .wrap{max-width:620px;margin:2rem auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-  .header{background:#2d1f14;padding:2rem 2.5rem;color:#f0ebe3}
-  .logo{font-size:2rem;font-weight:300;letter-spacing:.05em;margin-bottom:.25rem}
+  .header{background:#f7f3ee;padding:1.75rem 2.5rem;border-bottom:2px solid #af8455}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start}
+  .logo{font-size:1.9rem;font-weight:300;letter-spacing:.05em;color:#1a1209}
   .logo b{color:#af8455;font-weight:300}
-  .header-sub{font-size:.75rem;color:#9a8f82;letter-spacing:.05em}
-  .inv-title{margin-top:1.25rem;font-size:1.5rem;font-weight:300;color:#f0ebe3;border-top:1px solid rgba(255,255,255,.1);padding-top:1rem}
-  .inv-meta{font-size:.8rem;color:#9a8f82;margin-top:.35rem}
+  .header-sub{font-size:.72rem;color:#9a8f82;margin-top:.2rem;letter-spacing:.03em}
+  .inv-info{text-align:right}
+  .inv-num{font-size:1.1rem;font-weight:400;color:#1a1209;font-family:Georgia,serif}
+  .inv-date{font-size:.75rem;color:#9a8f82;margin-top:.2rem}
   .body{padding:2rem 2.5rem}
-  .greeting{font-size:.95rem;line-height:1.7;color:#3a3028;margin-bottom:2rem;white-space:pre-line}
-  .section-title{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid #ede6d6}
-  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.5rem;margin-bottom:2rem}
-  .info-item label{display:block;font-size:.65rem;color:#9a8f82;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.15rem}
+  .greeting{font-size:.9rem;line-height:1.75;color:#3a3028;margin-bottom:1.75rem;white-space:pre-line;padding-bottom:1.75rem;border-bottom:1px solid #ede6d6}
+  .section-title{font-size:.62rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.6rem}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem 1.5rem;margin-bottom:1.75rem}
+  .info-item label{display:block;font-size:.62rem;color:#9a8f82;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.1rem}
   .info-item span{font-size:.85rem;color:#1a1209}
-  table{width:100%;border-collapse:collapse;margin-bottom:2rem}
+  table{width:100%;border-collapse:collapse;margin-bottom:1.75rem;font-size:.85rem}
   thead tr{background:#f7f3ee}
-  thead th{text-align:left;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;padding:.6rem .75rem;border-bottom:2px solid #ede6d6}
-  thead th:last-child{text-align:right}
-  tbody td{padding:.65rem .75rem;font-size:.85rem;border-bottom:1px solid #f5f0e8;vertical-align:middle}
-  tbody td:last-child{text-align:right;font-weight:500}
-  tbody td:nth-child(2),tbody td:nth-child(3){text-align:right;color:#6a5a50}
-  .discount-row td{color:#3a6b4a;font-size:.82rem}
-  .total-row{background:#1a1209}
-  .total-row td{color:#f0ebe3;font-size:1rem;font-weight:500;padding:.85rem .75rem;border:none}
-  .total-row td:last-child{font-family:Georgia,serif;font-size:1.15rem;color:#af8455}
-  .message-box{background:#f7f3ee;border-left:3px solid #af8455;padding:1rem 1.25rem;border-radius:0 6px 6px 0;margin-bottom:2rem;font-size:.85rem;line-height:1.7;color:#3a3028;white-space:pre-line}
-  .footer{background:#f7f3ee;padding:1.25rem 2.5rem;border-top:1px solid #ede6d6}
-  .footer-logo{font-size:1rem;font-weight:300;letter-spacing:.05em;color:#1a1209;margin-bottom:.35rem}
+  thead th{text-align:left;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;padding:.55rem .75rem;border-bottom:2px solid #ede6d6}
+  thead th:last-child,thead th:nth-child(2),thead th:nth-child(3){text-align:right}
+  tbody td{padding:.6rem .75rem;border-bottom:1px solid #f5f0e8;vertical-align:middle}
+  tbody td:last-child,tbody td:nth-child(2),tbody td:nth-child(3){text-align:right;color:#6a5a50}
+  .discount-row td{color:#3a6b4a}
+  .total-row td{background:#f7f3ee;font-weight:600;font-size:.95rem;padding:.75rem;border-top:2px solid #af8455;border-bottom:none}
+  .total-row td:last-child{color:#af8455;font-size:1.1rem;font-family:Georgia,serif}
+  .payment-box{background:#f7f3ee;border-left:3px solid #af8455;padding:1rem 1.25rem;border-radius:0 6px 6px 0;margin-bottom:1.75rem;display:flex;gap:1.5rem;align-items:flex-start}
+  .payment-details{font-size:.82rem;line-height:1.8;color:#3a3028;flex:1}
+  .payment-details strong{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem}
+  .footer{background:#f7f3ee;padding:1.25rem 2.5rem;border-top:1px solid #ede6d6;display:flex;justify-content:space-between;align-items:center}
+  .footer-logo{font-size:.95rem;font-weight:300;letter-spacing:.05em;color:#1a1209}
   .footer-logo b{color:#af8455;font-weight:300}
-  .footer-info{font-size:.72rem;color:#9a8f82;line-height:1.6}
+  .footer-info{font-size:.7rem;color:#9a8f82;line-height:1.6;margin-top:.25rem}
   .footer-info a{color:#af8455;text-decoration:none}
 </style></head>
 <body>
 <div class="wrap">
   <div class="header">
-    <div class="logo">Go<b>Mushroom</b></div>
-    <div class="header-sub">gomushroom.si · info@gomushroom.si</div>
-    <div class="inv-title">${isPaid?'Račun':'Predračun'} ${inv.num}</div>
-    <div class="inv-meta">Datum: ${dateStr}</div>
+    <div class="header-top">
+      <div>
+        <div class="logo">Go<b>Mushroom</b></div>
+        <div class="header-sub">Rok Golob s.p. · gomushroom.si</div>
+      </div>
+      <div class="inv-info">
+        <div class="inv-num">${isPaid?'Račun':'Predračun'} ${inv.num}</div>
+        <div class="inv-date">${dateStr}</div>
+      </div>
+    </div>
   </div>
+
   <div class="body">
     <div class="greeting">${bodyText}</div>
 
-    <div class="section-title">Podatki računa</div>
+    <div class="section-title">Podatki</div>
     <div class="info-grid">
       <div class="info-item"><label>Kupec</label><span>${inv.buyer||'—'}</span></div>
       <div class="info-item"><label>Datum</label><span>${dateStr}</span></div>
       ${inv.address?`<div class="info-item"><label>Naslov</label><span>${inv.address}</span></div>`:''}
-      ${inv.email?`<div class="info-item"><label>E-mail</label><span>${inv.email}</span></div>`:''}
     </div>
 
     <div class="section-title">Postavke</div>
     <table>
       <thead><tr>
-        <th>Artikel</th><th style="text-align:right">Kol.</th><th style="text-align:right">Cena/kom</th><th>Skupaj</th>
+        <th>Artikel</th><th>Kol.</th><th>Cena/kom</th><th>Skupaj</th>
       </tr></thead>
       <tbody>
         ${(g?.lines||[]).map(l=>`
-          ${l.alc?`<tr><td>${l.productName}<br><small style="color:#9a8f82">alkoholna tinktura</small></td><td style="text-align:right">${l.alc} kom</td><td style="text-align:right">${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
-          ${l.gly?`<tr><td>${l.productName}<br><small style="color:#9a8f82">glicerinska tinktura</small></td><td style="text-align:right">${l.gly} kom</td><td style="text-align:right">${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.alc?`<tr><td>${l.productName} — alkoholna</td><td>${l.alc} kom</td><td>${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.gly?`<tr><td>${l.productName} — glicerinska</td><td>${l.gly} kom</td><td>${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
         `).join('')}
         ${popust>0?`<tr class="discount-row"><td colspan="3">Popust (${g?.discount||0}%)</td><td>−${popust.toFixed(2)} €</td></tr>`:''}
         <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
       </tbody>
     </table>
 
-    ${!isPaid?`<div class="message-box">Plačilo izvedite na:
-TRR: SI56 6100 0002 1970 832
-BIC: HDELSI22
-Referenca: ${inv.num}</div>`:''}
+    ${(inv.channel==='malo'||inv.channel==='velo'||inv.channel==='wp')?`<div class="payment-box">
+      <div class="payment-details">
+        <strong>Podatki za plačilo</strong>
+        Prejemnik: ${UPN_NAME}<br>
+        IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
+        BIC: HDELSI22<br>
+        Referenca: ${upnRef||inv.num}<br>
+        Znesek: ${(inv.total||0).toFixed(2)} €
+      </div>
+      <img src="${qrUrl}" width="100" height="100" alt="UPN QR" style="flex-shrink:0;border-radius:4px">
+    </div>`:''}
   </div>
+
   <div class="footer">
-    <div class="footer-logo">Go<b>Mushroom</b></div>
-    <div class="footer-info">
-      Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža<br>
-      <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
+    <div>
+      <div class="footer-logo">Go<b>Mushroom</b></div>
+      <div class="footer-info">
+        Prapreče pri Straži 22, 8351 Straža<br>
+        <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
+      </div>
     </div>
   </div>
 </div>

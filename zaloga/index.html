@@ -358,7 +358,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <div class="logo">Go<em>Mushroom</em></div>
+  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.2</button></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -660,7 +660,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
   <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
-  <button onclick="openChangelog()" style="background:none;border:none;color:rgba(255,255,255,.2);font-size:.5rem;padding:0 .5rem;cursor:pointer;align-self:flex-end;padding-bottom:calc(var(--sab) + .35rem);letter-spacing:.05em">v2.2</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
 
@@ -5043,7 +5042,7 @@ gomushroom.si`;
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased}
   .wrap{max-width:620px;margin:2rem auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-  .header{background:#1a1209;padding:2rem 2.5rem;color:#f0ebe3}
+  .header{background:#2d1f14;padding:2rem 2.5rem;color:#f0ebe3}
   .logo{font-size:2rem;font-weight:300;letter-spacing:.05em;margin-bottom:.25rem}
   .logo b{color:#af8455;font-weight:300}
   .header-sub{font-size:.75rem;color:#9a8f82;letter-spacing:.05em}

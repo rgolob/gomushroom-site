@@ -4517,9 +4517,12 @@ ${type==='trosarine'?`
   <div class="sign-box">Datum in podpis:<br><br></div>
 </div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+${group.email&&group.invoiceId?`<button class="printbtn" style="background:#3a6b4a;color:white;margin-top:.5rem" onclick="if(window.opener&&window.opener.sendInvoiceEmail){window.opener.sendInvoiceEmail('${group.invoiceId}');this.textContent='📧 Pošiljam…'}else{alert('Zapri in pošlji iz aplikacije')}">📧 Pošlji po e-pošti</button>`:''}
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
-<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>`}
+<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+${group.email&&group.invoiceId?`<button class="printbtn" style="background:#3a6b4a;color:white;margin-top:.5rem" onclick="if(window.opener&&window.opener.sendInvoiceEmail){window.opener.sendInvoiceEmail('${group.invoiceId}');this.textContent='📧 Pošiljam…'}else{alert('Zapri in pošlji iz aplikacije')}">📧 Pošlji po e-pošti</button>`:''}
+`}
 </body></html>`;
 
   const blob=new Blob([full],{type:'text/html;charset=utf-8'});
@@ -4883,24 +4886,6 @@ function openChangelog(){
 
 // ── NASTAVITVE ZALOGA ──
 const ZS_DEFAULTS={
-  resendKey:'',
-  emailFrom:'GoMushroom <info@gomushroom.si>',
-  emailSubject:'Račun {{invoiceNum}} — GoMushroom',
-  emailBody:`Spoštovani {{buyer}},
-
-v prilogi vam pošiljamo račun {{invoiceNum}} z dne {{date}} v vrednosti {{total}} €.
-
-Prosimo, da plačilo izvedete v roku 8 dni na naš TRR:
-SI56 XXXX XXXX XXXX XXX
-Referenca: {{invoiceNum}}
-
-Za morebitna vprašanja smo vam na voljo.
-
-Hvala za zaupanje!
-
-Lep pozdrav,
-GoMushroom, Rok Golob s.p.
-gomushroom.si`,
   trosarinaEUR:1412.40,
 };
 
@@ -4922,40 +4907,18 @@ function openZalogaSettings(){
   el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
   el.onclick=e=>{if(e.target===el)el.remove();};
   el.innerHTML=`
-    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:520px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">⚙️ Nastavitve</div>
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
       </div>
-
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Trošarina</div>
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem">
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Trošarina</div>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem">
         <input id="zsTrosarina" type="text" inputmode="decimal" value="${getZS('trosarinaEUR')}"
           style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
         <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
       </div>
-
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Email — Resend</div>
-      <input id="zsResendKey" type="password" value="${getZS('resendKey')}"
-        placeholder="re_xxxxxxxxxxxx — ni potreben če si na gomushroom.si"
-        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
-      <div style="font-size:.65rem;color:var(--muted);margin-bottom:.4rem">API ključ je nastavljen na Netlify strežniku — tega polja ni treba izpolniti.</div>
-      <input id="zsEmailFrom" type="text" value="${getZS('emailFrom')}"
-        placeholder="GoMushroom <info@gomushroom.si>"
-        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
-      
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">Zadeva emaila</div>
-      <input id="zsEmailSubject" type="text" value="${getZS('emailSubject')}"
-        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box;margin-bottom:.4rem">
-
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.75rem 0 .35rem">
-        Besedilo emaila
-        <span style="font-size:.6rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)"> — spremenljivke: {{buyer}} {{invoiceNum}} {{date}} {{total}}</span>
-      </div>
-      <textarea id="zsEmailBody" rows="10"
-        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.8rem;box-sizing:border-box;resize:vertical;line-height:1.5">${getZS('emailBody')}</textarea>
-
-      <div style="display:flex;gap:.75rem;margin-top:1rem">
+      <div style="display:flex;gap:.75rem">
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()"
           style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Zapri</button>
         <button onclick="saveZalogaSettings()"
@@ -4967,14 +4930,8 @@ function openZalogaSettings(){
 
 function saveZalogaSettings(){
   saveZS({
-    resendKey:document.getElementById('zsResendKey').value.trim(),
-    emailFrom:document.getElementById('zsEmailFrom').value.trim(),
-    emailSubject:document.getElementById('zsEmailSubject').value.trim(),
-    emailBody:document.getElementById('zsEmailBody').value,
     trosarinaEUR:parseFloat(document.getElementById('zsTrosarina').value.replace(',','.'))||1412.40,
   });
-  // Backward compat
-  if(getZS('resendKey'))localStorage.setItem('gm_resend_key',getZS('resendKey'));
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
 }
@@ -4997,14 +4954,39 @@ async function sendInvoiceEmail(invId){
   const popust=bruto>inv.total?bruto-inv.total:0;
   const dateStr=inv.date?inv.date.split('-').reverse().join('.'):'—';
 
-  // Zamenjaj spremenljivke v predlogi
-  const replace=t=>t.replace(/\{\{buyer\}\}/g,inv.buyer||'—')
-    .replace(/\{\{invoiceNum\}\}/g,inv.num||'—')
-    .replace(/\{\{date\}\}/g,dateStr)
-    .replace(/\{\{total\}\}/g,(inv.total||0).toFixed(2));
+  const st=inv.invStatus||'caka';
+  const isPaid=st==='placano'||st==='predano';
 
-  const subject=replace(getZS('emailSubject'));
-  const bodyText=replace(getZS('emailBody'));
+  const subject=isPaid
+    ?`Račun ${inv.num} — GoMushroom`
+    :`Predračun ${inv.num} — GoMushroom`;
+
+  const bodyText=isPaid
+    ?`Spoštovani ${inv.buyer||''},
+
+v prilogi je vaš račun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+
+Hvala za zaupanje in nakup!
+
+Lep pozdrav,
+GoMushroom, Rok Golob s.p.
+gomushroom.si`
+    :`Spoštovani ${inv.buyer||''},
+
+zahvaljujemo se vam za naročilo. V prilogi je predračun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+
+Prosimo, da plačilo izvedete na naš TRR:
+SI56 6100 0002 1970 832
+BIC: HDELSI22
+Referenca: ${inv.num}
+
+Po prejemu plačila bomo naročilo odpremili v najkrajšem možnem času.
+
+Za morebitna vprašanja smo vam na voljo na info@gomushroom.si.
+
+Lep pozdrav,
+GoMushroom, Rok Golob s.p.
+gomushroom.si`;
 
   // HTML verzija emaila
   const htmlBody=`<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -5048,7 +5030,7 @@ async function sendInvoiceEmail(invId){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        from:getZS('emailFrom'),
+        from:'GoMushroom <info@gomushroom.si>',
         to:email,
         subject,
         html:htmlBody,

@@ -376,7 +376,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
     <button class="hbtn" onclick="openZalogaSettings()" title="Nastavitve">⚙️</button>
-    <button class="hbtn" onclick="openChangelog()" title="Changelog">📋 v2.1</button>
+    <button class="hbtn" onclick="openChangelog()" title="Changelog">📋 v2.2</button>
   </div>
 </header>
 
@@ -543,6 +543,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="velo">🏪 Veleprodaja</option>
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
+        <option value="wp">🌐 Splet</option>
       </select>
       <div class="swrap" style="min-width:100px"><span class="sicon">🏷</span><input type="text" id="salesFilterBatch" placeholder="Serija…" oninput="renderSales()"></div>
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
@@ -1234,7 +1235,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -2003,7 +2004,7 @@ function productStock(productId){
   saleGroups.forEach(g=>{
     if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
   });
@@ -2819,9 +2820,9 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
       // For prod - only take from prod-allocated qty, never from internal allocation
       const allocProd=b.alc?.alloc?.prod!=null?b.alc.alloc.prod:(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0);
       const allocProdGly=b.gly?.alloc?.prod!=null?b.gly.alloc.prod:(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0);
-      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo')
+      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp')
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo')
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp')
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       // If no alloc set, use total available
       avAlc=allocProd>0?Math.max(0,Math.min(allocProd-soldProd,totalAvAlc)):totalAvAlc;
@@ -3016,7 +3017,8 @@ async function confirmOrder(withInvoice){
   if(withInvoice){
     invoiceNum=nextInvNum(ch,date);
     invoiceId=uid();
-    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery});
+    const invStatus=ch==='wp'?'caka':'placano';
+    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
   const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
@@ -3026,7 +3028,10 @@ async function confirmOrder(withInvoice){
   pendingBatchAlloc={};
   save();renderStats();renderInventory();clearOrder();
   syncCustomerFromSale(group);
-  if(withInvoice){printInvoice(group);if(currentTab==='racuni'){renderInvStats();renderInvoices();}}
+  if(withInvoice){
+    printInvoice(group);
+    if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  }
   closeNovaProdaja();
   renderSalesSummary();renderSales();
   toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
@@ -3275,7 +3280,8 @@ function issueInvoiceForGroup(groupId){
   const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
-  invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery});
+  const invStatus=g.channel==='wp'?'caka':'placano';
+  invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus});
   save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
 }
@@ -3399,7 +3405,7 @@ function renderInvoices(){
     const ch=CH[i.channel]||CH.malo;
     const st=i.invStatus||'caka';
     const s=STATUS[st]||STATUS.caka;
-    return `<div class="sg-card" style="margin-bottom:.5rem">
+    return `<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden">
       <div class="sg-header" style="cursor:default">
         <div class="sg-info">
           <div class="sg-buyer">🧾 ${i.num}
@@ -4115,8 +4121,8 @@ function genReport(type){
 
       const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
@@ -4264,7 +4270,7 @@ function genReport(type){
     const prodList=filterProd?products.filter(p=>p.id===filterProd):products;
 
     // Samo prod kanali (malo, velo, dar)
-    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='dar')&&g.status!=='stornirano';
+    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp')&&g.status!=='stornirano';
     const salesInPeriod=saleGroups.filter(g=>isProdChannel(g)&&g.date>=od&&g.date<=doVal);
     const salesUntilEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
 
@@ -4556,7 +4562,7 @@ function _calcBatchIntegrity(){
     activeSales.forEach(g=>{
       const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return;
       const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(!bb)return;
-      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar';
+      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp';
       if(isProd){soldAlcProd+=(bb.alc||0);soldGlyProd+=(bb.gly||0);}
       else{soldAlcInt+=(bb.alc||0);soldGlyInt+=(bb.gly||0);}
     });
@@ -4837,22 +4843,32 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 })();
 // ── CHANGELOG ──
 const CHANGELOG=[
+  {v:'v2.2',datum:'02.05.2026',spremembe:[
+    'Novo: pošiljanje emailov z Resend (Netlify Function proxy)',
+    'Novo: dve predlogi emaila — potrdilo o nakupu (Plačano) in obvestilo o odpošiljanju (Predano)',
+    'Novo: avtomatsko pošiljanje emailov po statusu (nastavitve)',
+    'Novo: oznaka 📧 ✓ na računu po uspešnem pošiljanju',
+    'Novo: status računov 🟡 Čaka / 🟢 Plačano / 📦 Predano',
+    'Novo: WP kanal za naročila iz spletne trgovine',
+    'Novo: ⚙️ Nastavitve — trošarina, avtomatski emaili',
+    'Novo: ločen zavihek 🧾 Računi z datumskimi filtri',
+    'Novo: urejanje zneska računa z live popust preview',
+    'Popravek: storniran račun pravilno vrne zalogo in promet',
+  ]},
   {v:'v2.1',datum:'01.05.2026',spremembe:[
-    'Novo: ločen zavihek 🧾 Računi (neodvisen od Prodaj)',
-    'Novo: urejanje zneska na računu (gumb € ✎)',
+    'Novo: ločen zavihek 🧾 Računi',
+    'Novo: urejanje zneska na računu (€ ✎)',
+    'Novo: Nova prodaja kot sheet overlay',
     'Popravek: storniran račun pravilno vrne zalogo',
     'Popravek: mesečni promet ne vključuje storniranih računov',
   ]},
   {v:'v2.0',datum:'21.04.2026',spremembe:[
     'Novo: trošarino poročilo — kronološka materialna kartica',
     'Novo: prikaz zaloge po serijah v trošarino poročilu',
-    'Popravek: logika datumov v trošarino poročilu',
   ]},
   {v:'v1.0',datum:'01.01.2026',spremembe:[
     'Osnovna verzija — zaloga, prodaja, serije, računi, stranke',
-    'FIFO alokacija serij',
-    'UPN QR kode na računih',
-    'Supabase sync',
+    'FIFO alokacija serij, UPN QR kode, Supabase sync',
   ]},
 ];
 
@@ -4887,6 +4903,8 @@ function openChangelog(){
 // ── NASTAVITVE ZALOGA ──
 const ZS_DEFAULTS={
   trosarinaEUR:1412.40,
+  autoEmailPlacano:false,
+  autoEmailPredano:false,
 };
 
 function getZS(key){
@@ -4906,18 +4924,45 @@ function openZalogaSettings(){
   el.id='zalogaSettingsOverlay';
   el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
   el.onclick=e=>{if(e.target===el)el.remove();};
+
+  const toggle=(key)=>`<label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;padding:.3rem 0">
+    <input type="checkbox" id="zs_${key}" ${getZS(key)?'checked':''} style="width:1.1rem;height:1.1rem;cursor:pointer">
+    <span style="font-size:.85rem"></span>
+  </label>`;
+
   el.innerHTML=`
     <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:520px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">⚙️ Nastavitve</div>
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
       </div>
+
       <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Trošarina</div>
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem">
         <input id="zsTrosarina" type="text" inputmode="decimal" value="${getZS('trosarinaEUR')}"
           style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
         <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
       </div>
+
+      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Avtomatsko pošiljanje emailov</div>
+      <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:.82rem;font-weight:500">🟢 Plačano</div>
+            <div style="font-size:.68rem;color:var(--muted)">Pošlje račun ko spremenišstatus na Plačano</div>
+          </div>
+          <input type="checkbox" id="zs_autoEmailPlacano" ${getZS('autoEmailPlacano')?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0">
+          <div>
+            <div style="font-size:.82rem;font-weight:500">📦 Predano</div>
+            <div style="font-size:.68rem;color:var(--muted)">Pošlje obvestilo o odpošiljanju</div>
+          </div>
+          <input type="checkbox" id="zs_autoEmailPredano" ${getZS('autoEmailPredano')?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+        </div>
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:1rem">📧 Ročno pošiljanje je vedno možno s klikom na gumb.</div>
+
       <div style="display:flex;gap:.75rem">
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()"
           style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Zapri</button>
@@ -4931,6 +4976,8 @@ function openZalogaSettings(){
 function saveZalogaSettings(){
   saveZS({
     trosarinaEUR:parseFloat(document.getElementById('zsTrosarina').value.replace(',','.'))||1412.40,
+    autoEmailPlacano:document.getElementById('zs_autoEmailPlacano').checked,
+    autoEmailPredano:document.getElementById('zs_autoEmailPredano').checked,
   });
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
@@ -5067,6 +5114,11 @@ function cycleInvStatus(invId){
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
   save();renderInvoices();renderInvStats();
   toast(labels[i.invStatus]);
+  // Avtomatsko pošiljanje
+  const autoKey={placano:'autoEmailPlacano',predano:'autoEmailPredano'};
+  if(autoKey[i.invStatus]&&getZS(autoKey[i.invStatus])&&i.email){
+    sendInvoiceEmail(i.id);
+  }
 }
 
 function openEditInvoice(invId){

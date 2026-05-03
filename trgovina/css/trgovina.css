@@ -646,3 +646,39 @@
     line-height:1.74;
   }
 }
+/*kosarica*/
+
+
+.shop-head--left{
+  text-align:left;
+  margin:0 0 10px;
+}
+
+.cart-page .shop-head{
+  max-width:760px;
+}
+
+.gm-cart-summary__row--total{
+  padding-top:14px;
+  margin-top:4px;
+  border-top:1px solid rgba(43,11,57,.08);
+  font-size:1.1rem;
+}
+
+.gm-cart-summary__row--total strong{
+  font-size:1.35rem;
+}
+
+.gm-cart-summary__actions{
+  display:grid;
+  gap:10px;
+  margin-top:6px;
+}
+
+.gm-cart-summary__actions .gm-btn{
+  width:100%;
+}
+
+.gm-cart-empty[hidden]{
+  display:none;
+}

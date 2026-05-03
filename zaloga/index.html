@@ -358,7 +358,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.2</button></div>
+  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.3</button></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -4842,28 +4842,35 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 })();
 // ── CHANGELOG ──
 const CHANGELOG=[
+  {v:'v2.3',datum:'03.05.2026',spremembe:[
+    'Novo: email gumb na pogledu računa (pošlji po e-pošti)',
+    'Novo: opozorilo če je mail že bil poslan + potrditev za ponoven send',
+    'Novo: mobilni odziv gumba med pošiljanjem (⏳ → ✓)',
+    'Novo: BCC na info@gomushroom.si za vsak poslan mail',
+    'Novo: logotip v email headerju in footerju',
+    'Izboljšava: email predloga optimizirana za mobilni prikaz',
+    'Izboljšava: besedilo emaila skrajšano brez ponavljanja',
+    'Popravek: QR koda le pri MP VP in WP kanalih',
+    'Popravek: email gumb na mobilnem ni več odpiral nastavitev',
+  ]},
   {v:'v2.2',datum:'02.05.2026',spremembe:[
     'Novo: pošiljanje emailov z Resend (Netlify Function proxy)',
-    'Novo: dve predlogi emaila — potrdilo o nakupu (Plačano) in obvestilo o odpošiljanju (Predano)',
+    'Novo: dve predlogi emaila — potrdilo (Plačano) in obvestilo (Predano)',
     'Novo: avtomatsko pošiljanje emailov po statusu (nastavitve)',
     'Novo: oznaka 📧 ✓ na računu po uspešnem pošiljanju',
     'Novo: status računov 🟡 Čaka / 🟢 Plačano / 📦 Predano',
     'Novo: WP kanal za naročila iz spletne trgovine',
     'Novo: ⚙️ Nastavitve — trošarina, avtomatski emaili',
-    'Novo: ločen zavihek 🧾 Računi z datumskimi filtri',
-    'Novo: urejanje zneska računa z live popust preview',
     'Popravek: storniran račun pravilno vrne zalogo in promet',
   ]},
   {v:'v2.1',datum:'01.05.2026',spremembe:[
-    'Novo: ločen zavihek 🧾 Računi',
-    'Novo: urejanje zneska na računu (€ ✎)',
+    'Novo: ločen zavihek 🧾 Računi z datumskimi filtri',
+    'Novo: urejanje zneska računa z live popust preview',
     'Novo: Nova prodaja kot sheet overlay',
     'Popravek: storniran račun pravilno vrne zalogo',
-    'Popravek: mesečni promet ne vključuje storniranih računov',
   ]},
   {v:'v2.0',datum:'21.04.2026',spremembe:[
     'Novo: trošarino poročilo — kronološka materialna kartica',
-    'Novo: prikaz zaloge po serijah v trošarino poročilu',
   ]},
   {v:'v1.0',datum:'01.01.2026',spremembe:[
     'Osnovna verzija — zaloga, prodaja, serije, računi, stranke',
@@ -5018,7 +5025,7 @@ hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-GoMushroom`
+Rok`
     :`Spoštovani ${inv.buyer||''},
 
 hvala za vaše naročilo. V nadaljevanju najdete predračun ${inv.num}.
@@ -5028,7 +5035,7 @@ Plačilo izvedite na spodnje bančne podatke. Po prejemu plačila bomo naročilo
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-GoMushroom`;
+Rok`;
 
   // HTML verzija emaila
   // Generiraj QR kodo URL za email
@@ -5096,7 +5103,7 @@ GoMushroom`;
   </div>
 
   <div class="body">
-    <div class="greeting">${bodyText}</div>
+    <div class="greeting">${bodyText.replace(/\n/g,'<br>')}</div>
 
     <div class="section-title">Podatki</div>
     <div class="info-grid">
@@ -5112,10 +5119,10 @@ GoMushroom`;
       </tr></thead>
       <tbody>
         ${(g?.lines||[]).map(l=>`
-          ${l.alc?`<tr><td>${l.productName} — alkoholna</td><td>${l.alc} kom</td><td>${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
-          ${l.gly?`<tr><td>${l.productName} — glicerinska</td><td>${l.gly} kom</td><td>${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.alc?`<tr><td>${l.productName} — alkoholna<br><small style="color:#9a8f82">${l.batchLabel||l.batchId||''}</small></td><td>${l.alc} kom</td><td>${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.gly?`<tr><td>${l.productName} — glicerinska<br><small style="color:#9a8f82">${l.batchLabel||l.batchId||''}</small></td><td>${l.gly} kom</td><td>${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
         `).join('')}
-        ${popust>0?`<tr class="discount-row"><td colspan="3">Popust (${g?.discount||0}%)</td><td>−${popust.toFixed(2)} €</td></tr>`:''}
+        ${popust>0?`<tr class="discount-row"><td colspan="3">Popust ${g?.discount?`(${g.discount}%)`:''}</td><td>−${popust.toFixed(2)} €</td></tr>`:''}
         <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
       </tbody>
     </table>

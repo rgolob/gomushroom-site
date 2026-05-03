@@ -67,49 +67,51 @@
     </div>
   </header>
 
-  <main>
-    <section class="shop-page">
-      <div class="wrap">
-        <div class="shop-shell">
-          <div class="shop-head" style="text-align:left; margin:0 0 10px;">
-            <p class="shop-kicker">GoMushroom • Košarica</p>
-            <h1 class="shop-title">Košarica</h1>
-            <p class="shop-sub">
-              Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.
-            </p>
+<main>
+  <section class="shop-page cart-page">
+    <div class="wrap shop-shell">
+
+      <header class="shop-head shop-head--left">
+        <p class="shop-kicker">GoMushroom • Košarica</p>
+        <h1>Košarica</h1>
+        <p class="shop-lead">
+          Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.
+        </p>
+      </header>
+
+      <section class="gm-cart-page" aria-label="Košarica">
+        <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
+
+        <aside class="gm-cart-summary" aria-label="Povzetek košarice">
+          <div class="gm-cart-summary__row">
+            <span>Izdelki</span>
+            <strong id="cart-count">0</strong>
           </div>
 
-          <section class="gm-cart-page">
-            <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
+          <div class="gm-cart-summary__row gm-cart-summary__row--total">
+            <span>Skupaj</span>
+            <strong id="cart-total">0,00 €</strong>
+          </div>
 
-            <aside class="gm-cart-summary">
-              <div class="gm-cart-summary__row">
-                <span>Izdelki</span>
-                <strong id="cart-count">0</strong>
-              </div>
+          <div class="gm-cart-summary__actions">
+            <a class="gm-btn gm-btn-secondary" href="/trgovina/">
+              Nadaljuj z nakupom
+            </a>
 
-              <div class="gm-cart-summary__row">
-                <span>Skupaj</span>
-                <strong id="cart-total">0,00 €</strong>
-              </div>
+            <button class="gm-btn gm-btn-primary" type="button" id="checkout-btn">
+              Na blagajno
+            </button>
+          </div>
 
-              <a class="gm-btn gm-btn--secondary" href="/trgovina/">
-                Nadaljuj z nakupom
-              </a>
+          <p class="gm-cart-empty" id="checkout-note" hidden>
+            Košarica je prazna.
+          </p>
+        </aside>
+      </section>
 
-              <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn">
-                Na blagajno
-              </button>
-
-              <p class="gm-cart-empty" id="checkout-note" style="display:none;">
-                Košarica je prazna.
-              </p>
-            </aside>
-          </section>
-        </div>
-      </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
 
   <footer id="footer" class="site-footer">
     <div class="footer-inner">

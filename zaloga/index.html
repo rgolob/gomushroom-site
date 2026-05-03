@@ -5010,7 +5010,7 @@ async function sendInvoiceEmail(invId){
   const bodyText=isPaid
     ?`Spoštovani ${inv.buyer||''},
 
-v prilogi je vaš račun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+v sporočilu je vaš račun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
 
 Hvala za zaupanje in nakup!
 
@@ -5019,7 +5019,7 @@ GoMushroom, Rok Golob s.p.
 gomushroom.si`
     :`Spoštovani ${inv.buyer||''},
 
-zahvaljujemo se vam za naročilo. V prilogi je predračun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+zahvaljujemo se vam za naročilo. V sporočilu je predračun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
 
 Prosimo, da plačilo izvedete na naš TRR:
 SI56 6100 0002 1970 832
@@ -5083,9 +5083,12 @@ gomushroom.si`;
 <div class="wrap">
   <div class="header">
     <div class="header-top">
-      <div>
-        <div class="logo">Go<b>Mushroom</b></div>
-        <div class="header-sub">Rok Golob s.p. · gomushroom.si</div>
+      <div style="display:flex;align-items:center;gap:.85rem">
+        <img src="https://gomushroom.si/icon-512.png" width="48" height="48" alt="GoMushroom" style="border-radius:10px;display:block">
+        <div>
+          <div class="logo">Go<b>Mushroom</b></div>
+          <div class="header-sub">Rok Golob s.p. · gomushroom.si</div>
+        </div>
       </div>
       <div class="inv-info">
         <div class="inv-num">${isPaid?'Račun':'Predračun'} ${inv.num}</div>
@@ -5133,11 +5136,14 @@ gomushroom.si`;
   </div>
 
   <div class="footer">
-    <div>
-      <div class="footer-logo">Go<b>Mushroom</b></div>
-      <div class="footer-info">
-        Prapreče pri Straži 22, 8351 Straža<br>
-        <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <img src="https://gomushroom.si/icon-512.png" width="36" height="36" alt="GoMushroom" style="border-radius:8px;display:block;opacity:.8">
+      <div>
+        <div class="footer-logo">Go<b>Mushroom</b></div>
+        <div class="footer-info">
+          Prapreče pri Straži 22, 8351 Straža<br>
+          <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
+        </div>
       </div>
     </div>
   </div>

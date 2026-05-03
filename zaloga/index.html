@@ -4992,6 +4992,12 @@ async function sendInvoiceEmail(invId){
   const email=inv.email;
   if(!email){toast('⚠ Kupec nima e-maila');return;}
 
+  // Opozorilo če je bil mail že poslan
+  if(inv.emailSent){
+    const sent=new Date(inv.emailSent).toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    if(!confirm(`Email je bil že poslan ${sent}.\n\nAli želite poslati še enkrat?`))return;
+  }
+
   const g=saleGroups.find(x=>x.id===inv.groupId);
   const bruto=g?.lines?.reduce((s,l)=>s+(l.lineTotal||((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0))),0)||0;
   const popust=bruto>inv.total?bruto-inv.total:0;
@@ -5007,29 +5013,22 @@ async function sendInvoiceEmail(invId){
   const bodyText=isPaid
     ?`Spoštovani ${inv.buyer||''},
 
-v sporočilu je vaš račun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.
 
-Hvala za zaupanje in nakup!
+Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-GoMushroom, Rok Golob s.p.
-gomushroom.si`
+GoMushroom`
     :`Spoštovani ${inv.buyer||''},
 
-zahvaljujemo se vam za naročilo. V sporočilu je predračun ${inv.num} z dne ${dateStr} v vrednosti ${(inv.total||0).toFixed(2)} €.
+hvala za vaše naročilo. V nadaljevanju najdete predračun ${inv.num}.
 
-Prosimo, da plačilo izvedete na naš TRR:
-SI56 6100 0002 1970 832
-BIC: HDELSI22
-Referenca: ${inv.num}
+Plačilo izvedite na spodnje bančne podatke. Po prejemu plačila bomo naročilo nemudoma odpremili.
 
-Po prejemu plačila bomo naročilo odpremili v najkrajšem možnem času.
-
-Za morebitna vprašanja smo vam na voljo na info@gomushroom.si.
+Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-GoMushroom, Rok Golob s.p.
-gomushroom.si`;
+GoMushroom`;
 
   // HTML verzija emaila
   // Generiraj QR kodo URL za email
@@ -5081,7 +5080,7 @@ gomushroom.si`;
   <div class="header">
     <div class="header-top">
       <div style="display:flex;align-items:center;gap:.85rem">
-        <img src="https://gomushroom.si/icon-512.png" width="48" height="48" alt="GoMushroom" style="border-radius:10px;display:block">
+        <img src="https://gomushroom.si/zaloga/icon-512.png" width="48" height="48" alt="G" style="border-radius:10px;display:block;background:#af8455">
         <div>
           <div class="logo">Go<b>Mushroom</b></div>
           <div class="header-sub">Rok Golob s.p. · gomushroom.si</div>
@@ -5134,7 +5133,7 @@ gomushroom.si`;
 
   <div class="footer">
     <div style="display:flex;align-items:center;gap:.75rem">
-      <img src="https://gomushroom.si/icon-512.png" width="36" height="36" alt="GoMushroom" style="border-radius:8px;display:block;opacity:.8">
+      <img src="https://gomushroom.si/zaloga/icon-512.png" width="36" height="36" alt="G" style="border-radius:8px;display:block;background:#af8455;flex-shrink:0">
       <div>
         <div class="footer-logo">Go<b>Mushroom</b></div>
         <div class="footer-info">
@@ -5147,6 +5146,9 @@ gomushroom.si`;
 </div>
 </body></html>`;
 
+  // Vizualni odziv na gumbu
+  const btn=document.querySelector(`[onclick*="sendInvoiceEmail('${invId}')"]`);
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
   toast('📧 Pošiljam…');
   try{
     const r=await fetch('/.netlify/functions/send-email',{
@@ -5161,15 +5163,16 @@ gomushroom.si`;
     });
     const data=await r.json();
     if(r.ok){
-      // Označi kot poslano
       inv.emailSent=new Date().toISOString();
-      save();
-      renderInvoices();
+      save();renderInvoices();
+      if(btn){btn.textContent='📧 ✓';btn.disabled=false;}
       toast(`✓ Email poslan → ${email}`);
     } else {
+      if(btn){btn.textContent='📧';btn.disabled=false;}
       toast('⚠ '+(data.message||r.status));
     }
   }catch(e){
+    if(btn){btn.textContent='📧';btn.disabled=false;}
     toast('⚠ '+e.message);
   }
 }

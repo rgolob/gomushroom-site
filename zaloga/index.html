@@ -5119,8 +5119,8 @@ Rok`;
       </tr></thead>
       <tbody>
         ${(g?.lines||[]).map(l=>`
-          ${l.alc?`<tr><td>${l.productName} — alkoholna<br><small style="color:#9a8f82">${l.batchLabel||l.batchId||''}</small></td><td>${l.alc} kom</td><td>${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
-          ${l.gly?`<tr><td>${l.productName} — glicerinska<br><small style="color:#9a8f82">${l.batchLabel||l.batchId||''}</small></td><td>${l.gly} kom</td><td>${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.alc?`<tr><td>${l.productName} — alkoholna<br><small style="color:#9a8f82">${(l.batchBreakdown||[]).map(bb=>`${bb.batchNum||bb.batchId||''}`).filter(Boolean).join(', ')||''}</small></td><td>${l.alc} kom</td><td>${(l.alcPrice||0).toFixed(2)} €</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+          ${l.gly?`<tr><td>${l.productName} — glicerinska<br><small style="color:#9a8f82">${(l.batchBreakdown||[]).map(bb=>`${bb.batchNum||bb.batchId||''}`).filter(Boolean).join(', ')||''}</small></td><td>${l.gly} kom</td><td>${(l.glyPrice||0).toFixed(2)} €</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
         `).join('')}
         ${popust>0?`<tr class="discount-row"><td colspan="3">Popust ${g?.discount?`(${g.discount}%)`:''}</td><td>−${popust.toFixed(2)} €</td></tr>`:''}
         <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>

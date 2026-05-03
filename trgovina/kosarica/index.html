@@ -41,7 +41,6 @@
           <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
         </a>
       </div>
-
       <nav id="primary-nav" aria-label="Glavna navigacija">
         <a href="https://gomushroom.si/#services">Storitve</a>
         <a href="https://gomushroom.si/#approach">Pristop</a>
@@ -50,118 +49,96 @@
         <a href="https://gomushroom.si/#references">Reference</a>
         <a href="https://gomushroom.si/trgovina/">Trgovina</a>
       </nav>
-
-      <div class="nav-actions" aria-label="Meni">
+      <div class="nav-actions">
         <a class="shop-cart-link" href="/trgovina/kosarica/" aria-label="Košarica">
-          Košarica
-          <span class="gm-cart-badge" data-cart-count></span>
+          Košarica <span class="gm-cart-badge" data-cart-count></span>
         </a>
-
         <button class="nav-toggle" id="nav-toggle" type="button"
                 aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path></svg>
         </button>
       </div>
     </div>
   </header>
 
-<main>
-  <section class="shop-page cart-page">
-    <div class="wrap shop-shell">
-
-      <header class="shop-head shop-head--left">
-        <p class="shop-kicker">GoMushroom • Košarica</p>
-        <h1>Košarica</h1>
-        <p class="shop-lead">
-          Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.
-        </p>
-      </header>
-
-      <section class="gm-cart-page" aria-label="Košarica">
-        <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
-
-        <aside class="gm-cart-summary" aria-label="Povzetek košarice">
-          <div class="gm-cart-summary__row">
-            <span>Izdelki</span>
-            <strong id="cart-count">0</strong>
+  <main>
+    <section class="shop-page">
+      <div class="wrap">
+        <div class="shop-shell">
+          <div class="shop-head" style="text-align:left;margin:0 0 10px">
+            <p class="shop-kicker">GoMushroom • Košarica</p>
+            <h1 class="shop-title">Košarica</h1>
+            <p class="shop-sub">Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.</p>
           </div>
 
-          <div class="gm-cart-summary__row gm-cart-summary__row--total">
-            <span>Skupaj</span>
-            <strong id="cart-total">0,00 €</strong>
-          </div>
+          <section class="gm-cart-page">
+            <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
 
-          <div class="gm-cart-summary__actions">
-            <a class="gm-btn gm-btn-secondary" href="/trgovina/">
-              Nadaljuj z nakupom
-            </a>
+            <aside class="gm-cart-summary">
 
-            <button class="gm-btn gm-btn-primary" type="button" id="checkout-btn">
-              Na blagajno
-            </button>
-          </div>
+              <!-- Kupon koda -->
+              <div style="border-bottom:1px solid rgba(43,11,57,.08);padding-bottom:1rem;margin-bottom:.5rem">
+                <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6a6670;margin-bottom:.5rem">Kupon koda</div>
+                <div style="display:flex;gap:.5rem">
+                  <input id="kupon-input" type="text" placeholder="npr. WELCOME10"
+                    style="flex:1;padding:.5rem .75rem;border:1px solid rgba(43,11,57,.12);border-radius:10px;font-family:inherit;font-size:.9rem;text-transform:uppercase">
+                  <button id="kupon-btn" type="button"
+                    style="padding:.5rem .85rem;border:1px solid rgba(43,11,57,.12);border-radius:10px;background:white;font-family:inherit;font-size:.85rem;cursor:pointer;white-space:nowrap">
+                    Uveljavi
+                  </button>
+                </div>
+              </div>
 
-          <p class="gm-cart-empty" id="checkout-note" hidden>
-            Košarica je prazna.
-          </p>
-        </aside>
-      </section>
+              <!-- Povzetek -->
+              <div id="cart-summary-detail"></div>
 
-    </div>
-  </section>
-</main>
+              <a class="gm-btn gm-btn--secondary" href="/trgovina/" style="margin-top:.5rem">
+                ← Nadaljuj z nakupom
+              </a>
+
+              <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn" style="margin-top:.5rem">
+                Na blagajno →
+              </button>
+
+            </aside>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <footer id="footer" class="site-footer">
     <div class="footer-inner">
-      <div class="footer-social" aria-label="Družbena omrežja">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
+      <div class="footer-social">
+        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener" aria-label="WhatsApp"><span>Wa</span></a>
+        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener" aria-label="Facebook"><span>Fb</span></a>
+        <a href="https://www.instagram.com/go.mushroom" target="_blank" rel="noopener" aria-label="Instagram"><span>IG</span></a>
         <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
       </div>
-
-      <nav class="footer-nav" aria-label="Footer navigacija">
+      <nav class="footer-nav">
         <a href="/#services">Storitve</a>
         <a href="/#approach">Pristop</a>
         <a href="/#gallery">Galerija</a>
         <a href="/#references">Reference</a>
         <a href="/trgovina/">Trgovina</a>
       </nav>
-
-      <p class="footer-tags">
-        Medicinske gobe · Reishi · Chaga · Resasti bradovec · tinkture · brezalkoholna varianta · trgovina
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
-      </p>
+      <p class="footer-meta">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia</p>
+      <div class="footer-line"></div>
+      <p class="footer-copy">© <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.</p>
     </div>
   </footer>
 
   <script src="/trgovina/js/cart.js"></script>
   <script src="/trgovina/js/cart-page.js"></script>
-
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-
-  <script>
-    const navToggle = document.getElementById("nav-toggle");
-    const siteHeader = document.getElementById("site-header");
-
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const navToggle = document.getElementById('nav-toggle');
+    const siteHeader = document.getElementById('site-header');
     if (navToggle && siteHeader) {
-      navToggle.addEventListener("click", () => {
-        const expanded = navToggle.getAttribute("aria-expanded") === "true";
-        navToggle.setAttribute("aria-expanded", String(!expanded));
-        siteHeader.classList.toggle("nav-open");
+      navToggle.addEventListener('click', () => {
+        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+        navToggle.setAttribute('aria-expanded', String(!expanded));
+        siteHeader.classList.toggle('nav-open');
       });
     }
   </script>

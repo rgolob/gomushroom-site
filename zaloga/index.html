@@ -358,7 +358,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.3</button></div>
+  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.4</button></div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -5026,6 +5026,10 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 })();
 // ── CHANGELOG ──
 const CHANGELOG=[
+  {v:'v2.4',datum:'03.05.2026',spremembe:[
+    'Popravek: UPN QR koda v emailu se prikaže samo pri statusu 🟡 Čaka (ne glede na kanal)',
+    'Popravek: Plačano in Predano status pošljeta račun brez QR kode',
+  ]},
   {v:'v2.3',datum:'03.05.2026',spremembe:[
     'Novo: email gumb na pogledu računa (pošlji po e-pošti)',
     'Novo: opozorilo če je mail že bil poslan + potrditev za ponoven send',
@@ -5095,6 +5099,9 @@ const ZS_DEFAULTS={
   trosarinaEUR:1412.40,
   autoEmailPlacano:false,
   autoEmailPredano:false,
+  postnina:3.90,
+  brezplacnaPosninaOd:60,
+  popusti:[], // [{kod, tip:'koda'|'kolicina'|'znesek', vrednost, min, aktiven}]
 };
 
 function getZS(key){
@@ -5112,46 +5119,76 @@ function openZalogaSettings(){
   if(existing){existing.remove();return;}
   const el=document.createElement('div');
   el.id='zalogaSettingsOverlay';
-  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center;overflow-y:auto';
   el.onclick=e=>{if(e.target===el)el.remove();};
 
-  const toggle=(key)=>`<label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;padding:.3rem 0">
-    <input type="checkbox" id="zs_${key}" ${getZS(key)?'checked':''} style="width:1.1rem;height:1.1rem;cursor:pointer">
-    <span style="font-size:.85rem"></span>
-  </label>`;
+  const popusti=getZS('popusti')||[];
+
+  const vrstica=(label,desc,id)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:.82rem;font-weight:500">${label}</div>${desc?`<div style="font-size:.68rem;color:var(--muted)">${desc}</div>`:''}
+      </div>
+      <input type="checkbox" id="${id}" ${getZS(id.replace('zs_',''))?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+    </div>`;
 
   el.innerHTML=`
-    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:520px">
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:92vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">⚙️ Nastavitve</div>
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
       </div>
 
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Trošarina</div>
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem">
-        <input id="zsTrosarina" type="text" inputmode="decimal" value="${getZS('trosarinaEUR')}"
-          style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
-        <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
+      <!-- TABI -->
+      <div style="display:flex;gap:.35rem;margin-bottom:1.25rem;background:var(--parchment);border-radius:10px;padding:.25rem">
+        <button id="zsTab1" onclick="zsSwitch(1)" style="flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:var(--ink);color:white">📱 Aplikacija</button>
+        <button id="zsTab2" onclick="zsSwitch(2)" style="flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:none;color:var(--muted)">🌐 Spletna stran</button>
       </div>
 
-      <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Avtomatsko pošiljanje emailov</div>
-      <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1rem">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--border)">
-          <div>
-            <div style="font-size:.82rem;font-weight:500">🟢 Plačano</div>
-            <div style="font-size:.68rem;color:var(--muted)">Pošlje račun ko spremenišstatus na Plačano</div>
-          </div>
-          <input type="checkbox" id="zs_autoEmailPlacano" ${getZS('autoEmailPlacano')?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+      <!-- TAB 1: APLIKACIJA -->
+      <div id="zsPanel1">
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Trošarina</div>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem">
+          <input id="zsTrosarina" type="text" inputmode="decimal" value="${getZS('trosarinaEUR')}"
+            style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+          <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">€ / hL AAE</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0">
-          <div>
-            <div style="font-size:.82rem;font-weight:500">📦 Predano</div>
-            <div style="font-size:.68rem;color:var(--muted)">Pošlje obvestilo o odpošiljanju</div>
+
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Avtomatsko pošiljanje emailov</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:.5rem">
+          ${vrstica('🟢 Plačano','Pošlje račun ob spremembi statusa','zs_autoEmailPlacano')}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0">
+            <div><div style="font-size:.82rem;font-weight:500">📦 Predano</div><div style="font-size:.68rem;color:var(--muted)">Pošlje obvestilo o odpošiljanju</div></div>
+            <input type="checkbox" id="zs_autoEmailPredano" ${getZS('autoEmailPredano')?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
           </div>
-          <input type="checkbox" id="zs_autoEmailPredano" ${getZS('autoEmailPredano')?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+        </div>
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:1.25rem">📧 Ročno pošiljanje je vedno možno s klikom na gumb.</div>
+      </div>
+
+      <!-- TAB 2: SPLETNA STRAN -->
+      <div id="zsPanel2" style="display:none">
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Poštnina</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.25rem;display:grid;gap:.5rem">
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Poštnina (€)</label>
+            <input id="zsPostnina" type="text" inputmode="decimal" value="${getZS('postnina')}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Brezplačna od (€)</label>
+            <input id="zsBrezplacnaPosninaOd" type="text" inputmode="decimal" value="${getZS('brezplacnaPosninaOd')}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+          <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Popusti</div>
+          <button onclick="dodajPopust()" style="font-size:.7rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer">+ Dodaj</button>
+        </div>
+        <div id="zsPopustiList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
+          ${popusti.length?popusti.map((p,i)=>renderPopustRow(p,i)).join(''):
+            '<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni nastavljenih popustov.</div>'}
         </div>
       </div>
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:1rem">📧 Ročno pošiljanje je vedno možno s klikom na gumb.</div>
 
       <div style="display:flex;gap:.75rem">
         <button onclick="document.getElementById('zalogaSettingsOverlay').remove()"
@@ -5163,14 +5200,109 @@ function openZalogaSettings(){
   document.body.appendChild(el);
 }
 
+function zsSwitch(tab){
+  document.getElementById('zsPanel1').style.display=tab===1?'':'none';
+  document.getElementById('zsPanel2').style.display=tab===2?'':'none';
+  document.getElementById('zsTab1').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===1?'var(--ink)':'none'};color:${tab===1?'white':'var(--muted)'}`;
+  document.getElementById('zsTab2').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===2?'var(--ink)':'none'};color:${tab===2?'white':'var(--muted)'}`;
+}
+
+function renderPopustRow(p,i){
+  const tipi={koda:'🏷 Koda',kolicina:'📦 Količina',znesek:'💰 Znesek naročila'};
+  const opis=p.tip==='koda'?`${p.kod} → ${p.vrednost}%`:
+    p.tip==='kolicina'?`${p.min}+ kosov → ${p.vrednost}%`:
+    `Nad ${p.min} € → ${p.vrednost}%`;
+  return`<div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
+    <div style="flex:1;font-size:.78rem">
+      <span style="font-weight:500">${tipi[p.tip]||p.tip}</span>
+      <span style="color:var(--muted);margin-left:.4rem">${opis}</span>
+    </div>
+    <input type="checkbox" ${p.aktiven?'checked':''} onchange="togglePopust(${i})" style="cursor:pointer">
+    <button onclick="odstraniPopust(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem">✕</button>
+  </div>`;
+}
+
+function dodajPopust(){
+  const tip=prompt('Tip popusta:\n1 = Koda za kupon\n2 = Količinski (X+ kosov)\n3 = Znesek naročila (nad X €)');
+  if(!tip)return;
+  const tipi={'1':'koda','2':'kolicina','3':'znesek'};
+  const tipKey=tipi[tip.trim()];
+  if(!tipKey){toast('⚠ Neveljaven tip');return;}
+
+  let p={tip:tipKey,vrednost:0,aktiven:true};
+
+  if(tipKey==='koda'){
+    const kod=prompt('Koda kupona (npr. WELCOME10):');
+    if(!kod)return;
+    const vrednost=parseFloat(prompt('Popust v % (npr. 10):')||'0');
+    if(!vrednost)return;
+    p.kod=kod.toUpperCase().trim();
+    p.vrednost=vrednost;
+    p.min=0;
+  } else if(tipKey==='kolicina'){
+    const min=parseInt(prompt('Minimalna količina kosov (npr. 3):')||'0');
+    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
+    if(!min||!vrednost)return;
+    p.min=min;p.vrednost=vrednost;p.kod='';
+  } else {
+    const min=parseFloat(prompt('Minimalni znesek naročila € (npr. 100):')||'0');
+    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
+    if(!min||!vrednost)return;
+    p.min=min;p.vrednost=vrednost;p.kod='';
+  }
+
+  const popusti=getZS('popusti')||[];
+  popusti.push(p);
+  saveZS({popusti});
+  // Osveži seznam
+  const list=document.getElementById('zsPopustiList');
+  if(list)list.innerHTML=popusti.map((pp,ii)=>renderPopustRow(pp,ii)).join('');
+}
+
+function togglePopust(i){
+  const popusti=getZS('popusti')||[];
+  if(popusti[i])popusti[i].aktiven=!popusti[i].aktiven;
+  saveZS({popusti});
+}
+
+function odstraniPopust(i){
+  const popusti=getZS('popusti')||[];
+  popusti.splice(i,1);
+  saveZS({popusti});
+  const list=document.getElementById('zsPopustiList');
+  if(list)list.innerHTML=popusti.length?popusti.map((p,ii)=>renderPopustRow(p,ii)).join(''):
+    '<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni nastavljenih popustov.</div>';
+}
+
 function saveZalogaSettings(){
   saveZS({
     trosarinaEUR:parseFloat(document.getElementById('zsTrosarina').value.replace(',','.'))||1412.40,
+    postnina:parseFloat(document.getElementById('zsPostnina').value.replace(',','.'))||3.90,
+    brezplacnaPosninaOd:parseFloat(document.getElementById('zsBrezplacnaPosninaOd').value.replace(',','.'))||60,
     autoEmailPlacano:document.getElementById('zs_autoEmailPlacano').checked,
     autoEmailPredano:document.getElementById('zs_autoEmailPredano').checked,
   });
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
+}
+
+// Pomočna funkcija — izračun popusta za naročilo (za spletno trgovino)
+function izracunajPopust(skupaj, kolicina, kodaVnesena){
+  const popusti=(getZS('popusti')||[]).filter(p=>p.aktiven);
+  let najboljsi=0;
+  for(const p of popusti){
+    let ustreza=false;
+    if(p.tip==='koda'&&kodaVnesena&&p.kod===kodaVnesena.toUpperCase().trim())ustreza=true;
+    if(p.tip==='kolicina'&&kolicina>=(p.min||0))ustreza=true;
+    if(p.tip==='znesek'&&skupaj>=(p.min||0))ustreza=true;
+    if(ustreza&&p.vrednost>najboljsi)najboljsi=p.vrednost;
+  }
+  return najboljsi; // vrne % popusta
+}
+
+function izracunajPostnino(skupaj){
+  const brezplacna=getZS('brezplacnaPosninaOd')||60;
+  return skupaj>=brezplacna?0:getZS('postnina')||3.90;
 }
 
 // ── EMAIL / RESEND ──
@@ -5311,7 +5443,7 @@ Rok`;
       </tbody>
     </table>
 
-    ${(inv.channel==='malo'||inv.channel==='velo'||inv.channel==='wp')?`<div class="payment-box">
+    ${(inv.invStatus==='caka')?`<div class="payment-box">
       <div class="payment-details">
         <strong>Podatki za plačilo</strong>
         Prejemnik: ${UPN_NAME}<br>

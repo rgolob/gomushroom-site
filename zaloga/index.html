@@ -2969,7 +2969,6 @@ async function confirmOrder(withInvoice){
   const post=document.getElementById('orderPost')?.value.trim()||'';
   const fullAddress=street&&post?street+', '+post:street||post||address;
   const date=document.getElementById('orderDate').value||todayISO();
-  const discount=parseNum(document.getElementById('orderDiscount').value);
   const extInvoice=document.getElementById('orderExtInvoice').value.trim();
   const extDelivery=document.getElementById('orderExtDelivery').value.trim();
   const ch=orderChannel;const isRevenue=true;const tier=getActiveTier();
@@ -3010,6 +3009,14 @@ async function confirmOrder(withInvoice){
   }
   const grandTotal=lines.reduce((a,l)=>a+l.lineTotal,0);
   const totalQty=lines.reduce((a,l)=>a+l.alc+l.gly,0);
+  // Izračunaj popust — ali iz % polja ali iz finalPrice
+  const fullTotal=lines.reduce((a,l)=>a+(l.alc*(l.alcP||0)+l.gly*(l.glyP||0)),0);
+  let discount=parseNum(document.getElementById('orderDiscount').value)||0;
+  const finalPriceVal=parseNum(document.getElementById('orderFinalPrice')?.value||'');
+  if(!discount&&finalPriceVal&&fullTotal&&finalPriceVal<fullTotal){
+    discount=Math.round(((1-finalPriceVal/fullTotal)*100)*10)/10;
+  }
+  const discountAmt=fullTotal>0&&discount>0?round(fullTotal-grandTotal,2):0;
   // create sale group
   const groupId=uid();
   let invoiceNum=null,invoiceId=null;
@@ -3019,7 +3026,7 @@ async function confirmOrder(withInvoice){
     const invStatus=ch==='wp'?'caka':'placano';
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -5006,8 +5013,8 @@ async function sendInvoiceEmail(invId){
   }
 
   const g=saleGroups.find(x=>x.id===inv.groupId);
-  const bruto=g?.lines?.reduce((s,l)=>s+(l.lineTotal||((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0))),0)||0;
-  const popust=bruto>inv.total?bruto-inv.total:0;
+  const bruto=g?.fullTotal||g?.lines?.reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0)||0;
+  const popust=g?.discountAmt||(bruto>(inv.total||0)?round(bruto-(inv.total||0),2):0);
   const dateStr=inv.date?inv.date.split('-').reverse().join('.'):'—';
 
   const st=inv.invStatus||'caka';
@@ -5213,8 +5220,8 @@ function openEditInvoice(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}
   const g=saleGroups.find(x=>x.id===inv.groupId);
-  const bruto=g?.lines?.reduce((s,l)=>s+(l.lineTotal||((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0))),0)||0;
-  const popust=bruto>inv.total?bruto-inv.total:0;
+  const bruto=g?.fullTotal||g?.lines?.reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0)||0;
+  const popust=g?.discountAmt||(bruto>(inv.total||0)?round(bruto-(inv.total||0),2):0);
   const popustPct=bruto>0?((popust/bruto)*100).toFixed(1):0;
 
   const existing=document.getElementById('editInvOverlay');

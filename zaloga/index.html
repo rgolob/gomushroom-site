@@ -5443,6 +5443,21 @@ function simulirajCeno(){
     <span style="font-weight:700;padding-top:.25rem;border-top:1px solid var(--border)">Skupaj</span><strong style="font-size:1rem;padding-top:.25rem;border-top:1px solid var(--border)">${skupaj.toFixed(2)} €</strong>
   </div>`;
 
+  // Prikaz stroškov za tebe
+  const tvojStrosek=popustZnesek+postnina;
+  const tvojStrosekPct=znesek>0?((tvojStrosek/znesek)*100):0;
+  if(tvojStrosek>0){
+    html+=`<div style="margin-top:.6rem;padding:.4rem .6rem;background:rgba(139,58,42,.08);border-radius:6px;border-left:3px solid var(--danger)">
+      <div style="font-size:.68rem;font-weight:600;color:var(--danger);margin-bottom:.2rem">Tvoj strošek</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.1rem .5rem;font-size:.75rem">
+        ${popustZnesek>0?`<span>Popust</span><span style="color:var(--danger)">−${popustZnesek.toFixed(2)} €</span>`:''}
+        ${postnina>0?`<span>Poštnina (tvoj strošek)</span><span style="color:var(--danger)">−${postnina.toFixed(2)} €</span>`:''}
+        <span style="font-weight:700;padding-top:.2rem;border-top:1px solid rgba(139,58,42,.2)">Skupaj izguba</span>
+        <span style="color:var(--danger);font-weight:700;padding-top:.2rem;border-top:1px solid rgba(139,58,42,.2)">−${tvojStrosek.toFixed(2)} € (${tvojStrosekPct.toFixed(1)}%)</span>
+      </div>
+    </div>`;
+  }
+
   el.innerHTML=html;
 }
 

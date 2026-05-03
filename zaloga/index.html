@@ -5270,6 +5270,7 @@ function zsSwitch(tab){
   document.getElementById('zsPanel2').style.display=tab===2?'':'none';
   document.getElementById('zsTab1').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===1?'var(--ink)':'none'};color:${tab===1?'white':'var(--muted)'}`;
   document.getElementById('zsTab2').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===2?'var(--ink)':'none'};color:${tab===2?'white':'var(--muted)'}`;
+  if(tab===2)setTimeout(simulirajCeno,50);
 }
 
 function renderPopustRow(p,i){
@@ -5364,20 +5365,85 @@ function simulirajCeno(){
   const kolicina=parseInt(document.getElementById('simKolicina')?.value)||1;
   const koda=document.getElementById('simKoda')?.value?.trim()||'';
   const el=document.getElementById('simRezultat');
-  if(!el||!znesek)return;
+  if(!el)return;
 
-  const popustPct=izracunajPopust(znesek,kolicina,koda);
-  const postnina=izracunajPostnino(znesek*(1-popustPct/100));
-  const popustZnesek=znesek*popustPct/100;
-  const skupaj=znesek-popustZnesek+postnina;
+  if(!znesek){
+    el.innerHTML='<span style="color:var(--muted);font-size:.78rem">Vnesi znesek za simulacijo.</span>';
+    return;
+  }
 
-  const vrstice=[
-    `Bruto: <strong>${znesek.toFixed(2)} €</strong>`,
-    popustPct>0?`Popust ${popustPct}%: <strong style="color:var(--success)">−${popustZnesek.toFixed(2)} €</strong>`:'Popust: <span style="color:var(--muted)">ni</span>',
-    `Poštnina: <strong>${postnina===0?'🎁 Brezplačno':postnina.toFixed(2)+' €'}</strong>`,
-    `<span style="border-top:1px solid var(--border);display:block;padding-top:.25rem;margin-top:.15rem">Skupaj: <strong style="font-size:1rem">${skupaj.toFixed(2)} €</strong></span>`,
-  ];
-  el.innerHTML=vrstice.join('<br>');
+  // Zberemo vse aktivne popuste z razlogi
+  const popusti=(getZS('popusti')||[]).filter(p=>p.aktiven);
+  const danes=todayISO();
+  const sestevaj=getZS('sestevajPopuste')||false;
+  const maxPct=getZS('maxPopust')||50;
+  const aktivirani=[];
+
+  // Časovni
+  const casovni=getZS('casovniPopust');
+  if(casovni?.aktiven&&casovni.vrednost>0){
+    if((!casovni.od||danes>=casovni.od)&&(!casovni.do||danes<=casovni.do)){
+      aktivirani.push({vrednost:casovni.vrednost,opis:`⏰ Časovni popust`});
+    } else {
+      // Prikaži zakaj ne velja
+    }
+  }
+
+  for(const p of popusti){
+    let ustreza=false;
+    let razlog='';
+    if(p.tip==='koda'){
+      if(koda&&p.kod===koda.toUpperCase().trim()){ustreza=true;razlog=`🏷 Koda ${p.kod}`;}
+    }
+    if(p.tip==='kolicina'){
+      if(kolicina>=(p.min||0)){ustreza=true;razlog=`📦 ${kolicina} kosov ≥ ${p.min}`;}
+    }
+    if(p.tip==='znesek'){
+      if(znesek>=(p.min||0)){ustreza=true;razlog=`💰 ${znesek.toFixed(2)} € ≥ ${p.min} €`;}
+    }
+    if(ustreza)aktivirani.push({vrednost:p.vrednost,opis:razlog});
+  }
+
+  // Izračun
+  let skupajPct=0;
+  if(aktivirani.length){
+    if(sestevaj){skupajPct=aktivirani.reduce((s,p)=>s+p.vrednost,0);}
+    else{skupajPct=Math.max(...aktivirani.map(p=>p.vrednost));}
+    skupajPct=Math.min(skupajPct,maxPct);
+  }
+
+  const popustZnesek=znesek*skupajPct/100;
+  const zneskPoPopustu=znesek-popustZnesek;
+  const postnina=zneskPoPopustu>=(getZS('brezplacnaPosninaOd')||60)?0:(getZS('postnina')||3.90);
+  const skupaj=zneskPoPopustu+postnina;
+
+  // Prikaz
+  let html='';
+
+  if(aktivirani.length){
+    html+=`<div style="margin-bottom:.35rem;font-size:.75rem;font-weight:600;color:var(--success)">Aktivni popusti:</div>`;
+    aktivirani.forEach(p=>{
+      html+=`<div style="font-size:.75rem;color:var(--success);padding:.1rem 0">✓ ${p.opis} → ${p.vrednost}%</div>`;
+    });
+    if(!sestevaj&&aktivirani.length>1){
+      html+=`<div style="font-size:.68rem;color:var(--muted);margin-top:.1rem">Seštevanje izklopljeno — velja največji popust</div>`;
+    }
+    if(skupajPct>=maxPct){
+      html+=`<div style="font-size:.68rem;color:var(--danger)">⚠ Omejen na max ${maxPct}%</div>`;
+    }
+    html+=`<div style="border-top:1px solid var(--border);margin:.4rem 0"></div>`;
+  } else {
+    html+=`<div style="font-size:.75rem;color:var(--muted);margin-bottom:.35rem">Nobeden popust ne velja.</div>`;
+  }
+
+  html+=`<div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .75rem;font-size:.82rem">
+    <span>Bruto</span><strong>${znesek.toFixed(2)} €</strong>
+    ${skupajPct>0?`<span style="color:var(--success)">Popust (${skupajPct}%)</span><strong style="color:var(--success)">−${popustZnesek.toFixed(2)} €</strong>`:''}
+    <span>Poštnina</span><strong>${postnina===0?'🎁 Brezplačno':postnina.toFixed(2)+' €'}</strong>
+    <span style="font-weight:700;padding-top:.25rem;border-top:1px solid var(--border)">Skupaj</span><strong style="font-size:1rem;padding-top:.25rem;border-top:1px solid var(--border)">${skupaj.toFixed(2)} €</strong>
+  </div>`;
+
+  el.innerHTML=html;
 }
 
 // Pomočna funkcija — izračun popusta za naročilo

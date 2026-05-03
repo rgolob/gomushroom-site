@@ -1126,8 +1126,8 @@ function stornoSale(groupId){
     g.status='stornirano';
     g.stornoDate=stornoDate;
     g.stornoRazlog=razlog||'';
-    // Stock is restored automatically since getSoldPerBatch filters stornirano
     save();
+    sbUpdate('gm_sale_groups',{id:g.id},{status:'stornirano'}).catch(e=>console.warn('sbUpdate storno failed:',e));
     renderStats();renderInventory();
     if(currentTab==='serije'){renderBatches();}
     if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
@@ -1244,7 +1244,185 @@ const MONTHS=['','jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','no
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 
 // ── STORAGE ──
-// ── SUPABASE ──
+// ── SUPABASE RELACIJSKA INTEGRACIJA ──
+
+// Pomoćne funkcije za Supabase REST
+async function sbFetch(table, params=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{headers:SB_HEADERS});
+  if(!r.ok)throw new Error(`sbFetch ${table}: ${r.status}`);
+  return r.json();
+}
+
+async function sbInsert(table, data, upsert=false){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
+    method:'POST',
+    headers:{...SB_HEADERS,'Prefer':upsert?'resolution=merge-duplicates':'return=minimal'},
+    body:JSON.stringify(Array.isArray(data)?data:[data])
+  });
+  if(!r.ok){const e=await r.text();throw new Error(`sbInsert ${table}: ${e}`);}
+}
+
+async function sbUpdate(table, match, data){
+  const params=Object.entries(match).map(([k,v])=>`${k}=eq.${v}`).join('&');
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{
+    method:'PATCH',
+    headers:SB_HEADERS,
+    body:JSON.stringify(data)
+  });
+  if(!r.ok){const e=await r.text();throw new Error(`sbUpdate ${table}: ${e}`);}
+}
+
+async function sbDelete(table, match){
+  const params=Object.entries(match).map(([k,v])=>`${k}=eq.${v}`).join('&');
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${params}`,{method:'DELETE',headers:SB_HEADERS});
+  if(!r.ok)throw new Error(`sbDelete ${table}: ${r.status}`);
+}
+
+// Pretvori Supabase batch v app format
+function sbBatchToApp(b){
+  return {
+    id:b.id, productId:b.product_id, productName:b.product_name,
+    batchNum:b.batch_num, date:b.date, note:b.note, workOrder:b.work_order,
+    safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
+    alc:{sku:b.alc_sku,qty:b.alc_qty||0,priceMalo:b.alc_price_malo||0,vol:b.alc_vol,alloc:{prod:b.alc_alloc_prod||0,int:b.alc_alloc_int||0}},
+    gly:{sku:b.gly_sku,qty:b.gly_qty||0,priceMalo:b.gly_price_malo||0,vol:b.gly_vol,alloc:{prod:b.gly_alloc_prod||0,int:b.gly_alloc_int||0}},
+  };
+}
+
+// Pretvori app batch v Supabase format
+function appBatchToSb(b){
+  return {
+    id:b.id, product_id:b.productId, product_name:b.productName,
+    batch_num:b.batchNum, date:b.date||null, note:b.note||null, work_order:b.workOrder||null,
+    safety_alc:b.safetyAlc||0, safety_gly:b.safetyGly||0,
+    alc_sku:b.alc?.sku||null, alc_qty:b.alc?.qty||0, alc_price_malo:b.alc?.priceMalo||0,
+    alc_vol:b.alc?.vol||null, alc_alloc_prod:b.alc?.alloc?.prod||0, alc_alloc_int:b.alc?.alloc?.int||0,
+    gly_sku:b.gly?.sku||null, gly_qty:b.gly?.qty||0, gly_price_malo:b.gly?.priceMalo||0,
+    gly_vol:b.gly?.vol||null, gly_alloc_prod:b.gly?.alloc?.prod||0, gly_alloc_int:b.gly?.alloc?.int||0,
+  };
+}
+
+// Pretvori Supabase group + lines v app format
+function sbGroupToApp(g, lines, lineBatches){
+  const gLines=lines.filter(l=>l.group_id===g.id).map(l=>({
+    productId:l.product_id, productName:l.product_name,
+    alc:l.alc||0, gly:l.gly||0,
+    alcPrice:l.alc_price||0, glyPrice:l.gly_price||0,
+    lineTotal:l.line_total||0,
+    batchBreakdown:lineBatches.filter(b=>b.line_id===l.id).map(b=>({
+      batchId:b.batch_id, batchNum:b.batch_num, alc:b.alc||0, gly:b.gly||0
+    }))
+  }));
+  return {
+    id:g.id, buyer:g.buyer, email:g.email, phone:g.phone, vat:g.vat,
+    address:g.address, street:g.street, post:g.post,
+    date:g.date, channel:g.channel,
+    discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
+    extInvoice:g.ext_invoice, extDelivery:g.ext_delivery,
+    note:g.note, invoiceNum:g.invoice_num, invoiceId:g.invoice_id,
+    total:g.total||0, qty:g.qty||0,
+    status:g.status||'active',
+    lines:gLines
+  };
+}
+
+// Pretvori Supabase invoice v app format
+function sbInvoiceToApp(i){
+  return {
+    id:i.id, num:i.num, channel:i.channel,
+    buyer:i.buyer, email:i.email, phone:i.phone,
+    address:i.address, street:i.street, post:i.post,
+    date:i.date, total:i.total||0,
+    groupId:i.group_id, extInvoice:i.ext_invoice, extDelivery:i.ext_delivery,
+    invStatus:i.inv_status||'placano',
+    emailSent:i.email_sent||null
+  };
+}
+
+// Naloži vse iz relacijskih tabel
+async function sbLoadAll(){
+  const [prods, bats, groups, lines, lineBats, invs, counters, tiers] = await Promise.all([
+    sbFetch('gm_products','select=*'),
+    sbFetch('gm_batches','select=*&order=date.desc'),
+    sbFetch('gm_sale_groups','select=*&order=date.desc'),
+    sbFetch('gm_sale_lines','select=*'),
+    sbFetch('gm_sale_line_batches','select=*'),
+    sbFetch('gm_invoices','select=*&order=date.desc'),
+    sbFetch('gm_inv_counters','select=*'),
+    sbFetch('gm_tiers','select=*&order=sort_order.asc'),
+  ]);
+
+  products=prods.map(p=>({id:p.id,name:p.name}));
+  batches=bats.map(sbBatchToApp);
+  saleGroups=groups.map(g=>sbGroupToApp(g,lines,lineBats));
+  invoices=invs.map(sbInvoiceToApp);
+  invCounters={malo:0,velo:0,dar:0,int:0};
+  counters.forEach(c=>{invCounters[c.key]=c.val;});
+  // Posodobi TIERS iz baze
+  if(tiers.length){
+    window._TIERS=tiers.map(t=>({min:t.min_qty,max:t.max_qty||Infinity,alc:t.alc_price,gly:t.gly_price,label:t.label}));
+  }
+}
+
+// Shrani batch v Supabase
+async function sbSaveBatch(b){
+  await sbInsert('gm_batches', appBatchToSb(b), true);
+}
+
+// Shrani prodajno skupino + vrstice
+async function sbSaveGroup(g){
+  // Upsert group
+  await sbInsert('gm_sale_groups',{
+    id:g.id, buyer:g.buyer||null, email:g.email||null, phone:g.phone||null, vat:g.vat||null,
+    address:g.address||null, street:g.street||null, post:g.post||null,
+    date:g.date||null, channel:g.channel||null,
+    discount:g.discount||0, discount_amt:g.discountAmt||0, full_total:g.fullTotal||0,
+    ext_invoice:g.extInvoice||null, ext_delivery:g.extDelivery||null,
+    note:g.note||null, invoice_num:g.invoiceNum||null, invoice_id:g.invoiceId||null,
+    total:g.total||0, qty:g.qty||0, status:g.status||'active'
+  }, true);
+  // Briši stare vrstice in vpiši nove
+  try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
+  for(const l of (g.lines||[])){
+    const lineId=uid();
+    await sbInsert('gm_sale_lines',{
+      id:lineId, group_id:g.id,
+      product_id:l.productId, product_name:l.productName,
+      alc:l.alc||0, gly:l.gly||0,
+      alc_price:l.alcPrice||0, gly_price:l.glyPrice||0,
+      line_total:l.lineTotal||0
+    }, true);
+    for(const bb of (l.batchBreakdown||[])){
+      await sbInsert('gm_sale_line_batches',{
+        group_id:g.id, line_id:lineId,
+        batch_id:bb.batchId, batch_num:bb.batchNum,
+        alc:bb.alc||0, gly:bb.gly||0
+      });
+    }
+  }
+}
+
+// Shrani račun
+async function sbSaveInvoice(inv){
+  await sbInsert('gm_invoices',{
+    id:inv.id, num:inv.num, channel:inv.channel,
+    buyer:inv.buyer||null, email:inv.email||null, phone:inv.phone||null,
+    address:inv.address||null, street:inv.street||null, post:inv.post||null,
+    date:inv.date||null, total:inv.total||0,
+    group_id:inv.groupId||null, ext_invoice:inv.extInvoice||null, ext_delivery:inv.extDelivery||null,
+    inv_status:inv.invStatus||'placano',
+    email_sent:inv.emailSent||null
+  }, true);
+}
+
+// Posodobi števce
+async function sbSaveCounters(){
+  const rows=Object.entries(invCounters).map(([key,val])=>({key,val}));
+  await sbInsert('gm_inv_counters', rows, true);
+}
+
+// ── KONEC RELACIJSKE INTEGRACIJE ──
+
 const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
@@ -1879,21 +2057,23 @@ function setSyncStatus(s){
 }
 
 function save(){
-  // Always save to localStorage as backup
+  // Vedno shrani lokalno
   localStorage.setItem('gm_products',JSON.stringify(products));
   localStorage.setItem('gm_batches',JSON.stringify(batches));
   localStorage.setItem('gm_saleGroups',JSON.stringify(saleGroups));
   localStorage.setItem('gm_invoices',JSON.stringify(invoices));
   localStorage.setItem('gm_invCounters',JSON.stringify(invCounters));
-  // Debounced save to Supabase
+  // Debounced Supabase sync
   clearTimeout(_saveTimer);
   setSyncStatus('💾 Shranjujem…');
   _saveTimer=setTimeout(async()=>{
     try{
-      await sbSet('gm_data',{products,batches,saleGroups,invoices,invCounters});
+      // Shrani števce
+      await sbSaveCounters();
       setSyncStatus('✓ Sinhronizirano');
       setTimeout(()=>setSyncStatus(''),3000);
-    }catch{
+    }catch(e){
+      console.warn('Supabase save failed:',e);
       setSyncStatus('⚠ Shranjevanje neuspešno');
     }
   },1500);
@@ -1911,40 +2091,30 @@ function loadFromLocal(){
 }
 
 async function appInit(){
-  setSyncStatus('⟳ Nalagam podatke…');
+  setSyncStatus('⟳ Nalagam…');
   loadFromLocal();
   migrateInvoiceNums();
   seed();
   renderStats();renderInventory();
   document.getElementById('orderDate').value=todayISO();
-  // Load customers from Supabase in parallel
   loadCustomers();
-  // Then fetch from Supabase and merge (cloud wins)
   try{
-    const cloud=await sbGet('gm_data');
-    if(cloud){
-      if(cloud.products?.length)products=cloud.products;
-      if(cloud.batches?.length)batches=cloud.batches;
-      if(cloud.saleGroups?.length)saleGroups=cloud.saleGroups;
-      if(cloud.invoices?.length)invoices=cloud.invoices;
-      if(cloud.invCounters)invCounters={malo:0,velo:0,dar:0,int:0,...cloud.invCounters};
-      // Sync local cache
-      localStorage.setItem('gm_products',JSON.stringify(products));
-      localStorage.setItem('gm_batches',JSON.stringify(batches));
-      localStorage.setItem('gm_saleGroups',JSON.stringify(saleGroups));
-      localStorage.setItem('gm_invoices',JSON.stringify(invoices));
-      localStorage.setItem('gm_invCounters',JSON.stringify(invCounters));
-      // Re-render with cloud data
-      renderStats();renderInventory();
-      if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
-      if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
-      setSyncStatus('✓ Sinhronizirano');
-      setTimeout(()=>setSyncStatus(''),3000);
-      setTimeout(()=>runIntegrityCheckSilent(),1000);
-      setSyncStatus('✓ Lokalni podatki');
-      setTimeout(()=>setSyncStatus(''),3000);
-    }
-  }catch{
+    await sbLoadAll();
+    // Sinhroniziraj lokalni cache
+    localStorage.setItem('gm_products',JSON.stringify(products));
+    localStorage.setItem('gm_batches',JSON.stringify(batches));
+    localStorage.setItem('gm_saleGroups',JSON.stringify(saleGroups));
+    localStorage.setItem('gm_invoices',JSON.stringify(invoices));
+    localStorage.setItem('gm_invCounters',JSON.stringify(invCounters));
+    renderStats();renderInventory();
+    if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
+    if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
+    if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+    setSyncStatus('✓ Sinhronizirano');
+    setTimeout(()=>setSyncStatus(''),3000);
+    setTimeout(()=>runIntegrityCheckSilent(),1000);
+  }catch(e){
+    console.warn('Supabase load failed, using local:',e);
     setSyncStatus('⚠ Brez povezave — lokalni podatki');
     setTimeout(()=>setSyncStatus(''),5000);
   }
@@ -2339,6 +2509,8 @@ function saveBatch(){
   };
   if(editingBatchId){const i=batches.findIndex(x=>x.id===editingBatchId);if(i!==-1)batches[i]={...batches[i],...bData};}
   else batches.unshift({id:uid(),...bData});
+  const savedBatch=editingBatchId?batches.find(x=>x.id===editingBatchId):batches[0];
+  if(savedBatch)sbSaveBatch(savedBatch).catch(e=>console.warn('sbSaveBatch failed:',e));
   save();closeSheet('batchOverlay');renderStats();renderInventory();if(currentTab==='serije')renderBatches();if(currentTab==='prodaja')renderOrderRows();
   toast(editingBatchId?'Serija posodobljena':'Serija dodana');
 }
@@ -3034,10 +3206,15 @@ async function confirmOrder(withInvoice){
   pendingBatchAlloc={};
   save();renderStats();renderInventory();clearOrder();
   syncCustomerFromSale(group);
+  // Shrani v Supabase
+  sbSaveGroup(group).catch(e=>console.warn('sbSaveGroup failed:',e));
   if(withInvoice){
+    const inv=invoices[0];
+    if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice failed:',e));
     printInvoice(group);
     if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   }
+  sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));
   closeNovaProdaja();
   renderSalesSummary();renderSales();
   toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
@@ -5208,6 +5385,7 @@ function cycleInvStatus(invId){
   }
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
   save();renderInvoices();renderInvStats();
+  sbSaveInvoice(i).catch(e=>console.warn('sbSaveInvoice failed:',e));
   toast(labels[i.invStatus]);
   // Avtomatsko pošiljanje
   const autoKey={placano:'autoEmailPlacano',predano:'autoEmailPredano'};
@@ -5298,6 +5476,8 @@ function saveEditInvoice(invId){
   renderInvStats();renderInvoices();
   if(currentTab==='prodaja')renderSales();
   renderStats();
+  sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice failed:',e));
+  if(g)sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup failed:',e));
 
   const popustInfo=g?.discount>0?` · Popust: ${g.discount.toFixed(1)}% (−${(g.discountAmt||0).toFixed(2)} €)`:'';
   toast(`✓ ${noviZnesek.toFixed(2)} €${popustInfo}`);

@@ -2098,6 +2098,7 @@ async function appInit(){
   renderStats();renderInventory();
   document.getElementById('orderDate').value=todayISO();
   loadCustomers();
+  sbLoadSettings().catch(()=>{});
   try{
     await sbLoadAll();
     // Sinhroniziraj lokalni cache
@@ -5112,6 +5113,27 @@ function saveZS(obj){
   const saved=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
   Object.assign(saved,obj);
   localStorage.setItem('gm_zaloga_settings',JSON.stringify(saved));
+  // Shrani v Supabase
+  Object.entries(obj).forEach(([key,value])=>{
+    fetch(`${SB_URL}/rest/v1/gm_settings`,{
+      method:'POST',
+      headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key,value:JSON.stringify(value),updated_at:new Date().toISOString()})
+    }).catch(e=>console.warn('sbSaveSettings failed:',e));
+  });
+}
+
+async function sbLoadSettings(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_settings?select=*`,{headers:SB_HEADERS});
+    if(!r.ok)return;
+    const rows=await r.json();
+    const saved=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
+    rows.forEach(row=>{
+      try{saved[row.key]=JSON.parse(row.value);}catch{saved[row.key]=row.value;}
+    });
+    localStorage.setItem('gm_zaloga_settings',JSON.stringify(saved));
+  }catch(e){console.warn('sbLoadSettings failed:',e);}
 }
 
 function openZalogaSettings(){

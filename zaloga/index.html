@@ -4989,9 +4989,6 @@ async function sendInvoiceEmail(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}
 
-  const key=getZS('resendKey')||localStorage.getItem('gm_resend_key')||'';
-  if(!key){toast('⚠ Nastavi Resend API ključ v ⚙️ Nastavitve');openZalogaSettings();return;}
-
   const email=inv.email;
   if(!email){toast('⚠ Kupec nima e-maila');return;}
 

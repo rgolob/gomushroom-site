@@ -36,6 +36,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         from: from || 'GoMushroom <info@gomushroom.si>',
         to: Array.isArray(to) ? to : [to],
+        bcc: ['info@gomushroom.si'],
+        reply_to: 'info@gomushroom.si',
         subject,
         html,
       }),

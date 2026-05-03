@@ -5412,10 +5412,32 @@ function simulirajCeno(){
     skupajPct=Math.min(skupajPct,maxPct);
   }
 
+  const postnina_znesek=getZS('postnina')||3.90;
+  const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
   const popustZnesek=znesek*skupajPct/100;
   const zneskPoPopustu=znesek-popustZnesek;
-  const postnina=zneskPoPopustu>=(getZS('brezplacnaPosninaOd')||60)?0:(getZS('postnina')||3.90);
-  const skupaj=zneskPoPopustu+postnina;
+
+  // Ali kupec plača poštnino ali je brezplačna (ti jo krije)
+  const brezplacnaPostnina=zneskPoPopustu>=brezplacnaOd;
+
+  // Kar kupec plača:
+  // - brezplačna poštnina: kupec plača samo blago po popustu
+  // - kupec plača poštnino: kupec plača blago po popustu + poštnina
+  const kupecPlaca=brezplacnaPostnina ? zneskPoPopustu : zneskPoPopustu+postnina_znesek;
+
+  // Tvoj neto:
+  // - brezplačna poštnina: prejmeš zneskPoPopustu, odšteješ poštnino ki jo plačaš prevozniku
+  // - kupec plača poštnino: prejmeš zneskPoPopustu+poštnina, poštnino daš prevozniku = ostane zneskPoPopustu
+  const tvojNeto=brezplacnaPostnina ? zneskPoPopustu-postnina_znesek : zneskPoPopustu;
+
+  // Kupec prihrani vs polna cena + poštnina (kar bi plačal brez ničesar)
+  const polnaCenaKupec=znesek+postnina_znesek;
+  const kupecPrihranek=polnaCenaKupec-kupecPlaca;
+  const kupecPrihranekPct=polnaCenaKupec>0?(kupecPrihranek/polnaCenaKupec*100):0;
+
+  // Tvoj strošek = popust + poštnina če jo ti plačaš
+  const tvojStrosek=popustZnesek+(brezplacnaPostnina?postnina_znesek:0);
+  const tvojStrosekPct=znesek>0?(tvojStrosek/znesek*100):0;
 
   // Prikaz
   let html='';
@@ -5437,26 +5459,27 @@ function simulirajCeno(){
   }
 
   html+=`<div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .75rem;font-size:.82rem">
-    <span>Bruto</span><strong>${znesek.toFixed(2)} €</strong>
+    <span style="font-size:.68rem;font-weight:600;color:var(--muted);grid-column:1/-1;padding-bottom:.15rem">Kupec plača:</span>
+    <span>Blago</span><strong>${znesek.toFixed(2)} €</strong>
     ${skupajPct>0?`<span style="color:var(--success)">Popust (${skupajPct}%)</span><strong style="color:var(--success)">−${popustZnesek.toFixed(2)} €</strong>`:''}
-    <span>Poštnina</span><strong>${postnina===0?'🎁 Brezplačno':postnina.toFixed(2)+' €'}</strong>
-    <span style="font-weight:700;padding-top:.25rem;border-top:1px solid var(--border)">Skupaj</span><strong style="font-size:1rem;padding-top:.25rem;border-top:1px solid var(--border)">${skupaj.toFixed(2)} €</strong>
-  </div>`;
+    <span>Poštnina</span><strong>${brezplacnaPostnina?'🎁 Brezplačno (plačaš ti)':postnina_znesek.toFixed(2)+' €'}</strong>
+    <span style="font-weight:700;padding-top:.25rem;border-top:1px solid var(--border)">Skupaj kupec</span><strong style="font-size:1rem;padding-top:.25rem;border-top:1px solid var(--border)">${kupecPlaca.toFixed(2)} €</strong>
+  </div>
 
-  // Prikaz stroškov za tebe
-  const tvojStrosek=popustZnesek+postnina;
-  const tvojStrosekPct=znesek>0?((tvojStrosek/znesek)*100):0;
-  if(tvojStrosek>0){
-    html+=`<div style="margin-top:.6rem;padding:.4rem .6rem;background:rgba(139,58,42,.08);border-radius:6px;border-left:3px solid var(--danger)">
-      <div style="font-size:.68rem;font-weight:600;color:var(--danger);margin-bottom:.2rem">Tvoj strošek</div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:.1rem .5rem;font-size:.75rem">
-        ${popustZnesek>0?`<span>Popust</span><span style="color:var(--danger)">−${popustZnesek.toFixed(2)} €</span>`:''}
-        ${postnina>0?`<span>Poštnina (tvoj strošek)</span><span style="color:var(--danger)">−${postnina.toFixed(2)} €</span>`:''}
-        <span style="font-weight:700;padding-top:.2rem;border-top:1px solid rgba(139,58,42,.2)">Skupaj izguba</span>
-        <span style="color:var(--danger);font-weight:700;padding-top:.2rem;border-top:1px solid rgba(139,58,42,.2)">−${tvojStrosek.toFixed(2)} € (${tvojStrosekPct.toFixed(1)}%)</span>
-      </div>
-    </div>`;
-  }
+  <div style="margin-top:.5rem;display:grid;grid-template-columns:1fr auto;gap:.15rem .75rem;font-size:.82rem">
+    <span style="font-size:.68rem;font-weight:600;color:var(--muted);grid-column:1/-1;padding-bottom:.15rem">Tvoj neto:</span>
+    <span>Prejmeš od kupca</span><strong>${kupecPlaca.toFixed(2)} €</strong>
+    ${brezplacnaPostnina?`<span style="color:var(--danger)">Poštnina prevozniku</span><strong style="color:var(--danger)">−${postnina_znesek.toFixed(2)} €</strong>`:`<span style="color:var(--muted)">Poštnina prevozniku</span><strong style="color:var(--muted)">−${postnina_znesek.toFixed(2)} €</strong>`}
+    <span style="font-weight:700;padding-top:.25rem;border-top:1px solid var(--border)">Neto zaslužek</span><strong style="padding-top:.25rem;border-top:1px solid var(--border)">${tvojNeto.toFixed(2)} €</strong>
+    <span>Neto / kos</span><strong>${(tvojNeto/kolicina).toFixed(2)} €</strong>
+  </div>
+
+  <div style="margin-top:.5rem;padding:.4rem .6rem;background:rgba(139,58,42,.08);border-radius:6px;border-left:3px solid var(--danger);font-size:.78rem">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem">
+      <span>Tvoj skupni strošek</span><span style="color:var(--danger);font-weight:700">−${tvojStrosek.toFixed(2)} € (${tvojStrosekPct.toFixed(1)}% od bruto)</span>
+      <span>Kupec prihrani vs polna cena</span><span style="color:var(--success);font-weight:700">${kupecPrihranek.toFixed(2)} € (${kupecPrihranekPct.toFixed(1)}%)</span>
+    </div>
+  </div>`;
 
   el.innerHTML=html;
 }

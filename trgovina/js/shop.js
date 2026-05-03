@@ -1,247 +1,169 @@
-const PRODUCTS = [
-  {
-    key: "reishi",
-    name: "Reishi tinktura",
-    latin: "Ganoderma lucidum",
-    image: "/assets/reishi-tinktura.webp",
-    description:
-      "Tinktura iz lastno pridelanega Reishija, pripravljena skozi lasten ekstrakcijski proces. Poudarek je na surovini, sledljivosti in formulaciji končnega izdelka — brez bližnjic.",
-    tagline: "Lastna pridelava · Lasten proces · Majhne serije",
-    origin: "Lastna pridelava",
-    detailUrl: "/trgovina/reishi-tinktura/",
-    variants: {
-      alcohol: {
-        label: "Alkoholna",
-        price: 31.90,
-        sku: "REISHI-ALC-50"
-      },
-      glycerin: {
-        label: "Brezalkoholna",
-        price: 33.90,
-        sku: "REISHI-GLY-50"
-      }
-    },
-    ingredients:
-      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Ganoderma lucidum, sončnični lecitin, vitamin C.",
-    usage:
-      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
-    warning:
-      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
-  },
-  {
-    key: "chaga",
-    name: "Chaga tinktura",
-    latin: "Inonotus obliquus",
-    image: "/assets/chaga-tinktura.webp",
-    description:
-      "Tinktura iz Chage iz brezovih gozdov EU / izven EU, pripravljena skozi lasten ekstrakcijski proces. Posebnost izdelka je surovina, njeno poreklo in skrbno vodena formulacija.",
-    tagline: "Brezovi gozdovi · Lasten proces · Majhne serije",
-    origin: "Brezovi gozdovi EU / izven EU",
-    detailUrl: "/trgovina/chaga-tinktura/",
-    variants: {
-      alcohol: {
-        label: "Alkoholna",
-        price: 31.90,
-        sku: "CHAGA-ALC-50"
-      },
-      glycerin: {
-        label: "Brezalkoholna",
-        price: 33.90,
-        sku: "CHAGA-GLY-50"
-      }
-    },
-    ingredients:
-      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Inonotus obliquus, sončnični lecitin, vitamin C.",
-    usage:
-      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
-    warning:
-      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
-  },
-  {
-    key: "bradovec",
-    name: "Resasti bradovec",
-    latin: "Hericium erinaceus",
-    image: "/assets/bradovec-tinktura.webp",
-    description:
-      "Tinktura iz slovenske surovine iz Pohorske gobarne, pripravljena skozi lasten ekstrakcijski proces. Poudarek je na izvoru, formulaciji in kakovosti končnega izdelka.",
-    tagline: "Slovenska surovina · Lasten proces · Majhne serije",
-    origin: "Pohorska gobarna, Slovenija",
-    detailUrl: "/trgovina/resasti-bradovec-tinktura/",
-    variants: {
-      alcohol: {
-        label: "Alkoholna",
-        price: 31.90,
-        sku: "BRADO-ALC-50"
-      },
-      glycerin: {
-        label: "Brezalkoholna",
-        price: 33.90,
-        sku: "BRADO-GLY-50"
-      }
-    },
-    ingredients:
-      "Prečiščena voda, etanol / rastlinski glicerin, ekstrakt gobe Hericium erinaceus, sončnični lecitin, vitamin C.",
-    usage:
-      "1–2 pipeti dnevno, lahko razredčeno v vodi ali samostojno. Pred uporabo pretresite.",
-    warning:
-      "Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano. Priporočenega dnevnega odmerka se ne sme prekoračiti. Hraniti izven dosega otrok."
-  }
-];
+// ── GoMushroom Shop ──────────────────────────────────────
+// Bere produkte iz Supabase gm_products + gm_product_variants
+// ─────────────────────────────────────────────────────────
+
+const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY
+};
 
 function formatPrice(value) {
-  return Number(value || 0).toLocaleString("sl-SI", {
+  return Number(value || 0).toLocaleString('sl-SI', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }) + " €";
+  }) + ' €';
 }
 
-function renderShopGrid() {
-  const grid = document.getElementById("shop-grid");
+async function loadProducts() {
+  const [prodRes, varRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS })
+  ]);
+  if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju produktov.');
+  const products = await prodRes.json();
+  const variants = await varRes.json();
+  return products.map(p => ({ ...p, variants: variants.filter(v => v.product_id === p.id) }));
+}
+
+function formatIngredients(ingredients) {
+  if (!ingredients || !ingredients.length) return '—';
+  return ingredients.join(', ') + '.';
+}
+
+function formatUsage(p) {
+  let html = '';
+  if (p.usage_intro) html += `<p>${p.usage_intro}</p>`;
+  if (p.usage_steps && p.usage_steps.length)
+    html += `<ul>${p.usage_steps.map(s => `<li>${s}</li>`).join('')}</ul>`;
+  if (p.usage_note) html += `<p><em>${p.usage_note}</em></p>`;
+  return html || '<p>—</p>';
+}
+
+function formatWarnings(warnings) {
+  if (!warnings || !warnings.length) return '<p>—</p>';
+  return `<ul>${warnings.map(w => `<li>${w}</li>`).join('')}</ul>`;
+}
+
+function renderShopGrid(products) {
+  const grid = document.getElementById('shop-grid');
   if (!grid) return;
 
-  grid.innerHTML = PRODUCTS.map((product) => {
-    const defaultVariant = product.variants.alcohol;
+  grid.innerHTML = products.map(p => {
+    const alcVariant = p.variants.find(v => v.type === 'alc');
+    const glyVariant = p.variants.find(v => v.type === 'gly');
+    const defaultVariant = alcVariant || glyVariant;
+    if (!defaultVariant) return '';
+    const detailUrl = `/trgovina/${p.slug}-tinktura/`;
 
     return `
-      <article class="gm-shop-card" data-product-card="${product.key}">
-        <a class="gm-shop-card__image" href="${product.detailUrl}" aria-label="${product.name}">
-          <img src="${product.image}" alt="${product.name}" loading="lazy">
+      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}">
+        <a class="gm-shop-card__image" href="${detailUrl}" aria-label="${p.name}">
+          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
         </a>
-
         <div class="gm-shop-card__body">
           <div>
-            <h2 class="gm-shop-card__title">
-              <a href="${product.detailUrl}">${product.name}</a>
-            </h2>
-            <p class="gm-shop-card__latin">${product.latin}</p>
-            <p class="gm-tagline">${product.tagline}</p>
+            <h2 class="gm-shop-card__title"><a href="${detailUrl}">${p.name}</a></h2>
+            ${p.latin ? `<p class="gm-shop-card__latin">${p.latin}</p>` : ''}
+            ${p.tagline ? `<p class="gm-tagline">${p.tagline}</p>` : ''}
           </div>
-
-          <p class="gm-shop-card__excerpt">${product.description}</p>
-
-          <div class="gm-shop-card__meta">
-            <div class="gm-shop-card__meta-row">
-              <span>Izvor surovine</span>
-              <strong>${product.origin}</strong>
-            </div>
-          </div>
-
-          <div class="gm-shop-card__variant-picker" role="radiogroup" aria-label="Izbira različice za ${product.name}">
-            <button class="gm-variant-btn is-active" type="button" data-card-variant-btn="alcohol">
-              Alkoholna
-            </button>
-            <button class="gm-variant-btn" type="button" data-card-variant-btn="glycerin">
-              Brezalkoholna
-            </button>
-          </div>
-
+          <p class="gm-shop-card__excerpt">${p.excerpt || ''}</p>
+          ${p.origin ? `<div class="gm-shop-card__meta"><div class="gm-shop-card__meta-row"><span>Izvor surovine</span><strong>${p.origin}</strong></div></div>` : ''}
+          ${p.variants.length > 1 ? `
+          <div class="gm-shop-card__variant-picker" role="radiogroup" aria-label="Izbira različice za ${p.name}">
+            ${alcVariant ? `<button class="gm-variant-btn is-active" type="button" data-card-variant-btn="alc">Alkoholna</button>` : ''}
+            ${glyVariant ? `<button class="gm-variant-btn${!alcVariant ? ' is-active' : ''}" type="button" data-card-variant-btn="gly">Brezalkoholna</button>` : ''}
+          </div>` : ''}
           <div>
-            <div class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price)}</div>
-            <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.label}</p>
+            <div class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo)}</div>
+            <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.name}</p>
             <p class="gm-micro">Na zalogi · Majhna serija</p>
           </div>
-
           <div class="gm-shop-card__actions">
-            <button
-              class="gm-btn gm-btn--primary"
-              type="button"
-              data-add-to-cart
-              data-slug="${product.key}"
-              data-name="${product.name}"
-              data-variant="alcohol"
-              data-variant-label="${defaultVariant.label}"
-              data-price="${defaultVariant.price}"
-              data-sku="${defaultVariant.sku}"
-              data-image="${product.image}">
+            <button class="gm-btn gm-btn--primary" type="button" data-add-to-cart
+              data-slug="${p.slug}" data-name="${p.name}"
+              data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
+              data-price="${defaultVariant.price_malo}" data-sku="${defaultVariant.sku}"
+              data-image="${p.image || ''}">
               Dodaj v košarico
             </button>
-
-            <a class="gm-btn gm-btn--secondary" href="${product.detailUrl}">
-              Podrobnosti
-            </a>
+            <a class="gm-btn gm-btn--secondary" href="${detailUrl}">Podrobnosti</a>
           </div>
-
           <div class="gm-accordion">
             <div class="gm-acc-item">
               <button class="gm-acc-toggle" type="button">Sestavine</button>
-              <div class="gm-acc-content">
-                <p>${product.ingredients}</p>
-              </div>
+              <div class="gm-acc-content"><p data-ingredients-el>${formatIngredients(defaultVariant.ingredients)}</p></div>
             </div>
-
             <div class="gm-acc-item">
               <button class="gm-acc-toggle" type="button">Način uporabe</button>
-              <div class="gm-acc-content">
-                <p>${product.usage}</p>
-              </div>
+              <div class="gm-acc-content">${formatUsage(p)}</div>
             </div>
-
             <div class="gm-acc-item">
               <button class="gm-acc-toggle" type="button">Opozorila</button>
-              <div class="gm-acc-content">
-                <p>${product.warning}</p>
-              </div>
+              <div class="gm-acc-content">${formatWarnings(p.warnings)}</div>
             </div>
           </div>
         </div>
-      </article>
-    `;
-  }).join("");
+      </article>`;
+  }).join('');
 
-  bindVariantPickers();
+  bindVariantPickers(products);
   bindAccordions();
 }
 
-function bindVariantPickers() {
-  document.querySelectorAll("[data-product-card]").forEach((card) => {
-    const productKey = card.dataset.productCard;
-    const product = PRODUCTS.find((p) => p.key === productKey);
+function bindVariantPickers(products) {
+  document.querySelectorAll('[data-product-card]').forEach(card => {
+    const product = products.find(p => p.id === card.dataset.productCard);
     if (!product) return;
+    const priceEl = card.querySelector('[data-card-price]');
+    const variantLabelEl = card.querySelector('[data-card-variant-label]');
+    const addBtn = card.querySelector('[data-add-to-cart]');
+    const ingredientsEl = card.querySelector('[data-ingredients-el]');
+    const btns = card.querySelectorAll('[data-card-variant-btn]');
 
-    const priceEl = card.querySelector("[data-card-price]");
-    const variantLabelEl = card.querySelector("[data-card-variant-label]");
-    const addToCartBtn = card.querySelector("[data-add-to-cart]");
-    const variantButtons = card.querySelectorAll("[data-card-variant-btn]");
-
-    function setVariant(variantKey) {
-      const variant = product.variants[variantKey];
-      if (!variant) return;
-
-      variantButtons.forEach((btn) => {
-        btn.classList.toggle("is-active", btn.dataset.cardVariantBtn === variantKey);
-      });
-
-      if (priceEl) priceEl.textContent = formatPrice(variant.price);
-      if (variantLabelEl) variantLabelEl.textContent = variant.label;
-
-      if (addToCartBtn) {
-        addToCartBtn.dataset.variant = variantKey;
-        addToCartBtn.dataset.variantLabel = variant.label;
-        addToCartBtn.dataset.price = String(variant.price);
-        addToCartBtn.dataset.sku = variant.sku;
+    function setVariant(type) {
+      const v = product.variants.find(v => v.type === type);
+      if (!v) return;
+      btns.forEach(b => b.classList.toggle('is-active', b.dataset.cardVariantBtn === type));
+      if (priceEl) priceEl.textContent = formatPrice(v.price_malo);
+      if (variantLabelEl) variantLabelEl.textContent = v.name;
+      if (ingredientsEl) ingredientsEl.textContent = formatIngredients(v.ingredients);
+      if (addBtn) {
+        addBtn.dataset.variant = type;
+        addBtn.dataset.variantLabel = v.name;
+        addBtn.dataset.price = String(v.price_malo);
+        addBtn.dataset.sku = v.sku;
       }
     }
 
-    variantButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        setVariant(btn.dataset.cardVariantBtn);
-      });
-    });
-
-    setVariant("alcohol");
+    btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.cardVariantBtn)));
   });
 }
 
 function bindAccordions() {
-  document.querySelectorAll(".gm-acc-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const item = btn.closest(".gm-acc-item");
-      if (!item) return;
-      item.classList.toggle("open");
-    });
+  document.querySelectorAll('.gm-acc-toggle').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.gm-acc-item')?.classList.toggle('open'));
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderShopGrid();
+function renderSkeleton() {
+  const grid = document.getElementById('shop-grid');
+  if (!grid) return;
+  grid.innerHTML = [1,2,3].map(() =>
+    `<div style="min-height:420px;background:rgba(43,11,57,.04);border-radius:24px"></div>`
+  ).join('');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderSkeleton();
+  try {
+    const products = await loadProducts();
+    renderShopGrid(products);
+  } catch(e) {
+    console.error(e);
+    const grid = document.getElementById('shop-grid');
+    if (grid) grid.innerHTML = '<p style="padding:1rem">Trenutno ni mogoče naložiti produktov.</p>';
+  }
 });

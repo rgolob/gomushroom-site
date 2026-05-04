@@ -37,18 +37,13 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
   const c = settings.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
     ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
-
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
-    let ustreza = false;
-    if (p.tip === 'koda' && kodaVnesena && p.kod === kodaVnesena.toUpperCase().trim()) ustreza = true;
-    if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ustreza = true;
-    if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ustreza = true;
-    if (ustreza) ujemajoci.push({
-      vrednost: p.vrednost,
-      opis: p.tip === 'koda' ? `Koda ${p.kod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €`
-    });
+    let ok = false;
+    if (p.tip === 'koda' && kodaVnesena && p.kod === kodaVnesena.toUpperCase().trim()) ok = true;
+    if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
+    if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
+    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${p.kod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
   }
-
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
     ? ujemajoci.reduce((s, p) => s + p.vrednost, 0)
@@ -56,21 +51,49 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
   return { pct: Math.min(pct, settings.maxPopust || 50), ujemajoci };
 }
 
-function fmt(value) {
-  return Number(value || 0).toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+function fmt(v) {
+  return Number(v || 0).toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
-function renderCartPage() {
+// ── Glavna re-render funkcija ────────────────────────────
+function renderCart() {
   const cart = getCart();
-  const itemsWrap = document.getElementById('cart-items');
-  if (!itemsWrap) return;
+  const wrap = document.getElementById('cart-items');
+  if (!wrap) return;
 
   if (!cart.length) {
-    itemsWrap.innerHTML = '<div class="gm-cart-empty">Košarica je trenutno prazna.</div>';
+    wrap.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;color:rgba(43,11,57,.4)">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🛒</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300">Košarica je prazna</div>
+        <a href="/trgovina/" style="display:inline-block;margin-top:1.25rem;padding:.55rem 1.25rem;background:#2b0b39;color:#f0ebe3;border-radius:999px;text-decoration:none;font-size:.85rem">← Nazaj v trgovino</a>
+      </div>`;
     updateSummary(0, 0, 0, 0, []);
     return;
   }
 
+  wrap.innerHTML = cart.map((item, i) => `
+    <div class="gm-cart-item" data-index="${i}">
+      <div class="gm-cart-item__image">
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block">` : '<div style="width:100%;height:100%;background:rgba(43,11,57,.06);border-radius:10px"></div>'}
+      </div>
+      <div class="gm-cart-item__content">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:#2b0b39;line-height:1.2">${item.name}</div>
+        <div style="font-size:.78rem;color:rgba(43,11,57,.5);margin:.2rem 0 .5rem">${item.variantLabel || ''}</div>
+        <div style="font-size:.85rem;color:#2b0b39;font-weight:500">${fmt(item.price)} / kom</div>
+      </div>
+      <div class="gm-cart-item__controls">
+        <div style="display:flex;align-items:center;gap:.4rem;background:rgba(43,11,57,.05);border-radius:999px;padding:.2rem .3rem">
+          <button onclick="changeQty(${i}, -1)" style="width:28px;height:28px;border:none;background:white;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.1)">−</button>
+          <span style="min-width:1.5rem;text-align:center;font-size:.9rem;font-weight:600;color:#2b0b39">${item.quantity}</span>
+          <button onclick="changeQty(${i}, 1)" style="width:28px;height:28px;border:none;background:white;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.1)">+</button>
+        </div>
+        <div style="font-weight:700;color:#2b0b39;font-size:.95rem;margin-top:.35rem">${fmt(item.price * item.quantity)}</div>
+        <button onclick="removeItem(${i})" style="background:none;border:none;color:rgba(43,11,57,.35);font-size:.72rem;cursor:pointer;padding:0;margin-top:.2rem;text-decoration:underline">Odstrani</button>
+      </div>
+    </div>`).join('');
+
+  // Izračun
   const bruto = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const kolicina = cart.reduce((s, i) => s + i.quantity, 0);
   const koda = document.getElementById('kupon-input')?.value?.trim() || '';
@@ -80,25 +103,6 @@ function renderCartPage() {
   const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : (settings.postnina || 3.90);
   const skupaj = zneskPoPopustu + postnina;
 
-  itemsWrap.innerHTML = cart.map((item, index) => `
-    <article class="gm-cart-item">
-      <div class="gm-cart-item__image">
-        ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
-      </div>
-      <div class="gm-cart-item__content">
-        <h3>${item.name}</h3>
-        <p>${item.variantLabel || ''}</p>
-        <p>Cena: ${fmt(item.price)}</p>
-      </div>
-      <div class="gm-cart-item__controls">
-        <label>Količina
-          <input type="number" min="1" step="1" value="${item.quantity}" data-cart-qty data-index="${index}">
-        </label>
-        <div class="gm-cart-item__subtotal">${fmt(item.price * item.quantity)}</div>
-        <button class="gm-link-btn" type="button" data-remove-item data-index="${index}">Odstrani</button>
-      </div>
-    </article>`).join('');
-
   updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci);
 }
 
@@ -106,7 +110,6 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
   const el = document.getElementById('cart-summary-detail');
   const btn = document.getElementById('checkout-btn');
   if (!el) return;
-
   const cart = getCart();
   if (btn) btn.disabled = !cart.length;
 
@@ -115,32 +118,47 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
   const doBrezplacne = brezplacnaOd - zneskPoPopustu;
 
   el.innerHTML = `
-    <div class="gm-cart-summary__row">
-      <span>Skupaj (${cart.reduce((s,i)=>s+i.quantity,0)} kosov)</span>
-      <strong>${fmt(bruto)}</strong>
-    </div>
-    ${pct > 0 ? `
-      <div class="gm-cart-summary__row" style="color:#3a6b4a">
-        <span>Popust (${pct}%)</span>
-        <strong>−${fmt(popustZnesek)}</strong>
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      <div style="display:flex;justify-content:space-between;font-size:.88rem;color:rgba(43,11,57,.6)">
+        <span>Skupaj (${cart.reduce((s,i)=>s+i.quantity,0)} kosov)</span>
+        <span>${fmt(bruto)}</span>
       </div>
-      ${ujemajoci.map(u => `<div style="font-size:.72rem;color:#3a6b4a;padding:.1rem 0">✓ ${u.opis}</div>`).join('')}
-    ` : ''}
-    <div class="gm-cart-summary__row">
-      <span>Poštnina</span>
-      <strong>${postnina === 0 ? '🎁 Brezplačno' : fmt(postnina)}</strong>
-    </div>
-    <div style="font-size:.72rem;color:${postnina===0?'#3a6b4a':'#888'};text-align:right;margin-bottom:.5rem">
-      ${postnina === 0
-        ? `✓ Brezplačna dostava nad ${fmt(brezplacnaOd)}`
-        : doBrezplacne > 0
-          ? `Dodaj še ${fmt(doBrezplacne)} za brezplačno dostavo`
-          : `Brezplačna dostava nad ${fmt(brezplacnaOd)}`}
-    </div>
-    <div style="border-top:1px solid rgba(43,11,57,.1);padding-top:.75rem;margin-top:.25rem" class="gm-cart-summary__row">
-      <span style="font-weight:700">Skupaj za plačilo</span>
-      <strong style="font-size:1.2rem">${fmt(skupaj)}</strong>
+      ${pct > 0 ? `
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;color:#3a6b4a">
+          <span>Popust (${pct}%)</span>
+          <span>−${fmt(popustZnesek)}</span>
+        </div>
+        ${ujemajoci.map(u => `<div style="font-size:.7rem;color:#3a6b4a;text-align:right">✓ ${u.opis}</div>`).join('')}
+      ` : ''}
+      <div style="display:flex;justify-content:space-between;font-size:.88rem;color:rgba(43,11,57,.6)">
+        <span>Poštnina</span>
+        <span>${postnina === 0 ? '🎁 Brezplačno' : fmt(postnina)}</span>
+      </div>
+      <div style="font-size:.7rem;color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.4)'};text-align:right">
+        ${postnina === 0 ? `✓ Brezplačna dostava nad ${fmt(brezplacnaOd)}` : doBrezplacne > 0 ? `Dodaj še ${fmt(doBrezplacne)} za brezplačno dostavo` : ''}
+      </div>
+      <div style="border-top:1px solid rgba(43,11,57,.1);padding-top:.65rem;margin-top:.15rem;display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-weight:600;color:#2b0b39">Skupaj za plačilo</span>
+        <span style="font-size:1.35rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>
+      </div>
     </div>`;
+}
+
+function changeQty(index, delta) {
+  const cart = getCart();
+  if (!cart[index]) return;
+  const newQty = cart[index].quantity + delta;
+  if (newQty < 1) { removeItem(index); return; }
+  cart[index].quantity = newQty;
+  saveCart(cart);
+  renderCart();
+}
+
+function removeItem(index) {
+  const cart = getCart();
+  cart.splice(index, 1);
+  saveCart(cart);
+  renderCart();
 }
 
 function bindKupon() {
@@ -148,49 +166,28 @@ function bindKupon() {
   const btn = document.getElementById('kupon-btn');
   if (!input || !btn) return;
 
-  btn.addEventListener('click', () => {
+  const validate = () => {
     const koda = input.value.trim().toUpperCase();
-    if (!koda) return;
+    if (!koda) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
     const najden = (settings.popusti || []).find(p => p.tip === 'koda' && p.kod === koda && p.aktiven);
     if (najden) {
       input.style.borderColor = '#3a6b4a';
-      btn.textContent = '✓ Uveljavljen';
+      btn.textContent = '✓';
       btn.style.background = '#3a6b4a';
       btn.style.color = 'white';
     } else {
       input.style.borderColor = '#c0392b';
-      btn.textContent = '✗ Napačna koda';
+      btn.textContent = '✗';
       btn.style.color = '#c0392b';
-      setTimeout(() => {
-        btn.textContent = 'Uveljavi';
-        btn.style.color = '';
-        input.style.borderColor = '';
-      }, 2000);
     }
-    renderCartPage();
-  });
+    renderCart();
+  };
 
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+  btn.addEventListener('click', validate);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') validate(); });
 }
 
-document.addEventListener('change', e => {
-  const input = e.target.closest('[data-cart-qty]');
-  if (!input) return;
-  const cart = getCart();
-  const i = Number(input.dataset.index);
-  if (cart[i]) { cart[i].quantity = Math.max(1, Number(input.value || 1)); saveCart(cart); renderCartPage(); }
-});
-
 document.addEventListener('click', e => {
-  const removeBtn = e.target.closest('[data-remove-item]');
-  if (removeBtn) {
-    const cart = getCart();
-    cart.splice(Number(removeBtn.dataset.index), 1);
-    saveCart(cart);
-    renderCartPage();
-    return;
-  }
-
   if (e.target.closest('#checkout-btn')) {
     if (!getCart().length) return;
     sessionStorage.setItem('gm_kupon', document.getElementById('kupon-input')?.value?.trim() || '');
@@ -200,6 +197,6 @@ document.addEventListener('click', e => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
-  renderCartPage();
+  renderCart();
   bindKupon();
 });

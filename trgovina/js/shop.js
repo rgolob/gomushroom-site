@@ -53,15 +53,19 @@ function renderShopGrid(products) {
 
   grid.innerHTML = products.map(p => {
     const alcVariant = p.variants.find(v => v.type === 'alc');
+    const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
     const glyVariant = p.variants.find(v => v.type === 'gly');
     const defaultVariant = alcVariant || glyVariant;
     if (!defaultVariant) return '';
-    const detailUrl = `/trgovina/${p.slug}-tinktura/`;
+    const detailUrl = p.is_bundle
+      ? null
+      : `/trgovina/${p.slug}-tinktura/`;
 
     return `
       <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}">
-        <a class="gm-shop-card__image" href="${detailUrl}" aria-label="${p.name}">
+        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}">
           <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
+          ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge>−${maxDiscount}%</span>` : ''}
         </a>
         <div class="gm-shop-card__body">
           <div>
@@ -89,7 +93,7 @@ function renderShopGrid(products) {
               data-image="${p.image || ''}">
               Dodaj v košarico
             </button>
-            <a class="gm-btn gm-btn--secondary" href="${detailUrl}">Podrobnosti</a>
+            ${detailUrl ? `<a class="gm-btn gm-btn--secondary" href="${detailUrl}">Podrobnosti</a>` : ''}
           </div>
           <div class="gm-accordion">
             <div class="gm-acc-item">
@@ -135,6 +139,22 @@ function bindVariantPickers(products) {
         addBtn.dataset.variantLabel = v.name;
         addBtn.dataset.price = String(v.price_malo);
         addBtn.dataset.sku = v.sku;
+      }
+      // Posodobi badge
+      const badge = card.querySelector('[data-discount-badge]');
+      const disc = v.discount_pct || 0;
+      if (badge) {
+        badge.textContent = disc > 0 ? `−${disc}%` : '';
+        badge.style.display = disc > 0 ? '' : 'none';
+      } else if (disc > 0) {
+        const img = card.querySelector('.gm-shop-card__image');
+        if (img && !img.querySelector('[data-discount-badge]')) {
+          const b = document.createElement('span');
+          b.className = 'gm-discount-badge';
+          b.dataset.discountBadge = '';
+          b.textContent = `−${disc}%`;
+          img.appendChild(b);
+        }
       }
     }
 

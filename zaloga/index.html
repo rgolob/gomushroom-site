@@ -3130,6 +3130,7 @@ function nextInvNum(ch, date){
 }
 
 async function confirmOrder(withInvoice){
+  try{
   const lines=collectOrderLines();
   if(!lines.length){alert('Dodaj vsaj eno količino.');return;}
   const buyer=document.getElementById('orderBuyer').value.trim();
@@ -3219,9 +3220,10 @@ async function confirmOrder(withInvoice){
   closeNovaProdaja();
   renderSalesSummary();renderSales();
   toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
+  }catch(err){toast('⚠ Napaka: '+err.message);console.error('confirmOrder:',err);}
 }
 
-function confirmAndInvoice(){confirmOrder(true);}
+async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
 function renderSalesSummary(filteredGroups){

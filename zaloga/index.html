@@ -1280,12 +1280,19 @@ async function sbDelete(table, match){
 
 // Pretvori Supabase batch v app format
 function sbBatchToApp(b){
+  // Rekonstruiraj alloc — prod+int sta v bazi, ostalo izračunamo iz prodaj
   return {
     id:b.id, productId:b.product_id, productName:b.product_name,
     batchNum:b.batch_num, date:b.date, note:b.note, workOrder:b.work_order,
     safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
-    alc:{sku:b.alc_sku,qty:b.alc_qty||0,priceMalo:b.alc_price_malo||0,vol:b.alc_vol,alloc:{prod:b.alc_alloc_prod||0,int:b.alc_alloc_int||0}},
-    gly:{sku:b.gly_sku,qty:b.gly_qty||0,priceMalo:b.gly_price_malo||0,vol:b.gly_vol,alloc:{prod:b.gly_alloc_prod||0,int:b.gly_alloc_int||0}},
+    alc:{
+      sku:b.alc_sku, qty:b.alc_qty||0, priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
+      alloc:{prod:b.alc_alloc_prod||0, int:b.alc_alloc_int||0, malo:0, velo:0, dar:0}
+    },
+    gly:{
+      sku:b.gly_sku, qty:b.gly_qty||0, priceMalo:b.gly_price_malo||0, vol:b.gly_vol,
+      alloc:{prod:b.gly_alloc_prod||0, int:b.gly_alloc_int||0, malo:0, velo:0, dar:0}
+    },
   };
 }
 
@@ -4083,6 +4090,7 @@ function selectRsBatch(id,label){
 let _currentReportType='';
 
 function openReportSheet(type){
+  try{
   populateReportDropdowns();
   _currentReportType=type;
   ['rzFilters','rsFilters','rpFilters','rtFilters'].forEach(id=>{
@@ -4117,6 +4125,7 @@ function openReportSheet(type){
     if(sel)sel.innerHTML='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   }
   openSheet('reportOverlay');
+  }catch(err){toast('⚠ '+err.message);console.error('openReportSheet:',err);}
 }
 
 function genReportFromSheet(){genReport(_currentReportType);}

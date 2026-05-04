@@ -62,10 +62,10 @@ function renderShopGrid(products) {
       : `/trgovina/${p.slug}-tinktura/`;
 
     return `
-      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}">
+      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}" style="position:relative">
+        ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge>−${maxDiscount}%</span>` : ''}
         <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}">
           <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
-          ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge>−${maxDiscount}%</span>` : ''}
         </a>
         <div class="gm-shop-card__body">
           <div>
@@ -144,17 +144,8 @@ function bindVariantPickers(products) {
       const badge = card.querySelector('[data-discount-badge]');
       const disc = v.discount_pct || 0;
       if (badge) {
-        badge.textContent = disc > 0 ? `−${disc}%` : '';
+        badge.textContent = `−${disc}%`;
         badge.style.display = disc > 0 ? '' : 'none';
-      } else if (disc > 0) {
-        const img = card.querySelector('.gm-shop-card__image');
-        if (img && !img.querySelector('[data-discount-badge]')) {
-          const b = document.createElement('span');
-          b.className = 'gm-discount-badge';
-          b.dataset.discountBadge = '';
-          b.textContent = `−${disc}%`;
-          img.appendChild(b);
-        }
       }
     }
 

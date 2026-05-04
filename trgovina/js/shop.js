@@ -32,32 +32,37 @@ async function loadSettings() {
   } catch(e) { console.warn('Settings load failed', e); }
 }
 
-function getActiveSplošniPopust() {
-  if (!_settings) return 0;
+function getAktivniPopusti() {
+  if (!_settings) return [];
   const danes = new Date().toISOString().split('T')[0];
+  const aktivni = [];
   const c = _settings.casovniPopust;
-  let max = 0;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
-    max = Math.max(max, c.vrednost);
+    aktivni.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
   for (const p of (_settings.popusti || []).filter(p => p.aktiven)) {
-    if (p.tip === 'znesek' && p.min === 0) max = Math.max(max, p.vrednost);
-    if (p.tip === 'kolicina' && p.min <= 1) max = Math.max(max, p.vrednost);
+    if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, opis: `Koda ${p.kod}` });
+    if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, opis: `${p.min}+ kosov` });
+    if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, opis: `Nad ${p.min} €` });
   }
-  return max;
+  return aktivni;
 }
 
 function renderActiveDiscountBanner() {
-  const pct = getActiveSplošniPopust();
   const banner = document.getElementById('shop-discount-banner');
   if (!banner) return;
-  if (pct > 0) {
-    banner.innerHTML = `<div style="background:linear-gradient(135deg,#2b0b39,#4a1a5e);color:#f0ebe3;text-align:center;padding:.6rem 1rem;border-radius:10px;font-size:.85rem;margin-bottom:1.5rem">
-      🏷 <strong>Trenutno velja ${pct}% popust</strong> — samodejno se upošteva v košarici
-    </div>`;
-    banner.style.display = '';
-  } else {
-    banner.style.display = 'none';
-  }
+  const aktivni = getAktivniPopusti();
+  if (!aktivni.length) { banner.style.display = 'none'; return; }
+  const vrstice = aktivni.map(p => {
+    if (p.opis.startsWith('Koda')) return `🏷 Koda <strong>${p.opis.replace('Koda ','')}</strong>: −${p.vrednost}%`;
+    if (p.opis.includes('+ kosov')) return `📦 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
+    if (p.opis.includes('Nad')) return `💰 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
+    return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
+  });
+  banner.innerHTML = `<div style="background:linear-gradient(135deg,#2b0b39,#4a1a5e);color:#f0ebe3;padding:.75rem 1.25rem;border-radius:10px;margin-bottom:1.5rem">
+    <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#af8455;margin-bottom:.35rem">Trenutne akcije</div>
+    ${vrstice.map(v=>`<div style="font-size:.85rem;margin:.15rem 0">${v}</div>`).join('')}
+  </div>`;
+  banner.style.display = '';
 }
 
 async function loadProducts() {
@@ -232,7 +237,8 @@ function renderSkeleton() {
 document.addEventListener('DOMContentLoaded', async () => {
   renderSkeleton();
   try {
-    const [products] = await Promise.all([loadProducts(), loadSettings()]);
+    await loadSettings();
+    const products = await loadProducts();
     renderShopGrid(products);
     renderActiveDiscountBanner();
   } catch(e) {

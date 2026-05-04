@@ -646,6 +646,24 @@
     line-height:1.74;
   }
 }
+
+/* DISCOUNT BADGE */
+.gm-discount-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  background: #2b0b39;
+  color: #af8455;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: .25rem .65rem;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(43,11,57,.18);
+}
+
 /*kosarica*/
 
 

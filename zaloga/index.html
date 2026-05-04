@@ -5256,6 +5256,12 @@ function openZalogaSettings(){
         </div>
 
         <!-- SIMULATOR -->
+        <!-- POPUSTI PO VARIANTAH -->
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Popusti po variantah</div>
+        <div id="zsVariantniPopustiList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
+          <div style="font-size:.78rem;color:var(--muted);padding:.35rem 0">Naloži seznam…</div>
+        </div>
+
         <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">🧮 Simulator cene</div>
         <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.25rem;display:grid;gap:.5rem">
           <div style="display:flex;gap:.5rem;align-items:center">
@@ -5292,7 +5298,53 @@ function zsSwitch(tab){
   document.getElementById('zsPanel2').style.display=tab===2?'':'none';
   document.getElementById('zsTab1').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===1?'var(--ink)':'none'};color:${tab===1?'white':'var(--muted)'}`;
   document.getElementById('zsTab2').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===2?'var(--ink)':'none'};color:${tab===2?'white':'var(--muted)'}`;
-  if(tab===2)setTimeout(simulirajCeno,50);
+  if(tab===2){setTimeout(simulirajCeno,50);naloziVariantnePopuste();}
+}
+
+// ── POPUSTI PO VARIANTAH ──────────────────────────────────
+async function naloziVariantnePopuste(){
+  const el=document.getElementById('zsVariantniPopustiList');
+  if(!el)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=id,product_id,type,name,sku,price_malo,discount_pct&order=product_id.asc,sort_order.asc`,{headers:SB_HEADERS});
+    if(!r.ok)throw new Error();
+    const variants=await r.json();
+    // Naloži produkte za imena
+    const pr=await fetch(`${SB_URL}/rest/v1/gm_products?select=id,name&active=eq.true`,{headers:SB_HEADERS});
+    const products=pr.ok?await pr.json():[];
+    const prodMap=Object.fromEntries(products.map(p=>[p.id,p.name]));
+
+    if(!variants.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Ni variant.</div>';return;}
+
+    el.innerHTML=variants.map(v=>`
+      <div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
+        <div style="flex:1;font-size:.78rem;min-width:0">
+          <span style="font-weight:500">${prodMap[v.product_id]||v.product_id}</span>
+          <span style="color:var(--muted);margin-left:.3rem">${v.type==='alc'?'Alkoholna':'Glicerinska'}</span>
+          <span style="color:var(--muted);font-size:.68rem;margin-left:.3rem">${v.sku||''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.35rem;flex-shrink:0">
+          <input type="number" min="0" max="100" step="1" value="${v.discount_pct||0}"
+            data-variant-id="${v.id}"
+            style="width:52px;padding:.3rem .4rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;text-align:center"
+            oninput="shtvariDiscountPct('${v.id}',this.value)">
+          <span style="font-size:.78rem;color:var(--muted)">%</span>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Napaka pri nalaganju.</div>';
+  }
+}
+
+async function shtvariDiscountPct(variantId, value){
+  const pct=parseFloat(value)||0;
+  try{
+    await fetch(`${SB_URL}/rest/v1/gm_product_variants?id=eq.${variantId}`,{
+      method:'PATCH',
+      headers:SB_HEADERS,
+      body:JSON.stringify({discount_pct:pct})
+    });
+  }catch(e){console.warn('shtvariDiscountPct failed:',e);}
 }
 
 function renderPopustRow(p,i){

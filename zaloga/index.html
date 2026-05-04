@@ -4732,11 +4732,9 @@ ${type==='trosarine'?`
   <div class="sign-box">Datum in podpis:<br><br></div>
 </div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
-${group.email&&group.invoiceId?`<button class="printbtn" style="background:#3a6b4a;color:white;margin-top:.5rem" onclick="if(window.opener&&window.opener.sendInvoiceEmail){window.opener.sendInvoiceEmail('${group.invoiceId}');this.textContent='📧 Pošiljam…'}else{alert('Zapri in pošlji iz aplikacije')}">📧 Pošlji po e-pošti</button>`:''}
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
-${group.email&&group.invoiceId?`<button class="printbtn" style="background:#3a6b4a;color:white;margin-top:.5rem" onclick="if(window.opener&&window.opener.sendInvoiceEmail){window.opener.sendInvoiceEmail('${group.invoiceId}');this.textContent='📧 Pošiljam…'}else{alert('Zapri in pošlji iz aplikacije')}">📧 Pošlji po e-pošti</button>`:''}
 `}
 </body></html>`;
 

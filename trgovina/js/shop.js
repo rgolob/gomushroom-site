@@ -116,10 +116,10 @@ function renderShopGrid(products) {
       : `/trgovina/${p.slug}-tinktura/`;
 
     return `
-      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}" style="position:relative">
-        ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge>−${maxDiscount}%</span>` : ''}
-        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}">
-          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
+      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}">
+        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}" style="position:relative;display:block">
+          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block">
+          ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge style="position:absolute;top:12px;left:12px;z-index:2;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;pointer-events:none">−${maxDiscount}%</span>` : ''}
         </a>
         <div class="gm-shop-card__body">
           <div>
@@ -213,11 +213,21 @@ function bindVariantPickers(products) {
         addBtn.dataset.sku = v.sku;
       }
       // Posodobi badge
-      const badge = card.querySelector('[data-discount-badge]');
       const disc = Number(v.discount_pct) || 0;
-      if (badge) {
+      const imgLink = card.querySelector('.gm-shop-card__image');
+      let badge = card.querySelector('[data-discount-badge]');
+      if (disc > 0) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'gm-discount-badge';
+          badge.dataset.discountBadge = '';
+          badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:2;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;pointer-events:none';
+          if (imgLink) imgLink.appendChild(badge);
+        }
         badge.textContent = `−${disc}%`;
-        badge.style.display = disc > 0 ? '' : 'none';
+        badge.style.display = '';
+      } else if (badge) {
+        badge.style.display = 'none';
       }
     }
 

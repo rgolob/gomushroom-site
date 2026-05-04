@@ -3637,6 +3637,20 @@ const UPN_NAME    = 'GoMushroom, Rok Golob s.p.';
 const UPN_ADDRESS = 'Prapreče pri Straži 22';
 const UPN_CITY    = '8351 Straža';
 
+// ISO 11649 RF referenca generator
+function generateRF(orderId){
+  const ref=String(orderId).replace(/[^A-Z0-9]/gi,'').toUpperCase();
+  if(!ref)return '';
+  const moved=ref+'RF00';
+  const numeric=moved.split('').map(c=>{
+    const code=c.charCodeAt(0);
+    return code>=65?String(code-55):c;
+  }).join('');
+  const remainder=BigInt(numeric)%97n;
+  const checkDigits=String(98n-remainder).padStart(2,'0');
+  return `RF${checkDigits}${ref}`;
+}
+
 function buildUpnString(amount, reference, purpose){
   // UPN QR — točen vrstni red polj po tehničnem standardu ZBS
   // Polje 20 = kontrolna vsota (skupna dolžina stringa vključno s poljem 20)
@@ -3676,7 +3690,7 @@ function buildInvoiceHTML(group, qrDataURL){
   const isRevenue=true;
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
-  const upnRef=invNum?'RF00'+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnRef=invNum?generateRF(invNum):'';
 
   // QR: vedno prikaži za maloprodajo/veleprodajo
   const hasPayment=group.channel==='malo'||group.channel==='velo';
@@ -3800,7 +3814,7 @@ ${qrImgTag?`
     Prejemnik: ${UPN_NAME}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
     Znesek: <strong>${total.toFixed(2)} €</strong><br>
-    Referenca: RF00 ${invNum?invNum.replace(/[^0-9]/g,'').padStart(12,'0'):''}<br>
+    Referenca: ${invNum?generateRF(invNum):''}<br>
     Namen: Plačilo ${invNum}
   </div>
 </div>`:''}
@@ -3894,7 +3908,7 @@ async function printInvoice(group){
   const isRevenue=true;
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
-  const upnRef=invNum?'RF00'+invNum.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnRef=invNum?generateRF(invNum):'';
   const hasPayment=group.channel==='malo'||group.channel==='velo';
   const upnString=hasPayment&&total>0?buildUpnString(total,upnRef,'Placilo '+invNum):'';
 
@@ -5654,7 +5668,7 @@ Rok`;
 
   // HTML verzija emaila
   // Generiraj QR kodo URL za email
-  const upnRef=inv.num?'RF00'+inv.num.replace(/[^0-9]/g,'').padStart(12,'0'):'';
+  const upnRef=inv.num?generateRF(inv.num):'';
   const upnString=buildUpnString(inv.total||0,upnRef,'Placilo '+(inv.num||'racuna'));
   const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
 

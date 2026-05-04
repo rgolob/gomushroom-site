@@ -1,38 +1,33 @@
 <!doctype html>
 <html lang="sl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>Košarica | GoMushroom</title>
-  <meta name="description" content="Pregled izbranih GoMushroom tinktur v košarici." />
-  <meta name="author" content="GoMushroom — Rok Golob" />
-  <meta name="robots" content="noindex,follow" />
-
-  <link rel="canonical" href="https://gomushroom.si/trgovina/kosarica/" />
-
-  <meta property="og:title" content="Košarica | GoMushroom" />
-  <meta property="og:description" content="Pregled izbranih GoMushroom tinktur v košarici." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://gomushroom.si/trgovina/kosarica/" />
-  <meta property="og:image" content="https://gomushroom.si/assets/og-shop.jpg" />
-  <meta property="og:site_name" content="GoMushroom" />
-  <meta property="og:locale" content="sl_SI" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Košarica | GoMushroom" />
-  <meta name="twitter:description" content="Pregled izbranih GoMushroom tinktur v košarici." />
-  <meta name="twitter:image" content="https://gomushroom.si/assets/og-shop.jpg" />
-
-  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
-  <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="icon" href="/assets/favicon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="/assets/favicon-180.png" />
-
-  <link rel="stylesheet" href="/css/site.css" />
-  <link rel="stylesheet" href="/trgovina/css/trgovina.css" />
+  <meta name="robots" content="noindex,follow"/>
+  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png"/>
+  <link rel="apple-touch-icon" href="/assets/favicon-180.png"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="stylesheet" href="/trgovina/css/trgovina.css"/>
+  <style>
+    .gm-cart-item {
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(43,11,57,.08);
+      border-radius: 16px;
+      background: white;
+      align-items: center;
+    }
+    .gm-cart-item__image { width: 72px; height: 72px; flex-shrink: 0; }
+    .gm-cart-item__controls { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
+    @media(max-width:480px) {
+      .gm-cart-item { grid-template-columns: 56px 1fr; }
+      .gm-cart-item__controls { grid-column: 1/-1; flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+  </style>
 </head>
-
 <body>
   <header id="site-header">
     <div class="wrap nav">
@@ -53,9 +48,8 @@
         <a class="shop-cart-link" href="/trgovina/kosarica/" aria-label="Košarica">
           Košarica <span class="gm-cart-badge" data-cart-count></span>
         </a>
-        <button class="nav-toggle" id="nav-toggle" type="button"
-                aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path></svg>
+        <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"/></svg>
         </button>
       </div>
     </div>
@@ -64,44 +58,44 @@
   <main>
     <section class="shop-page">
       <div class="wrap">
-        <div class="shop-shell">
-          <div class="shop-head" style="text-align:left;margin:0 0 10px">
-            <p class="shop-kicker">GoMushroom • Košarica</p>
-            <h1 class="shop-title">Košarica</h1>
-            <p class="shop-sub">Preglej izbrane izdelke, prilagodi količino in nadaljuj na blagajno.</p>
+        <div class="shop-head" style="text-align:left;margin:0 0 1.5rem">
+          <p class="shop-kicker">GoMushroom • Košarica</p>
+          <h1 class="shop-title" style="margin-bottom:.5rem">Košarica</h1>
+        </div>
+
+        <div class="gm-cart-page">
+          <!-- Artikli -->
+          <div>
+            <div id="cart-items" class="gm-cart-items" aria-live="polite" style="display:flex;flex-direction:column;gap:.75rem"></div>
+            <a href="/trgovina/" style="display:inline-flex;align-items:center;gap:.4rem;margin-top:1.25rem;color:rgba(43,11,57,.5);font-size:.82rem;text-decoration:none">
+              ← Nadaljuj z nakupom
+            </a>
           </div>
 
-          <section class="gm-cart-page">
-            <div id="cart-items" class="gm-cart-items" aria-live="polite"></div>
-
-            <aside class="gm-cart-summary">
-
-              <!-- Kupon koda -->
-              <div style="border-bottom:1px solid rgba(43,11,57,.08);padding-bottom:1rem;margin-bottom:.5rem">
-                <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6a6670;margin-bottom:.5rem">Kupon koda</div>
-                <div style="display:flex;gap:.5rem">
-                  <input id="kupon-input" type="text" placeholder="npr. WELCOME10"
-                    style="flex:1;padding:.5rem .75rem;border:1px solid rgba(43,11,57,.12);border-radius:10px;font-family:inherit;font-size:.9rem;text-transform:uppercase">
-                  <button id="kupon-btn" type="button"
-                    style="padding:.5rem .85rem;border:1px solid rgba(43,11,57,.12);border-radius:10px;background:white;font-family:inherit;font-size:.85rem;cursor:pointer;white-space:nowrap">
-                    Uveljavi
-                  </button>
-                </div>
+          <!-- Povzetek -->
+          <aside class="gm-cart-summary">
+            <!-- Kupon -->
+            <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(43,11,57,.08)">
+              <div style="font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(43,11,57,.4);margin-bottom:.5rem">Kupon koda</div>
+              <div style="display:flex;gap:.4rem">
+                <input id="kupon-input" type="text" placeholder="npr. WELCOME10"
+                  style="flex:1;padding:.5rem .75rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;font-family:inherit;font-size:.85rem;text-transform:uppercase;outline:none;transition:border-color .2s">
+                <button id="kupon-btn" type="button"
+                  style="padding:.5rem .85rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;background:white;font-family:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:.2s">
+                  Uveljavi
+                </button>
               </div>
+            </div>
 
-              <!-- Povzetek -->
-              <div id="cart-summary-detail"></div>
+            <!-- Seštevek -->
+            <div id="cart-summary-detail"></div>
 
-              <a class="gm-btn gm-btn--secondary" href="/trgovina/" style="margin-top:.5rem">
-                ← Nadaljuj z nakupom
-              </a>
-
-              <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn" style="margin-top:.5rem">
-                Na blagajno →
-              </button>
-
-            </aside>
-          </section>
+            <!-- Gumb -->
+            <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn"
+              style="width:100%;margin-top:1rem;min-height:48px;font-size:.95rem">
+              Na blagajno →
+            </button>
+          </aside>
         </div>
       </div>
     </section>

@@ -17,6 +17,49 @@ function formatPrice(value) {
   }) + ' €';
 }
 
+// Nastavitve (popusti, poštnina)
+let _settings = null;
+async function loadSettings() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS });
+    if (!r.ok) return;
+    const rows = await r.json();
+    _settings = {};
+    rows.forEach(row => {
+      try { _settings[row.key] = JSON.parse(row.value); }
+      catch { _settings[row.key] = row.value; }
+    });
+  } catch(e) { console.warn('Settings load failed', e); }
+}
+
+function getActiveSplošniPopust() {
+  if (!_settings) return 0;
+  const danes = new Date().toISOString().split('T')[0];
+  const c = _settings.casovniPopust;
+  let max = 0;
+  if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
+    max = Math.max(max, c.vrednost);
+  for (const p of (_settings.popusti || []).filter(p => p.aktiven)) {
+    if (p.tip === 'znesek' && p.min === 0) max = Math.max(max, p.vrednost);
+    if (p.tip === 'kolicina' && p.min <= 1) max = Math.max(max, p.vrednost);
+  }
+  return max;
+}
+
+function renderActiveDiscountBanner() {
+  const pct = getActiveSplošniPopust();
+  const banner = document.getElementById('shop-discount-banner');
+  if (!banner) return;
+  if (pct > 0) {
+    banner.innerHTML = `<div style="background:linear-gradient(135deg,#2b0b39,#4a1a5e);color:#f0ebe3;text-align:center;padding:.6rem 1rem;border-radius:10px;font-size:.85rem;margin-bottom:1.5rem">
+      🏷 <strong>Trenutno velja ${pct}% popust</strong> — samodejno se upošteva v košarici
+    </div>`;
+    banner.style.display = '';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 async function loadProducts() {
   const [prodRes, varRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
@@ -82,7 +125,13 @@ function renderShopGrid(products) {
             ${glyVariant ? `<button class="gm-variant-btn${!alcVariant ? ' is-active' : ''}" type="button" data-card-variant-btn="gly">Brezalkoholna</button>` : ''}
           </div>` : ''}
           <div>
-            <div class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo)}</div>
+            <div data-price-wrap>
+              ${defaultVariant.discount_pct > 0
+                ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(defaultVariant.price_malo)}</span>
+                   <span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100))}</span>`
+                : `<span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo)}</span>`
+              }
+            </div>
             <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.name}</p>
             <p class="gm-micro">Na zalogi · Majhna serija</p>
           </div>
@@ -132,7 +181,19 @@ function bindVariantPickers(products) {
       const v = product.variants.find(v => v.type === type);
       if (!v) return;
       btns.forEach(b => b.classList.toggle('is-active', b.dataset.cardVariantBtn === type));
-      if (priceEl) priceEl.textContent = formatPrice(v.price_malo);
+      // Posodobi ceno z popustom
+      const priceWrap = card.querySelector('[data-price-wrap]');
+      if (priceWrap) {
+        const disc = v.discount_pct || 0;
+        if (disc > 0) {
+          const discPrice = v.price_malo * (1 - disc / 100);
+          priceWrap.innerHTML = `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(v.price_malo)}</span><span class="gm-shop-card__price" data-card-price>${formatPrice(discPrice)}</span>`;
+          if (addBtn) addBtn.dataset.price = String(discPrice.toFixed(2));
+        } else {
+          priceWrap.innerHTML = `<span class="gm-shop-card__price" data-card-price>${formatPrice(v.price_malo)}</span>`;
+          if (addBtn) addBtn.dataset.price = String(v.price_malo);
+        }
+      } else if (priceEl) priceEl.textContent = formatPrice(v.price_malo);
       if (variantLabelEl) variantLabelEl.textContent = v.name;
       if (ingredientsEl) ingredientsEl.textContent = formatIngredients(v.ingredients);
       if (addBtn) {
@@ -171,8 +232,9 @@ function renderSkeleton() {
 document.addEventListener('DOMContentLoaded', async () => {
   renderSkeleton();
   try {
-    const products = await loadProducts();
+    const [products] = await Promise.all([loadProducts(), loadSettings()]);
     renderShopGrid(products);
+    renderActiveDiscountBanner();
   } catch(e) {
     console.error(e);
     const grid = document.getElementById('shop-grid');

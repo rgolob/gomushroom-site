@@ -73,7 +73,12 @@ async function loadProducts() {
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju produktov.');
   const products = await prodRes.json();
   const variants = await varRes.json();
-  return products.map(p => ({ ...p, variants: variants.filter(v => v.product_id === p.id) }));
+  return products.map(p => ({
+    ...p,
+    variants: variants
+      .filter(v => v.product_id === p.id)
+      .map(v => ({ ...v, discount_pct: Number(v.discount_pct) || 0, price_malo: Number(v.price_malo) || 0 }))
+  }));
 }
 
 function formatIngredients(ingredients) {
@@ -131,9 +136,9 @@ function renderShopGrid(products) {
           </div>` : ''}
           <div>
             <div data-price-wrap>
-              ${defaultVariant.discount_pct > 0
+              ${Number(defaultVariant.discount_pct) > 0
                 ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(defaultVariant.price_malo)}</span>
-                   <span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100))}</span>`
+                   <span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo * (1 - Number(defaultVariant.discount_pct) / 100))}</span>`
                 : `<span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo)}</span>`
               }
             </div>
@@ -189,7 +194,7 @@ function bindVariantPickers(products) {
       // Posodobi ceno z popustom
       const priceWrap = card.querySelector('[data-price-wrap]');
       if (priceWrap) {
-        const disc = v.discount_pct || 0;
+        const disc = Number(v.discount_pct) || 0;
         if (disc > 0) {
           const discPrice = v.price_malo * (1 - disc / 100);
           priceWrap.innerHTML = `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(v.price_malo)}</span><span class="gm-shop-card__price" data-card-price>${formatPrice(discPrice)}</span>`;
@@ -209,7 +214,7 @@ function bindVariantPickers(products) {
       }
       // Posodobi badge
       const badge = card.querySelector('[data-discount-badge]');
-      const disc = v.discount_pct || 0;
+      const disc = Number(v.discount_pct) || 0;
       if (badge) {
         badge.textContent = `−${disc}%`;
         badge.style.display = disc > 0 ? '' : 'none';

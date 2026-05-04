@@ -53,7 +53,8 @@ function renderShopGrid(products) {
 
   grid.innerHTML = products.map(p => {
     const alcVariant = p.variants.find(v => v.type === 'alc');
-    const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
+    const discounts = p.variants.map(v => Number(v.discount_pct) || 0);
+    const maxDiscount = discounts.length ? Math.max(...discounts) : 0;
     const glyVariant = p.variants.find(v => v.type === 'gly');
     const defaultVariant = alcVariant || glyVariant;
     if (!defaultVariant) return '';

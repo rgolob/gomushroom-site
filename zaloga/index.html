@@ -3196,7 +3196,7 @@ async function confirmOrder(withInvoice){
   if(withInvoice){
     invoiceNum=nextInvNum(ch,date);
     invoiceId=uid();
-    const invStatus=ch==='wp'?'caka':'placano';
+    const invStatus=(ch==='wp'||ch==='malo'||ch==='velo')?'caka':'placano';
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
   const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
@@ -3464,7 +3464,7 @@ function issueInvoiceForGroup(groupId){
   const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
-  const invStatus=g.channel==='wp'?'caka':'placano';
+  const invStatus=(g.channel==='wp'||g.channel==='malo'||g.channel==='velo')?'caka':'placano';
   invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus});
   save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);

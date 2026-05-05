@@ -35,13 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const slUrl = isEn ? (translatedUrl || "/znanje/") : path;
   const enUrl = isEn ? path : (translatedUrl || "/en/learn/");
 
-  const shopLink = isEn
-    ? ""
-    : `<a href="/trgovina/">Trgovina</a>`;
+  const shopLink = isEn ? "" : `<a href="/trgovina/">Trgovina</a>`;
 
   target.innerHTML = `
-    <header class="site-header">
-      <div class="wrap header-inner">
+    <header id="site-header">
+      <div class="wrap nav">
 
         <div class="brand">
           <a href="${homeUrl}" aria-label="GoMushroom domov">
@@ -65,9 +63,27 @@ document.addEventListener("DOMContentLoaded", () => {
               <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
             </a>
           </div>
+
+          <button class="nav-toggle" id="nav-toggle" type="button"
+                  aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
+            </svg>
+          </button>
         </div>
 
       </div>
     </header>
   `;
+
+  const navToggle = document.getElementById("nav-toggle");
+  const primaryNav = document.getElementById("primary-nav");
+
+  if (navToggle && primaryNav) {
+    navToggle.addEventListener("click", () => {
+      const isOpen = navToggle.getAttribute("aria-expanded") === "true";
+      navToggle.setAttribute("aria-expanded", String(!isOpen));
+      primaryNav.classList.toggle("is-open", !isOpen);
+    });
+  }
 });

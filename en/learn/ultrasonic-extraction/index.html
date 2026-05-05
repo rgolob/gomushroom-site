@@ -64,42 +64,8 @@
 </head>
 
 <body>
-  <div class="reading-progress"></div>
-  <header id="site-header">
-    <div class="wrap nav">
-      <div class="brand">
-        <a href="https://gomushroom.si/en/" aria-label="GoMushroom home">
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
-        </a>
-      </div>
-
-      <nav id="primary-nav" aria-label="Main navigation">
-        <a href="https://gomushroom.si/en/#services">Services</a>
-        <a href="https://gomushroom.si/en/#approach">Approach</a>
-        <a href="https://gomushroom.si/en/#about">About</a>
-        <a href="https://gomushroom.si/en/#gallery">Gallery</a>
-        <a href="https://gomushroom.si/en/#references">References</a>
-      </nav>
-
-      <div class="nav-actions" aria-label="Language and menu">
-        <div class="lang-switch" aria-label="Language selection">
-          <a class="lang-flag" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/" aria-label="Slovenščina" lang="sl">
-            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-          </a>
-          <a class="lang-flag" href="https://gomushroom.si/en/learn/ultrasonic-extraction/" aria-label="English" lang="en">
-            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-          </a>
-        </div>
-
-        <button class="nav-toggle" id="nav-toggle" type="button"
-                aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
+<div class="reading-progress"></div>
+<header id="site-header"></header>
 
   <main>
     <section class="article-page">
@@ -413,23 +379,12 @@
         © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
       </p>
     </div>
-
     <script>
       document.getElementById('year').textContent = new Date().getFullYear();
     </script>
   </footer>
-  <script defer src="/js/site.js"></script>
-  <script>
-    const navToggle = document.getElementById('nav-toggle');
-    const siteHeader = document.getElementById('site-header');
-
-    if (navToggle && siteHeader) {
-      navToggle.addEventListener('click', () => {
-        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!expanded));
-        siteHeader.classList.toggle('nav-open');
-      });
-    }
-  </script>
+    <script defer src="/js/site.js"></script>
+    <script src="/js/article-header.js"></script>
+ 
 </body>
 </html>

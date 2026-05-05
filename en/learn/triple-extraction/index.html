@@ -97,8 +97,40 @@
 }
 </script>
 </head>
-
 <body>
+  <header id="site-header">
+    <div class="wrap nav">
+      <div class="brand">
+        <a href="https://gomushroom.si/" aria-label="GoMushroom domov">
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
+        </a>
+      </div>
+
+      <nav id="primary-nav" aria-label="Glavna navigacija">
+      <a href="/">Home</a>
+      <a href="/znanje/">Learn</a>
+      <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">About</a>
+      </nav>
+
+      <div class="nav-actions" aria-label="Jezik in meni">
+        <div class="lang-switch" aria-label="Izbira jezika">
+          <a class="lang-flag" href="https://gomushroom.si/znanje/trojna-ekstrakcija/" aria-label="Slovenščina" lang="sl">
+            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
+          </a>
+          <a class="lang-flag" href="https://gomushroom.si/en/learn/" aria-label="English" lang="en">
+            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
+          </a>
+        </div>
+
+        <button class="nav-toggle" id="nav-toggle" type="button"
+                aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
 <main>
 <section class="article-page">
@@ -133,6 +165,9 @@ Differences between products therefore do not arise only from the raw material i
 <p>
 For medicinal mushrooms, the key question is not only <em>which species is used</em>, but also <em>how it is extracted</em>.
 </p>
+<p>
+This is why methods such as dual extraction and triple extraction are commonly used in medicinal mushroom processing.
+</p>
 </section>
 
 <section class="article-block">
@@ -155,9 +190,8 @@ Using only water results primarily in water-soluble fractions, while using only 
 <p>
 In practice, this means that single-phase extraction methods always represent a partial utilization of the raw material.
 </p>
-
 <p>
-However, solvent selection is not the only limitation.
+However, solvent selection is not the only limitation. Even with the correct solvent, extraction efficiency is still limited by the structure of the mushroom itself.
 </p>
 </section>
 
@@ -196,7 +230,9 @@ Medicinal mushrooms are chemically complex systems containing multiple classes o
 <p>
 Among the most studied are <strong>polysaccharides</strong>, particularly beta-glucans, which are often associated with structural components and require hot water and sufficient processing intensity for effective extraction.
 </p>
-
+<p>
+While beta-glucans are often used as a quality indicator, their total percentage alone does not reflect extraction depth or structural complexity.
+</p>
 <p>
 Another important group consists of <strong>triterpenes and other less polar compounds</strong>, which are poorly soluble in water and are more efficiently extracted using ethanol. In Reishi, these compounds contribute to its characteristic bitter profile.
 </p>
@@ -228,13 +264,15 @@ In simplified terms, the process typically includes:
 <li><strong>hot water extraction</strong> (polysaccharides, beta-glucans),</li>
 <li><strong>additional processing</strong> (e.g. higher temperature or pressure to further disrupt the matrix).</li>
 </ul>
-
 <p>
 Each stage produces a separate extract fraction. These fractions are later combined to form a final extract with a broader chemical profile than single-step methods.
 </p>
-
 <p>
-In practice, this involves multiple extractions, filtrations, concentration steps and final formulation.
+In practice, extraction involves multiple filtrations, separation of the solid matrix after each stage, 
+and concentration of individual fractions before final combination.
+</p>
+<p>
+In small-scale controlled production, this typically involves precise control of solvent ratios, temperature and concentration at each stage.
 </p>
 </section>
 
@@ -300,21 +338,17 @@ In practice, this often involves multiple concentration steps and precise contro
   <p>
     Medicinal mushrooms contain multiple classes of compounds that require different extraction conditions. A single method is therefore insufficient to capture a broader spectrum of naturally occurring molecules.
   </p>
-
   <p>
     Multi-stage extraction combines different approaches and results in a more representative extract. Differences between products are therefore not determined solely by the mushroom species, but largely by the process itself.
   </p>
-
   <p>
     In practice, this involves separate extract fractions, their further processing and final combination into a usable form.
   </p>
-
   <p>
     Understanding extraction is therefore not only a technical detail, but a key factor in understanding differences between products.
   </p>
-
-  <p>
-    In medicinal mushrooms, the difference is not only what is extracted, but how.
+   <p>
+  In medicinal mushrooms, the difference is not only what is extracted, but how — and to what extent the raw material is actually utilized.
   </p>
 </section>
 

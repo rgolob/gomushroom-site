@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a class="lang-flag" href="${slUrl}" aria-label="Slovenščina" lang="sl">
             <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
           </a>
+
           <a class="lang-flag" href="${enUrl}" aria-label="English" lang="en">
             <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
           </a>
@@ -71,12 +72,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const navToggle = document.getElementById("nav-toggle");
   const primaryNav = document.getElementById("primary-nav");
 
-  if (navToggle && primaryNav) {
-    navToggle.addEventListener("click", () => {
-      const open = navToggle.getAttribute("aria-expanded") === "true";
-      navToggle.setAttribute("aria-expanded", String(!open));
-      primaryNav.classList.toggle("open", !open);
-      primaryNav.classList.toggle("is-open", !open);
-    });
-  }
+  if (!navToggle || !primaryNav) return;
+
+  const closeMenu = () => {
+    navToggle.setAttribute("aria-expanded", "false");
+    primaryNav.classList.remove("open", "is-open", "active");
+    document.body.classList.remove("nav-open");
+  };
+
+  const openMenu = () => {
+    navToggle.setAttribute("aria-expanded", "true");
+    primaryNav.classList.add("open", "is-open", "active");
+    document.body.classList.add("nav-open");
+  };
+
+  navToggle.addEventListener("click", () => {
+    const isOpen = navToggle.getAttribute("aria-expanded") === "true";
+    isOpen ? closeMenu() : openMenu();
+  });
+
+  primaryNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMenu();
+  });
 });

@@ -2193,3 +2193,13 @@ footer.site-footer{
   text-transform: uppercase;
   color: rgba(16, 19, 17, 0.55);
 }
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: #af8455;
+  z-index: 9999;
+  transition: width 0.08s linear;
+}

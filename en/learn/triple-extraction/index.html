@@ -99,39 +99,7 @@
 </head>
 <body>
   <div class="reading-progress"></div>
-  <header id="site-header">
-    <div class="wrap nav">
-      <div class="brand">
-        <a href="https://gomushroom.si/" aria-label="GoMushroom domov">
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
-        </a>
-      </div>
-
-      <nav id="primary-nav" aria-label="Glavna navigacija">
-      <a href="/">Home</a>
-      <a href="/znanje/">Learn</a>
-      <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">About</a>
-      </nav>
-
-      <div class="nav-actions" aria-label="Jezik in meni">
-        <div class="lang-switch" aria-label="Izbira jezika">
-          <a class="lang-flag" href="https://gomushroom.si/znanje/trojna-ekstrakcija/" aria-label="Slovenščina" lang="sl">
-            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-          </a>
-          <a class="lang-flag" href="https://gomushroom.si/en/learn/" aria-label="English" lang="en">
-            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-          </a>
-        </div>
-
-        <button class="nav-toggle" id="nav-toggle" type="button"
-                aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
+<div id="article-header"></div>
 
 <main>
 <section class="article-page">
@@ -487,7 +455,8 @@ The extraction method determines extract quality because it defines which compou
         © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
       </p>
     </div>
-<script defer src="/js/site.js"></script>
+    <script defer src="/js/site.js"></script
+    <script src="/js/article-header.js"></script>
     <script>
       document.getElementById('year').textContent = new Date().getFullYear();
     </script>

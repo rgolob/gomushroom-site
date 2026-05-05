@@ -2186,3 +2186,10 @@ footer.site-footer{
     grid-template-columns:1fr;
   }
 }
+.learn-meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(16, 19, 17, 0.55);
+}

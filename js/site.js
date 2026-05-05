@@ -618,9 +618,7 @@
     if (initial) activateTab(initial);
   })();
 
-/* =========================
-   STORITVE — anchor link odpre kartico
-========================= */
+
 /* =========================
    STORITVE — anchor link odpre kartico
 ========================= */
@@ -642,3 +640,25 @@
     targetCard.click();
   });
 })();
+/* =========================
+   Članki  — progress bar
+========================= */
+document.addEventListener("scroll", function () {
+  const article = document.querySelector(".article-shell");
+  const progress = document.querySelector(".reading-progress");
+
+  if (!article || !progress) return;
+
+  const articleTop = article.offsetTop;
+  const articleHeight = article.offsetHeight;
+  const scrollY = window.scrollY;
+  const windowHeight = window.innerHeight;
+
+  const start = articleTop;
+  const end = articleTop + articleHeight - windowHeight;
+
+  let percent = ((scrollY - start) / (end - start)) * 100;
+  percent = Math.max(0, Math.min(100, percent));
+
+  progress.style.width = percent + "%";
+});

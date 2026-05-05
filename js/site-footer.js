@@ -25,6 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ? `All rights reserved.`
     : `Vse pravice pridržane.`;
 
+  const footerMeta = isEn
+  ? `GoMushroom, mushroom cultivation, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia`
+  : `GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenija`;
+  
   footer.className = "site-footer";
 
   footer.innerHTML = `
@@ -45,8 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
       </p>
 
       <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
+        ${footerMeta}
+      </p>    
 
       <div class="footer-line" aria-hidden="true"></div>
 

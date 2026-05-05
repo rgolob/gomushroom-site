@@ -69,33 +69,31 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   `;
 
-  const navToggle = document.getElementById("nav-toggle");
-  const primaryNav = document.getElementById("primary-nav");
+const navToggle = document.getElementById("nav-toggle");
+const primaryNav = document.getElementById("primary-nav");
 
-  if (!navToggle || !primaryNav) return;
+if (!navToggle || !primaryNav) return;
 
-  const closeMenu = () => {
-    navToggle.setAttribute("aria-expanded", "false");
-    primaryNav.classList.remove("open", "is-open", "active");
-    document.body.classList.remove("nav-open");
-  };
+const closeMenu = () => {
+  header.classList.remove("nav-open");
+  navToggle.setAttribute("aria-expanded", "false");
+};
 
-  const openMenu = () => {
-    navToggle.setAttribute("aria-expanded", "true");
-    primaryNav.classList.add("open", "is-open", "active");
-    document.body.classList.add("nav-open");
-  };
+const openMenu = () => {
+  header.classList.add("nav-open");
+  navToggle.setAttribute("aria-expanded", "true");
+};
 
-  navToggle.addEventListener("click", () => {
-    const isOpen = navToggle.getAttribute("aria-expanded") === "true";
-    isOpen ? closeMenu() : openMenu();
-  });
+navToggle.addEventListener("click", () => {
+  const isOpen = header.classList.contains("nav-open");
+  isOpen ? closeMenu() : openMenu();
+});
 
-  primaryNav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", closeMenu);
-  });
+primaryNav.querySelectorAll("a").forEach((link) => {
+  link.addEventListener("click", closeMenu);
+});
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeMenu();
-  });
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMenu();
+});
 });

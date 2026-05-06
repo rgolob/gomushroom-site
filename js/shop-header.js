@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const header = document.getElementById("site-header");
+  const header = document.getElementById("shop-header");
   if (!header) return;
 
   const navItems = `

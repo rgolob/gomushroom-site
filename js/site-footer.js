@@ -28,6 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const footerMeta = isEn
   ? `GoMushroom, mushroom cultivation, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia`
   : `GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenija`;
+
+  const signature = isEn
+  ? `GoMushroom is not a product. It is a process.`
+  : `GoMushroom ni produkt. Je proces.`;
   
   footer.className = "site-footer";
 
@@ -53,7 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
       </p>    
 
       <div class="footer-line" aria-hidden="true"></div>
-
+      
+      <p class="footer-signature">${signature}</p>
+      
       <p class="footer-copy">
         © <span id="year"></span> GoMushroom — Rok Golob. ${rights}
       </p>

@@ -114,8 +114,6 @@
       </header>
       <div id="shop-discount-banner" style="display:none"></div>
 
-
-      
       <section class="shop-grid" aria-label="Izdelki">
 
       <script src="/trgovina/js/shop.js"></script>
@@ -149,57 +147,11 @@
   </section>
 </main>
 
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social" aria-label="Družbena omrežja">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
-        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
-      </div>
+<footer id="site-footer"></footer>
 
-      <nav class="footer-nav" aria-label="Footer navigacija">
-        <a href="/#services">Storitve</a>
-        <a href="/#approach">Pristop</a>
-        <a href="/#gallery">Galerija</a>
-        <a href="/#references">Reference</a>
-        <a href="/trgovina/">Trgovina</a>
-      </nav>
-
-      <p class="footer-tags">
-        Medicinske gobe · Reishi · Chaga · Resasti bradovec · tinkture · brezalkoholna varianta · trgovina
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
-      </p>
-    </div>
-  </footer>
-
-  <script src="/trgovina/js/cart.js"></script>
-  <script src="/trgovina/js/shop.js"></script>
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
-
-  <script>
-    const navToggle = document.getElementById('nav-toggle');
-    const siteHeader = document.getElementById('site-header');
-
-    if (navToggle && siteHeader) {
-      navToggle.addEventListener('click', () => {
-        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!expanded));
-        siteHeader.classList.toggle('nav-open');
-      });
-    }
-  </script>
+<script src="/trgovina/js/cart.js"></script>
+<script src="/trgovina/js/shop.js"></script>
+<script defer src="/js/site-footer.js"></script>
+<script defer src="/js/site-header.js"></script>
 </body>
 </html>

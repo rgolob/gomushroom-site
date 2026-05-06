@@ -10,7 +10,7 @@ const navItems = isEn
     <a href="/en/#services">Services</a>
     <a href="/en//#approach">Approach</a>
     <a href="/en/qc/heavy-metals/">Quality</a>
-    <a href="/en//#about" id="nav-about" aria-expanded="false" role="button">About</a>
+    <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
     <a href="/en//#gallery">Gallery</a>
     <a href="/en//#references">References</a>
   `

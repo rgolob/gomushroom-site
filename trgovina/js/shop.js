@@ -65,24 +65,35 @@ function renderActiveDiscountBanner() {
 
 // ── Produkti iz Supabase ──────────────────────────────────
 async function loadProducts() {
-  const [prodRes, varRes] = await Promise.all([
+  const [prodRes, varRes, stockRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS })
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
   const variants = await varRes.json();
+  const stockData = stockRes.ok ? await stockRes.json() : [];
+
+  // Naredi map za hiter dostop: variant_id -> stock_status
+  const stockMap = Object.fromEntries(stockData.map(s => [s.variant_id, s]));
+
   return products.map(p => ({
     ...p,
     variants: variants
       .filter(v => v.product_id === p.id)
-      .map(v => ({
-        ...v,
-        discount_pct: Number(v.discount_pct) || 0,
-        price_malo: Number(v.price_malo) || 0,
-        in_stock: v.in_stock !== false,
-        low_stock: !!v.low_stock
-      }))
+      .map(v => {
+        const stock = stockMap[v.id] || {};
+        const status = stock.stock_status || 'in_stock';
+        return {
+          ...v,
+          discount_pct: Number(v.discount_pct) || 0,
+          price_malo: Number(v.price_malo) || 0,
+          in_stock: status !== 'out_of_stock',
+          low_stock: status === 'low_stock',
+          qty_available: stock.qty_available || 0
+        };
+      })
   }));
 }
 

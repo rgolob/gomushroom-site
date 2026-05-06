@@ -1341,6 +1341,14 @@ footer.site-footer{
   color:rgba(255,255,255,.6);
 }
 
+.footer-signature{
+  margin:6px 0 8px;
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.55);
+}
+
 @media (max-width:600px){
   .footer-inner{padding:16px 14px 14px;}
   .footer-nav{gap:8px 14px;}
@@ -2194,7 +2202,7 @@ footer.site-footer{
   color: rgba(16, 19, 17, 0.55);
 }
 .reading-progress {
-  position: fixed;
+  position: fixed;F
   top: 0;
   left: 0;
   height: 3px;

@@ -94,237 +94,311 @@
       </div>
     </div>
   </header>
+<main>
+  <section class="product-page">
+    <div class="wrap product-shell">
 
-  <main>
-    <section class="product-page">
-      <div class="wrap product-shell">
+      <section class="product-hero">
+        <div class="product-card product-copy">
+          <p class="product-kicker">GoMushroom • Reishi • trojna ekstrakcija</p>
 
-        <section class="product-hero">
-          <div class="product-card product-copy">
-            <p class="product-kicker">GoMushroom • Ganoderma lucidum</p>
-            <h1 class="product-title">Reishi tinktura</h1>
+          <h1 class="product-title">Reishi tinktura</h1>
 
-            <p class="product-sub">
-              Reishi tinktura 50 ml iz lastno pridelane gobe <strong>Ganoderma lucidum</strong>,
-              pripravljena v majhnih serijah z lastnim ekstrakcijskim in formulacijskim postopkom.
+          <p class="product-sub">
+            Koncentrirana tinktura iz plodišč gobe <strong>Ganoderma lucidum</strong>,
+            pripravljena v majhnih serijah z večstopenjsko ekstrakcijo, koncentracijo
+            in lastno formulacijo.
+          </p>
+
+          <div class="product-highlights">
+            <span>Trojna ekstrakcija</span>
+            <span>Plodišča gob</span>
+            <span>Majhne serije</span>
+            <span>Testiran končni izdelek</span>
+          </div>
+
+          <p class="product-sub muted">
+            GoMushroom Reishi ni pripravljen iz generičnega industrijskega praška,
+            ampak kot lasten ekstrakt — od surovine do končne tinkture.
+          </p>
+
+          <div class="product-actions">
+            <a class="gm-btn gm-btn-primary" href="#nakup">Izberi različico</a>
+            <a class="gm-btn gm-btn-secondary" href="#proces">Kako nastane</a>
+          </div>
+        </div>
+
+        <div class="product-card product-buy" id="nakup">
+          <div class="product-buy-inner">
+
+            <picture class="product-image-wrap">
+              <source
+                srcset="/assets/shop/reishi-tinktura-50ml-gomushroom.webp 800w"
+                sizes="(max-width: 760px) 90vw, 420px"
+                type="image/webp">
+              <img
+                src="/assets/shop/reishi-tinktura-50ml-gomushroom.webp"
+                alt="Reishi tinktura 50 ml GoMushroom"
+                width="800"
+                height="1000"
+                loading="eager"
+                fetchpriority="high">
+            </picture>
+
+            <aside class="hero-buy" aria-label="Nakup Reishi tinkture">
+              <div class="variant-picker" role="radiogroup" aria-label="Izbira različice">
+                <button class="variant-btn is-active" type="button" data-variant-btn="alcohol">Alkoholna</button>
+                <button class="variant-btn" type="button" data-variant-btn="glycerin">Brezalkoholna</button>
+              </div>
+
+              <p class="variant-current" data-variant-label>Alkoholna</p>
+              <p class="price" data-price>31,90 €</p>
+              <p class="price-note">50 ml • prehransko dopolnilo</p>
+
+              <ul class="product-bullets">
+                <li>Trojna ekstrakcija za širši spekter spojin</li>
+                <li>Lastna ekstrakcija, koncentracija in formulacija</li>
+                <li>Alkoholna ali brezalkoholna različica</li>
+                <li>Končni izdelek testiran na težke kovine</li>
+              </ul>
+
+              <div class="product-actions product-actions-buy">
+                <button
+                  class="gm-btn gm-btn-primary"
+                  type="button"
+                  id="add-to-cart-btn"
+                  data-add-to-cart
+                  data-slug="reishi"
+                  data-variant="alcohol"
+                  data-price="31.90"
+                  data-name="Reishi tinktura"
+                  data-variant-label="Alkoholna"
+                  data-sku="REISHI-ALC-50">
+                  Dodaj v košarico
+                </button>
+
+                <a class="gm-btn gm-btn-secondary" href="/trgovina/">Nazaj v trgovino</a>
+              </div>
+
+              <p class="mini-note" data-variant-note>Alkoholna različica.</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="product-meta">
+        <div class="product-meta-item">
+          <span class="product-meta-label">Vrsta</span>
+          <span class="product-meta-value">Ganoderma lucidum</span>
+        </div>
+        <div class="product-meta-item">
+          <span class="product-meta-label">Del gobe</span>
+          <span class="product-meta-value">Plodišča</span>
+        </div>
+        <div class="product-meta-item">
+          <span class="product-meta-label">Postopek</span>
+          <span class="product-meta-value">Trojna ekstrakcija</span>
+        </div>
+        <div class="product-meta-item">
+          <span class="product-meta-label">Volumen</span>
+          <span class="product-meta-value">50 ml</span>
+        </div>
+      </section>
+
+      <section class="product-grid-3">
+        <article class="info-tile">
+          <h3>Ne samo Reishi. Pomemben je proces.</h3>
+          <p>
+            Kakovost tinkture ni odvisna samo od imena gobe, ampak od surovine,
+            ekstrakcije, koncentracije in končne formulacije.
+          </p>
+        </article>
+
+        <article class="info-tile">
+          <h3>Večstopenjska ekstrakcija</h3>
+          <p>
+            Reishi vsebuje spojine z različno topnostjo. Zato uporabljamo kombinacijo
+            alkoholne in vodnih ekstrakcijskih faz.
+          </p>
+        </article>
+
+        <article class="info-tile">
+          <h3>Transparentna kakovost</h3>
+          <p>
+            Končni izdelek je testiran na težke kovine, saj ekstrakcija koncentrira
+            tako želene spojine kot tudi morebitne nezaželene primesi.
+          </p>
+        </article>
+      </section>
+
+      <section id="proces" class="product-card product-story">
+        <div class="product-story-grid">
+          <div>
+            <p class="product-kicker">Proces</p>
+            <h2>Zakaj trojna ekstrakcija?</h2>
+          </div>
+
+          <div>
+            <p>
+              Reishi vsebuje različne skupine naravnih spojin. Nekatere se bolje
+              izločajo v etanolu, druge v vodi. En sam ekstrakcijski korak zato
+              ne more zajeti celotne kompleksnosti surovine.
             </p>
 
-            <p class="product-sub">
-              Namenjena je uporabnikom, ki iščejo premišljen, sledljiv in laboratorijsko nadzorovan pristop
-              k tinkturam medicinskih gob — od surovine do končnega izdelka.
+            <p>
+              Pri GoMushroom tinktura nastane z večstopenjskim postopkom:
+              alkoholno ekstrakcijo, vročevodno ekstrakcijo in dodatno vodno
+              ekstrakcijo pod spremenjenimi pogoji.
             </p>
 
-            <div class="product-actions">
-              <a class="gm-btn gm-btn-primary" href="#nakup">Izberi različico</a>
-              <a class="gm-btn gm-btn-secondary" href="#podrobnosti">Podrobnosti</a>
-            </div>
+            <p>
+              Namen takšnega pristopa ni marketinška oznaka “močnejše”, ampak bolj
+              premišljen in širši ekstrakcijski profil.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="product-card product-story">
+        <div class="product-story-grid">
+          <div>
+            <p class="product-kicker">Kakovost</p>
+            <h2>Od surovine do končnega izdelka</h2>
           </div>
 
-          <div class="product-card product-buy" id="nakup">
-            <div class="product-buy-inner">
+          <div>
+            <p>
+              GoMushroom tinkture niso zasnovane kot prepakiran industrijski ekstrakt.
+              Proces vključuje lastno pripravo ekstrakta, koncentracijo posameznih
+              frakcij in končno formulacijo.
+            </p>
 
-              <picture class="product-image-wrap">
-                <source
-                  srcset="
-                    /assets/shop/reishi-tinktura-50ml-gomushroom.webp 600w,
-                    /assets/shop/reishi-tinktura-50ml-gomushroom.webp 800w
-                  "
-                  sizes="(max-width: 760px) 90vw, 420px"
-                  type="image/webp">
-                <img
-                  src="/assets/shop/reishi-tinktura-50ml-gomushroom.webp"
-                  alt="Reishi tinktura 50 ml (Ganoderma lucidum) GoMushroom"
-                  width="800"
-                  height="1000"
-                  loading="eager"
-                  fetchpriority="high">
-              </picture>
+            <p>
+              Tak pristop omogoča več nadzora nad tem, kaj dejansko pride v stekleničko:
+              ne samo po sestavi, ampak tudi po sledljivosti, stabilnosti in kakovosti.
+            </p>
 
-              <aside class="hero-buy" aria-label="Nakup Reishi tinkture">
-                <div class="variant-picker" role="radiogroup" aria-label="Izbira različice">
-                  <button class="variant-btn is-active" type="button" data-variant-btn="alcohol">Alkoholna</button>
-                  <button class="variant-btn" type="button" data-variant-btn="glycerin">Brezalkoholna</button>
-                </div>
+            <p>
+              <a class="gm-btn gm-btn-secondary" href="/qc/tezke-kovine/">
+                Poglej kontrolo kakovosti
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
 
-                <p class="variant-current" data-variant-label>Alkoholna</p>
-                <p class="price" data-price>31,90 €</p>
-                <p class="price-note">50 ml</p>
+      <section id="podrobnosti" class="product-card product-accordion" aria-label="Podrobnosti izdelka">
 
-                <ul class="product-bullets">
-                  <li>Iz lastno pridelane gobe <em>Ganoderma lucidum</em></li>
-                  <li>Alkoholna ali brezalkoholna različica</li>
-                  <li>Lastna ekstrakcija, koncentracija in formulacija</li>
-                  <li>Testirano na težke kovine na končnem izdelku</li>
-                </ul>
-
-                <div class="product-actions product-actions-buy">
-                  <button
-                    class="gm-btn gm-btn-primary"
-                    type="button"
-                    id="add-to-cart-btn"
-                    data-add-to-cart
-                    data-slug="reishi"
-                    data-variant="alcohol"
-                    data-price="31.90"
-                    data-name="Reishi tinktura"
-                    data-variant-label="Alkoholna"
-                    data-sku="REISHI-ALC-50">
-                    Dodaj v košarico
-                  </button>
-
-                  <a class="gm-btn gm-btn-secondary" href="/trgovina/">Nazaj v trgovino</a>
-                </div>
-
-                <p class="mini-note" data-variant-note>Alkoholna različica.</p>
-              </aside>
+        <article class="acc-item is-open">
+          <button class="acc-btn" type="button">Kaj je Reishi tinktura?</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                GoMushroom Reishi tinktura je prehransko dopolnilo iz plodišč gobe
+                <strong>Ganoderma lucidum</strong>. Pripravljena je kot koncentriran
+                ekstrakt v tekoči obliki.
+              </p>
+              <p>
+                Izdelek je namenjen uporabnikom, ki iščejo sledljiv, premišljeno
+                izdelan in procesno nadzorovan ekstrakt medicinske gobe.
+              </p>
             </div>
           </div>
-        </section>
+        </article>
 
-        <section class="product-meta">
-          <div class="product-meta-item">
-            <span class="product-meta-label">Latinsko ime</span>
-            <span class="product-meta-value">Ganoderma lucidum</span>
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Sestavine</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                Prečiščena voda, ekstrakt gobe <strong>Ganoderma lucidum</strong>,
+                etanol ali rastlinski glicerin, sončnični lecitin, vitamin C.
+              </p>
+            </div>
           </div>
-          <div class="product-meta-item">
-            <span class="product-meta-label">Volumen</span>
-            <span class="product-meta-value">50 ml</span>
+        </article>
+
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Navodila za uporabo</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                2–3× dnevno 10–20 kapljic. Tinkturo lahko zaužijete podjezično
+                ali razredčeno v manjši količini vode oziroma soka.
+              </p>
+              <p>Pred uporabo stekleničko dobro pretresite.</p>
+            </div>
           </div>
-          <div class="product-meta-item">
-            <span class="product-meta-label">Izvor</span>
-            <span class="product-meta-value">Lastna pridelava</span>
+        </article>
+
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Alkoholna ali brezalkoholna različica</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                Alkoholna različica vsebuje etanol kot del končne formulacije.
+                Brezalkoholna različica je pripravljena z rastlinskim glicerinom.
+              </p>
+              <p>
+                Obe različici sledita istemu pristopu izdelave, kakovosti in
+                kontrole končnega izdelka.
+              </p>
+            </div>
           </div>
-          <div class="product-meta-item">
-            <span class="product-meta-label">Različice</span>
-            <span class="product-meta-value">Alkoholna / brezalkoholna</span>
+        </article>
+
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Usedlina in motnost</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                Pri koncentriranih tinkturah se lahko pojavi naravna motnost,
+                usedlina ali rahlo ločevanje frakcij. To je normalen pojav pri
+                izdelkih z višjo vsebnostjo ekstrahiranih snovi.
+              </p>
+            </div>
           </div>
-        </section>
+        </article>
 
-        <section class="product-grid-3">
-          <article class="info-tile">
-            <h3>Lastna surovina</h3>
-            <p>Reishi izhaja iz lastne pridelave, kar omogoča več nadzora že pri osnovni surovini.</p>
-          </article>
-
-          <article class="info-tile">
-            <h3>Lasten proces</h3>
-            <p>Izdelek temelji na lastni ekstrakciji, koncentraciji in formulaciji — ne na kupljenem generičnem ekstraktu.</p>
-          </article>
-
-          <article class="info-tile">
-            <h3>Majhne serije</h3>
-            <p>Vsaka serija nastaja v omejenem obsegu, s poudarkom na sledljivosti in kakovosti končnega izdelka.</p>
-          </article>
-        </section>
-
-        <section id="podrobnosti" class="product-card product-accordion" aria-label="Podrobnosti izdelka">
-
-          <article class="acc-item is-open">
-            <button class="acc-btn" type="button">Kaj je Reishi tinktura?</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  GoMushroom Reishi tinktura je prehransko dopolnilo iz gobe
-                  <strong>Ganoderma lucidum</strong>, pripravljeno iz lastno pridelane surovine.
-                </p>
-                <p>
-                  Pri izdelku je pomembna celotna pot: pridelava, ekstrakcija, koncentracija,
-                  formulacija in nadzor končnega izdelka.
-                </p>
-              </div>
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Kakovost in sledljivost</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                GoMushroom daje poudarek na lastni surovini, majhnih serijah,
+                nadzoru procesa in testiranju končnega izdelka.
+              </p>
+              <p>
+                Neodvisno testiranje težkih kovin izvajamo na končnem koncentriranem izdelku.
+              </p>
+              <p>
+                <a class="gm-btn gm-btn-secondary" href="/qc/tezke-kovine/">
+                  Težke kovine in kontrola kakovosti
+                </a>
+              </p>
             </div>
-          </article>
+          </div>
+        </article>
 
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Sestavine</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  Prečiščena voda, ekstrakt gobe <strong>Ganoderma lucidum</strong>,
-                  etanol ali rastlinski glicerin, sončnični lecitin, vitamin C.
-                </p>
-              </div>
+        <article class="acc-item">
+          <button class="acc-btn" type="button">Opozorila</button>
+          <div class="acc-content">
+            <div class="acc-content-inner">
+              <p>
+                Priporočenega dnevnega odmerka se ne sme prekoračiti.
+                Prehransko dopolnilo ni nadomestilo za uravnoteženo prehrano
+                in zdrav življenjski slog. Hraniti izven dosega otrok.
+              </p>
             </div>
-          </article>
+          </div>
+        </article>
 
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Navodila za uporabo</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  2–3× dnevno 10–20 kapljic. Tinkturo lahko zaužijete podjezično ali razredčeno
-                  v manjši količini vode oziroma soka.
-                </p>
-                <p>Pred uporabo stekleničko dobro pretresite.</p>
-              </div>
-            </div>
-          </article>
+      </section>
 
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Alkoholna ali brezalkoholna različica</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  Alkoholna različica vsebuje etanol kot del končne formulacije.
-                  Brezalkoholna različica je pripravljena z rastlinskim glicerinom.
-                </p>
-                <p>
-                  Obe različici sledita istemu pristopu kakovosti, sledljivosti in nadzora procesa.
-                </p>
-              </div>
-            </div>
-          </article>
+    </div>
+  </section>
+</main>
 
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Usedlina in motnost</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  Pri koncentriranih tinkturah se lahko pojavi naravna motnost, usedlina ali rahlo
-                  ločevanje frakcij. To je lahko normalen pojav pri izdelkih z višjo vsebnostjo
-                  ekstrahiranih snovi.
-                </p>
-              </div>
-            </div>
-          </article>
-
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Kakovost in sledljivost</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  GoMushroom daje poudarek na lastni surovini, majhnih serijah, nadzoru procesa
-                  in testiranju končnega izdelka.
-                </p>
-                <p>
-                  Neodvisno testiranje težkih kovin izvajamo na končnem koncentriranem izdelku.
-                </p>
-                <p>
-                  <a class="gm-btn gm-btn-secondary" href="/qc/tezke-kovine/">
-                    Težke kovine in kontrola kakovosti
-                  </a>
-                </p>
-              </div>
-            </div>
-          </article>
-
-          <article class="acc-item">
-            <button class="acc-btn" type="button">Opozorila</button>
-            <div class="acc-content">
-              <div class="acc-content-inner">
-                <p>
-                  Priporočenega dnevnega odmerka se ne sme prekoračiti. Prehransko dopolnilo
-                  ni nadomestilo za uravnoteženo prehrano in zdrav življenjski slog.
-                  Hraniti izven dosega otrok.
-                </p>
-              </div>
-            </div>
-          </article>
-
-        </section>
-
-      </div>
-    </section>
   </main>
 
   <footer id="footer" class="site-footer">

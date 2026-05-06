@@ -7,14 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const footerNav = isEn
     ? `
+      <a href="/en/">Home</a>
       <a href="/en/learn/">Learn</a>
-      <a href="/">Slovenian site</a>
+      <a href="/en/qc/heavy-metals/">Quality</a>
     `
     : `
       <a href="/">Domov</a>
       <a href="/znanje/">Znanje</a>
       <a href="/trgovina/">Trgovina</a>
-      <a href="/qc/tezke-kovine/">QC</a>
+      <a href="/qc/tezke-kovine/">Kakovost</a>
     `;
 
   const tags = isEn

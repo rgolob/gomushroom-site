@@ -101,29 +101,8 @@
     </section>
   </main>
 
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener" aria-label="WhatsApp"><span>Wa</span></a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener" aria-label="Facebook"><span>Fb</span></a>
-        <a href="https://www.instagram.com/go.mushroom" target="_blank" rel="noopener" aria-label="Instagram"><span>IG</span></a>
-        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
-      </div>
-      <nav class="footer-nav">
-        <a href="/#services">Storitve</a>
-        <a href="/#approach">Pristop</a>
-        <a href="/#gallery">Galerija</a>
-        <a href="/#references">Reference</a>
-        <a href="/trgovina/">Trgovina</a>
-      </nav>
-      <p class="footer-meta">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia</p>
-      <div class="footer-line"></div>
-      <p class="footer-copy">© <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.</p>
-    </div>
-  </footer>
+  <footer id="site-footer"></footer>
 
-  <script src="/trgovina/js/cart.js"></script>
-  <script src="/trgovina/js/cart-page.js"></script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
     const navToggle = document.getElementById('nav-toggle');
@@ -135,6 +114,8 @@
         siteHeader.classList.toggle('nav-open');
       });
     }
-  </script>
+  </script>  
+  <script src="/trgovina/js/cart-page.js"></script>
+  <script defer src="/js/site-footer.js"></script>
 </body>
 </html>

@@ -154,7 +154,8 @@
               </div>
 
               <p class="variant-current" data-variant-label>Alkoholna</p>
-              <p class="price" data-price>31,90 €</p>
+              <div id="product-price-wrap"></div>
+              <div id="product-stock-wrap" style="margin:.25rem 0"></div>
               <p class="price-note">50 ml • prehransko dopolnilo</p>
 
               <ul class="product-bullets">
@@ -164,23 +165,23 @@
                 <li>Končni izdelek testiran na težke kovine</li>
               </ul>
 
-              <div class="product-actions product-actions-buy">
-                <button
-                  class="gm-btn gm-btn-primary"
-                  type="button"
-                  id="add-to-cart-btn"
-                  data-add-to-cart
-                  data-slug="reishi"
-                  data-variant="alcohol"
-                  data-price="31.90"
-                  data-name="Reishi tinktura"
-                  data-variant-label="Alkoholna"
-                  data-sku="REISHI-ALC-50">
-                  Dodaj v košarico
-                </button>
-
-                <a class="gm-btn gm-btn-secondary" href="/trgovina/">Nazaj v trgovino</a>
-              </div>
+             <div class="product-actions product-actions-buy">
+              <button
+                class="gm-btn gm-btn-primary"
+                type="button"
+                id="add-to-cart-btn"
+                data-add-to-cart
+                data-slug="reishi"
+                data-variant="alc"
+                data-price="31.90"
+                data-name="Reishi tinktura"
+                data-variant-label="Alkoholna"
+                data-sku="RE-ALC-50"
+                data-image="/assets/shop/reishi-tinktura-50ml-gomushroom.webp">
+                Dodaj v košarico
+              </button>
+              <a class="gm-btn gm-btn-secondary" href="/trgovina/">Nazaj v trgovino</a>
+            </div>
 
               <p class="mini-note" data-variant-note>Alkoholna različica.</p>
             </aside>
@@ -403,108 +404,12 @@
 
   <footer id="site-footer"></footer>
   
-  <script defer src="/js/site-footer.js"></script>
   <script src="/trgovina/js/cart.js"></script>
+  <script src="/trgovina/js/product-page.js"></script>
+  <script defer src="/js/site-footer.js"></script>
 
-  <script>
-    const productData = {
-      slug: "reishi",
-      name: "Reishi tinktura",
-      variants: {
-        alcohol: {
-          label: "Alkoholna",
-          price: 31.90,
-          sku: "REISHI-ALC-50",
-          cartVariant: "alcohol",
-          note: "Alkoholna različica."
-        },
-        glycerin: {
-          label: "Brezalkoholna",
-          price: 33.90,
-          sku: "REISHI-GLY-50",
-          cartVariant: "glycerin",
-          note: "Brezalkoholna različica z glicerinom."
-        }
-      }
-    };
+  
+  
 
-    function formatPrice(value) {
-      return value.toLocaleString("sl-SI", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }) + " €";
-    }
-
-    function setVariant(variantKey) {
-      const variant = productData.variants[variantKey];
-      if (!variant) return;
-
-      document.querySelectorAll("[data-variant-btn]").forEach(btn => {
-        btn.classList.toggle("is-active", btn.dataset.variantBtn === variantKey);
-      });
-
-      const priceEl = document.querySelector("[data-price]");
-      const variantLabelEl = document.querySelector("[data-variant-label]");
-      const variantNoteEl = document.querySelector("[data-variant-note]");
-      const addToCartBtn = document.getElementById("add-to-cart-btn");
-
-      if (priceEl) priceEl.textContent = formatPrice(variant.price);
-      if (variantLabelEl) variantLabelEl.textContent = variant.label;
-      if (variantNoteEl) variantNoteEl.textContent = variant.note || "";
-
-      if (addToCartBtn) {
-        addToCartBtn.dataset.slug = productData.slug;
-        addToCartBtn.dataset.variant = variant.cartVariant;
-        addToCartBtn.dataset.price = String(variant.price);
-        addToCartBtn.dataset.name = productData.name;
-        addToCartBtn.dataset.variantLabel = variant.label;
-        addToCartBtn.dataset.sku = variant.sku;
-      }
-    }
-
-    document.querySelectorAll("[data-variant-btn]").forEach(btn => {
-      btn.addEventListener("click", () => setVariant(btn.dataset.variantBtn));
-    });
-
-    setVariant("alcohol");
-  </script>
-
-  <script>
-    document.querySelectorAll(".acc-item").forEach(item => {
-      const btn = item.querySelector(".acc-btn");
-      const content = item.querySelector(".acc-content");
-
-      function setHeight() {
-        if (item.classList.contains("is-open")) {
-          content.style.maxHeight = content.scrollHeight + "px";
-        } else {
-          content.style.maxHeight = null;
-        }
-      }
-
-      btn.addEventListener("click", () => {
-        item.classList.toggle("is-open");
-        setHeight();
-      });
-
-      setHeight();
-    });
-  </script>
-
-  <script>
-    const year = document.getElementById("year");
-    if (year) year.textContent = new Date().getFullYear();
-
-    const navToggle = document.getElementById("nav-toggle");
-    const siteHeader = document.getElementById("site-header");
-
-    if (navToggle && siteHeader) {
-      navToggle.addEventListener("click", () => {
-        const expanded = navToggle.getAttribute("aria-expanded") === "true";
-        navToggle.setAttribute("aria-expanded", String(!expanded));
-        siteHeader.classList.toggle("nav-open");
-      });
-    }
-  </script>
 </body>
 </html>

@@ -143,6 +143,8 @@
 </head>
 
 <body>
+  <header id="site-header"></header>
+  
   <!-- SVG simboli za ikone -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <defs>
@@ -156,45 +158,6 @@
     </defs>
   </svg>
 
-<header id="site-header">
-  <div class="wrap nav">
-    <div class="brand">
-      <!-- logotip ostane nespremenjen -->
-      <a href="https://gomushroom.si/"><img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom"></a>
-    </div>
-
-    <nav id="primary-nav" aria-label="Glavna navigacija">
-      <a href="/#storitve" data-ga-click="storitve" data-ga-location="header_tezke_kovine">Storitve</a>
-      <a href="/#pristop" data-ga-click="pristop" data-ga-location="header_tezke_kovine">Pristop</a>
-      <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button" data-ga-click="o_meni" data-ga-location="header_tezke_kovine">O&nbsp;meni</a>
-      <a href="/#galerija" data-ga-click="galerija" data-ga-location="header_tezke_kovine">Galerija</a>
-      <a href="/#reference" data-ga-click="reference" data-ga-location="header_tezke_kovine">Reference</a>
-      <!-- <a href="#kontakt">Kontakt</a> -->
-    </nav>
-
-    <!-- desno: zastavici + hamburger -->
-    <div class="nav-actions" aria-label="Jezik in meni">
-      <div class="lang-switch" aria-label="Jezik">
-        <!-- povezava na slovensko različico -->
-        <a class="lang-flag" href="https://gomushroom.si/qc/tezke-kovine/" aria-label="Slovenščina" lang="sl" data-ga-click="sl-jezik" data-ga-location="header_tezke_kovine">
-          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-        </a>
-        <!-- povezava na angleško različico -->
-        <a class="lang-flag" href="https://gomushroom.si/en/qc/heavy-metals/" aria-label="English" lang="en" data-ga-click="en-jezik" data-ga-location="header_tezke_kovine">
-          <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-        </a>
-      </div>
-
-      <button class="nav-toggle" id="nav-toggle" type="button"
-              aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
-  
   <main>
 <!-- HERO -->
     <!-- HERO -->
@@ -557,53 +520,10 @@
     </div>
   </div>
 </section>
-
 </main>  
-  
- <!-- FOOTER -->
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social" aria-label="Družbena omrežja">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-          <span>Wa</span>
-        </a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-          <span>Fb</span>
-        </a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-          <span>IG</span>
-        </a>
-        <a href="mailto:info@gomushroom.si" aria-label="E-pošta">
-          <span>@</span>
-        </a>
-      </div>
 
-      <nav class="footer-nav" aria-label="Spodnja navigacija">
-        <a href="/#storitve">Storitve</a>
-        <a href="/#pristop">Pristop</a>
-        <a href="/#galerija">Galerija</a>
-        <a href="/#reference">Reference</a>
-        <!--<a href="/kontakt">Kontakt</a>-->
-      </nav>
+<footer id="site-footer"></footer>  
 
-      <p class="footer-tags">
-        Tinkture medicinskih gob · Reishi · Čaga · resasti bradovec · trojna ekstrakcija ·
-        ultrazvočna ekstrakcija · vakuumsko koncentriranje · majhne serije · sledljivost
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenija
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
-      </p>
-    </div>
-  </footer>
-
-  
 <script>
 /* =========================================================
    1) Tabs switching with animation (fade/slide) – WORKS
@@ -698,7 +618,9 @@
   window.addEventListener('hashchange', openHashTarget);
 })();
 </script>
-<script defer src="https://gomushroom.si/js/site.js"></script>
+<script defer src="/js/site-header.js"></script>
+<script defer src="/js/site-footer.js"></script>
+<script defer src="/js/site.js"></script>
 
 </body>
 </html>

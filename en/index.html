@@ -86,8 +86,8 @@
   }
   </script>
 </head>
-
 <body>
+  <header id="site-header"></header>
   <!-- SVG symbols -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <defs>
@@ -100,47 +100,8 @@
       </symbol>
     </defs>
   </svg>
-
-<header id="site-header">
-  <div class="wrap nav">
-    <div class="brand">
-      <!-- logotip ostane nespremenjen -->
-      <a href="/en/" id="site-logo" class="brand"><img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom"></a>
-    </div>
-
-    <nav id="primary-nav" aria-label="Glavna navigacija">
-      <a href="#services">Services</a>
-      <a href="#approach">Approach</a>
-      <a href="#about" id="nav-about" aria-expanded="false" role="button">About</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#references">References</a>
-      <!-- <a href="#contact">Contact</a> -->
-    </nav>
-    
-    <!-- desno: zastavici + hamburger -->
-    <div class="nav-actions" aria-label="Jezik in meni">
-      <div class="lang-switch" aria-label="Jezik">
-        <!-- povezava na slovensko različico -->
-        <a class="lang-flag" href="https://gomushroom.si/" aria-label="Slovenščina" lang="sl">
-          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-        </a>
-        <!-- povezava na angleško različico -->
-        <a class="lang-flag" href="https://gomushroom.si/en/" aria-label="English" lang="en">
-          <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-        </a>
-      </div>
-
-      <button class="nav-toggle" id="nav-toggle" type="button"
-              aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
-
-  <main>
+  
+<main>
     <!-- HERO -->
 <section class="hero">
   <div class="slides">
@@ -1004,46 +965,7 @@
       </div>
     </section>
   </main>
-
-  <!-- FOOTER -->
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social" aria-label="Social media">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
-        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
-      </div>
-
-      <nav class="footer-nav" aria-label="Footer navigation">
-        <a href="#services">Services</a>
-        <a href="#approach">Approach</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#references">References</a>
-       <!-- <a href="#kontakt">Contact</a>-->
-      </nav>
-
-      <p class="footer-tags">
-        Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction ·
-        ultrasound-assisted extraction · vacuum concentration · small batches · traceability
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
-      </p>
-    </div>
-
-    <script>
-      document.getElementById('year').textContent = new Date().getFullYear();
-    </script>
-  </footer>
-
+  
   <!-- ABOUT — Drawer / Modal -->
   <div id="o-meni" hidden></div>
   <div class="about-modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
@@ -1130,7 +1052,10 @@
   <!-- Backdrop for mobile fullscreen gallery -->
   <div class="gallery-backdrop" id="gallery-backdrop" aria-hidden="true"></div>
   
+<script defer src="/js/site-header.js"></script>
+<script defer src="/js/site-footer.js"></script>
 <script defer src="/js/site.js"></script>
+  
 </body>
 </html>
 

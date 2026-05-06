@@ -1,6 +1,4 @@
 // ── GoMushroom Shop ──────────────────────────────────────
-// Bere produkte iz Supabase gm_products + gm_product_variants
-// ─────────────────────────────────────────────────────────
 
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
@@ -17,7 +15,7 @@ function formatPrice(value) {
   }) + ' €';
 }
 
-// Nastavitve (popusti, poštnina)
+// Nastavitve
 let _settings = null;
 async function loadSettings() {
   try {
@@ -70,200 +68,139 @@ async function loadProducts() {
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS })
   ]);
-  if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju produktov.');
+  if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
   const variants = await varRes.json();
   return products.map(p => ({
     ...p,
     variants: variants
       .filter(v => v.product_id === p.id)
-      .map(v => ({ ...v, discount_pct: Number(v.discount_pct) || 0, price_malo: Number(v.price_malo) || 0, in_stock: v.in_stock !== false, low_stock: !!v.low_stock }))
+      .map(v => ({
+        ...v,
+        discount_pct: Number(v.discount_pct) || 0,
+        price_malo: Number(v.price_malo) || 0,
+        in_stock: v.in_stock !== false,
+        low_stock: !!v.low_stock
+      }))
   }));
 }
 
-function formatIngredients(ingredients) {
-  if (!ingredients || !ingredients.length) return '—';
-  return ingredients.join(', ') + '.';
+function stockLabel(v) {
+  if (!v.in_stock) return '<span style="color:#c0392b;font-size:.8rem">● Ni na zalogi</span>';
+  if (v.low_stock) return '<span style="color:#e67e22;font-size:.8rem">● Zadnje kose</span>';
+  return '<span style="color:#3a6b4a;font-size:.8rem">● Na zalogi</span>';
 }
 
-function formatUsage(p) {
-  let html = '';
-  if (p.usage_intro) html += `<p>${p.usage_intro}</p>`;
-  if (p.usage_steps && p.usage_steps.length)
-    html += `<ul>${p.usage_steps.map(s => `<li>${s}</li>`).join('')}</ul>`;
-  if (p.usage_note) html += `<p><em>${p.usage_note}</em></p>`;
-  return html || '<p>—</p>';
-}
-
-function formatWarnings(warnings) {
-  if (!warnings || !warnings.length) return '<p>—</p>';
-  return `<ul>${warnings.map(w => `<li>${w}</li>`).join('')}</ul>`;
+function priceHtml(v) {
+  if (v.discount_pct > 0) {
+    const discPrice = v.price_malo * (1 - v.discount_pct / 100);
+    return `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.3rem">${formatPrice(v.price_malo)}</span><strong style="font-size:1.2rem;color:#2b0b39">${formatPrice(discPrice)}</strong>`;
+  }
+  return `<strong style="font-size:1.2rem;color:#2b0b39">${formatPrice(v.price_malo)}</strong>`;
 }
 
 function renderShopGrid(products) {
-  const grid = document.getElementById('shop-grid');
+  const grid = document.querySelector('.shop-grid') || document.getElementById('shop-grid');
   if (!grid) return;
 
   grid.innerHTML = products.map(p => {
     const alcVariant = p.variants.find(v => v.type === 'alc');
-    const discounts = p.variants.map(v => Number(v.discount_pct) || 0);
-    const maxDiscount = discounts.length ? Math.max(...discounts) : 0;
     const glyVariant = p.variants.find(v => v.type === 'gly');
     const defaultVariant = alcVariant || glyVariant;
     if (!defaultVariant) return '';
-    const detailUrl = p.is_bundle
-      ? null
-      : `/trgovina/${p.slug}-tinktura/`;
+
+    const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
+    const detailUrl = p.is_bundle ? null : `/trgovina/${p.slug}-tinktura/`;
+    const discPrice = defaultVariant.discount_pct > 0
+      ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
+      : defaultVariant.price_malo;
 
     return `
-      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}" style="position:relative">
-        ${maxDiscount > 0 ? `<span data-discount-badge style="position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25)">−${maxDiscount}%</span>` : ''}
-        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}">
-          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
+      <article class="shop-product" data-product-card="${p.id}" style="position:relative">
+        ${maxDiscount > 0 ? `<span data-discount-badge style="position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25);pointer-events:none">−${maxDiscount}%</span>` : ''}
+        <a href="${detailUrl || '/trgovina/kosarica/'}">
+          <picture>
+            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="800" height="1000" loading="lazy">
+          </picture>
+          <div class="shop-product-body">
+            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
+            <h2>${p.name}</h2>
+            <p class="product-desc">${p.excerpt || ''}</p>
+          </div>
         </a>
-        <div class="gm-shop-card__body">
-          <div>
-            <h2 class="gm-shop-card__title"><a href="${detailUrl}">${p.name}</a></h2>
-            ${p.latin ? `<p class="gm-shop-card__latin">${p.latin}</p>` : ''}
-            ${p.tagline ? `<p class="gm-tagline">${p.tagline}</p>` : ''}
-          </div>
-          <p class="gm-shop-card__excerpt">${p.excerpt || ''}</p>
-          ${p.origin ? `<div class="gm-shop-card__meta"><div class="gm-shop-card__meta-row"><span>Izvor surovine</span><strong>${p.origin}</strong></div></div>` : ''}
+        <div style="padding:0 20px 20px">
           ${p.variants.length > 1 ? `
-          <div class="gm-shop-card__variant-picker" role="radiogroup" aria-label="Izbira različice za ${p.name}">
-            ${alcVariant ? `<button class="gm-variant-btn is-active" type="button" data-card-variant-btn="alc">Alkoholna</button>` : ''}
-            ${glyVariant ? `<button class="gm-variant-btn${!alcVariant ? ' is-active' : ''}" type="button" data-card-variant-btn="gly">Brezalkoholna</button>` : ''}
+          <div style="display:flex;gap:.5rem;margin-bottom:.75rem" data-variant-picker>
+            ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
+            ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalkoholna</button>` : ''}
           </div>` : ''}
-          <div>
-            <div data-price-wrap>
-              ${Number(defaultVariant.discount_pct) > 0
-                ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(defaultVariant.price_malo)}</span>
-                   <span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo * (1 - Number(defaultVariant.discount_pct) / 100))}</span>`
-                : `<span class="gm-shop-card__price" data-card-price>${formatPrice(defaultVariant.price_malo)}</span>`
-              }
-            </div>
-            <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.name}</p>
-            <p class="gm-micro" data-stock-label>
-              ${defaultVariant.in_stock === false
-                ? '<span style="color:#c0392b">● Ni na zalogi</span>'
-                : defaultVariant.low_stock
-                  ? '<span style="color:#e67e22">● Zadnje kose</span> · Majhna serija'
-                  : '<span style="color:#3a6b4a">● Na zalogi</span> · Majhna serija'}
-            </p>
-          </div>
-          <div class="gm-shop-card__actions">
+          <div data-price-wrap style="margin-bottom:.35rem">${priceHtml(defaultVariant)}</div>
+          <div data-stock-wrap style="margin-bottom:.75rem">${stockLabel(defaultVariant)}</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
             <button class="gm-btn gm-btn--primary" type="button" data-add-to-cart
               data-slug="${p.slug}" data-name="${p.name}"
               data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
-              data-price="${defaultVariant.price_malo}" data-sku="${defaultVariant.sku}"
-              data-image="${p.image || ''}">
-              Dodaj v košarico
+              data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
+              data-image="${p.image || ''}"
+              ${!defaultVariant.in_stock ? 'disabled' : ''}>
+              ${defaultVariant.in_stock ? 'Dodaj v košarico' : 'Ni na zalogi'}
             </button>
             ${detailUrl ? `<a class="gm-btn gm-btn--secondary" href="${detailUrl}">Podrobnosti</a>` : ''}
-          </div>
-          <div class="gm-accordion">
-            <div class="gm-acc-item">
-              <button class="gm-acc-toggle" type="button">Sestavine</button>
-              <div class="gm-acc-content"><p data-ingredients-el>${formatIngredients(defaultVariant.ingredients)}</p></div>
-            </div>
-            <div class="gm-acc-item">
-              <button class="gm-acc-toggle" type="button">Način uporabe</button>
-              <div class="gm-acc-content">${formatUsage(p)}</div>
-            </div>
-            <div class="gm-acc-item">
-              <button class="gm-acc-toggle" type="button">Opozorila</button>
-              <div class="gm-acc-content">${formatWarnings(p.warnings)}</div>
-            </div>
           </div>
         </div>
       </article>`;
   }).join('');
 
   bindVariantPickers(products);
-  bindAccordions();
 }
 
 function bindVariantPickers(products) {
   document.querySelectorAll('[data-product-card]').forEach(card => {
     const product = products.find(p => p.id === card.dataset.productCard);
     if (!product) return;
-    const priceEl = card.querySelector('[data-card-price]');
-    const variantLabelEl = card.querySelector('[data-card-variant-label]');
-    const addBtn = card.querySelector('[data-add-to-cart]');
-    const ingredientsEl = card.querySelector('[data-ingredients-el]');
-    const btns = card.querySelectorAll('[data-card-variant-btn]');
+    const btns = card.querySelectorAll('[data-variant-btn]');
 
     function setVariant(type) {
       const v = product.variants.find(v => v.type === type);
       if (!v) return;
-      btns.forEach(b => b.classList.toggle('is-active', b.dataset.cardVariantBtn === type));
-      // Posodobi ceno z popustom
+
+      btns.forEach(b => b.classList.toggle('is-active', b.dataset.variantBtn === type));
+
+      const discPrice = v.discount_pct > 0 ? v.price_malo * (1 - v.discount_pct / 100) : v.price_malo;
+
       const priceWrap = card.querySelector('[data-price-wrap]');
-      if (priceWrap) {
-        const disc = Number(v.discount_pct) || 0;
-        if (disc > 0) {
-          const discPrice = v.price_malo * (1 - disc / 100);
-          priceWrap.innerHTML = `<span style="text-decoration:line-through;color:#9a8f82;font-size:.9rem;margin-right:.4rem">${formatPrice(v.price_malo)}</span><span class="gm-shop-card__price" data-card-price>${formatPrice(discPrice)}</span>`;
-          if (addBtn) addBtn.dataset.price = String(discPrice.toFixed(2));
-        } else {
-          priceWrap.innerHTML = `<span class="gm-shop-card__price" data-card-price>${formatPrice(v.price_malo)}</span>`;
-          if (addBtn) addBtn.dataset.price = String(v.price_malo);
-        }
-      } else if (priceEl) priceEl.textContent = formatPrice(v.price_malo);
-      if (variantLabelEl) variantLabelEl.textContent = v.name;
-      if (ingredientsEl) ingredientsEl.textContent = formatIngredients(v.ingredients);
+      if (priceWrap) priceWrap.innerHTML = priceHtml(v);
+
+      const stockWrap = card.querySelector('[data-stock-wrap]');
+      if (stockWrap) stockWrap.innerHTML = stockLabel(v);
+
+      const addBtn = card.querySelector('[data-add-to-cart]');
       if (addBtn) {
         addBtn.dataset.variant = type;
         addBtn.dataset.variantLabel = v.name;
-        addBtn.dataset.price = String(v.price_malo);
-        addBtn.dataset.sku = v.sku;
+        addBtn.dataset.price = discPrice.toFixed(2);
+        addBtn.dataset.sku = v.sku || '';
+        addBtn.disabled = !v.in_stock;
+        addBtn.textContent = v.in_stock ? 'Dodaj v košarico' : 'Ni na zalogi';
       }
-      // Posodobi badge
-      const disc = Number(v.discount_pct) || 0;
+
+      // Badge
       let badge = card.querySelector('[data-discount-badge]');
       if (!badge) {
         badge = document.createElement('span');
         badge.dataset.discountBadge = '';
-        badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25)';
+        badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25);pointer-events:none';
         card.appendChild(badge);
       }
-      badge.textContent = `−${disc}%`;
-      badge.style.display = disc > 0 ? '' : 'none';
-
-      // Posodobi stock label
-      const stockEl = card.querySelector('[data-stock-label]');
-      if (stockEl) {
-        stockEl.innerHTML = v.in_stock === false
-          ? '<span style="color:#c0392b">● Ni na zalogi</span>'
-          : v.low_stock
-            ? '<span style="color:#e67e22">● Zadnje kose</span> · Majhna serija'
-            : '<span style="color:#3a6b4a">● Na zalogi</span> · Majhna serija';
-      }
-
-      // Onemogoči gumb če ni na zalogi
-      if (addBtn) addBtn.disabled = v.in_stock === false;
+      badge.textContent = `−${v.discount_pct}%`;
+      badge.style.display = v.discount_pct > 0 ? '' : 'none';
     }
 
-    btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.cardVariantBtn)));
+    btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.variantBtn)));
   });
-}
-
-function bindAccordions() {
-  document.querySelectorAll('.gm-acc-toggle').forEach(btn => {
-    btn.addEventListener('click', () => btn.closest('.gm-acc-item')?.classList.toggle('open'));
-  });
-}
-
-function renderSkeleton() {
-  const grid = document.getElementById('shop-grid');
-  if (!grid) return;
-  grid.innerHTML = [1,2,3].map(() =>
-    `<div style="min-height:420px;background:rgba(43,11,57,.04);border-radius:24px"></div>`
-  ).join('');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  renderSkeleton();
   try {
     await loadSettings();
     const products = await loadProducts();
@@ -271,7 +208,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderActiveDiscountBanner();
   } catch(e) {
     console.error(e);
-    const grid = document.getElementById('shop-grid');
-    if (grid) grid.innerHTML = '<p style="padding:1rem">Trenutno ni mogoče naložiti produktov.</p>';
   }
 });

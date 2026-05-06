@@ -135,8 +135,8 @@
 }
 </script>
 </head>
-
 <body>
+<header id="site-header"></header>
   <!-- SVG symbols for icons -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <defs>
@@ -149,44 +149,6 @@
       </symbol>
     </defs>
   </svg>
-
-<header id="site-header">
-  <div class="wrap nav">
-    <div class="brand">
-      <!-- logo remains unchanged -->
-      <a href="https://gomushroom.si/en/"><img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom"></a>
-    </div>
-
-    <nav id="primary-nav" aria-label="Main navigation">
-      <a href="/en/#services">Services</a>
-      <a href="/en/#approach">Approach</a>
-      <a href="/en/#gallery">Gallery</a>
-      <a href="/en/#references">References</a>
-      <!-- <a href="#kontakt">Contact</a> -->
-    </nav>
-
-    <!-- right: flags + hamburger -->
-    <div class="nav-actions" aria-label="Language and menu">
-      <div class="lang-switch" aria-label="Language">
-        <!-- link to Slovenian version -->
-        <a class="lang-flag" href="https://gomushroom.si/qc/tezke-kovine/" aria-label="Slovenian" lang="sl">
-          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenian" width="34" height="34" loading="lazy">
-        </a>
-        <!-- link to English version -->
-        <a class="lang-flag" href="https://gomushroom.si/en/qc/heavy-metals/" aria-label="English" lang="en">
-          <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-        </a>
-      </div>
-
-      <button class="nav-toggle" id="nav-toggle" type="button"
-              aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
   
   <main>
 <!-- HERO -->
@@ -550,53 +512,8 @@
     </div>
   </div>
 </section>
-
 </main>  
-  
- <!-- FOOTER -->
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social" aria-label="Social media">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-          <span>Wa</span>
-        </a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-          <span>Fb</span>
-        </a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-          <span>IG</span>
-        </a>
-        <a href="mailto:info@gomushroom.si" aria-label="Email">
-          <span>@</span>
-        </a>
-      </div>
-
-      <nav class="footer-nav" aria-label="Footer navigation">
-        <a href="/en/#services">Services</a>
-        <a href="/en/#approach">Approach</a>
-        <a href="/en/#gallery">Gallery</a>
-        <a href="/en/#references">References</a>
-        <!--<a href="/kontakt">Contact</a>-->
-      </nav>
-
-      <p class="footer-tags">
-        Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction ·
-        ultrasonic extraction · vacuum concentration · small batches · traceability
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, mushroom cultivation, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. All rights reserved.
-      </p>
-    </div>
-  </footer>
-
-  
+   
 <script>
 /* =========================================================
    1) Tabs switching with animation (fade/slide) – WORKS
@@ -691,7 +608,8 @@
   window.addEventListener('hashchange', openHashTarget);
 })();
 </script>
-<script defer src="https://gomushroom.si/js/site.js"></script>
-
+<script defer src="/js/site-header.js"></script>
+<script defer src="/js/site-footer.js"></script>
+<script defer src="/js/site.js"></script>
 </body>
 </html>

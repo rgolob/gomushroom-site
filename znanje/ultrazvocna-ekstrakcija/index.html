@@ -62,44 +62,11 @@
   }
   </script>
 </head>
-
 <body>
-  <header id="site-header">
-    <div class="wrap nav">
-      <div class="brand">
-        <a href="https://gomushroom.si/" aria-label="GoMushroom domov">
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom">
-        </a>
-      </div>
-
-      <nav id="primary-nav" aria-label="Glavna navigacija">
-        <a href="https://gomushroom.si/#services">Storitve</a>
-        <a href="https://gomushroom.si/#approach">Pristop</a>
-        <a href="https://gomushroom.si/#about">O nas</a>
-        <a href="https://gomushroom.si/#gallery">Galerija</a>
-        <a href="https://gomushroom.si/#references">Reference</a>
-      </nav>
-
-      <div class="nav-actions" aria-label="Jezik in meni">
-        <div class="lang-switch" aria-label="Izbira jezika">
-          <a class="lang-flag" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/" aria-label="Slovenščina" lang="sl">
-            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-          </a>
-          <a class="lang-flag" href="https://gomushroom.si/en/learn/ultrasonic-extraction/" aria-label="English" lang="en">
-            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-          </a>
-        </div>
-
-        <button class="nav-toggle" id="nav-toggle" type="button"
-                aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
+  
+<div class="reading-progress"></div>
+<header id="site-header"></header>
+  
   <main>
     <section class="article-page">
       <div class="wrap">
@@ -380,54 +347,10 @@
     </section>
   </main>
 
-  <footer id="footer" class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-social" aria-label="Družbena omrežja">
-        <a href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><span>Wa</span></a>
-        <a href="https://www.facebook.com/go.mushroomm" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span>Fb</span></a>
-        <a href="https://www.instagram.com/go.mushroom?igsh=bG1pMXRtbWprNThk&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span>IG</span></a>
-        <a href="mailto:info@gomushroom.si" aria-label="Email"><span>@</span></a>
-      </div>
-
-      <nav class="footer-nav" aria-label="Footer navigacija">
-        <a href="#services">Storitve</a>
-        <a href="#approach">Pristop</a>
-        <a href="#gallery">Galerija</a>
-        <a href="#references">Reference</a>
-      </nav>
-
-      <p class="footer-tags">
-        Medicinske gobe · Reishi · Chaga · Resasti bradovec · ultrazvočna ekstrakcija ·
-        UAE · akustična kavitacija · večstopenjska ekstrakcija · sledljivost
-      </p>
-
-      <p class="footer-meta">
-        GoMushroom, pridelava gob, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža · Slovenia
-      </p>
-
-      <div class="footer-line" aria-hidden="true"></div>
-
-      <p class="footer-copy">
-        © <span id="year"></span> GoMushroom — Rok Golob. Vse pravice pridržane.
-      </p>
-    </div>
-
-    <script>
-      document.getElementById('year').textContent = new Date().getFullYear();
-    </script>
-  </footer>
-
-  <script>
-    const navToggle = document.getElementById('nav-toggle');
-    const siteHeader = document.getElementById('site-header');
-
-    if (navToggle && siteHeader) {
-      navToggle.addEventListener('click', () => {
-        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!expanded));
-        siteHeader.classList.toggle('nav-open');
-      });
-    }
-  </script>
+<footer id="site-footer"></footer>
+  
+<script defer src="/js/article-header.js"></script>
+<script defer src="/js/site-footer.js"></script>
+<script defer src="/js/site.js"></script>
 </body>
 </html>

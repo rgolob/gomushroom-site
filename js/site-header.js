@@ -8,11 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
 const navItems = isEn
   ? `
     <a href="/en/#services">Services</a>
-    <a href="/en//#approach">Approach</a>
+    <a href="/en/#approach">Approach</a>
     <a href="/en/qc/heavy-metals/">Quality</a>
     <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
-    <a href="/en//#gallery">Gallery</a>
-    <a href="/en//#references">References</a>
+    <a href="/en/#gallery">Gallery</a>
+    <a href="/en/#references">References</a>
   `
   : `
     <a href="/#storitve">Storitve</a>
@@ -70,7 +70,7 @@ const enLangUrl = isEn
 
         <div class="lang-switch" aria-label="Jezik">
 
-          <a class="lang-flag" href="href="${slLangUrl}" aria-label="Slovenščina" lang="sl">
+          <a class="lang-flag" href="${slLangUrl}" aria-label="Slovenščina" lang="sl">
            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
           </a>
 

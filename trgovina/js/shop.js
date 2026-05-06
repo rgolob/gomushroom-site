@@ -77,7 +77,7 @@ async function loadProducts() {
     ...p,
     variants: variants
       .filter(v => v.product_id === p.id)
-      .map(v => ({ ...v, discount_pct: Number(v.discount_pct) || 0, price_malo: Number(v.price_malo) || 0 }))
+      .map(v => ({ ...v, discount_pct: Number(v.discount_pct) || 0, price_malo: Number(v.price_malo) || 0, in_stock: v.in_stock !== false, low_stock: !!v.low_stock }))
   }));
 }
 
@@ -116,10 +116,10 @@ function renderShopGrid(products) {
       : `/trgovina/${p.slug}-tinktura/`;
 
     return `
-      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}">
-        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}" style="position:relative;display:block">
-          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block">
-          ${maxDiscount > 0 ? `<span class="gm-discount-badge" data-discount-badge style="position:absolute;top:12px;left:12px;z-index:2;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;pointer-events:none">−${maxDiscount}%</span>` : ''}
+      <article class="gm-shop-card" data-product-card="${p.id}" data-slug="${p.slug}" style="position:relative">
+        ${maxDiscount > 0 ? `<span data-discount-badge style="position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25)">−${maxDiscount}%</span>` : ''}
+        <a class="gm-shop-card__image" href="${detailUrl || '/trgovina/kosarica/'}" aria-label="${p.name}">
+          <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" loading="lazy">
         </a>
         <div class="gm-shop-card__body">
           <div>
@@ -143,7 +143,13 @@ function renderShopGrid(products) {
               }
             </div>
             <p class="gm-shop-card__price-note" data-card-variant-label>${defaultVariant.name}</p>
-            <p class="gm-micro">Na zalogi · Majhna serija</p>
+            <p class="gm-micro" data-stock-label>
+              ${defaultVariant.in_stock === false
+                ? '<span style="color:#c0392b">● Ni na zalogi</span>'
+                : defaultVariant.low_stock
+                  ? '<span style="color:#e67e22">● Zadnje kose</span> · Majhna serija'
+                  : '<span style="color:#3a6b4a">● Na zalogi</span> · Majhna serija'}
+            </p>
           </div>
           <div class="gm-shop-card__actions">
             <button class="gm-btn gm-btn--primary" type="button" data-add-to-cart
@@ -214,21 +220,28 @@ function bindVariantPickers(products) {
       }
       // Posodobi badge
       const disc = Number(v.discount_pct) || 0;
-      const imgLink = card.querySelector('.gm-shop-card__image');
       let badge = card.querySelector('[data-discount-badge]');
-      if (disc > 0) {
-        if (!badge) {
-          badge = document.createElement('span');
-          badge.className = 'gm-discount-badge';
-          badge.dataset.discountBadge = '';
-          badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:2;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;pointer-events:none';
-          if (imgLink) imgLink.appendChild(badge);
-        }
-        badge.textContent = `−${disc}%`;
-        badge.style.display = '';
-      } else if (badge) {
-        badge.style.display = 'none';
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.dataset.discountBadge = '';
+        badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.25rem .65rem;border-radius:999px;box-shadow:0 2px 8px rgba(43,11,57,.25)';
+        card.appendChild(badge);
       }
+      badge.textContent = `−${disc}%`;
+      badge.style.display = disc > 0 ? '' : 'none';
+
+      // Posodobi stock label
+      const stockEl = card.querySelector('[data-stock-label]');
+      if (stockEl) {
+        stockEl.innerHTML = v.in_stock === false
+          ? '<span style="color:#c0392b">● Ni na zalogi</span>'
+          : v.low_stock
+            ? '<span style="color:#e67e22">● Zadnje kose</span> · Majhna serija'
+            : '<span style="color:#3a6b4a">● Na zalogi</span> · Majhna serija';
+      }
+
+      // Onemogoči gumb če ni na zalogi
+      if (addBtn) addBtn.disabled = v.in_stock === false;
     }
 
     btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.cardVariantBtn)));

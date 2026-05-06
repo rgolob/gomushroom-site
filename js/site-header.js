@@ -15,13 +15,13 @@ const navItems = isEn
     <a href="/en//#references">References</a>
   `
   : `
-    <a href="#storitve">Storitve</a>
-    <a href="#pristop">Pristop</a>
+    <a href="/#storitve">Storitve</a>
+    <a href="/#pristop">Pristop</a>
     <a href="/znanje/">Znanje</a>
     <a href="/qc/tezke-kovine/">Kakovost</a>
-    <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
-    <a href="#galerija">Galerija</a>
-    <a href="#reference">Reference</a>
+    <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
+    <a href="/#galerija">Galerija</a>
+    <a href="/#reference">Reference</a>
   `;
 
   const homeUrl = isEn ? "/en/" : "/";

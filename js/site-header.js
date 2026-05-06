@@ -42,18 +42,35 @@ document.addEventListener("DOMContentLoaded", () => {
     "#references": "#reference"
   };
 
+  const pageMapSlToEn = {
+    "/qc/tezke-kovine/": "/en/qc/heavy-metals/"
+  };
+
+  const pageMapEnToSl = {
+    "/en/qc/heavy-metals/": "/qc/tezke-kovine/"
+  };
+
   function getLangUrls() {
+    const currentPath = window.location.pathname;
     const currentHash = window.location.hash;
 
-    const slUrl = isEn
-      ? `/${hashMapEnToSl[currentHash] || ""}`
-      : `/${currentHash || ""}`;
+    if (isEn) {
+      const translatedPage = pageMapEnToSl[currentPath];
+      const translatedHash = hashMapEnToSl[currentHash];
 
-    const enUrl = isEn
-      ? `/en/${currentHash || ""}`
-      : `/en/${hashMapSlToEn[currentHash] || ""}`;
+      return {
+        slUrl: translatedPage || `/${translatedHash || ""}`,
+        enUrl: currentPath + currentHash
+      };
+    }
 
-    return { slUrl, enUrl };
+    const translatedPage = pageMapSlToEn[currentPath];
+    const translatedHash = hashMapSlToEn[currentHash];
+
+    return {
+      slUrl: currentPath + currentHash,
+      enUrl: translatedPage || `/en/${translatedHash || ""}`
+    };
   }
 
   const { slUrl, enUrl } = getLangUrls();

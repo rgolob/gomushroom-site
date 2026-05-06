@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zaloga">
 <meta name="theme-color" content="#1a1209">
@@ -4739,11 +4738,25 @@ ${type==='trosarine'?`
 `}
 </body></html>`;
 
-  const blob=new Blob([full],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  // Prikaži v overlay znotraj app (deluje na mobilnem)
+  let reportWrap = document.getElementById('reportViewOverlay');
+  if (!reportWrap) {
+    reportWrap = document.createElement('div');
+    reportWrap.id = 'reportViewOverlay';
+    reportWrap.style.cssText = 'position:fixed;inset:0;z-index:900;background:white;overflow-y:auto;-webkit-overflow-scrolling:touch';
+    document.body.appendChild(reportWrap);
+  }
+  reportWrap.innerHTML = `
+    <div style="position:sticky;top:0;z-index:10;background:var(--ink);padding:.65rem 1rem;display:flex;justify-content:space-between;align-items:center">
+      <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
+      <div style="display:flex;gap:.5rem">
+        <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
+        <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
+      </div>
+    </div>
+    <div style="padding:1.5rem;max-width:900px;margin:0 auto">${full}</div>`;
+  reportWrap.style.display = '';
+  reportWrap.scrollTop = 0;
 }
 
 
@@ -5281,6 +5294,12 @@ function openZalogaSettings(){
         </div>
 
         <!-- SIMULATOR -->
+        <!-- ZALOGA PO VARIANTAH -->
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Zaloga po variantah</div>
+        <div id="zsStockList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
+          <div style="font-size:.78rem;color:var(--muted);padding:.35rem 0">Naloži seznam…</div>
+        </div>
+
         <!-- POPUSTI PO VARIANTAH -->
         <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Popusti po variantah</div>
         <div id="zsVariantniPopustiList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
@@ -5323,7 +5342,49 @@ function zsSwitch(tab){
   document.getElementById('zsPanel2').style.display=tab===2?'':'none';
   document.getElementById('zsTab1').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===1?'var(--ink)':'none'};color:${tab===1?'white':'var(--muted)'}`;
   document.getElementById('zsTab2').style.cssText=`flex:1;padding:.5rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;background:${tab===2?'var(--ink)':'none'};color:${tab===2?'white':'var(--muted)'}`;
-  if(tab===2){setTimeout(simulirajCeno,50);naloziVariantnePopuste();}
+  if(tab===2){setTimeout(simulirajCeno,50);naloziVariantnePopuste();naloziStock();}
+}
+
+// ── ZALOGA PO VARIANTAH ──────────────────────────────────
+async function naloziStock(){
+  const el=document.getElementById('zsStockList');
+  if(!el)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=id,product_id,type,name,sku,in_stock,low_stock&order=product_id.asc,sort_order.asc`,{headers:SB_HEADERS});
+    if(!r.ok)throw new Error();
+    const variants=await r.json();
+    const pr=await fetch(`${SB_URL}/rest/v1/gm_products?select=id,name&active=eq.true`,{headers:SB_HEADERS});
+    const products=pr.ok?await pr.json():[];
+    const prodMap=Object.fromEntries(products.map(p=>[p.id,p.name]));
+    if(!variants.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Ni variant.</div>';return;}
+    el.innerHTML=variants.map(v=>`
+      <div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
+        <div style="flex:1;font-size:.78rem;min-width:0">
+          <span style="font-weight:500">${prodMap[v.product_id]||v.product_id}</span>
+          <span style="color:var(--muted);margin-left:.3rem">${v.type==='alc'?'Alkoholna':'Glicerinska'}</span>
+        </div>
+        <select onchange="shtvariStock('${v.id}',this.value)"
+          style="padding:.3rem .4rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.75rem;cursor:pointer">
+          <option value="in_stock" ${v.in_stock!==false&&!v.low_stock?'selected':''}>● Na zalogi</option>
+          <option value="low_stock" ${v.low_stock?'selected':''}>● Zadnje kose</option>
+          <option value="out_of_stock" ${v.in_stock===false?'selected':''}>● Ni na zalogi</option>
+        </select>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Napaka.</div>';
+  }
+}
+
+async function shtvariStock(variantId,value){
+  const data=value==='in_stock'?{in_stock:true,low_stock:false}
+    :value==='low_stock'?{in_stock:true,low_stock:true}
+    :{in_stock:false,low_stock:false};
+  try{
+    await fetch(`${SB_URL}/rest/v1/gm_product_variants?id=eq.${variantId}`,{
+      method:'PATCH',headers:SB_HEADERS,body:JSON.stringify(data)
+    });
+    toast('✓ Zaloga posodobljena');
+  }catch(e){toast('⚠ Napaka');}
 }
 
 // ── POPUSTI PO VARIANTAH ──────────────────────────────────

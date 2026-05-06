@@ -26,6 +26,33 @@ const navItems = isEn
 
   const homeUrl = isEn ? "/en/" : "/";
 
+const hashMapSlToEn = {
+  "#storitve": "#services",
+  "#pristop": "#approach",
+  "#o-meni": "#about",
+  "#galerija": "#gallery",
+  "#reference": "#references"
+};
+
+const hashMapEnToSl = {
+  "#services": "#storitve",
+  "#approach": "#pristop",
+  "#about": "#o-meni",
+  "#gallery": "#galerija",
+  "#references": "#reference"
+};
+
+const currentHash = window.location.hash;
+
+const slLangUrl = isEn
+  ? "/" + (hashMapEnToSl[currentHash] || "")
+  : "/" + (currentHash || "");
+
+const enLangUrl = isEn
+  ? "/en/" + (currentHash || "")
+  : "/en/" + (hashMapSlToEn[currentHash] || "");
+
+
   header.innerHTML = `
     <div class="wrap nav">
 
@@ -43,41 +70,16 @@ const navItems = isEn
 
         <div class="lang-switch" aria-label="Jezik">
 
-          <a class="lang-flag"
-             href="/"
-             aria-label="Slovenščina"
-             lang="sl">
-
-            <img class="flag-img"
-                 src="/assets/flag-sl-64.webp"
-                 alt="Slovenščina"
-                 width="34"
-                 height="34"
-                 loading="lazy">
+          <a class="lang-flag" href="href="${slLangUrl}" aria-label="Slovenščina" lang="sl">
+           <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
           </a>
 
-          <a class="lang-flag"
-             href="/en/"
-             aria-label="English"
-             lang="en">
-
-            <img class="flag-img"
-                 src="/assets/flag-uk-64.webp"
-                 alt="English"
-                 width="34"
-                 height="34"
-                 loading="lazy">
+          <a class="lang-flag" href="${enLangUrl}" aria-label="English" lang="en">
+            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
           </a>
 
         </div>
-
-        <button class="nav-toggle"
-                id="nav-toggle"
-                type="button"
-                aria-label="Meni"
-                aria-expanded="false"
-                aria-controls="primary-nav">
-
+        <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
           </svg>

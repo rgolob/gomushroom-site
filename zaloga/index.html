@@ -364,6 +364,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+    <button class="htab" onclick="switchTab('narocila',this)">🌐 Naročila</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
@@ -384,6 +385,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+  <button class="dtab" onclick="switchTab('narocila',this)">🌐 Naročila</button>
   
 </nav>
 
@@ -610,6 +612,27 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div id="customerList"></div>
     <div id="customerPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
+  </div>
+
+  <!-- NAROČILA IZ SPLETNE TRGOVINE -->
+  <div class="view" id="view-narocila">
+    <div class="view-hdr">
+      <div class="view-title">🌐 Naročila</div>
+      <button class="bsave" onclick="naloziNarocila()" style="font-size:.75rem;padding:.35rem .75rem">↻ Osveži</button>
+    </div>
+
+    <!-- Filter -->
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.75rem 0 .5rem">
+      <select id="narocila-status-filter" onchange="renderNarocila()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+        <option value="">Vsa naročila</option>
+        <option value="pending" selected>⏳ Čaka plačilo</option>
+        <option value="paid">✅ Plačano</option>
+        <option value="shipped">📦 Odposlano</option>
+        <option value="cancelled">❌ Preklicano</option>
+      </select>
+    </div>
+
+    <div id="narocila-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
   </div>
 
 </div>
@@ -2249,6 +2272,7 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='prodaja')renderOrderRows();
+  if(id==='narocila') naloziNarocila();
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
@@ -4825,6 +4849,180 @@ ${type==='trosarine'?`
   reportWrap.scrollTop = 0;
 }
 
+
+// ── NAROČILA IZ SPLETNE TRGOVINE ─────────────────────────
+let _narocila = [];
+
+async function naloziNarocila() {
+  const el = document.getElementById('narocila-list');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:.5rem">Nalagam…</div>';
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_orders?order=created_at.desc&limit=100`, { headers: SB_HEADERS });
+    if (!r.ok) throw new Error();
+    _narocila = await r.json();
+    renderNarocila();
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:.8rem;color:var(--muted)">Napaka pri nalaganju.</div>';
+  }
+}
+
+function renderNarocila() {
+  const el = document.getElementById('narocila-list');
+  if (!el) return;
+  const filter = document.getElementById('narocila-status-filter')?.value || '';
+  const seznam = filter ? _narocila.filter(n => n.status === filter) : _narocila;
+
+  if (!seznam.length) {
+    el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:.5rem">Ni naročil.</div>';
+    return;
+  }
+
+  const statusLabel = { pending: '⏳ Čaka', paid: '✅ Plačano', shipped: '📦 Odposlano', cancelled: '❌ Preklicano', abandoned: '👻 Zapuščeno' };
+  const statusColor = { pending: '#e67e22', paid: '#3a6b4a', shipped: '#2b0b39', cancelled: '#c0392b', abandoned: '#9a8f82' };
+
+  el.innerHTML = seznam.map(n => {
+    const datum = new Date(n.created_at).toLocaleDateString('sl-SI');
+    const artikli = (n.items || []).map(i => `${i.name} ${i.variantLabel || ''} ×${i.quantity}`).join(', ');
+    const status = n.status || 'pending';
+    return `
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:.9rem">${n.name}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${n.email} · ${datum}</div>
+          <div style="font-size:.78rem;margin:.35rem 0;color:var(--ink)">${artikli}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${n.street || ''}, ${n.post || ''} ${n.city || ''}</div>
+          ${n.rf_reference ? `<div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">RF: ${n.rf_reference}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-weight:700;font-size:1rem">${(n.total||0).toFixed(2)} €</div>
+          <div style="font-size:.72rem;font-weight:600;color:${statusColor[status]||'#9a8f82'};margin:.2rem 0">${statusLabel[status]||status}</div>
+        </div>
+      </div>
+      ${status === 'pending' ? `
+      <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
+        <button class="bsave" onclick="potrdiNarocilo('${n.id}')" style="font-size:.75rem;padding:.35rem .75rem;flex:1">
+          ✅ Potrdi plačilo + ustvari WP
+        </button>
+        <button class="bcancel" onclick="prekliNarocilo('${n.id}')" style="font-size:.75rem;padding:.35rem .75rem">
+          ❌ Prekliči
+        </button>
+      </div>` : ''}
+      ${status === 'paid' && !n.invoice_id ? `
+      <div style="margin-top:.5rem">
+        <button class="bsave" onclick="oznacOdposlano('${n.id}')" style="font-size:.75rem;padding:.35rem .75rem;background:var(--parchment);color:var(--ink)">
+          📦 Označi kot odposlano
+        </button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function potrdiNarocilo(orderId) {
+  const narocilo = _narocila.find(n => n.id === orderId);
+  if (!narocilo) return;
+  if (!confirm(`Potrdi plačilo od ${narocilo.name} (${(narocilo.total||0).toFixed(2)} €) in ustvari WP prodajno skupino?`)) return;
+
+  try {
+    // 1. Ustvari prodajno skupino WP
+    const items = narocilo.items || [];
+    const lines = items.map(item => ({
+      productId: null,
+      productName: item.name,
+      sku: item.sku || '',
+      variantType: item.variant || 'alc',
+      qty: item.quantity || 1,
+      price: item.price || 0,
+    }));
+
+    // Poišči produkte po SKU
+    const prodRes = await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=id,sku,product_id,type,name,price_malo`, { headers: SB_HEADERS });
+    const variants = prodRes.ok ? await prodRes.json() : [];
+    const skuMap = Object.fromEntries(variants.map(v => [v.sku, v]));
+
+    // Ustvari sale group
+    const groupData = {
+      channel: 'wp',
+      customer_name: narocilo.name,
+      customer_email: narocilo.email,
+      note: `Spletno naročilo #${orderId.substring(0,8)} · ${narocilo.street}, ${narocilo.post} ${narocilo.city}`,
+      status: 'placano',
+      discount: narocilo.discount_pct || 0,
+      discount_amt: narocilo.discount_amt || 0,
+      full_total: narocilo.total || 0,
+      created_at: new Date().toISOString(),
+    };
+
+    const gr = await fetch(`${SB_URL}/rest/v1/gm_sale_groups`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      body: JSON.stringify(groupData)
+    });
+    if (!gr.ok) throw new Error('Napaka pri ustvarjanju prodajne skupine');
+    const [group] = await gr.json();
+
+    // Ustvari sale lines
+    for (const item of items) {
+      const variant = skuMap[item.sku];
+      await fetch(`${SB_URL}/rest/v1/gm_sale_lines`, {
+        method: 'POST',
+        headers: SB_HEADERS,
+        body: JSON.stringify({
+          group_id: group.id,
+          product_id: variant?.product_id || null,
+          variant_type: item.variant || 'alc',
+          sku: item.sku || '',
+          product_name: item.name,
+          qty: item.quantity || 1,
+          price_malo: item.price || 0,
+          line_total: (item.price || 0) * (item.quantity || 1),
+        })
+      });
+    }
+
+    // 2. Posodobi status naročila
+    await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
+      method: 'PATCH',
+      headers: SB_HEADERS,
+      body: JSON.stringify({ status: 'paid', invoice_id: group.id })
+    });
+
+    // 3. Posodobi lokalno
+    const idx = _narocila.findIndex(n => n.id === orderId);
+    if (idx >= 0) { _narocila[idx].status = 'paid'; _narocila[idx].invoice_id = group.id; }
+
+    renderNarocila();
+    toast('✅ Naročilo potrjeno, WP skupina ustvarjena');
+
+  } catch(e) {
+    console.error(e);
+    toast('⚠ Napaka: ' + e.message);
+  }
+}
+
+async function prekliNarocilo(orderId) {
+  if (!confirm('Prekliči naročilo?')) return;
+  await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
+    method: 'PATCH', headers: SB_HEADERS,
+    body: JSON.stringify({ status: 'cancelled' })
+  });
+  const idx = _narocila.findIndex(n => n.id === orderId);
+  if (idx >= 0) _narocila[idx].status = 'cancelled';
+  renderNarocila();
+  toast('❌ Naročilo preklicano');
+}
+
+async function oznacOdposlano(orderId) {
+  await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
+    method: 'PATCH', headers: SB_HEADERS,
+    body: JSON.stringify({ status: 'shipped' })
+  });
+  const idx = _narocila.findIndex(n => n.id === orderId);
+  if (idx >= 0) _narocila[idx].status = 'shipped';
+  renderNarocila();
+  toast('📦 Označeno kot odposlano');
+}
 
 // ── INTEGRITY CHECK ──
 function _calcBatchIntegrity(){

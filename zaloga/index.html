@@ -364,7 +364,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
-    <button class="htab" onclick="switchTab('narocila',this)">🌐 Naročila</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
@@ -385,7 +384,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
-  <button class="dtab" onclick="switchTab('narocila',this)">🌐 Naročila</button>
   
 </nav>
 
@@ -614,26 +612,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div id="customerPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
   </div>
 
-  <!-- NAROČILA IZ SPLETNE TRGOVINE -->
-  <div class="view" id="view-narocila">
-    <div class="view-hdr">
-      <div class="view-title">🌐 Naročila</div>
-      <button class="bsave" onclick="naloziNarocila()" style="font-size:.75rem;padding:.35rem .75rem">↻ Osveži</button>
-    </div>
-
-    <!-- Filter -->
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.75rem 0 .5rem">
-      <select id="narocila-status-filter" onchange="renderNarocila()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
-        <option value="">Vsa naročila</option>
-        <option value="pending" selected>⏳ Čaka plačilo</option>
-        <option value="paid">✅ Plačano</option>
-        <option value="shipped">📦 Odposlano</option>
-        <option value="cancelled">❌ Preklicano</option>
-      </select>
-    </div>
-
-    <div id="narocila-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
-  </div>
 
 </div>
 
@@ -2271,8 +2249,7 @@ function switchTab(id,el){
   if(el&&el.classList.contains('htab'))el.classList.add('active');
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
-  if(id==='prodaja')renderOrderRows();
-  if(id==='narocila') naloziNarocila();
+  if(id==='prodaja'){renderOrderRows();if(!_narocila)naloziNarocila();}
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
@@ -3284,16 +3261,73 @@ function renderSales(){
     const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)));
     return mq&&mBatch&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
   });
+
+  // Dodaj WP naročila iz gm_orders (pending/paid/shipped)
+  let wpOrders = [];
+  if(!fCh || fCh === 'wp') {
+    wpOrders = (_narocila||[]).filter(n => {
+      if(n.status === 'cancelled' || n.status === 'abandoned') return false;
+      // Ne prikazuj tistih ki so že potrjena in imajo invoice_id (so že v saleGroups)
+      if(n.status === 'paid' && n.invoice_id) return false;
+      const datum = n.created_at?.split('T')[0] || '';
+      const mq = !q || (n.name||'').toLowerCase().includes(q) || (n.email||'').toLowerCase().includes(q);
+      const mDate = (!fFrom||datum>=fFrom)&&(!fTo||datum<=fTo);
+      return mq && mDate;
+    });
+  }
+
   renderSalesSummary(groups);
   const el=document.getElementById('salesList');
-  if(!groups.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;
-    document.getElementById('salesPager').innerHTML='';return;}
+  if(!groups.length && !wpOrders.length){
+    el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni zapisov</div></div>`;
+    document.getElementById('salesPager').innerHTML='';return;
+  }
+
+  // WP naročila kartice (pending/paid brez invoice)
+  const wpHtml = wpOrders.map(n => {
+    const datum = n.created_at?.split('T')[0] || '';
+    const dt = fmtDate(datum);
+    const artikli = (n.items||[]).map(i=>`<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(i.price*i.quantity).toFixed(2)} €</span></div>`).join('');
+    const isPaid = n.status === 'paid';
+    const isShipped = n.status === 'shipped';
+    return `<div class="sale-group" style="border-left:3px solid #7c3aed;cursor:default">
+      <div class="sg-header">
+        <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
+        <div class="sg-div"></div>
+        <div class="sg-info">
+          <div class="sg-buyer">${n.name||'—'} <span style="font-size:.62rem;background:#7c3aed;color:white;padding:.1rem .4rem;border-radius:6px;vertical-align:middle">🌐 Splet</span></div>
+          <div class="sg-meta">
+            ${n.email?`<span style="font-size:.72rem;color:var(--muted)">✉ ${n.email}</span>`:''}
+            ${n.phone?`<span style="font-size:.72rem;color:var(--muted)">📞 ${n.phone}</span>`:''}
+            <span style="font-size:.72rem;color:var(--muted)">📍 ${n.street||''}, ${n.post||''} ${n.city||''}</span>
+          </div>
+          <div class="sg-meta">
+            ${!isPaid && !isShipped ? `<span style="font-size:.68rem;font-weight:600;color:#e67e22">⏳ Čaka plačilo</span>` : ''}
+            ${isPaid ? `<span style="font-size:.68rem;font-weight:600;color:#3a6b4a">✅ Plačano</span>` : ''}
+            ${isShipped ? `<span style="font-size:.68rem;font-weight:600;color:#2b0b39">📦 Odposlano</span>` : ''}
+            ${n.rf_reference?`<span style="font-size:.65rem;color:var(--muted)">RF: ${n.rf_reference}</span>`:''}
+          </div>
+        </div>
+        <div class="sg-right">
+          <div class="sg-total">${(n.total||0).toFixed(2)} €</div>
+        </div>
+      </div>
+      <div class="sg-items">${artikli}</div>
+      <div class="sg-footer" onclick="event.stopPropagation()">
+        <div style="margin-left:auto;display:flex;gap:.35rem;flex-wrap:wrap">
+          ${!isPaid && !isShipped ? `<button class="bsave" onclick="potrdiNarocilo('${n.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi plačilo</button>` : ''}
+          ${isPaid ? `<button class="tbtn" onclick="oznacOdposlano('${n.id}')" style="font-size:.72rem">📦 Odposlano</button>` : ''}
+          <button class="tbtn" onclick="prekliNarocilo('${n.id}')" style="font-size:.72rem;color:#8b3a2a">❌ Prekliči</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 
   const total=groups.length;
   const pages=Math.ceil(total/SALES_PER_PAGE);
   if(salesPage>=pages)salesPage=Math.max(0,pages-1);
   const page=groups.slice(salesPage*SALES_PER_PAGE,(salesPage+1)*SALES_PER_PAGE);
-  el.innerHTML=page.map(g=>{
+  el.innerHTML = wpHtml + page.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
     const isExpanded=expandedSales.has(g.id);
     const itemsHtml=(g.lines||[]).map(l=>{
@@ -4850,8 +4884,7 @@ ${type==='trosarine'?`
 }
 
 
-// ── NAROČILA IZ SPLETNE TRGOVINE ─────────────────────────
-let _narocila = [];
+let _narocila = null;
 
 async function naloziNarocila() {
   const el = document.getElementById('narocila-list');
@@ -4861,7 +4894,7 @@ async function naloziNarocila() {
     const r = await fetch(`${SB_URL}/rest/v1/gm_orders?order=created_at.desc&limit=100`, { headers: SB_HEADERS });
     if (!r.ok) throw new Error();
     _narocila = await r.json();
-    renderNarocila();
+    if(currentTab==='prodaja') renderSales();
   } catch(e) {
     el.innerHTML = '<div style="font-size:.8rem;color:var(--muted)">Napaka pri nalaganju.</div>';
   }

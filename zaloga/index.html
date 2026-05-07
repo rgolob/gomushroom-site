@@ -4887,16 +4887,14 @@ ${type==='trosarine'?`
 let _narocila = null;
 
 async function naloziNarocila() {
-  const el = document.getElementById('narocila-list');
-  if (!el) return;
-  el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:.5rem">Nalagam…</div>';
   try {
     const r = await fetch(`${SB_URL}/rest/v1/gm_orders?order=created_at.desc&limit=100`, { headers: SB_HEADERS });
     if (!r.ok) throw new Error();
     _narocila = await r.json();
     if(currentTab==='prodaja') renderSales();
   } catch(e) {
-    el.innerHTML = '<div style="font-size:.8rem;color:var(--muted)">Napaka pri nalaganju.</div>';
+    console.warn('Napaka pri nalaganju naročil:', e);
+    _narocila = [];
   }
 }
 

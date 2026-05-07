@@ -581,6 +581,7 @@ return { pct: Math.min(pct, settings.maxPopust || 50), ujemajoci };
 
 // ── Render povzetka ───────────────────────────────────────
 function renderSummary() {
+if (typeof getCart !== ‘function’) { setTimeout(renderSummary, 100); return; }
 const cart = getCart();
 const itemsEl = document.getElementById(‘order-items’);
 if (!itemsEl) return;
@@ -796,6 +797,7 @@ successEl.scrollIntoView({ behavior: ‘smooth’ });
 document.addEventListener(‘DOMContentLoaded’, async () => {
 await loadSettings();
 renderSummary();
+updateCartBadge && updateCartBadge();
 
 document.getElementById(‘place-order-btn’)?.addEventListener(‘click’, placeOrder);
 

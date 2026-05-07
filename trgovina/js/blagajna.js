@@ -527,22 +527,31 @@ function generateRF(orderId) {
 
 // ── UPN QR ────────────────────────────────────────────────
 function buildUPNString(amount, rf, purpose) {
-  const pad = (val, len) => String(val || '').substring(0, len).padEnd(len);
-  const amountStr = Math.round((amount || 0) * 100).toString().padStart(11, '0');
+  const cents = Math.round((amount || 0) * 100).toString().padStart(11, '0');
   const fields = [
-    'UPNQR', '', '', '', '', '', '',
-    amountStr, '',
-    pad(GM_IBAN, 34),
-    pad('GDSV', 4),
-    pad(purpose || 'Placilo', 42),
-    pad(rf, 35),
-    pad(GM_NAME, 33),
-    pad(GM_ADDRESS, 33),
-    pad(GM_CITY, 33),
+    'UPNQR',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    cents,
+    '',
+    '',
+    'GDSV',
+    purpose || 'Placilo narocila',
+    '',
+    GM_IBAN,
+    rf || '',
+    GM_NAME,
+    GM_ADDRESS,
+    GM_CITY,
   ];
-  const payload = fields.join('\n');
-  const checksum = payload.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % 1000;
-  return payload + '\n' + String(checksum).padStart(3, '0');
+  const body = fields.map(f => f + '\n').join('');
+  const checksum = String(body.length + 4).padStart(3, '0');
+  return body + checksum + '\n';
 }
 
 function qrUrl(amount, rf, purpose, size = 200) {

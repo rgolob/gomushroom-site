@@ -12,6 +12,7 @@ function getCart() {
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   updateCartBadge();
+  window.dispatchEvent(new Event("cart:updated"));
 }
 
 function formatPrice(value) {

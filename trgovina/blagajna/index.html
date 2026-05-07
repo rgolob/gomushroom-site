@@ -1,1 +1,313 @@
+<!doctype html>
 
+<html lang="sl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Blagajna | GoMushroom</title>
+  <meta name="robots" content="noindex,follow"/>
+  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png"/>
+  <link rel="apple-touch-icon" href="/assets/favicon-180.png"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="stylesheet" href="/trgovina/css/trgovina.css"/>
+  <style>
+    .checkout-page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: clamp(24px,4vw,48px) 0 80px;
+    }
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+    .checkout-card {
+      background: #fff;
+      border: 1px solid rgba(43,11,57,.08);
+      border-radius: 20px;
+      padding: 1.5rem;
+    }
+    .checkout-section-title {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(43,11,57,.45);
+      margin: 0 0 1rem;
+    }
+    .checkout-field {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      margin-bottom: .85rem;
+    }
+    .checkout-field label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #2b0b39;
+    }
+    .checkout-field input,
+    .checkout-field textarea {
+      padding: .6rem .85rem;
+      border: 1px solid rgba(43,11,57,.15);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: .9rem;
+      color: #2b0b39;
+      background: #fff;
+      outline: none;
+      transition: border-color .2s;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .checkout-field input:focus,
+    .checkout-field textarea:focus {
+      border-color: #2b0b39;
+    }
+    .checkout-field input.error {
+      border-color: #c0392b;
+    }
+    .checkout-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .5rem 0;
+      border-bottom: 1px solid rgba(43,11,57,.06);
+      font-size: .85rem;
+      color: #2b0b39;
+    }
+    .order-item:last-child { border-bottom: none; }
+    .order-item__name { flex: 1; }
+    .order-item__qty { color: rgba(43,11,57,.45); margin: 0 .75rem; font-size: .78rem; }
+    .order-item__price { font-weight: 600; }
+    .order-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .4rem 0;
+      font-size: .88rem;
+      color: rgba(43,11,57,.6);
+    }
+    .order-total-row--final {
+      border-top: 1px solid rgba(43,11,57,.1);
+      margin-top: .5rem;
+      padding-top: .75rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #2b0b39;
+    }
+    .qr-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: #f7f3ee;
+      border-radius: 14px;
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .qr-wrap.visible { display: flex; }
+    .payment-details {
+      font-size: .82rem;
+      line-height: 1.8;
+      color: #2b0b39;
+      text-align: left;
+      width: 100%;
+    }
+    .payment-details strong {
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(43,11,57,.45);
+      display: block;
+      margin-bottom: .25rem;
+    }
+    .success-wrap {
+      display: none;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    .success-wrap.visible { display: block; }
+    @media(max-width: 760px) {
+      .checkout-grid { grid-template-columns: 1fr; }
+      .checkout-row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header id="site-header">
+    <div class="wrap nav">
+      <div class="brand">
+        <a href="/" aria-label="GoMushroom domov">
+          <img src="/assets/logo-horizontal.webp" alt="GoMushroom">
+        </a>
+      </div>
+      <nav id="primary-nav" aria-label="Glavna navigacija">
+        <a href="/">Domov</a>
+        <a href="/znanje/">Znanje</a>
+        <a href="#about">O nas</a>
+        <a href="/trgovina/">Trgovina</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="shop-cart-link" href="/trgovina/kosarica/">
+          Košarica <span class="gm-cart-badge" data-cart-count></span>
+        </a>
+        <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap checkout-page">
+
+```
+  <div style="margin-bottom:1.5rem">
+    <p class="shop-kicker">GoMushroom • Blagajna</p>
+    <h1 style="font-size:clamp(1.8rem,5vw,3rem);line-height:1;color:#2b0b39;margin:.25rem 0 0">Zaključek nakupa</h1>
+  </div>
+
+  <!-- Forma + povzetek -->
+  <div class="checkout-grid" id="checkout-form-wrap">
+
+    <!-- Levo: Podatki kupca -->
+    <div>
+      <div class="checkout-card" style="margin-bottom:1rem">
+        <p class="checkout-section-title">Podatki za dostavo</p>
+
+        <div class="checkout-field">
+          <label for="c-name">Ime in priimek *</label>
+          <input type="text" id="c-name" placeholder="Jana Novak" autocomplete="name">
+        </div>
+
+        <div class="checkout-field">
+          <label for="c-email">E-mail *</label>
+          <input type="email" id="c-email" placeholder="jana@example.com" autocomplete="email">
+        </div>
+
+        <div class="checkout-field">
+          <label for="c-phone">Telefon</label>
+          <input type="tel" id="c-phone" placeholder="+386 41 123 456" autocomplete="tel">
+        </div>
+
+        <div class="checkout-field">
+          <label for="c-street">Ulica in hišna številka *</label>
+          <input type="text" id="c-street" placeholder="Slovenska cesta 1" autocomplete="street-address">
+        </div>
+
+        <div class="checkout-row">
+          <div class="checkout-field">
+            <label for="c-post">Poštna številka *</label>
+            <input type="text" id="c-post" placeholder="1000" autocomplete="postal-code" inputmode="numeric">
+          </div>
+          <div class="checkout-field">
+            <label for="c-city">Kraj *</label>
+            <input type="text" id="c-city" placeholder="Ljubljana" autocomplete="address-level2">
+          </div>
+        </div>
+
+        <div class="checkout-field">
+          <label for="c-note">Opomba (neobvezno)</label>
+          <textarea id="c-note" rows="2" placeholder="Posebne želje, navodila za dostavo…" style="resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <div class="checkout-card">
+        <p class="checkout-section-title">Način plačila</p>
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.5rem;background:#f7f3ee;border-radius:10px">
+          <span style="font-size:1.5rem">🏦</span>
+          <div>
+            <div style="font-weight:600;font-size:.88rem;color:#2b0b39">Bančno nakazilo</div>
+            <div style="font-size:.75rem;color:rgba(43,11,57,.5)">Po naročilu prejmete predračun z UPN QR kodo</div>
+          </div>
+        </div>
+        <div style="margin-top:.75rem;padding:.5rem;border-radius:10px;border:1px dashed rgba(43,11,57,.15);display:flex;align-items:center;gap:.75rem;opacity:.5">
+          <span style="font-size:1.5rem">💳</span>
+          <div>
+            <div style="font-weight:600;font-size:.88rem;color:#2b0b39">Kartica / Apple Pay</div>
+            <div style="font-size:.75rem;color:rgba(43,11,57,.5)">Kmalu na voljo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desno: Povzetek naročila -->
+    <div>
+      <div class="checkout-card" style="position:sticky;top:24px">
+        <p class="checkout-section-title">Povzetek naročila</p>
+
+        <div id="order-items"></div>
+
+        <div style="margin-top:.75rem">
+          <div class="order-total-row">
+            <span>Skupaj</span>
+            <span id="order-subtotal">—</span>
+          </div>
+          <div class="order-total-row" id="order-discount-row" style="display:none;color:#3a6b4a">
+            <span id="order-discount-label">Popust</span>
+            <span id="order-discount-amt">—</span>
+          </div>
+          <div class="order-total-row">
+            <span>Poštnina</span>
+            <span id="order-shipping">—</span>
+          </div>
+          <div class="order-total-row--final order-total-row">
+            <span>Skupaj za plačilo</span>
+            <span id="order-total">—</span>
+          </div>
+        </div>
+
+        <button class="gm-btn gm-btn--primary" type="button" id="place-order-btn"
+          style="width:100%;margin-top:1.25rem;min-height:50px;font-size:.95rem">
+          Naroči in plačaj →
+        </button>
+
+        <p style="font-size:.72rem;color:rgba(43,11,57,.4);text-align:center;margin:.75rem 0 0;line-height:1.6">
+          S klikom potrjuješ naročilo in se strinjaš s pogoji poslovanja.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR / Potrditev -->
+  <div id="order-success" class="checkout-card success-wrap">
+    <div style="font-size:3rem;margin-bottom:.75rem">✅</div>
+    <h2 style="color:#2b0b39;margin:0 0 .5rem;font-size:1.5rem">Naročilo prejeto!</h2>
+    <p style="color:rgba(43,11,57,.6);margin:0 0 1.5rem">Poslali smo vam potrditveni email s podatki za plačilo.</p>
+
+    <div class="qr-wrap visible" id="qr-section">
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(43,11,57,.45)">Plačajte z UPN QR kodo</div>
+      <img id="qr-img" src="" alt="UPN QR koda" width="180" height="180" style="border-radius:10px">
+      <div class="payment-details" id="payment-details"></div>
+    </div>
+
+    <a class="gm-btn gm-btn--secondary" href="/trgovina/" style="margin-top:1rem">
+      ← Nazaj v trgovino
+    </a>
+  </div>
+
+</div>
+```
+
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="/trgovina/js/cart.js"></script>
+
+  <script src="/trgovina/js/blagajna.js"></script>
+
+  <script defer src="/js/site-footer.js"></script>
+
+  <script defer src="/js/site-header.js"></script>
+
+</body>
+</html>

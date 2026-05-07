@@ -368,7 +368,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
-    <button class="hbtn" onclick="backupJSON()" title="Izvozi vse podatke (JSON backup)">💾 Backup</button>
+    <button class="hbtn" onclick="showBackupMenu()" title="Izvozi vse podatke">💾 Backup</button>
     <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
     <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
@@ -3941,9 +3941,25 @@ async function printInvoice(group){
 }
 
 // ── BACKUP / RESTORE ──
-async function backupJSON(){
+function showBackupMenu(){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:700;display:flex;align-items:flex-end;justify-content:center';
+  el.innerHTML=`<div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:420px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin-bottom:1rem">💾 Backup podatkov</div>
+    <button onclick="backupJSON('json');this.closest('[style]').remove()" style="width:100%;padding:.75rem;margin-bottom:.5rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;font-size:.9rem;cursor:pointer;text-align:left">
+      📄 JSON — obnova v tej aplikaciji
+    </button>
+    <button onclick="backupJSON('sql');this.closest('[style]').remove()" style="width:100%;padding:.75rem;margin-bottom:.75rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;font-size:.9rem;cursor:pointer;text-align:left">
+      🗄 SQL — obnova v Supabase
+    </button>
+    <button onclick="this.closest('[style]').remove()" style="width:100%;padding:.65rem;border:none;border-radius:10px;background:var(--parchment);font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+}
+
+async function backupJSON(format='json'){
   toast('💾 Nalagam podatke za backup…');
-  // Poberi vse tabele iz Supabase
   const fetchTable = async (table) => {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/${table}?select=*`, {headers:SB_HEADERS});
@@ -3951,55 +3967,67 @@ async function backupJSON(){
     } catch(e) { return []; }
   };
 
-  const [
-    sb_products, sb_batches, sb_saleGroups, sb_saleLines, sb_saleLineBatches,
-    sb_invoices, sb_invCounters, sb_customers, sb_productVariants,
-    sb_settings, sb_tiers, sb_orders
-  ] = await Promise.all([
-    fetchTable('gm_products'),
-    fetchTable('gm_batches'),
-    fetchTable('gm_sale_groups'),
-    fetchTable('gm_sale_lines'),
-    fetchTable('gm_sale_line_batches'),
-    fetchTable('gm_invoices'),
-    fetchTable('gm_inv_counters'),
-    fetchTable('gm_customers'),
-    fetchTable('gm_product_variants'),
-    fetchTable('gm_settings'),
-    fetchTable('gm_tiers'),
-    fetchTable('gm_orders'),
-  ]);
-
-  const backup = {
-    version: 4,
-    exportedAt: new Date().toISOString(),
-    // Lokalni podatki
-    products, batches, saleGroups, invoices, invCounters,
-    // Vse Supabase tabele
-    supabase: {
-      gm_products: sb_products,
-      gm_batches: sb_batches,
-      gm_sale_groups: sb_saleGroups,
-      gm_sale_lines: sb_saleLines,
-      gm_sale_line_batches: sb_saleLineBatches,
-      gm_invoices: sb_invoices,
-      gm_inv_counters: sb_invCounters,
-      gm_customers: sb_customers,
-      gm_product_variants: sb_productVariants,
-      gm_settings: sb_settings,
-      gm_tiers: sb_tiers,
-      gm_orders: sb_orders,
-    }
+  const tables = {
+    gm_products: await fetchTable('gm_products'),
+    gm_batches: await fetchTable('gm_batches'),
+    gm_sale_groups: await fetchTable('gm_sale_groups'),
+    gm_sale_lines: await fetchTable('gm_sale_lines'),
+    gm_sale_line_batches: await fetchTable('gm_sale_line_batches'),
+    gm_invoices: await fetchTable('gm_invoices'),
+    gm_inv_counters: await fetchTable('gm_inv_counters'),
+    gm_customers: await fetchTable('gm_customers'),
+    gm_product_variants: await fetchTable('gm_product_variants'),
+    gm_settings: await fetchTable('gm_settings'),
+    gm_tiers: await fetchTable('gm_tiers'),
+    gm_orders: await fetchTable('gm_orders'),
   };
 
-  const json = JSON.stringify(backup, null, 2);
   const date = todayISO().replace(/-/g,'');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([json], {type:'application/json'}));
-  a.download = `gomushroom-backup-${date}.json`;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
-  toast('💾 Popoln backup shranjen');
+
+  if(format==='sql'){
+    // Generiraj SQL INSERT stavke
+    const q = (v) => {
+      if(v===null||v===undefined) return 'null';
+      if(typeof v==='boolean') return v?'true':'false';
+      if(typeof v==='number') return String(v);
+      if(typeof v==='object') return `'${JSON.stringify(v).replace(/'/g,"''")}'`;
+      return `'${String(v).replace(/'/g,"''")}'`;
+    };
+
+    let sql = `-- GoMushroom SQL Backup\n-- Datum: ${new Date().toISOString()}\n-- POZOR: Izvedi šele po kreaciji tabel!\n\n`;
+
+    for(const [table, rows] of Object.entries(tables)){
+      if(!rows.length){ sql += `-- ${table}: ni podatkov\n\n`; continue; }
+      sql += `-- ${table} (${rows.length} vrstic)\n`;
+      sql += `truncate table ${table} cascade;\n`;
+      for(const row of rows){
+        const cols = Object.keys(row).join(', ');
+        const vals = Object.values(row).map(q).join(', ');
+        sql += `insert into ${table} (${cols}) values (${vals});\n`;
+      }
+      sql += '\n';
+    }
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([sql], {type:'text/plain'}));
+    a.download = `gomushroom-backup-${date}.sql`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
+    toast('💾 SQL backup shranjen');
+  } else {
+    const backup = {
+      version: 4,
+      exportedAt: new Date().toISOString(),
+      products, batches, saleGroups, invoices, invCounters,
+      supabase: tables
+    };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)], {type:'application/json'}));
+    a.download = `gomushroom-backup-${date}.json`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
+    toast('💾 JSON backup shranjen');
+  }
 }
 
 async function restoreJSON(e){

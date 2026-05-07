@@ -17,8 +17,8 @@ const GM_CITY    = ‘8351 Straža’;
 const SI_POST = {
 ‘1000’:‘Ljubljana’,
 ‘1001’:‘Ljubljana’,
-‘1210’:‘Ljubljana – Šentvid’,
-‘1211’:‘Ljubljana – Šmartno’,
+‘1210’:‘Ljubljana - Šentvid’,
+‘1211’:‘Ljubljana - Šmartno’,
 ‘1215’:‘Medvode’,
 ‘1216’:‘Smlednik’,
 ‘1217’:‘Vodice’,
@@ -29,7 +29,7 @@ const SI_POST = {
 ‘1223’:‘Blagovica’,
 ‘1225’:‘Lukovica’,
 ‘1230’:‘Domžale’,
-‘1231’:‘Ljubljana – Črnuče’,
+‘1231’:‘Ljubljana - Črnuče’,
 ‘1233’:‘Dob’,
 ‘1234’:‘Mengeš’,
 ‘1235’:‘Radomlje’,
@@ -38,8 +38,8 @@ const SI_POST = {
 ‘1242’:‘Stahovica’,
 ‘1251’:‘Moravče’,
 ‘1252’:‘Vače’,
-‘1260’:‘Ljubljana – Polje’,
-‘1261’:‘Ljubljana – Dobrunje’,
+‘1260’:‘Ljubljana - Polje’,
+‘1261’:‘Ljubljana - Dobrunje’,
 ‘1262’:‘Dol pri Ljubljani’,
 ‘1270’:‘Litija’,
 ‘1272’:‘Polšnik’,
@@ -52,7 +52,7 @@ const SI_POST = {
 ‘1290’:‘Grosuplje’,
 ‘1291’:‘Škofljica’,
 ‘1292’:‘Ig’,
-‘1293’:‘Šmarje – Sap’,
+‘1293’:‘Šmarje - Sap’,
 ‘1294’:‘Višnja Gora’,
 ‘1295’:‘Ivančna Gorica’,
 ‘1296’:‘Šentvid pri Stični’,
@@ -60,7 +60,7 @@ const SI_POST = {
 ‘1303’:‘Zagradec’,
 ‘1310’:‘Ribnica’,
 ‘1311’:‘Turjak’,
-‘1312’:‘Videm – Dobrepolje’,
+‘1312’:‘Videm - Dobrepolje’,
 ‘1313’:‘Struge’,
 ‘1314’:‘Rob’,
 ‘1315’:‘Velike Lašče’,
@@ -274,7 +274,7 @@ const SI_POST = {
 ‘4207’:‘Cerklje na Gorenjskem’,
 ‘4208’:‘Šenčur’,
 ‘4209’:‘Žabnica’,
-‘4210’:‘Brnik – Aerodrom’,
+‘4210’:‘Brnik - Aerodrom’,
 ‘4211’:‘Mavčiče’,
 ‘4212’:‘Visoko’,
 ‘4220’:‘Škofja Loka’,
@@ -305,7 +305,7 @@ const SI_POST = {
 ‘4280’:‘Kranjska Gora’,
 ‘4281’:‘Mojstrana’,
 ‘4282’:‘Gozd Martuljek’,
-‘4283’:‘Rateče – Planica’,
+‘4283’:‘Rateče - Planica’,
 ‘4290’:‘Tržič’,
 ‘4294’:‘Križe’,
 ‘5000’:‘Nova Gorica’,
@@ -707,7 +707,7 @@ alert(‘Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na
 async function sendConfirmationEmail(order, rf, calc) {
 const ibanFormatted = GM_IBAN.replace(/(.{4})/g,’$1 ‘).trim();
 const itemsList = order.items.map(i =>
-`<tr><td style="padding:.4rem .5rem;border-bottom:1px solid #f5f0e8">${i.name} — ${i.variantLabel||''}</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8">${i.quantity}×</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(Number(i.price)*i.quantity).toFixed(2)} €</td></tr>`
+`<tr><td style="padding:.4rem .5rem;border-bottom:1px solid #f5f0e8">${i.name} - ${i.variantLabel||''}</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8">${i.quantity}×</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(Number(i.price)*i.quantity).toFixed(2)} €</td></tr>`
 ).join(’’);
 
 const qr = qrUrl(calc.skupaj, rf, `Placilo narocila GoMushroom`, 160);
@@ -773,7 +773,7 @@ try {
 await fetch(’/.netlify/functions/send-email’, {
 method: ‘POST’,
 headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ to: order.email, subject: ‘Potrditev naročila — GoMushroom’, html })
+body: JSON.stringify({ to: order.email, subject: ‘Potrditev naročila - GoMushroom’, html })
 });
 await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
 method: ‘PATCH’, headers: SB_HEADERS,

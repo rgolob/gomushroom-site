@@ -759,3 +759,41 @@
 .gm-cart-empty[hidden]{
   display:none;
 }
+/* SHOP HEADER MOBILE FIX */
+@media (max-width:767px){
+  #site-header #primary-nav{
+    position:absolute;
+    top:100%;
+    left:-14px;
+    right:-14px;
+    display:none;
+    flex-direction:column;
+    gap:8px;
+    padding:10px 14px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(160%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+
+  #site-header.nav-open #primary-nav{
+    display:flex;
+  }
+
+  #site-header #primary-nav a{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,.06);
+    background:rgba(255,255,255,.78);
+    font-size:15px;
+  }
+
+  #site-header #primary-nav a::after{
+    display:none;
+  }
+
+  #site-header .nav-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+}

@@ -581,10 +581,14 @@ return { pct: Math.min(pct, settings.maxPopust || 50), ujemajoci };
 
 // ── Render povzetka ───────────────────────────────────────
 function renderSummary() {
-if (typeof getCart !== ‘function’) { setTimeout(renderSummary, 100); return; }
-const cart = getCart();
 const itemsEl = document.getElementById(‘order-items’);
 if (!itemsEl) return;
+
+// Preberi košarico direktno iz localStorage
+let cart = [];
+try {
+cart = JSON.parse(localStorage.getItem(‘gomushroom_cart’) || ‘[]’);
+} catch(e) { cart = []; }
 
 if (!cart.length) {
 window.location.href = ‘/trgovina/kosarica/’;
@@ -643,7 +647,7 @@ const btn = document.getElementById(‘place-order-btn’);
 btn.disabled = true;
 btn.textContent = ‘⏳ Pošiljam…’;
 
-const cart = getCart();
+const cart = JSON.parse(localStorage.getItem(‘gomushroom_cart’) || ‘[]’);
 const calc = window._orderCalc;
 const name = document.getElementById(‘c-name’).value.trim();
 const email = document.getElementById(‘c-email’).value.trim();
@@ -687,7 +691,7 @@ await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
 
 await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calc);
 showSuccess({ ...order, rf_reference: rf }, rf, calc);
-saveCart([]);
+localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
 sessionStorage.removeItem('gm_kupon');
 ```
 
@@ -797,7 +801,7 @@ successEl.scrollIntoView({ behavior: ‘smooth’ });
 document.addEventListener(‘DOMContentLoaded’, async () => {
 await loadSettings();
 renderSummary();
-updateCartBadge && updateCartBadge();
+try { updateCartBadge && updateCartBadge(); } catch(e) {}
 
 document.getElementById(‘place-order-btn’)?.addEventListener(‘click’, placeOrder);
 

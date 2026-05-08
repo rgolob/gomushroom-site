@@ -100,7 +100,7 @@ async function loadProducts() {
 // ── Pomočne funkcije ──────────────────────────────────────
 function stockBadge(v) {
   if (!v.in_stock) return `<span style="color:#c0392b;font-size:.75rem;letter-spacing:.04em">● Ni na zalogi</span>`;
-  if (v.low_stock) return `<span style="color:#e67e22;font-size:.75rem;letter-spacing:.04em">● Zadnje kose</span>`;
+  if (v.low_stock) return `<span style="color:#e67e22;font-size:.75rem;letter-spacing:.04em">● Zadnji kosi</span>`;
   return `<span style="color:#3a6b4a;font-size:.75rem;letter-spacing:.04em">● Na zalogi</span>`;
 }
 

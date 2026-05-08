@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
   const tags = isEn
-    ? `Medicinal mushroom tinctures · Reishi · Chaga · Lion’s Mane · triple extraction · ultrasound-assisted extraction · vacuum concentration · small batches · traceability`
+    ? `Medicinal mushroom tinctures · Reishi · Chaga · Lion's Mane · triple extraction · ultrasound-assisted extraction · vacuum concentration · small batches · traceability`
     : `Tinkture medicinskih gob · Reishi · Chaga · Resasti bradovec · trojna ekstrakcija · ultrazvočna ekstrakcija · vakuumsko koncentriranje · male serije · sledljivost`;
 
   const rights = isEn
@@ -32,7 +32,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const signature = isEn
   ? `GoMushroom is not a product. It is a process.`
   : `GoMushroom ni produkt. Je proces.`;
-  
+
+  const legalLinks = isEn
+    ? `<a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Privacy Policy</a>
+       <a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Terms</a>`
+    : `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
+       <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>
+       <a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Splošni pogoji</a>
+       <a href="#" onclick="gmShowLegal('politika-vracil');return false">Politika vračil</a>`;
+
   footer.className = "site-footer";
 
   footer.innerHTML = `
@@ -54,12 +62,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       <p class="footer-meta">
         ${footerMeta}
-      </p>    
+      </p>
 
       <div class="footer-line" aria-hidden="true"></div>
-      
+
       <p class="footer-signature">${signature}</p>
-      
+
+      <nav class="footer-legal" aria-label="Pravni dokumenti">
+        ${legalLinks}
+      </nav>
+
       <p class="footer-copy">
         © <span id="year"></span> GoMushroom — Rok Golob. ${rights}
       </p>
@@ -67,7 +79,13 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
 
   const yearEl = footer.querySelector("#year");
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // Naloži legal.js
+  if (!document.getElementById('gm-legal-script')) {
+    const s = document.createElement('script');
+    s.id = 'gm-legal-script';
+    s.src = '/js/legal.js';
+    document.head.appendChild(s);
   }
 });

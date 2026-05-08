@@ -84,11 +84,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const yearEl = footer.querySelector("#year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // Naloži legal.js
-  if (!document.getElementById('gm-legal-script')) {
-    const s = document.createElement('script');
-    s.id = 'gm-legal-script';
-    s.src = '/js/legal.js';
-    document.head.appendChild(s);
+ function loadScriptOnce(src, callback) {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      if (callback) callback();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+
+    if (callback) {
+      script.onload = callback;
+    }
+
+    document.body.appendChild(script);
   }
+
+  loadScriptOnce("/js/legal.js");
+  loadScriptOnce("/js/ga-dev-toggle.js", () => {
+    loadScriptOnce("/js/cookie-consent.js");
+  });
+  
 });

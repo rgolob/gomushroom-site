@@ -34,15 +34,15 @@ document.addEventListener("DOMContentLoaded", () => {
   : `GoMushroom ni produkt. Je proces.`;
 
   const legalLinks = isEn
-    ? `<a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Privacy Policy</a>
-       <a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Terms</a>`
+    ? `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Cookie Policy</a>
+       <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Privacy Policy</a>`
     : path.startsWith('/trgovina/')
     ? `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
        <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>
        <a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Splošni pogoji</a>
        <a href="#" onclick="gmShowLegal('politika-vracil');return false">Politika vračil</a>`
-     : `<a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Splošni pogoji</a>
-       <a href="#" onclick="gmShowLegal('politika-vracil');return false">Politika vračil</a>`;
+     : `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
+        <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>`;
 
   footer.className = "site-footer";
 

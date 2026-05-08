@@ -1,5 +1,7 @@
 /* =========================
-   DEV toggle izklop sledenja za testiranje Ctrl + Alt + 5 klikov na logo
+   DEV toggle izklop sledenja za testiranje
+   ?noga=1 → GA OFF
+   ?noga=0 → GA ON
 ========================= */
 (function () {
   function setCookie(name, value, days) {
@@ -28,6 +30,7 @@
   }
 
   function showGABadge() {
+    if (!isGADisabled()) return;
     if (document.getElementById("ga-dev-badge")) return;
 
     const badge = document.createElement("div");
@@ -49,54 +52,24 @@
     document.body.appendChild(badge);
   }
 
-  function setupDevToggle() {
-    const logo = document.getElementById("site-logo");
-    if (!logo) return;
+  const params = new URLSearchParams(window.location.search);
 
-    let clickCount = 0;
-    let firstClickTime = 0;
-    const requiredClicks = 5;
-    const timeWindowMs = 2500;
-
-    logo.addEventListener("mousedown", function (e) {
-      if (!(e.altKey && e.ctrlKey)) {
-        clickCount = 0;
-        firstClickTime = 0;
-        return;
-      }
-
-      const now = Date.now();
-
-      if (!firstClickTime || now - firstClickTime > timeWindowMs) {
-        firstClickTime = now;
-        clickCount = 1;
-      } else {
-        clickCount += 1;
-      }
-
-      if (clickCount >= requiredClicks) {
-        e.preventDefault();
-
-        const disabled = !isGADisabled();
-        setGADisabled(disabled);
-
-        location.reload();
-      }
-    });
+  if (params.get("noga") === "1") {
+    setGADisabled(true);
+    window.location.replace(window.location.pathname + window.location.hash);
+    return;
   }
 
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("noga") === "1") setGADisabled(true);
-  if (params.get("noga") === "0") setGADisabled(false);
+  if (params.get("noga") === "0") {
+    setGADisabled(false);
+    window.location.replace(window.location.pathname + window.location.hash);
+    return;
+  }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      setupDevToggle();
-      if (isGADisabled()) showGABadge();
-    });
+    document.addEventListener("DOMContentLoaded", showGABadge);
   } else {
-    setupDevToggle();
-    if (isGADisabled()) showGABadge();
+    showGABadge();
   }
 
   document.addEventListener("click", function (e) {
@@ -104,14 +77,13 @@
     if (!el) return;
 
     if (isGADisabled()) return;
+    if (!window.gtag) return;
 
-    if (window.gtag) {
-      window.gtag("event", "button_click", {
-        button_name: el.dataset.gaClick || "",
-        button_location: el.dataset.gaLocation || "",
-        button_text: (el.textContent || "").trim(),
-        link_url: el.href || ""
-      });
-    }
+    window.gtag("event", "button_click", {
+      button_name: el.dataset.gaClick || "",
+      button_location: el.dataset.gaLocation || "",
+      button_text: (el.textContent || "").trim(),
+      link_url: el.href || ""
+    });
   }, true);
 })();

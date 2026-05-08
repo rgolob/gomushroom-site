@@ -402,11 +402,9 @@
 
 
 /* =========================
-   GA4 lazy-load + DEV toggle
+   DEV toggle izklop sledenja za testiranje Ctrl + Alt + 5 klikov na logo
 ========================= */
 (function () {
-  const GA_ID = "G-L2PGE7VDHB";
-
   function setCookie(name, value, days) {
     const maxAge = days * 24 * 60 * 60;
     document.cookie =
@@ -425,6 +423,8 @@
   function isGADisabled() {
     return getCookie("ga_disable") === "1";
   }
+
+  window.gmIsGADisabled = isGADisabled;
 
   function setGADisabled(disabled) {
     setCookie("ga_disable", disabled ? "1" : "0", 365);
@@ -452,99 +452,64 @@
     document.body.appendChild(badge);
   }
 
-  // Ctrl + Alt + 5 klikov na logo = toggle trackinga
- (function setupDevToggle() {
-  const logo = document.getElementById("site-logo");
-  if (!logo) return;
+  function setupDevToggle() {
+    const logo = document.getElementById("site-logo");
+    if (!logo) return;
 
-  let clickCount = 0;
-  let firstClickTime = 0;
-  const requiredClicks = 5;
-  const timeWindowMs = 2500;
+    let clickCount = 0;
+    let firstClickTime = 0;
+    const requiredClicks = 5;
+    const timeWindowMs = 2500;
 
-  logo.addEventListener("mousedown", function (e) {
-    if (!(e.altKey && e.ctrlKey)) {
-      clickCount = 0;
-      firstClickTime = 0;
-      return;
-    }
+    logo.addEventListener("mousedown", function (e) {
+      if (!(e.altKey && e.ctrlKey)) {
+        clickCount = 0;
+        firstClickTime = 0;
+        return;
+      }
 
-    const now = Date.now();
+      const now = Date.now();
 
-    if (!firstClickTime || (now - firstClickTime) > timeWindowMs) {
-      firstClickTime = now;
-      clickCount = 1;
-    } else {
-      clickCount += 1;
-    }
+      if (!firstClickTime || now - firstClickTime > timeWindowMs) {
+        firstClickTime = now;
+        clickCount = 1;
+      } else {
+        clickCount += 1;
+      }
 
-    if (clickCount >= requiredClicks) {
-      e.preventDefault();
+      if (clickCount >= requiredClicks) {
+        e.preventDefault();
 
-      const disabled = !isGADisabled();
-      setGADisabled(disabled);
+        const disabled = !isGADisabled();
+        setGADisabled(disabled);
 
-      clickCount = 0;
-      firstClickTime = 0;
+        location.reload();
+      }
+    });
+  }
 
-      location.reload();
-    }
-  });
-})();
-   
-  // URL override
   const params = new URLSearchParams(window.location.search);
   if (params.get("noga") === "1") setGADisabled(true);
   if (params.get("noga") === "0") setGADisabled(false);
 
-  const isDevHost =
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1";
-
-  if (isDevHost || isGADisabled()) {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", showGABadge);
-    } else {
-      showGABadge();
-    }
-    console.log("GA disabled");
-    return;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      setupDevToggle();
+      if (isGADisabled()) showGABadge();
+    });
+  } else {
+    setupDevToggle();
+    if (isGADisabled()) showGABadge();
   }
 
-  let loaded = false;
-
-  function loadGA() {
-    if (loaded) return;
-    loaded = true;
-
-    const s = document.createElement("script");
-    s.async = true;
-    s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA_ID);
-    document.head.appendChild(s);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ window.dataLayer.push(arguments); }
-    window.gtag = gtag;
-
-    gtag("js", new Date());
-    gtag("config", GA_ID);
-  }
-
-  ["scroll", "click", "touchstart", "keydown"].forEach(function (evt) {
-    window.addEventListener(evt, loadGA, { once: true, passive: true });
-  });
-
-  setTimeout(loadGA, 4000);
-
-  // TRACKING KLIKOV: linki + nelink elementi
   document.addEventListener("click", function (e) {
     const el = e.target.closest("[data-ga-click]");
     if (!el) return;
 
-    loadGA();
+    if (isGADisabled()) return;
 
     if (window.gtag) {
-      gtag("event", "button_click", {
+      window.gtag("event", "button_click", {
         button_name: el.dataset.gaClick || "",
         button_location: el.dataset.gaLocation || "",
         button_text: (el.textContent || "").trim(),
@@ -553,11 +518,6 @@
     }
   }, true);
 })();
-
-
-
-
-
 /* =========================
    QC tezke kovine
 ========================= */

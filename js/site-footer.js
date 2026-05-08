@@ -39,8 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     : path.startsWith('/trgovina/')
     ? `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
        <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>
-       <a href="#" onclick="gmShowLegal('splosni-pogoji');return false">Splošni pogoji</a>
-       <a href="#" onclick="gmShowLegal('politika-vracil');return false">Politika vračil</a>`
+       <a href="#" onclick="gmShowLegal('pogoji-poslovanja');return false">Pogoji poslovanja</a>`
      : `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
         <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>`;
 

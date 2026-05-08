@@ -5,6 +5,10 @@ const GA_ID = 'G-L2PGE7VDHB';
 const CONSENT_KEY = 'gm_cookie_consent';
 
 function gmLoadGA() {
+  if (window.gmIsGADisabled && window.gmIsGADisabled()) {
+    console.log("GA disabled by DEV toggle");
+    return;
+  }
   if (document.getElementById('gm-ga-script')) return;
   const s1 = document.createElement('script');
   s1.id = 'gm-ga-script';

@@ -34,8 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
   : `GoMushroom ni produkt. Je proces.`;
 
   const legalLinks = isEn
-    ? `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Cookie Policy</a>
-       <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Privacy Policy</a>`
+    ? `<a href="#" onclick="gmShowLegal('cookie-policy');return false">Cookie Policy</a>
+       <a href="#" onclick="gmShowLegal('privacy-policy');return false">Privacy Policy</a>`
     : path.startsWith('/trgovina/')
     ? `<a href="#" onclick="gmShowLegal('politika-piskotkov');return false">Politika piškotkov</a>
        <a href="#" onclick="gmShowLegal('politika-zasebnosti');return false">Politika zasebnosti</a>

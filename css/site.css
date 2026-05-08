@@ -2218,3 +2218,23 @@ footer.site-footer{
   z-index: 9999;
   transition: width 0.08s linear;
 }
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1rem;
+  justify-content: center;
+  margin: .5rem 0;
+}
+
+.footer-legal a {
+  font-size: .72rem;
+  color: rgba(255,255,255,.4);
+  text-decoration: none;
+  transition: color .18s;
+}
+
+.footer-legal a:hover {
+  color: rgba(255,255,255,.8);
+}
+

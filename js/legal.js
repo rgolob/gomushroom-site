@@ -3,7 +3,81 @@
 
 const GM_LEGAL = {
 
+  'cookies-policy': {
+    title: 'Cookie Policy',
+    lang: 'en',
+    content: `
+      <p>This page explains which cookies <strong>gomushroom.si</strong> uses and how you can manage them.</p>
+
+      <h3>What are cookies?</h3>
+      <p>Cookies are small text files stored in your browser when you visit a website. They allow the site to remember your preferences and settings.</p>
+
+      <h3>Cookies we use</h3>
+      <table class="gm-legal-table">
+        <thead><tr><th>Name / source</th><th>Purpose</th><th>Type</th><th>Duration</th></tr></thead>
+        <tbody>
+          <tr><td><code>gm_cookie_consent</code></td><td>Stores your cookie preference</td><td>Necessary</td><td>1 year</td></tr>
+          <tr><td><code>gomushroom_cart</code></td><td>Shopping cart contents</td><td>Necessary</td><td>Until cleared</td></tr>
+          <tr><td>Google Analytics (<code>_ga</code>, <code>_ga_*</code>)</td><td>Anonymised analytics</td><td>Analytical</td><td>2 years</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Necessary cookies</h3>
+      <p>Required for the cart and basic site functionality. No consent needed.</p>
+
+      <h3>Analytical cookies</h3>
+      <p>Google Analytics helps us understand how visitors use the site. All data is anonymised. These cookies are only loaded after your explicit consent.</p>
+
+      <h3>Managing cookies</h3>
+      <p>You can change your preference at any time:</p>
+      <button onclick="localStorage.removeItem('gm_cookie_consent');location.reload()" class="gm-legal-btn">
+        Reset cookie preferences
+      </button>
+
+      <h3>Contact</h3>
+      <p><a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · GoMushroom, Rok Golob s.p., Prapreče pri Straži 22, 8351 Straža, Slovenia</p>
+      <p class="gm-legal-meta">Effective from: 7 May 2026</p>
+    `
+  },
+
+  'privacy-policy': {
+    title: 'Privacy Policy',
+    lang: 'en',
+    content: `
+      <h3>Data controller</h3>
+      <p><strong>GoMushroom, Rok Golob s.p.</strong><br>
+      Prapreče pri Straži 22, 8351 Straža, Slovenia<br>
+      VAT: SI20581041<br>
+      <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="tel:+38631373836">+386 31 373 836</a></p>
+
+      <h3>What data do we collect?</h3>
+      <p>We collect only data necessary to fulfil your order: name, email, phone (optional), delivery address, and order details.</p>
+
+      <h3>Purpose of processing</h3>
+      <p>Your data is used exclusively to process and deliver your order, send order confirmation and invoice, communicate about your order, and fulfil legal obligations.</p>
+
+      <h3>Legal basis</h3>
+      <p>Processing is based on contractual necessity (order fulfilment) under Art. 6(1)(b) GDPR.</p>
+
+      <h3>Data retention</h3>
+      <p>Order data is retained for 10 years (accounting legislation). Analytics data for 26 months.</p>
+
+      <h3>Data sharing</h3>
+      <p>We do not sell your data. It is shared only with: Pošta Slovenije (delivery), Google Analytics (analytics, with consent), Supabase (storage, EU servers), Resend (transactional emails).</p>
+
+      <h3>Your rights</h3>
+      <p>Under GDPR you have the right to access, rectify, erase, restrict processing, and port your data. Submit requests to <a href="mailto:info@gomushroom.si">info@gomushroom.si</a>. You may also lodge a complaint with the <a href="https://www.ip-rs.si" target="_blank" rel="noopener">Slovenian Information Commissioner</a>.</p>
+
+      <h3>Security</h3>
+      <p>Data is protected with HTTPS. We do not store payment details — payment is by bank transfer only.</p>
+      <p class="gm-legal-meta">Effective from: 7 May 2026</p>
+    `
+  },
+
+
+
   'politika-piskotkov': {
+    lang: 'sl',
     title: 'Politika piškotkov',
     content: `
       <p>Ta stran pojasnjuje, katere piškotke uporablja <strong>gomushroom.si</strong> in kako jih upravljate.</p>
@@ -40,6 +114,7 @@ const GM_LEGAL = {
   },
 
   'politika-zasebnosti': {
+    lang: 'sl',
     title: 'Politika zasebnosti',
     content: `
       <h3>Upravljavec podatkov</h3>
@@ -73,6 +148,7 @@ const GM_LEGAL = {
   },
 
   'splosni-pogoji': {
+    lang: 'sl',
     title: 'Splošni pogoji poslovanja',
     content: `
       <h3>1. Prodajalec</h3>
@@ -105,6 +181,7 @@ const GM_LEGAL = {
   },
 
   'politika-vracil': {
+    lang: 'sl',
     title: 'Politika vračil',
     content: `
       <div class="gm-legal-highlight">
@@ -142,6 +219,24 @@ const GM_LEGAL = {
   }
 
 };
+
+// ── Določi sorodne dokumente glede na stran in kontekst ──
+function gmGetRelatedDocs(currentSlug) {
+  const path = window.location.pathname;
+  const isEn = path.startsWith('/en/');
+  const isTrgovine = path.startsWith('/trgovina/');
+
+  let allowedSlugs;
+  if (isEn) {
+    allowedSlugs = ['cookies-policy', 'privacy-policy'];
+  } else if (isTrgovine) {
+    allowedSlugs = ['politika-piskotkov', 'politika-zasebnosti', 'splosni-pogoji', 'politika-vracil'];
+  } else {
+    allowedSlugs = ['politika-piskotkov', 'politika-zasebnosti'];
+  }
+
+  return Object.entries(GM_LEGAL).filter(([k]) => allowedSlugs.includes(k));
+}
 
 // ── Drawer panel iz desne ────────────────────────────────
 function gmShowLegal(slug) {
@@ -212,7 +307,7 @@ function gmShowLegal(slug) {
       ">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(43,11,57,.35);margin-bottom:.6rem">Drugi dokumenti</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-          ${Object.entries(GM_LEGAL).filter(([k]) => k !== slug).map(([k, v]) =>
+          ${gmGetRelatedDocs(slug).filter(([k]) => k !== slug).map(([k, v]) =>
             `<button onclick="gmShowLegal('${k}')" style="
               font-size:.72rem;padding:.35rem .8rem;
               border:1px solid rgba(43,11,57,.12);

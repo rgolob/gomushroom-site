@@ -105,4 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadScriptOnce("/js/cookie-consent.js");
   });
   
+  if (path === "/trgovina" || path.startsWith("/trgovina/")) {
+  loadScriptOnce("/js/analytics.js");
+}
 });

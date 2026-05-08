@@ -174,6 +174,8 @@ function renderShopGrid(products) {
   }).join('');
 
   bindVariantPickers(products);
+  // GA4 - view_item_list
+  if (typeof gmViewItemList === 'function') gmViewItemList(products);
 }
 
 // ── Variant picker ────────────────────────────────────────
@@ -223,6 +225,23 @@ function bindVariantPickers(products) {
 }
 
 // ── Init ──────────────────────────────────────────────────
+// GA4 - add_to_cart ob kliku na gumb
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-add-to-cart]');
+  if (!btn) return;
+  if (typeof gmAddToCart === 'function') {
+    gmAddToCart({
+      sku: btn.dataset.sku,
+      slug: btn.dataset.slug,
+      name: btn.dataset.name,
+      variant: btn.dataset.variant,
+      variantLabel: btn.dataset.variantLabel,
+      price: btn.dataset.price,
+      quantity: 1,
+    });
+  }
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadSettings();

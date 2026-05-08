@@ -156,8 +156,11 @@ function changeQty(index, delta) {
 
 function removeItem(index) {
   const cart = getCart();
+  const removed = cart[index];
   cart.splice(index, 1);
   saveCart(cart);
+  // GA4 - remove_from_cart
+  if (removed && typeof gmRemoveFromCart === 'function') gmRemoveFromCart(removed);
   renderCart();
 }
 
@@ -189,8 +192,15 @@ function bindKupon() {
 
 document.addEventListener('click', e => {
   if (e.target.closest('#checkout-btn')) {
-    if (!getCart().length) return;
-    sessionStorage.setItem('gm_kupon', document.getElementById('kupon-input')?.value?.trim() || '');
+    const cart = getCart();
+    if (!cart.length) return;
+    const kupon = document.getElementById('kupon-input')?.value?.trim() || '';
+    sessionStorage.setItem('gm_kupon', kupon);
+    // GA4 - begin_checkout
+    if (typeof gmBeginCheckout === 'function') {
+      const total = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+      gmBeginCheckout(cart, total, kupon);
+    }
     window.location.href = '/trgovina/blagajna/';
   }
 });
@@ -199,4 +209,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
   renderCart();
   bindKupon();
+  // GA4 - view_cart
+  if (typeof gmInitCartPage === 'function') gmInitCartPage();
 });

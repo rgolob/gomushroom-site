@@ -656,6 +656,11 @@ async function placeOrder() {
     document.querySelector('.checkout-field input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
+  // GA4 - add_payment_info
+  if (typeof gmAddPaymentInfo === 'function' && window._orderCalc) {
+    const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
+    gmAddPaymentInfo(cart, window._orderCalc.skupaj, window._orderCalc.koda);
+  }
 
   const btn = document.getElementById('place-order-btn');
   btn.disabled = true;
@@ -704,6 +709,10 @@ async function placeOrder() {
 
     await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calc);
     showSuccess({ ...order, rf_reference: rf }, rf, calc);
+    // GA4 - purchase
+    if (typeof gmPurchase === 'function') {
+      gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
+    }
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
 
@@ -816,6 +825,8 @@ function showSuccess(order, rf, calc) {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
   renderSummary();
+  // GA4 - begin_checkout (prihod na blagajno)
+  if (typeof gmInitCheckoutPage === 'function') gmInitCheckoutPage();
   try { updateCartBadge && updateCartBadge(); } catch(e) {}
 
   document.getElementById('place-order-btn')?.addEventListener('click', placeOrder);

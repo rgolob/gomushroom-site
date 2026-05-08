@@ -111,7 +111,29 @@ function initProductPage(variants) {
 
   // Init z alkoholno varianto
   updateUI(activeVariant);
+
+  // GA4 - view_item
+  if (typeof gmViewItem === 'function' && data.product) {
+    gmViewItem(data.product, activeVariant);
+  }
 }
+
+// GA4 - add_to_cart na produktni strani
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-add-to-cart]');
+  if (!btn) return;
+  if (typeof gmAddToCart === 'function') {
+    gmAddToCart({
+      sku: btn.dataset.sku,
+      slug: btn.dataset.slug,
+      name: btn.dataset.name,
+      variant: btn.dataset.variant,
+      variantLabel: btn.dataset.variantLabel,
+      price: btn.dataset.price,
+      quantity: 1,
+    });
+  }
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {

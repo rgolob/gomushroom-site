@@ -147,9 +147,9 @@ const GM_LEGAL = {
     `
   },
 
-  'splosni-pogoji': {
+  'pogoji-poslovanja': {
     lang: 'sl',
-    title: 'Splošni pogoji poslovanja',
+    title: 'Pogoji poslovanja',
     content: `
       <h3>1. Prodajalec</h3>
       <p><strong>GoMushroom, Rok Golob s.p.</strong><br>
@@ -168,52 +168,29 @@ const GM_LEGAL = {
       <h3>5. Dostava</h3>
       <p>Dostavljamo po vsej Sloveniji prek Pošte Slovenije. Poštnina: 3,90 € — pri naročilu nad 60 € brezplačno. Čas dostave: 2–4 delovne dni po potrditvi plačila. Dostava v tujino trenutno ni na voljo.</p>
 
-      <h3>6. Odstop od pogodbe</h3>
-      <p>Pravica do odstopa v 14 dneh od prejema blaga brez navedbe razloga. Obvestite nas pisno na <a href="mailto:info@gomushroom.si">info@gomushroom.si</a>. Blago vrnite neodprto v originalni embalaži. Stroške vračila nosi kupec. Pravica ne velja za odprte izdelke iz higienskih razlogov.</p>
+      <h3>6. Vračila in odstop od pogodbe</h3>
+      <div class="gm-legal-highlight">
+        <strong>Kratko:</strong> Neodprte izdelke vrnete v 14 dneh brez razloga. Kupnino vrnemo v 14 dneh od prejema vračila.
+      </div>
+      <p>Pravica do odstopa v <strong>14 dneh</strong> od prejema blaga brez navedbe razloga. Obvestite nas pisno na <a href="mailto:info@gomushroom.si">info@gomushroom.si</a>.</p>
+      <ol>
+        <li>Pišite na <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> ali pokličite <a href="tel:+38631373836">031 373 836</a></li>
+        <li>Povejte številko naročila in razlog vračila</li>
+        <li>Blago pošljite na: <strong>GoMushroom, Prapreče pri Straži 22, 8351 Straža</strong></li>
+      </ol>
+      <ul>
+        <li>Izdelek mora biti <strong>neodprt in nepoškodovan</strong> v originalni embalaži</li>
+        <li>Pravica ne velja za odprte ali delno uporabljene izdelke</li>
+        <li>Stroške vračilne pošiljke nosi kupec</li>
+      </ul>
+      <p>Kupnino vrnemo v <strong>14 dneh</strong> od prejema vrnjenega blaga. Poštnine ne vračamo.</p>
+      <p>Za poškodovano ali napačno blago nas kontaktirajte v 48 urah od prejema z opisom in fotografijo — prevzamemo vse stroške in pošljemo nadomestni izdelek ali vrnemo kupnino.</p>
 
       <h3>7. Reklamacije</h3>
       <p>Reklamacijo sporočite na <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> ali 031 373 836. Rešimo jo v 8 delovnih dneh.</p>
 
       <h3>8. Reševanje sporov</h3>
       <p>Morebitne spore rešujemo sporazumno. Potrošnik lahko vloži pritožbo prek <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">platforme EU za spletno reševanje sporov</a>.</p>
-      <p class="gm-legal-meta">Veljavno od: 7. maja 2026</p>
-    `
-  },
-
-  'politika-vracil': {
-    lang: 'sl',
-    title: 'Politika vračil',
-    content: `
-      <div class="gm-legal-highlight">
-        <strong>Kratko:</strong> Neodprte izdelke vrnete v 14 dneh brez razloga. Kupnino vrnemo v 14 dneh od prejema vračila.
-      </div>
-
-      <h3>Pravica do odstopa</h3>
-      <p>Kot potrošnik imate pravico do odstopa od pogodbe brez navedbe razloga v roku <strong>14 dni</strong> od dneva prejema blaga.</p>
-
-      <h3>Kako vrniti blago?</h3>
-      <ol>
-        <li>Pišite na <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> ali pokličite <a href="tel:+38631373836">031 373 836</a></li>
-        <li>Povejte številko naročila in razlog vračila</li>
-        <li>Blago pošljite na: <strong>GoMushroom, Prapreče pri Straži 22, 8351 Straža</strong></li>
-        <li>Priporočamo sledljivo pošiljko</li>
-      </ol>
-
-      <h3>Pogoji vračila</h3>
-      <ul>
-        <li>Izdelek mora biti <strong>neodprt in nepoškodovan</strong> v originalni embalaži</li>
-        <li>Pravica ne velja za odprte ali delno uporabljene izdelke</li>
-        <li>Stroške vračilne pošiljke nosi kupec</li>
-      </ul>
-
-      <h3>Povračilo kupnine</h3>
-      <p>Kupnino vrnemo v <strong>14 dneh</strong> od prejema vrnjenega blaga na vaš bančni račun. Poštnine ne vračamo.</p>
-
-      <h3>Poškodovano ali napačno blago</h3>
-      <p>Kontaktirajte nas v 48 urah od prejema z opisom in fotografijo. Prevzamemo vse stroške vračila in pošljemo nadomestni izdelek ali vrnemo kupnino.</p>
-
-      <h3>Kontakt</h3>
-      <p><a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="tel:+38631373836">031 373 836</a> · Pon–Pet 9:00–17:00</p>
       <p class="gm-legal-meta">Veljavno od: 7. maja 2026</p>
     `
   }
@@ -230,7 +207,7 @@ function gmGetRelatedDocs(currentSlug) {
   if (isEn) {
     allowedSlugs = ['cookies-policy', 'privacy-policy'];
   } else if (isTrgovine) {
-    allowedSlugs = ['politika-piskotkov', 'politika-zasebnosti', 'splosni-pogoji', 'politika-vracil'];
+    allowedSlugs = ['politika-piskotkov', 'politika-zasebnosti', 'pogoji-poslovanja'];
   } else {
     allowedSlugs = ['politika-piskotkov', 'politika-zasebnosti'];
   }

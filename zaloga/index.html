@@ -365,6 +365,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
     <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
+    <button class="htab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
@@ -384,6 +385,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+  <button class="dtab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
   
 </nav>
 
@@ -615,7 +617,24 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 </div>
 
-  <!-- CUSTOMER DETAIL SHEET -->
+  <!-- RECENZIJE -->
+  <div class="view" id="view-recenzije">
+    <div class="view-hdr">
+      <div class="view-title">⭐ Recenzije</div>
+      <button class="bsave" onclick="naloziRecenzije()" style="font-size:.75rem;padding:.35rem .75rem">↻ Osveži</button>
+    </div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.75rem 0 .5rem">
+      <select id="rec-filter" onchange="renderRecenzije()" style="padding:.4rem .6rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink)">
+        <option value="pending" selected>⏳ Čaka potrditev</option>
+        <option value="approved">✅ Potrjene</option>
+        <option value="rejected">❌ Zavrnjene</option>
+        <option value="">Vse</option>
+      </select>
+    </div>
+    <div id="recenzije-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+  </div>
+
+</div>
   <div class="overlay" id="customerOverlay" onclick="maybeClose(event,'customerOverlay')">
     <div class="sheet" style="max-height:90vh">
       <div class="shandle"></div>
@@ -2250,6 +2269,7 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='prodaja'){renderOrderRows();if(!_narocila)naloziNarocila();}
+  if(id==='recenzije'){if(!_recenzije)naloziRecenzije();else renderRecenzije();}
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
@@ -5016,11 +5036,12 @@ async function potrdiNarocilo(orderId) {
         body: JSON.stringify({
           group_id: group.id,
           product_id: productId,
-          variant_type: variantType,
-          sku: item.sku || '',
           product_name: item.name,
-          qty,
-          price_malo: price,
+          sku: item.sku || '',
+          alc: variantType === 'alc' ? qty : 0,
+          gly: variantType === 'gly' ? qty : 0,
+          alc_price: variantType === 'alc' ? price : 0,
+          gly_price: variantType === 'gly' ? price : 0,
           line_total: price * qty,
         })
       });
@@ -5107,6 +5128,134 @@ async function oznacOdposlano(orderId) {
   if (idx >= 0) _narocila[idx].status = 'shipped';
   renderNarocila();
   toast('📦 Označeno kot odposlano');
+}
+
+// ── RECENZIJE ─────────────────────────────────────────────
+let _recenzije = null;
+
+async function naloziRecenzije() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?order=created_at.desc&limit=200`, {
+      headers: { ...SB_HEADERS, 'Authorization': 'Bearer ' + SB_HEADERS['apikey'] }
+    });
+    _recenzije = r.ok ? await r.json() : [];
+    renderRecenzije();
+  } catch(e) { console.warn('Recenzije napaka:', e); _recenzije = []; renderRecenzije(); }
+}
+
+function renderRecenzije() {
+  const el = document.getElementById('recenzije-list');
+  if (!el) return;
+  const filter = document.getElementById('rec-filter')?.value || '';
+  const seznam = filter ? (_recenzije||[]).filter(r => r.status === filter) : (_recenzije||[]);
+
+  if (!seznam.length) {
+    el.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:.5rem">Ni recenzij.</div>';
+    return;
+  }
+
+  const stars = r => '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+  const datum = iso => new Date(iso).toLocaleDateString('sl-SI');
+
+  el.innerHTML = seznam.map(r => `
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:600;font-size:.9rem">${r.name} <span style="font-weight:400;color:var(--muted);font-size:.75rem">&lt;${r.email}&gt;</span></div>
+          <div style="font-size:.72rem;color:var(--muted)">${r.product_name||r.product_id} · ${datum(r.created_at)}</div>
+          <div style="color:#af8455;font-size:.95rem;margin:.2rem 0">${stars(r)}</div>
+        </div>
+        <div style="font-size:.68rem;font-weight:600;color:${r.status==='approved'?'#3a6b4a':r.status==='rejected'?'#c0392b':'#e67e22'}">
+          ${r.status==='approved'?'✅ Potrjena':r.status==='rejected'?'❌ Zavrnjena':'⏳ Čaka'}
+        </div>
+      </div>
+      ${r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
+      <p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body}</p>
+      ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
+      ${r.status === 'pending' ? `
+      <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
+        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon</button>
+        <button class="bcancel" onclick="zavrniRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">❌ Zavrni</button>
+      </div>` : ''}
+    </div>`).join('');
+}
+
+function generateCouponCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return 'REVIEW-' + Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function potrdiRecenzijo(id) {
+  const rec = (_recenzije||[]).find(r => r.id === id);
+  if (!rec) return;
+
+  const couponCode = generateCouponCode();
+  const validDays = rec.coupon_valid_days || 60;
+  const validDo = new Date(Date.now() + validDays * 86400000).toISOString().split('T')[0];
+
+  try {
+    // Posodobi recenzijo
+    await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+      method: 'PATCH', headers: SB_HEADERS,
+      body: JSON.stringify({ status: 'approved', coupon_code: couponCode, coupon_sent_at: new Date().toISOString() })
+    });
+
+    // Dodaj kupon v gm_settings popusti
+    const sRes = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, { headers: SB_HEADERS });
+    const sRows = sRes.ok ? await sRes.json() : [];
+    let popusti = sRows.length ? JSON.parse(sRows[0].value) : [];
+    popusti.push({ tip: 'koda', kod: couponCode, vrednost: rec.coupon_pct || 10, aktiven: true, validDo, opis: `Recenzija: ${rec.name}` });
+    await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, {
+      method: 'PATCH', headers: SB_HEADERS,
+      body: JSON.stringify({ value: JSON.stringify(popusti) })
+    });
+
+    // Pošlji email kupcu
+    await sendCouponEmail(rec, couponCode, validDays, validDo);
+
+    // Posodobi lokalno
+    const idx = (_recenzije||[]).findIndex(r => r.id === id);
+    if (idx >= 0) { _recenzije[idx].status = 'approved'; _recenzije[idx].coupon_code = couponCode; }
+    renderRecenzije();
+    toast(`✅ Recenzija potrjena · Kupon ${couponCode} poslan`);
+  } catch(e) { toast('⚠ Napaka: ' + e.message); }
+}
+
+async function sendCouponEmail(rec, couponCode, validDays, validDo) {
+  const html = `<!DOCTYPE html><html><body style="font-family:Georgia,serif;color:#2b0b39;max-width:600px;margin:0 auto">
+    <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
+      <div style="font-size:1.4rem;font-weight:300">Go<strong style="color:#af8455">Mushroom</strong></div>
+    </div>
+    <div style="padding:1.5rem">
+      <p>Spoštovani ${rec.name.split(' ')[0]},</p>
+      <p>hvala za vašo recenzijo! Kot zahvalo vam pošiljamo kupon kodo za ${rec.coupon_pct||10}% popust pri naslednjem naročilu.</p>
+      <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;text-align:center">
+        <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;margin-bottom:.35rem">Vaša kupon koda</div>
+        <div style="font-size:1.75rem;font-weight:700;letter-spacing:.08em;color:#2b0b39">${couponCode}</div>
+        <div style="font-size:.78rem;color:#9a8f82;margin-top:.35rem">Veljavnost: ${validDays} dni (do ${validDo})</div>
+      </div>
+      <p>Kodo vnesite v košarici pri naslednjem naročilu na <a href="https://gomushroom.si/trgovina/" style="color:#af8455">gomushroom.si/trgovina</a>.</p>
+      <p>Lep pozdrav,<br>Rok</p>
+    </div>
+  </body></html>`;
+
+  await fetch('/.netlify/functions/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to: rec.email, subject: `Vaša kupon koda — GoMushroom`, html })
+  });
+}
+
+async function zavrniRecenzijo(id) {
+  if (!confirm('Zavrni recenzijo?')) return;
+  await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+    method: 'PATCH', headers: SB_HEADERS,
+    body: JSON.stringify({ status: 'rejected' })
+  });
+  const idx = (_recenzije||[]).findIndex(r => r.id === id);
+  if (idx >= 0) _recenzije[idx].status = 'rejected';
+  renderRecenzije();
+  toast('❌ Recenzija zavrnjena');
 }
 
 // ── INTEGRITY CHECK ──
@@ -6011,6 +6160,152 @@ async function sendInvoiceEmail(invId){
 
   const st=inv.invStatus||'caka';
   const isPaid=st==='placano'||st==='predano';
+  const isWP=g?.channel==='wp';
+
+  // WP kanal ima posebna emaila za Plačano in Predano
+  if(isWP && st==='placano'){
+    const artikli=(g?.lines||[]).map(l=>`
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+    `).join('');
+
+    const wpPlacanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
+<div style="max-width:600px;margin:0 auto;background:#fff">
+  <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
+    <div style="display:flex;align-items:center;gap:.85rem">
+      <img src="https://gomushroom.si/zaloga/icon-512.png" width="48" height="48" alt="G" style="border-radius:10px;background:#af8455">
+      <div>
+        <div style="font-size:1.4rem;font-weight:300;letter-spacing:.04em">Go<strong style="color:#af8455;font-weight:300">Mushroom</strong></div>
+        <div style="font-size:.7rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">✅ Plačilo prejeto — naročilo se pripravlja</div>
+    </div>
+  </div>
+  <div style="padding:1.5rem">
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
+      prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili.
+      O odpošiljanju vas bomo obvestili z novim sporočilom.
+    </p>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
+      <thead><tr style="background:#f7f3ee">
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Skupaj</th>
+      </tr></thead>
+      <tbody>${artikli}</tbody>
+    </table>
+    <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;font-size:.82rem;line-height:1.8">
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+    </div>
+    <p style="margin:1.25rem 0 0;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
+      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+    </p>
+    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+  </div>
+  <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
+  </div>
+</div></body></html>`;
+
+    const btn=document.querySelector(`[onclick*="sendInvoiceEmail('${invId}')"]`);
+    if(btn){btn.textContent='⏳';btn.disabled=true;}
+    toast('📧 Pošiljam…');
+    try{
+      const r=await fetch('/.netlify/functions/send-email',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({to:email,subject:`Naročilo se pripravlja — GoMushroom`,html:wpPlacanoHtml})
+      });
+      if(!r.ok)throw new Error();
+      inv.emailSent=new Date().toISOString();
+      save();
+      await sbSaveInvoice(inv);
+      if(btn){btn.textContent='📧';btn.disabled=false;}
+      toast('✅ Email poslan');
+    }catch(e){
+      if(btn){btn.textContent='📧';btn.disabled=false;}
+      toast('⚠ Napaka pri pošiljanju');
+    }
+    return;
+  }
+
+  if(isWP && st==='predano'){
+    const artikli=(g?.lines||[]).map(l=>`
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td></tr>`:''}
+    `).join('');
+
+    const wpPredanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
+<div style="max-width:600px;margin:0 auto;background:#fff">
+  <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
+    <div style="display:flex;align-items:center;gap:.85rem">
+      <img src="https://gomushroom.si/zaloga/icon-512.png" width="48" height="48" alt="G" style="border-radius:10px;background:#af8455">
+      <div>
+        <div style="font-size:1.4rem;font-weight:300;letter-spacing:.04em">Go<strong style="color:#af8455;font-weight:300">Mushroom</strong></div>
+        <div style="font-size:.7rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">📦 Vaše naročilo je na poti</div>
+    </div>
+  </div>
+  <div style="padding:1.5rem">
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
+      vaše naročilo je bilo danes odposlano prek Pošte Slovenije.
+      Pričakujte dostavo v 1–2 delovnih dneh.
+    </p>
+    <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;margin-bottom:1.25rem;font-size:.82rem;line-height:1.8">
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava na naslov</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
+      <thead><tr style="background:#f7f3ee">
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
+      </tr></thead>
+      <tbody>${artikli}</tbody>
+    </table>
+    <p style="margin:0 0 .5rem;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
+      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+    </p>
+    <p style="margin:.75rem 0 0;font-size:.82rem;color:rgba(26,18,9,.5);font-style:italic">
+      Veseli nas, če nam zaupate recenzijo na <a href="https://gomushroom.si/trgovina/" style="color:#af8455">gomushroom.si</a> — za oddano recenzijo prejmete 10% popust pri naslednjem naročilu.
+    </p>
+    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+  </div>
+  <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
+  </div>
+</div></body></html>`;
+
+    const btn=document.querySelector(`[onclick*="sendInvoiceEmail('${invId}')"]`);
+    if(btn){btn.textContent='⏳';btn.disabled=true;}
+    toast('📧 Pošiljam…');
+    try{
+      const r=await fetch('/.netlify/functions/send-email',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({to:email,subject:`Vaše naročilo je na poti — GoMushroom`,html:wpPredanoHtml})
+      });
+      if(!r.ok)throw new Error();
+      inv.emailSent=new Date().toISOString();
+      save();
+      await sbSaveInvoice(inv);
+      if(btn){btn.textContent='📧';btn.disabled=false;}
+      toast('✅ Email poslan');
+    }catch(e){
+      if(btn){btn.textContent='📧';btn.disabled=false;}
+      toast('⚠ Napaka pri pošiljanju');
+    }
+    return;
+  }
 
   const subject=isPaid
     ?`Račun ${inv.num} — GoMushroom`

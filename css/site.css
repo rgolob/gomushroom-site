@@ -2237,4 +2237,10 @@ footer.site-footer{
 .footer-legal a:hover {
   color: rgba(255,255,255,.8);
 }
+.site-footer {
+  min-height: 260px;
+}
 
+.gm-cart-summary {
+  min-height: 420px;
+}

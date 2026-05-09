@@ -183,6 +183,7 @@ nav a:hover::after{width:100%}
   cursor:pointer;
   padding:0;
   flex:0 0 auto;
+  margin: 0 10px 0 0;
 }
 
 .nav-toggle:active{transform:translateY(1px)}

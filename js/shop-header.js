@@ -1,6 +1,3 @@
-const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
-const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
-
 document.addEventListener("DOMContentLoaded", () => {
   const header = document.getElementById("shop-header");
   if (!header) return;

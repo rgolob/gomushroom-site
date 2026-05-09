@@ -1358,6 +1358,7 @@ footer.site-footer{
 }
 
 @media (max-width:600px){
+  .site-footer{min-height:340px;}
   .footer-inner{padding:16px 14px 14px;}
   .footer-nav{gap:8px 14px;}
   .footer-tags{font-size:12px;}

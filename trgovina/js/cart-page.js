@@ -1,7 +1,5 @@
 // ── GoMushroom Košarica ───────────────────────────────────
 
-const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
-const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS = {
   'Content-Type': 'application/json',
   'apikey': SB_KEY,

@@ -1250,6 +1250,7 @@ footer.site-footer{
   color:#fdfbff;
   border-top:1px solid rgba(255,255,255,.18);
   font-size:13px;
+  min-height: 260px;
 }
 
 .footer-inner{

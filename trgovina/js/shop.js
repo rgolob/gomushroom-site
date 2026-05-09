@@ -17,7 +17,7 @@ function formatPrice(value) {
 }
 
 // ── Nastavitve iz Supabase ────────────────────────────────
-let _settings = null;
+if (typeof _settings === 'undefined') var _settings = null;
 async function loadSettings() {
   try {
     const r = await fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS });

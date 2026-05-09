@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   header.innerHTML = `
+    <script src="/js/supabase-config.js"><\/script>
     <div class="wrap nav">
 
       <div class="brand">

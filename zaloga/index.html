@@ -3800,25 +3800,55 @@ function buildInvoiceHTML(group, qrDataURL){
     }
   }
 
-  const tableRows=(group.lines||[]).map(l=>{
-    const rows=[];
-    const batchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>bb.batchNum).join(', ');
-    // Find SKU from batches
-    const pb=batches.filter(b=>b.productId===l.productId);
-    const alcSku=pb.length?pb[0].alc?.sku||'':'';
-    const glySku=pb.length?pb[0].gly?.sku||'':'';
-    if(l.alc>0){
-      const descAlc=`<div style="font-weight:500">${l.productName}</div>${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
-      rows.push(`<tr><td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc.replace('<div style="font-weight:500">','<div style="font-weight:500">').replace('</div>','</div>')}</td><td>${l.alc}</td><td>${l.alcPrice!=null?l.alcPrice.toFixed(2):'\u2013'} \u20AC</td><td>${(l.alc*(l.alcPrice||0)).toFixed(2)} \u20AC</td></tr>`);
-    }
-    if(l.gly>0){
-      const descGly=`<div style="font-weight:500">${l.productName}</div>${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
-      rows.push(`<tr><td><div>🌿 Glicerin</div>${descGly}</td><td>${l.gly}</td><td>${l.glyPrice!=null?l.glyPrice.toFixed(2):'\u2013'} \u20AC</td><td>${(l.gly*(l.glyPrice||0)).toFixed(2)} \u20AC</td></tr>`);
-    }
-    return rows.join('');
-  }).join('');
+ const tableRows=(group.lines||[]).map(l=>{
+  const rows=[];
+  const batchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>bb.batchNum).join(', ');
+  const pb=batches.filter(b=>b.productId===l.productId);
+  const alcSku=pb.length?pb[0].alc?.sku||'':'';
+  const glySku=pb.length?pb[0].gly?.sku||'':'';
 
-  const discountLine=(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span>\u2013${((total)/(1-(group.discount||0)/100)*(group.discount||0)/100).toFixed(2)} \u20AC</span></div>`:'';
+  if(l.alc>0){
+    const alcPriceFull=latestPrice(l.productId,'alc');
+    const alcDiscPct=alcPriceFull>0&&(l.alcPrice||0)<alcPriceFull?Math.round(((alcPriceFull-(l.alcPrice||0))/alcPriceFull)*100):0;
+    const descAlc=`
+      <div style="font-weight:500">${l.productName}</div>
+      ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
+      ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+    rows.push(`<tr>
+      <td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc}</td>
+      <td>${l.alc}</td>
+      <td>
+        ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
+        ${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €
+        ${alcDiscPct>0?`<div style="font-size:.7rem;color:#3a6b4a">–${alcDiscPct}%</div>`:''}
+      </td>
+      <td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td>
+    </tr>`);
+  }
+
+  if(l.gly>0){
+    const glyPriceFull=latestPrice(l.productId,'gly');
+    const glyDiscPct=glyPriceFull>0&&(l.glyPrice||0)<glyPriceFull?Math.round(((glyPriceFull-(l.glyPrice||0))/glyPriceFull)*100):0;
+    const descGly=`
+      <div style="font-weight:500">${l.productName}</div>
+      ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
+      ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+    rows.push(`<tr>
+      <td><div>🌿 Glicerin</div>${descGly}</td>
+      <td>${l.gly}</td>
+      <td>
+        ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
+        ${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €
+        ${glyDiscPct>0?`<div style="font-size:.7rem;color:#3a6b4a">–${glyDiscPct}%</div>`:''}
+      </td>
+      <td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td>
+    </tr>`);
+  }
+
+  return rows.join('');
+}).join('');
+
+  const discountLine=(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span>–${(group.discountAmt||((group.fullTotal||0)-(group.total||0))).toFixed(2)} €</span></div>`:'';
   const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
 

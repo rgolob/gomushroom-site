@@ -4986,50 +4986,56 @@ async function potrdiNarocilo(orderId) {
   try {
     const items = narocilo.items || [];
 
-    // Poišči variante po SKU
-    const prodRes = await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=id,sku,product_id,type,name,price_malo`, { headers: SB_HEADERS });
+    // Poišči variante po SKU → product_id
+    const prodRes = await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=sku,product_id,type,price_malo&active=eq.true`, { headers: SB_HEADERS });
     const variants = prodRes.ok ? await prodRes.json() : [];
     const skuMap = Object.fromEntries(variants.map(v => [v.sku, v]));
 
-    // Poišči produkte
-    const prodMap = Object.fromEntries(products.map(p => [p.id, p]));
-
-    // Ustvari sale group
+    // Pripravi group podatke
     const today = todayISO();
+    const groupId = 'wp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+    const postFull = [narocilo.post, narocilo.city].filter(Boolean).join(' ');
+    const totalQty = items.reduce((s, i) => s + (i.quantity || 0), 0);
+
     const groupData = {
-      id: 'wp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2),
+      id: groupId,
       channel: 'wp',
       buyer: narocilo.name,
-      email: narocilo.email,
+      email: narocilo.email || null,
       phone: narocilo.phone || null,
       street: narocilo.street || null,
-      post: [narocilo.post, narocilo.city].filter(Boolean).join(' '),
+      post: postFull || null,
       date: today,
-      note: `Spletno naročilo · ${narocilo.street||''}, ${narocilo.post||''} ${narocilo.city||''}`,
-      status: 'placano',
-      discount: narocilo.discount_pct || 0,
-      discount_amt: narocilo.discount_amt || 0,
-      full_total: narocilo.subtotal || narocilo.total || 0,
-      total: narocilo.total || 0,
+      note: ['Spletno naročilo', narocilo.street, postFull].filter(Boolean).join(' · '),
+      discount: parseFloat(narocilo.discount_pct) || 0,
+      discount_amt: parseFloat(narocilo.discount_amt) || 0,
+      full_total: parseFloat(narocilo.subtotal) || parseFloat(narocilo.total) || 0,
+      total: parseFloat(narocilo.total) || 0,
+      qty: totalQty,
+      status: 'active',
     };
 
+    // Vstavi sale group
     const gr = await fetch(`${SB_URL}/rest/v1/gm_sale_groups`, {
       method: 'POST',
       headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
       body: JSON.stringify(groupData)
     });
-    if (!gr.ok) throw new Error('Napaka pri ustvarjanju prodajne skupine');
+    if (!gr.ok) {
+      const err = await gr.text();
+      throw new Error('sale_groups: ' + err);
+    }
     const [group] = await gr.json();
 
-    // Ustvari sale lines + FIFO dodelitev serij
+    // Vstavi sale lines + batch alokacija
     for (const item of items) {
       const variant = skuMap[item.sku] || {};
       const productId = variant.product_id || null;
-      const variantType = item.variant || 'alc';
-      const qty = item.quantity || 1;
-      const price = item.price || 0;
+      const variantType = item.variant || variant.type || 'alc';
+      const qty = parseInt(item.quantity) || 1;
+      const price = parseFloat(item.price) || 0;
+      const isAlc = variantType === 'alc';
 
-      // Ustvari sale line
       const lineRes = await fetch(`${SB_URL}/rest/v1/gm_sale_lines`, {
         method: 'POST',
         headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
@@ -5037,23 +5043,24 @@ async function potrdiNarocilo(orderId) {
           group_id: group.id,
           product_id: productId,
           product_name: item.name,
-          sku: item.sku || '',
-          alc: variantType === 'alc' ? qty : 0,
-          gly: variantType === 'gly' ? qty : 0,
-          alc_price: variantType === 'alc' ? price : 0,
-          gly_price: variantType === 'gly' ? price : 0,
+          alc: isAlc ? qty : 0,
+          gly: isAlc ? 0 : qty,
+          alc_price: isAlc ? price : 0,
+          gly_price: isAlc ? 0 : price,
           line_total: price * qty,
         })
       });
-      if (!lineRes.ok) continue;
+      if (!lineRes.ok) {
+        console.warn('sale_lines failed:', await lineRes.text());
+        continue;
+      }
       const [line] = await lineRes.json();
 
-      // FIFO dodelitev serij (če imamo produkt v lokalnih podatkih)
+      // FIFO batch alokacija (samo če poznamo produkt)
       if (productId) {
-        const reqAlc = variantType === 'alc' ? qty : 0;
-        const reqGly = variantType === 'gly' ? qty : 0;
-        const alloc = fifoAllocate(productId, reqAlc, reqGly, 'prod');
-
+        const reqAlc = isAlc ? qty : 0;
+        const reqGly = isAlc ? 0 : qty;
+        const { alloc } = fifoAllocate(productId, reqAlc, reqGly, 'prod');
         for (const bb of alloc) {
           await fetch(`${SB_URL}/rest/v1/gm_sale_line_batches`, {
             method: 'POST',
@@ -5062,6 +5069,7 @@ async function potrdiNarocilo(orderId) {
               line_id: line.id,
               group_id: group.id,
               batch_id: bb.batchId,
+              batch_num: bb.batchNum,
               alc: bb.alc || 0,
               gly: bb.gly || 0,
             })
@@ -5072,51 +5080,64 @@ async function potrdiNarocilo(orderId) {
 
     // Ustvari račun
     const invNum = nextInvNum('wp', today);
-    await sbSaveCounters();
+    const invId = uid();
     await fetch(`${SB_URL}/rest/v1/gm_invoices`, {
       method: 'POST',
       headers: SB_HEADERS,
       body: JSON.stringify({
-        group_id: group.id,
+        id: invId,
         num: invNum,
+        channel: 'wp',
+        buyer: narocilo.name,
+        email: narocilo.email || null,
+        phone: narocilo.phone || null,
+        street: narocilo.street || null,
+        post: postFull || null,
         date: today,
-        total: narocilo.total || 0,
-        inv_status: 'placano',
-        email_sent: false,
+        total: parseFloat(narocilo.total) || 0,
+        group_id: group.id,
+        inv_status: 'caka',
+        email_sent: null,
       })
     });
 
+    // Posodobi invoice_num v sale_group
+    await fetch(`${SB_URL}/rest/v1/gm_sale_groups?id=eq.${group.id}`, {
+      method: 'PATCH',
+      headers: SB_HEADERS,
+      body: JSON.stringify({ invoice_num: invNum, invoice_id: invId })
+    });
+
+    // Shrani števce
+    await sbSaveCounters();
+
     // Posodobi status naročila
     await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
-      method: 'PATCH', headers: SB_HEADERS,
+      method: 'PATCH',
+      headers: SB_HEADERS,
       body: JSON.stringify({ status: 'paid', invoice_id: group.id })
     });
 
-    // Posodobi lokalno
+    // Posodobi lokalni cache
     const idx = _narocila.findIndex(n => n.id === orderId);
-    if (idx >= 0) { _narocila[idx].status = 'paid'; _narocila[idx].invoice_id = group.id; }
+    if (idx >= 0) {
+      _narocila[idx].status = 'paid';
+      _narocila[idx].invoice_id = group.id;
+    }
 
-    // Osveži lokalne podatke iz Supabase
+    // Osveži vse iz Supabase
     await sbLoadAll();
     renderSales();
+    if (currentTab === 'racuni') { renderInvStats(); renderInvoices(); }
+    renderStats();
+    renderInventory();
+
     toast(`✅ Naročilo potrjeno · Račun ${invNum}`);
 
   } catch(e) {
-    console.error(e);
+    console.error('potrdiNarocilo error:', e);
     toast('⚠ Napaka: ' + e.message);
   }
-}
-
-async function prekliNarocilo(orderId) {
-  if (!confirm('Prekliči naročilo?')) return;
-  await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
-    method: 'PATCH', headers: SB_HEADERS,
-    body: JSON.stringify({ status: 'cancelled' })
-  });
-  const idx = _narocila.findIndex(n => n.id === orderId);
-  if (idx >= 0) _narocila[idx].status = 'cancelled';
-  renderNarocila();
-  toast('❌ Naročilo preklicano');
 }
 
 async function oznacOdposlano(orderId) {

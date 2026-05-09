@@ -100,18 +100,6 @@
 
   <footer id="site-footer"></footer>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-    const navToggle = document.getElementById('nav-toggle');
-    const siteHeader = document.getElementById('site-header');
-    if (navToggle && siteHeader) {
-      navToggle.addEventListener('click', () => {
-        const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!expanded));
-        siteHeader.classList.toggle('nav-open');
-      });
-    }
-  </script>  
   <script src="/trgovina/js/cart-page.js"></script>
    <script src="/trgovina/js/cart.js"></script>
   <script defer src="/js/shop-header.js"></script>

@@ -3863,7 +3863,8 @@ if(l.gly>0){
   return rows.join('');
 }).join('');
 
-  const discountLine=(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span>–${(group.discountAmt||((group.fullTotal||0)-(group.total||0))).toFixed(2)} €</span></div>`:'';
+  const discountAmt = group.discountAmt || ((group.fullTotal||0) - (group.total||0));
+  const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>Popust ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
   const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
 
@@ -5182,7 +5183,8 @@ async function potrdiNarocilo(orderId) {
     renderInventory();
 
     toast(`✅ Naročilo potrjeno · Račun ${invNum}`);
-
+   if (narocilo.email) await sendInvoiceEmail(invId);
+    
   } catch(e) {
     console.error('potrdiNarocilo error:', e);
     toast('⚠ Napaka: ' + e.message);

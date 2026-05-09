@@ -3543,9 +3543,15 @@ function aaAddArticle(){
     if(!g.lines)g.lines=[];
     g.lines.push({productId:pid,productName:p.name,alc,gly,alcPrice:alcP,glyPrice:glyP,lineTotal,batchBreakdown:alloc.alloc});
   }
-  g.total=(g.total||0)+lineTotal;
-  g.qty=(g.qty||0)+alc+gly;
-  save();renderStats();renderInventory();renderSales();
+g.total=(g.total||0)+lineTotal;
+g.qty=(g.qty||0)+alc+gly;
+// Posodobi fullTotal in discountAmt
+const alcFullPrice=latestPrice(pid,'alc');
+const glyFullPrice=latestPrice(pid,'gly');
+const fullLineTotal=(alc*alcFullPrice)+(gly*glyFullPrice);
+g.fullTotal=(g.fullTotal||0)+fullLineTotal;
+g.discountAmt=Math.max(0,(g.fullTotal||0)-(g.total||0));
+save();renderStats();renderInventory();renderSales();
   if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   const div=document.getElementById('aaAddedLines');
   div.innerHTML+=`<div style="font-size:.75rem;color:#3a6b4a;padding:.3rem .5rem;background:rgba(58,107,74,.08);border-radius:6px;margin-top:.3rem">
@@ -3808,43 +3814,44 @@ function buildInvoiceHTML(group, qrDataURL){
   const glySku=pb.length?pb[0].gly?.sku||'':'';
 
   if(l.alc>0){
-    const alcPriceFull=latestPrice(l.productId,'alc');
-    const alcDiscPct=alcPriceFull>0&&(l.alcPrice||0)<alcPriceFull?Math.round(((alcPriceFull-(l.alcPrice||0))/alcPriceFull)*100):0;
-    const descAlc=`
-      <div style="font-weight:500">${l.productName}</div>
-      ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
-      ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
-    rows.push(`<tr>
-      <td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc}</td>
-      <td>${l.alc}</td>
-      <td>
-        ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
-        ${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €
-        ${alcDiscPct>0?`<div style="font-size:.7rem;color:#3a6b4a">–${alcDiscPct}%</div>`:''}
-      </td>
-      <td>${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td>
-    </tr>`);
-  }
+  const alcPriceFull=latestPrice(l.productId,'alc');
+  const isFreeAlc=(l.alcPrice||0)===0 && alcPriceFull>0;
+  const alcDiscPct=isFreeAlc?100:alcPriceFull>0&&(l.alcPrice||0)<alcPriceFull?Math.round(((alcPriceFull-(l.alcPrice||0))/alcPriceFull)*100):0;
+  const descAlc=`
+    <div style="font-weight:500">${l.productName}</div>
+    ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
+    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+  rows.push(`<tr>
+    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc}</td>
+    <td>${l.alc}</td>
+    <td>
+      ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
+      ${isFreeAlc?`<span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`:`${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €`}
+      ${alcDiscPct>0&&!isFreeAlc?`<div style="font-size:.7rem;color:#3a6b4a">–${alcDiscPct}%</div>`:''}
+    </td>
+    <td>${isFreeAlc?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td>
+  </tr>`);
+}
 
-  if(l.gly>0){
-    const glyPriceFull=latestPrice(l.productId,'gly');
-    const glyDiscPct=glyPriceFull>0&&(l.glyPrice||0)<glyPriceFull?Math.round(((glyPriceFull-(l.glyPrice||0))/glyPriceFull)*100):0;
-    const descGly=`
-      <div style="font-weight:500">${l.productName}</div>
-      ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
-      ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
-    rows.push(`<tr>
-      <td><div>🌿 Glicerin</div>${descGly}</td>
-      <td>${l.gly}</td>
-      <td>
-        ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
-        ${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €
-        ${glyDiscPct>0?`<div style="font-size:.7rem;color:#3a6b4a">–${glyDiscPct}%</div>`:''}
-      </td>
-      <td>${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td>
-    </tr>`);
-  }
-
+if(l.gly>0){
+  const glyPriceFull=latestPrice(l.productId,'gly');
+  const isFreeGly=(l.glyPrice||0)===0 && glyPriceFull>0;
+  const glyDiscPct=isFreeGly?100:glyPriceFull>0&&(l.glyPrice||0)<glyPriceFull?Math.round(((glyPriceFull-(l.glyPrice||0))/glyPriceFull)*100):0;
+  const descGly=`
+    <div style="font-weight:500">${l.productName}</div>
+    ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
+    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+  rows.push(`<tr>
+    <td><div>🌿 Glicerin</div>${descGly}</td>
+    <td>${l.gly}</td>
+    <td>
+      ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
+      ${isFreeGly?`<span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`:`${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €`}
+      ${glyDiscPct>0&&!isFreeGly?`<div style="font-size:.7rem;color:#3a6b4a">–${glyDiscPct}%</div>`:''}
+    </td>
+    <td>${isFreeGly?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td>
+  </tr>`);
+}
   return rows.join('');
 }).join('');
 

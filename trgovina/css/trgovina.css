@@ -202,7 +202,7 @@
 
 .shop-product picture {
   display: block;
-  height: 280px;       /* fiksna višina slike */
+  height: 400px;       /* fiksna višina slike */
   overflow: hidden;
 }
 

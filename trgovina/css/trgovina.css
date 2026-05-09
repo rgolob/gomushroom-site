@@ -797,3 +797,10 @@
     justify-content:center;
   }
 }
+.site-footer {
+  min-height: 260px;
+}
+
+.gm-cart-summary {
+  min-height: 420px;
+}

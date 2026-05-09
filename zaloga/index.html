@@ -4997,6 +4997,7 @@ async function potrdiNarocilo(orderId) {
     // Ustvari sale group
     const today = todayISO();
     const groupData = {
+      id: 'wp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2),
       channel: 'wp',
       buyer: narocilo.name,
       email: narocilo.email,

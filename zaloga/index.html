@@ -1369,7 +1369,7 @@ function sbInvoiceToApp(i){
 // Naloži vse iz relacijskih tabel
 async function sbLoadAll(){
   const [prods, bats, groups, lines, lineBats, invs, counters, tiers] = await Promise.all([
-    sbFetch('gm_products','select=*'),
+    sbFetch('gm_products','select=*&order=sort_order.asc'),
     sbFetch('gm_batches','select=*&order=date.desc'),
     sbFetch('gm_sale_groups','select=*&order=date.desc'),
     sbFetch('gm_sale_lines','select=*'),

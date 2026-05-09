@@ -3288,7 +3288,8 @@ function renderSales(){
     wpOrders = (_narocila||[]).filter(n => {
       if(n.status === 'cancelled' || n.status === 'abandoned') return false;
       // Ne prikazuj tistih ki so že potrjena in imajo invoice_id (so že v saleGroups)
-      if(n.status === 'paid' && n.invoice_id) return false;
+     // if(n.status === 'paid' && n.invoice_id) return false;
+      if((n.status === 'paid' || n.status === 'shipped') && n.invoice_id) return false;
       const datum = n.created_at?.split('T')[0] || '';
       const mq = !q || (n.name||'').toLowerCase().includes(q) || (n.email||'').toLowerCase().includes(q);
       const mDate = (!fFrom||datum>=fFrom)&&(!fTo||datum<=fTo);
@@ -5127,6 +5128,7 @@ async function potrdiNarocilo(orderId) {
 
     // Osveži vse iz Supabase
     await sbLoadAll();
+    await naloziNarocila(); 
     renderSales();
     if (currentTab === 'racuni') { renderInvStats(); renderInvoices(); }
     renderStats();

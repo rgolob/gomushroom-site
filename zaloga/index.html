@@ -3193,8 +3193,16 @@ async function confirmOrder(withInvoice){
     }
   }
   // compute batch allocation if not already set (FIFO default)
-  if(!Object.keys(pendingBatchAlloc).length){
-    const {warnings, unfulfilled}=computePendingAlloc();
+if(!Object.keys(pendingBatchAlloc).length){
+  const {warnings, unfulfilled}=computePendingAlloc();
+  // Varnostna mreža — dopolni manjkajoče alokacije
+  lines.forEach(l=>{
+    if(!(pendingBatchAlloc[l.p.id]||[]).some(x=>x.alc||x.gly)){
+      const purpose=(orderChannel==='int')?'int':'prod';
+      const result=fifoAllocate(l.p.id,l.alc,l.gly,purpose);
+      if(result.alloc.length)pendingBatchAlloc[l.p.id]=result.alloc;
+    }
+  });
     if(unfulfilled){
       // Not enough stock for this channel - block and offer alternatives
       const isProd=orderChannel==='malo'||orderChannel==='velo';

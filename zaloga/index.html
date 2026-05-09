@@ -5065,6 +5065,8 @@ async function potrdiNarocilo(orderId) {
       const variantType = item.variant || variant.type || 'alc';
       const qty = parseInt(item.quantity) || 1;
       const price = parseFloat(item.price) || 0;
+      const discountPct = parseFloat(narocilo.discount_pct) || 0;
+      const priceAfterDiscount = discountPct > 0 ? Math.round(price * (1 - discountPct / 100) * 100) / 100 : price;
       const isAlc = variantType === 'alc';
 
       const lineRes = await fetch(`${SB_URL}/rest/v1/gm_sale_lines`, {
@@ -5076,9 +5078,9 @@ async function potrdiNarocilo(orderId) {
           product_name: item.name,
           alc: isAlc ? qty : 0,
           gly: isAlc ? 0 : qty,
-          alc_price: isAlc ? price : 0,
-          gly_price: isAlc ? 0 : price,
-          line_total: price * qty,
+          alc_price: isAlc ? priceAfterDiscount : 0,
+          gly_price: isAlc ? 0 : priceAfterDiscount,
+          line_total: priceAfterDiscount * qty,
         })
       });
       if (!lineRes.ok) {

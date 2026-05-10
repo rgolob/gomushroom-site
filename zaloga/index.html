@@ -351,7 +351,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
-    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
+    <button onclick="doLogin()"
       style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
     <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
   </div>
@@ -1098,12 +1098,16 @@ function hideFaceIdBtn(){
 })();
 
 
-const LOGIN_PWD='Z29tdXNocm9vbTIwMjQ='; // btoa('gomushroom2024')
-function doLogin(){
+const LOGIN_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+async function hashPwd(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function doLogin(){
   const pwd=document.getElementById('loginPwd')?.value||'';
   const err=document.getElementById('loginErr');
   if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
-  if(btoa(pwd)===LOGIN_PWD){
+  if(await hashPwd(pwd)===LOGIN_HASH){
     try{localStorage.setItem('gm_auth','1');}catch(e){}
     document.getElementById('loginScreen').style.display='none';
     if(err)err.textContent='';
@@ -1831,7 +1835,7 @@ async function saveCustomerEdit(){
   const oldRecord=_customers?.find(c=>c.id===id);
   if(partnerId&&partnerId!==(oldRecord?.partner_id||'')){
     const pwd=prompt('Partner ID sprememba zahteva geslo:');
-    if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+    if(!pwd||await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo.');return;}
     if(partnerId){
       const partners=getPartners();
       if(!partners.find(p=>p.id===partnerId)){
@@ -1877,7 +1881,7 @@ async function removePartnerStatus(vat){
   const ok=await showConfirm(`Odstrani partner status?`,'Odstrani');
   if(!ok)return;
   const pwd=prompt('Vnesi geslo:');
-  if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+  if(!pwd||await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo.');return;}
   savePartners(getPartners().filter(p=>p.vat!==vat));
   toast('Partner status odstranjen');
   closeSheet('customerOverlay');
@@ -1952,7 +1956,7 @@ async function deletePartner(idx){
   // Require password
   const pwd=prompt('Vnesi geslo za potrditev izbrisa:');
   if(!pwd){toast('Izbris preklican.');return;}
-  if(btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo — izbris preklican.');return;}
+  if(await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo — izbris preklican.');return;}
   partners.splice(idx,1);
   savePartners(partners);
   renderPartnerList();
@@ -6552,13 +6556,13 @@ Rok`;
   }
 }
 
-function cycleInvStatus(invId){
+async function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
   const cur=i.invStatus||'caka';
   if(cur==='predano'){
     const pwd=prompt('Vnesi geslo za razveljavitev statusa "Predano":');
     if(!pwd)return;
-    if(btoa(pwd)!=='Z29tdXNocm9vbTIwMjQ='){toast('⛔ Napačno geslo');return;}
+    if(await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo');return;}
     i.invStatus='caka';
   } else {
     const cycle={caka:'placano',placano:'predano'};

@@ -197,7 +197,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="view-hdr">
       <div class="view-title">Etanol</div>
       <div style="display:flex;gap:.4rem">
-        <button class="hbtn2" style="background:white;color:var(--ink);border:1px solid var(--border)" onclick="genEtanolPorocilo()">📄</button>
+        <button class="hbtn2" style="background:white;color:var(--ink);border:1px solid var(--border)" onclick="openPorociloFilter()">📄</button>
         <button class="hbtn2" onclick="openEtanolSheet()">+ Vnos</button>
       </div>
     </div>
@@ -279,6 +279,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <option value="Reishi">Reishi</option>
             <option value="Resasti bradovec">Resasti bradovec</option>
             <option value="Chaga">Chaga</option>
+            <option value="Smrekovi vršički">Smrekovi vršički</option>
           </select>
         </div>
         <div class="field"><label>Namen (auto)</label>
@@ -562,6 +563,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('settingsOverlay')">Zapri</button>
       <button class="bsave" onclick="saveSettings()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- POROCILO FILTER -->
+<div class="overlay" id="porociloOverlay">
+  <div class="sheet" style="height:auto;max-height:70vh">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Filtri poročila</span>
+      <button class="shclose" onclick="closeSheet('porociloOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="slabel">Obdobje</div>
+      <div class="frow">
+        <div class="field"><label>Od</label><input id="porOd" type="date"></div>
+        <div class="field"><label>Do</label><input id="porDo" type="date"></div>
+      </div>
+      <div class="slabel">Vrsta vnosov</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem">
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porNabava" checked> Nabave</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porRegen" checked> Regeneracije</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porEkstr" checked> Ekstrakcije</label>
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('porociloOverlay')">Prekliči</button>
+      <button class="bsave" onclick="closeSheet('porociloOverlay');genEtanolPorocilo()">📄 Generiraj</button>
     </div>
   </div>
 </div>
@@ -1461,11 +1490,42 @@ function clearAll(){
 }
 
 // ── BACKUP ──
-function genEtanolPorocilo(){
-  // Zberi vse vnose in DN izhode, sortirano po datumu
-  const vsi=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+function openPorociloFilter(){
+  const today=todayISO();
+  if(!document.getElementById('porDo').value) document.getElementById('porDo').value=today;
+  openSheet('porociloOverlay');
+}
 
-  let tekocaZaloga=0;
+function genEtanolPorocilo(){
+  const od=document.getElementById('porOd')?.value||'';
+  const doo=document.getElementById('porDo')?.value||'';
+  const showNabava=document.getElementById('porNabava')?.checked!==false;
+  const showRegen=document.getElementById('porRegen')?.checked!==false;
+  const showEkstr=document.getElementById('porEkstr')?.checked!==false;
+
+  let vsi=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Tip filter
+  vsi=vsi.filter(e=>{
+    if(e.tip==='nabava') return showNabava;
+    if(e.tip==='regeneracija') return showRegen;
+    if(e.tip==='izhod_dn') return showEkstr;
+    return true;
+  });
+  // Datum filter — računamo tekočo zalogo od začetka, prikažemo samo v obdobju
+  const vsiChronological=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Preračunaj začetno stanje (pred "od")
+  let zalogaPred=0;
+  if(od){
+    vsiChronological.forEach(e=>{
+      if(e.datum>=od) return;
+      if(e.tip==='nabava'||e.tip==='regeneracija') zalogaPred+=e.lAAE||0;
+      else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
+    });
+  }
+  if(od) vsi=vsi.filter(e=>e.datum>=od);
+  if(doo) vsi=vsi.filter(e=>e.datum<=doo);
+
+  let tekocaZaloga=zalogaPred;
   const rows=vsi.map(e=>{
     const isIn=e.tip==='nabava'||e.tip==='regeneracija';
     const aae=e.lAAE||0;
@@ -1518,6 +1578,8 @@ th.num{text-align:right}
   <div style="text-align:right">
     <div style="font-size:.9rem;font-weight:500">Materialna kartica etanola</div>
     <div style="font-size:.65rem;color:#7a6f60">Vse količine v L AAE · Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    ${od||doo?`<div style="font-size:.62rem;color:#af8455;margin-top:.15rem">Obdobje: ${od?fmtDate(od):'začetek'} – ${doo?fmtDate(doo):'danes'}${zalogaPred?` · Začetna zaloga: ${zalogaPred.toFixed(4)} L AAE`:''}</div>`:''}
+    ${(!showNabava||!showRegen||!showEkstr)?`<div style="font-size:.62rem;color:#af8455">Prikazano: ${[showNabava?'nabave':'',showRegen?'regeneracije':'',showEkstr?'ekstrakcije':''].filter(Boolean).join(', ')}</div>`:''}
   </div>
 </div>
 
@@ -1561,17 +1623,16 @@ th.num{text-align:right}
 // ── MATERIALI ──
 const MAT_ENOTA={
   steklenicka_bela:'kom',steklenicka_crna:'kom',
-  etiketa_reishi:'kom',etiketa_bradovec:'kom',etiketa_chaga:'kom',
-  goba_reishi:'kg',goba_bradovec:'kg',goba_chaga:'kg',
+  etiketa_reishi:'kom',etiketa_bradovec:'kom',etiketa_chaga:'kom',etiketa_smrekovi:'kom',
+  goba_reishi:'kg',goba_bradovec:'kg',goba_chaga:'kg',goba_smrekovi:'kg',
   vitc:'g',lecitin:'g',glicerin:'L'
 };
 const MAT_IME={
   steklenicka_bela:'⬜ Steklenička bela',steklenicka_crna:'⬛ Steklenička črna',
   etiketa_reishi:'🏷 Etiketa Reishi',etiketa_bradovec:'🏷 Etiketa Bradovec',
-  etiketa_chaga:'🏷 Etiketa Chaga',
-  
+  etiketa_chaga:'🏷 Etiketa Chaga',etiketa_smrekovi:'🏷 Etiketa Smrekovi vršički',
   goba_reishi:'🍄 Goba Reishi',goba_bradovec:'🍄 Goba Bradovec',
-  goba_chaga:'🍄 Goba Chaga',
+  goba_chaga:'🍄 Goba Chaga',goba_smrekovi:'🌿 Smrekovi vršički',
   
   vitc:'💊 Vitamin C',lecitin:'🌱 Lecitin',glicerin:'🧴 Glicerin'
 };
@@ -1732,6 +1793,7 @@ const MAT_OPCIJE={
     {value:'goba_reishi',label:'🍄 Goba Reishi (kg)'},
     {value:'goba_bradovec',label:'🍄 Goba Resasti bradovec (kg)'},
     {value:'goba_chaga',label:'🍄 Goba Chaga (kg)'},
+    {value:'goba_smrekovi',label:'🌿 Smrekovi vršički (kg)'},
     {value:'vitc',label:'💊 Vitamin C (g)'},
     {value:'lecitin',label:'🌱 Lecitin (g)'},
     {value:'glicerin',label:'🧴 Glicerin (L)'},
@@ -1742,6 +1804,7 @@ const MAT_OPCIJE={
     {value:'etiketa_reishi',label:'🏷 Etiketa Reishi (kom)'},
     {value:'etiketa_bradovec',label:'🏷 Etiketa Bradovec (kom)'},
     {value:'etiketa_chaga',label:'🏷 Etiketa Chaga (kom)'},
+    {value:'etiketa_smrekovi',label:'🏷 Etiketa Smrekovi vršički (kom)'},
   ]
 };
 
@@ -1810,11 +1873,11 @@ function knjizMaterjaleIzhod(d){
   const skupajCrna=(stekAlcTip==='steklenicka_crna'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_crna'?d.kolGly||0:0);
 
   // Etikete
-  const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':'etiketa_chaga';
+  const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
   const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
 
-  // Goba
-  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':'goba_chaga';
+  // Goba / surovina
+  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
 
   const izhodi=[];
   if(skupajBela>0)izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});

@@ -50,13 +50,15 @@ function renderActiveDiscountBanner() {
   const banner = document.getElementById('shop-discount-banner');
   if (!banner) return;
   const aktivni = getAktivniPopusti();
-  if (!aktivni.length) { banner.style.display = 'none'; return; }
+  const brezplacnaOd = _settings?.brezplacnaPosninaOd;
+  if (!aktivni.length && !brezplacnaOd) { banner.style.display = 'none'; return; }
   const vrstice = aktivni.map(p => {
     if (p.opis.startsWith('Koda')) return `🏷 Koda <strong>${p.opis.replace('Koda ','')}</strong>: −${p.vrednost}%`;
     if (p.opis.includes('+ kosov')) return `📦 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
     if (p.opis.includes('Nad')) return `💰 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
     return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
   });
+  if (brezplacnaOd) vrstice.push(`🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
   banner.innerHTML = `<div style="background:rgba(175,132,85,.08);border:1px solid rgba(175,132,85,.22);border-radius:10px;padding:.6rem 1rem;display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:center">
     ${vrstice.map(v=>`<span style="font-size:.82rem;color:#2b0b39">${v}</span>`).join('')}
   </div>`;

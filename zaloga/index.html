@@ -5393,30 +5393,47 @@ function renderRecenzije() {
     return;
   }
 
-  const stars = r => '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+  const stars = r => '★'.repeat(r.rating||0) + '☆'.repeat(5 - (r.rating||0));
   const datum = iso => new Date(iso).toLocaleDateString('sl-SI');
+  const isIG = r => (r.product_id||'').startsWith('ig-');
 
-  el.innerHTML = seznam.map(r => `
-    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem">
+  el.innerHTML = seznam.map(r => {
+    const ig = isIG(r);
+    const igHandle = ig ? (r.body||'').split('\n')[0].replace('IG: ','') : null;
+    const igLink  = ig ? ((r.body||'').split('\n')[1]||'').replace('Link: ','') : null;
+    const accentColor = ig ? '#833ab4' : '#af8455';
+    const typeLabel = ig
+      ? `<span style="font-size:.65rem;font-weight:700;background:#f3e8ff;color:#833ab4;padding:.15rem .45rem;border-radius:5px;margin-left:.3rem">📸 IG</span>`
+      : `<span style="font-size:.65rem;font-weight:700;background:#fff3e0;color:#e67e22;padding:.15rem .45rem;border-radius:5px;margin-left:.3rem">⭐ Recenzija</span>`;
+    return `
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem;border-left:3px solid ${accentColor}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
         <div>
-          <div style="font-weight:600;font-size:.9rem">${r.name} <span style="font-weight:400;color:var(--muted);font-size:.75rem">&lt;${r.email}&gt;</span></div>
-          <div style="font-size:.72rem;color:var(--muted)">${r.product_name||r.product_id} · ${datum(r.created_at)}</div>
-          <div style="color:#af8455;font-size:.95rem;margin:.2rem 0">${stars(r)}</div>
+          <div style="font-weight:600;font-size:.9rem">${r.name}${typeLabel}
+            <span style="font-weight:400;color:var(--muted);font-size:.75rem;margin-left:.3rem">&lt;${r.email}&gt;</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted)">${r.product_name||r.product_id} · ${datum(r.created_at)} · ${r.coupon_pct||10}% kupon</div>
+          ${ig
+            ? `<div style="font-size:.82rem;margin:.25rem 0">
+                 <strong style="color:#833ab4">@${igHandle}</strong>
+                 ${igLink?`<a href="${igLink}" target="_blank" rel="noopener" style="color:#833ab4;font-size:.75rem;margin-left:.4rem">→ Odpri objavo</a>`:''}
+               </div>`
+            : `<div style="color:${accentColor};font-size:.95rem;margin:.2rem 0">${stars(r)}</div>`}
         </div>
         <div style="font-size:.68rem;font-weight:600;color:${r.status==='approved'?'#3a6b4a':r.status==='rejected'?'#c0392b':'#e67e22'}">
           ${r.status==='approved'?'✅ Potrjena':r.status==='rejected'?'❌ Zavrnjena':'⏳ Čaka'}
         </div>
       </div>
-      ${r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
-      <p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body}</p>
-      ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
+      ${!ig && r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
+      ${!ig ? `<p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body||''}</p>` : ''}
+      ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a;margin-top:.3rem">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
       ${r.status === 'pending' ? `
       <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
-        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon</button>
+        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon (${r.coupon_pct||10}%)</button>
         <button class="bcancel" onclick="zavrniRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">❌ Zavrni</button>
       </div>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function generateCouponCode() {

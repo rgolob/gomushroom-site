@@ -147,7 +147,7 @@
 
 .shop-head{
   max-width:760px;
-  margin-bottom:2px;
+  margin-bottom:10px;
 }
 
 .shop-kicker{
@@ -178,12 +178,13 @@
   color:#2b0b39;
 }
 
-#shop-discount-banner{ margin-bottom:-10px; }
+#shop-discount-banner{ margin-bottom:4px; }
 
 .shop-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:16px;
+  padding:0;
 }
 
 @media (max-width:640px){

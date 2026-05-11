@@ -549,6 +549,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <button class="bcancel" style="flex:1" onclick="document.getElementById('importDNInput').click()">📥 Uvozi JSON</button>
       </div>
       <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
       <div style="margin-bottom:.75rem">
         <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
       </div>
@@ -1970,35 +1971,45 @@ function saveOprema(){
   editingOpremaId=null;
 }
 
+async function uvozHistoricnih(){
+  toast('⏳ Nalagam…');
+  try{
+    const r=await fetch('/doc/dn_import_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    applyImport(data);
+  }catch(e){
+    toast('⚠ Napaka pri nalaganju: '+e.message);
+  }
+}
+
+function applyImport(data){
+  const incomingWO=data.workOrders||[];
+  const incomingEt=data.etanolKnjiga||[];
+  if(!incomingWO.length&&!incomingEt.length){toast('⚠ Ni podatkov za uvoz');return;}
+  const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
+  const noviWO=incomingWO.filter(w=>!existingOznakas.has(w.oznaka));
+  incomingWO.filter(w=>existingOznakas.has(w.oznaka)).forEach(w=>{
+    const i=workOrders.findIndex(x=>x.oznaka===w.oznaka);if(i>=0)workOrders[i]=w;
+  });
+  workOrders.push(...noviWO);
+  workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
+  const existingEtIds=new Set(etanolKnjiga.map(e=>e.id));
+  const noviEt=incomingEt.filter(e=>!existingEtIds.has(e.id));
+  etanolKnjiga.push(...noviEt);
+  etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
+  save();
+  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
+}
+
 function importDN(input){
   const file=input.files[0];
   if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    try{
-      const data=JSON.parse(e.target.result);
-      const incomingWO=data.workOrders||[];
-      const incomingEt=data.etanolKnjiga||[];
-      if(!incomingWO.length&&!incomingEt.length){toast('⚠ Ni podatkov za uvoz');return;}
-      // Merge workOrders po oznaki
-      const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
-      const noviWO=incomingWO.filter(w=>!existingOznakas.has(w.oznaka));
-      const posodWO=incomingWO.filter(w=>existingOznakas.has(w.oznaka));
-      posodWO.forEach(w=>{const i=workOrders.findIndex(x=>x.oznaka===w.oznaka);if(i>=0)workOrders[i]=w;});
-      workOrders.push(...noviWO);
-      workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
-      // Merge etanolKnjiga po id
-      const existingEtIds=new Set(etanolKnjiga.map(e=>e.id));
-      const noviEt=incomingEt.filter(e=>!existingEtIds.has(e.id));
-      etanolKnjiga.push(...noviEt);
-      etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
-      save();
-      renderDNStats();renderDN();renderEtStats();renderEtanol();
-      toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
-    }catch(err){
-      toast('⚠ Napaka pri branju JSON');
-      console.error(err);
-    }
+    try{applyImport(JSON.parse(e.target.result));}
+    catch(err){toast('⚠ Napaka pri branju JSON');console.error(err);}
     input.value='';
   };
   reader.readAsText(file);

@@ -120,28 +120,26 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
   const doBrezplacne = brezplacnaOd - zneskPoPopustu;
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:.5rem">
-      <div style="display:flex;justify-content:space-between;font-size:.88rem;color:rgba(43,11,57,.6)">
+    <div style="display:flex;flex-direction:column;gap:.4rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:rgba(43,11,57,.55);padding:.1rem 0">
         <span>Skupaj (${cart.reduce((s,i)=>s+i.quantity,0)} kosov)</span>
         <span>${fmt(bruto)}</span>
       </div>
       ${pct > 0 ? `
-        <div style="display:flex;justify-content:space-between;font-size:.88rem;color:#3a6b4a">
-          <span>Popust (${pct}%)</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:#3a6b4a;padding:.1rem 0">
+          <span>Popust ${pct}%</span>
           <span>−${fmt(popustZnesek)}</span>
         </div>
-        ${ujemajoci.map(u => `<div style="font-size:.7rem;color:#3a6b4a;text-align:right">✓ ${u.opis}</div>`).join('')}
+        ${ujemajoci.map(u => `<div style="font-size:.68rem;color:#3a6b4a;text-align:right;letter-spacing:.01em">✓ ${u.opis}</div>`).join('')}
       ` : ''}
-      <div style="display:flex;justify-content:space-between;font-size:.88rem;color:rgba(43,11,57,.6)">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:rgba(43,11,57,.55);padding:.1rem 0">
         <span>Poštnina</span>
-        <span>${postnina === 0 ? '🎁 Brezplačno' : fmt(postnina)}</span>
+        <span style="color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.55)'}">${postnina === 0 ? 'Brezplačno' : fmt(postnina)}</span>
       </div>
-      <div style="font-size:.7rem;color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.4)'};text-align:right">
-        ${postnina === 0 ? `✓ Brezplačna dostava nad ${fmt(brezplacnaOd)}` : doBrezplacne > 0 ? `Dodaj še ${fmt(doBrezplacne)} za brezplačno dostavo` : ''}
-      </div>
-      <div style="border-top:1px solid rgba(43,11,57,.1);padding-top:.65rem;margin-top:.15rem;display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-weight:600;color:#2b0b39">Skupaj za plačilo</span>
-        <span style="font-size:1.35rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>
+      ${doBrezplacne > 0 && postnina > 0 ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">Dodaj še ${fmt(doBrezplacne)} za brezplačno dostavo</div>` : ''}
+      <div style="border-top:1px solid rgba(43,11,57,.08);padding-top:.7rem;margin-top:.25rem;display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:.82rem;font-weight:600;color:#2b0b39">Skupaj za plačilo</span>
+        <span style="font-size:1.3rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>
       </div>
     </div>`;
 }

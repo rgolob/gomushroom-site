@@ -14,7 +14,8 @@
     .checkout-page {
       max-width: 900px;
       margin: 0 auto;
-      padding: clamp(24px,4vw,48px) 0 80px;
+      padding-top: clamp(20px,4vw,40px);
+      padding-bottom: 60px;
     }
     .checkout-grid {
       display: grid;
@@ -136,8 +137,11 @@
     }
     .success-wrap.visible { display: block; }
     @media(max-width: 760px) {
-      .checkout-grid { grid-template-columns: 1fr; }
-      .checkout-row { grid-template-columns: 1fr; gap: 0; }
+      .checkout-grid { grid-template-columns: 1fr; gap: 14px; }
+      .checkout-row { grid-template-columns: 1fr 1fr; gap: .6rem; }
+      .checkout-card { padding: 1.1rem; border-radius: 16px; }
+      .checkout-field { margin-bottom: .65rem; }
+      .checkout-page { padding-top: 16px; padding-bottom: 48px; }
     }
   </style>
 </head>
@@ -145,9 +149,9 @@
  <header id="shop-header"></header>
   <main>
     <div class="wrap checkout-page">
-  <div style="margin-bottom:1.5rem">
-    <p class="shop-kicker">GoMushroom • Blagajna</p>
-    <h1 style="font-size:clamp(1.8rem,5vw,3rem);line-height:1;color:#2b0b39;margin:.25rem 0 0">Zaključek nakupa</h1>
+  <div style="margin-bottom:1.1rem">
+    <p class="shop-kicker">Trgovina • Blagajna</p>
+    <h1 style="font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.1;color:#2b0b39;margin:.2rem 0 0">Zaključek nakupa</h1>
   </div>
 
   <!-- Forma + povzetek -->

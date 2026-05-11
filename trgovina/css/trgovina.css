@@ -134,15 +134,15 @@
 /* SHOP PAGE */
 
 .shop-page{
-  padding:clamp(30px,4vw,56px) 0 76px;
+  padding:clamp(20px,3vw,40px) 0 76px;
   background:
-    radial-gradient(circle at top right, rgba(175,132,85,.10), transparent 24%),
-    radial-gradient(circle at top left, rgba(43,11,57,.06), transparent 26%);
+    radial-gradient(circle at top right, rgba(175,132,85,.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(43,11,57,.05), transparent 26%);
 }
 
 .shop-shell{
   display:grid;
-  gap:28px;
+  gap:20px;
 }
 
 .shop-head{
@@ -150,28 +150,31 @@
 }
 
 .shop-kicker{
-  margin:0 0 12px;
-  font-size:.82rem;
-  letter-spacing:.14em;
+  margin:0 0 10px;
+  font-size:.7rem;
+  letter-spacing:.13em;
   text-transform:uppercase;
-  color:#8a6a48;
-  font-weight:800;
+  color:#9a7a58;
+  font-weight:700;
 }
 
 .shop-head h1{
-  margin:0;
-  font-size:clamp(2.4rem,6vw,5rem);
-  line-height:.96;
-  letter-spacing:-.055em;
-  color:#2b0b39;
+  margin:6px 0 0;
+  font-size:.8rem;
+  font-weight:600;
+  letter-spacing:.01em;
+  color:rgba(43,11,57,.38);
+  line-height:1.5;
 }
 
 .shop-lead{
-  margin:16px 0 0;
-  max-width:56ch;
+  margin:0;
+  max-width:44ch;
   font-size:1.05rem;
-  line-height:1.75;
-  color:rgba(43,11,57,.72);
+  font-weight:700;
+  line-height:1.55;
+  letter-spacing:-.01em;
+  color:#2b0b39;
 }
 
 .shop-grid{
@@ -216,7 +219,7 @@
   width:100%;
   height:100%;
   min-height:150px;
-  background:#f7f2eb;
+  background:radial-gradient(ellipse at center, #faf6f1 0%, #f2ebe0 100%);
   border-radius:20px 0 0 20px;
   overflow:hidden;
   display:flex;

@@ -180,6 +180,12 @@
   gap:16px;
 }
 
+@media (max-width:640px){
+  .shop-grid{
+    grid-template-columns:1fr;
+  }
+}
+
 .shop-product{
   background:#fff;
   border:1px solid rgba(43,11,57,.08);

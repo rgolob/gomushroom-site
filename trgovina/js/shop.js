@@ -133,42 +133,44 @@ function renderShopGrid(products) {
     return `
       <article class="shop-product" data-product-card="${p.id}">
 
-        ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
-
-        <a class="shop-product-link" href="${detailUrl || '/trgovina/'}">
-          <picture>
-            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="800" height="1000" loading="lazy">
-          </picture>
-          <div class="shop-product-body">
-            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
-            <h2>${p.name}</h2>
-            <p class="product-desc">${p.excerpt || ''}</p>
+        <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
+          <div class="shop-product-image">
+            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
+            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy">
           </div>
         </a>
 
-        <div class="shop-product-foot">
+        <div class="shop-product-content">
+          <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
+            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
+            <h2>${p.name}</h2>
+          </a>
 
-          ${p.variants.length > 1 ? `
-          <div class="shop-product-variants">
-            ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
-            ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalkoholna</button>` : ''}
-          </div>` : ''}
+          <div class="shop-product-foot">
 
-          <div class="shop-product-price-row">
-            <div data-price-wrap>${priceHtml(defaultVariant)}</div>
-            <div data-stock-wrap>${stockBadge(defaultVariant)}</div>
+            ${p.variants.length > 1 ? `
+            <div class="shop-product-variants">
+              ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
+              ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalk.</button>` : ''}
+            </div>` : ''}
+
+            <div class="shop-product-price-row">
+              <div data-price-wrap>${priceHtml(defaultVariant)}</div>
+              <div data-stock-wrap>${stockBadge(defaultVariant)}</div>
+            </div>
+
+            <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
+              data-slug="${p.slug}" data-name="${p.name}"
+              data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
+              data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
+              data-image="${p.image || ''}"
+              ${!defaultVariant.in_stock ? 'disabled' : ''}>
+              ${defaultVariant.in_stock ? '+ Dodaj' : 'Ni na zalogi'}
+            </button>
+
           </div>
-
-          <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
-            data-slug="${p.slug}" data-name="${p.name}"
-            data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
-            data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
-            data-image="${p.image || ''}"
-            ${!defaultVariant.in_stock ? 'disabled' : ''}>
-            ${defaultVariant.in_stock ? '+ Dodaj v košarico' : 'Ni na zalogi'}
-          </button>
-
         </div>
+
       </article>`;
   }).join('');
 

@@ -1443,6 +1443,92 @@ async function uvozi2025Serije(){
   }
 }
 
+async function uvozi2025Prodaje(){
+  const overlay=document.getElementById('zalogaSettingsOverlay');
+  try{
+    toast('⏳ Nalagam prodaje…');
+    const r=await fetch('/doc/zaloga_sales_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(!data.length){toast('⚠ Ni podatkov');return;}
+
+    // Fetch fresh references from Supabase
+    const [pRes,bRes,gRes]=await Promise.all([
+      sbFetch('gm_products','select=id,name'),
+      sbFetch('gm_batches','select=id,batch_num'),
+      sbFetch('gm_sale_groups','select=ext_delivery')
+    ]);
+    const prods=Array.isArray(pRes)?pRes:[];
+    const bats=Array.isArray(bRes)?bRes:[];
+    const existingDob=new Set((Array.isArray(gRes)?gRes:[]).map(g=>g.ext_delivery).filter(Boolean));
+
+    let added=0,skipped=0,warn=[];
+    for(const s of data){
+      if(existingDob.has(s.dobId)){skipped++;continue;}
+      const prod=prods.find(p=>p.name&&p.name.toLowerCase().includes(s.productName.toLowerCase()))
+                ||prods.find(p=>p.name&&s.productName.toLowerCase().includes(p.name.toLowerCase()));
+      if(!prod){warn.push(s.productName);continue;}
+      const bat=bats.find(b=>b.batch_num===s.batchNum);
+      if(!bat){warn.push(s.batchNum);continue;}
+
+      const groupId=uid();
+      const lineId=uid();
+      const qty=s.alc+s.gly;
+
+      await sbInsert('gm_sale_groups',{
+        id:groupId, buyer:'Fungalist', email:null, phone:null, vat:null,
+        address:null, street:null, post:null,
+        date:s.date, channel:'velo',
+        discount:0, discount_amt:0, full_total:s.total,
+        ext_invoice:null, ext_delivery:s.dobId,
+        note:null, invoice_num:null, invoice_id:null,
+        total:s.total, qty, status:'active'
+      });
+      await sbInsert('gm_sale_lines',{
+        id:lineId, group_id:groupId,
+        product_id:prod.id, product_name:prod.name,
+        alc:s.alc, gly:s.gly,
+        alc_price:s.alcPrice, gly_price:s.glyPrice,
+        line_total:s.total
+      });
+      await sbInsert('gm_sale_line_batches',{
+        group_id:groupId, line_id:lineId,
+        batch_id:bat.id, batch_num:s.batchNum,
+        alc:s.alc, gly:s.gly
+      });
+
+      // Update local state
+      saleGroups.push({
+        id:groupId, buyer:'Fungalist', email:null, phone:null, vat:null,
+        address:null, street:null, post:null,
+        date:s.date, channel:'velo',
+        discount:0, discountAmt:0, fullTotal:s.total,
+        extInvoice:null, extDelivery:s.dobId,
+        note:null, invoiceNum:null, invoiceId:null,
+        total:s.total, qty, status:'active',
+        lines:[{
+          productId:prod.id, productName:prod.name,
+          alc:s.alc, gly:s.gly,
+          alcPrice:s.alcPrice, glyPrice:s.glyPrice,
+          lineTotal:s.total,
+          batchBreakdown:[{batchId:bat.id,batchNum:s.batchNum,alc:s.alc,gly:s.gly}]
+        }]
+      });
+      existingDob.add(s.dobId);
+      added++;
+    }
+    saleGroups.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    save();renderStats();
+    if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
+    if(overlay)overlay.remove();
+    const warnMsg=warn.length?` · ⚠ ni v bazi: ${[...new Set(warn)].join(', ')}`:''
+    toast(`✓ Uvoženih ${added} prodaj${skipped?`, ${skipped} že obstaja`:''}${warnMsg}`);
+  }catch(e){
+    console.error(e);
+    toast('⚠ Napaka: '+e.message);
+  }
+}
+
 async function sbSaveBatch(b){
   await sbInsert('gm_batches', appBatchToSb(b), true);
 }
@@ -5858,6 +5944,9 @@ function openZalogaSettings(){
           </button>
           <button onclick="uvozi2025Serije()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
             📦 <span>Uvozi 2025 serije (iz Numbers)</span>
+          </button>
+          <button onclick="uvozi2025Prodaje()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
+            🛒 <span>Uvozi 2025 prodaje (DoB Fungalist)</span>
           </button>
         </div>
       </div>

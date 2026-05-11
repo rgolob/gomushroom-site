@@ -2351,13 +2351,17 @@ function productStock(productId){
     });
   }
   // per purpose alloc (prod = prodaja, int = interno)
+  // Serije brez nastavljene alokacije → celotna qty šteje kot prod (izravna se s prodano)
   let allocProdAlc=0,allocIntAlc=0,allocProdGly=0,allocIntGly=0;
   pb.forEach(b=>{
-    // support both old 4-way and new 2-way
-    allocProdAlc+=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0);
-    allocIntAlc +=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-    allocProdGly+=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0);
-    allocIntGly +=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    const bAProd=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0))||0;
+    const bAInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+    const bGProd=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0))||0;
+    const bGInt=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    allocProdAlc+=bAProd>0||bAInt>0 ? bAProd : (b.alc?.qty||0);
+    allocIntAlc +=bAInt;
+    allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
+    allocIntGly +=bGInt;
   });
   // sold per purpose: malo+velo+dar = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;

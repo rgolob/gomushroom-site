@@ -5500,6 +5500,7 @@ async function zavrniRecenzijo(id) {
 // ── INTEGRITY CHECK ──
 function _calcBatchIntegrity(){
   // Returns {issues, batchRows} — checks per batch
+  // Preverja samo resnične napake: prodano > narejeno, ali alokacija > narejeno (samo če je nastavljna)
   const issues=[];
   const batchRows=[];
   const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
@@ -5510,37 +5511,31 @@ function _calcBatchIntegrity(){
 
     const alcIn=b.alc?.qty||0;
     const glyIn=b.gly?.qty||0;
-    const alcProdAlloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-    const glyProdAlloc=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
-    const alcIntAlloc=b.alc?.alloc?.int||0;
-    const glyIntAlloc=b.gly?.alloc?.int||0;
+    const alcProdAlloc=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0))||0;
+    const glyProdAlloc=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0))||0;
+    const alcIntAlloc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+    const glyIntAlloc=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    const alcAllocSet=alcProdAlloc+alcIntAlloc>0;
+    const glyAllocSet=glyProdAlloc+glyIntAlloc>0;
 
-    // Prodano iz te serije po kanalu
-    let soldAlcProd=0,soldGlyProd=0,soldAlcInt=0,soldGlyInt=0;
+    // Prodano iz te serije
+    let soldAlc=0,soldGly=0;
     activeSales.forEach(g=>{
       const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return;
       const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(!bb)return;
-      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp';
-      if(isProd){soldAlcProd+=(bb.alc||0);soldGlyProd+=(bb.gly||0);}
-      else{soldAlcInt+=(bb.alc||0);soldGlyInt+=(bb.gly||0);}
+      soldAlc+=(bb.alc||0);soldGly+=(bb.gly||0);
     });
 
-    const zaloгаAlcProd=alcProdAlloc-soldAlcProd;
-    const zaloгаGlyProd=glyProdAlloc-soldGlyProd;
-    const zaloгаAlcInt=alcIntAlloc-soldAlcInt;
-    const zaloгаGlyInt=glyIntAlloc-soldGlyInt;
+    const fullyDone=soldAlc>=alcIn&&(!glyIn||soldGly>=glyIn);
 
-    // Serija je v celoti prodana in OK — preskoči napake
-    const fullyDone=(zaloгаAlcProd<=0&&zaloгаGlyProd<=0&&zaloгаAlcInt<=0&&zaloгаGlyInt<=0);
-
-    // Preveri napake
+    // Samo resnične napake
     const batchIssues=[];
-    if(alcProdAlloc+alcIntAlloc>alcIn) batchIssues.push(`alok. alc (${alcProdAlloc+alcIntAlloc}) > narejeno (${alcIn})`);
-    if(glyProdAlloc+glyIntAlloc>glyIn) batchIssues.push(`alok. gly (${glyProdAlloc+glyIntAlloc}) > narejeno (${glyIn})`);
-    if(soldAlcProd>alcProdAlloc) batchIssues.push(`prodano alc (${soldAlcProd}) > prod alok. (${alcProdAlloc})`);
-    if(soldGlyProd>glyProdAlloc) batchIssues.push(`prodano gly (${soldGlyProd}) > prod alok. (${glyProdAlloc})`);
-    if(soldAlcInt>alcIntAlloc) batchIssues.push(`int alc (${soldAlcInt}) > int alok. (${alcIntAlloc})`);
-    if(soldGlyInt>glyIntAlloc) batchIssues.push(`int gly (${soldGlyInt}) > int alok. (${glyIntAlloc})`);
+    // 1. Prodano > narejeno (prava data napaka)
+    if(soldAlc>alcIn) batchIssues.push(`prodano alc (${soldAlc}) > narejeno (${alcIn})`);
+    if(soldGly>glyIn) batchIssues.push(`prodano gly (${soldGly}) > narejeno (${glyIn})`);
+    // 2. Alokacija > narejeno (samo če je alokacija nastavljna)
+    if(alcAllocSet&&alcProdAlloc+alcIntAlloc>alcIn) batchIssues.push(`alok. alc (${alcProdAlloc+alcIntAlloc}) > narejeno (${alcIn})`);
+    if(glyAllocSet&&glyProdAlloc+glyIntAlloc>glyIn) batchIssues.push(`alok. gly (${glyProdAlloc+glyIntAlloc}) > narejeno (${glyIn})`);
 
     batchIssues.forEach(i=>issues.push(`❌ ${pName} · ${b.batchNum}: ${i}`));
 
@@ -5549,10 +5544,11 @@ function _calcBatchIntegrity(){
       alcIn,glyIn,
       alcProdAlloc,glyProdAlloc,
       alcIntAlloc,glyIntAlloc,
-      soldAlcProd,soldGlyProd,
-      soldAlcInt,soldGlyInt,
-      zAlcProd:zaloгаAlcProd,zGlyProd:zaloгаGlyProd,
-      zAlcInt:zaloгаAlcInt,zGlyInt:zaloгаGlyInt,
+      soldAlc,soldGly,
+      soldAlcProd:soldAlc,soldGlyProd:soldGly,
+      soldAlcInt:0,soldGlyInt:0,
+      zAlcProd:Math.max(0,alcIn-soldAlc),zGlyProd:Math.max(0,glyIn-soldGly),
+      zAlcInt:0,zGlyInt:0,
     });
   });
 

@@ -1453,16 +1453,32 @@ async function uvozi2025Prodaje(){
     if(!data.length){toast('⚠ Ni podatkov');return;}
 
     // Fetch fresh references from Supabase
-    const [pRes,bRes,gRes,lRes]=await Promise.all([
+    const [pRes,bRes,gRes,lRes,cRes]=await Promise.all([
       sbFetch('gm_products','select=id,name'),
       sbFetch('gm_batches','select=id,batch_num'),
-      sbFetch('gm_sale_groups','select=id,ext_delivery'),
-      sbFetch('gm_sale_lines','select=group_id')
+      sbFetch('gm_sale_groups','select=id,ext_delivery,buyer'),
+      sbFetch('gm_sale_lines','select=group_id'),
+      sbFetch('gm_customers','select=name,email')
     ]);
     const prods=Array.isArray(pRes)?pRes:[];
     const bats=Array.isArray(bRes)?bRes:[];
+    // Resolve correct buyer name from gm_customers by email
+    const custByEmail={};
+    (Array.isArray(cRes)?cRes:[]).forEach(c=>{if(c.email)custByEmail[c.email.toLowerCase().trim()]=c.name;});
+    const BUYER_EMAIL='info1@fungalist.si';
+    const BUYER_NAME=custByEmail[BUYER_EMAIL]||'Fungalist';
     const allGroups=Array.isArray(gRes)?gRes:[];
     const lineGroupIds=new Set((Array.isArray(lRes)?lRes:[]).map(l=>l.group_id));
+
+    // Popravi napačen buyer na obstoječih DoB skupinah
+    const wrongBuyer=allGroups.filter(g=>g.ext_delivery&&g.ext_delivery.startsWith('DoB-')&&g.buyer!==BUYER_NAME&&lineGroupIds.has(g.id));
+    for(const o of wrongBuyer){
+      await fetch(`${SB_URL}/rest/v1/gm_sale_groups?id=eq.${o.id}`,{
+        method:'PATCH',headers:{...SB_HEADERS,'Prefer':'return=minimal'},
+        body:JSON.stringify({buyer:BUYER_NAME,email:BUYER_EMAIL})
+      }).catch(()=>{});
+    }
+    if(wrongBuyer.length) toast(`✏️ Popravljenih ${wrongBuyer.length} imen…`);
 
     // Zbriši orphaned groups (group brez vrstic — delni uvoz)
     const orphaned=allGroups.filter(g=>g.ext_delivery&&g.ext_delivery.startsWith('DoB-')&&!lineGroupIds.has(g.id));
@@ -1486,7 +1502,7 @@ async function uvozi2025Prodaje(){
       const qty=s.alc+s.gly;
 
       await sbInsert('gm_sale_groups',{
-        id:groupId, buyer:'Fungalist', email:'info1@fungalist.si', phone:null, vat:null,
+        id:groupId, buyer:BUYER_NAME, email:BUYER_EMAIL, phone:null, vat:null,
         address:null, street:null, post:null,
         date:s.date, channel:'velo',
         discount:0, discount_amt:0, full_total:s.total,
@@ -1509,7 +1525,7 @@ async function uvozi2025Prodaje(){
 
       // Update local state
       saleGroups.push({
-        id:groupId, buyer:'Fungalist', email:'info1@fungalist.si', phone:null, vat:null,
+        id:groupId, buyer:BUYER_NAME, email:BUYER_EMAIL, phone:null, vat:null,
         address:null, street:null, post:null,
         date:s.date, channel:'velo',
         discount:0, discountAmt:0, fullTotal:s.total,

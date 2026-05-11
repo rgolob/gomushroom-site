@@ -1481,7 +1481,7 @@ async function uvozi2025Prodaje(){
         date:s.date, channel:'velo',
         discount:0, discount_amt:0, full_total:s.total,
         ext_invoice:null, ext_delivery:s.dobId,
-        note:null, invoice_num:null, invoice_id:null,
+        note:null, invoice_num:s.dobId, invoice_id:null,
         total:s.total, qty, status:'active'
       });
       await sbInsert('gm_sale_lines',{
@@ -1504,7 +1504,7 @@ async function uvozi2025Prodaje(){
         date:s.date, channel:'velo',
         discount:0, discountAmt:0, fullTotal:s.total,
         extInvoice:null, extDelivery:s.dobId,
-        note:null, invoiceNum:null, invoiceId:null,
+        note:null, invoiceNum:s.dobId, invoiceId:null,
         total:s.total, qty, status:'active',
         lines:[{
           productId:prod.id, productName:prod.name,

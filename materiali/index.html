@@ -1291,18 +1291,12 @@ function deleteDN(id){
 
 // ── ETANOL STATS ──
 function calcEtZaloga(){
-  // Vse v L AAE ker primerjamo različne koncentracije
   let aae=0;
-  // Vhod: nabava + regeneriran
   etanolKnjiga.forEach(e=>{
-    if(e.tip==='nabava'||e.tip==='regeneracija')aae+=e.lAAE||0;
+    if(e.tip==='nabava'||e.tip==='regeneracija') aae+=e.lAAE||0;
+    else if(e.tip==='izhod_dn') aae-=e.lAAE||0;
   });
-  // Izhod: zaključeni DN → AAE tinktur + AAE izgub
-  workOrders.filter(d=>d.status==='zakljucen'||d.status==='prenos').forEach(d=>{
-    aae-=calcAAE((d.kolAlc||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT);
-    aae-=d.izgube||0;
-  });
-  return Math.max(0,aae);
+  return Math.max(0,round(aae,4));
 }
 
 function calcEtRezervirano(){
@@ -1486,7 +1480,8 @@ function genEtanolPorocilo(){
       <td style="padding:.3rem .5rem;white-space:nowrap">${fmtDate(e.datum)}</td>
       <td style="padding:.3rem .5rem">${tipLabel}</td>
       <td style="padding:.3rem .5rem;color:#7a6f60;font-size:.75rem">${opis}</td>
-      <td style="padding:.3rem .5rem;text-align:right;color:${isIn?'#3a6b4a':'#8b3a2a'};font-weight:600">${isIn?'+':'-'}${aae.toFixed(4)}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#3a6b4a;font-weight:600">${isIn?'+'+aae.toFixed(4):'—'}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#8b3a2a;font-weight:600">${!isIn?'−'+aae.toFixed(4):'—'}</td>
       <td style="padding:.3rem .5rem;text-align:right;font-weight:700;color:${tekocaZaloga>=0?'#1a4a2a':'#8b3a2a'}">${tekocaZaloga.toFixed(4)}</td>
     </tr>`;
   }).join('');

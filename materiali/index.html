@@ -544,9 +544,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Glicerinska (€/kom)</label><input id="setCenaGly" type="text" inputmode="decimal" placeholder="33,90"></div>
       </div>
       <div class="slabel">Podatki</div>
-      <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
         <button class="bcancel" style="flex:1" onclick="backupDN()">💾 Backup</button>
-        <button class="bcancel" style="flex:1;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
+        <button class="bcancel" style="flex:1" onclick="document.getElementById('importDNInput').click()">📥 Uvozi JSON</button>
+      </div>
+      <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
+      <div style="margin-bottom:.75rem">
+        <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
       </div>
       <div class="slabel">Informacija</div>
       <div style="font-size:.72rem;color:var(--muted);line-height:1.5">
@@ -1964,6 +1968,37 @@ function saveOprema(){
   renderOprema();
   toast(`✓ ${naziv} shranjen`);
   editingOpremaId=null;
+}
+
+function importDN(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const incoming=data.workOrders||[];
+      if(!incoming.length){toast('⚠ Ni podatkov za uvoz');return;}
+      const obstojecih=workOrders.length;
+      // Merge: dodaj samo tiste ki še ne obstajajo (po oznaki)
+      const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
+      const novi=incoming.filter(w=>!existingOznakas.has(w.oznaka));
+      workOrders=[...incoming.filter(w=>existingOznakas.has(w.oznaka)).map(w=>{
+        // Ohrani obstoječe, posodobi z uvoženimi
+        return w;
+      }),...workOrders.filter(w=>!incoming.find(i=>i.oznaka===w.oznaka)),...novi];
+      // Sort by oznaka
+      workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
+      save();
+      renderDNStats();renderDN();renderEtStats();
+      toast(`✓ Uvoženih ${incoming.length} DN (${novi.length} novih)`);
+    }catch(err){
+      toast('⚠ Napaka pri branju JSON');
+      console.error(err);
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
 }
 
 function backupDN(){

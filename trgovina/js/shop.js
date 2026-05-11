@@ -141,11 +141,11 @@ function renderShopGrid(products) {
         <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
           <div class="shop-product-image">
             <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy">
+            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
           </div>
         </a>
 
         <div class="shop-product-content">
-          ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
@@ -218,8 +218,8 @@ function bindVariantPickers(products) {
         badge = document.createElement('span');
         badge.dataset.discountBadge = '';
         badge.className = 'gm-discount-badge';
-        const content = card.querySelector('.shop-product-content');
-        if (content) content.insertBefore(badge, content.firstChild);
+        const imgWrap = card.querySelector('.shop-product-image');
+        if (imgWrap) imgWrap.appendChild(badge);
         else card.appendChild(badge);
       }
       if (badge) {

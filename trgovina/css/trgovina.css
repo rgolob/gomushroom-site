@@ -178,7 +178,7 @@
   color:#2b0b39;
 }
 
-#shop-discount-banner{ margin-bottom:12px; }
+#shop-discount-banner{ margin-bottom:20px; }
 
 .shop-grid{
   display:grid;
@@ -338,7 +338,7 @@
 }
 
 .shop-manifesto{
-  padding:8px 0 4px;
+  padding:28px 0 4px;
 }
 
 .shop-manifesto-intro{
@@ -818,8 +818,8 @@
 /* DISCOUNT BADGE */
 .gm-discount-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  bottom: 8px;
+  right: 8px;
   z-index: 2;
   background: rgba(175,132,85,.10);
   color: #7a5530;

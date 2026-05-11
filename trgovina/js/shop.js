@@ -57,9 +57,8 @@ function renderActiveDiscountBanner() {
     if (p.opis.includes('Nad')) return `💰 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
     return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
   });
-  banner.innerHTML = `<div style="background:linear-gradient(135deg,#2b0b39,#4a1a5e);color:#f0ebe3;padding:.75rem 1.25rem;border-radius:10px;margin-bottom:1.5rem">
-    <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#af8455;margin-bottom:.35rem">Trenutne akcije</div>
-    ${vrstice.map(v=>`<div style="font-size:.85rem;margin:.15rem 0">${v}</div>`).join('')}
+  banner.innerHTML = `<div style="background:rgba(175,132,85,.08);border:1px solid rgba(175,132,85,.22);border-radius:10px;padding:.6rem 1rem;display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:center">
+    ${vrstice.map(v=>`<span style="font-size:.82rem;color:#2b0b39">${v}</span>`).join('')}
   </div>`;
   banner.style.display = '';
 }

@@ -1476,7 +1476,7 @@ async function uvozi2025Prodaje(){
       const qty=s.alc+s.gly;
 
       await sbInsert('gm_sale_groups',{
-        id:groupId, buyer:'Fungalist', email:null, phone:null, vat:null,
+        id:groupId, buyer:'Fungalist', email:'info1@fungalist.si', phone:null, vat:null,
         address:null, street:null, post:null,
         date:s.date, channel:'velo',
         discount:0, discount_amt:0, full_total:s.total,
@@ -1499,7 +1499,7 @@ async function uvozi2025Prodaje(){
 
       // Update local state
       saleGroups.push({
-        id:groupId, buyer:'Fungalist', email:null, phone:null, vat:null,
+        id:groupId, buyer:'Fungalist', email:'info1@fungalist.si', phone:null, vat:null,
         address:null, street:null, post:null,
         date:s.date, channel:'velo',
         discount:0, discountAmt:0, fullTotal:s.total,

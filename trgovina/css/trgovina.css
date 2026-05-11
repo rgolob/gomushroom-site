@@ -374,12 +374,14 @@
   gap:1px;
   border-radius:18px;
   overflow:hidden;
-  background:rgba(43,11,57,.06);
+  background:
+    radial-gradient(ellipse at 88% 14%, rgba(175,132,85,.11) 0%, transparent 56%),
+    rgba(43,11,57,.06);
   box-shadow:0 2px 16px rgba(43,11,57,.05), 0 1px 4px rgba(43,11,57,.03);
 }
 
 .shop-process-item{
-  background:radial-gradient(ellipse at 110% -20%, rgba(175,132,85,.065) 0%, transparent 52%) #fff;
+  background:rgba(255,255,255,.88);
   padding:14px 16px;
   display:block;
   text-decoration:none;
@@ -387,13 +389,15 @@
 }
 
 .shop-process-item--link{
-  transition:background .22s ease, transform .22s ease;
+  transition:background .2s ease, transform .22s ease;
   cursor:pointer;
 }
 
 .shop-process-item--link:hover{
-  background:radial-gradient(ellipse at 110% -20%, rgba(175,132,85,.065) 0%, transparent 52%) #fdf8f3;
+  background:rgba(255,255,255,.78);
   transform:translateY(-1px);
+}
+
 }
 
 .shop-process-item strong{

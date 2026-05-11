@@ -207,19 +207,17 @@
 .shop-product picture {
   display: block;
   width: 100%;
-  height: 150px;
-  overflow: visible;
+  height: 160px;
+  overflow: hidden;
   background: #fff;
   border-radius: 26px 26px 0 0;
-  position: relative;
-  z-index: 2;
 }
 
 .shop-product img {
   width: 100%;
-  height: 120%;
+  height: 100%;
   object-fit: contain;
-  object-position: center bottom;
+  object-position: center center;
   transition: transform .35s ease;
 }
 
@@ -228,10 +226,8 @@
 }
 
 .shop-product-body{
-  padding:36px 18px 6px;
-  position:relative;
-  z-index:1;
-  background:linear-gradient(to bottom,rgba(247,244,252,.5) 0%,#fff 32px);
+  padding:14px 18px 6px;
+  border-top:1px solid rgba(43,11,57,.05);
 }
 
 .shop-product-foot{

@@ -381,6 +381,19 @@
 .shop-process-item{
   background:#fdfaf7;
   padding:14px 16px;
+  display:block;
+  text-decoration:none;
+  color:inherit;
+}
+
+.shop-process-item--link{
+  transition:background .22s ease, transform .22s ease;
+  cursor:pointer;
+}
+
+.shop-process-item--link:hover{
+  background:#fdf6ee;
+  transform:translateY(-1px);
 }
 
 .shop-process-item:nth-child(2),

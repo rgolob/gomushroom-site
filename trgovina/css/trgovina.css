@@ -142,12 +142,12 @@
 
 .shop-shell{
   display:grid;
-  gap:20px;
+  gap:14px;
 }
 
 .shop-head{
   max-width:760px;
-  margin-bottom:18px;
+  margin-bottom:2px;
 }
 
 .shop-kicker{
@@ -178,7 +178,7 @@
   color:#2b0b39;
 }
 
-#shop-discount-banner{ margin-bottom:-12px; }
+#shop-discount-banner{ margin-bottom:-10px; }
 
 .shop-grid{
   display:grid;

@@ -59,8 +59,8 @@ function renderActiveDiscountBanner() {
     return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
   });
   if (brezplacnaOd) vrstice.push(`🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
-  banner.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:center">
-    ${vrstice.map(v=>`<span style="font-size:.82rem;color:#2b0b39">${v}</span>`).join('')}
+  banner.innerHTML = `<div style="display:flex;flex-direction:column;gap:.15rem">
+    ${vrstice.map(v=>`<span style="font-size:.75rem;color:rgba(43,11,57,.55);line-height:1.5;letter-spacing:.01em">${v}</span>`).join('')}
   </div>`;
   banner.style.display = '';
 }

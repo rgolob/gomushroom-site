@@ -369,9 +369,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
-    <button class="hbtn" onclick="showBackupMenu()" title="Izvozi vse podatke">💾 Backup</button>
-    <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
-    <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
     <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
@@ -5796,6 +5793,20 @@ function openZalogaSettings(){
           </div>
         </div>
         <div style="font-size:.68rem;color:var(--muted);margin-bottom:1.25rem">📧 Ročno pošiljanje je vedno možno s klikom na gumb.</div>
+
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Podatki</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem">
+          <button onclick="showBackupMenu()" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem">
+            💾 <span>Backup — izvozi vse podatke</span>
+          </button>
+          <label style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;box-sizing:border-box">
+            📂 <span>Restore — obnovi iz backupa</span>
+            <input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)">
+          </label>
+          <button onclick="clearAllData()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(139,58,42,.3);border-radius:8px;background:rgba(139,58,42,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#8b3a2a">
+            🗑 <span>Izbriši vse podatke</span>
+          </button>
+        </div>
       </div>
 
       <!-- TAB 2: SPLETNA STRAN -->

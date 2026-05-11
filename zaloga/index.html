@@ -1471,8 +1471,8 @@ async function uvozi2025Prodaje(){
       const bat=bats.find(b=>b.batch_num===s.batchNum);
       if(!bat){warn.push(s.batchNum);continue;}
 
-      const groupId=uid();
-      const lineId=uid();
+      const groupId=crypto.randomUUID();
+      const lineId=crypto.randomUUID();
       const qty=s.alc+s.gly;
 
       await sbInsert('gm_sale_groups',{

@@ -1977,21 +1977,24 @@ function importDN(input){
   reader.onload=e=>{
     try{
       const data=JSON.parse(e.target.result);
-      const incoming=data.workOrders||[];
-      if(!incoming.length){toast('⚠ Ni podatkov za uvoz');return;}
-      const obstojecih=workOrders.length;
-      // Merge: dodaj samo tiste ki še ne obstajajo (po oznaki)
+      const incomingWO=data.workOrders||[];
+      const incomingEt=data.etanolKnjiga||[];
+      if(!incomingWO.length&&!incomingEt.length){toast('⚠ Ni podatkov za uvoz');return;}
+      // Merge workOrders po oznaki
       const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
-      const novi=incoming.filter(w=>!existingOznakas.has(w.oznaka));
-      workOrders=[...incoming.filter(w=>existingOznakas.has(w.oznaka)).map(w=>{
-        // Ohrani obstoječe, posodobi z uvoženimi
-        return w;
-      }),...workOrders.filter(w=>!incoming.find(i=>i.oznaka===w.oznaka)),...novi];
-      // Sort by oznaka
+      const noviWO=incomingWO.filter(w=>!existingOznakas.has(w.oznaka));
+      const posodWO=incomingWO.filter(w=>existingOznakas.has(w.oznaka));
+      posodWO.forEach(w=>{const i=workOrders.findIndex(x=>x.oznaka===w.oznaka);if(i>=0)workOrders[i]=w;});
+      workOrders.push(...noviWO);
       workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
+      // Merge etanolKnjiga po id
+      const existingEtIds=new Set(etanolKnjiga.map(e=>e.id));
+      const noviEt=incomingEt.filter(e=>!existingEtIds.has(e.id));
+      etanolKnjiga.push(...noviEt);
+      etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
       save();
-      renderDNStats();renderDN();renderEtStats();
-      toast(`✓ Uvoženih ${incoming.length} DN (${novi.length} novih)`);
+      renderDNStats();renderDN();renderEtStats();renderEtanol();
+      toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
     }catch(err){
       toast('⚠ Napaka pri branju JSON');
       console.error(err);

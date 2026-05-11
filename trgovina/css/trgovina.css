@@ -179,6 +179,7 @@
 }
 
 #shop-discount-banner{ margin-bottom:14px; }
+#shop-discount-banner span{ font-size:12px; }
 
 .shop-grid{
   display:grid;

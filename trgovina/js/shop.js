@@ -42,6 +42,7 @@ function getAktivniPopusti() {
     if (p.od && danes < p.od) continue;
     if (p.do && danes > p.do) continue;
     if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
+    if (p.prikaziVTrgovini === false) continue;
     if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, opis: `Koda ${p.kod}` });
     if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, opis: `${p.min}+ kosov` });
     if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, opis: `Nad ${p.min} €` });

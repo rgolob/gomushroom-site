@@ -5967,6 +5967,7 @@ function renderPopustRow(p,i){
   const extras=[];
   if(p.od||p.do) extras.push(`📅 ${p.od||'?'}–${p.do||'∞'}`);
   if(p.maxKolicina) extras.push(`📊 ${p.porabljeno||0}/${p.maxKolicina} art.`);
+  extras.push(p.prikaziVTrgovini===false?'👁 skrit':'👁 viden');
   return`<div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
     <div style="flex:1;font-size:.78rem">
       <span style="font-weight:500">${tipi[p.tip]||p.tip}</span>
@@ -6036,6 +6037,13 @@ function dodajPopust(){
           </div>
         </div>
         <button onclick="shraniPopust()" style="width:100%;padding:.7rem;background:var(--ink);color:white;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">Shrani popust</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.1rem 0">
+          <div>
+            <div style="font-size:.82rem;font-weight:500">Prikaži v trgovini</div>
+            <div style="font-size:.68rem;color:var(--muted)">Pokaže popust v reklamnem pasu na strani trgovine</div>
+          </div>
+          <input type="checkbox" id="dpPrikaziVTrgovini" checked style="width:1.2rem;height:1.2rem;cursor:pointer">
+        </div>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -6071,6 +6079,7 @@ function shraniPopust(){
   if(doDatum)p.do=doDatum;
   if(maxKolicina)p.maxKolicina=maxKolicina;
   if(porabljeno)p.porabljeno=porabljeno;
+  p.prikaziVTrgovini=document.getElementById('dpPrikaziVTrgovini').checked;
   const popusti=getZS('popusti')||[];
   popusti.push(p);
   saveZS({popusti});

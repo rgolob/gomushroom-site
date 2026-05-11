@@ -1394,6 +1394,55 @@ async function sbLoadAll(){
 }
 
 // Shrani batch v Supabase
+async function uvozi2025Serije(){
+  const overlay=document.getElementById('zalogaSettingsOverlay');
+  try{
+    toast('⏳ Nalagam podatke…');
+    const r=await fetch('/doc/zaloga_batches_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const incoming=data.batches||[];
+    if(!incoming.length){toast('⚠ Ni podatkov');return;}
+
+    // Fetch current products
+    const pRes=await sbFetch('gm_products','select=id,name');
+    const prods=Array.isArray(pRes)?pRes:[];
+
+    // Existing batch numbers
+    const existingNums=new Set(batches.map(b=>b.batchNum));
+
+    let added=0,skipped=0;
+    for(const imp of incoming){
+      if(existingNums.has(imp.batchNum)){skipped++;continue;}
+      // Match product by name (case-insensitive contains)
+      const prod=prods.find(p=>p.name&&p.name.toLowerCase().includes(imp.productName.toLowerCase()))
+                 ||prods.find(p=>p.name&&imp.productName.toLowerCase().includes(p.name.toLowerCase()));
+      if(!prod){toast(`⚠ Produkt "${imp.productName}" ne obstaja v zalogi`);continue;}
+      const b={
+        id:uid(),
+        productId:prod.id, productName:prod.name,
+        batchNum:imp.batchNum, date:imp.date,
+        workOrder:imp.workOrder, note:imp.note||'',
+        safetyAlc:imp.safetyAlc||10, safetyGly:imp.safetyGly||10,
+        alc:{sku:'',qty:imp.alcQty||0,priceMalo:imp.alcPriceMalo||31.9,vol:imp.alcVol||50,alloc:{prod:0,int:0,malo:0,velo:0,dar:0}},
+        gly:{sku:'',qty:imp.glyQty||0,priceMalo:imp.glyPriceMalo||33.9,vol:imp.glyVol||50,alloc:{prod:0,int:0,malo:0,velo:0,dar:0}},
+      };
+      batches.push(b);
+      await sbSaveBatch(b).catch(e=>console.warn('sbSaveBatch:',e));
+      existingNums.add(imp.batchNum);
+      added++;
+    }
+    batches.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    save();renderStats();renderInventory();
+    if(currentTab==='serije')renderBatches();
+    if(overlay)overlay.remove();
+    toast(`✓ Uvoženih ${added} serij${skipped?`, ${skipped} že obstaja`:''}`);
+  }catch(e){
+    console.error(e);
+    toast('⚠ Napaka: '+e.message);
+  }
+}
+
 async function sbSaveBatch(b){
   await sbInsert('gm_batches', appBatchToSb(b), true);
 }
@@ -5806,6 +5855,9 @@ function openZalogaSettings(){
           </label>
           <button onclick="clearAllData()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(139,58,42,.3);border-radius:8px;background:rgba(139,58,42,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#8b3a2a">
             🗑 <span>Izbriši vse podatke</span>
+          </button>
+          <button onclick="uvozi2025Serije()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
+            📦 <span>Uvozi 2025 serije (iz Numbers)</span>
           </button>
         </div>
       </div>

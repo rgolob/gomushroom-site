@@ -7,17 +7,35 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_H={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
-const REVIEW_PCT=10;
-const IG_ACTIONS=[
-  {id:'follow',  label:'Sledi profilu @gomushroom.si',       hint:'Sledi nam na Instagramu',                     pct:5},
-  {id:'story',   label:'Označi nas v Instagram zgodbi',       hint:'@gomushroom.si v story + pošlji screenshot',  pct:10},
-  {id:'objava',  label:'Ustvari objavo z našim produktom',    hint:'Označi @gomushroom.si + #gomushroom',         pct:15},
-];
+const DEFAULTS={recenzijaPct:10,igFollowPct:5,igStoryPct:10,igObjavaLnk:15,igObjavaTag:20};
+let cfg=Object.assign({},DEFAULTS);
 
-function init(){
+function igActions(){
+  return[
+    {id:'follow',  label:'Sledi profilu @gomushroom.si',       hint:'Sledi nam na Instagramu',                     pct:cfg.igFollowPct},
+    {id:'story',   label:'Označi nas v Instagram zgodbi',       hint:'@gomushroom.si v story + pošlji screenshot',  pct:cfg.igStoryPct},
+    {id:'objavaLnk',label:'Ustvari objavo z linkom do profila',hint:'Objava z linkom na @gomushroom.si',            pct:cfg.igObjavaLnk},
+    {id:'objavaTag',label:'Označi nas v objavi z našim produktom',hint:'Označi @gomushroom.si + #gomushroom',       pct:cfg.igObjavaTag},
+  ];
+}
+
+async function loadSettings(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.recenzijeNastavitve&select=value`,{headers:SB_H});
+    if(!r.ok)return;
+    const rows=await r.json();
+    if(rows.length){
+      const val=typeof rows[0].value==='string'?JSON.parse(rows[0].value):rows[0].value;
+      Object.assign(cfg,val);
+    }
+  }catch{}
+}
+
+async function init(){
   const mount=document.getElementById('gm-recenzije');
   if(!mount)return;
   injectStyles();
+  await loadSettings();
   const slug=(typeof PRODUCT_SLUG!=='undefined'?PRODUCT_SLUG:null)||
              document.getElementById('add-to-cart-btn')?.dataset.slug||'produkt';
   const productName=document.querySelector('.product-title')?.textContent?.trim()||slug;
@@ -38,7 +56,7 @@ function buildHTML(){
       <span class="gmr-card-icon">✍️</span>
       <div>
         <h3 class="gmr-h3">Napiši recenzijo</h3>
-        <p class="gmr-sub">Za vsako potrjeno recenzijo prejmete <strong>${REVIEW_PCT}% popust</strong> na naslednji nakup.</p>
+        <p class="gmr-sub">Za vsako potrjeno recenzijo prejmete <strong>${cfg.recenzijaPct}% popust</strong> na naslednji nakup.</p>
       </div>
     </div>
     <form id="gmr-form" novalidate>
@@ -68,7 +86,7 @@ function buildHTML(){
       </div>
     </div>
     <div class="gmr-ig-actions">
-      ${IG_ACTIONS.map(a=>`
+      ${igActions().map(a=>`
       <div class="gmr-ig-row">
         <div class="gmr-ig-info">
           <span class="gmr-ig-label">${a.label}</span>
@@ -130,12 +148,12 @@ function bindEvents(slug,productName){
         method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},
         body:JSON.stringify({name,email,rating,title:title||null,body,
           product_id:slug,product_name:productName,
-          status:'pending',coupon_pct:REVIEW_PCT,
+          status:'pending',coupon_pct:cfg.recenzijaPct,
           created_at:new Date().toISOString()})
       });
       if(r.ok||r.status===201){
         document.getElementById('gmr-form').innerHTML=
-          `<div class="gmr-success">✅ Hvala za recenzijo! Po pregledu boste na e-mail prejeli ${REVIEW_PCT}% kupon za naslednji nakup.</div>`;
+          `<div class="gmr-success">✅ Hvala za recenzijo! Po pregledu boste na e-mail prejeli ${cfg.recenzijaPct}% kupon za naslednji nakup.</div>`;
       } else throw new Error('HTTP '+r.status);
     }catch{
       showMsg(msg,'Napaka pri pošiljanju. Poskusite znova.','err');
@@ -146,8 +164,8 @@ function bindEvents(slug,productName){
   // IG buttons
   document.querySelectorAll('.gmr-ig-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const id=btn.dataset.id,pct=btn.dataset.pct;
-      const a=IG_ACTIONS.find(x=>x.id===id);
+      const id=btn.dataset.id,pct=+btn.dataset.pct;
+      const a=igActions().find(x=>x.id===id);
       document.getElementById('gmr-ig-id').value=id;
       document.getElementById('gmr-ig-pct').value=pct;
       document.getElementById('gmr-ig-selected').textContent=a.hint+' → +'+pct+'% popust';
@@ -168,7 +186,7 @@ function bindEvents(slug,productName){
     const link=document.getElementById('gmr-ig-link').value.trim();
     const msg=document.getElementById('gmr-ig-msg');
     if(!name||!email||!handle){showMsg(msg,'Izpolnite vsa obvezna polja.','err');return;}
-    const a=IG_ACTIONS.find(x=>x.id===id);
+    const a=igActions().find(x=>x.id===id);
     const btn=e.target.querySelector('.gmr-btn-submit');
     btn.disabled=true;btn.textContent='Pošiljam…';
     try{

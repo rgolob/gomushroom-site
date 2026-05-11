@@ -5891,6 +5891,7 @@ const ZS_DEFAULTS={
   postnina:3.90,
   brezplacnaPosninaOd:60,
   popusti:[], // [{kod, tip:'koda'|'kolicina'|'znesek', vrednost, min, aktiven}]
+  recenzijeNastavitve:{recenzijaPct:10,igFollowPct:5,igStoryPct:10,igObjavaLnk:15,igObjavaTag:20},
 };
 
 function getZS(key){
@@ -6061,6 +6062,37 @@ function openZalogaSettings(){
         <div id="zsPopustiList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
           ${popusti.length?popusti.map((p,i)=>renderPopustRow(p,i)).join(''):
             '<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni nastavljenih popustov.</div>'}
+        </div>
+
+        <!-- RECENZIJE & IG -->
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Recenzije &amp; IG nagrade</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.25rem;display:grid;gap:.5rem">
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Recenzija (%)</label>
+            <input id="zsRecenzijaPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).recenzijaPct??10}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);padding:.1rem 0 .3rem;border-bottom:1px solid var(--border)">IG — sledenje in objave</div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Follow (%)</label>
+            <input id="zsIgFollowPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igFollowPct??5}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Story (%)</label>
+            <input id="zsIgStoryPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igStoryPct??10}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Objava z linkom (%)</label>
+            <input id="zsIgObjavaLnk" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igObjavaLnk??15}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Objava z oznako (%)</label>
+            <input id="zsIgObjavaTag" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igObjavaTag??20}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
         </div>
 
         <!-- SIMULATOR -->
@@ -6320,6 +6352,13 @@ function saveZalogaSettings(){
       od:document.getElementById('zsCasovniOd').value,
       do:document.getElementById('zsCasovniDo').value,
       aktiven:document.getElementById('zs_casovniAktiven').checked,
+    },
+    recenzijeNastavitve:{
+      recenzijaPct:parseFloat(document.getElementById('zsRecenzijaPct').value.replace(',','.'))||10,
+      igFollowPct:parseFloat(document.getElementById('zsIgFollowPct').value.replace(',','.'))||5,
+      igStoryPct:parseFloat(document.getElementById('zsIgStoryPct').value.replace(',','.'))||10,
+      igObjavaLnk:parseFloat(document.getElementById('zsIgObjavaLnk').value.replace(',','.'))||15,
+      igObjavaTag:parseFloat(document.getElementById('zsIgObjavaTag').value.replace(',','.'))||20,
     },
   });
   document.getElementById('zalogaSettingsOverlay').remove();

@@ -677,6 +677,44 @@
   line-height:1.65;
 }
 
+/* STORY SECTIONS (Surovina / Kakovost) */
+
+.product-story{
+  padding:clamp(26px,4vw,42px);
+}
+
+.product-story-grid{
+  display:grid;
+  grid-template-columns:200px 1fr;
+  gap:2rem 3rem;
+  align-items:start;
+}
+
+.product-story-grid h2{
+  margin:0 0 .35rem;
+  font-size:1.65rem;
+  color:#2b0b39;
+  letter-spacing:-.03em;
+  line-height:1.15;
+}
+
+.product-story p{
+  color:rgba(43,11,57,.74);
+  line-height:1.82;
+  margin:0;
+}
+
+.product-story p+p{
+  margin-top:14px;
+}
+
+@media(max-width:760px){
+  .product-story-grid{
+    grid-template-columns:1fr;
+    gap:.75rem;
+  }
+}
+
 /* ACCORDION ON PRODUCT PAGE */
 
 .product-accordion{

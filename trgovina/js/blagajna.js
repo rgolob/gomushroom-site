@@ -574,7 +574,8 @@ function izracunajPopust(skupaj, kolicina, koda) {
     ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
     let ok = false;
-    if (p.tip === 'koda' && koda && p.kod === koda.toUpperCase().trim()) ok = true;
+    const kode = (koda || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
+    if (p.tip === 'koda' && kode.length && kode.includes(p.kod)) ok = true;
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
     if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${p.kod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });

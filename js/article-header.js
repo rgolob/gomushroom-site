@@ -16,7 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     "/en/learn/what-is-extraction/": "/znanje/kaj-je-ekstrakcija/",
 
     "/znanje/beta-glukani/": "/en/learn/beta-glucans/",
-    "/en/learn/beta-glucans/": "/znanje/beta-glukani/"
+    "/en/learn/beta-glucans/": "/znanje/beta-glukani/",
+
+    "/znanje/beta-glukani-medicinske-gobe/": "/en/learn/beta-glucans/",
   };
 
   const path = window.location.pathname;

@@ -41,7 +41,8 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
     if (p.do && danes > p.do) continue;
     if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     let ok = false;
-    if (p.tip === 'koda' && kodaVnesena && p.kod === kodaVnesena.toUpperCase().trim()) ok = true;
+    const kode = (kodaVnesena || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
+    if (p.tip === 'koda' && kode.includes(p.kod)) ok = true;
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
     if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${p.kod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
@@ -170,17 +171,29 @@ function bindKupon() {
   if (!input || !btn) return;
 
   const validate = () => {
-    const koda = input.value.trim().toUpperCase();
-    if (!koda) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
-    const najden = (settings.popusti || []).find(p => p.tip === 'koda' && p.kod === koda && p.aktiven);
-    if (najden) {
+    const raw = input.value.trim();
+    if (!raw) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
+    const kode = raw.split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
+    const veljavne = kode.filter(k => (settings.popusti || []).some(p => p.tip === 'koda' && p.kod === k && p.aktiven));
+    if (veljavne.length === kode.length) {
+      // All codes valid — green ✓
       input.style.borderColor = '#3a6b4a';
       btn.textContent = '✓';
       btn.style.background = '#3a6b4a';
       btn.style.color = 'white';
+      btn.style.borderColor = '';
+    } else if (veljavne.length > 0) {
+      // Some codes valid — amber ⚠
+      input.style.borderColor = '#e67e22';
+      btn.textContent = 'Delno';
+      btn.style.background = '#e67e22';
+      btn.style.color = 'white';
+      btn.style.borderColor = '';
     } else {
+      // No codes valid — red ✗
       input.style.borderColor = '#c0392b';
       btn.textContent = '✗';
+      btn.style.background = '';
       btn.style.color = '#c0392b';
     }
     renderCart();

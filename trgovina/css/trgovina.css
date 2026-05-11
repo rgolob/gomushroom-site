@@ -206,6 +206,7 @@
 
 .shop-product picture {
   display: block;
+  width: 100%;
   aspect-ratio: 1 / 1;
   max-height: 240px;
   overflow: hidden;

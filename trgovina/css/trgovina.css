@@ -202,15 +202,16 @@
 
 .shop-product picture {
   display: block;
-  height: 400px;
+  aspect-ratio: 4 / 5;
+  max-height: 280px;
   overflow: hidden;
 }
 
 .shop-product img {
   width: 100%;
   height: 100%;
-  object-fit: contain;  /* contain namesto cover */
-  object-position: center 70%;  /* pomakne sliko navzdol */
+  object-fit: contain;
+  object-position: center 70%;
 }
 
 
@@ -758,9 +759,9 @@
 .gm-cart-empty[hidden]{
   display:none;
 }
-/* SHOP HEADER MOBILE FIX */
+/* SHOP HEADER MOBILE */
 @media (max-width:767px){
-  #site-header #primary-nav{
+  #shop-header nav{
     position:absolute;
     top:100%;
     left:-14px;
@@ -771,29 +772,26 @@
     padding:10px 14px 14px;
     background:rgba(255,255,255,.92);
     backdrop-filter:saturate(160%) blur(10px);
-    border-bottom:1px solid var(--line);
+    border-bottom:1px solid rgba(43,11,57,.08);
+    z-index:100;
   }
 
-  #site-header.nav-open #primary-nav{
+  #shop-header.nav-open nav{
     display:flex;
   }
 
-  #site-header #primary-nav a{
+  #shop-header nav a{
     padding:10px 12px;
     border-radius:12px;
     border:1px solid rgba(0,0,0,.06);
     background:rgba(255,255,255,.78);
     font-size:15px;
+    color:#2b0b39;
+    text-decoration:none;
   }
 
-  #site-header #primary-nav a::after{
+  #shop-header nav a::after{
     display:none;
-  }
-
-  #site-header .nav-toggle{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
   }
 }
 

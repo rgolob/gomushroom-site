@@ -190,6 +190,7 @@
   position:relative;
   display:flex;
   flex-direction:column;
+  transform:translateZ(0); /* Safari overflow:hidden + border-radius fix */
 }
 
 .shop-product:hover{
@@ -209,6 +210,8 @@
   max-height: 240px;
   overflow: hidden;
   background: #f2ede6;
+  border-radius: 26px 26px 0 0;
+  border-bottom: 1px solid rgba(43,11,57,.06);
 }
 
 .shop-product img {

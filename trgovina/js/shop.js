@@ -131,11 +131,11 @@ function renderShopGrid(products) {
       : defaultVariant.price_malo;
 
     return `
-      <article class="shop-product" data-product-card="${p.id}" style="position:relative;display:flex;flex-direction:column">
+      <article class="shop-product" data-product-card="${p.id}">
 
-        ${maxDiscount > 0 ? `<span data-discount-badge style="position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.75rem;font-weight:700;letter-spacing:.04em;padding:.2rem .6rem;border-radius:999px;pointer-events:none">−${maxDiscount}%</span>` : ''}
+        ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
 
-        <a href="${detailUrl || '/trgovina/'}" style="display:block;text-decoration:none;color:inherit">
+        <a class="shop-product-link" href="${detailUrl || '/trgovina/'}">
           <picture>
             <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="800" height="1000" loading="lazy">
           </picture>
@@ -146,29 +146,27 @@ function renderShopGrid(products) {
           </div>
         </a>
 
-        <div style="padding:0 20px 22px;margin-top:auto">
+        <div class="shop-product-foot">
 
           ${p.variants.length > 1 ? `
-          <div style="display:flex;gap:.4rem;margin-bottom:.85rem">
-            ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button" style="font-size:.82rem;padding:0 12px;min-height:34px">Alkoholna</button>` : ''}
-            ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button" style="font-size:.82rem;padding:0 12px;min-height:34px">Brezalkoholna</button>` : ''}
+          <div class="shop-product-variants">
+            ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
+            ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalkoholna</button>` : ''}
           </div>` : ''}
 
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
-            <div>
-              <div data-price-wrap style="font-size:1.15rem;line-height:1.2">${priceHtml(defaultVariant)}</div>
-              <div data-stock-wrap style="margin-top:.2rem">${stockBadge(defaultVariant)}</div>
-            </div>
-            <button class="gm-btn gm-btn--primary" type="button" data-add-to-cart
-              data-slug="${p.slug}" data-name="${p.name}"
-              data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
-              data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
-              data-image="${p.image || ''}"
-              style="flex-shrink:0;font-size:.85rem;padding:0 16px;min-height:40px"
-              ${!defaultVariant.in_stock ? 'disabled' : ''}>
-              ${defaultVariant.in_stock ? '+ Dodaj' : 'Ni na zalogi'}
-            </button>
+          <div class="shop-product-price-row">
+            <div data-price-wrap>${priceHtml(defaultVariant)}</div>
+            <div data-stock-wrap>${stockBadge(defaultVariant)}</div>
           </div>
+
+          <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
+            data-slug="${p.slug}" data-name="${p.name}"
+            data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
+            data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
+            data-image="${p.image || ''}"
+            ${!defaultVariant.in_stock ? 'disabled' : ''}>
+            ${defaultVariant.in_stock ? '+ Dodaj v košarico' : 'Ni na zalogi'}
+          </button>
 
         </div>
       </article>`;

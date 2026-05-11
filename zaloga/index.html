@@ -5974,52 +5974,56 @@ function renderPopustRow(p,i){
       <span style="color:var(--muted);margin-left:.4rem">${opis}</span>
       ${extras.length?`<div style="font-size:.66rem;color:var(--muted);margin-top:.15rem">${extras.join(' · ')}</div>`:''}
     </div>
+    <button onclick="dodajPopust(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.1rem .2rem" title="Uredi">✏️</button>
     <input type="checkbox" ${p.aktiven?'checked':''} onchange="togglePopust(${i})" style="cursor:pointer">
     <button onclick="odstraniPopust(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem">✕</button>
   </div>`;
 }
 
-function dodajPopust(){
+function dodajPopust(editIdx){
+  const edit=editIdx!=null;
+  const p=edit?(getZS('popusti')||[])[editIdx]:null;
   const overlay=document.createElement('div');
   overlay.id='dodajPopustOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML=`
     <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
+      <input type="hidden" id="dpEditIdx" value="${edit?editIdx:-1}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">➕ Nov popust</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">${edit?'✏️ Uredi popust':'➕ Nov popust'}</div>
         <button onclick="document.getElementById('dodajPopustOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
       </div>
       <div style="display:grid;gap:.75rem">
         <div>
           <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tip popusta</label>
           <select id="dpTip" onchange="dpTipChange()" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;background:white">
-            <option value="koda">🏷 Koda za kupon</option>
-            <option value="kolicina">📦 Količinski (X+ kosov)</option>
-            <option value="znesek">💰 Znesek naročila (nad X €)</option>
+            <option value="koda" ${p?.tip==='koda'?'selected':''}>🏷 Koda za kupon</option>
+            <option value="kolicina" ${p?.tip==='kolicina'?'selected':''}>📦 Količinski (X+ kosov)</option>
+            <option value="znesek" ${p?.tip==='znesek'?'selected':''}>💰 Znesek naročila (nad X €)</option>
           </select>
         </div>
-        <div id="dpKodaRow">
+        <div id="dpKodaRow" ${p&&p.tip!=='koda'?'style="display:none"':''}>
           <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Koda kupona</label>
-          <input id="dpKod" type="text" placeholder="WELCOME10" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
+          <input id="dpKod" type="text" placeholder="WELCOME10" value="${p?.kod||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
         </div>
-        <div id="dpMinRow" style="display:none">
-          <label id="dpMinLabel" style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Min kosov</label>
-          <input id="dpMin" type="text" inputmode="decimal" placeholder="3" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        <div id="dpMinRow" ${!p||p.tip==='koda'?'style="display:none"':''}>
+          <label id="dpMinLabel" style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${p?.tip==='znesek'?'Min znesek (€)':'Min kosov'}</label>
+          <input id="dpMin" type="text" inputmode="decimal" placeholder="3" value="${p?.min||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
         </div>
         <div>
           <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Popust (%)</label>
-          <input id="dpVrednost" type="text" inputmode="decimal" placeholder="10" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+          <input id="dpVrednost" type="text" inputmode="decimal" placeholder="10" value="${p?.vrednost||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
         </div>
         <div style="background:var(--parchment);border-radius:10px;padding:.6rem .85rem">
           <div style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Časovna omejitev (neobvezno)</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
             <div>
               <label style="font-size:.72rem;color:var(--muted)">Od</label>
-              <input id="dpOd" type="date" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+              <input id="dpOd" type="date" value="${p?.od||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
             </div>
             <div>
               <label style="font-size:.72rem;color:var(--muted)">Do</label>
-              <input id="dpDo" type="date" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+              <input id="dpDo" type="date" value="${p?.do||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
             </div>
           </div>
         </div>
@@ -6028,11 +6032,11 @@ function dodajPopust(){
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
             <div>
               <label style="font-size:.72rem;color:var(--muted)">Max artiklov</label>
-              <input id="dpMaxKolicina" type="text" inputmode="numeric" placeholder="npr. 50" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+              <input id="dpMaxKolicina" type="text" inputmode="numeric" placeholder="npr. 50" value="${p?.maxKolicina||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
             </div>
             <div>
               <label style="font-size:.72rem;color:var(--muted)">Že prodanih</label>
-              <input id="dpPorabljeno" type="text" inputmode="numeric" placeholder="0" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+              <input id="dpPorabljeno" type="text" inputmode="numeric" placeholder="0" value="${p?.porabljeno||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
             </div>
           </div>
         </div>
@@ -6042,7 +6046,7 @@ function dodajPopust(){
             <div style="font-size:.82rem;font-weight:500">Prikaži v trgovini</div>
             <div style="font-size:.68rem;color:var(--muted)">Pokaže popust v reklamnem pasu na strani trgovine</div>
           </div>
-          <input type="checkbox" id="dpPrikaziVTrgovini" checked style="width:1.2rem;height:1.2rem;cursor:pointer">
+          <input type="checkbox" id="dpPrikaziVTrgovini" ${p?.prikaziVTrgovini===false?'':'checked'} style="width:1.2rem;height:1.2rem;cursor:pointer">
         </div>
       </div>
     </div>`;
@@ -6080,13 +6084,15 @@ function shraniPopust(){
   if(maxKolicina)p.maxKolicina=maxKolicina;
   if(porabljeno)p.porabljeno=porabljeno;
   p.prikaziVTrgovini=document.getElementById('dpPrikaziVTrgovini').checked;
+  const editIdx=parseInt(document.getElementById('dpEditIdx').value);
   const popusti=getZS('popusti')||[];
-  popusti.push(p);
+  if(editIdx>=0) popusti[editIdx]={...popusti[editIdx],...p};
+  else popusti.push(p);
   saveZS({popusti});
   document.getElementById('dodajPopustOverlay')?.remove();
   const list=document.getElementById('zsPopustiList');
   if(list)list.innerHTML=popusti.map((pp,ii)=>renderPopustRow(pp,ii)).join('');
-  toast('✓ Popust dodan');
+  toast(editIdx>=0?'✓ Popust posodobljen':'✓ Popust dodan');
 }
 
 function togglePopust(i){

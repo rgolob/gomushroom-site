@@ -74,7 +74,7 @@ function renderCart() {
   wrap.innerHTML = cart.map((item, i) => `
     <div class="gm-cart-item" data-index="${i}">
       <div class="gm-cart-item__image">
-        ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block">` : '<div style="width:100%;height:100%;background:rgba(43,11,57,.06);border-radius:10px"></div>'}
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;border-radius:10px;display:block">` : '<div style="width:100%;height:100%;background:rgba(43,11,57,.06);border-radius:10px"></div>'}
       </div>
       <div class="gm-cart-item__content">
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:#2b0b39;line-height:1.2">${item.name}</div>

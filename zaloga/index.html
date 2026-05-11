@@ -5964,10 +5964,14 @@ function renderPopustRow(p,i){
   const opis=p.tip==='koda'?`${p.kod} → ${p.vrednost}%`:
     p.tip==='kolicina'?`${p.min}+ kosov → ${p.vrednost}%`:
     `Nad ${p.min} € → ${p.vrednost}%`;
+  const extras=[];
+  if(p.od||p.do) extras.push(`📅 ${p.od||'?'}–${p.do||'∞'}`);
+  if(p.maxKolicina) extras.push(`📊 ${p.porabljeno||0}/${p.maxKolicina} art.`);
   return`<div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
     <div style="flex:1;font-size:.78rem">
       <span style="font-weight:500">${tipi[p.tip]||p.tip}</span>
       <span style="color:var(--muted);margin-left:.4rem">${opis}</span>
+      ${extras.length?`<div style="font-size:.66rem;color:var(--muted);margin-top:.15rem">${extras.join(' · ')}</div>`:''}
     </div>
     <input type="checkbox" ${p.aktiven?'checked':''} onchange="togglePopust(${i})" style="cursor:pointer">
     <button onclick="odstraniPopust(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem">✕</button>
@@ -5975,40 +5979,105 @@ function renderPopustRow(p,i){
 }
 
 function dodajPopust(){
-  const tip=prompt('Tip popusta:\n1 = Koda za kupon\n2 = Količinski (X+ kosov)\n3 = Znesek naročila (nad X €)');
-  if(!tip)return;
-  const tipi={'1':'koda','2':'kolicina','3':'znesek'};
-  const tipKey=tipi[tip.trim()];
-  if(!tipKey){toast('⚠ Neveljaven tip');return;}
+  const overlay=document.createElement('div');
+  overlay.id='dodajPopustOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">➕ Nov popust</div>
+        <button onclick="document.getElementById('dodajPopustOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
+      </div>
+      <div style="display:grid;gap:.75rem">
+        <div>
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tip popusta</label>
+          <select id="dpTip" onchange="dpTipChange()" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;background:white">
+            <option value="koda">🏷 Koda za kupon</option>
+            <option value="kolicina">📦 Količinski (X+ kosov)</option>
+            <option value="znesek">💰 Znesek naročila (nad X €)</option>
+          </select>
+        </div>
+        <div id="dpKodaRow">
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Koda kupona</label>
+          <input id="dpKod" type="text" placeholder="WELCOME10" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
+        </div>
+        <div id="dpMinRow" style="display:none">
+          <label id="dpMinLabel" style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Min kosov</label>
+          <input id="dpMin" type="text" inputmode="decimal" placeholder="3" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Popust (%)</label>
+          <input id="dpVrednost" type="text" inputmode="decimal" placeholder="10" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        </div>
+        <div style="background:var(--parchment);border-radius:10px;padding:.6rem .85rem">
+          <div style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Časovna omejitev (neobvezno)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Od</label>
+              <input id="dpOd" type="date" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Do</label>
+              <input id="dpDo" type="date" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--parchment);border-radius:10px;padding:.6rem .85rem">
+          <div style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Omejitev artiklov (neobvezno)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Max artiklov</label>
+              <input id="dpMaxKolicina" type="text" inputmode="numeric" placeholder="npr. 50" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Že prodanih</label>
+              <input id="dpPorabljeno" type="text" inputmode="numeric" placeholder="0" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <button onclick="shraniPopust()" style="width:100%;padding:.7rem;background:var(--ink);color:white;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">Shrani popust</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
 
-  let p={tip:tipKey,vrednost:0,aktiven:true};
+function dpTipChange(){
+  const tip=document.getElementById('dpTip')?.value;
+  document.getElementById('dpKodaRow').style.display=tip==='koda'?'':'none';
+  document.getElementById('dpMinRow').style.display=tip!=='koda'?'':'none';
+  const lbl=document.getElementById('dpMinLabel');
+  if(lbl)lbl.textContent=tip==='kolicina'?'Min kosov':'Min znesek (€)';
+}
 
-  if(tipKey==='koda'){
-    const kod=prompt('Koda kupona (npr. WELCOME10):');
-    if(!kod)return;
-    const vrednost=parseFloat(prompt('Popust v % (npr. 10):')||'0');
-    if(!vrednost)return;
-    p.kod=kod.toUpperCase().trim();
-    p.vrednost=vrednost;
-    p.min=0;
-  } else if(tipKey==='kolicina'){
-    const min=parseInt(prompt('Minimalna količina kosov (npr. 3):')||'0');
-    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
-    if(!min||!vrednost)return;
-    p.min=min;p.vrednost=vrednost;p.kod='';
+function shraniPopust(){
+  const tip=document.getElementById('dpTip').value;
+  const vrednost=parseFloat(document.getElementById('dpVrednost').value.replace(',','.'))||0;
+  if(!vrednost){toast('⚠ Vnesi vrednost popusta');return;}
+  let p={tip,vrednost,aktiven:true};
+  if(tip==='koda'){
+    const kod=document.getElementById('dpKod').value.toUpperCase().trim();
+    if(!kod){toast('⚠ Vnesi kodo kupona');return;}
+    p.kod=kod;p.min=0;
   } else {
-    const min=parseFloat(prompt('Minimalni znesek naročila € (npr. 100):')||'0');
-    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
-    if(!min||!vrednost)return;
-    p.min=min;p.vrednost=vrednost;p.kod='';
+    const min=parseFloat(document.getElementById('dpMin').value.replace(',','.'))||0;
+    if(!min){toast('⚠ Vnesi minimum');return;}
+    p.min=min;p.kod='';
   }
-
+  const od=document.getElementById('dpOd').value;
+  const doDatum=document.getElementById('dpDo').value;
+  const maxKolicina=parseInt(document.getElementById('dpMaxKolicina').value)||0;
+  const porabljeno=parseInt(document.getElementById('dpPorabljeno').value)||0;
+  if(od)p.od=od;
+  if(doDatum)p.do=doDatum;
+  if(maxKolicina)p.maxKolicina=maxKolicina;
+  if(porabljeno)p.porabljeno=porabljeno;
   const popusti=getZS('popusti')||[];
   popusti.push(p);
   saveZS({popusti});
-  // Osveži seznam
+  document.getElementById('dodajPopustOverlay')?.remove();
   const list=document.getElementById('zsPopustiList');
   if(list)list.innerHTML=popusti.map((pp,ii)=>renderPopustRow(pp,ii)).join('');
+  toast('✓ Popust dodan');
 }
 
 function togglePopust(i){

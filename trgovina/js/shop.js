@@ -39,6 +39,9 @@ function getAktivniPopusti() {
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
     aktivni.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
   for (const p of (_settings.popusti || []).filter(p => p.aktiven)) {
+    if (p.od && danes < p.od) continue;
+    if (p.do && danes > p.do) continue;
+    if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, opis: `Koda ${p.kod}` });
     if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, opis: `${p.min}+ kosov` });
     if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, opis: `Nad ${p.min} €` });

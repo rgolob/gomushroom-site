@@ -37,6 +37,9 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
     ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
+    if (p.od && danes < p.od) continue;
+    if (p.do && danes > p.do) continue;
+    if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     let ok = false;
     if (p.tip === 'koda' && kodaVnesena && p.kod === kodaVnesena.toUpperCase().trim()) ok = true;
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;

@@ -135,12 +135,12 @@ function renderShopGrid(products) {
 
         <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
           <div class="shop-product-image">
-            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
             <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy">
           </div>
         </a>
 
         <div class="shop-product-content">
+          ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
@@ -212,8 +212,10 @@ function bindVariantPickers(products) {
       if (!badge && v.discount_pct > 0) {
         badge = document.createElement('span');
         badge.dataset.discountBadge = '';
-        badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.75rem;font-weight:700;letter-spacing:.04em;padding:.2rem .6rem;border-radius:999px;pointer-events:none';
-        card.appendChild(badge);
+        badge.className = 'gm-discount-badge';
+        const content = card.querySelector('.shop-product-content');
+        if (content) content.insertBefore(badge, content.firstChild);
+        else card.appendChild(badge);
       }
       if (badge) {
         badge.textContent = `−${v.discount_pct}%`;

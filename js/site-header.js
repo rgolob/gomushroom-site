@@ -7,20 +7,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const navItems = isEn
     ? `
+      <a href="/en/learn/">Learn</a>
+      <a href="/en/qc/heavy-metals/">Quality</a>
       <a href="/en/#services">Services</a>
       <a href="/en/#approach">Approach</a>
-      <a href="/en/qc/heavy-metals/">Quality</a>
-      <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
       <a href="/en/#gallery">Gallery</a>
+      <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
       <a href="/en/#references">References</a>
     `
     : `
-      <a href="/#storitve">Storitve</a>
-      <a href="/#pristop">Pristop</a>
       <a href="/znanje/">Znanje</a>
       <a href="/qc/tezke-kovine/">Kakovost</a>
-      <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
+      <a href="/#storitve">Storitve</a>
+      <a href="/#pristop">Pristop</a>
       <a href="/#galerija">Galerija</a>
+      <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
       <a href="/#reference">Reference</a>
     `;
 

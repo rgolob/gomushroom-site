@@ -208,6 +208,7 @@
   flex-direction:row;
   align-items:stretch;
   transform:translateZ(0);
+  min-height:220px;
 }
 
 .shop-product:hover{

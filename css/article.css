@@ -122,7 +122,7 @@
 }
 
 .article-block p + p{
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .article-block ul,
@@ -148,7 +148,10 @@
 }
 
 .article-card{
-  background: rgba(255,255,255,.92);
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(43,10,57,.05), transparent 65%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(177,133,86,.06), transparent 65%),
+    rgba(255,255,255,.92);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 14px 14px 12px;

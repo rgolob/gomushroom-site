@@ -2166,6 +2166,13 @@ footer.site-footer{
   grid-template-columns:repeat(3, minmax(0,1fr));
 }
 
+.learn-card{
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(43,10,57,.05), transparent 65%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(177,133,86,.06), transparent 65%),
+    #ffffff;
+}
+
 .learn-card .body{
   padding:18px 18px 16px;
 }

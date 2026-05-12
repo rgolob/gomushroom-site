@@ -69,6 +69,7 @@ header{
   backdrop-filter:saturate(160%) blur(10px);
   border-bottom:1px solid var(--line);
   padding-top:env(safe-area-inset-top);
+  min-height:66px;
 }
 
 .nav{

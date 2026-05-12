@@ -130,7 +130,7 @@ function renderShopGrid(products) {
     if (!defaultVariant) return '';
 
     const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
-    const detailUrl = p.is_bundle ? null : `/trgovina/${p.slug}-tinktura/`;
+    const detailUrl = p.is_bundle ? null : (p.detail_path || `/trgovina/${p.slug}-tinktura/`);
     const discPrice = defaultVariant.discount_pct > 0
       ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
       : defaultVariant.price_malo;

@@ -186,7 +186,7 @@
 }
 
 .learn-card--locked .body {
-  filter: blur(1.6px);
+  filter: blur(4px);
   transform: scale(1.01);
 }
 

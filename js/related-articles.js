@@ -2,6 +2,11 @@
 (function(){
   var ARTICLES = [
     {
+      url: '/znanje/kaj-je-ekstrakcija/',
+      title: 'Kaj je ekstrakcija?',
+      desc: 'Kako se spojine prenesejo iz gobnega materiala v tekočino in zakaj metoda ekstrakcije opredeljuje končni produkt.',
+    },
+    {
       url: '/znanje/trojna-ekstrakcija/',
       title: 'Trojna ekstrakcija medicinskih gob',
       desc: 'Zakaj en sam ekstrakcijski postopek ni dovolj in kako večstopenjska ekstrakcija zajame širši spekter spojin.',
@@ -10,6 +15,11 @@
       url: '/znanje/ultrazvocna-ekstrakcija/',
       title: 'Ultrazvočna ekstrakcija medicinskih gob',
       desc: 'Kako ultrazvok z akustično kavitacijo izboljša masni prenos in učinkovitost ekstrakcije bioaktivnih spojin.',
+    },
+    {
+      url: '/znanje/vakuumsko-koncentriranje/',
+      title: 'Vakuumsko koncentriranje ekstraktov',
+      desc: 'Zakaj je odstranjevanje topila ključen korak po ekstrakciji in kako vpliva na kakovost končnega ekstrakta.',
     },
     {
       url: '/znanje/beta-glukani/',

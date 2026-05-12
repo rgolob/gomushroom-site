@@ -276,12 +276,14 @@
   color: var(--fg);
 }
 
-.article-references ol{
-  margin: 0 0 0 1.2rem;
+.article-references ol,
+.article-references ul{
+  margin: 0;
+  padding-left: 1.4em;
 }
 
 .article-references li + li{
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 @media (max-width: 768px){

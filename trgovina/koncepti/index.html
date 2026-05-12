@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koncepti kartic – GoMushroom</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f1ec;
+  color: #2b0b39;
+  padding: 24px 16px 60px;
+}
+h1 {
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #9a7a58;
+  margin-bottom: 32px;
+  font-weight: 700;
+}
+.concept-group {
+  margin-bottom: 48px;
+}
+.concept-label {
+  font-size: .65rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #9a7a58;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.concept-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2b0b39;
+  margin-bottom: 4px;
+  letter-spacing: -.02em;
+}
+.concept-desc {
+  font-size: .78rem;
+  color: rgba(43,11,57,.55);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* ── SHARED ──────────────────────────────────── */
+.card-wrap {
+  max-width: 360px;
+}
+img { display: block; }
+
+/* ════════════════════════════════════════════════
+   CONCEPT 1 — Editorial Minimal
+   ════════════════════════════════════════════════ */
+.c1 {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(43,11,57,.06);
+}
+.c1-image {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: #faf8f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.c1-image img {
+  width: 55%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+}
+.c1-body {
+  padding: 20px 22px 22px;
+}
+.c1-species {
+  font-size: .62rem;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: #b8956a;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.c1-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2b0b39;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  margin-bottom: 18px;
+}
+.c1-variants {
+  font-size: .78rem;
+  color: rgba(43,11,57,.5);
+  margin-bottom: 18px;
+  letter-spacing: .02em;
+}
+.c1-variants strong {
+  color: #2b0b39;
+  font-weight: 700;
+}
+.c1-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.c1-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2b0b39;
+  letter-spacing: -.02em;
+}
+.c1-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #2b0b39;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(43,11,57,.3);
+  padding-bottom: 1px;
+  cursor: pointer;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+}
+.c1-stock {
+  font-size: .72rem;
+  color: #3a6b4a;
+  margin-top: 12px;
+  letter-spacing: .03em;
+}
+
+/* ════════════════════════════════════════════════
+   CONCEPT 2 — Product Hero
+   ════════════════════════════════════════════════ */
+.c2 {
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(43,11,57,.07), 0 2px 8px rgba(43,11,57,.04);
+}
+.c2-image {
+  width: 100%;
+  height: 240px;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.c2-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+}
+.c2-image::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.75));
+  pointer-events: none;
+}
+.c2-body {
+  padding: 10px 16px 4px;
+}
+.c2-species {
+  font-size: .62rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #b8956a;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.c2-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #2b0b39;
+  letter-spacing: -.02em;
+}
+.c2-foot {
+  padding: 0 14px 14px;
+}
+.c2-variants {
+  display: flex;
+  gap: .35rem;
+  margin-bottom: .4rem;
+  margin-top: .5rem;
+}
+.c2-vbtn {
+  font-size: .72rem;
+  padding: 0 10px;
+  min-height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(43,11,57,.15);
+  background: #fff;
+  color: #2b0b39;
+  font-weight: 600;
+  cursor: pointer;
+}
+.c2-vbtn.active {
+  background: #2b0b39;
+  color: #fff;
+  border-color: #2b0b39;
+}
+.c2-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .4rem;
+}
+.c2-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2b0b39;
+}
+.c2-stock {
+  font-size: .72rem;
+  color: #3a6b4a;
+  letter-spacing: .03em;
+}
+.c2-btn {
+  width: 100%;
+  min-height: 36px;
+  background: #2b0b39;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: .86rem;
+  font-weight: 650;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+
+/* ════════════════════════════════════════════════
+   CONCEPT 3 — Compact Horizontal
+   ════════════════════════════════════════════════ */
+.c3 {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(43,11,57,.07);
+  display: flex;
+  align-items: stretch;
+  min-height: 150px;
+}
+.c3-image {
+  width: 38%;
+  flex-shrink: 0;
+  background: #faf8f5;
+  border-radius: 20px 0 0 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+}
+.c3-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.c3-body {
+  flex: 1;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.c3-top {}
+.c3-species {
+  font-size: .58rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #b8956a;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.c3-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #2b0b39;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+.c3-variants {
+  display: flex;
+  gap: .25rem;
+  margin-bottom: 6px;
+}
+.c3-vbtn {
+  font-size: .65rem;
+  padding: 0 8px;
+  min-height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(43,11,57,.15);
+  background: #fff;
+  color: #2b0b39;
+  font-weight: 600;
+  cursor: pointer;
+}
+.c3-vbtn.active {
+  background: #2b0b39;
+  color: #fff;
+  border-color: #2b0b39;
+}
+.c3-bottom {}
+.c3-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.c3-price {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #2b0b39;
+}
+.c3-stock {
+  font-size: .66rem;
+  color: #3a6b4a;
+}
+.c3-btn {
+  width: 100%;
+  min-height: 32px;
+  background: #2b0b39;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<h1>GoMushroom · Koncepti kartic</h1>
+
+<!-- ── CONCEPT 1 ─────────────────────────────── -->
+<div class="concept-group">
+  <p class="concept-label">Koncept 1</p>
+  <p class="concept-title">Editorial Minimal</p>
+  <p class="concept-desc">Kartica izgine, produkt ostane. Brez obrob, tipografija vodi kompozicijo. CTA je subtilen underline gumb.</p>
+  <div class="card-wrap">
+    <article class="c1">
+      <div class="c1-image">
+        <img src="/assets/shop/reishi-tinktura-50ml-gomushroom.webp" alt="Reishi tinktura">
+      </div>
+      <div class="c1-body">
+        <p class="c1-species">Ganoderma lucidum</p>
+        <h2 class="c1-name">Reishi</h2>
+        <p class="c1-variants"><strong>Alkoholna</strong> · Brezalkoholna</p>
+        <div class="c1-footer">
+          <span class="c1-price">31,90 €</span>
+          <button class="c1-cta">Dodaj v košarico →</button>
+        </div>
+        <p class="c1-stock">● Na zalogi</p>
+      </div>
+    </article>
+  </div>
+</div>
+
+<!-- ── CONCEPT 2 ─────────────────────────────── -->
+<div class="concept-group">
+  <p class="concept-label">Koncept 2</p>
+  <p class="concept-title">Product Hero</p>
+  <p class="concept-desc">Steklenička zasede 65% kartice. Vsebina je komprimirana spodaj. Produkt je v ospredju.</p>
+  <div class="card-wrap">
+    <article class="c2">
+      <div class="c2-image">
+        <img src="/assets/shop/reishi-tinktura-50ml-gomushroom.webp" alt="Reishi tinktura">
+      </div>
+      <div class="c2-body">
+        <p class="c2-species">Ganoderma lucidum</p>
+        <h2 class="c2-name">Reishi</h2>
+      </div>
+      <div class="c2-foot">
+        <div class="c2-variants">
+          <button class="c2-vbtn active">Alkoholna</button>
+          <button class="c2-vbtn">Brezalkoholna</button>
+        </div>
+        <div class="c2-price-row">
+          <span class="c2-price">31,90 €</span>
+          <span class="c2-stock">● Na zalogi</span>
+        </div>
+        <button class="c2-btn">+ Dodaj v košarico</button>
+      </div>
+    </article>
+  </div>
+</div>
+
+<!-- ── CONCEPT 3 ─────────────────────────────── -->
+<div class="concept-group">
+  <p class="concept-label">Koncept 3</p>
+  <p class="concept-title">Compact Horizontal</p>
+  <p class="concept-desc">Steklenička levo, vsebina desno. Nizka kartica, več produktov vidnih hkrati. App-like premium modul.</p>
+  <div class="card-wrap">
+    <article class="c3">
+      <div class="c3-image">
+        <img src="/assets/shop/reishi-tinktura-50ml-gomushroom.webp" alt="Reishi tinktura">
+      </div>
+      <div class="c3-body">
+        <div class="c3-top">
+          <p class="c3-species">Ganoderma lucidum</p>
+          <h2 class="c3-name">Reishi</h2>
+          <div class="c3-variants">
+            <button class="c3-vbtn active">Alkoholna</button>
+            <button class="c3-vbtn">Brezalk.</button>
+          </div>
+        </div>
+        <div class="c3-bottom">
+          <div class="c3-price-row">
+            <span class="c3-price">31,90 €</span>
+            <span class="c3-stock">● Na zalogi</span>
+          </div>
+          <button class="c3-btn">+ Dodaj v košarico</button>
+        </div>
+      </div>
+    </article>
+  </div>
+</div>
+
+</body>
+</html>

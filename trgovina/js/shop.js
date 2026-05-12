@@ -39,6 +39,10 @@ function getAktivniPopusti() {
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
     aktivni.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
   for (const p of (_settings.popusti || []).filter(p => p.aktiven)) {
+    if (p.od && danes < p.od) continue;
+    if (p.do && danes > p.do) continue;
+    if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
+    if (p.prikaziVTrgovini === false) continue;
     if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, opis: `Koda ${p.kod}` });
     if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, opis: `${p.min}+ kosov` });
     if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, opis: `Nad ${p.min} €` });
@@ -50,16 +54,17 @@ function renderActiveDiscountBanner() {
   const banner = document.getElementById('shop-discount-banner');
   if (!banner) return;
   const aktivni = getAktivniPopusti();
-  if (!aktivni.length) { banner.style.display = 'none'; return; }
+  const brezplacnaOd = _settings?.brezplacnaPosninaOd;
+  if (!aktivni.length && !brezplacnaOd) { banner.style.display = 'none'; return; }
   const vrstice = aktivni.map(p => {
     if (p.opis.startsWith('Koda')) return `🏷 Koda <strong>${p.opis.replace('Koda ','')}</strong>: −${p.vrednost}%`;
     if (p.opis.includes('+ kosov')) return `📦 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
     if (p.opis.includes('Nad')) return `💰 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
     return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
   });
-  banner.innerHTML = `<div style="background:linear-gradient(135deg,#2b0b39,#4a1a5e);color:#f0ebe3;padding:.75rem 1.25rem;border-radius:10px;margin-bottom:1.5rem">
-    <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#af8455;margin-bottom:.35rem">Trenutne akcije</div>
-    ${vrstice.map(v=>`<div style="font-size:.85rem;margin:.15rem 0">${v}</div>`).join('')}
+  if (brezplacnaOd) vrstice.push(`🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
+  banner.innerHTML = `<div style="display:flex;flex-direction:column;gap:.15rem">
+    ${vrstice.map(v=>`<span style="font-size:.75rem;color:rgba(43,11,57,.55);line-height:1.5;letter-spacing:.01em">${v}</span>`).join('')}
   </div>`;
   banner.style.display = '';
 }
@@ -125,52 +130,52 @@ function renderShopGrid(products) {
     if (!defaultVariant) return '';
 
     const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
-    const detailUrl = p.is_bundle ? null : `/trgovina/${p.slug}-tinktura/`;
+    const detailUrl = p.is_bundle ? null : (p.detail_path || `/trgovina/${p.slug}-tinktura/`);
     const discPrice = defaultVariant.discount_pct > 0
       ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
       : defaultVariant.price_malo;
 
     return `
-      <article class="shop-product" data-product-card="${p.id}" style="position:relative;display:flex;flex-direction:column">
+      <article class="shop-product" data-product-card="${p.id}">
 
-        ${maxDiscount > 0 ? `<span data-discount-badge style="position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.75rem;font-weight:700;letter-spacing:.04em;padding:.2rem .6rem;border-radius:999px;pointer-events:none">−${maxDiscount}%</span>` : ''}
-
-        <a href="${detailUrl || '/trgovina/'}" style="display:block;text-decoration:none;color:inherit">
-          <picture>
-            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="800" height="1000" loading="lazy">
-          </picture>
-          <div class="shop-product-body">
-            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
-            <h2>${p.name}</h2>
-            <p class="product-desc">${p.excerpt || ''}</p>
+        <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
+          <div class="shop-product-image">
+            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy">
+            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
           </div>
         </a>
 
-        <div style="padding:0 20px 22px;margin-top:auto">
+        <div class="shop-product-content">
+          <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
+            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
+            <h2>${p.name}</h2>
+          </a>
 
-          ${p.variants.length > 1 ? `
-          <div style="display:flex;gap:.4rem;margin-bottom:.85rem">
-            ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button" style="font-size:.82rem;padding:0 12px;min-height:34px">Alkoholna</button>` : ''}
-            ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button" style="font-size:.82rem;padding:0 12px;min-height:34px">Brezalkoholna</button>` : ''}
-          </div>` : ''}
+          <div class="shop-product-foot">
 
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
-            <div>
-              <div data-price-wrap style="font-size:1.15rem;line-height:1.2">${priceHtml(defaultVariant)}</div>
-              <div data-stock-wrap style="margin-top:.2rem">${stockBadge(defaultVariant)}</div>
+            ${p.variants.length > 1 ? `
+            <div class="shop-product-variants">
+              ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
+              ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalk.</button>` : ''}
+            </div>` : ''}
+
+            <div class="shop-product-price-row">
+              <div data-price-wrap>${priceHtml(defaultVariant)}</div>
+              <div data-stock-wrap>${stockBadge(defaultVariant)}</div>
             </div>
-            <button class="gm-btn gm-btn--primary" type="button" data-add-to-cart
+
+            <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
               data-slug="${p.slug}" data-name="${p.name}"
               data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
               data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
               data-image="${p.image || ''}"
-              style="flex-shrink:0;font-size:.85rem;padding:0 16px;min-height:40px"
               ${!defaultVariant.in_stock ? 'disabled' : ''}>
               ${defaultVariant.in_stock ? '+ Dodaj' : 'Ni na zalogi'}
             </button>
-          </div>
 
+          </div>
         </div>
+
       </article>`;
   }).join('');
 
@@ -212,8 +217,10 @@ function bindVariantPickers(products) {
       if (!badge && v.discount_pct > 0) {
         badge = document.createElement('span');
         badge.dataset.discountBadge = '';
-        badge.style.cssText = 'position:absolute;top:12px;left:12px;z-index:10;background:#2b0b39;color:#af8455;font-size:.75rem;font-weight:700;letter-spacing:.04em;padding:.2rem .6rem;border-radius:999px;pointer-events:none';
-        card.appendChild(badge);
+        badge.className = 'gm-discount-badge';
+        const imgWrap = card.querySelector('.shop-product-image');
+        if (imgWrap) imgWrap.appendChild(badge);
+        else card.appendChild(badge);
       }
       if (badge) {
         badge.textContent = `−${v.discount_pct}%`;

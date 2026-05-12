@@ -1,0 +1,9 @@
+[[redirects]]
+  from = "/trgovina/bradovec-tinktura/"
+  to = "/trgovina/resasti-bradovec-tinktura/"
+  status = 301
+
+[[redirects]]
+  from = "/znanje/beta-glukani-medicinske-gobe/"
+  to = "/znanje/beta-glukani/"
+  status = 301

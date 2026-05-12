@@ -270,6 +270,124 @@
 
 
 /* =========================
+   O MENI — modal injection
+   Injects modal HTML on pages that don't have it (e.g. /znanje/, articles)
+========================= */
+(function(){
+  if(document.getElementById('about-modal')) return;
+  const isSL = !(document.documentElement.lang||'').startsWith('en');
+
+  const sl = {
+    drawerLabel:'O meni', title:'O meni', closeLabel:'Zapri', closeBtn:'Zapri',
+    p1:`Moje ime je <strong>Rok Golob</strong> in stojim za projektom <strong>GoMushroom</strong>.
+        Po izobrazbi sem "skoraj kemijski tehnolog" — študij <strong>kemijske tehnologije</strong> je ostal malo
+        <strong>brez pike na i</strong>. Ampak ravno način razmišljanja, ki ga prinese kemija in tehnologija procesov,
+        je nekaj, kar me spremlja vsak dan: logika korakov, razumevanje topil, mase, pretokov in predvsem spoštovanje do detajlov.`,
+    p2:`Že skoraj <strong>20 let</strong> delam v <strong>analitskem laboratoriju</strong> — in v analitiki
+        <strong>še vedno delam tudi danes</strong>, v svoji redni službi. Analitika te hitro "vzgoji":
+        rezultat je dober samo, če je <strong>ponovljiv</strong>, če je metoda smiselna, če razumeš vzorčenje, matriko
+        in če imaš urejene zapise. Tam ni prostora za približke. In ravno ta disciplina je tudi razlog,
+        da GoMushroom ni nastal kot hiter trend, ampak kot projekt, ki stoji na praksi in na sistemu.`,
+    p3:`GoMushroom je zrasel iz radovednosti in iz želje, da bi izvlečke delal tako, kot bi si jih sam želel:
+        brez napihnjenih obljub, z jasno logiko procesa in s fokusom na stabilnosti. Majhne serije mi omogočajo,
+        da imam nadzor nad detajli — od surovine do končne stekleničke — in da vsako serijo postavim tako,
+        da je primerljiva s prejšnjo.`,
+    p4:`Najbolj me vleče "inženirski del" zgodbe: kako proces postaviti tako, da je učinkovit,
+        nežen do občutljivih spojin in hkrati ponovljiv. Ko se vse sestavi — surovina, postopek,
+        kontrolne točke, meritve in zapisi — dobiš izdelek, ki ni odvisen od sreče, ampak od sistema.
+        To je tudi bistvo GoMushroom.`,
+    pills:`<span class="pill">~20 let analitike</span>
+           <span class="pill accent">Še vedno zaposlen v analitiki</span>
+           <span class="pill">Procesna logika</span>
+           <span class="pill accent">Sledljivost &amp; zapisi</span>
+           <span class="pill">Majhne serije</span>`,
+    focusH:'Fokus',
+    f1:'<strong>Doslednost:</strong> rezultat je dober samo, če je ponovljiv.',
+    f2:'<strong>Transparentnost:</strong> jasni koraki, brez praznih obljub.',
+    f3:'<strong>Stabilnost:</strong> fokus na kontrolnih točkah skozi proces.',
+    f4:'<strong>Butično:</strong> majhne serije, ročna kontrola in detajli.',
+    email:'E-pošta'
+  };
+
+  const en = {
+    drawerLabel:'About', title:'About', closeLabel:'Close', closeBtn:'Close',
+    p1:`My name is <strong>Rok Golob</strong> and I'm the person behind <strong>GoMushroom</strong>.
+        I'm "almost" a chemical engineer — I studied <strong>chemical engineering</strong> but never put the final dot on the i.
+        Still, the way of thinking that chemistry and process engineering bring — logic of steps, understanding solvents, mass flows,
+        and respect for details — is what I use every day.`,
+    p2:`I've spent nearly <strong>20 years</strong> working in an <strong>analytical laboratory</strong> —
+        and I still work in analytics today in my regular job. Analytics trains you fast:
+        a result is only good if it's <strong>repeatable</strong>, if the method makes sense, if you understand sampling and matrix effects,
+        and if your records are in order. There's no room for approximations. That discipline is exactly why GoMushroom
+        wasn't built as a quick trend — but as a system-based project grounded in practice.`,
+    p3:`GoMushroom grew out of curiosity and the desire to make extracts the way I would want them myself:
+        without inflated claims, with a clear process logic, and with a focus on stability. Small batches let me control details —
+        from raw material to the final bottle — and set each batch so it's comparable to the previous one.`,
+    p4:`What pulls me the most is the "engineering" part: how to design a process that is efficient, gentle to sensitive compounds,
+        and still repeatable. When everything comes together — raw material, procedure, control points, measurements and records —
+        you get a product that doesn't depend on luck, but on a system. That's the essence of GoMushroom.`,
+    pills:`<span class="pill">~20 years in analytics</span>
+           <span class="pill accent">Still working in analytics</span>
+           <span class="pill">Process logic</span>
+           <span class="pill accent">Traceability &amp; records</span>
+           <span class="pill">Small batches</span>`,
+    focusH:'Focus',
+    f1:'<strong>Consistency:</strong> a result is only good if it\'s repeatable.',
+    f2:'<strong>Transparency:</strong> clear steps, no empty promises.',
+    f3:'<strong>Stability:</strong> focus on control points throughout the process.',
+    f4:'<strong>Boutique:</strong> small batches, manual control and details.',
+    email:'Email'
+  };
+
+  const t = isSL ? sl : en;
+
+  const html = `
+  <div class="about-modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
+    <div class="about-overlay" id="about-overlay" tabindex="-1"></div>
+    <div class="about-drawer" role="document" aria-label="${t.drawerLabel}">
+      <div class="about-top">
+        <div class="ttl">
+          <strong id="about-title">${t.title}</strong>
+          <span>Rok Golob — GoMushroom</span>
+        </div>
+        <button class="icon-btn" type="button" id="about-x" aria-label="${t.closeLabel}">×</button>
+      </div>
+      <div class="about-scroll" id="about-scroll">
+        <div class="about-card">
+          <div class="about-hero"><div class="about-ph"><img src="/assets/rok.webp" alt="Rok"></div></div>
+          <div class="about-body">
+            <h3>Rok Golob — GoMushroom</h3>
+            <p>${t.p1}</p>
+            <p>${t.p2}</p>
+            <p>${t.p3}</p>
+            <p>${t.p4}</p>
+            <div class="pill-row">${t.pills}</div>
+            <div class="about-actions">
+              <button class="btn ghost" type="button" id="about-close">${t.closeBtn}</button>
+              <a class="btn brand" href="https://wa.me/message/3U7XJG5NK3IPN1" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <a class="btn ghost" href="mailto:info@gomushroom.si">${t.email}</a>
+            </div>
+          </div>
+        </div>
+        <div class="about-card">
+          <div class="about-body">
+            <h3>${t.focusH}</h3>
+            <ul class="meta" style="margin:0;padding-left:0;list-style:none">
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>${t.f1}</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>${t.f2}</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-shield"/></svg>${t.f3}</li>
+              <li class="li-icon"><svg class="ico"><use href="#i-drop"/></svg>${t.f4}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+})();
+
+/* =========================
    O MENI — drawer/modal
 ========================= */
 (function(){

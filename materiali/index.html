@@ -135,17 +135,40 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .zb-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
 .zb-val{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600}
 .zb-aae{font-size:.65rem;color:var(--muted)}
+
+/* ── LOGIN ── */
+.login-input::placeholder{color:rgba(245,240,232,.3)}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="loginScreen" style="position:fixed;inset:0;background:#1a1209;z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem">
+  <div style="width:100%;max-width:340px;text-align:center">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:#f5f0e8;margin-bottom:.35rem">Go<em style="color:#af8455;font-style:normal">Mushroom</em></div>
+    <div style="font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem">Delovni nalogi · DN</div>
+    <div id="faceIdSection" style="display:none;margin-bottom:1.25rem">
+      <button id="faceIdBtn" onclick="loginWithFaceId()"
+        style="width:100%;padding:1rem;border:1px solid rgba(175,132,85,.4);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;background:rgba(175,132,85,.12);color:#f5f0e8;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem">
+        <span style="font-size:1.4rem">🔒</span> Prijava z Face ID
+      </button>
+      <div style="font-size:.68rem;color:rgba(245,240,232,.3);margin-top:.6rem">ali</div>
+    </div>
+    <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
+      style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
+    <button onclick="doLogin()"
+      style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
+    <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
+  </div>
+</div>
+
 <header class="app-header">
-  <div class="app-logo">Go<span>Mushroom</span> · DN</div>
+  <div class="app-logo">DN</div>
   <div class="hbtns">
+    <a href="/zaloga/" class="hbtn" style="text-decoration:none">📦 Zaloga</a>
     <span class="sync-status" id="syncStatus"></span>
-    <button class="hbtn" onclick="backupDN()">💾</button>
     <button class="hbtn" onclick="openSettings()">⚙️</button>
-    <button class="hbtn" onclick="clearAll()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
   </div>
 </header>
 
@@ -174,7 +197,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="view-hdr">
       <div class="view-title">Etanol</div>
       <div style="display:flex;gap:.4rem">
-        <button class="hbtn2" style="background:white;color:var(--ink);border:1px solid var(--border)" onclick="genEtanolPorocilo()">📄</button>
+        <button class="hbtn2" style="background:white;color:var(--ink);border:1px solid var(--border)" onclick="openPorociloFilter()">📄</button>
         <button class="hbtn2" onclick="openEtanolSheet()">+ Vnos</button>
       </div>
     </div>
@@ -256,6 +279,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <option value="Reishi">Reishi</option>
             <option value="Resasti bradovec">Resasti bradovec</option>
             <option value="Chaga">Chaga</option>
+            <option value="Smrekovi vršički">Smrekovi vršički</option>
           </select>
         </div>
         <div class="field"><label>Namen (auto)</label>
@@ -520,6 +544,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Alkoholna (€/kom)</label><input id="setCenaAlc" type="text" inputmode="decimal" placeholder="31,90"></div>
         <div class="field"><label>Glicerinska (€/kom)</label><input id="setCenaGly" type="text" inputmode="decimal" placeholder="33,90"></div>
       </div>
+      <div class="slabel">Podatki</div>
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+        <button class="bcancel" style="flex:1" onclick="backupDN()">💾 Backup</button>
+        <button class="bcancel" style="flex:1" onclick="document.getElementById('importDNInput').click()">📥 Uvozi JSON</button>
+      </div>
+      <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
+      <div style="margin-bottom:.75rem">
+        <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
+      </div>
       <div class="slabel">Informacija</div>
       <div style="font-size:.72rem;color:var(--muted);line-height:1.5">
         Tabela gostot: hobbybrennen.ch · 20°C · 1001 vrednosti<br>
@@ -529,6 +563,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('settingsOverlay')">Zapri</button>
       <button class="bsave" onclick="saveSettings()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- POROCILO FILTER -->
+<div class="overlay" id="porociloOverlay">
+  <div class="sheet" style="height:auto;max-height:70vh">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Filtri poročila</span>
+      <button class="shclose" onclick="closeSheet('porociloOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="slabel">Obdobje</div>
+      <div class="frow">
+        <div class="field"><label>Od</label><input id="porOd" type="date"></div>
+        <div class="field"><label>Do</label><input id="porDo" type="date"></div>
+      </div>
+      <div class="slabel">Vrsta vnosov</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem">
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porNabava" checked> Nabave</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porRegen" checked> Regeneracije</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porEkstr" checked> Ekstrakcije</label>
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('porociloOverlay')">Prekliči</button>
+      <button class="bsave" onclick="closeSheet('porociloOverlay');genEtanolPorocilo()">📄 Generiraj</button>
     </div>
   </div>
 </div>
@@ -1258,18 +1320,12 @@ function deleteDN(id){
 
 // ── ETANOL STATS ──
 function calcEtZaloga(){
-  // Vse v L AAE ker primerjamo različne koncentracije
   let aae=0;
-  // Vhod: nabava + regeneriran
   etanolKnjiga.forEach(e=>{
-    if(e.tip==='nabava'||e.tip==='regeneracija')aae+=e.lAAE||0;
+    if(e.tip==='nabava'||e.tip==='regeneracija') aae+=e.lAAE||0;
+    else if(e.tip==='izhod_dn') aae-=e.lAAE||0;
   });
-  // Izhod: zaključeni DN → AAE tinktur + AAE izgub
-  workOrders.filter(d=>d.status==='zakljucen'||d.status==='prenos').forEach(d=>{
-    aae-=calcAAE((d.kolAlc||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT);
-    aae-=d.izgube||0;
-  });
-  return Math.max(0,aae);
+  return Math.max(0,round(aae,4));
 }
 
 function calcEtRezervirano(){
@@ -1434,11 +1490,42 @@ function clearAll(){
 }
 
 // ── BACKUP ──
-function genEtanolPorocilo(){
-  // Zberi vse vnose in DN izhode, sortirano po datumu
-  const vsi=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+function openPorociloFilter(){
+  const today=todayISO();
+  if(!document.getElementById('porDo').value) document.getElementById('porDo').value=today;
+  openSheet('porociloOverlay');
+}
 
-  let tekocaZaloga=0;
+function genEtanolPorocilo(){
+  const od=document.getElementById('porOd')?.value||'';
+  const doo=document.getElementById('porDo')?.value||'';
+  const showNabava=document.getElementById('porNabava')?.checked!==false;
+  const showRegen=document.getElementById('porRegen')?.checked!==false;
+  const showEkstr=document.getElementById('porEkstr')?.checked!==false;
+
+  let vsi=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Tip filter
+  vsi=vsi.filter(e=>{
+    if(e.tip==='nabava') return showNabava;
+    if(e.tip==='regeneracija') return showRegen;
+    if(e.tip==='izhod_dn') return showEkstr;
+    return true;
+  });
+  // Datum filter — računamo tekočo zalogo od začetka, prikažemo samo v obdobju
+  const vsiChronological=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Preračunaj začetno stanje (pred "od")
+  let zalogaPred=0;
+  if(od){
+    vsiChronological.forEach(e=>{
+      if(e.datum>=od) return;
+      if(e.tip==='nabava'||e.tip==='regeneracija') zalogaPred+=e.lAAE||0;
+      else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
+    });
+  }
+  if(od) vsi=vsi.filter(e=>e.datum>=od);
+  if(doo) vsi=vsi.filter(e=>e.datum<=doo);
+
+  let tekocaZaloga=zalogaPred;
   const rows=vsi.map(e=>{
     const isIn=e.tip==='nabava'||e.tip==='regeneracija';
     const aae=e.lAAE||0;
@@ -1453,7 +1540,8 @@ function genEtanolPorocilo(){
       <td style="padding:.3rem .5rem;white-space:nowrap">${fmtDate(e.datum)}</td>
       <td style="padding:.3rem .5rem">${tipLabel}</td>
       <td style="padding:.3rem .5rem;color:#7a6f60;font-size:.75rem">${opis}</td>
-      <td style="padding:.3rem .5rem;text-align:right;color:${isIn?'#3a6b4a':'#8b3a2a'};font-weight:600">${isIn?'+':'-'}${aae.toFixed(4)}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#3a6b4a;font-weight:600">${isIn?'+'+aae.toFixed(4):'—'}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#8b3a2a;font-weight:600">${!isIn?'−'+aae.toFixed(4):'—'}</td>
       <td style="padding:.3rem .5rem;text-align:right;font-weight:700;color:${tekocaZaloga>=0?'#1a4a2a':'#8b3a2a'}">${tekocaZaloga.toFixed(4)}</td>
     </tr>`;
   }).join('');
@@ -1490,6 +1578,8 @@ th.num{text-align:right}
   <div style="text-align:right">
     <div style="font-size:.9rem;font-weight:500">Materialna kartica etanola</div>
     <div style="font-size:.65rem;color:#7a6f60">Vse količine v L AAE · Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    ${od||doo?`<div style="font-size:.62rem;color:#af8455;margin-top:.15rem">Obdobje: ${od?fmtDate(od):'začetek'} – ${doo?fmtDate(doo):'danes'}${zalogaPred?` · Začetna zaloga: ${zalogaPred.toFixed(4)} L AAE`:''}</div>`:''}
+    ${(!showNabava||!showRegen||!showEkstr)?`<div style="font-size:.62rem;color:#af8455">Prikazano: ${[showNabava?'nabave':'',showRegen?'regeneracije':'',showEkstr?'ekstrakcije':''].filter(Boolean).join(', ')}</div>`:''}
   </div>
 </div>
 
@@ -1533,17 +1623,16 @@ th.num{text-align:right}
 // ── MATERIALI ──
 const MAT_ENOTA={
   steklenicka_bela:'kom',steklenicka_crna:'kom',
-  etiketa_reishi:'kom',etiketa_bradovec:'kom',etiketa_chaga:'kom',
-  goba_reishi:'kg',goba_bradovec:'kg',goba_chaga:'kg',
+  etiketa_reishi:'kom',etiketa_bradovec:'kom',etiketa_chaga:'kom',etiketa_smrekovi:'kom',
+  goba_reishi:'kg',goba_bradovec:'kg',goba_chaga:'kg',goba_smrekovi:'kg',
   vitc:'g',lecitin:'g',glicerin:'L'
 };
 const MAT_IME={
   steklenicka_bela:'⬜ Steklenička bela',steklenicka_crna:'⬛ Steklenička črna',
   etiketa_reishi:'🏷 Etiketa Reishi',etiketa_bradovec:'🏷 Etiketa Bradovec',
-  etiketa_chaga:'🏷 Etiketa Chaga',
-  
+  etiketa_chaga:'🏷 Etiketa Chaga',etiketa_smrekovi:'🏷 Etiketa Smrekovi vršički',
   goba_reishi:'🍄 Goba Reishi',goba_bradovec:'🍄 Goba Bradovec',
-  goba_chaga:'🍄 Goba Chaga',
+  goba_chaga:'🍄 Goba Chaga',goba_smrekovi:'🌿 Smrekovi vršički',
   
   vitc:'💊 Vitamin C',lecitin:'🌱 Lecitin',glicerin:'🧴 Glicerin'
 };
@@ -1704,6 +1793,7 @@ const MAT_OPCIJE={
     {value:'goba_reishi',label:'🍄 Goba Reishi (kg)'},
     {value:'goba_bradovec',label:'🍄 Goba Resasti bradovec (kg)'},
     {value:'goba_chaga',label:'🍄 Goba Chaga (kg)'},
+    {value:'goba_smrekovi',label:'🌿 Smrekovi vršički (kg)'},
     {value:'vitc',label:'💊 Vitamin C (g)'},
     {value:'lecitin',label:'🌱 Lecitin (g)'},
     {value:'glicerin',label:'🧴 Glicerin (L)'},
@@ -1714,6 +1804,7 @@ const MAT_OPCIJE={
     {value:'etiketa_reishi',label:'🏷 Etiketa Reishi (kom)'},
     {value:'etiketa_bradovec',label:'🏷 Etiketa Bradovec (kom)'},
     {value:'etiketa_chaga',label:'🏷 Etiketa Chaga (kom)'},
+    {value:'etiketa_smrekovi',label:'🏷 Etiketa Smrekovi vršički (kom)'},
   ]
 };
 
@@ -1782,11 +1873,11 @@ function knjizMaterjaleIzhod(d){
   const skupajCrna=(stekAlcTip==='steklenicka_crna'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_crna'?d.kolGly||0:0);
 
   // Etikete
-  const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':'etiketa_chaga';
+  const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
   const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
 
-  // Goba
-  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':'goba_chaga';
+  // Goba / surovina
+  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
 
   const izhodi=[];
   if(skupajBela>0)izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
@@ -1938,6 +2029,50 @@ function saveOprema(){
   editingOpremaId=null;
 }
 
+async function uvozHistoricnih(){
+  toast('⏳ Nalagam…');
+  try{
+    const r=await fetch('/doc/dn_import_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    applyImport(data);
+  }catch(e){
+    toast('⚠ Napaka pri nalaganju: '+e.message);
+  }
+}
+
+function applyImport(data){
+  const incomingWO=data.workOrders||[];
+  const incomingEt=data.etanolKnjiga||[];
+  if(!incomingWO.length&&!incomingEt.length){toast('⚠ Ni podatkov za uvoz');return;}
+  const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
+  const noviWO=incomingWO.filter(w=>!existingOznakas.has(w.oznaka));
+  incomingWO.filter(w=>existingOznakas.has(w.oznaka)).forEach(w=>{
+    const i=workOrders.findIndex(x=>x.oznaka===w.oznaka);if(i>=0)workOrders[i]=w;
+  });
+  workOrders.push(...noviWO);
+  workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
+  const existingEtIds=new Set(etanolKnjiga.map(e=>e.id));
+  const noviEt=incomingEt.filter(e=>!existingEtIds.has(e.id));
+  etanolKnjiga.push(...noviEt);
+  etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
+  save();
+  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
+}
+
+function importDN(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{applyImport(JSON.parse(e.target.result));}
+    catch(err){toast('⚠ Napaka pri branju JSON');console.error(err);}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
 function backupDN(){
   const data={version:1,exportedAt:new Date().toISOString(),workOrders,etanolKnjiga};
   const a=document.createElement('a');
@@ -1956,14 +2091,91 @@ function toast(msg){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2400);
 }
 
+// ── AUTH ──
+const WA_KEY='gm_faceid_cred';
+function b64ToArr(b64){const s=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(s,c=>c.charCodeAt(0));}
+function arrToB64(arr){return btoa(String.fromCharCode(...new Uint8Array(arr))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
+function isFaceIdAvailable(){return!!(window.PublicKeyCredential&&navigator.credentials);}
+async function checkFaceIdAvailable(){try{if(!isFaceIdAvailable())return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+async function registerFaceId(){
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'GoMushroom',id:location.hostname},user:{id:new TextEncoder().encode('gm_user'),name:'gm_user',displayName:'GoMushroom'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});
+    localStorage.setItem(WA_KEY,arrToB64(cred.rawId));
+    return true;
+  }catch(e){console.log('Face ID registration failed:',e.message);return false;}
+}
+async function loginWithFaceId(){
+  const btn=document.getElementById('faceIdBtn');
+  const err=document.getElementById('loginErr');
+  const credId=localStorage.getItem(WA_KEY);
+  if(!credId){err.textContent='Face ID ni registriran.';return;}
+  try{
+    if(btn)btn.textContent='🔒 Preverjam…';
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    await navigator.credentials.get({publicKey:{challenge,rpId:location.hostname,allowCredentials:[{type:'public-key',id:b64ToArr(credId)}],userVerification:'required',timeout:60000}});
+    localStorage.setItem('gm_auth','1');
+    document.getElementById('loginScreen').style.display='none';
+    if(err)err.textContent='';
+    appInit();
+  }catch(e){
+    if(btn)btn.innerHTML='<span style="font-size:1.4rem">🔒</span> Prijava z Face ID';
+    err.textContent='Face ID ni uspel. Uporabi geslo.';
+    setTimeout(()=>err.textContent='',3000);
+  }
+}
+async function setupFaceId(){
+  const available=await checkFaceIdAvailable();
+  if(!available){toast('Face ID ni na voljo na tej napravi.');return;}
+  const ok=await registerFaceId();
+  toast(ok?'✓ Face ID nastavljen!':'Face ID registracija ni uspela.');
+}
+(async function(){
+  const credId=localStorage.getItem(WA_KEY);
+  if(credId&&await checkFaceIdAvailable()){
+    const s=document.getElementById('faceIdSection');
+    if(s)s.style.display='';
+    const ls=document.getElementById('loginScreen');
+    if(ls&&ls.style.display!=='none')setTimeout(loginWithFaceId,500);
+  }
+})();
+const LOGIN_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+async function hashPwd(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function doLogin(){
+  const pwd=document.getElementById('loginPwd')?.value||'';
+  const err=document.getElementById('loginErr');
+  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
+  if(await hashPwd(pwd)===LOGIN_HASH){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    document.getElementById('loginScreen').style.display='none';
+    if(err)err.textContent='';
+    appInit();
+  }else{
+    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
+    document.getElementById('loginPwd').value='';
+  }
+}
+(function(){
+  let auth=null;
+  try{auth=localStorage.getItem('gm_auth');}catch(e){}
+  const validHash='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+  if(auth==='1'||auth===validHash){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    const ls=document.getElementById('loginScreen');
+    if(ls)ls.style.display='none';
+    appInit();
+  }else{
+    setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
+  }
+})();
+
 // ── INIT ──
-function init(){
+function appInit(){
   renderDNStats();
   renderDN();
   document.getElementById('dnDatum').value=todayISO();
 }
-
-init();
+function init(){appInit();}
 </script>
 </body>
 </html>

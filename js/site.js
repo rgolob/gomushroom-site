@@ -390,7 +390,7 @@
 /* =========================
    O MENI — drawer/modal
 ========================= */
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   const link = document.getElementById('nav-about');
   const modal = document.getElementById('about-modal');
   const overlay = document.getElementById('about-overlay');
@@ -500,7 +500,7 @@
   if(window.location.hash === '#o-meni'){
     openModal();
   }
-})();
+});
 
 /* =========================
    Card image CSS var (safety)

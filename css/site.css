@@ -518,11 +518,11 @@ section{padding:32px 0}
 }
 
 .under{
-  height:2px;
-  background:linear-gradient(90deg,var(--brand),var(--accent));
-  width:100px;
-  border-radius:2px;
-  margin-top:8px;
+  height:3px;
+  background:var(--brand-accent, #af8455);
+  width:44px;
+  border-radius:999px;
+  margin-top:10px;
 }
 
 .lead2{

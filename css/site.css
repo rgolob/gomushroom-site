@@ -1314,8 +1314,9 @@ footer.site-footer{
 
 .footer-tags{
   margin:4px 0 8px;
-  font-size:12.5px;
-  color:rgba(255,255,255,.76);
+  font-size:11px;
+  color:rgba(255,255,255,.38);
+  letter-spacing:.02em;
 }
 
 .footer-meta{

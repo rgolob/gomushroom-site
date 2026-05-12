@@ -20,7 +20,7 @@
       background: white;
       align-items: center;
     }
-    .gm-cart-item__image { width: 72px; height: 72px; flex-shrink: 0; }
+    .gm-cart-item__image { width: 72px; height: 72px; flex-shrink: 0; background: #fff; border-radius: 10px; overflow: hidden; }
     .gm-cart-item__controls { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
     @media(max-width:480px) {
       .gm-cart-item { grid-template-columns: 56px 1fr; }
@@ -55,8 +55,8 @@
   <main>
     <section class="shop-page">
       <div class="wrap">
-        <div class="shop-head" style="text-align:left;margin:0 0 1.5rem">
-          <p class="shop-kicker">GoMushroom • Košarica</p>
+        <div class="shop-head" style="text-align:left;margin:0 0 1rem">
+          <p class="shop-kicker">Trgovina • Košarica</p>
           <h1 class="shop-title" style="margin-bottom:.5rem">Košarica</h1>
         </div>
 
@@ -73,9 +73,9 @@
           <aside class="gm-cart-summary">
             <!-- Kupon -->
             <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(43,11,57,.08)">
-              <div style="font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(43,11,57,.4);margin-bottom:.5rem">Kupon koda</div>
+              <div style="font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(43,11,57,.4);margin-bottom:.5rem">Kupon kode</div>
               <div style="display:flex;gap:.4rem">
-                <input id="kupon-input" type="text" placeholder="npr. WELCOME10"
+                <input id="kupon-input" type="text" placeholder="npr. WELCOME10, REVIEW10"
                   style="flex:1;padding:.5rem .75rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;font-family:inherit;font-size:.85rem;text-transform:uppercase;outline:none;transition:border-color .2s">
                 <button id="kupon-btn" type="button"
                   style="padding:.5rem .85rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;background:white;font-family:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:.2s">

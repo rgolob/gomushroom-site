@@ -351,7 +351,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
-    <button onclick="(function(){var p=document.getElementById('loginPwd').value;var e=document.getElementById('loginErr');if(!p){e.textContent='Vnesite geslo.';return;}if(btoa(p)==='Z29tdXNocm9vbTIwMjQ='){localStorage.setItem('gm_auth','1');document.getElementById('loginScreen').style.display='none';e.textContent='';if(typeof appInit==='function')appInit();}else{e.textContent='Napačno geslo.';document.getElementById('loginPwd').value='';setTimeout(function(){e.textContent=''},2500);}})()"
+    <button onclick="doLogin()"
       style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
     <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
   </div>
@@ -369,9 +369,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
-    <button class="hbtn" onclick="showBackupMenu()" title="Izvozi vse podatke">💾 Backup</button>
-    <label class="hbtn" style="cursor:pointer" title="Obnovi podatke iz JSON backupa">📂 Restore<input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)"></label>
-    <button class="hbtn" onclick="clearAllData()" style="background:rgba(139,58,42,.25);border-color:rgba(139,58,42,.4)">🗑</button>
+    <a href="/materiali/" class="hbtn" style="text-decoration:none">🌿 Materiali</a>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
     <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
     <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
@@ -1098,12 +1096,16 @@ function hideFaceIdBtn(){
 })();
 
 
-const LOGIN_PWD='Z29tdXNocm9vbTIwMjQ='; // btoa('gomushroom2024')
-function doLogin(){
+const LOGIN_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+async function hashPwd(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function doLogin(){
   const pwd=document.getElementById('loginPwd')?.value||'';
   const err=document.getElementById('loginErr');
   if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
-  if(btoa(pwd)===LOGIN_PWD){
+  if(await hashPwd(pwd)===LOGIN_HASH){
     try{localStorage.setItem('gm_auth','1');}catch(e){}
     document.getElementById('loginScreen').style.display='none';
     if(err)err.textContent='';
@@ -1392,6 +1394,167 @@ async function sbLoadAll(){
 }
 
 // Shrani batch v Supabase
+async function uvozi2025Serije(){
+  const overlay=document.getElementById('zalogaSettingsOverlay');
+  try{
+    toast('⏳ Nalagam podatke…');
+    const r=await fetch('/doc/zaloga_batches_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const incoming=data.batches||[];
+    if(!incoming.length){toast('⚠ Ni podatkov');return;}
+
+    // Fetch current products
+    const pRes=await sbFetch('gm_products','select=id,name');
+    const prods=Array.isArray(pRes)?pRes:[];
+
+    // Existing batch numbers
+    const existingNums=new Set(batches.map(b=>b.batchNum));
+
+    let added=0,skipped=0;
+    for(const imp of incoming){
+      if(existingNums.has(imp.batchNum)){skipped++;continue;}
+      // Match product by name (case-insensitive contains)
+      const prod=prods.find(p=>p.name&&p.name.toLowerCase().includes(imp.productName.toLowerCase()))
+                 ||prods.find(p=>p.name&&imp.productName.toLowerCase().includes(p.name.toLowerCase()));
+      if(!prod){toast(`⚠ Produkt "${imp.productName}" ne obstaja v zalogi`);continue;}
+      const b={
+        id:uid(),
+        productId:prod.id, productName:prod.name,
+        batchNum:imp.batchNum, date:imp.date,
+        workOrder:imp.workOrder, note:imp.note||'',
+        safetyAlc:imp.safetyAlc||10, safetyGly:imp.safetyGly||10,
+        alc:{sku:'',qty:imp.alcQty||0,priceMalo:imp.alcPriceMalo||31.9,vol:imp.alcVol||50,alloc:{prod:0,int:0,malo:0,velo:0,dar:0}},
+        gly:{sku:'',qty:imp.glyQty||0,priceMalo:imp.glyPriceMalo||33.9,vol:imp.glyVol||50,alloc:{prod:0,int:0,malo:0,velo:0,dar:0}},
+      };
+      batches.push(b);
+      await sbSaveBatch(b).catch(e=>console.warn('sbSaveBatch:',e));
+      existingNums.add(imp.batchNum);
+      added++;
+    }
+    batches.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    save();renderStats();renderInventory();
+    if(currentTab==='serije')renderBatches();
+    if(overlay)overlay.remove();
+    toast(`✓ Uvoženih ${added} serij${skipped?`, ${skipped} že obstaja`:''}`);
+  }catch(e){
+    console.error(e);
+    toast('⚠ Napaka: '+e.message);
+  }
+}
+
+async function uvozi2025Prodaje(){
+  const overlay=document.getElementById('zalogaSettingsOverlay');
+  try{
+    toast('⏳ Nalagam prodaje…');
+    const r=await fetch('/doc/zaloga_sales_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(!data.length){toast('⚠ Ni podatkov');return;}
+
+    // Fetch fresh references from Supabase
+    const [pRes,bRes,gRes,lRes,cRes]=await Promise.all([
+      sbFetch('gm_products','select=id,name'),
+      sbFetch('gm_batches','select=id,batch_num'),
+      sbFetch('gm_sale_groups','select=id,ext_delivery,buyer'),
+      sbFetch('gm_sale_lines','select=group_id'),
+      sbFetch('gm_customers','select=name,email')
+    ]);
+    const prods=Array.isArray(pRes)?pRes:[];
+    const bats=Array.isArray(bRes)?bRes:[];
+    // Resolve correct buyer name from gm_customers by email
+    const custByEmail={};
+    (Array.isArray(cRes)?cRes:[]).forEach(c=>{if(c.email)custByEmail[c.email.toLowerCase().trim()]=c.name;});
+    const BUYER_EMAIL='info1@fungalist.si';
+    const BUYER_NAME=custByEmail[BUYER_EMAIL]||'Fungalist';
+    const allGroups=Array.isArray(gRes)?gRes:[];
+    const lineGroupIds=new Set((Array.isArray(lRes)?lRes:[]).map(l=>l.group_id));
+
+    // Popravi napačen buyer na obstoječih DoB skupinah
+    const wrongBuyer=allGroups.filter(g=>g.ext_delivery&&g.ext_delivery.startsWith('DoB-')&&g.buyer!==BUYER_NAME&&lineGroupIds.has(g.id));
+    for(const o of wrongBuyer){
+      await fetch(`${SB_URL}/rest/v1/gm_sale_groups?id=eq.${o.id}`,{
+        method:'PATCH',headers:{...SB_HEADERS,'Prefer':'return=minimal'},
+        body:JSON.stringify({buyer:BUYER_NAME,email:BUYER_EMAIL})
+      }).catch(()=>{});
+    }
+    if(wrongBuyer.length) toast(`✏️ Popravljenih ${wrongBuyer.length} imen…`);
+
+    // Zbriši orphaned groups (group brez vrstic — delni uvoz)
+    const orphaned=allGroups.filter(g=>g.ext_delivery&&g.ext_delivery.startsWith('DoB-')&&!lineGroupIds.has(g.id));
+    for(const o of orphaned) await sbDelete('gm_sale_groups',{id:o.id}).catch(()=>{});
+    if(orphaned.length) toast(`🧹 Zbrisanih ${orphaned.length} nepopolnih zapisov…`);
+
+    // Veljavni = samo tisti ki imajo vrstice
+    const existingDob=new Set(allGroups.filter(g=>lineGroupIds.has(g.id)).map(g=>g.ext_delivery).filter(Boolean));
+
+    let added=0,skipped=0,warn=[];
+    for(const s of data){
+      if(existingDob.has(s.dobId)){skipped++;continue;}
+      const prod=prods.find(p=>p.name&&p.name.toLowerCase().includes(s.productName.toLowerCase()))
+                ||prods.find(p=>p.name&&s.productName.toLowerCase().includes(p.name.toLowerCase()));
+      if(!prod){warn.push(s.productName);continue;}
+      const bat=bats.find(b=>b.batch_num===s.batchNum);
+      if(!bat){warn.push(s.batchNum);continue;}
+
+      const groupId=crypto.randomUUID();
+      const lineId=crypto.randomUUID();
+      const qty=s.alc+s.gly;
+
+      await sbInsert('gm_sale_groups',{
+        id:groupId, buyer:BUYER_NAME, email:BUYER_EMAIL, phone:null, vat:null,
+        address:null, street:null, post:null,
+        date:s.date, channel:'velo',
+        discount:0, discount_amt:0, full_total:s.total,
+        ext_invoice:null, ext_delivery:s.dobId,
+        note:null, invoice_num:s.dobId, invoice_id:null,
+        total:s.total, qty, status:'active'
+      });
+      await sbInsert('gm_sale_lines',{
+        id:lineId, group_id:groupId,
+        product_id:prod.id, product_name:prod.name,
+        alc:s.alc, gly:s.gly,
+        alc_price:s.alcPrice, gly_price:s.glyPrice,
+        line_total:s.total
+      });
+      await sbInsert('gm_sale_line_batches',{
+        group_id:groupId, line_id:lineId,
+        batch_id:bat.id, batch_num:s.batchNum,
+        alc:s.alc, gly:s.gly
+      });
+
+      // Update local state
+      saleGroups.push({
+        id:groupId, buyer:BUYER_NAME, email:BUYER_EMAIL, phone:null, vat:null,
+        address:null, street:null, post:null,
+        date:s.date, channel:'velo',
+        discount:0, discountAmt:0, fullTotal:s.total,
+        extInvoice:null, extDelivery:s.dobId,
+        note:null, invoiceNum:s.dobId, invoiceId:null,
+        total:s.total, qty, status:'active',
+        lines:[{
+          productId:prod.id, productName:prod.name,
+          alc:s.alc, gly:s.gly,
+          alcPrice:s.alcPrice, glyPrice:s.glyPrice,
+          lineTotal:s.total,
+          batchBreakdown:[{batchId:bat.id,batchNum:s.batchNum,alc:s.alc,gly:s.gly}]
+        }]
+      });
+      existingDob.add(s.dobId);
+      added++;
+    }
+    saleGroups.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    save();renderStats();
+    if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
+    if(overlay)overlay.remove();
+    const warnMsg=warn.length?` · ⚠ ni v bazi: ${[...new Set(warn)].join(', ')}`:''
+    toast(`✓ Uvoženih ${added} prodaj${skipped?`, ${skipped} že obstaja`:''}${warnMsg}`);
+  }catch(e){
+    console.error(e);
+    toast('⚠ Napaka: '+e.message);
+  }
+}
+
 async function sbSaveBatch(b){
   await sbInsert('gm_batches', appBatchToSb(b), true);
 }
@@ -1831,7 +1994,7 @@ async function saveCustomerEdit(){
   const oldRecord=_customers?.find(c=>c.id===id);
   if(partnerId&&partnerId!==(oldRecord?.partner_id||'')){
     const pwd=prompt('Partner ID sprememba zahteva geslo:');
-    if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+    if(!pwd||await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo.');return;}
     if(partnerId){
       const partners=getPartners();
       if(!partners.find(p=>p.id===partnerId)){
@@ -1877,7 +2040,7 @@ async function removePartnerStatus(vat){
   const ok=await showConfirm(`Odstrani partner status?`,'Odstrani');
   if(!ok)return;
   const pwd=prompt('Vnesi geslo:');
-  if(!pwd||btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo.');return;}
+  if(!pwd||await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo.');return;}
   savePartners(getPartners().filter(p=>p.vat!==vat));
   toast('Partner status odstranjen');
   closeSheet('customerOverlay');
@@ -1952,7 +2115,7 @@ async function deletePartner(idx){
   // Require password
   const pwd=prompt('Vnesi geslo za potrditev izbrisa:');
   if(!pwd){toast('Izbris preklican.');return;}
-  if(btoa(pwd)!==LOGIN_PWD){toast('⛔ Napačno geslo — izbris preklican.');return;}
+  if(await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo — izbris preklican.');return;}
   partners.splice(idx,1);
   savePartners(partners);
   renderPartnerList();
@@ -2188,13 +2351,17 @@ function productStock(productId){
     });
   }
   // per purpose alloc (prod = prodaja, int = interno)
+  // Serije brez nastavljene alokacije → celotna qty šteje kot prod (izravna se s prodano)
   let allocProdAlc=0,allocIntAlc=0,allocProdGly=0,allocIntGly=0;
   pb.forEach(b=>{
-    // support both old 4-way and new 2-way
-    allocProdAlc+=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0);
-    allocIntAlc +=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-    allocProdGly+=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0);
-    allocIntGly +=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    const bAProd=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0))||0;
+    const bAInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+    const bGProd=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0))||0;
+    const bGInt=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    allocProdAlc+=bAProd>0||bAInt>0 ? bAProd : (b.alc?.qty||0);
+    allocIntAlc +=bAInt;
+    allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
+    allocIntGly +=bGInt;
   });
   // sold per purpose: malo+velo+dar = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
@@ -5226,30 +5393,47 @@ function renderRecenzije() {
     return;
   }
 
-  const stars = r => '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+  const stars = r => '★'.repeat(r.rating||0) + '☆'.repeat(5 - (r.rating||0));
   const datum = iso => new Date(iso).toLocaleDateString('sl-SI');
+  const isIG = r => (r.product_id||'').startsWith('ig-');
 
-  el.innerHTML = seznam.map(r => `
-    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem">
+  el.innerHTML = seznam.map(r => {
+    const ig = isIG(r);
+    const igHandle = ig ? (r.body||'').split('\n')[0].replace('IG: ','') : null;
+    const igLink  = ig ? ((r.body||'').split('\n')[1]||'').replace('Link: ','') : null;
+    const accentColor = ig ? '#833ab4' : '#af8455';
+    const typeLabel = ig
+      ? `<span style="font-size:.65rem;font-weight:700;background:#f3e8ff;color:#833ab4;padding:.15rem .45rem;border-radius:5px;margin-left:.3rem">📸 IG</span>`
+      : `<span style="font-size:.65rem;font-weight:700;background:#fff3e0;color:#e67e22;padding:.15rem .45rem;border-radius:5px;margin-left:.3rem">⭐ Recenzija</span>`;
+    return `
+    <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:1rem;border-left:3px solid ${accentColor}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
         <div>
-          <div style="font-weight:600;font-size:.9rem">${r.name} <span style="font-weight:400;color:var(--muted);font-size:.75rem">&lt;${r.email}&gt;</span></div>
-          <div style="font-size:.72rem;color:var(--muted)">${r.product_name||r.product_id} · ${datum(r.created_at)}</div>
-          <div style="color:#af8455;font-size:.95rem;margin:.2rem 0">${stars(r)}</div>
+          <div style="font-weight:600;font-size:.9rem">${r.name}${typeLabel}
+            <span style="font-weight:400;color:var(--muted);font-size:.75rem;margin-left:.3rem">&lt;${r.email}&gt;</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted)">${r.product_name||r.product_id} · ${datum(r.created_at)} · ${r.coupon_pct||10}% kupon</div>
+          ${ig
+            ? `<div style="font-size:.82rem;margin:.25rem 0">
+                 <strong style="color:#833ab4">@${igHandle}</strong>
+                 ${igLink?`<a href="${igLink}" target="_blank" rel="noopener" style="color:#833ab4;font-size:.75rem;margin-left:.4rem">→ Odpri objavo</a>`:''}
+               </div>`
+            : `<div style="color:${accentColor};font-size:.95rem;margin:.2rem 0">${stars(r)}</div>`}
         </div>
         <div style="font-size:.68rem;font-weight:600;color:${r.status==='approved'?'#3a6b4a':r.status==='rejected'?'#c0392b':'#e67e22'}">
           ${r.status==='approved'?'✅ Potrjena':r.status==='rejected'?'❌ Zavrnjena':'⏳ Čaka'}
         </div>
       </div>
-      ${r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
-      <p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body}</p>
-      ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
+      ${!ig && r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
+      ${!ig ? `<p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body||''}</p>` : ''}
+      ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a;margin-top:.3rem">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
       ${r.status === 'pending' ? `
       <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
-        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon</button>
+        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon (${r.coupon_pct||10}%)</button>
         <button class="bcancel" onclick="zavrniRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">❌ Zavrni</button>
       </div>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function generateCouponCode() {
@@ -5333,6 +5517,7 @@ async function zavrniRecenzijo(id) {
 // ── INTEGRITY CHECK ──
 function _calcBatchIntegrity(){
   // Returns {issues, batchRows} — checks per batch
+  // Preverja samo resnične napake: prodano > narejeno, ali alokacija > narejeno (samo če je nastavljna)
   const issues=[];
   const batchRows=[];
   const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
@@ -5343,37 +5528,31 @@ function _calcBatchIntegrity(){
 
     const alcIn=b.alc?.qty||0;
     const glyIn=b.gly?.qty||0;
-    const alcProdAlloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-    const glyProdAlloc=b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0)||0;
-    const alcIntAlloc=b.alc?.alloc?.int||0;
-    const glyIntAlloc=b.gly?.alloc?.int||0;
+    const alcProdAlloc=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0))||0;
+    const glyProdAlloc=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0))||0;
+    const alcIntAlloc=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+    const glyIntAlloc=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    const alcAllocSet=alcProdAlloc+alcIntAlloc>0;
+    const glyAllocSet=glyProdAlloc+glyIntAlloc>0;
 
-    // Prodano iz te serije po kanalu
-    let soldAlcProd=0,soldGlyProd=0,soldAlcInt=0,soldGlyInt=0;
+    // Prodano iz te serije
+    let soldAlc=0,soldGly=0;
     activeSales.forEach(g=>{
       const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return;
       const bb=(l.batchBreakdown||[]).find(x=>x.batchId===b.id);if(!bb)return;
-      const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp';
-      if(isProd){soldAlcProd+=(bb.alc||0);soldGlyProd+=(bb.gly||0);}
-      else{soldAlcInt+=(bb.alc||0);soldGlyInt+=(bb.gly||0);}
+      soldAlc+=(bb.alc||0);soldGly+=(bb.gly||0);
     });
 
-    const zaloгаAlcProd=alcProdAlloc-soldAlcProd;
-    const zaloгаGlyProd=glyProdAlloc-soldGlyProd;
-    const zaloгаAlcInt=alcIntAlloc-soldAlcInt;
-    const zaloгаGlyInt=glyIntAlloc-soldGlyInt;
+    const fullyDone=soldAlc>=alcIn&&(!glyIn||soldGly>=glyIn);
 
-    // Serija je v celoti prodana in OK — preskoči napake
-    const fullyDone=(zaloгаAlcProd<=0&&zaloгаGlyProd<=0&&zaloгаAlcInt<=0&&zaloгаGlyInt<=0);
-
-    // Preveri napake
+    // Samo resnične napake
     const batchIssues=[];
-    if(alcProdAlloc+alcIntAlloc>alcIn) batchIssues.push(`alok. alc (${alcProdAlloc+alcIntAlloc}) > narejeno (${alcIn})`);
-    if(glyProdAlloc+glyIntAlloc>glyIn) batchIssues.push(`alok. gly (${glyProdAlloc+glyIntAlloc}) > narejeno (${glyIn})`);
-    if(soldAlcProd>alcProdAlloc) batchIssues.push(`prodano alc (${soldAlcProd}) > prod alok. (${alcProdAlloc})`);
-    if(soldGlyProd>glyProdAlloc) batchIssues.push(`prodano gly (${soldGlyProd}) > prod alok. (${glyProdAlloc})`);
-    if(soldAlcInt>alcIntAlloc) batchIssues.push(`int alc (${soldAlcInt}) > int alok. (${alcIntAlloc})`);
-    if(soldGlyInt>glyIntAlloc) batchIssues.push(`int gly (${soldGlyInt}) > int alok. (${glyIntAlloc})`);
+    // 1. Prodano > narejeno (prava data napaka)
+    if(soldAlc>alcIn) batchIssues.push(`prodano alc (${soldAlc}) > narejeno (${alcIn})`);
+    if(soldGly>glyIn) batchIssues.push(`prodano gly (${soldGly}) > narejeno (${glyIn})`);
+    // 2. Alokacija > narejeno (samo če je alokacija nastavljna)
+    if(alcAllocSet&&alcProdAlloc+alcIntAlloc>alcIn) batchIssues.push(`alok. alc (${alcProdAlloc+alcIntAlloc}) > narejeno (${alcIn})`);
+    if(glyAllocSet&&glyProdAlloc+glyIntAlloc>glyIn) batchIssues.push(`alok. gly (${glyProdAlloc+glyIntAlloc}) > narejeno (${glyIn})`);
 
     batchIssues.forEach(i=>issues.push(`❌ ${pName} · ${b.batchNum}: ${i}`));
 
@@ -5382,10 +5561,11 @@ function _calcBatchIntegrity(){
       alcIn,glyIn,
       alcProdAlloc,glyProdAlloc,
       alcIntAlloc,glyIntAlloc,
-      soldAlcProd,soldGlyProd,
-      soldAlcInt,soldGlyInt,
-      zAlcProd:zaloгаAlcProd,zGlyProd:zaloгаGlyProd,
-      zAlcInt:zaloгаAlcInt,zGlyInt:zaloгаGlyInt,
+      soldAlc,soldGly,
+      soldAlcProd:soldAlc,soldGlyProd:soldGly,
+      soldAlcInt:0,soldGlyInt:0,
+      zAlcProd:Math.max(0,alcIn-soldAlc),zGlyProd:Math.max(0,glyIn-soldGly),
+      zAlcInt:0,zGlyInt:0,
     });
   });
 
@@ -5711,6 +5891,7 @@ const ZS_DEFAULTS={
   postnina:3.90,
   brezplacnaPosninaOd:60,
   popusti:[], // [{kod, tip:'koda'|'kolicina'|'znesek', vrednost, min, aktiven}]
+  recenzijeNastavitve:{recenzijaPct:10,igFollowPct:5,igStoryPct:10,igObjavaLnk:15,igObjavaTag:20},
 };
 
 function getZS(key){
@@ -5792,6 +5973,26 @@ function openZalogaSettings(){
           </div>
         </div>
         <div style="font-size:.68rem;color:var(--muted);margin-bottom:1.25rem">📧 Ročno pošiljanje je vedno možno s klikom na gumb.</div>
+
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Podatki</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem">
+          <button onclick="showBackupMenu()" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem">
+            💾 <span>Backup — izvozi vse podatke</span>
+          </button>
+          <label style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;box-sizing:border-box">
+            📂 <span>Restore — obnovi iz backupa</span>
+            <input type="file" accept=".json" style="display:none" onchange="restoreJSON(event)">
+          </label>
+          <button onclick="clearAllData()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(139,58,42,.3);border-radius:8px;background:rgba(139,58,42,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#8b3a2a">
+            🗑 <span>Izbriši vse podatke</span>
+          </button>
+          <button onclick="uvozi2025Serije()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
+            📦 <span>Uvozi 2025 serije (iz Numbers)</span>
+          </button>
+          <button onclick="uvozi2025Prodaje()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
+            🛒 <span>Uvozi 2025 prodaje (DoB Fungalist)</span>
+          </button>
+        </div>
       </div>
 
       <!-- TAB 2: SPLETNA STRAN -->
@@ -5861,6 +6062,37 @@ function openZalogaSettings(){
         <div id="zsPopustiList" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem">
           ${popusti.length?popusti.map((p,i)=>renderPopustRow(p,i)).join(''):
             '<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni nastavljenih popustov.</div>'}
+        </div>
+
+        <!-- RECENZIJE & IG -->
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Recenzije &amp; IG nagrade</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.25rem;display:grid;gap:.5rem">
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Recenzija (%)</label>
+            <input id="zsRecenzijaPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).recenzijaPct??10}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);padding:.1rem 0 .3rem;border-bottom:1px solid var(--border)">IG — sledenje in objave</div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Follow (%)</label>
+            <input id="zsIgFollowPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igFollowPct??5}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Story (%)</label>
+            <input id="zsIgStoryPct" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igStoryPct??10}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Objava z linkom (%)</label>
+            <input id="zsIgObjavaLnk" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igObjavaLnk??15}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:160px">Objava z oznako (%)</label>
+            <input id="zsIgObjavaTag" type="text" inputmode="decimal" value="${(getZS('recenzijeNastavitve')||{}).igObjavaTag??20}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
         </div>
 
         <!-- SIMULATOR -->
@@ -5955,56 +6187,143 @@ async function shtvariDiscountPct(variantId, value){
   }catch(e){console.warn('shtvariDiscountPct failed:',e);}
 }
 
+function getKode(p){return(p.kode?.length?p.kode:p.kod?[p.kod]:[]).filter(Boolean);}
+
 function renderPopustRow(p,i){
   const tipi={koda:'🏷 Koda',kolicina:'📦 Količina',znesek:'💰 Znesek naročila'};
-  const opis=p.tip==='koda'?`${p.kod} → ${p.vrednost}%`:
+  const opis=p.tip==='koda'?`${getKode(p).join(', ')} → ${p.vrednost}%`:
     p.tip==='kolicina'?`${p.min}+ kosov → ${p.vrednost}%`:
     `Nad ${p.min} € → ${p.vrednost}%`;
+  const extras=[];
+  if(p.od||p.do) extras.push(`📅 ${p.od||'?'}–${p.do||'∞'}`);
+  if(p.maxKolicina) extras.push(`📊 ${p.porabljeno||0}/${p.maxKolicina} art.`);
+  extras.push(p.prikaziVTrgovini===false?'👁 skrit':'👁 viden');
   return`<div style="display:flex;align-items:center;gap:.5rem;background:var(--parchment);border-radius:8px;padding:.4rem .6rem">
     <div style="flex:1;font-size:.78rem">
       <span style="font-weight:500">${tipi[p.tip]||p.tip}</span>
       <span style="color:var(--muted);margin-left:.4rem">${opis}</span>
+      ${extras.length?`<div style="font-size:.66rem;color:var(--muted);margin-top:.15rem">${extras.join(' · ')}</div>`:''}
     </div>
+    <button onclick="dodajPopust(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.1rem .2rem" title="Uredi">✏️</button>
     <input type="checkbox" ${p.aktiven?'checked':''} onchange="togglePopust(${i})" style="cursor:pointer">
     <button onclick="odstraniPopust(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem">✕</button>
   </div>`;
 }
 
-function dodajPopust(){
-  const tip=prompt('Tip popusta:\n1 = Koda za kupon\n2 = Količinski (X+ kosov)\n3 = Znesek naročila (nad X €)');
-  if(!tip)return;
-  const tipi={'1':'koda','2':'kolicina','3':'znesek'};
-  const tipKey=tipi[tip.trim()];
-  if(!tipKey){toast('⚠ Neveljaven tip');return;}
+function dodajPopust(editIdx){
+  const edit=editIdx!=null;
+  const p=edit?(getZS('popusti')||[])[editIdx]:null;
+  const overlay=document.createElement('div');
+  overlay.id='dodajPopustOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
+      <input type="hidden" id="dpEditIdx" value="${edit?editIdx:-1}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">${edit?'✏️ Uredi popust':'➕ Nov popust'}</div>
+        <button onclick="document.getElementById('dodajPopustOverlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
+      </div>
+      <div style="display:grid;gap:.75rem">
+        <div>
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tip popusta</label>
+          <select id="dpTip" onchange="dpTipChange()" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;background:white">
+            <option value="koda" ${p?.tip==='koda'?'selected':''}>🏷 Koda za kupon</option>
+            <option value="kolicina" ${p?.tip==='kolicina'?'selected':''}>📦 Količinski (X+ kosov)</option>
+            <option value="znesek" ${p?.tip==='znesek'?'selected':''}>💰 Znesek naročila (nad X €)</option>
+          </select>
+        </div>
+        <div id="dpKodaRow" ${p&&p.tip!=='koda'?'style="display:none"':''}>
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Kode kupona</label>
+          <input id="dpKod" type="text" placeholder="WELCOME10, JESEN25" value="${p?getKode(p).join(', '):''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Vejica = več veljavnih kod za ta popust</div>
+        </div>
+        <div id="dpMinRow" ${!p||p.tip==='koda'?'style="display:none"':''}>
+          <label id="dpMinLabel" style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${p?.tip==='znesek'?'Min znesek (€)':'Min kosov'}</label>
+          <input id="dpMin" type="text" inputmode="decimal" placeholder="3" value="${p?.min||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Popust (%)</label>
+          <input id="dpVrednost" type="text" inputmode="decimal" placeholder="10" value="${p?.vrednost||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box">
+        </div>
+        <div style="background:var(--parchment);border-radius:10px;padding:.6rem .85rem">
+          <div style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Časovna omejitev (neobvezno)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Od</label>
+              <input id="dpOd" type="date" value="${p?.od||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Do</label>
+              <input id="dpDo" type="date" value="${p?.do||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--parchment);border-radius:10px;padding:.6rem .85rem">
+          <div style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Omejitev artiklov (neobvezno)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Max artiklov</label>
+              <input id="dpMaxKolicina" type="text" inputmode="numeric" placeholder="npr. 50" value="${p?.maxKolicina||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:.72rem;color:var(--muted)">Že prodanih</label>
+              <input id="dpPorabljeno" type="text" inputmode="numeric" placeholder="0" value="${p?.porabljeno||''}" style="width:100%;margin-top:.2rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <button onclick="shraniPopust()" style="width:100%;padding:.7rem;background:var(--ink);color:white;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer">Shrani popust</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.1rem 0">
+          <div>
+            <div style="font-size:.82rem;font-weight:500">Prikaži v trgovini</div>
+            <div style="font-size:.68rem;color:var(--muted)">Pokaže popust v reklamnem pasu na strani trgovine</div>
+          </div>
+          <input type="checkbox" id="dpPrikaziVTrgovini" ${p?.prikaziVTrgovini===false?'':'checked'} style="width:1.2rem;height:1.2rem;cursor:pointer">
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
 
-  let p={tip:tipKey,vrednost:0,aktiven:true};
+function dpTipChange(){
+  const tip=document.getElementById('dpTip')?.value;
+  document.getElementById('dpKodaRow').style.display=tip==='koda'?'':'none';
+  document.getElementById('dpMinRow').style.display=tip!=='koda'?'':'none';
+  const lbl=document.getElementById('dpMinLabel');
+  if(lbl)lbl.textContent=tip==='kolicina'?'Min kosov':'Min znesek (€)';
+}
 
-  if(tipKey==='koda'){
-    const kod=prompt('Koda kupona (npr. WELCOME10):');
-    if(!kod)return;
-    const vrednost=parseFloat(prompt('Popust v % (npr. 10):')||'0');
-    if(!vrednost)return;
-    p.kod=kod.toUpperCase().trim();
-    p.vrednost=vrednost;
-    p.min=0;
-  } else if(tipKey==='kolicina'){
-    const min=parseInt(prompt('Minimalna količina kosov (npr. 3):')||'0');
-    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
-    if(!min||!vrednost)return;
-    p.min=min;p.vrednost=vrednost;p.kod='';
+function shraniPopust(){
+  const tip=document.getElementById('dpTip').value;
+  const vrednost=parseFloat(document.getElementById('dpVrednost').value.replace(',','.'))||0;
+  if(!vrednost){toast('⚠ Vnesi vrednost popusta');return;}
+  let p={tip,vrednost,aktiven:true};
+  if(tip==='koda'){
+    const kode=document.getElementById('dpKod').value.split(',').map(k=>k.trim().toUpperCase()).filter(Boolean);
+    if(!kode.length){toast('⚠ Vnesi kodo kupona');return;}
+    p.kode=kode;p.kod=kode[0];p.min=0;
   } else {
-    const min=parseFloat(prompt('Minimalni znesek naročila € (npr. 100):')||'0');
-    const vrednost=parseFloat(prompt('Popust v % (npr. 5):')||'0');
-    if(!min||!vrednost)return;
-    p.min=min;p.vrednost=vrednost;p.kod='';
+    const min=parseFloat(document.getElementById('dpMin').value.replace(',','.'))||0;
+    if(!min){toast('⚠ Vnesi minimum');return;}
+    p.min=min;p.kod='';
   }
-
+  const od=document.getElementById('dpOd').value;
+  const doDatum=document.getElementById('dpDo').value;
+  const maxKolicina=parseInt(document.getElementById('dpMaxKolicina').value)||0;
+  const porabljeno=parseInt(document.getElementById('dpPorabljeno').value)||0;
+  if(od)p.od=od;
+  if(doDatum)p.do=doDatum;
+  if(maxKolicina)p.maxKolicina=maxKolicina;
+  if(porabljeno)p.porabljeno=porabljeno;
+  p.prikaziVTrgovini=document.getElementById('dpPrikaziVTrgovini').checked;
+  const editIdx=parseInt(document.getElementById('dpEditIdx').value);
   const popusti=getZS('popusti')||[];
-  popusti.push(p);
+  if(editIdx>=0) popusti[editIdx]={...popusti[editIdx],...p};
+  else popusti.push(p);
   saveZS({popusti});
-  // Osveži seznam
+  document.getElementById('dodajPopustOverlay')?.remove();
   const list=document.getElementById('zsPopustiList');
   if(list)list.innerHTML=popusti.map((pp,ii)=>renderPopustRow(pp,ii)).join('');
+  toast(editIdx>=0?'✓ Popust posodobljen':'✓ Popust dodan');
 }
 
 function togglePopust(i){
@@ -6036,6 +6355,13 @@ function saveZalogaSettings(){
       od:document.getElementById('zsCasovniOd').value,
       do:document.getElementById('zsCasovniDo').value,
       aktiven:document.getElementById('zs_casovniAktiven').checked,
+    },
+    recenzijeNastavitve:{
+      recenzijaPct:parseFloat(document.getElementById('zsRecenzijaPct').value.replace(',','.'))||10,
+      igFollowPct:parseFloat(document.getElementById('zsIgFollowPct').value.replace(',','.'))||5,
+      igStoryPct:parseFloat(document.getElementById('zsIgStoryPct').value.replace(',','.'))||10,
+      igObjavaLnk:parseFloat(document.getElementById('zsIgObjavaLnk').value.replace(',','.'))||15,
+      igObjavaTag:parseFloat(document.getElementById('zsIgObjavaTag').value.replace(',','.'))||20,
     },
   });
   document.getElementById('zalogaSettingsOverlay').remove();
@@ -6075,7 +6401,9 @@ function simulirajCeno(){
     let ustreza=false;
     let razlog='';
     if(p.tip==='koda'){
-      if(koda&&p.kod===koda.toUpperCase().trim()){ustreza=true;razlog=`🏷 Koda ${p.kod}`;}
+      const ruleKode=getKode(p);
+      const matched=ruleKode.find(k=>k===koda.toUpperCase().trim());
+      if(koda&&matched){ustreza=true;razlog=`🏷 Koda ${matched}`;}
     }
     if(p.tip==='kolicina'){
       if(kolicina>=(p.min||0)){ustreza=true;razlog=`📦 ${kolicina} kosov ≥ ${p.min}`;}
@@ -6184,12 +6512,17 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena){
   }
 
   // Ostali popusti
+  const customerKode=(kodaVnesena||'').split(',').map(k=>k.trim().toUpperCase()).filter(Boolean);
   for(const p of popusti){
-    let ustreza=false;
-    if(p.tip==='koda'&&kodaVnesena&&p.kod===kodaVnesena.toUpperCase().trim())ustreza=true;
+    let ustreza=false;let matchedKod='';
+    if(p.tip==='koda'){
+      const ruleKode=getKode(p);
+      const m=ruleKode.find(k=>customerKode.includes(k));
+      if(m){ustreza=true;matchedKod=m;}
+    }
     if(p.tip==='kolicina'&&kolicina>=(p.min||0))ustreza=true;
     if(p.tip==='znesek'&&skupaj>=(p.min||0))ustreza=true;
-    if(ustreza)ujemajoci.push({vrednost:p.vrednost,opis:p.tip==='koda'?`Koda ${p.kod}`:p.tip==='kolicina'?`${p.min}+ kosov`:`Nad ${p.min} €`});
+    if(ustreza)ujemajoci.push({vrednost:p.vrednost,opis:p.tip==='koda'?`Koda ${matchedKod}`:p.tip==='kolicina'?`${p.min}+ kosov`:`Nad ${p.min} €`});
   }
 
   if(!ujemajoci.length)return 0;
@@ -6552,13 +6885,13 @@ Rok`;
   }
 }
 
-function cycleInvStatus(invId){
+async function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
   const cur=i.invStatus||'caka';
   if(cur==='predano'){
     const pwd=prompt('Vnesi geslo za razveljavitev statusa "Predano":');
     if(!pwd)return;
-    if(btoa(pwd)!=='Z29tdXNocm9vbTIwMjQ='){toast('⛔ Napačno geslo');return;}
+    if(await hashPwd(pwd)!==LOGIN_HASH){toast('⛔ Napačno geslo');return;}
     i.invStatus='caka';
   } else {
     const cycle={caka:'placano',placano:'predano'};

@@ -80,12 +80,13 @@ async function runDiag(){
     log('gm_auth branje: napaka — '+e.message,'err');
   }
 
-  // 5. Hash test
+  // 5. Hash test (crypto.subtle smoke test)
   try{
-    const h=await hashStr('gomushroom2024');
-    log('hash("gomushroom2024"): '+h.substring(0,20)+'...');
-    if(h===PASSWORD_HASH) log('Hash privzetega gesla: ✓ ustreza','ok');
-    else log('Hash privzetega gesla: ✗ NE USTREZA! Problem s crypto.','err');
+    const testVal='crypto_test_42';
+    const h=await hashStr(testVal);
+    const expectedLen=64;
+    if(h.length===expectedLen) log('crypto.subtle hash: ✓ deluje ('+expectedLen+' znakov)','ok');
+    else log('crypto.subtle hash: ✗ nepričakovan rezultat','err');
   } catch(e){
     log('hashStr napaka: '+e.message,'err');
   }

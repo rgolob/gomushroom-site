@@ -9,8 +9,8 @@ const SB_HEADERS = {
   'Authorization': 'Bearer ' + SB_KEY
 };
 
-// Slug produkta — nastavi glede na stran
-const PRODUCT_SLUG = 'reishi';
+// Slug produkta — bere iz data-slug atributa gumba za košarico
+const PRODUCT_SLUG = document.getElementById('add-to-cart-btn')?.dataset.slug || 'reishi';
 
 function formatPrice(value) {
   return Number(value || 0).toLocaleString('sl-SI', {

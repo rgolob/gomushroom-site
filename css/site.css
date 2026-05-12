@@ -493,6 +493,13 @@ h3{
 /* LAYOUT */
 section{padding:64px 0}
 
+#znanje-uvod,
+#znanje-clanki,
+#znanje-povezave,
+#znanje-kontakt{
+  padding:32px 0;
+}
+
 .section-head{
   display:flex;
   justify-content:space-between;
@@ -1064,6 +1071,10 @@ body.gallery-open .gallery-backdrop{display:block}
     padding-right:env(safe-area-inset-right);
   }
   section{padding:52px 0;}
+  #znanje-uvod,
+  #znanje-clanki,
+  #znanje-povezave,
+  #znanje-kontakt{padding:24px 0;}
   .headline{padding:18px 16px}
   .arrow{display:none}
   .dots{bottom:10px}

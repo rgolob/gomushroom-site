@@ -6187,9 +6187,11 @@ async function shtvariDiscountPct(variantId, value){
   }catch(e){console.warn('shtvariDiscountPct failed:',e);}
 }
 
+function getKode(p){return(p.kode?.length?p.kode:p.kod?[p.kod]:[]).filter(Boolean);}
+
 function renderPopustRow(p,i){
   const tipi={koda:'🏷 Koda',kolicina:'📦 Količina',znesek:'💰 Znesek naročila'};
-  const opis=p.tip==='koda'?`${p.kod} → ${p.vrednost}%`:
+  const opis=p.tip==='koda'?`${getKode(p).join(', ')} → ${p.vrednost}%`:
     p.tip==='kolicina'?`${p.min}+ kosov → ${p.vrednost}%`:
     `Nad ${p.min} € → ${p.vrednost}%`;
   const extras=[];
@@ -6231,8 +6233,9 @@ function dodajPopust(editIdx){
           </select>
         </div>
         <div id="dpKodaRow" ${p&&p.tip!=='koda'?'style="display:none"':''}>
-          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Koda kupona</label>
-          <input id="dpKod" type="text" placeholder="WELCOME10" value="${p?.kod||''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
+          <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Kode kupona</label>
+          <input id="dpKod" type="text" placeholder="WELCOME10, JESEN25" value="${p?getKode(p).join(', '):''}" style="width:100%;margin-top:.3rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;box-sizing:border-box;text-transform:uppercase">
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.25rem">Vejica = več veljavnih kod za ta popust</div>
         </div>
         <div id="dpMinRow" ${!p||p.tip==='koda'?'style="display:none"':''}>
           <label id="dpMinLabel" style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">${p?.tip==='znesek'?'Min znesek (€)':'Min kosov'}</label>
@@ -6295,9 +6298,9 @@ function shraniPopust(){
   if(!vrednost){toast('⚠ Vnesi vrednost popusta');return;}
   let p={tip,vrednost,aktiven:true};
   if(tip==='koda'){
-    const kod=document.getElementById('dpKod').value.toUpperCase().trim();
-    if(!kod){toast('⚠ Vnesi kodo kupona');return;}
-    p.kod=kod;p.min=0;
+    const kode=document.getElementById('dpKod').value.split(',').map(k=>k.trim().toUpperCase()).filter(Boolean);
+    if(!kode.length){toast('⚠ Vnesi kodo kupona');return;}
+    p.kode=kode;p.kod=kode[0];p.min=0;
   } else {
     const min=parseFloat(document.getElementById('dpMin').value.replace(',','.'))||0;
     if(!min){toast('⚠ Vnesi minimum');return;}
@@ -6398,7 +6401,9 @@ function simulirajCeno(){
     let ustreza=false;
     let razlog='';
     if(p.tip==='koda'){
-      if(koda&&p.kod===koda.toUpperCase().trim()){ustreza=true;razlog=`🏷 Koda ${p.kod}`;}
+      const ruleKode=getKode(p);
+      const matched=ruleKode.find(k=>k===koda.toUpperCase().trim());
+      if(koda&&matched){ustreza=true;razlog=`🏷 Koda ${matched}`;}
     }
     if(p.tip==='kolicina'){
       if(kolicina>=(p.min||0)){ustreza=true;razlog=`📦 ${kolicina} kosov ≥ ${p.min}`;}
@@ -6507,12 +6512,17 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena){
   }
 
   // Ostali popusti
+  const customerKode=(kodaVnesena||'').split(',').map(k=>k.trim().toUpperCase()).filter(Boolean);
   for(const p of popusti){
-    let ustreza=false;
-    if(p.tip==='koda'&&kodaVnesena&&p.kod===kodaVnesena.toUpperCase().trim())ustreza=true;
+    let ustreza=false;let matchedKod='';
+    if(p.tip==='koda'){
+      const ruleKode=getKode(p);
+      const m=ruleKode.find(k=>customerKode.includes(k));
+      if(m){ustreza=true;matchedKod=m;}
+    }
     if(p.tip==='kolicina'&&kolicina>=(p.min||0))ustreza=true;
     if(p.tip==='znesek'&&skupaj>=(p.min||0))ustreza=true;
-    if(ustreza)ujemajoci.push({vrednost:p.vrednost,opis:p.tip==='koda'?`Koda ${p.kod}`:p.tip==='kolicina'?`${p.min}+ kosov`:`Nad ${p.min} €`});
+    if(ustreza)ujemajoci.push({vrednost:p.vrednost,opis:p.tip==='koda'?`Koda ${matchedKod}`:p.tip==='kolicina'?`${p.min}+ kosov`:`Nad ${p.min} €`});
   }
 
   if(!ujemajoci.length)return 0;

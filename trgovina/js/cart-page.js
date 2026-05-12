@@ -42,10 +42,15 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
     if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     let ok = false;
     const kode = (kodaVnesena || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
-    if (p.tip === 'koda' && kode.includes(p.kod)) ok = true;
+    let matchedKod = '';
+    if (p.tip === 'koda') {
+      const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
+      const m = ruleKode.find(k => kode.includes(k));
+      if (m) { ok = true; matchedKod = m; }
+    }
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
-    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${p.kod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
+    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${matchedKod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
   }
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
@@ -174,7 +179,11 @@ function bindKupon() {
     const raw = input.value.trim();
     if (!raw) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
     const kode = raw.split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
-    const veljavne = kode.filter(k => (settings.popusti || []).some(p => p.tip === 'koda' && p.kod === k && p.aktiven));
+    const veljavne = kode.filter(k => (settings.popusti || []).some(p => {
+      if (!p.aktiven || p.tip !== 'koda') return false;
+      const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
+      return ruleKode.includes(k);
+    }));
     if (veljavne.length === kode.length) {
       // All codes valid — green ✓
       input.style.borderColor = '#3a6b4a';

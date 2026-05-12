@@ -34,8 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const slUrl = isEn ? (translatedUrl || "/znanje/") : path;
   const enUrl = isEn ? path : (translatedUrl || "/en/learn/");
 
-  const shopLink = isEn ? "" : `<a href="/trgovina/">Trgovina</a>`;
-
   header.innerHTML = `
     <div class="wrap nav">
       <div class="brand">
@@ -47,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <nav id="primary-nav" aria-label="Glavna navigacija">
         <a href="${homeUrl}">${homeLabel}</a>
         <a href="${knowledgeUrl}">${knowledgeLabel}</a>
-        ${shopLink}
       </nav>
 
       <div class="nav-actions" aria-label="Jezik in meni">

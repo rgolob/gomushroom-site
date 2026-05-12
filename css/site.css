@@ -491,7 +491,14 @@ h3{
 }
 
 /* LAYOUT */
-section{padding:64px 0}
+section{padding:32px 0}
+
+#znanje-uvod,
+#znanje-clanki,
+#znanje-povezave,
+#znanje-kontakt{
+  padding:32px 0;
+}
 
 .section-head{
   display:flex;
@@ -1063,7 +1070,11 @@ body.gallery-open .gallery-backdrop{display:block}
     padding-left:env(safe-area-inset-left);
     padding-right:env(safe-area-inset-right);
   }
-  section{padding:52px 0;}
+  section{padding:26px 0;}
+  #znanje-uvod,
+  #znanje-clanki,
+  #znanje-povezave,
+  #znanje-kontakt{padding:20px 0;}
   .headline{padding:18px 16px}
   .arrow{display:none}
   .dots{bottom:10px}
@@ -2165,6 +2176,13 @@ footer.site-footer{
 /* ZNANJE */
 .learn-grid{
   grid-template-columns:repeat(3, minmax(0,1fr));
+}
+
+.learn-card{
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(43,10,57,.05), transparent 65%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(177,133,86,.06), transparent 65%),
+    #ffffff;
 }
 
 .learn-card .body{

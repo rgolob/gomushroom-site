@@ -34,7 +34,7 @@
         <a href="/" id="site-logo" class="brand">
           <img src="/assets/logo-horizontal-320.webp"
                srcset="/assets/logo-horizontal-320.webp 1x, /assets/logo-horizontal.webp 2x"
-               alt="GoMushroom" width="160" height="42" fetchpriority="high">
+               alt="GoMushroom" width="84" height="42" fetchpriority="high">
         </a>
       </div>
       <nav id="primary-nav" aria-label="Glavna navigacija">

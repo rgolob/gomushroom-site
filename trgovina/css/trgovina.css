@@ -948,3 +948,48 @@
   }
 }
 
+
+/* ── Skeleton loader za shop grid ─────────────────────── */
+@keyframes skel-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
+}
+
+.shop-skeleton {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  border: 1px solid rgba(43,11,57,.07);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(43,11,57,.07);
+  min-height: 160px;
+}
+
+.shop-skeleton__img {
+  width: 38%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #f2f0ee 25%, #e8e4df 50%, #f2f0ee 75%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s ease-in-out infinite;
+}
+
+.shop-skeleton__body {
+  flex: 1;
+  padding: 1.1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+
+.shop-skeleton__line {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f2f0ee 25%, #e8e4df 50%, #f2f0ee 75%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s ease-in-out infinite;
+}
+
+.shop-skeleton__line--title { height: 18px; width: 80%; }
+.shop-skeleton__line--meta  { height: 13px; width: 55%; animation-delay: .1s; }
+.shop-skeleton__line--btn   { height: 34px; width: 90%; border-radius: 10px; margin-top: 4px; animation-delay: .2s; }

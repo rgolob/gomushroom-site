@@ -32,8 +32,7 @@
     <div class="wrap nav">
       <div class="brand">
         <a href="/" id="site-logo" class="brand">
-          <img src="/assets/logo-horizontal-320.webp"
-               srcset="/assets/logo-horizontal-320.webp 1x, /assets/logo-horizontal.webp 2x"
+          <img src="/assets/logo-h168.webp"
                alt="GoMushroom" width="84" height="42" fetchpriority="high">
         </a>
       </div>

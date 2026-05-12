@@ -602,6 +602,66 @@
   });
 })();
 /* =========================
+   Article notice (new article)
+========================= */
+(function(){
+  // ── CONFIG — posodobi ob vsakem novem članku ──────────────────
+  const NOTICE = {
+    id:   'gm_notice_v2',   // povečaj za ponastavitev pri vsakem novem članku
+    days: 7,                // koliko dni je obvestilo vidno
+    sl: {
+      label: 'Nov članek',
+      title: 'Kaj je ekstrakcija?',
+      url:   '/znanje/kaj-je-ekstrakcija/',
+      cta:   'Preberi →'
+    },
+    en: {
+      label: 'New article',
+      title: 'What Is Extraction?',
+      url:   '/en/learn/what-is-extraction/',
+      cta:   'Read →'
+    }
+  };
+  // ─────────────────────────────────────────────────────────────
+
+  const stored = localStorage.getItem(NOTICE.id);
+  if (stored === 'dismissed') return;
+
+  const now = Date.now();
+  if (stored) {
+    if (now - parseInt(stored, 10) > NOTICE.days * 86400000) return;
+  } else {
+    localStorage.setItem(NOTICE.id, now.toString());
+  }
+
+  const isEn = (document.documentElement.lang || '').startsWith('en');
+  const t = isEn ? NOTICE.en : NOTICE.sl;
+
+  if (window.location.pathname === t.url) return;
+
+  const el = document.createElement('div');
+  el.className = 'article-notice';
+  el.setAttribute('role', 'complementary');
+  el.innerHTML =
+    '<div class="article-notice__icon" aria-hidden="true">📄</div>' +
+    '<div class="article-notice__body">' +
+      '<p class="article-notice__label">' + t.label + '</p>' +
+      '<p class="article-notice__title">' + t.title + '</p>' +
+      '<a class="article-notice__link" href="' + t.url + '">' + t.cta + '</a>' +
+    '</div>' +
+    '<button class="article-notice__close" type="button" aria-label="Zapri">×</button>';
+
+  el.querySelector('.article-notice__close').addEventListener('click', function(){
+    localStorage.setItem(NOTICE.id, 'dismissed');
+    el.style.cssText += ';opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s';
+    setTimeout(function(){ el.remove(); }, 220);
+  });
+
+  setTimeout(function(){ document.body.appendChild(el); }, 1200);
+})();
+
+
+/* =========================
    Članki  — progress bar
 ========================= */
 document.addEventListener("scroll", function () {

@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GoMushroom · DN</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1209;--cream:#eef2f7;--parchment:#dde5f0;--accent:#af8455;
+  --dark:#2b0b39;--muted:#6a7a8a;--border:#c8d5e4;--success:#3a6b4a;
+  --danger:#8b3a2a;--shadow:0 1px 4px rgba(26,40,60,.08);
+  --r:10px;--rs:8px;--sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── HEADER ── */
+.app-header{background:var(--ink);color:var(--cream);padding:.35rem .75rem;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:100;gap:.5rem}
+.app-logo{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:300;letter-spacing:.08em;white-space:nowrap}
+.app-logo span{color:var(--accent)}
+.hbtns{display:flex;gap:.3rem;align-items:center}
+.hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:var(--cream);padding:.3rem .6rem;border-radius:6px;font-family:'Jost',sans-serif;font-size:.7rem;cursor:pointer;white-space:nowrap}
+.sync-status{font-size:.65rem;color:rgba(255,255,255,.5);min-width:60px;text-align:right}
+
+/* ── SCROLL BODY ── */
+.scroll-body{padding:.75rem .75rem calc(var(--sab)+70px);max-width:680px;margin:0 auto;padding-top:calc(46px + .75rem)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--ink);display:flex;padding-bottom:var(--sab);z-index:100;border-top:1px solid rgba(255,255,255,.08)}
+.nitem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem .25rem;color:rgba(255,255,255,.4);font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;border:none;background:none;cursor:pointer;gap:.2rem;transition:color .15s}
+.nitem.active{color:var(--accent)}
+.nicon{font-size:1.1rem;line-height:1}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+
+/* ── VIEW HEADER ── */
+.view-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:.5rem}
+.view-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.04em}
+.hbtn2{background:var(--ink);color:var(--cream);border:none;padding:.35rem .75rem;border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.72rem;cursor:pointer;white-space:nowrap}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.75rem}
+.stat-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:.6rem .75rem;box-shadow:var(--shadow)}
+.stat-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400}
+.stat-value.ok{color:var(--success)}.stat-value.warn{color:var(--danger)}
+
+/* ── CARDS ── */
+.dn-card{background:white;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:.5rem;overflow:hidden}
+.dn-header{padding:.65rem .9rem;display:flex;gap:.6rem;align-items:flex-start;cursor:pointer}
+.dn-header:active{background:var(--parchment)}
+.dn-num{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;min-width:6rem}
+.dn-info{flex:1;min-width:0}
+.dn-name{font-size:.85rem;font-weight:500}
+.dn-meta{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+.dn-right{text-align:right;flex-shrink:0}
+.status-badge{font-size:.62rem;padding:.15rem .45rem;border-radius:10px;font-weight:500}
+.status-odprt{background:rgba(175,132,85,.15);color:#7a5a2a}
+.status-zakljucen{background:rgba(58,107,74,.12);color:var(--success)}
+.status-prenos{background:rgba(42,90,139,.12);color:#2a5a8b}
+.dn-body{padding:.5rem .9rem .75rem;border-top:1px solid var(--border)}
+
+/* ── ETANOL CARD ── */
+.eth-card{background:white;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:.4rem;padding:.55rem .9rem;display:flex;gap:.6rem;align-items:center}
+.eth-type{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:500;min-width:5.5rem}
+.eth-nabava{color:var(--success)}.eth-izhod{color:var(--danger)}.eth-reg{color:#2a5a8b}
+.eth-info{flex:1;min-width:0}
+.eth-doc{font-size:.78rem;font-weight:500}
+.eth-detail{font-size:.68rem;color:var(--muted);margin-top:.1rem}
+.eth-qty{text-align:right;flex-shrink:0}
+.eth-L{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600}
+.eth-aae{font-size:.65rem;color:var(--muted)}
+
+/* ── FORMS ── */
+.field{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.6rem}
+.field label{font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{padding:.55rem .75rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field textarea{min-height:60px;resize:vertical}
+.frow{display:flex;gap:.5rem}.frow .field{flex:1;min-width:0}
+.calc-hint{font-size:.65rem;color:var(--accent);margin-top:.2rem;font-style:italic}
+
+/* ── OVERLAY / SHEET ── */
+.overlay{position:fixed;inset:0;background:rgba(26,18,9,.45);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;padding:0 5px}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{background:var(--cream);border-radius:16px 16px 0 0;height:92vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,0,.67,0);overflow:hidden;width:100%}
+.overlay.open .sheet{transform:translateY(0)}
+.shandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:.6rem auto .2rem}
+.shdr{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem .4rem}
+.shtitle{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400}
+.shclose{background:none;border:none;font-size:1.2rem;color:var(--muted);cursor:pointer;padding:.2rem}
+.shbody{overflow-y:auto;overflow-x:hidden;padding:.25rem .75rem .5rem;flex:1}
+.shfoot{display:flex;gap:.5rem;padding:.6rem .9rem calc(.6rem + var(--sab));border-top:1px solid var(--border)}
+.bcancel{flex:1;padding:.65rem;border:1px solid var(--border);border-radius:var(--rs);background:white;font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer}
+.bsave{flex:2;padding:.65rem;border:none;border-radius:var(--rs);background:var(--ink);color:var(--cream);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;font-weight:500}
+.bsave.green{background:var(--success)}
+.bsave.accent{background:var(--accent)}
+
+/* ── SLABEL ── */
+.slabel{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.6rem 0 .3rem}
+
+/* ── SEARCH ── */
+.swrap{position:relative;flex:1}.sicon{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+.swrap input{padding:.4rem .6rem .4rem 1.8rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:.8rem;background:white;width:100%;outline:none}
+
+/* ── FILTER PILLS ── */
+.filter-row{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap}
+.fpill{padding:.3rem .7rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:.7rem;background:white;color:var(--ink);cursor:pointer}
+.fpill.active{background:var(--accent);border-color:var(--accent);color:white;font-weight:500}
+
+/* ── TABLE ── */
+.mini-table{width:100%;border-collapse:collapse;font-size:.72rem;margin:.4rem 0}
+.mini-table th{text-align:left;padding:.2rem .4rem;color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.mini-table td{padding:.25rem .4rem;border-bottom:1px solid var(--parchment)}
+.mini-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
+.ei{font-size:2.5rem;margin-bottom:.5rem}.et{font-size:.9rem;font-weight:500}
+.es{font-size:.75rem;margin-top:.25rem;opacity:.7}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:calc(var(--sab)+75px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--cream);padding:.5rem 1.1rem;border-radius:20px;font-size:.78rem;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── PAGER ── */
+.pager{display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap;align-items:center}
+.pager-info{font-size:.7rem;color:var(--muted)}
+.fpill.active{background:var(--accent);border-color:var(--accent);color:white}
+
+/* ── ZALOGA BAR ── */
+.zaloga-bar{background:var(--parchment);border-radius:var(--r);padding:.6rem .9rem;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center}
+.zb-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.zb-val{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600}
+.zb-aae{font-size:.65rem;color:var(--muted)}
+
+/* ── LOGIN ── */
+.login-input::placeholder{color:rgba(245,240,232,.3)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="position:fixed;inset:0;background:#1a1209;z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem">
+  <div style="width:100%;max-width:340px;text-align:center">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;letter-spacing:.08em;color:#f5f0e8;margin-bottom:.35rem">Go<em style="color:#af8455;font-style:normal">Mushroom</em></div>
+    <div style="font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.4);margin-bottom:2.5rem">Delovni nalogi · DN</div>
+    <div id="faceIdSection" style="display:none;margin-bottom:1.25rem">
+      <button id="faceIdBtn" onclick="loginWithFaceId()"
+        style="width:100%;padding:1rem;border:1px solid rgba(175,132,85,.4);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;background:rgba(175,132,85,.12);color:#f5f0e8;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem">
+        <span style="font-size:1.4rem">🔒</span> Prijava z Face ID
+      </button>
+      <div style="font-size:.68rem;color:rgba(245,240,232,.3);margin-top:.6rem">ali</div>
+    </div>
+    <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
+      style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
+    <button onclick="doLogin()"
+      style="width:100%;padding:.9rem;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#af8455;color:#1a1209;cursor:pointer">Vstopi</button>
+    <div id="loginErr" style="font-size:.78rem;color:#e07060;margin-top:.75rem;min-height:1.1em"></div>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="app-logo">DN</div>
+  <div class="hbtns">
+    <a href="/zaloga/" class="hbtn" style="text-decoration:none">📦 Zaloga</a>
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="hbtn" onclick="openSettings()">⚙️</button>
+  </div>
+</header>
+
+<!-- VIEWS -->
+<div class="scroll-body">
+
+  <!-- DN VIEW -->
+  <div class="view active" id="view-dn">
+    <div class="view-hdr">
+      <div class="view-title">Delovni nalogi</div>
+      <button class="hbtn2" onclick="openDNSheet()">+ Nov DN</button>
+    </div>
+    <div class="stats-grid" id="dnStatsGrid"></div>
+    <div class="filter-row">
+      <button class="fpill active" id="f-vsi" onclick="setDNFilter('vsi',this)">Vsi</button>
+      <button class="fpill" id="f-odprt" onclick="setDNFilter('odprt',this)">Odprti</button>
+      <button class="fpill" id="f-zakljucen" onclick="setDNFilter('zakljucen',this)">Zaključeni</button>
+      <button class="fpill" id="f-prenos" onclick="setDNFilter('prenos',this)">Preneseni</button>
+    </div>
+    <div id="dnList"></div>
+    <div class="pager" id="dnPager"></div>
+  </div>
+
+  <!-- ETANOL VIEW -->
+  <div class="view" id="view-etanol">
+    <div class="view-hdr">
+      <div class="view-title">Etanol</div>
+      <div style="display:flex;gap:.4rem">
+        <button class="hbtn2" style="background:white;color:var(--ink);border:1px solid var(--border)" onclick="openPorociloFilter()">📄</button>
+        <button class="hbtn2" onclick="openEtanolSheet()">+ Vnos</button>
+      </div>
+    </div>
+    <div class="zaloga-bar">
+      <div>
+        <div class="zb-label">Zaloga etanola (L AAE)</div>
+        <div class="zb-val" id="etZaloga">— L AAE</div>
+        <div class="zb-aae" id="etAAE"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="zb-label">Nabavljeno letos (L AAE)</div>
+        <div class="zb-val" id="etNabava">— L AAE</div>
+      </div>
+    </div>
+    <div id="etanolList"></div>
+    <div class="pager" id="etPager"></div>
+  </div>
+
+  <!-- MATERIALI VIEW -->
+  <div class="view" id="view-materiali">
+    <div class="view-hdr">
+      <div class="view-title">Materiali</div>
+      <button class="hbtn2" onclick="openMaterijalSheet()">+ Vnos</button>
+    </div>
+    <div id="matZalogaGrid" style="margin-bottom:.75rem"></div>
+    <div class="filter-row">
+      <button class="fpill active" id="mk-vsi" onclick="setMatKat('vsi',this)">Vse</button>
+      <button class="fpill" id="mk-surovina" onclick="setMatKat('surovina',this)">🌿 Surovine</button>
+      <button class="fpill" id="mk-embalaza" onclick="setMatKat('embalaza',this)">📦 Embalaža</button>
+    </div>
+    <div class="filter-row" id="matFilterRow" style="margin-top:.2rem"></div>
+    <div id="matList"></div>
+    <div class="pager" id="matPager"></div>
+  </div>
+
+  <!-- OPREMA VIEW -->
+  <div class="view" id="view-oprema">
+    <div class="view-hdr">
+      <div class="view-title">Oprema</div>
+      <button class="hbtn2" onclick="openOpremaSheet()">+ Dodaj</button>
+    </div>
+    <div class="filter-row">
+      <button class="fpill active" id="op-vsi" onclick="setOpremaFilter('vsi',this)">Vsa</button>
+      <button class="fpill" onclick="setOpremaFilter('oprema',this)">⚙️ Oprema</button>
+      <button class="fpill" onclick="setOpremaFilter('inventar',this)">📎 Inventar</button>
+      <button class="fpill" onclick="setOpremaFilter('vzdrz',this)">🔧 Vzdrž.</button>
+      <button class="fpill" onclick="setOpremaFilter('neaktivna',this)">✗ Neaktivna</button>
+    </div>
+    <div id="opremaList"></div>
+    <div class="pager" id="opremaPager"></div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nitem active" id="nav-dn" onclick="switchTab('dn',this)"><span class="nicon">📋</span>DN</button>
+  <button class="nitem" id="nav-etanol" onclick="switchTab('etanol',this)"><span class="nicon">🧪</span>Etanol</button>
+  <button class="nitem" id="nav-materiali" onclick="switchTab('materiali',this)"><span class="nicon">📦</span>Materiali</button>
+  <button class="nitem" id="nav-oprema" onclick="switchTab('oprema',this)"><span class="nicon">🔧</span>Oprema</button>
+</nav>
+
+<!-- SHEET: NOV DN -->
+<div class="overlay" id="dnOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="dnSheetTitle">Nov delovni nalog</span>
+      <button class="shclose" onclick="closeSheet('dnOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Oznaka DN</label><input id="dnOznaka" placeholder="DN-26-001" autocapitalize="characters"></div>
+        <div class="field"><label>Datum odprtja</label><input id="dnDatum" type="date"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Vrsta gobe</label>
+          <select id="dnVrstaGobe" onchange="updateDNNamen()">
+            <option value="Reishi">Reishi</option>
+            <option value="Resasti bradovec">Resasti bradovec</option>
+            <option value="Chaga">Chaga</option>
+            <option value="Smrekovi vršički">Smrekovi vršički</option>
+          </select>
+        </div>
+        <div class="field"><label>Namen (auto)</label>
+          <input id="dnNamen" type="text" readonly style="background:var(--parchment);font-size:.82rem" placeholder="—">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Serija gobe</label><input id="dnSerijaGobe" placeholder="npr. BG-2024-01"></div>
+        <div class="field"><label>Masa gobe (kg)</label><input id="dnMasaGobe" type="text" step="0.01" placeholder="0.00" inputmode="decimal" oninput="calcDN()"></div>
+      </div>
+      <div class="slabel">Etanol — vhod</div>
+      <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
+      <div class="frow">
+        <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
+        <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="dnPctEtOH" type="text" placeholder="npr. 96,25" inputmode="decimal" oninput="calcDN()"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+        <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+      </div>
+      <div class="slabel">Alkoholna tinktura (produkt — 30 vol% EtOH)</div>
+      <div class="frow">
+        <div class="field"><label>Alkohol (kom. × 50 mL)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        <div class="field"><label>Steklenička alc</label>
+          <select id="dnStekAlc">
+            <option value="bela">⬜ Bela</option>
+            <option value="crna">⬛ Črna</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+        <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+      </div>
+      <div class="slabel">Glicerinska tinktura</div>
+      <div class="frow">
+        <div class="field"><label>Glicerin (kom. × 50 mL)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="field"><label>Steklenička gly</label>
+          <select id="dnStekGly">
+            <option value="bela">⬜ Bela</option>
+            <option value="crna">⬛ Črna</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+        <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>AAE v tinktaurah (L) ⚡ trošarina</label><input id="dnAAETinkture" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent)" placeholder="—"></div>
+      </div>
+      <div class="slabel">Bilanca etanola</div>
+      <div class="frow">
+        <div class="field"><label>AAE vhod. EtOH (L)</label><input id="dnLAAE" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+        <div class="field"><label>Procesne izgube (L AAE)</label><input id="dnIzgube" type="text" inputmode="decimal" placeholder="0,000" oninput="calcDNBilanca()"></div>
+      </div>
+      <div id="dnBilanca" style="font-size:.72rem;padding:.4rem .6rem;border-radius:6px;background:var(--parchment);margin-bottom:.5rem;display:none"></div>
+      <div class="calc-hint" id="dnCalcHint"></div>
+      <div class="slabel">Cene za Zaloga app</div>
+      <div class="frow">
+        <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
+        <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Opomba</label><textarea id="dnOpomba" placeholder="Neobvezna opomba…"></textarea></div>
+      <div class="slabel">Zaključek</div>
+      <div class="frow">
+        <div class="field"><label>Datum zaključka</label><input id="dnDatumZakljucka" type="date"></div>
+        <div class="field"><label>Oznaka serije</label><input id="dnSerijaAlc" placeholder="npr. R010131" autocapitalize="characters"></div>
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('dnOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveDN()">Shrani DN</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: DN DETAIL / ZAKLJUČEK -->
+<div class="overlay" id="dnDetailOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="dnDetailTitle">Delovni nalog</span>
+      <button class="shclose" onclick="closeSheet('dnDetailOverlay')">✕</button>
+    </div>
+    <div class="shbody" id="dnDetailBody"></div>
+  </div>
+</div>
+
+<!-- SHEET: ETANOL -->
+<div class="overlay" id="etanolOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Etanol — vnos</span>
+      <button class="shclose" onclick="closeSheet('etanolOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="field"><label>Vrsta premika</label>
+        <select id="etTip" onchange="onEtTipChange()">
+          <option value="nabava">Nabava — nakup (vhod)</option>
+          <option value="regeneracija">Regeneriran (vhod)</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="etDatum" type="date"></div>
+        <div class="field"><label>Račun / dokument</label><input id="etDok" placeholder="1-4-40742" autocapitalize="characters"></div>
+      </div>
+      <div id="etNabavaFields">
+        <div style="display:flex;gap:.3rem;margin-bottom:.5rem">
+          <button id="etTogMasa" onclick="setEtVnos('masa')" class="fpill active" style="flex:1">Masa (kg)</button>
+          <button id="etTogVol" onclick="setEtVnos('vol')" class="fpill" style="flex:1">Volumen (L)</button>
+        </div>
+        <div class="frow">
+          <div class="field" id="etMasaField"><label>Masa (kg)</label><input id="etMasa" type="text" placeholder="0,000" inputmode="decimal" oninput="calcEt()"></div>
+          <div class="field" id="etVolField" style="display:none"><label>Volumen (L)</label><input id="etVolVnos" type="text" placeholder="0,000" inputmode="decimal" oninput="calcEt()"></div>
+          <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="etPct" type="text" placeholder="96,25" inputmode="decimal" oninput="calcEt()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Gostota (auto)</label><input id="etGostota" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+          <div class="field"><label id="etKolLabel">Volumen (L)</label><input id="etKolicina" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>L AAE</label><input id="etLAAE" type="text" readonly style="background:var(--parchment)"></div>
+          <div class="field"><label>mas%</label><input id="etMasPct" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Strošek nabave (€)</label><input id="etStrosek" type="text" inputmode="decimal" placeholder="0,00"></div>
+        <div class="field"><label>Opomba</label><input id="etOpomba" placeholder="Dobavitelj, lot…"></div>
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('etanolOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveEtanol()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: MATERIALI -->
+<div class="overlay" id="materialiOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="matSheetTitle">Vnos materiala</span>
+      <button class="shclose" onclick="closeSheet('materialiOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Kategorija</label>
+          <select id="matKatSel" onchange="onMatKatSelChange()">
+            <option value="surovina">🌿 Surovina</option>
+            <option value="embalaza">📦 Embalaža</option>
+          </select>
+        </div>
+        <div class="field"><label>Material</label>
+          <select id="matTip" onchange="onMatTipChange()"></select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="matDatum" type="date"></div>
+        <div class="field"><label>Dokument / dobavnica</label><input id="matDok" placeholder="npr. DOB-2026-01" autocapitalize="characters"></div>
+      </div>
+      <!-- Samo za gobe -->
+      <div id="matGobaSerija" style="display:none" class="field">
+        <label>Serija gobe</label><input id="matSerijaGobe" placeholder="npr. BG-2024-01">
+      </div>
+      <!-- Samo za surovine: dobavitelj -->
+      <div id="matDobaviteljField" class="field" style="display:none">
+        <label>Dobavitelj</label><input id="matDobavitelj" placeholder="npr. iHerb, ECP d.o.o.">
+      </div>
+      <div class="frow">
+        <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label>Strošek nabave (€)</label><input id="matStrosek" type="text" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+      <div class="field"><label>Opomba</label><input id="matOpomba" placeholder="Neobvezno"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('materialiOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveMaterjal()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: OPREMA -->
+<div class="overlay" id="opremaOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="opremaSheetTitle">Dodaj opremo</span>
+      <button class="shclose" onclick="closeSheet('opremaOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Kategorija</label>
+          <select id="opKat" onchange="onOpKatChange()">
+            <option value="oprema">⚙️ Oprema</option>
+            <option value="inventar">📎 Drobni inventar</option>
+          </select>
+        </div>
+        <div class="field"><label>Status</label>
+          <select id="opStatus">
+            <option value="aktivna">✓ Aktivna</option>
+            <option value="vzdrz">🔧 V vzdrževanju</option>
+            <option value="neaktivna">✗ Neaktivna</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Naziv</label><input id="opNaziv" placeholder="npr. Rotavapor"></div>
+        <div class="field"><label>Model</label><input id="opModel" placeholder="npr. RE-52A"></div>
+      </div>
+      <!-- Samo za inventar -->
+      <div id="opKolicinaField" class="frow" style="display:none">
+        <div class="field"><label>Količina (kom)</label><input id="opKolicina" type="text" inputmode="numeric" placeholder="1"></div>
+        <div class="field"><label>Datum nakupa</label><input id="opDatumNakupa" type="date"></div>
+      </div>
+      <!-- Samo za opremo -->
+      <div id="opOpremaFields">
+        <div class="frow">
+          <div class="field"><label>Serijska št.</label><input id="opSerijska" placeholder="SN-12345" autocapitalize="characters"></div>
+          <div class="field"><label>Datum nakupa</label><input id="opDatumNakupa2" type="date"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Dobavitelj</label><input id="opDobavitelj" placeholder="npr. Sigma-Aldrich"></div>
+          <div class="field"><label>Cena (€)</label><input id="opCena" type="text" inputmode="decimal" placeholder="0,00"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Garancija do</label><input id="opGarancija" type="date"></div>
+          <div class="field"><label>Naslednje vzdrž.</label><input id="opVzdrz" type="date"></div>
+        </div>
+      </div>
+      <!-- Skupno -->
+      <div id="opInventarCena" class="frow" style="display:none">
+        <div class="field"><label>Cena/kom (€)</label><input id="opCenaInv" type="text" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+      <div class="field"><label>Opomba</label><textarea id="opOpomba" placeholder="Lokacija, opombe…"></textarea></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('opremaOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveOprema()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: NASTAVITVE -->
+<div class="overlay" id="settingsOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Nastavitve</span>
+      <button class="shclose" onclick="closeSheet('settingsOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="slabel">Trošarina — etanol</div>
+      <div class="field">
+        <label>Cena trošarine (€/hL AAE)</label>
+        <input id="setTrosarina" type="text" inputmode="decimal" placeholder="1412,40">
+      </div>
+      <div class="slabel">Cene tinktur</div>
+      <div class="frow">
+        <div class="field"><label>Alkoholna (€/kom)</label><input id="setCenaAlc" type="text" inputmode="decimal" placeholder="31,90"></div>
+        <div class="field"><label>Glicerinska (€/kom)</label><input id="setCenaGly" type="text" inputmode="decimal" placeholder="33,90"></div>
+      </div>
+      <div class="slabel">Podatki</div>
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+        <button class="bcancel" style="flex:1" onclick="backupDN()">💾 Backup</button>
+        <button class="bcancel" style="flex:1" onclick="document.getElementById('importDNInput').click()">📥 Uvozi JSON</button>
+      </div>
+      <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
+      <div style="margin-bottom:.75rem">
+        <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
+      </div>
+      <div class="slabel">Informacija</div>
+      <div style="font-size:.72rem;color:var(--muted);line-height:1.5">
+        Tabela gostot: hobbybrennen.ch · 20°C · 1001 vrednosti<br>
+        AAE = Absolutni Alkoholni Ekvivalent (L čistega EtOH)
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('settingsOverlay')">Zapri</button>
+      <button class="bsave" onclick="saveSettings()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- POROCILO FILTER -->
+<div class="overlay" id="porociloOverlay">
+  <div class="sheet" style="height:auto;max-height:70vh">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Filtri poročila</span>
+      <button class="shclose" onclick="closeSheet('porociloOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="slabel">Obdobje</div>
+      <div class="frow">
+        <div class="field"><label>Od</label><input id="porOd" type="date"></div>
+        <div class="field"><label>Do</label><input id="porDo" type="date"></div>
+      </div>
+      <div class="slabel">Vrsta vnosov</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem">
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porNabava" checked> Nabave</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porRegen" checked> Regeneracije</label>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><input type="checkbox" id="porEkstr" checked> Ekstrakcije</label>
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('porociloOverlay')">Prekliči</button>
+      <button class="bsave" onclick="closeSheet('porociloOverlay');genEtanolPorocilo()">📄 Generiraj</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── DATA ──
+let workOrders = JSON.parse(localStorage.getItem('gm_dn_workorders')||'[]');
+let etanolKnjiga = JSON.parse(localStorage.getItem('gm_dn_etanol')||'[]');
+let materiali = JSON.parse(localStorage.getItem('gm_dn_materiali')||'[]');
+let oprema = JSON.parse(localStorage.getItem('gm_dn_oprema')||'[]');
+let settings = JSON.parse(localStorage.getItem('gm_dn_settings')||'{"trosarinaEUR":1412.40,"cenaAlc":31.9,"cenaGly":33.9}');
+
+function saveSettings(){
+  settings.trosarinaEUR=parseNum(document.getElementById('setTrosarina').value)||1412.40;
+  settings.cenaAlc=parseNum(document.getElementById('setCenaAlc').value)||31.9;
+  settings.cenaGly=parseNum(document.getElementById('setCenaGly').value)||33.9;
+  localStorage.setItem('gm_dn_settings',JSON.stringify(settings));
+  closeSheet('settingsOverlay');
+  toast(`✓ Nastavitve shranjene`);
+}
+
+function openSettings(){
+  document.getElementById('setTrosarina').value=String(settings.trosarinaEUR).replace('.',',');
+  document.getElementById('setCenaAlc').value=String(settings.cenaAlc||31.9).replace('.',',');
+  document.getElementById('setCenaGly').value=String(settings.cenaGly||33.9).replace('.',',');
+  openSheet('settingsOverlay');
+}
+
+// Prefiks serije po vrsti gobe
+
+let currentTab='dn';
+let dnFilter='vsi';
+let dnPage=0;
+const DN_PER_PAGE=10;
+let etPage=0;
+const ET_PER_PAGE=15;
+
+// ── UTILS ──
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+function todayDisp(){const d=new Date();return`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;}
+function fmtDate(d){if(!d)return'—';if(d.includes('-')){const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0];}return d;}
+// Pretvori DD.MM.LLLL → ISO ali vrne obstoječi ISO
+function parseDate(v){
+  if(!v)return'';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;
+  const m=v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return v;
+}
+function parseNum(v){return parseFloat(String(v).replace(',','.'))||0;}
+function round(v,n=3){return Math.round(v*Math.pow(10,n))/Math.pow(10,n);}
+
+// ── SAVE ──
+function save(){
+  localStorage.setItem('gm_dn_workorders',JSON.stringify(workOrders));
+  localStorage.setItem('gm_dn_etanol',JSON.stringify(etanolKnjiga));
+  localStorage.setItem('gm_dn_materiali',JSON.stringify(materiali));
+  localStorage.setItem('gm_dn_oprema',JSON.stringify(oprema));
+}
+
+// ── TABELA GOSTOTE EtOH/H2O po volumskem % (20°C, g/mL) ──
+const ETOH_DENSITY=[
+  [0.0,0.99823],[0.1,0.99808],[0.2,0.99793],[0.3,0.99778],[0.4,0.99763],[0.5,0.99749],[0.6,0.99734],[0.7,0.99719],[0.8,0.99704],[0.9,0.9969],
+  [1.0,0.99675],[1.1,0.9966],[1.2,0.99645],[1.3,0.99631],[1.4,0.99616],[1.5,0.99601],[1.6,0.99587],[1.7,0.99572],[1.8,0.99557],[1.9,0.99543],
+  [2.0,0.99528],[2.1,0.99513],[2.2,0.99499],[2.3,0.99485],[2.4,0.9947],[2.5,0.99456],[2.6,0.99442],[2.7,0.99427],[2.8,0.99413],[2.9,0.99398],
+  [3.0,0.99384],[3.1,0.9937],[3.2,0.99355],[3.3,0.99341],[3.4,0.99327],[3.5,0.99313],[3.6,0.99299],[3.7,0.99285],[3.8,0.99271],[3.9,0.99257],
+  [4.0,0.99243],[4.1,0.99229],[4.2,0.99215],[4.3,0.99201],[4.4,0.99188],[4.5,0.99174],[4.6,0.99161],[4.7,0.99147],[4.8,0.99133],[4.9,0.9912],
+  [5.0,0.99106],[5.1,0.99093],[5.2,0.9908],[5.3,0.99066],[5.4,0.99052],[5.5,0.9904],[5.6,0.99026],[5.7,0.99013],[5.8,0.98999],[5.9,0.98986],
+  [6.0,0.98973],[6.1,0.9896],[6.2,0.98947],[6.3,0.98934],[6.4,0.98921],[6.5,0.98908],[6.6,0.98895],[6.7,0.98882],[6.8,0.9887],[6.9,0.98857],
+  [7.0,0.98845],[7.1,0.98832],[7.2,0.98819],[7.3,0.98806],[7.4,0.98794],[7.5,0.98781],[7.6,0.98769],[7.7,0.98756],[7.8,0.98744],[7.9,0.98731],
+  [8.0,0.98719],[8.1,0.98706],[8.2,0.98694],[8.3,0.98682],[8.4,0.9867],[8.5,0.98658],[8.6,0.98645],[8.7,0.98633],[8.8,0.9862],[8.9,0.98608],
+  [9.0,0.98596],[9.1,0.98584],[9.2,0.98572],[9.3,0.9856],[9.4,0.98549],[9.5,0.98536],[9.6,0.98524],[9.7,0.98512],[9.8,0.985],[9.9,0.98488],
+  [10.0,0.98476],[10.1,0.98463],[10.2,0.98452],[10.3,0.9844],[10.4,0.98428],[10.5,0.98416],[10.6,0.98404],[10.7,0.98391],[10.8,0.98379],[10.9,0.98367],
+  [11.0,0.98356],[11.1,0.98344],[11.2,0.98332],[11.3,0.9832],[11.4,0.98308],[11.5,0.98296],[11.6,0.98285],[11.7,0.98273],[11.8,0.98261],[11.9,0.9825],
+  [12.0,0.98238],[12.1,0.98226],[12.2,0.98214],[12.3,0.98203],[12.4,0.98191],[12.5,0.9818],[12.6,0.98168],[12.7,0.98156],[12.8,0.98145],[12.9,0.98133],
+  [13.0,0.98122],[13.1,0.98111],[13.2,0.981],[13.3,0.98089],[13.4,0.98077],[13.5,0.98066],[13.6,0.98054],[13.7,0.98043],[13.8,0.98031],[13.9,0.9802],
+  [14.0,0.98009],[14.1,0.97998],[14.2,0.97987],[14.3,0.97975],[14.4,0.97964],[14.5,0.97953],[14.6,0.97942],[14.7,0.9793],[14.8,0.97919],[14.9,0.97908],
+  [15.0,0.97897],[15.1,0.97886],[15.2,0.97875],[15.3,0.97863],[15.4,0.97852],[15.5,0.97841],[15.6,0.9783],[15.7,0.97819],[15.8,0.97808],[15.9,0.97797],
+  [16.0,0.97786],[16.1,0.97775],[16.2,0.97764],[16.3,0.97753],[16.4,0.97742],[16.5,0.97732],[16.6,0.97721],[16.7,0.9771],[16.8,0.97699],[16.9,0.97689],
+  [17.0,0.97678],[17.1,0.97667],[17.2,0.97657],[17.3,0.97645],[17.4,0.97634],[17.5,0.97624],[17.6,0.97613],[17.7,0.97602],[17.8,0.97591],[17.9,0.97581],
+  [18.0,0.9757],[18.1,0.97559],[18.2,0.97548],[18.3,0.97538],[18.4,0.97527],[18.5,0.97517],[18.6,0.97507],[18.7,0.97496],[18.8,0.97485],[18.9,0.97474],
+  [19.0,0.97464],[19.1,0.97454],[19.2,0.97444],[19.3,0.97433],[19.4,0.97423],[19.5,0.97412],[19.6,0.97402],[19.7,0.97391],[19.8,0.97381],[19.9,0.9737],
+  [20.0,0.97359],[20.1,0.97349],[20.2,0.97339],[20.3,0.97328],[20.4,0.97317],[20.5,0.97306],[20.6,0.97295],[20.7,0.97285],[20.8,0.97275],[20.9,0.97264],
+  [21.0,0.97253],[21.1,0.97242],[21.2,0.97232],[21.3,0.97221],[21.4,0.9721],[21.5,0.97199],[21.6,0.97188],[21.7,0.97178],[21.8,0.97167],[21.9,0.97156],
+  [22.0,0.97145],[22.1,0.97134],[22.2,0.97123],[22.3,0.97113],[22.4,0.97102],[22.5,0.9709],[22.6,0.97079],[22.7,0.97068],[22.8,0.97057],[22.9,0.97047],
+  [23.0,0.97036],[23.1,0.97025],[23.2,0.97013],[23.3,0.97002],[23.4,0.96991],[23.5,0.9698],[23.6,0.9697],[23.7,0.96958],[23.8,0.96947],[23.9,0.96936],
+  [24.0,0.96925],[24.1,0.96913],[24.2,0.96902],[24.3,0.96891],[24.4,0.9688],[24.5,0.96869],[24.6,0.96857],[24.7,0.96846],[24.8,0.96835],[24.9,0.96823],
+  [25.0,0.96812],[25.1,0.96801],[25.2,0.96789],[25.3,0.96778],[25.4,0.96767],[25.5,0.96756],[25.6,0.96744],[25.7,0.96733],[25.8,0.96722],[25.9,0.9671],
+  [26.0,0.96699],[26.1,0.96687],[26.2,0.96676],[26.3,0.96664],[26.4,0.96653],[26.5,0.96641],[26.6,0.9663],[26.7,0.96618],[26.8,0.96606],[26.9,0.96595],
+  [27.0,0.96583],[27.1,0.96571],[27.2,0.96559],[27.3,0.96548],[27.4,0.96536],[27.5,0.96525],[27.6,0.96513],[27.7,0.96501],[27.8,0.96489],[27.9,0.96477],
+  [28.0,0.96465],[28.1,0.96454],[28.2,0.96442],[28.3,0.9643],[28.4,0.96418],[28.5,0.96406],[28.6,0.96393],[28.7,0.96381],[28.8,0.96369],[28.9,0.96358],
+  [29.0,0.96346],[29.1,0.96334],[29.2,0.96322],[29.3,0.9631],[29.4,0.96297],[29.5,0.96285],[29.6,0.96273],[29.7,0.96261],[29.8,0.96249],[29.9,0.96236],
+  [30.0,0.96224],[30.1,0.96212],[30.2,0.96199],[30.3,0.96187],[30.4,0.96175],[30.5,0.96163],[30.6,0.9615],[30.7,0.96138],[30.8,0.96125],[30.9,0.96112],
+  [31.0,0.961],[31.1,0.96087],[31.2,0.96075],[31.3,0.96062],[31.4,0.96049],[31.5,0.96036],[31.6,0.96024],[31.7,0.96011],[31.8,0.95998],[31.9,0.95985],
+  [32.0,0.95972],[32.1,0.95958],[32.2,0.95945],[32.3,0.95932],[32.4,0.9592],[32.5,0.95906],[32.6,0.95893],[32.7,0.9588],[32.8,0.95866],[32.9,0.95852],
+  [33.0,0.95839],[33.1,0.95826],[33.2,0.95812],[33.3,0.95799],[33.4,0.95785],[33.5,0.95771],[33.6,0.95758],[33.7,0.95745],[33.8,0.95731],[33.9,0.95717],
+  [34.0,0.95703],[34.1,0.95689],[34.2,0.95676],[34.3,0.95662],[34.4,0.95648],[34.5,0.95634],[34.6,0.95619],[34.7,0.95605],[34.8,0.95591],[34.9,0.95577],
+  [35.0,0.95563],[35.1,0.95549],[35.2,0.95535],[35.3,0.95521],[35.4,0.95506],[35.5,0.95492],[35.6,0.95478],[35.7,0.95463],[35.8,0.95449],[35.9,0.95434],
+  [36.0,0.95419],[36.1,0.95405],[36.2,0.9539],[36.3,0.95375],[36.4,0.9536],[36.5,0.95346],[36.6,0.95331],[36.7,0.95316],[36.8,0.95301],[36.9,0.95287],
+  [37.0,0.95272],[37.1,0.95257],[37.2,0.95242],[37.3,0.95227],[37.4,0.95211],[37.5,0.95196],[37.6,0.95181],[37.7,0.95166],[37.8,0.95151],[37.9,0.95135],
+  [38.0,0.9512],[38.1,0.95104],[38.2,0.95089],[38.3,0.95074],[38.4,0.95058],[38.5,0.95043],[38.6,0.95027],[38.7,0.95011],[38.8,0.94996],[38.9,0.9498],
+  [39.0,0.94964],[39.1,0.94949],[39.2,0.94933],[39.3,0.94917],[39.4,0.94901],[39.5,0.94885],[39.6,0.94869],[39.7,0.94853],[39.8,0.94837],[39.9,0.94821],
+  [40.0,0.94805],[40.1,0.94789],[40.2,0.94773],[40.3,0.94757],[40.4,0.94741],[40.5,0.94725],[40.6,0.94708],[40.7,0.94692],[40.8,0.94676],[40.9,0.94659],
+  [41.0,0.94643],[41.1,0.94627],[41.2,0.9461],[41.3,0.94594],[41.4,0.94577],[41.5,0.9456],[41.6,0.94544],[41.7,0.94527],[41.8,0.9451],[41.9,0.94494],
+  [42.0,0.94477],[42.1,0.9446],[42.2,0.94443],[42.3,0.94427],[42.4,0.9441],[42.5,0.94393],[42.6,0.94376],[42.7,0.94359],[42.8,0.94342],[42.9,0.94325],
+  [43.0,0.94308],[43.1,0.94291],[43.2,0.94274],[43.3,0.94256],[43.4,0.94239],[43.5,0.94222],[43.6,0.94205],[43.7,0.94187],[43.8,0.94169],[43.9,0.94152],
+  [44.0,0.94135],[44.1,0.94117],[44.2,0.94099],[44.3,0.94081],[44.4,0.94064],[44.5,0.94046],[44.6,0.94028],[44.7,0.94011],[44.8,0.93993],[44.9,0.93975],
+  [45.0,0.93957],[45.1,0.9394],[45.2,0.93922],[45.3,0.93903],[45.4,0.93885],[45.5,0.93867],[45.6,0.93849],[45.7,0.93831],[45.8,0.93813],[45.9,0.93794],
+  [46.0,0.93776],[46.1,0.93758],[46.2,0.93739],[46.3,0.93721],[46.4,0.93703],[46.5,0.93684],[46.6,0.93666],[46.7,0.93647],[46.8,0.93629],[46.9,0.9361],
+  [47.0,0.93591],[47.1,0.93573],[47.2,0.93554],[47.3,0.93536],[47.4,0.93516],[47.5,0.93498],[47.6,0.93479],[47.7,0.93461],[47.8,0.93441],[47.9,0.93423],
+  [48.0,0.93404],[48.1,0.93385],[48.2,0.93366],[48.3,0.93347],[48.4,0.93328],[48.5,0.93308],[48.6,0.9329],[48.7,0.9327],[48.8,0.93251],[48.9,0.93232],
+  [49.0,0.93213],[49.1,0.93194],[49.2,0.93174],[49.3,0.93154],[49.4,0.93136],[49.5,0.93116],[49.6,0.93095],[49.7,0.93076],[49.8,0.93056],[49.9,0.93036],
+  [50.0,0.93017],[50.1,0.92997],[50.2,0.92977],[50.3,0.92958],[50.4,0.92938],[50.5,0.92918],[50.6,0.92898],[50.7,0.92879],[50.8,0.92859],[50.9,0.92839],
+  [51.0,0.92818],[51.1,0.92798],[51.2,0.92778],[51.3,0.92759],[51.4,0.92739],[51.5,0.92719],[51.6,0.92699],[51.7,0.92678],[51.8,0.92658],[51.9,0.92637],
+  [52.0,0.92617],[52.1,0.92597],[52.2,0.92577],[52.3,0.92556],[52.4,0.92537],[52.5,0.92517],[52.6,0.92496],[52.7,0.92476],[52.8,0.92455],[52.9,0.92435],
+  [53.0,0.92415],[53.1,0.92394],[53.2,0.92373],[53.3,0.92353],[53.4,0.92332],[53.5,0.92312],[53.6,0.92291],[53.7,0.92271],[53.8,0.9225],[53.9,0.92229],
+  [54.0,0.92209],[54.1,0.92188],[54.2,0.92167],[54.3,0.92147],[54.4,0.92126],[54.5,0.92105],[54.6,0.92084],[54.7,0.92063],[54.8,0.92042],[54.9,0.92021],
+  [55.0,0.91999],[55.1,0.91979],[55.2,0.91958],[55.3,0.91937],[55.4,0.91915],[55.5,0.91895],[55.6,0.91874],[55.7,0.91852],[55.8,0.91831],[55.9,0.9181],
+  [56.0,0.91789],[56.1,0.91768],[56.2,0.91747],[56.3,0.91725],[56.4,0.91704],[56.5,0.91682],[56.6,0.91661],[56.7,0.91639],[56.8,0.91618],[56.9,0.91597],
+  [57.0,0.91575],[57.1,0.91554],[57.2,0.91532],[57.3,0.9151],[57.4,0.91489],[57.5,0.91467],[57.6,0.91446],[57.7,0.91424],[57.8,0.91403],[57.9,0.91381],
+  [58.0,0.91358],[58.1,0.91337],[58.2,0.91315],[58.3,0.91293],[58.4,0.91271],[58.5,0.91249],[58.6,0.91227],[58.7,0.91206],[58.8,0.91183],[58.9,0.9116],
+  [59.0,0.91138],[59.1,0.91116],[59.2,0.91094],[59.3,0.91072],[59.4,0.9105],[59.5,0.91027],[59.6,0.91005],[59.7,0.90982],[59.8,0.9096],[59.9,0.90938],
+  [60.0,0.90916],[60.1,0.90893],[60.2,0.90871],[60.3,0.90848],[60.4,0.90826],[60.5,0.90803],[60.6,0.90781],[60.7,0.90758],[60.8,0.90736],[60.9,0.90713],
+  [61.0,0.90691],[61.1,0.90668],[61.2,0.90646],[61.3,0.90622],[61.4,0.90599],[61.5,0.90577],[61.6,0.90554],[61.7,0.90532],[61.8,0.90509],[61.9,0.90486],
+  [62.0,0.90463],[62.1,0.9044],[62.2,0.90417],[62.3,0.90395],[62.4,0.90371],[62.5,0.90348],[62.6,0.90326],[62.7,0.90303],[62.8,0.90279],[62.9,0.90256],
+  [63.0,0.90234],[63.1,0.9021],[63.2,0.90187],[63.3,0.90163],[63.4,0.90141],[63.5,0.90117],[63.6,0.90094],[63.7,0.90071],[63.8,0.90048],[63.9,0.90025],
+  [64.0,0.90001],[64.1,0.89977],[64.2,0.89954],[64.3,0.89931],[64.4,0.89908],[64.5,0.89884],[64.6,0.89861],[64.7,0.89837],[64.8,0.89814],[64.9,0.89791],
+  [65.0,0.89767],[65.1,0.89743],[65.2,0.8972],[65.3,0.89696],[65.4,0.89672],[65.5,0.89649],[65.6,0.89626],[65.7,0.89602],[65.8,0.89578],[65.9,0.89555],
+  [66.0,0.89531],[66.1,0.89507],[66.2,0.89483],[66.3,0.89459],[66.4,0.89435],[66.5,0.89411],[66.6,0.89387],[66.7,0.89363],[66.8,0.89339],[66.9,0.89315],
+  [67.0,0.89292],[67.1,0.89268],[67.2,0.89243],[67.3,0.89219],[67.4,0.89195],[67.5,0.89171],[67.6,0.89147],[67.7,0.89122],[67.8,0.89098],[67.9,0.89074],
+  [68.0,0.8905],[68.1,0.89025],[68.2,0.89001],[68.3,0.88977],[68.4,0.88952],[68.5,0.88928],[68.6,0.88903],[68.7,0.88879],[68.8,0.88855],[68.9,0.8883],
+  [69.0,0.88805],[69.1,0.88781],[69.2,0.88756],[69.3,0.88732],[69.4,0.88707],[69.5,0.88682],[69.6,0.88658],[69.7,0.88632],[69.8,0.88608],[69.9,0.88583],
+  [70.0,0.88559],[70.1,0.88533],[70.2,0.88509],[70.3,0.88484],[70.4,0.88458],[70.5,0.88434],[70.6,0.88409],[70.7,0.88384],[70.8,0.88359],[70.9,0.88334],
+  [71.0,0.88309],[71.1,0.88284],[71.2,0.88258],[71.3,0.88233],[71.4,0.88208],[71.5,0.88183],[71.6,0.88158],[71.7,0.88132],[71.8,0.88107],[71.9,0.88081],
+  [72.0,0.88056],[72.1,0.88031],[72.2,0.88005],[72.3,0.8798],[72.4,0.87954],[72.5,0.87929],[72.6,0.87903],[72.7,0.87878],[72.8,0.87852],[72.9,0.87826],
+  [73.0,0.87801],[73.1,0.87775],[73.2,0.87749],[73.3,0.87724],[73.4,0.87697],[73.5,0.87672],[73.6,0.87646],[73.7,0.8762],[73.8,0.87594],[73.9,0.87569],
+  [74.0,0.87542],[74.1,0.87516],[74.2,0.87491],[74.3,0.87465],[74.4,0.87439],[74.5,0.87412],[74.6,0.87387],[74.7,0.8736],[74.8,0.87335],[74.9,0.87308],
+  [75.0,0.87282],[75.1,0.87256],[75.2,0.8723],[75.3,0.87204],[75.4,0.87177],[75.5,0.87151],[75.6,0.87125],[75.7,0.87098],[75.8,0.87071],[75.9,0.87045],
+  [76.0,0.87019],[76.1,0.86992],[76.2,0.86966],[76.3,0.86939],[76.4,0.86912],[76.5,0.86885],[76.6,0.86859],[76.7,0.86832],[76.8,0.86805],[76.9,0.86778],
+  [77.0,0.86751],[77.1,0.86724],[77.2,0.86697],[77.3,0.86671],[77.4,0.86644],[77.5,0.86617],[77.6,0.8659],[77.7,0.86562],[77.8,0.86535],[77.9,0.86508],
+  [78.0,0.86481],[78.1,0.86453],[78.2,0.86426],[78.3,0.86399],[78.4,0.86356],[78.5,0.86336],[78.6,0.86316],[78.7,0.86289],[78.8,0.86261],[78.9,0.86234],
+  [79.0,0.86206],[79.1,0.86179],[79.2,0.86151],[79.3,0.86124],[79.4,0.86096],[79.5,0.86069],[79.6,0.86041],[79.7,0.86012],[79.8,0.85984],[79.9,0.85957],
+  [80.0,0.85929],[80.1,0.85901],[80.2,0.85873],[80.3,0.85846],[80.4,0.85818],[80.5,0.85789],[80.6,0.85761],[80.7,0.85733],[80.8,0.85705],[80.9,0.85677],
+  [81.0,0.85649],[81.1,0.8562],[81.2,0.85592],[81.3,0.85564],[81.4,0.85536],[81.5,0.85506],[81.6,0.85478],[81.7,0.8545],[81.8,0.85422],[81.9,0.85393],
+  [82.0,0.85364],[82.1,0.85336],[82.2,0.85307],[82.3,0.85278],[82.4,0.8525],[82.5,0.85222],[82.6,0.85192],[82.7,0.85164],[82.8,0.85136],[82.9,0.85106],
+  [83.0,0.85077],[83.1,0.85049],[83.2,0.8502],[83.3,0.84991],[83.4,0.84962],[83.5,0.84932],[83.6,0.84903],[83.7,0.84874],[83.8,0.84844],[83.9,0.84815],
+  [84.0,0.84787],[84.1,0.84757],[84.2,0.84727],[84.3,0.84698],[84.4,0.84668],[84.5,0.84639],[84.6,0.84608],[84.7,0.84579],[84.8,0.84549],[84.9,0.8452],
+  [85.0,0.84489],[85.1,0.84459],[85.2,0.84429],[85.3,0.84399],[85.4,0.84369],[85.5,0.84339],[85.6,0.84308],[85.7,0.84278],[85.8,0.84248],[85.9,0.84217],
+  [86.0,0.84188],[86.1,0.84157],[86.2,0.84126],[86.3,0.84095],[86.4,0.84065],[86.5,0.84035],[86.6,0.84004],[86.7,0.83973],[86.8,0.83942],[86.9,0.83912],
+  [87.0,0.83881],[87.1,0.8385],[87.2,0.83818],[87.3,0.83787],[87.4,0.83756],[87.5,0.83725],[87.6,0.83694],[87.7,0.83663],[87.8,0.83632],[87.9,0.83601],
+  [88.0,0.83569],[88.1,0.83537],[88.2,0.83505],[88.3,0.83473],[88.4,0.83442],[88.5,0.8341],[88.6,0.83379],[88.7,0.83347],[88.8,0.83315],[88.9,0.83282],
+  [89.0,0.83251],[89.1,0.83219],[89.2,0.83186],[89.3,0.83154],[89.4,0.83121],[89.5,0.83089],[89.6,0.83056],[89.7,0.83024],[89.8,0.82991],[89.9,0.82958],
+  [90.0,0.82925],[90.1,0.82893],[90.2,0.82859],[90.3,0.82826],[90.4,0.82792],[90.5,0.82759],[90.6,0.82726],[90.7,0.82692],[90.8,0.82658],[90.9,0.82625],
+  [91.0,0.8259],[91.1,0.82556],[91.2,0.82522],[91.3,0.82488],[91.4,0.82453],[91.5,0.82419],[91.6,0.82384],[91.7,0.8235],[91.8,0.82315],[91.9,0.82281],
+  [92.0,0.82246],[92.1,0.82212],[92.2,0.82177],[92.3,0.82141],[92.4,0.82106],[92.5,0.82071],[92.6,0.82035],[92.7,0.82],[92.8,0.81964],[92.9,0.81929],
+  [93.0,0.81893],[93.1,0.81856],[93.2,0.81821],[93.3,0.81784],[93.4,0.81748],[93.5,0.81711],[93.6,0.81675],[93.7,0.81638],[93.8,0.81601],[93.9,0.81563],
+  [94.0,0.81526],[94.1,0.81488],[94.2,0.81451],[94.3,0.81413],[94.4,0.81375],[94.5,0.81337],[94.6,0.81299],[94.7,0.8126],[94.8,0.81222],[94.9,0.81183],
+  [95.0,0.81145],[95.1,0.81105],[95.2,0.81067],[95.3,0.81027],[95.4,0.80988],[95.5,0.80949],[95.6,0.8091],[95.7,0.80869],[95.8,0.8083],[95.9,0.8079],
+  [96.0,0.80749],[96.1,0.80709],[96.2,0.80668],[96.3,0.80627],[96.4,0.80586],[96.5,0.80546],[96.6,0.80505],[96.7,0.80462],[96.8,0.80421],[96.9,0.80379],
+  [97.0,0.80336],[97.1,0.80294],[97.2,0.80252],[97.3,0.80208],[97.4,0.80165],[97.5,0.80122],[97.6,0.80079],[97.7,0.80035],[97.8,0.79991],[97.9,0.79945],
+  [98.0,0.79901],[98.1,0.79855],[98.2,0.79809],[98.3,0.79764],[98.4,0.79717],[98.5,0.79672],[98.6,0.79625],[98.7,0.79577],[98.8,0.79529],[98.9,0.79481],
+  [99.0,0.79432],[99.1,0.79384],[99.2,0.79336],[99.3,0.79287],[99.4,0.79237],[99.5,0.79188],[99.6,0.79137],[99.7,0.79087],[99.8,0.79038],[99.9,0.78987],
+  [100.0,0.78934]
+];
+function etohDensity(volPct){
+  for(let i=0;i<ETOH_DENSITY.length-1;i++){
+    const [p0,d0]=ETOH_DENSITY[i],[p1,d1]=ETOH_DENSITY[i+1];
+    if(volPct>=p0&&volPct<=p1){const t=(volPct-p0)/(p1-p0);return d0+t*(d1-d0);}
+  }
+  return 0.9530;
+}
+// Masni % iz volumskega: mas% = vol% × ρ_EtOH / ρ_raztopine
+// ρ_EtOH (abs.) = 0.78927 g/mL
+function volToMas(volPct){
+  const gostota=etohDensity(volPct);
+  return round(volPct*0.78927/gostota,3);
+}
+function calcAAE(volL,volPct){return round(volL*volPct/100,4);}
+function calcTrosarina(aae,volL){if(!volL)return 0;return round(aae/(volL/100),6);}
+
+// AAE tinkture — vedno 30 vol% EtOH, 50 mL/kom
+const TINKTURA_VOL_PCT=30;
+const TINKTURA_VOL_KOM=0.050; // L na kos
+
+function calcDNTinktura(){
+  const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
+  if(!kom){
+    document.getElementById('dnAAETinkture').value='';
+    calcDNBilanca();
+    return;
+  }
+  const volT=kom*TINKTURA_VOL_KOM;          // skupni volumen tinktur
+  const aaeT=calcAAE(volT,TINKTURA_VOL_PCT); // AAE = V × 30%
+  document.getElementById('dnAAETinkture').value=
+    `${aaeT.toFixed(4)} L  (${kom} × 0,050 L × 30%)`;
+  calcDNBilanca();
+}
+
+function calcDNBilanca(){
+  const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
+  const aaeVhod=parseNum(document.getElementById('dnLAAE')?.value);
+  const izgube=parseNum(document.getElementById('dnIzgube')?.value||'0');
+  const el=document.getElementById('dnBilanca');
+  if(!aaeVhod){el.style.display='none';return;}
+
+  const volT=kom*TINKTURA_VOL_KOM;
+  const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
+  const razlika=round(aaeVhod-aaeT-izgube,4);
+  const ok=Math.abs(razlika)<0.005;
+
+  el.style.display='';
+  el.style.background=ok?'rgba(58,107,74,.08)':Math.abs(razlika)<0.1?'rgba(175,132,85,.06)':'rgba(139,58,42,.06)';
+  el.style.border=`1px solid ${ok?'rgba(58,107,74,.2)':Math.abs(razlika)<0.1?'rgba(175,132,85,.3)':'rgba(139,58,42,.2)'}`;
+  el.style.borderRadius='8px';
+  el.style.padding='.5rem .6rem';
+  el.style.marginBottom='.4rem';
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.72rem">
+      <span style="color:var(--muted)">Vhodni AAE:</span>
+      <span style="text-align:right;font-weight:600">${aaeVhod.toFixed(4)} L</span>
+      <span style="color:var(--muted)">AAE v tinktaurah (trošar.):</span>
+      <span style="text-align:right;color:var(--accent);font-weight:600">− ${aaeT.toFixed(4)} L</span>
+      <span style="color:var(--muted)">Izgube (za regeneracijo):</span>
+      <span style="text-align:right;color:var(--muted)">− ${izgube.toFixed(4)} L</span>
+      <span style="border-top:1px solid var(--border);padding-top:.25rem;font-weight:500">
+        ${ok?'✓ Bilanca zaprta':Math.abs(razlika)<0.1?'≈ Manjša razlika':'⚠ Razlika'}:
+      </span>
+      <span style="text-align:right;font-weight:700;border-top:1px solid var(--border);padding-top:.25rem;color:${ok?'var(--success)':Math.abs(razlika)<0.1?'var(--muted)':'var(--danger)'}">
+        ${razlika>=0?'+':''}${razlika.toFixed(4)} L AAE ${ok?'✓':''}
+      </span>
+    </div>
+    ${!ok?`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">
+      Bilanca se zapre ko: tinktura + izgube = vhodni AAE.<br>
+      Izgube so interna evidenca — na etanol bilanco vplivajo samo tinkture.
+    </div>`:''}`;
+}
+
+function knjizVrnjen(){
+  const aae=window._dnVrnjenAAE||0;
+  if(!aae){toast('Ni kaj knjižiti');return;}
+  const oznaka=document.getElementById('dnOznaka')?.value||'DN';
+  const datum=document.getElementById('dnDatum')?.value||todayISO();
+  // Vrnjen iz procesa je ~30 vol% (isto kot tinktura)
+  const volPct=TINKTURA_VOL_PCT;
+  const volL=round(aae/(volPct/100),3);
+  const e={
+    id:uid(),datum,
+    tip:'vrnjen',
+    dokument:oznaka,
+    opomba:`Vrnjen iz procesa ekstrakcije · ${oznaka}`,
+    kolicina:volL,pct:volPct,lAAE:aae,
+    trosarina:calcTrosarina(aae,volL),cena:0,
+  };
+  etanolKnjiga.push(e);
+  save();
+  renderEtStats();
+  toast(`✓ Knjiženo: +${volL.toFixed(3)} L @ ${volPct}vol% (${aae.toFixed(4)} L AAE) → zaloga`);
+  window._dnVrnjenAAE=0;
+  calcDNBilanca();
+}
+
+// ── DN CALC ──
+function calcDN(){
+  const masaKg=parseNum(document.getElementById('dnMasaEtOH').value);
+  const volPct=parseNum(document.getElementById('dnPctEtOH').value);
+  if(!masaKg||!volPct){
+    ['dnGostota','dnVolume','dnLAAE'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('dnCalcHint').textContent='';
+    return;
+  }
+  const gostota=etohDensity(volPct);       // g/mL = kg/L
+  const volL=round(masaKg/gostota,3);      // V = m/ρ
+  const aae=calcAAE(volL,volPct);          // AAE = V × vol%/100
+  const tros=calcTrosarina(aae,volL);
+  document.getElementById('dnGostota').value=gostota.toFixed(5)+' g/mL';
+  document.getElementById('dnVolume').value=volL.toFixed(3)+' L';
+  document.getElementById('dnLAAE').value=aae.toFixed(4)+' L';
+  document.getElementById('dnCalcHint').textContent=
+    `ρ(${volPct} vol%) = ${gostota.toFixed(5)} g/mL · AAE/hL: ${tros.toFixed(5)}`;
+  calcDNBilanca();
+
+  // Posodobi indikator zaloge
+  const aaeZaloga=calcEtZaloga();
+  const aaeRez=calcEtRezervirano();
+  const aaeProsto=round(aaeZaloga-aaeRez,4);
+  const indEl=document.getElementById('etZaloгаDN');
+  if(indEl){
+    const ok=aae<=aaeProsto;
+    indEl.textContent=`Prosto: ${aaeProsto.toFixed(4)} L AAE · Potrebno: ${aae.toFixed(4)} L AAE${ok?' ✓':' ⛔ PREMALO'}`;
+    indEl.style.background=ok?'rgba(58,107,74,.08)':'rgba(139,58,42,.08)';
+    indEl.style.color=ok?'var(--success)':'var(--danger)';
+  }
+}
+
+// ── ETANOL CALC ──
+let etVnosNacin='masa';
+
+function setEtVnos(nacin){
+  etVnosNacin=nacin;
+  document.getElementById('etMasaField').style.display=nacin==='masa'?'':'none';
+  document.getElementById('etVolField').style.display=nacin==='vol'?'':'none';
+  document.getElementById('etTogMasa').classList.toggle('active',nacin==='masa');
+  document.getElementById('etTogVol').classList.toggle('active',nacin==='vol');
+  document.getElementById('etKolLabel').textContent=nacin==='masa'?'Volumen (L)':'Masa (kg)';
+  calcEt();
+}
+
+function calcEt(){
+  const pct=parseNum(document.getElementById('etPct')?.value||'');
+  if(!pct){
+    ['etGostota','etKolicina','etLAAE','etMasPct'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    return;
+  }
+  const gostota=etohDensity(pct);
+  let volL=0,masaKg=0;
+  if(etVnosNacin==='masa'){
+    masaKg=parseNum(document.getElementById('etMasa')?.value||'');
+    if(!masaKg)return;
+    volL=round(masaKg/gostota,3);
+    document.getElementById('etKolicina').value=volL.toFixed(3)+' L';
+  } else {
+    volL=parseNum(document.getElementById('etVolVnos')?.value||'');
+    if(!volL)return;
+    masaKg=round(volL*gostota,3);
+    document.getElementById('etKolicina').value=masaKg.toFixed(3)+' kg';
+  }
+  const masPct=volToMas(pct);
+  const aae=calcAAE(volL,pct);
+  document.getElementById('etGostota').value=gostota.toFixed(5)+' g/mL';
+  document.getElementById('etLAAE').value=aae.toFixed(4)+' L';
+  document.getElementById('etMasPct').value=masPct.toFixed(3)+' mas%';
+}
+
+function onEtTipChange(){
+  const tip=document.getElementById('etTip').value;
+  document.getElementById('etNabavaFields').style.display=
+    tip==='izguba'?'none':'';
+}
+
+// ── TAB ──
+function switchTab(id,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  else document.getElementById('nav-'+id)?.classList.add('active');
+  currentTab=id;
+  if(id==='dn'){renderDNStats();renderDN();}
+  if(id==='etanol'){renderEtStats();renderEtanol();}
+  if(id==='materiali'){renderMateriali();}
+  if(id==='oprema'){renderOprema();}
+}
+
+// ── SHEET ──
+function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+
+// ── DN FILTER ──
+function setDNFilter(f,btn){
+  dnFilter=f;dnPage=0;
+  document.querySelectorAll('.fpill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDN();
+}
+
+// ── RENDER DN STATS ──
+function renderDNStats(){
+  const odprti=workOrders.filter(d=>d.status==='odprt').length;
+  const zakljuceni=workOrders.filter(d=>d.status==='zakljucen').length;
+  const preneseni=workOrders.filter(d=>d.status==='prenos').length;
+  const letosniAAE=workOrders
+    .filter(d=>d.datum&&d.datum.startsWith(new Date().getFullYear().toString()))
+    .reduce((s,d)=>s+(d.lAAE||0),0);
+  document.getElementById('dnStatsGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Odprti</div><div class="stat-value warn">${odprti}</div></div>
+    <div class="stat-card"><div class="stat-label">Zaključeni</div><div class="stat-value ok">${zakljuceni}</div></div>
+    <div class="stat-card"><div class="stat-label">Preneseni → Zaloga</div><div class="stat-value">${preneseni}</div></div>
+    <div class="stat-card"><div class="stat-label">AAE letos</div><div class="stat-value">${letosniAAE.toFixed(2)} L</div></div>`;
+}
+
+// ── RENDER DN LIST ──
+function renderDN(){
+  let rows=workOrders;
+  if(dnFilter==='odprt')rows=rows.filter(d=>d.status==='odprt');
+  if(dnFilter==='zakljucen')rows=rows.filter(d=>d.status==='zakljucen');
+  if(dnFilter==='prenos')rows=rows.filter(d=>d.status==='prenos');
+  rows=[...rows].sort((a,b)=>b.datum.localeCompare(a.datum));
+
+  const total=rows.length;
+  const pages=Math.ceil(total/DN_PER_PAGE)||1;
+  if(dnPage>=pages)dnPage=0;
+  const page=rows.slice(dnPage*DN_PER_PAGE,(dnPage+1)*DN_PER_PAGE);
+
+  const el=document.getElementById('dnList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">📋</div><div class="et">Ni delovnih nalogov</div><div class="es">Dodaj z gumbom + Nov DN</div></div>`;
+    document.getElementById('dnPager').innerHTML='';
+    return;
+  }
+
+  el.innerHTML=page.map(d=>{
+    const statusCls=`status-${d.status}`;
+    const statusLabel=d.status==='odprt'?'Odprt':d.status==='zakljucen'?'Zaključen':'Prenesen';
+    return`<div class="dn-card">
+      <div class="dn-header" onclick="openDNDetail('${d.id}')">
+        <div>
+          <div class="dn-num">${d.oznaka}</div>
+          <div class="dn-meta">${fmtDate(d.datum)}</div>
+        </div>
+        <div class="dn-info">
+          <div class="dn-name">${d.namen}</div>
+          <div class="dn-meta">${d.serijaGobe||'—'} · ${d.masaGobe||'?'} kg · ${d.serijaAlc||'?'}</div>
+        </div>
+        <div class="dn-right">
+          <div class="status-badge ${statusCls}">${statusLabel}</div>
+          <div class="dn-meta" style="margin-top:.3rem">${d.lAAE?d.lAAE.toFixed(3)+' L AAE':''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pager
+  const pager=document.getElementById('dnPager');
+  if(pages<=1){pager.innerHTML=`<span class="pager-info">${total} nalogov</span>`;return;}
+  let ph=`<span class="pager-info">${total} nalogov</span>`;
+  if(dnPage>0)ph+=`<button class="fpill" onclick="dnPage--;renderDN()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===dnPage?' active':''}" onclick="dnPage=${i};renderDN()">${i+1}</button>`;
+  if(dnPage<pages-1)ph+=`<button class="fpill" onclick="dnPage++;renderDN()">›</button>`;
+  pager.innerHTML=ph;
+}
+
+// ── OPEN DN SHEET ──
+let editingDNId=null;
+function openDNSheet(id){
+  editingDNId=id||null;
+  const d=id?workOrders.find(x=>x.id===id):null;
+  document.getElementById('dnSheetTitle').textContent=d?'Uredi DN':'Nov delovni nalog';
+  document.getElementById('dnOznaka').value=d?.oznaka||nextDNNum();
+  document.getElementById('dnDatum').value=d?.datum||todayISO();
+  document.getElementById('dnNamen').value=d?.namen||'Ekstrakcija Reishi';
+  document.getElementById('dnVrstaGobe').value=d?.vrstaGobe||'Reishi';
+  updateDNNamen();
+  if(d?.namen)document.getElementById('dnNamen').value=d.namen;
+  document.getElementById('dnSerijaGobe').value=d?.serijaGobe||'';
+  document.getElementById('dnMasaGobe').value=d?.masaGobe||'';
+  document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
+  document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
+  document.getElementById('dnKolAlc').value=d?.kolAlc||'';
+  document.getElementById('dnStekAlc').value=d?.stekAlc||'bela';
+  document.getElementById('dnVitCAlc').value=d?.vitCAlc||'';
+  document.getElementById('dnLecitinAlc').value=d?.lecitinAlc||'';
+  document.getElementById('dnKolGly').value=d?.kolGly||'';
+  document.getElementById('dnStekGly').value=d?.stekGly||'bela';
+  document.getElementById('dnVitCGly').value=d?.vitCGly||'';
+  document.getElementById('dnLecitinGly').value=d?.lecitinGly||'';
+  document.getElementById('dnIzgube').value=d?.izgube||'';
+  document.getElementById('dnCenaAlc').value=d?.cenaAlc||settings.cenaAlc||31.9;
+  document.getElementById('dnCenaGly').value=d?.cenaGly||settings.cenaGly||33.9;
+  document.getElementById('dnOpomba').value=d?.opomba||'';
+  document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
+  document.getElementById('dnSerijaAlc').value=d?.serijaAlc||'';
+  calcDN();
+  const aaeProsto=round(calcEtZaloga()-calcEtRezervirano(),4);
+  const indEl=document.getElementById('etZaloгаDN');
+  if(indEl){
+    indEl.textContent=`Prosto: ${aaeProsto.toFixed(4)} L AAE`;
+    indEl.style.background='rgba(58,107,74,.08)';
+    indEl.style.color='var(--success)';
+  }
+  openSheet('dnOverlay');
+}
+
+function nextDNNum(){
+  const y=new Date().getFullYear().toString().slice(2);
+  const existing=workOrders
+    .map(d=>d.oznaka)
+    .filter(o=>o&&o.startsWith('DN-'+y+'-'))
+    .map(o=>parseInt(o.split('-')[2])||0);
+  const next=(existing.length?Math.max(...existing):0)+1;
+  return`DN-${y}-${String(next).padStart(3,'0')}`;
+}
+
+function updateDNNamen(){
+  const g=document.getElementById('dnVrstaGobe').value;
+  document.getElementById('dnNamen').value='Ekstrakcija '+g;
+}
+
+// ── SAVE DN ──
+function saveDN(){
+  const masaEtOH=parseNum(document.getElementById('dnMasaEtOH').value);
+  const volPct=parseNum(document.getElementById('dnPctEtOH').value)||96.25;
+  const gostota=etohDensity(volPct);
+  const volL=masaEtOH?round(masaEtOH/gostota,3):0;
+  const lAAE=calcAAE(volL,volPct);
+
+  const d={
+    id:editingDNId||uid(),
+    oznaka:document.getElementById('dnOznaka').value.trim().toUpperCase(),
+    datum:document.getElementById('dnDatum').value,
+    namen:document.getElementById('dnNamen').value,
+    vrstaGobe:document.getElementById('dnVrstaGobe').value,
+    serijaGobe:document.getElementById('dnSerijaGobe').value.trim(),
+    masaGobe:parseNum(document.getElementById('dnMasaGobe').value),
+    serijaAlc:document.getElementById('dnSerijaAlc').value.trim().toUpperCase(),
+    kolAlc:parseInt(document.getElementById('dnKolAlc').value)||0,
+    stekAlc:document.getElementById('dnStekAlc').value,
+    vitCAlc:parseNum(document.getElementById('dnVitCAlc').value||'0'),
+    lecitinAlc:parseNum(document.getElementById('dnLecitinAlc').value||'0'),
+    kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
+    stekGly:document.getElementById('dnStekGly').value,
+    vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
+    lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
+    izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
+    aaeTinkture:calcAAE((parseInt(document.getElementById('dnKolAlc').value)||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT),
+    volTinkture:(parseInt(document.getElementById('dnKolAlc').value)||0)*TINKTURA_VOL_KOM,
+    masaEtOH,pctEtOH:volPct,gostota,
+    volL,volPct:round(volPct,2),lAAE,
+    trosarina:calcTrosarina(lAAE,volL),
+    cenaAlc:parseNum(document.getElementById('dnCenaAlc').value),
+    cenaGly:parseNum(document.getElementById('dnCenaGly').value),
+    opomba:document.getElementById('dnOpomba').value.trim(),
+    datumZakljucka:document.getElementById('dnDatumZakljucka').value||'',
+    status:'odprt',
+    ustvarjen:new Date().toISOString(),
+  };
+
+  if(!d.oznaka){toast('⚠ Vnesi oznako DN');return;}
+  if(!d.masaEtOH||d.masaEtOH<=0){toast('⚠ Vnesi maso etanola');return;}
+
+  // Preveri zalogo etanola — samo za nov DN (ne za urejanje)
+  if(!editingDNId&&d.lAAE>0){
+    const aaeZaloga=calcEtZaloga();
+    const aaeRez=calcEtRezervirano();
+    const aaeProsto=aaeZaloga-aaeRez;
+    if(d.lAAE>aaeProsto){
+      const primanjkljaj=(d.lAAE-aaeProsto).toFixed(4);
+      if(!confirm(`⛔ Premalo etanola!\n\nProsto (AAE): ${aaeProsto.toFixed(4)} L\nPotrebno (AAE): ${d.lAAE.toFixed(4)} L\nPrimanjkljaj: ${primanjkljaj} L AAE\n\nVseeno nadaljuješ?`)){return;}
+    }
+  }
+
+  if(editingDNId){
+    const idx=workOrders.findIndex(x=>x.id===editingDNId);
+    if(idx>=0){d.status=workOrders[idx].status;workOrders[idx]=d;}
+  } else {
+    workOrders.unshift(d);
+  }
+
+  save();
+  closeSheet('dnOverlay');
+  renderDNStats();renderDN();
+  renderEtStats();
+  toast('✓ DN shranjen · etanol rezerviran');
+}
+
+// ── DN DETAIL ──
+function openDNDetail(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  document.getElementById('dnDetailTitle').textContent=d.oznaka;
+
+  const canClose=d.status==='odprt';
+  const canTransfer=d.status==='zakljucen';
+  // Preveri ali je etanol izhod že knjižen za ta DN
+  const etKnjizen=etanolKnjiga.some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
+  const canKnjizEt=d.status==='zakljucen'&&!etKnjizen;
+
+  document.getElementById('dnDetailBody').innerHTML=`
+    <div class="stats-grid" style="margin-bottom:.5rem">
+      <div class="stat-card"><div class="stat-label">Datum</div><div class="stat-value" style="font-size:1.1rem">${fmtDate(d.datum)}</div></div>
+      <div class="stat-card"><div class="stat-label">Status</div><div class="status-badge status-${d.status}" style="display:inline-block;margin-top:.3rem">${d.status==='odprt'?'Odprt':d.status==='zakljucen'?'Zaključen':'Prenesen → Zaloga'}</div></div>
+    </div>
+
+    <div class="slabel">Surovine</div>
+    <table class="mini-table">
+      <tr><td>Namen</td><td>${d.namen}</td></tr>
+      <tr><td>Serija gobe</td><td>${d.serijaGobe||'—'}</td></tr>
+      <tr><td>Masa gobe</td><td>${d.masaGobe} kg</td></tr>
+      <tr><td>Masa EtOH</td><td>${d.masaEtOH} kg</td></tr>
+    </table>
+
+    <div class="slabel">Alkoholna tinktura</div>
+    <table class="mini-table">
+      <tr><td>AAE tinkture</td><td>${d.aaeTinkture?d.aaeTinkture.toFixed(4)+' L':'—'}</td></tr>
+      <tr><td>EtOH tinkture</td><td>30 vol% (fiksno)</td></tr>
+      <tr><td style="color:var(--accent);font-weight:500">Trošarina (${settings.trosarinaEUR} €/hL)</td><td style="color:var(--accent);font-weight:600">${d.trosarinaEUR?d.trosarinaEUR.toFixed(2)+' €':'—'}</td></tr>
+      <tr><td>L AAE vhod. EtOH</td><td><strong>${d.lAAE?.toFixed(4)||'—'}</strong></td></tr>
+    </table>
+
+    <div class="slabel">Zaloga app</div>
+    <table class="mini-table">
+      <tr><td>Alkohol (kom.)</td><td>${d.kolAlc} × ${d.stekAlc==='crna'?'⬛':'⬜'} ${d.stekAlc||'bela'}</td></tr>
+      <tr><td>Vit. C alc</td><td>${d.vitCAlc?d.vitCAlc+' g':'—'}</td></tr>
+      <tr><td>Lecitin alc</td><td>${d.lecitinAlc?d.lecitinAlc+' g':'—'}</td></tr>
+      <tr><td>Glicerin (kom.)</td><td>${d.kolGly} × ${d.stekGly==='crna'?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>
+      <tr><td>Vit. C gly</td><td>${d.vitCGly?d.vitCGly+' g':'—'}</td></tr>
+      <tr><td>Lecitin gly</td><td>${d.lecitinGly?d.lecitinGly+' g':'—'}</td></tr>
+      <tr><td>Cena alc</td><td>${d.cenaAlc?d.cenaAlc.toFixed(2)+' €':'—'}</td></tr>
+      <tr><td>Cena gly</td><td>${d.cenaGly?d.cenaGly.toFixed(2)+' €':'—'}</td></tr>
+    </table>
+
+    ${d.opomba?`<div class="slabel">Opomba</div><div style="font-size:.8rem;color:var(--muted)">${d.opomba}</div>`:''}
+
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+      <button class="bsave" onclick="openDNSheet('${d.id}');closeSheet('dnDetailOverlay')">✎ Uredi</button>
+      ${canClose?`<button class="bsave green" onclick="zaklucDN('${d.id}')">✓ Zaključi DN</button>`:''}
+      ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
+      ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
+      ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
+      <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
+    </div>`;
+
+  openSheet('dnDetailOverlay');
+}
+
+function knjizEtanolIzhod(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  // Preveri da ni že knjiženo
+  if(etanolKnjiga.some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka)){
+    toast('⚠ Etanol izhod je že knjižen za ta DN');return;
+  }
+  const aaeTinkture=calcAAE((d.kolAlc||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT);
+  const aaeIzgube=d.izgube||0;
+  const aaeSkupaj=round(aaeTinkture+aaeIzgube,4);
+  const volPct=d.volPct||d.pctEtOH||96.25;
+  const gostota=etohDensity(volPct);
+  const volSkupaj=round(aaeSkupaj/(volPct/100),3);
+  etanolKnjiga.push({
+    id:uid(),
+    datum:d.datumZakljucka||d.datum,
+    tip:'izhod_dn',
+    dokument:d.oznaka,
+    opomba:`Ekstrakcija ${d.vrstaGobe} · ${d.kolAlc||0} kom alc · izgube: ${aaeIzgube.toFixed(4)} L AAE`,
+    kolicina:volSkupaj,pct:volPct,gostota,
+    lAAE:aaeSkupaj,aaeTinkture,aaeIzgube,
+  });
+  save();
+  closeSheet('dnDetailOverlay');
+  renderEtStats();renderEtanol();
+  toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
+}
+
+function zaklucDN(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  const aaeTinkture=calcAAE((d.kolAlc||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT);
+  const aaeIzgube=d.izgube||0;
+  const aaeSkupaj=round(aaeTinkture+aaeIzgube,4);
+  const trosarinaEUR=round(aaeTinkture/100*settings.trosarinaEUR,4);
+
+  // Vknjižimo izhod v etanol knjigo
+  const volPct=d.volPct||d.pctEtOH||96.25;
+  const gostota=etohDensity(volPct);
+  const volSkupaj=round(aaeSkupaj/(volPct/100),3);
+  etanolKnjiga.push({
+    id:uid(),
+    datum:d.datumZakljucka||todayISO(),
+    tip:'izhod_dn',
+    dokument:d.oznaka,
+    opomba:`Ekstrakcija ${d.vrstaGobe} · ${d.kolAlc||0} kom alc · izgube: ${aaeIzgube.toFixed(4)} L AAE`,
+    kolicina:volSkupaj,
+    pct:volPct,
+    gostota,
+    lAAE:aaeSkupaj,
+    aaeTinkture,
+    aaeIzgube,
+  });
+
+  d.status='zakljucen';
+  d.datumZakljucka=d.datumZakljucka||todayISO();
+  d.aaeTinkture=aaeTinkture;
+  d.trosarinaEUR=trosarinaEUR;
+  const stMatov=knjizMaterjaleIzhod(d);
+  save();
+  closeSheet('dnDetailOverlay');
+  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  toast(`✓ DN zaključen · trošarina: ${trosarinaEUR.toFixed(2)} € · ${stMatov} materialov knjiženih`);
+}
+
+function prenesDN(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  // Ustvari JSON paket za prenos v Zaloga app
+  const prenos={
+    type:'dn_prenos',
+    version:1,
+    dn:{
+      id:d.id,
+      oznaka:d.oznaka,
+      datum:d.datum,
+      vrstaGobe:d.vrstaGobe,
+      serijaAlc:d.serijaAlc,
+      kolAlc:d.kolAlc,
+      kolGly:d.kolGly,
+      cenaAlc:d.cenaAlc,
+      cenaGly:d.cenaGly,
+      lAAE:d.lAAE,
+      volPct:d.volPct,
+      masaGobe:d.masaGobe,
+      serijaGobe:d.serijaGobe,
+    }
+  };
+  // Shrani v localStorage pod ključem ki ga Zaloga app bere
+  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  pending.push(prenos);
+  localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
+
+  d.status='prenos';
+  save();
+  closeSheet('dnDetailOverlay');
+  renderDNStats();renderDN();
+  toast('→ DN prenesen v Zaloga app · odpri Zaloga za uvoz');
+}
+
+function deleteDN(id){
+  if(!confirm('Izbriši ta delovni nalog?'))return;
+  workOrders=workOrders.filter(x=>x.id!==id);
+  save();
+  closeSheet('dnDetailOverlay');
+  renderDNStats();renderDN();
+  toast('Nalog izbrisan');
+}
+
+// ── ETANOL STATS ──
+function calcEtZaloga(){
+  let aae=0;
+  etanolKnjiga.forEach(e=>{
+    if(e.tip==='nabava'||e.tip==='regeneracija') aae+=e.lAAE||0;
+    else if(e.tip==='izhod_dn') aae-=e.lAAE||0;
+  });
+  return Math.max(0,round(aae,4));
+}
+
+function calcEtRezervirano(){
+  // Rezervirano = odprti DN, v L AAE vhodnega etanola
+  let aae=0;
+  workOrders.filter(d=>d.status==='odprt').forEach(d=>{
+    aae+=d.lAAE||0;
+  });
+  return aae;
+}
+
+function renderEtStats(){
+  const aaeZaloga=calcEtZaloga();
+  const aaeRez=calcEtRezervirano();
+  const year=new Date().getFullYear().toString();
+  const nabavaAAE=etanolKnjiga
+    .filter(e=>e.tip==='nabava'&&e.datum?.startsWith(year))
+    .reduce((s,e)=>s+(e.lAAE||0),0);
+  document.getElementById('etZaloga').textContent=aaeZaloga.toFixed(4)+' L AAE';
+  document.getElementById('etAAE').textContent=
+    (aaeRez>0?`🔒 Rezerv.: ${aaeRez.toFixed(4)} L AAE`:'Ni odprtih DN');
+  document.getElementById('etNabava').textContent=nabavaAAE.toFixed(4)+' L AAE';
+}
+
+// ── RENDER ETANOL ──
+function renderEtanol(){
+  const rows=[...etanolKnjiga].sort((a,b)=>b.datum.localeCompare(a.datum));
+  const total=rows.length;
+  const pages=Math.ceil(total/ET_PER_PAGE)||1;
+  if(etPage>=pages)etPage=0;
+  const page=rows.slice(etPage*ET_PER_PAGE,(etPage+1)*ET_PER_PAGE);
+
+  const el=document.getElementById('etanolList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">🧪</div><div class="et">Ni vnosov etanola</div></div>`;
+    document.getElementById('etPager').innerHTML='';
+    return;
+  }
+
+  el.innerHTML=page.map(e=>{
+    const isIn=e.tip==='nabava'||e.tip==='regeneracija';
+    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':'Izhod';
+    const tipCls=e.tip==='nabava'?'eth-nabava':e.tip==='regeneracija'?'eth-reg':'eth-izhod';
+    const isDN=e.tip==='izhod_dn';
+    // Za DN izhode poiščemo DN podatke
+    const dn=isDN?workOrders.find(x=>x.oznaka===e.dokument):null;
+    const dnSub=dn?`<div style="font-size:.62rem;color:var(--muted);margin-top:.1rem">${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}</div>`:'';
+    return`<div class="eth-card" style="flex-wrap:wrap;gap:.4rem">
+      <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
+        <div class="eth-type ${tipCls}">${tipLabel}</div>
+        <div class="eth-info">
+          <div class="eth-doc">${e.dokument||'—'}</div>
+          ${dnSub}
+          <div class="eth-detail">${fmtDate(e.datum)}</div>
+        </div>
+        <div class="eth-qty">
+          <div class="eth-L" style="color:${isIn?'var(--success)':'var(--danger)'}">${isIn?'+':'-'}${(e.lAAE||0).toFixed(4)} L AAE</div>
+          ${e.strosek?`<div class="eth-aae" style="color:var(--muted)">${e.strosek.toFixed(2)} €</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:.3rem;width:100%;justify-content:flex-end">
+        ${!isDN?`<button onclick="openEtanolSheet('${e.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">✎ Uredi</button>`:''}
+        <button onclick="deleteEtanol('${e.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid rgba(139,58,42,.3);border-radius:6px;background:none;cursor:pointer;color:var(--danger)">✕ Briši</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const pager=document.getElementById('etPager');
+  if(pages<=1){pager.innerHTML=`<span class="pager-info">${total} vnosov</span>`;return;}
+  let ph=`<span class="pager-info">${total} vnosov</span>`;
+  if(etPage>0)ph+=`<button class="fpill" onclick="etPage--;renderEtanol()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===etPage?' active':''}" onclick="etPage=${i};renderEtanol()">${i+1}</button>`;
+  if(etPage<pages-1)ph+=`<button class="fpill" onclick="etPage++;renderEtanol()">›</button>`;
+  pager.innerHTML=ph;
+}
+
+// ── OPEN ETANOL SHEET ──
+let editingEtId=null;
+function openEtanolSheet(id){
+  editingEtId=id||null;
+  const e=id?etanolKnjiga.find(x=>x.id===id):null;
+  document.getElementById('etTip').value=e?.tip||'nabava';
+  document.getElementById('etDatum').value=e?.datum||todayISO();
+  document.getElementById('etDok').value=e?.dokument||'';
+  document.getElementById('etMasa').value=e?.masa||'';
+  document.getElementById('etVolVnos').value='';
+  document.getElementById('etPct').value=e?.pct||'';
+  document.getElementById('etStrosek').value=e?.strosek||'';
+  document.getElementById('etOpomba').value=e?.opomba||'';
+  setEtVnos('masa'); // reset na masa vnos
+  document.getElementById('etNabavaFields').style.display='';
+  calcEt();
+  openSheet('etanolOverlay');
+}
+
+function deleteEtanol(id){
+  const e=etanolKnjiga.find(x=>x.id===id);
+  if(!e)return;
+  const tipLabel=e.tip==='nabava'?'nabavo':e.tip==='regeneracija'?'regeneracijo':'vnos';
+  if(!confirm(`Izbriši ta ${tipLabel}?\n\n${fmtDate(e.datum)} · ${(e.kolicina||0).toFixed(3)} L\n\nTo bo vplivalo na zalogo etanola!`))return;
+  etanolKnjiga=etanolKnjiga.filter(x=>x.id!==id);
+  save();
+  renderEtStats();renderEtanol();
+  toast('Vnos izbrisan');
+}
+
+// ── SAVE ETANOL ──
+function saveEtanol(){
+  const tip=document.getElementById('etTip').value;
+  const pct=parseNum(document.getElementById('etPct')?.value||'');
+  if(!pct){toast('⚠ Vnesi vol%');return;}
+
+  const gostota=etohDensity(pct);
+  let volL=0,masaKg=0;
+  if(etVnosNacin==='masa'){
+    masaKg=parseNum(document.getElementById('etMasa')?.value||'');
+    if(!masaKg){toast('⚠ Vnesi maso');return;}
+    volL=round(masaKg/gostota,3);
+  } else {
+    volL=parseNum(document.getElementById('etVolVnos')?.value||'');
+    if(!volL){toast('⚠ Vnesi volumen');return;}
+    masaKg=round(volL*gostota,3);
+  }
+  const aae=calcAAE(volL,pct);
+
+  const e={
+    id:editingEtId||uid(),
+    datum:document.getElementById('etDatum').value,
+    tip,
+    dokument:document.getElementById('etDok').value.trim(),
+    opomba:document.getElementById('etOpomba').value.trim(),
+    masa:masaKg,pct,gostota,
+    kolicina:volL,lAAE:aae,
+    masPct:volToMas(pct),
+    trosarina:calcTrosarina(aae,volL),
+    strosek:parseNum(document.getElementById('etStrosek').value||'0'),
+  };
+
+  if(editingEtId){
+    const idx=etanolKnjiga.findIndex(x=>x.id===editingEtId);
+    if(idx>=0)etanolKnjiga[idx]=e;
+  } else {
+    etanolKnjiga.push(e);
+  }
+  save();
+  closeSheet('etanolOverlay');
+  renderEtStats();renderEtanol();
+  toast(editingEtId?'✓ Vnos posodobljen':'✓ Etanol knjižen');
+  editingEtId=null;
+}
+
+function clearAll(){
+  if(!confirm('Izbriši VSE podatke DN app?\n\nDelovni nalogi + etanol knjiga bosta izbrisana.'))return;
+  workOrders=[];etanolKnjiga=[];materiali=[];oprema=[];
+  localStorage.removeItem('gm_dn_workorders');
+  localStorage.removeItem('gm_dn_etanol');
+  localStorage.removeItem('gm_dn_materiali');
+  localStorage.removeItem('gm_dn_oprema');
+  save();
+  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  toast('Vsi podatki izbrisani');
+}
+
+// ── BACKUP ──
+function openPorociloFilter(){
+  const today=todayISO();
+  if(!document.getElementById('porDo').value) document.getElementById('porDo').value=today;
+  openSheet('porociloOverlay');
+}
+
+function genEtanolPorocilo(){
+  const od=document.getElementById('porOd')?.value||'';
+  const doo=document.getElementById('porDo')?.value||'';
+  const showNabava=document.getElementById('porNabava')?.checked!==false;
+  const showRegen=document.getElementById('porRegen')?.checked!==false;
+  const showEkstr=document.getElementById('porEkstr')?.checked!==false;
+
+  let vsi=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Tip filter
+  vsi=vsi.filter(e=>{
+    if(e.tip==='nabava') return showNabava;
+    if(e.tip==='regeneracija') return showRegen;
+    if(e.tip==='izhod_dn') return showEkstr;
+    return true;
+  });
+  // Datum filter — računamo tekočo zalogo od začetka, prikažemo samo v obdobju
+  const vsiChronological=[...etanolKnjiga].sort((a,b)=>a.datum.localeCompare(b.datum));
+  // Preračunaj začetno stanje (pred "od")
+  let zalogaPred=0;
+  if(od){
+    vsiChronological.forEach(e=>{
+      if(e.datum>=od) return;
+      if(e.tip==='nabava'||e.tip==='regeneracija') zalogaPred+=e.lAAE||0;
+      else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
+    });
+  }
+  if(od) vsi=vsi.filter(e=>e.datum>=od);
+  if(doo) vsi=vsi.filter(e=>e.datum<=doo);
+
+  let tekocaZaloga=zalogaPred;
+  const rows=vsi.map(e=>{
+    const isIn=e.tip==='nabava'||e.tip==='regeneracija';
+    const aae=e.lAAE||0;
+    if(isIn) tekocaZaloga=round(tekocaZaloga+aae,4);
+    else tekocaZaloga=round(tekocaZaloga-aae,4);
+
+    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':'Izhod';
+    const dn=e.tip==='izhod_dn'?workOrders.find(x=>x.oznaka===e.dokument):null;
+    const opis=dn?`${e.dokument} · ${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}`:e.dokument||'—';
+
+    return`<tr style="border-bottom:1px solid #ede6d6;font-size:.8rem">
+      <td style="padding:.3rem .5rem;white-space:nowrap">${fmtDate(e.datum)}</td>
+      <td style="padding:.3rem .5rem">${tipLabel}</td>
+      <td style="padding:.3rem .5rem;color:#7a6f60;font-size:.75rem">${opis}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#3a6b4a;font-weight:600">${isIn?'+'+aae.toFixed(4):'—'}</td>
+      <td style="padding:.3rem .5rem;text-align:right;color:#8b3a2a;font-weight:600">${!isIn?'−'+aae.toFixed(4):'—'}</td>
+      <td style="padding:.3rem .5rem;text-align:right;font-weight:700;color:${tekocaZaloga>=0?'#1a4a2a':'#8b3a2a'}">${tekocaZaloga.toFixed(4)}</td>
+    </tr>`;
+  }).join('');
+
+  const zalogaKonec=tekocaZaloga;
+  const skupajVhod=vsi.filter(e=>e.tip==='nabava'||e.tip==='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
+  const skupajIzhod=vsi.filter(e=>e.tip!=='nabava'&&e.tip!=='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Materialna kartica etanola</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:800px;margin:0 auto;color:#1a1209;font-size:12px}
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #1a1209}
+.doc-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300}.doc-logo span{color:#af8455}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.25rem}
+.kpi{border:1px solid #ede6d6;border-radius:4px;padding:.4rem .6rem;text-align:center}
+.kpi-label{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;margin-bottom:.15rem}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem}
+table{width:100%;border-collapse:collapse}
+th{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;padding:.3rem .5rem;border-bottom:2px solid #1a1209;text-align:left;background:#f9f7f3}
+th.num{text-align:right}
+.subtotal{background:#f5f0e8;font-weight:700;border-top:2px solid #1a1209}
+.subtotal td{padding:.35rem .5rem}
+.printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer}
+@media print{.printbtn{display:none}body{padding:.5rem 1rem}}
+</style></head><body>
+<div class="doc-header">
+  <div>
+    <div class="doc-logo">Go<span>Mushroom</span></div>
+    <div style="font-size:.65rem;color:#7a6f60">GoMushroom, Rok Golob s.p.</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:.9rem;font-weight:500">Materialna kartica etanola</div>
+    <div style="font-size:.65rem;color:#7a6f60">Vse količine v L AAE · Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    ${od||doo?`<div style="font-size:.62rem;color:#af8455;margin-top:.15rem">Obdobje: ${od?fmtDate(od):'začetek'} – ${doo?fmtDate(doo):'danes'}${zalogaPred?` · Začetna zaloga: ${zalogaPred.toFixed(4)} L AAE`:''}</div>`:''}
+    ${(!showNabava||!showRegen||!showEkstr)?`<div style="font-size:.62rem;color:#af8455">Prikazano: ${[showNabava?'nabave':'',showRegen?'regeneracije':'',showEkstr?'ekstrakcije':''].filter(Boolean).join(', ')}</div>`:''}
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-label">Skupaj vhod</div><div class="kpi-val" style="color:#3a6b4a">+${skupajVhod.toFixed(4)} L</div></div>
+  <div class="kpi"><div class="kpi-label">Skupaj izhod</div><div class="kpi-val" style="color:#8b3a2a">−${skupajIzhod.toFixed(4)} L</div></div>
+  <div class="kpi"><div class="kpi-label">Zaloga AAE</div><div class="kpi-val" style="color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)} L</div></div>
+</div>
+
+<table>
+  <tr>
+    <th style="width:10%">Datum</th>
+    <th style="width:13%">Vrsta</th>
+    <th>Opis / Dokument</th>
+    <th class="num" style="width:13%">Vhod (AAE)</th>
+    <th class="num" style="width:13%">Izhod (AAE)</th>
+    <th class="num" style="width:13%">Zaloga (AAE)</th>
+  </tr>
+  ${rows}
+  <tr class="subtotal">
+    <td colspan="3">Skupaj</td>
+    <td style="text-align:right;color:#3a6b4a">+${skupajVhod.toFixed(4)}</td>
+    <td style="text-align:right;color:#8b3a2a">−${skupajIzhod.toFixed(4)}</td>
+    <td style="text-align:right;color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)}</td>
+  </tr>
+</table>
+<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(!win){
+    // Safari popup blocker — fallback: download
+    const a=document.createElement('a');
+    a.href=url;a.download='etanol-kartica.html';a.click();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+// ── MATERIALI ──
+const MAT_ENOTA={
+  steklenicka_bela:'kom',steklenicka_crna:'kom',
+  etiketa_reishi:'kom',etiketa_bradovec:'kom',etiketa_chaga:'kom',etiketa_smrekovi:'kom',
+  goba_reishi:'kg',goba_bradovec:'kg',goba_chaga:'kg',goba_smrekovi:'kg',
+  vitc:'g',lecitin:'g',glicerin:'L'
+};
+const MAT_IME={
+  steklenicka_bela:'⬜ Steklenička bela',steklenicka_crna:'⬛ Steklenička črna',
+  etiketa_reishi:'🏷 Etiketa Reishi',etiketa_bradovec:'🏷 Etiketa Bradovec',
+  etiketa_chaga:'🏷 Etiketa Chaga',etiketa_smrekovi:'🏷 Etiketa Smrekovi vršički',
+  goba_reishi:'🍄 Goba Reishi',goba_bradovec:'🍄 Goba Bradovec',
+  goba_chaga:'🍄 Goba Chaga',goba_smrekovi:'🌿 Smrekovi vršički',
+  
+  vitc:'💊 Vitamin C',lecitin:'🌱 Lecitin',glicerin:'🧴 Glicerin'
+};
+// Kategorija po tipu
+const MAT_KAT={
+  steklenicka_bela:'embalaza',steklenicka_crna:'embalaza',
+  etiketa_reishi:'embalaza',etiketa_bradovec:'embalaza',etiketa_chaga:'embalaza',
+  goba_reishi:'surovina',goba_bradovec:'surovina',goba_chaga:'surovina',
+  vitc:'surovina',lecitin:'surovina',glicerin:'surovina'
+};
+function matKat(tip){return MAT_KAT[tip]||'surovina';}
+
+// Izračun zaloge po tipu
+function calcMatZaloga(tip){
+  const vhodi=materiali.filter(m=>m.tip===tip&&m.smer==='vhod').reduce((s,m)=>s+(m.kolicina||0),0);
+  const izhodi=materiali.filter(m=>m.tip===tip&&m.smer==='izhod').reduce((s,m)=>s+(m.kolicina||0),0);
+  return round(vhodi-izhodi,3);
+}
+
+let matKatFilter='vsi';
+let matFilter='vsi';
+let matPage=0;
+const MAT_PER_PAGE=15;
+
+// Podfilterji po kategoriji
+const MAT_PODFILTER={
+  surovina:[
+    {id:'vsi_s',label:'Vsi'},
+    {id:'goba',label:'🍄 Gobe'},
+    {id:'vitc',label:'💊 Vit.C'},
+    {id:'lecitin',label:'🌱 Lecitin'},
+    {id:'glicerin',label:'🧴 Glicerin'},
+  ],
+  embalaza:[
+    {id:'vsi_e',label:'Vsi'},
+    {id:'steklenicka_bela',label:'⬜ Bele'},
+    {id:'steklenicka_crna',label:'⬛ Črne'},
+    {id:'etiketa',label:'🏷 Etikete'},
+  ]
+};
+
+function setMatKat(kat,btn){
+  matKatFilter=kat;matFilter='vsi';matPage=0;
+  document.querySelectorAll('[id^="mk-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Prikaži podfilter
+  const row=document.getElementById('matFilterRow');
+  const podfilter=MAT_PODFILTER[kat];
+  if(podfilter){
+    row.innerHTML=podfilter.map(p=>
+      `<button class="fpill${p.id==='vsi_s'||p.id==='vsi_e'?' active':''}" onclick="setMatFilter('${p.id}',this)">${p.label}</button>`
+    ).join('');
+  } else {
+    row.innerHTML='';
+  }
+  renderMateriali();
+}
+
+function setMatFilter(f,btn){
+  matFilter=f;matPage=0;
+  document.querySelectorAll('#matFilterRow .fpill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMateriali();
+}
+
+function renderMatZaloga(){
+  const tipi=Object.keys(MAT_IME);
+  const grid=document.getElementById('matZalogaGrid');
+  if(!grid)return;
+  // Pokaži samo tiste ki imajo podatke
+  const zalogeHtml=tipi.map(tip=>{
+    const z=calcMatZaloga(tip);
+    if(z===0&&!materiali.some(m=>m.tip===tip))return'';
+    const enota=MAT_ENOTA[tip]||'';
+    return`<div class="stat-card" style="padding:.4rem .6rem">
+      <div class="stat-label" style="font-size:.58rem">${MAT_IME[tip]}</div>
+      <div class="stat-value ${z<0?'warn':''}" style="font-size:1rem">${z} <span style="font-size:.65rem;color:var(--muted)">${enota}</span></div>
+    </div>`;
+  }).filter(Boolean).join('');
+  grid.innerHTML=zalogeHtml?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${zalogeHtml}</div>`:'';
+}
+
+function renderMateriali(){
+  renderMatZaloga();
+  let rows=[...materiali].sort((a,b)=>b.datum.localeCompare(a.datum));
+  // Kategorija filter
+  if(matKatFilter!=='vsi')rows=rows.filter(m=>matKat(m.tip)===matKatFilter);
+  // Podfilter
+  if(matFilter!=='vsi'&&matFilter!=='vsi_s'&&matFilter!=='vsi_e'){
+    rows=rows.filter(m=>
+      matFilter==='goba'?m.tip.startsWith('goba'):
+      matFilter==='etiketa'?m.tip.startsWith('etiketa'):
+      m.tip===matFilter
+    );
+  }
+  const total=rows.length;
+  const pages=Math.ceil(total/MAT_PER_PAGE)||1;
+  if(matPage>=pages)matPage=0;
+  const page=rows.slice(matPage*MAT_PER_PAGE,(matPage+1)*MAT_PER_PAGE);
+  const el=document.getElementById('matList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni vnosov</div><div class="es">Dodaj z gumbom + Vnos</div></div>`;
+    document.getElementById('matPager').innerHTML='';return;
+  }
+  el.innerHTML=page.map(m=>{
+    const isIn=m.smer==='vhod';
+    const enota=MAT_ENOTA[m.tip]||'';
+    return`<div class="eth-card" style="flex-wrap:wrap;gap:.3rem">
+      <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
+        <div class="eth-type ${isIn?'eth-nabava':'eth-izhod'}" style="min-width:4rem;font-size:.6rem">${isIn?'Nabava':'Izhod'}</div>
+        <div class="eth-info">
+          <div class="eth-doc">${MAT_IME[m.tip]||m.tip}</div>
+          <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${m.opomba?' · '+m.opomba:''}</div>
+        </div>
+        <div class="eth-qty">
+          <div class="eth-L" style="color:${isIn?'var(--success)':'var(--danger)'}">${isIn?'+':'-'}${m.kolicina} ${enota}</div>
+          ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${m.strosek.toFixed(2)} €</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:.3rem;width:100%;justify-content:flex-end">
+        <button onclick="openMaterijalSheet('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">✎ Uredi</button>
+        <button onclick="deleteMaterjal('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid rgba(139,58,42,.3);border-radius:6px;background:none;cursor:pointer;color:var(--danger)">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  const pager=document.getElementById('matPager');
+  if(pages<=1){pager.innerHTML=`<span class="pager-info">${total} vnosov</span>`;return;}
+  let ph=`<span class="pager-info">${total} vnosov</span>`;
+  if(matPage>0)ph+=`<button class="fpill" onclick="matPage--;renderMateriali()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===matPage?' active':''}" onclick="matPage=${i};renderMateriali()">${i+1}</button>`;
+  if(matPage<pages-1)ph+=`<button class="fpill" onclick="matPage++;renderMateriali()">›</button>`;
+  pager.innerHTML=ph;
+}
+
+let editingMatId=null;
+function openMaterijalSheet(id){
+  editingMatId=id||null;
+  const m=id?materiali.find(x=>x.id===id):null;
+  document.getElementById('matSheetTitle').textContent=m?'Uredi vnos':'Vnos materiala';
+  // Nastavi kategorijo in zapolni dropdown
+  const kat=m?MAT_KAT[m.tip]||'surovina':'surovina';
+  document.getElementById('matKatSel').value=kat;
+  onMatKatSelChange();
+  // Nastavi specifičen tip
+  if(m?.tip)document.getElementById('matTip').value=m.tip;
+  document.getElementById('matDatum').value=m?.datum||todayISO();
+  document.getElementById('matDok').value=m?.dokument||'';
+  document.getElementById('matSerijaGobe').value=m?.serijaGobe||'';
+  document.getElementById('matKolicina').value=m?.kolicina||'';
+  document.getElementById('matStrosek').value=m?.strosek||'';
+  document.getElementById('matOpomba').value=m?.opomba||'';
+  onMatTipChange();
+  openSheet('materialiOverlay');
+}
+
+const MAT_OPCIJE={
+  surovina:[
+    {value:'goba_reishi',label:'🍄 Goba Reishi (kg)'},
+    {value:'goba_bradovec',label:'🍄 Goba Resasti bradovec (kg)'},
+    {value:'goba_chaga',label:'🍄 Goba Chaga (kg)'},
+    {value:'goba_smrekovi',label:'🌿 Smrekovi vršički (kg)'},
+    {value:'vitc',label:'💊 Vitamin C (g)'},
+    {value:'lecitin',label:'🌱 Lecitin (g)'},
+    {value:'glicerin',label:'🧴 Glicerin (L)'},
+  ],
+  embalaza:[
+    {value:'steklenicka_bela',label:'⬜ Steklenička bela (kom)'},
+    {value:'steklenicka_crna',label:'⬛ Steklenička črna (kom)'},
+    {value:'etiketa_reishi',label:'🏷 Etiketa Reishi (kom)'},
+    {value:'etiketa_bradovec',label:'🏷 Etiketa Bradovec (kom)'},
+    {value:'etiketa_chaga',label:'🏷 Etiketa Chaga (kom)'},
+    {value:'etiketa_smrekovi',label:'🏷 Etiketa Smrekovi vršički (kom)'},
+  ]
+};
+
+function onMatKatSelChange(){
+  const kat=document.getElementById('matKatSel').value;
+  const sel=document.getElementById('matTip');
+  sel.innerHTML=MAT_OPCIJE[kat].map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  onMatTipChange();
+}
+
+function onMatTipChange(){
+  const tip=document.getElementById('matTip').value;
+  const enota=MAT_ENOTA[tip]||'kom';
+  document.getElementById('matKolLabel').textContent=`Količina (${enota})`;
+  const isGoba=tip.startsWith('goba');
+  const isSurovina=MAT_KAT[tip]==='surovina';
+  document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
+  document.getElementById('matDobaviteljField').style.display=isSurovina?'':'none';
+}
+
+function saveMaterjal(){
+  const tip=document.getElementById('matTip').value;
+  const kolicina=parseNum(document.getElementById('matKolicina').value);
+  if(!kolicina){toast('⚠ Vnesi količino');return;}
+  const m={
+    id:editingMatId||uid(),
+    datum:document.getElementById('matDatum').value,
+    tip,smer:'vhod',
+    dokument:document.getElementById('matDok').value.trim(),
+    serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
+    kolicina,
+    strosek:parseNum(document.getElementById('matStrosek').value||'0'),
+    opomba:document.getElementById('matOpomba').value.trim(),
+  };
+  if(editingMatId){
+    const idx=materiali.findIndex(x=>x.id===editingMatId);
+    if(idx>=0)materiali[idx]=m;
+  } else {
+    materiali.push(m);
+  }
+  save();
+  closeSheet('materialiOverlay');
+  renderMateriali();
+  toast(`✓ ${MAT_IME[tip]||tip}: +${kolicina} ${MAT_ENOTA[tip]||''}`);
+  editingMatId=null;
+}
+
+function deleteMaterjal(id){
+  const m=materiali.find(x=>x.id===id);if(!m)return;
+  if(!confirm(`Izbriši vnos?\n${MAT_IME[m.tip]} · ${m.kolicina} ${MAT_ENOTA[m.tip]||''}`))return;
+  materiali=materiali.filter(x=>x.id!==id);
+  save();renderMateriali();
+  toast('Vnos izbrisan');
+}
+
+// Odštevanje materialov ob zaključku DN
+function knjizMaterjaleIzhod(d){
+  const datum=d.datumZakljucka||d.datum;
+  const dok=d.oznaka;
+  const vrsta=d.vrstaGobe?.toLowerCase()||'';
+
+  // Stekleničke — alc + gly skupaj po tipu
+  const stekAlcTip='steklenicka_'+(d.stekAlc||'bela');
+  const stekGlyTip='steklenicka_'+(d.stekGly||'bela');
+  const skupajBela=(stekAlcTip==='steklenicka_bela'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_bela'?d.kolGly||0:0);
+  const skupajCrna=(stekAlcTip==='steklenicka_crna'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_crna'?d.kolGly||0:0);
+
+  // Etikete
+  const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
+  const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
+
+  // Goba / surovina
+  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+
+  const izhodi=[];
+  if(skupajBela>0)izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
+  if(skupajCrna>0)izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
+  if(skupajEtikete>0)izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
+  if(d.masaGobe>0)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
+  if((d.vitCAlc||0)+(d.vitCGly||0)>0)izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
+  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0)izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
+
+  izhodi.forEach(iz=>{
+    materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',
+      dokument:dok,serijaGobe:iz.serijaGobe||'',kolicina:iz.kolicina,opomba:'DN izhod'});
+  });
+  return izhodi.length;
+}
+
+// ── OPREMA ──
+let opremaFilter='vsi';
+let opremaPage=0;
+const OP_PER_PAGE=15;
+
+function setOpremaFilter(f,btn){
+  opremaFilter=f;opremaPage=0;
+  document.querySelectorAll('[id^="op-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOprema();
+}
+
+function renderOprema(){
+  let rows=[...oprema];
+  if(opremaFilter==='oprema')rows=rows.filter(o=>o.kat==='oprema'||!o.kat);
+  if(opremaFilter==='inventar')rows=rows.filter(o=>o.kat==='inventar');
+  if(opremaFilter==='vzdrz')rows=rows.filter(o=>o.status==='vzdrz');
+  if(opremaFilter==='neaktivna')rows=rows.filter(o=>o.status==='neaktivna');
+  rows.sort((a,b)=>(a.naziv||'').localeCompare(b.naziv||''));
+
+  const total=rows.length;
+  const pages=Math.ceil(total/OP_PER_PAGE)||1;
+  if(opremaPage>=pages)opremaPage=0;
+  const page=rows.slice(opremaPage*OP_PER_PAGE,(opremaPage+1)*OP_PER_PAGE);
+
+  const el=document.getElementById('opremaList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">🔧</div><div class="et">Ni opreme</div><div class="es">Dodaj z gumbom + Dodaj</div></div>`;
+    document.getElementById('opremaPager').innerHTML='';return;
+  }
+
+  const statusIcon={aktivna:'✓',vzdrz:'🔧',neaktivna:'✗'};
+  const statusCls={aktivna:'status-zakljucen',vzdrz:'status-odprt',neaktivna:'status-prenos'};
+
+  el.innerHTML=page.map(o=>{
+    const danes=todayISO();
+    const vzdrz=o.vzdrz&&o.vzdrz<=danes?`<span style="color:var(--danger);font-size:.65rem">⚠ Vzdrž. ${fmtDate(o.vzdrz)}</span>`:'';
+    const garancija=o.garancija?`<span style="font-size:.65rem;color:var(--muted)">Garancija: ${fmtDate(o.garancija)}</span>`:'';
+    return`<div class="dn-card">
+      <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
+        <div class="dn-info">
+          <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
+          <div class="dn-meta">${o.kat==='inventar'?'📎 Drobni inventar':'⚙️ Oprema'}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.dobavitelj?' · '+o.dobavitelj:''}</div>
+          <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
+          <div style="margin-top:.2rem">${vzdrz} ${garancija}</div>
+        </div>
+        <div class="dn-right">
+          <div class="status-badge ${statusCls[o.status]||''}">${statusIcon[o.status]||''} ${o.status==='aktivna'?'Aktivna':o.status==='vzdrz'?'Vzdrž.':'Neaktivna'}</div>
+          ${o.cena?`<div class="dn-meta" style="margin-top:.3rem">${parseFloat(o.cena).toFixed(2)} €</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const pager=document.getElementById('opremaPager');
+  if(pages<=1){pager.innerHTML=`<span class="pager-info">${total} kosov</span>`;return;}
+  let ph=`<span class="pager-info">${total} kosov</span>`;
+  if(opremaPage>0)ph+=`<button class="fpill" onclick="opremaPage--;renderOprema()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===opremaPage?' active':''}" onclick="opremaPage=${i};renderOprema()">${i+1}</button>`;
+  if(opremaPage<pages-1)ph+=`<button class="fpill" onclick="opremaPage++;renderOprema()">›</button>`;
+  pager.innerHTML=ph;
+}
+
+let editingOpremaId=null;
+function openOpremaSheet(id){
+  editingOpremaId=id||null;
+  const o=id?oprema.find(x=>x.id===id):null;
+  document.getElementById('opremaSheetTitle').textContent=o?'Uredi opremo':'Dodaj opremo';
+  document.getElementById('opNaziv').value=o?.naziv||'';
+  document.getElementById('opModel').value=o?.model||'';
+  document.getElementById('opSerijska').value=o?.serijska||'';
+  document.getElementById('opDatumNakupa').value=o?.datumNakupa||'';
+  document.getElementById('opDatumNakupa2').value=o?.datumNakupa||'';
+  document.getElementById('opKolicina').value=o?.kolicina||'';
+  document.getElementById('opDobavitelj').value=o?.dobavitelj||'';
+  document.getElementById('opCena').value=o?.cena||'';
+  document.getElementById('opCenaInv').value=o?.cena||'';
+  document.getElementById('opGarancija').value=o?.garancija||'';
+  document.getElementById('opVzdrz').value=o?.vzdrz||'';
+  document.getElementById('opKat').value=o?.kat||'oprema';
+  document.getElementById('opOpomba').value=o?.opomba||'';
+  onOpKatChange();
+  document.getElementById('opStatus').value=o?.status||'aktivna';
+  openSheet('opremaOverlay');
+}
+
+function onOpKatChange(){
+  const kat=document.getElementById('opKat').value;
+  const isInv=kat==='inventar';
+  document.getElementById('opKolicinaField').style.display=isInv?'':'none';
+  document.getElementById('opOpremaFields').style.display=isInv?'none':'';
+  document.getElementById('opInventarCena').style.display=isInv?'':'none';
+  // Status: inventar nima vzdrževanja
+  const statusSel=document.getElementById('opStatus');
+  if(isInv){
+    statusSel.innerHTML='<option value="aktivna">✓ Aktivna</option><option value="neaktivna">✗ Neaktivna</option>';
+  } else {
+    statusSel.innerHTML='<option value="aktivna">✓ Aktivna</option><option value="vzdrz">🔧 V vzdrževanju</option><option value="neaktivna">✗ Neaktivna</option>';
+  }
+}
+
+function saveOprema(){
+  const naziv=document.getElementById('opNaziv').value.trim();
+  if(!naziv){toast('⚠ Vnesi naziv');return;}
+  const kat=document.getElementById('opKat').value;
+  const isInv=kat==='inventar';
+  const o={
+    id:editingOpremaId||uid(),
+    kat,naziv,
+    model:document.getElementById('opModel').value.trim(),
+    status:document.getElementById('opStatus').value,
+    opomba:document.getElementById('opOpomba').value.trim(),
+    datumNakupa:isInv?document.getElementById('opDatumNakupa').value:document.getElementById('opDatumNakupa2').value,
+    cena:parseNum((isInv?document.getElementById('opCenaInv'):document.getElementById('opCena')).value||'0'),
+    // Samo oprema
+    serijska:isInv?'':document.getElementById('opSerijska').value.trim(),
+    dobavitelj:isInv?'':document.getElementById('opDobavitelj').value.trim(),
+    garancija:isInv?'':document.getElementById('opGarancija').value,
+    vzdrz:isInv?'':document.getElementById('opVzdrz').value,
+    // Samo inventar
+    kolicina:isInv?parseNum(document.getElementById('opKolicina').value||'1'):null,
+  };
+  if(editingOpremaId){
+    const idx=oprema.findIndex(x=>x.id===editingOpremaId);
+    if(idx>=0)oprema[idx]=o;
+  } else {
+    oprema.push(o);
+  }
+  save();
+  closeSheet('opremaOverlay');
+  renderOprema();
+  toast(`✓ ${naziv} shranjen`);
+  editingOpremaId=null;
+}
+
+async function uvozHistoricnih(){
+  toast('⏳ Nalagam…');
+  try{
+    const r=await fetch('/doc/dn_import_2025.json');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    applyImport(data);
+  }catch(e){
+    toast('⚠ Napaka pri nalaganju: '+e.message);
+  }
+}
+
+function applyImport(data){
+  const incomingWO=data.workOrders||[];
+  const incomingEt=data.etanolKnjiga||[];
+  if(!incomingWO.length&&!incomingEt.length){toast('⚠ Ni podatkov za uvoz');return;}
+  const existingOznakas=new Set(workOrders.map(w=>w.oznaka));
+  const noviWO=incomingWO.filter(w=>!existingOznakas.has(w.oznaka));
+  incomingWO.filter(w=>existingOznakas.has(w.oznaka)).forEach(w=>{
+    const i=workOrders.findIndex(x=>x.oznaka===w.oznaka);if(i>=0)workOrders[i]=w;
+  });
+  workOrders.push(...noviWO);
+  workOrders.sort((a,b)=>b.oznaka.localeCompare(a.oznaka));
+  const existingEtIds=new Set(etanolKnjiga.map(e=>e.id));
+  const noviEt=incomingEt.filter(e=>!existingEtIds.has(e.id));
+  etanolKnjiga.push(...noviEt);
+  etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
+  save();
+  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
+}
+
+function importDN(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{applyImport(JSON.parse(e.target.result));}
+    catch(err){toast('⚠ Napaka pri branju JSON');console.error(err);}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function backupDN(){
+  const data={version:1,exportedAt:new Date().toISOString(),workOrders,etanolKnjiga};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download=`gomushroom-dn-${todayISO().replace(/-/g,'')}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast('💾 Backup shranjen');
+}
+
+// ── TOAST ──
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// ── AUTH ──
+const WA_KEY='gm_faceid_cred';
+function b64ToArr(b64){const s=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(s,c=>c.charCodeAt(0));}
+function arrToB64(arr){return btoa(String.fromCharCode(...new Uint8Array(arr))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
+function isFaceIdAvailable(){return!!(window.PublicKeyCredential&&navigator.credentials);}
+async function checkFaceIdAvailable(){try{if(!isFaceIdAvailable())return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+async function registerFaceId(){
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'GoMushroom',id:location.hostname},user:{id:new TextEncoder().encode('gm_user'),name:'gm_user',displayName:'GoMushroom'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});
+    localStorage.setItem(WA_KEY,arrToB64(cred.rawId));
+    return true;
+  }catch(e){console.log('Face ID registration failed:',e.message);return false;}
+}
+async function loginWithFaceId(){
+  const btn=document.getElementById('faceIdBtn');
+  const err=document.getElementById('loginErr');
+  const credId=localStorage.getItem(WA_KEY);
+  if(!credId){err.textContent='Face ID ni registriran.';return;}
+  try{
+    if(btn)btn.textContent='🔒 Preverjam…';
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    await navigator.credentials.get({publicKey:{challenge,rpId:location.hostname,allowCredentials:[{type:'public-key',id:b64ToArr(credId)}],userVerification:'required',timeout:60000}});
+    localStorage.setItem('gm_auth','1');
+    document.getElementById('loginScreen').style.display='none';
+    if(err)err.textContent='';
+    appInit();
+  }catch(e){
+    if(btn)btn.innerHTML='<span style="font-size:1.4rem">🔒</span> Prijava z Face ID';
+    err.textContent='Face ID ni uspel. Uporabi geslo.';
+    setTimeout(()=>err.textContent='',3000);
+  }
+}
+async function setupFaceId(){
+  const available=await checkFaceIdAvailable();
+  if(!available){toast('Face ID ni na voljo na tej napravi.');return;}
+  const ok=await registerFaceId();
+  toast(ok?'✓ Face ID nastavljen!':'Face ID registracija ni uspela.');
+}
+(async function(){
+  const credId=localStorage.getItem(WA_KEY);
+  if(credId&&await checkFaceIdAvailable()){
+    const s=document.getElementById('faceIdSection');
+    if(s)s.style.display='';
+    const ls=document.getElementById('loginScreen');
+    if(ls&&ls.style.display!=='none')setTimeout(loginWithFaceId,500);
+  }
+})();
+const LOGIN_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+async function hashPwd(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function doLogin(){
+  const pwd=document.getElementById('loginPwd')?.value||'';
+  const err=document.getElementById('loginErr');
+  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
+  if(await hashPwd(pwd)===LOGIN_HASH){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    document.getElementById('loginScreen').style.display='none';
+    if(err)err.textContent='';
+    appInit();
+  }else{
+    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
+    document.getElementById('loginPwd').value='';
+  }
+}
+(function(){
+  let auth=null;
+  try{auth=localStorage.getItem('gm_auth');}catch(e){}
+  const validHash='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
+  if(auth==='1'||auth===validHash){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    const ls=document.getElementById('loginScreen');
+    if(ls)ls.style.display='none';
+    appInit();
+  }else{
+    setTimeout(()=>document.getElementById('loginPwd')?.focus(),300);
+  }
+})();
+
+// ── INIT ──
+function appInit(){
+  renderDNStats();
+  renderDN();
+  document.getElementById('dnDatum').value=todayISO();
+}
+function init(){appInit();}
+</script>
+</body>
+</html>

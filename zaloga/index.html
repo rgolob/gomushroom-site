@@ -2436,7 +2436,7 @@ function switchTab(id,el){
   else{const ht=document.querySelector(`.htab[onclick*="'${id}'"]`);if(ht)ht.classList.add('active');}
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='prodaja'){renderOrderRows();if(!_narocila)naloziNarocila();}
-  if(id==='recenzije'){if(!_recenzije)naloziRecenzije();else renderRecenzije();}
+  if(id==='recenzije'){naloziRecenzije();}
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});

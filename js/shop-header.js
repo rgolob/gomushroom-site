@@ -33,7 +33,7 @@
       <div class="brand">
         <a href="/" id="site-logo" class="brand">
           <img src="/assets/logo-h168.webp"
-               alt="GoMushroom" width="84" height="42" fetchpriority="high">
+               alt="GoMushroom" width="112" height="42" fetchpriority="high">
         </a>
       </div>
       <nav id="primary-nav" aria-label="Glavna navigacija">

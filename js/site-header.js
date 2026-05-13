@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       <div class="brand">
         <a href="${homeUrl}" id="site-logo" class="brand">
-          <img src="/assets/logo-h168.webp" alt="GoMushroom" width="112" height="42" fetchpriority="high">
+          <img src="/assets/logo-h168.webp" alt="GoMushroom" width="84" height="42" fetchpriority="high">
         </a>
       </div>
 

@@ -5145,29 +5145,24 @@ function genReport(type){
       const karticaRows=[];
       let tekocaZaloga=zalogaStart;
 
-      // Vse serije in prodaje od začetka leta do konca obdobja, sortirano po datumu
-      const yearStart=od.slice(0,4)+'-01-01';
-      const allBatchesYear=batches.filter(b=>b.productId===p.id&&b.date>=yearStart&&b.date<=doVal&&(b.alc?.qty||0)>0);
-      const allSalesYear=saleGroups.filter(g=>isProdChannel(g)&&g.date>=yearStart&&g.date<=doVal);
-
       // Zberi vse dogodke — serije + B2B posamezno + maloprodaja tedensko
       const RETAIL_CH=new Set(['malo','wp','dar']);
       const B2B_CH=new Set(['velo','kom']);
       const getWeekStart=ds=>{const d=new Date(ds);const dy=d.getDay()||7;d.setDate(d.getDate()-dy+1);return d.toISOString().slice(0,10);};
       const weekLbl=ws=>{const s=new Date(ws),e=new Date(ws);e.setDate(e.getDate()+6);const f=d=>String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.';return f(s)+'–'+f(e);};
       const events=[];
-      allBatchesYear.forEach(b=>{
+      batchesInPeriod.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         if(alloc>0)events.push({date:b.date,type:'prod',batchNum:b.batchNum,qty:alloc});
       });
       // B2B (velo, kom) — vsaka prodaja posebej z dokumentom
-      allSalesYear.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
+      salesInPeriod.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
         events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
       });
       // Maloprodaja (malo, wp, dar) — tedenski seštevek
       const retailWeeks={};
-      allSalesYear.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
+      salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
         const wk=getWeekStart(g.date);
         if(!retailWeeks[wk])retailWeeks[wk]={qty:0,chs:new Set()};

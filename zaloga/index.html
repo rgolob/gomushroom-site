@@ -903,6 +903,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-velo" checked> 🏪 Veleprodaja</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-dar" checked> 🎁 Podaritev</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-int" checked> 🔬 Interni</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-wp" checked> 🌐 Splet</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-kom" checked> 🤝 Komisija</label>
       </div>
       <div class="slabel">Obdobje</div>
       <div class="frow">
@@ -4890,10 +4892,11 @@ function genReport(type){
       if(!showProdaja&&hasAny&&!hasInt)return; // samo int — izpusti prod-only
       if(!showInterno&&hasAny&&!hasProd)return; // samo prod — izpusti int-only
 
-      const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
+      const soldAlc=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldGly=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
@@ -4974,11 +4977,14 @@ function genReport(type){
     if(document.getElementById('rp-velo').checked)chFilter.push('velo');
     if(document.getElementById('rp-dar').checked)chFilter.push('dar');
     if(document.getElementById('rp-int').checked)chFilter.push('int');
+    if(document.getElementById('rp-wp').checked)chFilter.push('wp');
+    if(document.getElementById('rp-kom').checked)chFilter.push('kom');
     const od=document.getElementById('rp-od').value;
     const doVal=document.getElementById('rp-do').value;
     const filterProd=document.getElementById('rp-prod').value;
 
     const filtered=saleGroups.filter(g=>
+      g.status!=='stornirano'&&
       chFilter.includes(g.channel)&&
       (!od||g.date>=od)&&(!doVal||g.date<=doVal)&&
       (!filterProd||g.lines?.some(l=>l.productId===filterProd))
@@ -4998,7 +5004,7 @@ function genReport(type){
       <div class="s-item">
         <div class="s-label">${CH[ch].icon} ${CH[ch].label}</div>
         <div class="s-val">${v.alcQ+v.glyQ} kom.</div>
-        ${showPrices&&(ch==='malo'||ch==='velo')?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
+        ${showPrices&&ch!=='int'&&ch!=='dar'?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
       </div>`).join('');
 
     const totalRev=filtered.reduce((s,g)=>s+(g.total||0),0);
@@ -5016,7 +5022,7 @@ function genReport(type){
           <td><span class="badge b-${g.channel}">${ch.icon}</span></td>
           <td class="num">${l.alc||0}</td>
           <td class="num">${l.gly||0}</td>
-          ${showPrices?`<td class="num">${l.lineTotal?(g.channel==='malo'||g.channel==='velo'?l.lineTotal.toFixed(2)+' €':'—'):'—'}</td>`:''}
+          ${showPrices?`<td class="num">${l.lineTotal&&g.channel!=='int'&&g.channel!=='dar'?l.lineTotal.toFixed(2)+' €':'—'}</td>`:''}
         </tr>`;
       });
     });

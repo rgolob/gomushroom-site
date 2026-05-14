@@ -5244,7 +5244,6 @@ function genReport(type){
             <div class="kpi"><div class="kpi-label" style="color:#1a4a2a">+ Narejeno</div><div class="kpi-val" style="color:#1a4a2a">+${totalNarejeno}</div></div>
             <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− Prodano</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdano}</div></div>
             <div class="kpi"><div class="kpi-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="kpi-val" style="color:${zalogaEnd>0?'#1a4a2a':'#5a4a3a'}">${zalogaEnd}</div></div>
-            <div class="kpi"><div class="kpi-label" style="color:#5a3a1a">🧪 Etanol (30vol%×50ml)</div><div class="kpi-val" style="color:#5a3a1a;font-size:.95rem">${(totalNarejeno*0.015).toFixed(3)} L</div></div>
           </div>
           <table>
             <tr>
@@ -5271,7 +5270,6 @@ function genReport(type){
       <div class="s-item"><div class="s-label">Narejeno</div><div class="s-val" style="color:#1a4a2a">+${grandNarejeno} kom.</div></div>
       <div class="s-item"><div class="s-label">Prodano</div><div class="s-val" style="color:#8b3a2a">−${grandProdano} kom.</div></div>
       <div class="s-item"><div class="s-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#1a4a2a">${grandZaloga} kom.</div></div>
-      <div class="s-item"><div class="s-label" style="color:#5a3a1a">🧪 Etanol skupaj</div><div class="s-val" style="color:#5a3a1a">${(grandNarejeno*0.015).toFixed(3)} L</div></div>
     </div>
     ${productCards||'<p style="color:#7a6f60;padding:1rem">Ni alkoholnih tinktur z razporejeno prodajno zalogo.</p>'}`;
   }

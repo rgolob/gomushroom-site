@@ -1187,21 +1187,83 @@ async function potrdiKomisijoPlacilo(groupId){
   if(!g)return;
   if(g.invoiceNum){toast('Račun je bil že izdan: '+g.invoiceNum);return;}
   if(g.status==='stornirano'){toast('Komisija je stornirana.');return;}
-  const ok=await showConfirm(`💶 Potrdi plačilo komisije\n\nPartner: ${g.buyer||'—'}\nZnesek: ${g.total?.toFixed(2)||'—'} €\n\nIzdal se bo račun in prodaja bo zaprta.`,'Potrdi plačilo');
-  if(!ok)return;
-  const date=todayISO();
+  const lines=(g.lines||[]).filter(l=>(l.alc||0)+(l.gly||0)>0);
+  window._komPayLines=lines;
+  window._komPayGroupId=groupId;
+  document.getElementById('komPlaciloOverlay')?.remove();
+  const el=document.createElement('div');
+  el.id='komPlaciloOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  const priceRows=lines.map((l,i)=>{
+    const rows=[];
+    if(l.alc)rows.push(`<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:500">🥃 ${l.productName}</div><div style="font-size:.72rem;color:var(--muted)">${l.alc} kom</div></div>
+        <input type="number" id="kpp-${i}-alc" step="0.01" min="0" value="${l.alcPrice||''}" placeholder="0.00" oninput="updateKomPayTotal()" style="width:80px;text-align:right;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.9rem;outline:none">
+        <span style="font-size:.72rem;color:var(--muted);width:20px">€</span>
+        <span id="kpp-lt-${i}-alc" style="font-size:.82rem;font-weight:500;min-width:62px;text-align:right">—</span>
+      </div>`);
+    if(l.gly)rows.push(`<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:500">🌿 ${l.productName}</div><div style="font-size:.72rem;color:var(--muted)">${l.gly} kom</div></div>
+        <input type="number" id="kpp-${i}-gly" step="0.01" min="0" value="${l.glyPrice||''}" placeholder="0.00" oninput="updateKomPayTotal()" style="width:80px;text-align:right;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.9rem;outline:none">
+        <span style="font-size:.72rem;color:var(--muted);width:20px">€</span>
+        <span id="kpp-lt-${i}-gly" style="font-size:.82rem;font-weight:500;min-width:62px;text-align:right">—</span>
+      </div>`);
+    return rows.join('');
+  }).join('');
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem calc(var(--sab,0px)+1.25rem);width:100%;max-width:480px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;margin-bottom:.2rem">💶 Potrdi plačilo komisije</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">${g.buyer||'—'} · ${g.deliveryNum||g.extDelivery||'—'}</div>
+    <div style="font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Datum računa</div>
+    <input type="date" id="kpp-date" value="${todayISO()}" style="width:100%;box-sizing:border-box;padding:.45rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;margin-bottom:.9rem;outline:none">
+    <div style="font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Cena / kos</div>
+    <div style="margin-bottom:.75rem">${priceRows||'<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Ni produktnih linij.</div>'}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:rgba(58,107,74,.08);border-radius:8px;margin-bottom:1rem">
+      <span style="font-size:.85rem;font-weight:500">Skupaj za račun</span>
+      <span id="kpp-total" style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:#3a6b4a">0.00 €</span>
+    </div>
+    <div style="display:flex;gap:.75rem">
+      <button onclick="document.getElementById('komPlaciloOverlay').remove()" style="flex:1;padding:.75rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+      <button onclick="_komPayConfirm()" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:#3a6b4a;color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Potrdi in izdaj račun</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  updateKomPayTotal();
+}
+
+function updateKomPayTotal(){
+  const lines=window._komPayLines||[];
+  let total=0;
+  lines.forEach((l,i)=>{
+    if(l.alc){const p=parseFloat(document.getElementById(`kpp-${i}-alc`)?.value)||0;const lt=round(l.alc*p,2);total+=lt;const e=document.getElementById(`kpp-lt-${i}-alc`);if(e)e.textContent=lt.toFixed(2)+' €';}
+    if(l.gly){const p=parseFloat(document.getElementById(`kpp-${i}-gly`)?.value)||0;const lt=round(l.gly*p,2);total+=lt;const e=document.getElementById(`kpp-lt-${i}-gly`);if(e)e.textContent=lt.toFixed(2)+' €';}
+  });
+  const te=document.getElementById('kpp-total');if(te)te.textContent=round(total,2).toFixed(2)+' €';
+}
+
+async function _komPayConfirm(){
+  const g=saleGroups.find(x=>x.id===window._komPayGroupId);if(!g)return;
+  const lines=window._komPayLines||[];
+  const date=document.getElementById('kpp-date')?.value||todayISO();
+  let grandTotal=0;
+  lines.forEach((l,i)=>{
+    if(l.alc)l.alcPrice=parseFloat(document.getElementById(`kpp-${i}-alc`)?.value)||0;
+    if(l.gly)l.glyPrice=parseFloat(document.getElementById(`kpp-${i}-gly`)?.value)||0;
+    l.lineTotal=round((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),2);
+    grandTotal+=l.lineTotal;
+  });
+  g.total=round(grandTotal,2);g.fullTotal=g.total;
+  document.getElementById('komPlaciloOverlay')?.remove();
   const invoiceNum=nextInvNum(g.channel,date);
   const invoiceId=uid();
   const inv={id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,email:g.email,phone:g.phone,
     address:g.address,street:g.street,post:g.post,date,total:g.total,groupId:g.id,
     extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus:'caka'};
   invoices.unshift(inv);
-  g.invoiceNum=invoiceNum;
-  g.invoiceId=invoiceId;
+  g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
   save();
-  sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice komisija failed:',e));
-  sbUpdate('gm_sale_groups',{id:g.id},{invoice_num:invoiceNum,invoice_id:invoiceId}).catch(e=>console.warn('sbUpdate komisija invoice failed:',e));
-  sbSaveCounters().catch(e=>console.warn('sbSaveCounters komisija failed:',e));
+  sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup kom failed:',e));
+  sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice kom failed:',e));
+  sbSaveCounters().catch(e=>console.warn('sbSaveCounters kom failed:',e));
   renderSalesSummary();renderSales();
   if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   printInvoice(g);

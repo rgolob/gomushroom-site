@@ -855,6 +855,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-prod" checked> 🛒 Prodaja</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-int" checked> 🔬 Interno</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-kom" checked> 🤝 Komisija</label>
       </div>
       <div class="slabel">Varianta</div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -4740,6 +4741,7 @@ function genReport(type){
     const showBatches=document.getElementById('rz-serije')?.checked??true;
     const showProd=document.getElementById('rz-prod')?.checked??true;
     const showInt=document.getElementById('rz-int')?.checked??true;
+    const showKom=document.getElementById('rz-kom')?.checked??true;
     const varFilter=document.querySelector('input[name="rz-var"]:checked')?.value||'all';
     const showAlc=varFilter==='all'||varFilter==='alc';
     const showGly=varFilter==='all'||varFilter==='gly';
@@ -4812,6 +4814,16 @@ function genReport(type){
           </tr>`;
         });
       }
+      if(showKom&&((st.komAlc||0)+(st.komGly||0)>0)){
+        rows+=`<tr style="font-size:.75rem;color:var(--ch-kom)">
+          <td style="padding-left:1.5rem">🤝 Na komisiji</td>
+          ${showAlc?`<td class="num">${st.komAlc||0}</td>`:''}
+          ${showGly?`<td class="num">${st.komGly||0}</td>`:''}
+          <td class="num">${(st.komAlc||0)+(st.komGly||0)}</td>
+          ${showPrices?`<td></td>`:''}
+          <td></td>
+        </tr>`;
+      }
     });
     const totAlc=showAlc?products.reduce((s,p)=>{
       const st=productStock(p.id);
@@ -4825,6 +4837,8 @@ function genReport(type){
       if(!hasAlloc||(!showProd&&!showInt)||(showProd&&showInt))return s+st.gly;
       return s+(showProd?st.prodGly:st.intGly);
     },0):0;
+    const totKomAlc=showKom&&showAlc?products.reduce((s,p)=>s+(productStock(p.id).komAlc||0),0):0;
+    const totKomGly=showKom&&showGly?products.reduce((s,p)=>s+(productStock(p.id).komGly||0),0):0;
     let totVal=0;
     if(showPrices)products.forEach(p=>{
       const st=productStock(p.id);
@@ -4838,6 +4852,7 @@ function genReport(type){
       ${showAlc?`<div class="s-item"><div class="s-label">🥃 Alkohol (${purposeLabel})</div><div class="s-val">${totAlc} kom.</div></div>`:''}
       ${showGly?`<div class="s-item"><div class="s-label">🌿 Glicerin (${purposeLabel})</div><div class="s-val">${totGly} kom.</div></div>`:''}
       <div class="s-item"><div class="s-label">Skupaj${varLabel}</div><div class="s-val">${totAlc+totGly} kom.</div></div>
+      ${showKom&&(totKomAlc+totKomGly>0)?`<div class="s-item"><div class="s-label" style="color:var(--ch-kom)">🤝 Na komisiji</div><div class="s-val" style="color:var(--ch-kom)">${totKomAlc+totKomGly} kom.</div></div>`:''}
       ${showPrices?`<div class="s-item"><div class="s-label">Vrednost</div><div class="s-val">${totVal.toFixed(2)} €</div></div>`:''}
     </div>
     <table>

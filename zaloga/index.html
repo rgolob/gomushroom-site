@@ -5112,11 +5112,12 @@ function genReport(type){
       }).filter(Boolean).join('');
 
       // Izhodi — prodano v obdobju po kupcih
-      let totalProdano=0;
+      let totalProdanoFO=0,totalProdanoPO=0;
       const izhodiRows=[];
       salesInPeriod.sort((a,b)=>a.date.localeCompare(b.date)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
-        totalProdano+=(l.alc||0);
+        if(g.channel==='malo'||g.channel==='wp'||g.channel==='dar')totalProdanoFO+=(l.alc||0);
+        else totalProdanoPO+=(l.alc||0);
         grandProdano+=(l.alc||0);
         izhodiRows.push(`<tr>
           <td>${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
@@ -5126,6 +5127,7 @@ function genReport(type){
           <td class="num" style="color:#7a6f60;font-size:.72rem">${g.invoiceNum||'—'}</td>
         </tr>`);
       });
+      const totalProdano=totalProdanoFO+totalProdanoPO;
 
       // Zaloga konec obdobja
       let zalogaEnd=0;
@@ -5237,7 +5239,8 @@ function genReport(type){
           <div class="kpi-row">
             <div class="kpi"><div class="kpi-label">Zaloga ${od.split('-').reverse().join('.')}</div><div class="kpi-val">${zalogaStart}</div></div>
             <div class="kpi"><div class="kpi-label" style="color:#1a4a2a">+ Narejeno</div><div class="kpi-val" style="color:#1a4a2a">+${totalNarejeno}</div></div>
-            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− Prodano</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdano}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− FO</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdanoFO}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− B2B</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdanoPO}</div></div>
             <div class="kpi"><div class="kpi-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="kpi-val" style="color:${zalogaEnd>0?'#1a4a2a':'#5a4a3a'}">${zalogaEnd}</div></div>
           </div>
           <table>

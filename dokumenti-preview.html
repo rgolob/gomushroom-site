@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dokumenti — Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1209;--cream:#f5f0e8;--accent:#af8455;--border:#e8e0d0;--muted:#7a6f60;--rs:10px}
+body{font-family:'Jost',sans-serif;background:#f0ebe0;color:var(--ink);max-width:430px;margin:0 auto;min-height:100vh}
+
+/* HEADER */
+.app-header{background:var(--ink);color:var(--cream);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;letter-spacing:.06em}
+.app-logo span{color:var(--accent)}
+
+/* SCROLLABLE TABS */
+.nav-tabs{background:var(--ink);border-top:1px solid rgba(255,255,255,.1);display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 .5rem .5rem}
+.nav-tabs::-webkit-scrollbar{display:none}
+.ntab{font-family:'Jost',sans-serif;font-size:.63rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .7rem;cursor:pointer;border:none;background:rgba(255,255,255,.08);color:rgba(245,240,232,.5);border-radius:20px;white-space:nowrap;flex-shrink:0;margin-right:.3rem;transition:all .2s}
+.ntab.active{background:var(--accent);color:#1a1209}
+
+/* CONTENT */
+.content{padding:1rem}
+
+/* SUB-TABS */
+.sub-tabs{display:flex;gap:.4rem;margin-bottom:1rem;background:white;border-radius:10px;padding:.35rem;border:1px solid var(--border)}
+.stab{flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:none;border-radius:7px;cursor:pointer;color:var(--muted);transition:all .2s;text-align:center}
+.stab.active{background:var(--ink);color:var(--cream)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:1rem}
+.stat-card{background:white;border-radius:var(--rs);padding:.65rem .75rem;border:1px solid var(--border)}
+.stat-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem}
+.stat-value{font-size:1.05rem;font-weight:500}
+
+/* DOC LIST */
+.doc-card{background:white;border-radius:var(--rs);border:1px solid var(--border);margin-bottom:.5rem;overflow:hidden}
+.doc-header{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem}
+.doc-date{min-width:36px;text-align:center}
+.doc-day{font-size:1.1rem;font-weight:500;line-height:1}
+.doc-mon{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.doc-div{width:1px;background:var(--border);align-self:stretch}
+.doc-info{flex:1;min-width:0}
+.doc-num{font-size:.82rem;font-weight:500}
+.doc-buyer{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-right{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem}
+.doc-amount{font-size:.85rem;font-weight:500}
+.doc-badge{font-size:.58rem;font-weight:600;letter-spacing:.08em;padding:.15rem .45rem;border-radius:8px}
+.badge-velo{background:rgba(58,107,74,.12);color:#3a6b4a}
+.badge-malo{background:rgba(42,90,139,.12);color:#2a5a8b}
+.badge-kom{background:rgba(139,90,42,.12);color:#8b5a2a}
+.badge-wp{background:rgba(124,58,237,.12);color:#7c3aed}
+.doc-actions{display:flex;gap:.4rem;padding:.4rem .75rem .6rem;border-top:1px solid var(--border);background:#faf8f4}
+.doc-btn{font-size:.65rem;font-weight:500;letter-spacing:.06em;padding:.3rem .7rem;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;color:var(--ink)}
+.doc-btn.primary{background:var(--ink);color:white;border-color:var(--ink)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:.4rem;margin-bottom:.75rem;overflow-x:auto;scrollbar-width:none;padding-bottom:.1rem}
+.filter-bar::-webkit-scrollbar{display:none}
+.fbtn{font-size:.65rem;padding:.3rem .7rem;border-radius:12px;border:1px solid var(--border);background:white;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.fbtn.active{background:var(--ink);color:white;border-color:var(--ink)}
+
+.banner{background:#e8f4e8;border:1px solid #3a6b4a;border-radius:8px;padding:.6rem .9rem;font-size:.72rem;color:#1a3a2a;margin-bottom:1rem;text-align:center}
+</style>
+</head><body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-logo">Go<span>Mushroom</span></div>
+  <div style="font-size:.65rem;color:rgba(245,240,232,.5)">✓ Sinhronizirano</div>
+</div>
+
+<!-- SCROLLABLE MAIN TABS (vsi tabi dosegljivi z drsenjem) -->
+<div class="nav-tabs">
+  <button class="ntab" onclick="showTab(this)">📦 Zaloga</button>
+  <button class="ntab" onclick="showTab(this)">🛒 Prodaja</button>
+  <button class="ntab" onclick="showTab(this)">🏷 Serije</button>
+  <button class="ntab active" onclick="showTab(this)">🧾 Dokumenti</button>
+  <button class="ntab" onclick="showTab(this)">👥 Stranke</button>
+  <button class="ntab" onclick="showTab(this)">⭐ Recenzije</button>
+</div>
+
+<div class="content">
+
+  <div class="banner">👆 Tabi so zdaj drsljivi — povleci levo/desno</div>
+
+  <!-- SUB-TABS -->
+  <div class="sub-tabs">
+    <button class="stab active" onclick="showSub(this,'racuni')">🧾 Računi</button>
+    <button class="stab" onclick="showSub(this,'dobavnice')">📦 Dobavnice</button>
+    <button class="stab" onclick="showSub(this,'predracuni')">📋 Predračuni</button>
+  </div>
+
+  <!-- ── RAČUNI ── -->
+  <div id="sub-racuni">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">18</div></div>
+      <div class="stat-card"><div class="stat-label">Vrednost</div><div class="stat-value ok" style="color:#3a6b4a;font-size:.9rem">4.820 €</div></div>
+      <div class="stat-card"><div class="stat-label">Čaka</div><div class="stat-value" style="color:#8b3a2a">3</div></div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="fbtn active">Vsi</button>
+      <button class="fbtn">🛒 Malo</button>
+      <button class="fbtn">🏪 Velo</button>
+      <button class="fbtn">🌐 Splet</button>
+      <button class="fbtn">🤝 Kom</button>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-date"><div class="doc-day">14</div><div class="doc-mon">maj</div></div>
+        <div class="doc-div"></div>
+        <div class="doc-info">
+          <div class="doc-num">VP-26-0003</div>
+          <div class="doc-buyer">Fungalist, Miha Grulja s.p.</div>
+        </div>
+        <div class="doc-right">
+          <div class="doc-amount">2.050 €</div>
+          <span class="doc-badge badge-velo">Velo</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn primary">🖨 Natisni</button>
+        <button class="doc-btn">✉ Email</button>
+        <button class="doc-btn">📦 Dobavnica</button>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-date"><div class="doc-day">13</div><div class="doc-mon">maj</div></div>
+        <div class="doc-div"></div>
+        <div class="doc-info">
+          <div class="doc-num">MP-26-0041</div>
+          <div class="doc-buyer">Jana Novak</div>
+        </div>
+        <div class="doc-right">
+          <div class="doc-amount">63.80 €</div>
+          <span class="doc-badge badge-malo">Malo</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn primary">🖨 Natisni</button>
+        <button class="doc-btn">✉ Email</button>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-date"><div class="doc-day">10</div><div class="doc-mon">maj</div></div>
+        <div class="doc-div"></div>
+        <div class="doc-info">
+          <div class="doc-num">WP-26-0018</div>
+          <div class="doc-buyer">Maja Kovač</div>
+        </div>
+        <div class="doc-right">
+          <div class="doc-amount">95.70 €</div>
+          <span class="doc-badge badge-wp">Splet</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn primary">🖨 Natisni</button>
+        <button class="doc-btn">✉ Email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DOBAVNICE ── -->
+  <div id="sub-dobavnice" style="display:none">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">4</div></div>
+      <div class="stat-card"><div class="stat-label">Velo</div><div class="stat-value">3</div></div>
+      <div class="stat-card"><div class="stat-label">Kom</div><div class="stat-value">1</div></div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-date"><div class="doc-day">14</div><div class="doc-mon">maj</div></div>
+        <div class="doc-div"></div>
+        <div class="doc-info">
+          <div class="doc-num">DOB-26-0003</div>
+          <div class="doc-buyer">Fungalist, Miha Grulja s.p.</div>
+        </div>
+        <div class="doc-right">
+          <div class="doc-amount">2.050 €</div>
+          <span class="doc-badge badge-velo">Velo</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn primary">🖨 Natisni</button>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-date"><div class="doc-day">02</div><div class="doc-mon">apr</div></div>
+        <div class="doc-div"></div>
+        <div class="doc-info">
+          <div class="doc-num">DOB-26-0002</div>
+          <div class="doc-buyer">Lekarnar d.o.o.</div>
+        </div>
+        <div class="doc-right">
+          <div class="doc-amount">1.200 €</div>
+          <span class="doc-badge badge-kom">Kom</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn primary">🖨 Natisni</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PREDRAČUNI ── -->
+  <div id="sub-predracuni" style="display:none">
+    <div style="text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.85rem">
+      <div style="font-size:2rem;margin-bottom:.5rem">📋</div>
+      Predračuni še niso implementirani.<br>
+      <span style="font-size:.75rem">Prihaja v naslednji verziji.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(btn){
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+function showSub(btn, id){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['racuni','dobavnice','predracuni'].forEach(s=>{
+    document.getElementById('sub-'+s).style.display = s===id ? '' : 'none';
+  });
+}
+</script>
+</body></html>

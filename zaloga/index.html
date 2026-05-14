@@ -5162,12 +5162,17 @@ function genReport(type){
       });
       // Maloprodaja (malo, wp, dar) — mesečni seštevek, opomba: število kupcev
       let retailTotal=0,retailCount=0;
+      const retailChs=new Set();
       salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
         retailTotal+=(l.alc||0);
         retailCount++;
+        retailChs.add(g.channel);
       });
-      if(retailTotal>0)events.push({date:doVal,type:'sale',qty:retailTotal,doc:'—',buyer:'Maloprodaja',channel:'retail',grouped:true,count:retailCount});
+      if(retailTotal>0){
+        const retailLabel=[...retailChs].map(c=>CH[c]?.label||c).join(' / ');
+        events.push({date:doVal,type:'sale',qty:retailTotal,doc:'—',buyer:retailLabel,channel:'retail',grouped:true,count:retailCount});
+      }
       events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
       // Začetna zaloga

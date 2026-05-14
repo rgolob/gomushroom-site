@@ -3105,12 +3105,18 @@ function renderOrderRows(){
           <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
           <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
         </div>
-        <div style="display:flex;gap:.3rem;align-items:center">
+        ${orderChannel==='kom'?`<div style="display:flex;gap:.3rem;align-items:center;margin-top:.1rem">
+          <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€/kos:</span>
+          <input type="number" id="okpa-${p.id}" step="0.01" min="0" placeholder="alc" inputmode="decimal"
+            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena alkohol / kos (opcijsko)">
+          <input type="number" id="okpg-${p.id}" step="0.01" min="0" placeholder="gly" inputmode="decimal"
+            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena glicerin / kos (opcijsko)">
+        </div>`:`<div style="display:flex;gap:.3rem;align-items:center">
           <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€ skupaj:</span>
           <input type="text" id="oprice-${p.id}" placeholder="auto" inputmode="decimal"
             style="width:65px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;color:var(--ink);outline:none"
             oninput="onFinalPriceChange('${p.id}');renderOrderSummary()" title="Vnesi končni znesek — popust se izračuna avtomatično">
-        </div>
+        </div>`}
       </div>
     </div>
     <div id="owarn-${p.id}" style="font-size:.7rem;padding:.15rem 1rem .4rem;display:none"></div>`;
@@ -3202,13 +3208,19 @@ function collectOrderLines(){
   const discMult=1-discount/100;
   const tier=getActiveTier();
   const isVelo=orderChannel==='velo';
+  const isKom=orderChannel==='kom';
   return products.map(p=>{
     const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
     const customTotal=parseNum(document.getElementById('oprice-'+p.id)?.value||'');
     let alcP,glyP,lineTotal;
-    if(customTotal){
+    if(isKom){
+      // Per-unit prices entered in the komisija form (optional — 0 if not entered)
+      alcP=parseFloat(document.getElementById('okpa-'+p.id)?.value)||0;
+      glyP=parseFloat(document.getElementById('okpg-'+p.id)?.value)||0;
+      lineTotal=alc*alcP+gly*glyP;
+    } else if(customTotal){
       // Custom total — distribute proportionally between alc and gly
       const alcBase=latestPrice(p.id,'alc');
       const glyBase=latestPrice(p.id,'gly');

@@ -1397,6 +1397,7 @@ function sbGroupToApp(g, lines, lineBatches){
     discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
     extInvoice:g.ext_invoice, extDelivery:g.ext_delivery,
     note:g.note, invoiceNum:g.invoice_num, invoiceId:g.invoice_id,
+    deliveryNum:g.delivery_num||null,
     total:g.total||0, qty:g.qty||0,
     status:g.status||'active',
     lines:gLines
@@ -3381,7 +3382,15 @@ function nextInvNum(ch, date){
   return CH[ch].short+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
-async function confirmOrder(withInvoice){
+function nextDobNum(date){
+  const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
+  const key='dob_'+yr;
+  if(!invCounters[key])invCounters[key]=0;
+  invCounters[key]++;
+  return 'DOB-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
+}
+
+
   try{
   const lines=collectOrderLines();
   if(!lines.length){alert('Dodaj vsaj eno količino.');return;}
@@ -3460,7 +3469,8 @@ if(!Object.keys(pendingBatchAlloc).length){
     const invStatus=(ch==='wp'||ch==='malo'||ch==='velo'||ch==='kom')?'caka':'placano';
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
+  const deliveryNum=ch==='kom'?nextDobNum(date):null;
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -3476,10 +3486,11 @@ if(!Object.keys(pendingBatchAlloc).length){
     printInvoice(group);
     if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   }
+  if(ch==='kom'&&deliveryNum){printDobavnica(group);}
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));
   closeNovaProdaja();
   renderSalesSummary();renderSales();
-  toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
+  toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}${deliveryNum?' · '+deliveryNum:''}`);
   }catch(err){toast('⚠ Napaka: '+err.message);console.error('confirmOrder:',err);}
 }
 
@@ -3629,7 +3640,8 @@ function renderSales(){
         ${isStorno?`<span style="background:#8b3a2a;color:white;font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px">⊘ STORNIRANO${g.stornoDate?' · '+g.stornoDate.split('-').reverse().join('.'):''}${g.stornoRazlog?' · '+g.stornoRazlog:''}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno&&g.channel!=='kom'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
-          ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">🤝 Na komisiji</span>`:''}
+          ${g.channel==='kom'&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">${g.deliveryNum?g.deliveryNum:'🤝 Na komisiji'}</span>`:''}
+          ${g.channel==='kom'&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
           ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
@@ -4019,6 +4031,129 @@ function buildUpnString(amount, reference, purpose){
 
 // ── QR CDN URL ──
 const QRJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
+function printDobavnica(group){
+  const html=buildDobavnicaHTML(group);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+function buildDobavnicaHTML(group){
+  const dobNum=group.deliveryNum||'';
+  const tableRows=(group.lines||[]).map(l=>{
+    const rows=[];
+    const batchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>bb.batchNum).join(', ');
+    const pb=batches.filter(b=>b.productId===l.productId);
+    const alcSku=pb.length?pb[0].alc?.sku||'':'';
+    const glySku=pb.length?pb[0].gly?.sku||'':'';
+    if(l.alc>0){rows.push(`<tr>
+      <td>🥃 Alkohol<br><span class="desc">${l.productName}${alcSku?'<br>'+alcSku:''}${batchStr?'<br>serija: '+batchStr:''}</span></td>
+      <td>${l.alc}</td>
+      <td class="r">${l.alcPrice!=null?l.alcPrice.toFixed(2)+' €':'—'}</td>
+      <td class="r">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td>
+    </tr>`);}
+    if(l.gly>0){rows.push(`<tr>
+      <td>🌿 Glicerin<br><span class="desc">${l.productName}${glySku?'<br>'+glySku:''}${batchStr?'<br>serija: '+batchStr:''}</span></td>
+      <td>${l.gly}</td>
+      <td class="r">${l.glyPrice!=null?l.glyPrice.toFixed(2)+' €':'—'}</td>
+      <td class="r">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td>
+    </tr>`);}
+    return rows.join('');
+  }).join('');
+
+  return`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${dobNum||'Komisijska dobavnica'}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:2.5rem;max-width:700px;margin:0 auto;color:#1a1209;font-size:13.5px;line-height:1.5}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;letter-spacing:.06em}
+.logo span{color:#af8455}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #8b5a2a}
+.meta{text-align:right;font-size:.72rem;color:#7a6f60;line-height:1.9}
+.doc-type{font-size:.62rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#8b5a2a;margin-top:.2rem}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.plabel{font-size:.6rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.pname{font-weight:500;font-size:.9rem}
+.pdetail{font-size:.75rem;color:#7a6f60;line-height:1.65}
+table{width:100%;border-collapse:collapse;margin-bottom:1.25rem}
+th{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;padding:.45rem .6rem;border-bottom:1px solid #ede6d6;text-align:left}
+th:last-child,td:last-child,th:nth-child(2),td:nth-child(2){text-align:right}
+th:nth-child(3),td:nth-child(3){text-align:right}
+td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.82rem;vertical-align:top}
+.desc{font-size:.7rem;color:#7a6f60;line-height:1.5}
+.r{text-align:right}
+.totals{border-top:1.5px solid #8b5a2a;padding-top:.85rem;display:flex;flex-direction:column;gap:.35rem;align-items:flex-end}
+.trow{display:flex;gap:2.5rem;font-size:.82rem}
+.grand{font-family:'Cormorant Garamond',serif;font-size:1.35rem;margin-top:.25rem}
+.notice{margin-top:1.5rem;padding:1rem 1.25rem;border:1px solid rgba(139,90,42,.3);border-radius:6px;background:rgba(139,90,42,.04);font-size:.78rem;color:#5a3a1a;line-height:1.65}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem}
+.sig-box{border-top:1px solid #1a1209;padding-top:.5rem;font-size:.68rem;color:#7a6f60;letter-spacing:.06em;text-transform:uppercase}
+.footer-line{border:none;border-top:1px solid rgba(175,132,85,.3);margin:2rem 0 .75rem}
+.footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;color:#7a6f60;text-align:center}
+.btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;background:#8b5a2a;color:white;display:block;margin:1.75rem auto 0}
+@media print{.btn{display:none}body{padding:1.5rem}}
+</style></head><body>
+
+<div class="hdr">
+  <div>
+    <div class="logo">Go<span>Mushroom</span></div>
+    <div style="font-size:.7rem;color:#7a6f60;margin-top:.2rem">gomushroom.si</div>
+    <div class="doc-type">🤝 Komisijska dobavnica</div>
+  </div>
+  <div class="meta">
+    <div><strong>${dobNum||'—'}</strong></div>
+    <div>${fmtDateSl(group.date)}</div>
+  </div>
+</div>
+
+<div class="parties">
+  <div>
+    <div class="plabel">Dobavitelj</div>
+    <div class="pname">GoMushroom, Rok Golob s.p.</div>
+    <div class="pdetail">Slovenija<br>gomushroom.si</div>
+  </div>
+  <div>
+    <div class="plabel">Partner / Komisionar</div>
+    <div class="pname">${group.buyer||'—'}</div>
+    <div class="pdetail">
+      ${group.email?group.email+'<br>':''}${group.phone?group.phone+'<br>':''}${group.street?group.street+'<br>':''}${group.post||''}${group.vat?'<br>ID DDV: '+group.vat:''}
+    </div>
+  </div>
+</div>
+
+<table>
+  <tr><th>Artikel</th><th style="text-align:right">Kol.</th><th style="text-align:right">Cena/kom</th><th style="text-align:right">Vrednost</th></tr>
+  ${tableRows||'<tr><td colspan="4" style="color:#7a6f60;text-align:center">—</td></tr>'}
+</table>
+
+<div class="totals">
+  ${(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span style="color:#3a6b4a">–${(group.discountAmt||0).toFixed(2)} €</span></div>`:''}
+  <div class="trow grand"><span>Skupna vrednost</span><span>${(group.total||0).toFixed(2)} €</span></div>
+</div>
+
+<div class="notice">
+  <strong>Pogoji komisijske prodaje</strong><br>
+  Blago ostaja last GoMushroom do potrditve plačila. Partner je dolžan blago hraniti ločeno in ga vrniti v nespremenjeni obliki, če do prodaje ne pride. Račun se izda ob potrditvi plačila.
+  ${group.extInvoice||group.extDelivery?`<br><br>${group.extInvoice?'Zunanji račun: <strong>'+group.extInvoice+'</strong>  ':''}${group.extDelivery?'Ref. dobavnica: <strong>'+group.extDelivery+'</strong>':''}`:''}
+</div>
+
+<div class="sig-grid">
+  <div class="sig-box">Oddal — GoMushroom<br><br><br></div>
+  <div class="sig-box">Prevzel — Partner<br><br><br></div>
+</div>
+
+<hr class="footer-line">
+<div class="footer-tagline">Od narave. Z znanjem. Za vas.</div>
+
+<button class="btn" onclick="window.print()">🖨 Natisni</button>
+</body></html>`;
+}
 
 function buildInvoiceHTML(group, qrDataURL){
   const ch=CH[group.channel]||CH.malo;

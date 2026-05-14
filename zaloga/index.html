@@ -5115,7 +5115,7 @@ function genReport(type){
       let totalProdanoFO=0,totalProdanoPO=0;
       const izhodiRows=[];
       salesInPeriod.sort((a,b)=>a.date.localeCompare(b.date)).forEach(g=>{
-        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
         if(g.channel==='malo'||g.channel==='wp'||g.channel==='dar')totalProdanoFO+=(l.alc||0);
         else totalProdanoPO+=(l.alc||0);
         grandProdano+=(l.alc||0);
@@ -5157,14 +5157,14 @@ function genReport(type){
       });
       // B2B (velo, kom) — vsaka prodaja posebej z dokumentom
       salesInPeriod.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
-        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
         events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
       });
       // Maloprodaja (malo, wp, dar) — mesečni seštevek, opomba: število kupcev
       let retailTotal=0,retailCount=0;
       const retailChs=new Set();
       salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
-        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
         retailTotal+=(l.alc||0);
         retailCount++;
         retailChs.add(g.channel);

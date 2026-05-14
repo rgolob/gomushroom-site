@@ -41,8 +41,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .dtab{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:.9rem 1rem;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .dtab.active{color:var(--ink);border-bottom-color:var(--accent)}
 .dtab:hover:not(.active){color:var(--ink)}
-.header-tabs{display:none;align-items:center;gap:.25rem;flex:1;justify-content:center}
-.htab{font-family:'Jost',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .75rem;cursor:pointer;border:none;background:rgba(255,255,255,.08);color:rgba(245,240,232,.5);border-radius:20px;white-space:nowrap;transition:all .2s}
+.header-tabs{display:none;align-items:center;gap:.25rem;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:.35rem}
+.htab{font-family:'Jost',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .75rem;cursor:pointer;border:none;background:rgba(255,255,255,.08);color:rgba(245,240,232,.5);border-radius:20px;white-space:nowrap;transition:all .2s;flex-shrink:0}
 .htab.active{background:var(--accent);color:#1a1209}
 .htab:hover:not(.active){background:rgba(255,255,255,.15);color:var(--cream)}
 
@@ -365,7 +365,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
     <button class="htab" onclick="switchTab('serije',this)">🏷 Serije</button>
-    <button class="htab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+    <button class="htab" onclick="switchTab('dokumenti',this)">🧾 Dokumenti</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
     <button class="htab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
   </div>
@@ -384,7 +384,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab active" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
   <button class="dtab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
-  <button class="dtab" onclick="switchTab('racuni',this)">🧾 Računi</button>
+  <button class="dtab" onclick="switchTab('dokumenti',this)">🧾 Dokumenti</button>
   <button class="dtab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
   
 </nav>
@@ -555,34 +555,45 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div id="salesPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
   </div>
 
-  <!-- RAČUNI -->
-  <div class="view" id="view-racuni">
-    <div class="view-header">
-      <div class="view-title">🧾 Računi</div>
+  <!-- DOKUMENTI -->
+  <div class="view" id="view-dokumenti">
+    <div style="display:flex;gap:.4rem;padding:.75rem .9rem .1rem;background:var(--cream)">
+      <button class="subdok-tab active" id="sdtab-racuni" onclick="switchDokTab('racuni',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:var(--ink);color:var(--cream);border-radius:7px;cursor:pointer;text-align:center">🧾 Računi</button>
+      <button class="subdok-tab" id="sdtab-dobavnice" onclick="switchDokTab('dobavnice',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:none;color:var(--muted);border-radius:7px;cursor:pointer;text-align:center;border:1px solid var(--border)">📦 Dobavnice</button>
     </div>
-    <div class="stats-grid" id="invStatsGrid"></div>
-    <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
-      <div class="swrap" style="min-width:100px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec…" oninput="renderInvoices()"></div>
-      <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-      <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-      <select class="fpill" id="invFilterCh" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-        <option value="">Vsi kanali</option>
-        <option value="malo">🛒 MP</option>
-        <option value="velo">🏪 VP</option>
-        <option value="dar">🎁 Promo</option>
-        <option value="int">🔬 Int</option>
-        <option value="kom">🤝 Kom</option>
-      </select>
-      <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-        <option value="">Vsi statusi</option>
-        <option value="caka">🟡 Čaka</option>
-        <option value="placano">🟢 Plačano</option>
-        <option value="predano">📦 Predano</option>
-      </select>
-      <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
+    <div id="subdok-racuni">
+      <div class="view-header">
+        <div class="view-title">🧾 Računi</div>
+      </div>
+      <div class="stats-grid" id="invStatsGrid"></div>
+      <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
+        <div class="swrap" style="min-width:100px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec…" oninput="renderInvoices()"></div>
+        <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+        <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+        <select class="fpill" id="invFilterCh" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+          <option value="">Vsi kanali</option>
+          <option value="malo">🛒 MP</option>
+          <option value="velo">🏪 VP</option>
+          <option value="dar">🎁 Promo</option>
+          <option value="int">🔬 Int</option>
+          <option value="kom">🤝 Kom</option>
+        </select>
+        <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+          <option value="">Vsi statusi</option>
+          <option value="caka">🟡 Čaka</option>
+          <option value="placano">🟢 Plačano</option>
+          <option value="predano">📦 Predano</option>
+        </select>
+        <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
+      </div>
+      <div id="invoiceList"></div>
+      <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
     </div>
-    <div id="invoiceList"></div>
-    <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
+    <div id="subdok-dobavnice" style="display:none">
+      <div class="view-header"><div class="view-title">📦 Dobavnice</div></div>
+      <div class="stats-grid" id="dobStatsGrid"></div>
+      <div id="dobList"></div>
+    </div>
   </div>
   <div class="view" id="view-stranke">
     <div class="view-hdr">
@@ -681,7 +692,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem active" id="nav-zaloga"   onclick="switchTab('zaloga',this)"><span class="nicon">📦</span>Zaloga</button>
   <button class="nitem"        id="nav-prodaja"   onclick="switchTab('prodaja',this)"><span class="nicon">🛒</span>Prodaja</button>
   <button class="nitem"        id="nav-serije"    onclick="switchTab('serije',this)"><span class="nicon">🏷</span>Serije</button>
-  <button class="nitem"        id="nav-racuni"    onclick="switchTab('racuni',this)"><span class="nicon">🧾</span>Računi</button>
+  <button class="nitem"        id="nav-dokumenti"    onclick="switchTab('dokumenti',this)"><span class="nicon">🧾</span>Dokumenti</button>
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
@@ -1265,7 +1276,7 @@ async function _komPayConfirm(){
   sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice kom failed:',e));
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters kom failed:',e));
   renderSalesSummary();renderSales();
-  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   printInvoice(g);
   toast(`🧾 Račun ${invoiceNum} izdan`);
 }
@@ -1333,7 +1344,7 @@ async function clearAllData(){
   renderStats();renderInventory();
   if(currentTab==='serije'){renderProductMgmt();renderBatches();}
   if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
-  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   if(currentTab==='prodaja')renderOrderRows();
   if(currentTab==='stranke'){renderCustomerStats();renderCustomers();}
 }
@@ -2415,7 +2426,7 @@ async function appInit(){
     renderStats();renderInventory();
     if(currentTab==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
     if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
-    if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+    if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
     setSyncStatus('✓ Sinhronizirano');
     setTimeout(()=>setSyncStatus(''),3000);
     setTimeout(()=>runIntegrityCheckSilent(),1000);
@@ -2540,6 +2551,49 @@ function showConfirm(msg,okLabel='Potrdi'){return new Promise(res=>{_cResolve=re
 function confirmResolve(v){document.getElementById('confirmOverlay').classList.remove('open');if(_cResolve){_cResolve(v);_cResolve=null;}}
 
 // ── TABS ──
+function switchDokTab(id, el){
+  document.querySelectorAll('.subdok-tab').forEach(t=>{
+    t.style.background='none';t.style.color='var(--muted)';t.style.border='1px solid var(--border)';t.classList.remove('active');
+  });
+  el.style.background='var(--ink)';el.style.color='var(--cream)';el.style.border='none';el.classList.add('active');
+  document.getElementById('subdok-racuni').style.display=id==='racuni'?'':'none';
+  document.getElementById('subdok-dobavnice').style.display=id==='dobavnice'?'':'none';
+  if(id==='dobavnice')renderDobavnice();
+}
+
+function renderDobavnice(){
+  const groups=saleGroups.filter(g=>g.deliveryNum&&g.status!=='stornirano').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const statsEl=document.getElementById('dobStatsGrid');
+  const listEl=document.getElementById('dobList');
+  if(!statsEl||!listEl)return;
+  const velo=groups.filter(g=>g.channel==='velo').length;
+  const kom=groups.filter(g=>g.channel==='kom').length;
+  statsEl.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">${groups.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Velo</div><div class="stat-value">${velo}</div></div>
+    <div class="stat-card"><div class="stat-label">Komisija</div><div class="stat-value">${kom}</div></div>`;
+  if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;return;}
+  const CH_LOCAL={velo:{label:'Veleprodaja',cls:'ch-velo'},kom:{label:'Komisija',cls:'ch-kom'}};
+  listEl.innerHTML=groups.map(g=>{
+    const ch=CH_LOCAL[g.channel]||{label:g.channel,cls:''};
+    const dt=fmtDate(g.date);
+    return`<div class="sale-group">
+      <div class="sg-header" style="display:flex;align-items:center;gap:.65rem;padding:.65rem .9rem">
+        <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
+        <div class="sg-div"></div>
+        <div class="sg-info" style="flex:1;min-width:0">
+          <div class="sg-buyer">${g.deliveryNum} <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;border-radius:8px">${ch.label}</span></div>
+          <div class="sg-meta" style="font-size:.72rem;color:var(--muted)">${g.buyer||'—'}</div>
+        </div>
+        <div style="font-size:.85rem;font-weight:500">${(g.total||0).toFixed(2)} €</div>
+      </div>
+      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4">
+        <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function switchTab(id,el){
   currentTab=id;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -2567,7 +2621,7 @@ function switchTab(id,el){
   if(oab)oab.style.display='none';
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaja'){renderSalesSummary();renderSales();}
-  if(id==='racuni'){renderInvStats();renderInvoices();}
+  if(id==='dokumenti'){renderInvStats();renderInvoices();renderDobavnice();}
 }
 
 // ── STATS ──
@@ -3562,7 +3616,7 @@ if(!Object.keys(pendingBatchAlloc).length){
     const inv=invoices[0];
     if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice failed:',e));
     printInvoice(group);
-    if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+    if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   }
   if((ch==='kom'||ch==='velo')&&deliveryNum){printDobavnica(group);}
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));
@@ -3877,7 +3931,7 @@ const fullLineTotal=(alc*alcFullPrice)+(gly*glyFullPrice);
 g.fullTotal=(g.fullTotal||0)+fullLineTotal;
 g.discountAmt=Math.max(0,(g.fullTotal||0)-(g.total||0));
 save();renderStats();renderInventory();renderSales();
-  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   const div=document.getElementById('aaAddedLines');
   div.innerHTML+=`<div style="font-size:.75rem;color:#3a6b4a;padding:.3rem .5rem;background:rgba(58,107,74,.08);border-radius:6px;margin-top:.3rem">
     ✓ ${moji(p.name)} ${p.name}${alc?' 🥃'+alc:''}${gly?' 🌿'+gly:''} · ${lineTotal.toFixed(2)} €</div>`;
@@ -3893,7 +3947,7 @@ function issueInvoiceForGroup(groupId){
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
   const invStatus=(g.channel==='wp'||g.channel==='malo'||g.channel==='velo')?'caka':'placano';
   invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus});
-  save();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  save();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
 }
 
@@ -3930,14 +3984,14 @@ function saveEditGroup(){
   g.note=document.getElementById('egNote').value.trim();
   // sync to invoice
   if(g.invoiceId){const inv=invoices.find(x=>x.id===g.invoiceId);if(inv){inv.buyer=g.buyer;inv.date=g.date;inv.extInvoice=g.extInvoice;inv.extDelivery=g.extDelivery;}}
-  save();closeSheet('editGroupOverlay');renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}toast('Zapis posodobljen');
+  save();closeSheet('editGroupOverlay');renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Zapis posodobljen');
 }
 async function deleteSaleGroup(id){
   const ok=await showConfirm('Izbriši to prodajo?\nZaloga se ne bo samodejno vrnila.','Izbriši');if(!ok)return;
   const g=saleGroups.find(x=>x.id===id);
   if(g?.invoiceId)invoices=invoices.filter(x=>x.id!==g.invoiceId);
   saleGroups=saleGroups.filter(x=>x.id!==id);
-  save();renderStats();renderInventory();renderSales();if(currentTab==='racuni'){renderInvStats();renderInvoices();}toast('Prodaja izbrisana');
+  save();renderStats();renderInventory();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Prodaja izbrisana');
 }
 const expandedSales=new Set();
 
@@ -5712,7 +5766,7 @@ async function potrdiNarocilo(orderId) {
     await sbLoadAll();
     await naloziNarocila(); 
     renderSales();
-    if (currentTab === 'racuni') { renderInvStats(); renderInvoices(); }
+    if (currentTab === 'dokumenti') { renderInvStats(); renderInvoices(); }
     renderStats();
     renderInventory();
 

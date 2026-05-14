@@ -3547,7 +3547,7 @@ if(!Object.keys(pendingBatchAlloc).length){
     const invStatus=(ch==='wp'||ch==='malo'||ch==='velo'||ch==='kom')?'caka':'placano';
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
-  const deliveryNum=ch==='kom'?nextDobNum(date):null;
+  const deliveryNum=(ch==='kom'||ch==='velo')?nextDobNum(date):null;
   const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
@@ -3564,7 +3564,7 @@ if(!Object.keys(pendingBatchAlloc).length){
     printInvoice(group);
     if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   }
-  if(ch==='kom'&&deliveryNum){printDobavnica(group);}
+  if((ch==='kom'||ch==='velo')&&deliveryNum){printDobavnica(group);}
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));
   closeNovaProdaja();
   renderSalesSummary();renderSales();
@@ -3719,7 +3719,7 @@ function renderSales(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           ${!hasInvoice&&!isStorno&&g.channel!=='kom'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${g.channel==='kom'&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">${g.deliveryNum?g.deliveryNum:'🤝 Na komisiji'}</span>`:''}
-          ${g.channel==='kom'&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
+          ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
           ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
@@ -4182,7 +4182,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
   <div>
     <div class="logo">Go<span>Mushroom</span></div>
     <div style="font-size:.7rem;color:#7a6f60;margin-top:.2rem">gomushroom.si</div>
-    <div class="doc-type">🤝 Komisijska dobavnica</div>
+    <div class="doc-type">${group.channel==='kom'?'🤝 Komisijska dobavnica':'📦 Dobavnica'}</div>
   </div>
   <div class="meta">
     <div><strong>${dobNum||'—'}</strong></div>
@@ -4197,7 +4197,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
     <div class="pdetail">Slovenija<br>gomushroom.si</div>
   </div>
   <div>
-    <div class="plabel">Partner / Komisionar</div>
+    <div class="plabel">${group.channel==='kom'?'Partner / Komisionar':'Kupec'}</div>
     <div class="pname">${group.buyer||'—'}</div>
     <div class="pdetail">
       ${group.email?group.email+'<br>':''}${group.phone?group.phone+'<br>':''}${group.street?group.street+'<br>':''}${group.post||''}${group.vat?'<br>ID DDV: '+group.vat:''}
@@ -4216,8 +4216,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 </div>
 
 <div class="notice">
-  <strong>Pogoji komisijske prodaje</strong><br>
-  Blago ostaja last GoMushroom do potrditve plačila. Partner je dolžan blago hraniti ločeno in ga vrniti v nespremenjeni obliki, če do prodaje ne pride. Račun se izda ob potrditvi plačila.
+  ${group.channel==='kom'?`<strong>Pogoji komisijske prodaje</strong><br>Blago ostaja last GoMushroom do potrditve plačila. Partner je dolžan blago hraniti ločeno in ga vrniti v nespremenjeni obliki, če do prodaje ne pride. Račun se izda ob potrditvi plačila.`:`<strong>Opomba</strong><br>Račun se izda ločeno. Dobavnica služi kot potrdilo o prevzemu blaga.`}
   ${group.extInvoice||group.extDelivery?`<br><br>${group.extInvoice?'Zunanji račun: <strong>'+group.extInvoice+'</strong>  ':''}${group.extDelivery?'Ref. dobavnica: <strong>'+group.extDelivery+'</strong>':''}`:''}
 </div>
 

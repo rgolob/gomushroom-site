@@ -20,7 +20,7 @@
   --border:rgba(175,132,85,0.22);--shadow:0 2px 16px rgba(26,18,9,0.09);
   --r:12px;--rs:8px;
   --sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);
-  --ch-malo:#2a5a8b;--ch-velo:#3a6b4a;--ch-dar:#8b6a2a;--ch-int:#5a3a6b;
+  --ch-malo:#2a5a8b;--ch-velo:#3a6b4a;--ch-dar:#8b6a2a;--ch-int:#5a3a6b;--ch-kom:#8b5a2a;
   --alc:#7a4a1a;--gly:#2a6b5a;
 }
 html{height:100%}
@@ -153,6 +153,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .ch-velo{background:rgba(58,107,74,.12);color:var(--ch-velo)}
 .ch-dar{background:rgba(139,106,42,.12);color:var(--ch-dar)}
 .ch-int{background:rgba(90,58,107,.12);color:var(--ch-int)}
+.ch-kom{background:rgba(139,90,42,.12);color:var(--ch-kom)}
 .sg-items{border-top:1px solid var(--border);padding:.5rem .9rem;display:flex;flex-direction:column;gap:.25rem}
 .sg-item{display:flex;justify-content:space-between;font-size:.75rem;min-width:0;gap:.5rem}
 .sg-item-label{color:var(--muted);flex-shrink:0}
@@ -182,6 +183,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .ch-opt-h.sel-velo{border-color:var(--ch-velo);background:rgba(58,107,74,.06);color:var(--ch-velo)}
 .ch-opt-h.sel-dar{border-color:var(--ch-dar);background:rgba(139,106,42,.06);color:var(--ch-dar)}
 .ch-opt-h.sel-int{border-color:var(--ch-int);background:rgba(90,58,107,.06);color:var(--ch-int)}
+.ch-opt-h.sel-kom{border-color:var(--ch-kom);background:rgba(139,90,42,.06);color:var(--ch-kom)}
 .tier-pills{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.4rem}
 .tier-pill{border:2px solid var(--border);border-radius:20px;padding:.35rem .85rem;cursor:pointer;font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;background:white;color:var(--muted);-webkit-user-select:none;user-select:none}
 .tier-pill.active{border-color:var(--ch-velo);background:rgba(58,107,74,.08);color:var(--ch-velo)}
@@ -416,6 +418,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="ch-opt-h" id="och-velo" onclick="orderSelectChannel('velo')">🏪 Vele</div>
           <div class="ch-opt-h" id="och-dar" onclick="orderSelectChannel('dar')">🎁 Promo</div>
           <div class="ch-opt-h" id="och-int" onclick="orderSelectChannel('int')">🔬 Interno</div>
+          <div class="ch-opt-h" id="och-kom" onclick="orderSelectChannel('kom')">🤝 Komisija</div>
         </div>
         <div id="orderTierSection" style="display:none;margin-bottom:.85rem">
           <div class="slabel" style="margin-bottom:.5rem">Cenovni razred</div>
@@ -543,6 +546,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
         <option value="wp">🌐 Splet</option>
+        <option value="kom">🤝 Komisija</option>
       </select>
       <div class="swrap" style="min-width:100px"><span class="sicon">🏷</span><input type="text" id="salesFilterBatch" placeholder="Serija…" oninput="renderSales()"></div>
       <button class="fpill" onclick="clearSalesFilters()">✕</button>
@@ -567,6 +571,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="velo">🏪 VP</option>
         <option value="dar">🎁 Promo</option>
         <option value="int">🔬 Int</option>
+        <option value="kom">🤝 Kom</option>
       </select>
       <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
         <option value="">Vsi statusi</option>
@@ -850,6 +855,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-prod" checked> 🛒 Prodaja</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-int" checked> 🔬 Interno</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rz-kom" checked> 🤝 Komisija</label>
       </div>
       <div class="slabel">Varianta</div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -898,6 +904,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-velo" checked> 🏪 Veleprodaja</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-dar" checked> 🎁 Podaritev</label>
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-int" checked> 🔬 Interni</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-wp" checked> 🌐 Splet</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-kom" checked> 🤝 Komisija</label>
       </div>
       <div class="slabel">Obdobje</div>
       <div class="frow">
@@ -1157,6 +1165,111 @@ function stornoSale(groupId){
   });
 }
 
+async function vrniKomisijo(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  if(g.status==='stornirano'){toast('Komisija je že stornirana.');return;}
+  const ok=await showConfirm(`↩ Vrni komisijsko blago\n\nPartner: ${g.buyer||'—'}\nDatum: ${g.date||'—'}\n\nBlago bo vrnjeno v razpoložljivo zalogo.`,'Vrni blago');
+  if(!ok)return;
+  g.status='stornirano';
+  g.stornoDate=todayISO();
+  g.stornoRazlog='Vrnitev komisijskega blaga';
+  save();
+  sbUpdate('gm_sale_groups',{id:g.id},{status:'stornirano'}).catch(e=>console.warn('sbUpdate vrni komisija failed:',e));
+  renderStats();renderInventory();
+  if(currentTab==='serije'){renderBatches();}
+  if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
+  toast('↩ Blago vrnjeno v zalogo');
+}
+
+async function potrdiKomisijoPlacilo(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  if(g.invoiceNum){toast('Račun je bil že izdan: '+g.invoiceNum);return;}
+  if(g.status==='stornirano'){toast('Komisija je stornirana.');return;}
+  const lines=(g.lines||[]).filter(l=>(l.alc||0)+(l.gly||0)>0);
+  window._komPayLines=lines;
+  window._komPayGroupId=groupId;
+  document.getElementById('komPlaciloOverlay')?.remove();
+  const el=document.createElement('div');
+  el.id='komPlaciloOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  const priceRows=lines.map((l,i)=>{
+    const rows=[];
+    if(l.alc)rows.push(`<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:500">🥃 ${l.productName}</div><div style="font-size:.72rem;color:var(--muted)">${l.alc} kom</div></div>
+        <input type="number" id="kpp-${i}-alc" step="0.01" min="0" value="${l.alcPrice||''}" placeholder="0.00" oninput="updateKomPayTotal()" style="width:80px;text-align:right;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.9rem;outline:none">
+        <span style="font-size:.72rem;color:var(--muted);width:20px">€</span>
+        <span id="kpp-lt-${i}-alc" style="font-size:.82rem;font-weight:500;min-width:62px;text-align:right">—</span>
+      </div>`);
+    if(l.gly)rows.push(`<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:500">🌿 ${l.productName}</div><div style="font-size:.72rem;color:var(--muted)">${l.gly} kom</div></div>
+        <input type="number" id="kpp-${i}-gly" step="0.01" min="0" value="${l.glyPrice||''}" placeholder="0.00" oninput="updateKomPayTotal()" style="width:80px;text-align:right;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.9rem;outline:none">
+        <span style="font-size:.72rem;color:var(--muted);width:20px">€</span>
+        <span id="kpp-lt-${i}-gly" style="font-size:.82rem;font-weight:500;min-width:62px;text-align:right">—</span>
+      </div>`);
+    return rows.join('');
+  }).join('');
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem calc(var(--sab,0px)+1.25rem);width:100%;max-width:480px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;margin-bottom:.2rem">💶 Potrdi plačilo komisije</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">${g.buyer||'—'} · ${g.deliveryNum||g.extDelivery||'—'}</div>
+    <div style="font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Datum računa</div>
+    <input type="date" id="kpp-date" value="${todayISO()}" style="width:100%;box-sizing:border-box;padding:.45rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;margin-bottom:.9rem;outline:none">
+    <div style="font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Cena / kos</div>
+    <div style="margin-bottom:.75rem">${priceRows||'<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Ni produktnih linij.</div>'}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:rgba(58,107,74,.08);border-radius:8px;margin-bottom:1rem">
+      <span style="font-size:.85rem;font-weight:500">Skupaj za račun</span>
+      <span id="kpp-total" style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:#3a6b4a">0.00 €</span>
+    </div>
+    <div style="display:flex;gap:.75rem">
+      <button onclick="document.getElementById('komPlaciloOverlay').remove()" style="flex:1;padding:.75rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+      <button onclick="_komPayConfirm()" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:#3a6b4a;color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Potrdi in izdaj račun</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  updateKomPayTotal();
+}
+
+function updateKomPayTotal(){
+  const lines=window._komPayLines||[];
+  let total=0;
+  lines.forEach((l,i)=>{
+    if(l.alc){const p=parseFloat(document.getElementById(`kpp-${i}-alc`)?.value)||0;const lt=round(l.alc*p,2);total+=lt;const e=document.getElementById(`kpp-lt-${i}-alc`);if(e)e.textContent=lt.toFixed(2)+' €';}
+    if(l.gly){const p=parseFloat(document.getElementById(`kpp-${i}-gly`)?.value)||0;const lt=round(l.gly*p,2);total+=lt;const e=document.getElementById(`kpp-lt-${i}-gly`);if(e)e.textContent=lt.toFixed(2)+' €';}
+  });
+  const te=document.getElementById('kpp-total');if(te)te.textContent=round(total,2).toFixed(2)+' €';
+}
+
+async function _komPayConfirm(){
+  const g=saleGroups.find(x=>x.id===window._komPayGroupId);if(!g)return;
+  const lines=window._komPayLines||[];
+  const date=document.getElementById('kpp-date')?.value||todayISO();
+  let grandTotal=0;
+  lines.forEach((l,i)=>{
+    if(l.alc)l.alcPrice=parseFloat(document.getElementById(`kpp-${i}-alc`)?.value)||0;
+    if(l.gly)l.glyPrice=parseFloat(document.getElementById(`kpp-${i}-gly`)?.value)||0;
+    l.lineTotal=round((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),2);
+    grandTotal+=l.lineTotal;
+  });
+  g.total=round(grandTotal,2);g.fullTotal=g.total;
+  document.getElementById('komPlaciloOverlay')?.remove();
+  const invoiceNum=nextInvNum(g.channel,date);
+  const invoiceId=uid();
+  const inv={id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,email:g.email,phone:g.phone,
+    address:g.address,street:g.street,post:g.post,date,total:g.total,groupId:g.id,
+    extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus:'caka'};
+  invoices.unshift(inv);
+  g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
+  save();
+  sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup kom failed:',e));
+  sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice kom failed:',e));
+  sbSaveCounters().catch(e=>console.warn('sbSaveCounters kom failed:',e));
+  renderSalesSummary();renderSales();
+  if(currentTab==='racuni'){renderInvStats();renderInvoices();}
+  printInvoice(g);
+  toast(`🧾 Račun ${invoiceNum} izdan`);
+}
+
 function showPromptConfirm(label, cb){
   // Simple prompt overlay
   const existing=document.getElementById('promptOverlay');
@@ -1256,7 +1369,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -1349,6 +1462,7 @@ function sbGroupToApp(g, lines, lineBatches){
     discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
     extInvoice:g.ext_invoice, extDelivery:g.ext_delivery,
     note:g.note, invoiceNum:g.invoice_num, invoiceId:g.invoice_id,
+    deliveryNum:g.delivery_num||null,
     total:g.total||0, qty:g.qty||0,
     status:g.status||'active',
     lines:gLines
@@ -1569,6 +1683,7 @@ async function sbSaveGroup(g){
     discount:g.discount||0, discount_amt:g.discountAmt||0, full_total:g.fullTotal||0,
     ext_invoice:g.extInvoice||null, ext_delivery:g.extDelivery||null,
     note:g.note||null, invoice_num:g.invoiceNum||null, invoice_id:g.invoiceId||null,
+    delivery_num:g.deliveryNum||null,
     total:g.total||0, qty:g.qty||0, status:g.status||'active'
   }, true);
   // Briši stare vrstice in vpiši nove
@@ -2276,7 +2391,7 @@ function loadFromLocal(){
   try{invoices=JSON.parse(localStorage.getItem('gm_invoices')||'[]');}catch{invoices=[];}
   try{
     invCounters=JSON.parse(localStorage.getItem('gm_invCounters')||'{}');
-    ['malo','velo','dar','int'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
+    ['malo','velo','dar','int','kom'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
   }catch{invCounters={malo:0,velo:0,dar:0,int:0};}
 }
 
@@ -2363,14 +2478,16 @@ function productStock(productId){
     allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
     allocIntGly +=bGInt;
   });
-  // sold per purpose: malo+velo+dar = prodaja, int = interno
+  // sold per purpose: malo+velo+dar+wp+kom = prodaja, int = interno
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
+  let komAlc=0,komGly=0;
   saleGroups.forEach(g=>{
     if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
+    if(g.channel==='kom'){komAlc+=(l.alc||0);komGly+=(l.gly||0);}
   });
   const remProdAlc=Math.max(0,allocProdAlc-soldProdAlc);
   const remIntAlc =Math.max(0,allocIntAlc-soldIntAlc);
@@ -2390,6 +2507,7 @@ function productStock(productId){
     alc:Math.max(0,bAlc-soldAlc),gly:Math.max(0,bGly-soldGly),
     prodAlc:remProdAlc,intAlc:remIntAlc,
     prodGly:remProdGly,intGly:remIntGly,
+    komAlc,komGly,
     batchStock,safetyAlc,safetyGly,
   };
 }
@@ -2507,6 +2625,10 @@ function renderInventory(){
           <span class="ch-stock-label" style="color:var(--ch-int)">🔬 Interno</span>
           <span class="ch-stock-val">🥃${st.intAlc} 🌿${st.intGly}</span>
         </div>
+        ${(st.komAlc||0)+(st.komGly||0)>0?`<div class="ch-stock-row">
+          <span class="ch-stock-label" style="color:var(--ch-kom)">🤝 Komisija</span>
+          <span class="ch-stock-val">🥃${st.komAlc} 🌿${st.komGly}</span>
+        </div>`:''}
       </div>`:'';
     return `<div class="pcard ${cls}">
       <div class="pcard-top">
@@ -2920,7 +3042,7 @@ function checkOrderChannelStock(productId){
   const st=productStock(productId);
   const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
   const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
-  const isProd=orderChannel==='malo'||orderChannel==='velo';
+  const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
   const remAlc=isProd?st.prodAlc:st.intAlc;
   const remGly=isProd?st.prodGly:st.intGly;
   const purpose=isProd?'Prodaja':'Interno';
@@ -2937,11 +3059,13 @@ function checkOrderChannelStock(productId){
 
 function orderSelectChannel(ch){
   orderChannel=ch;orderTier=null;
-  Object.keys(CH).forEach(k=>document.getElementById('och-'+k).className='ch-opt-h'+(k===ch?' sel-'+k:''));
+  Object.keys(CH).forEach(k=>{const el=document.getElementById('och-'+k);if(el)el.className='ch-opt-h'+(k===ch?' sel-'+k:'');});
   const isVelo=ch==='velo';
+  const isKom=ch==='kom';
   document.getElementById('orderTierSection').style.display=isVelo?'':'none';
-  document.getElementById('orderVeloFields').style.display=isVelo?'':'none';
+  document.getElementById('orderVeloFields').style.display=(isVelo||isKom)?'':'none';
   if(isVelo)renderTierPills();
+  document.querySelectorAll('.order-btn-invoice').forEach(btn=>{btn.style.display=isKom?'none':'';});
   renderOrderRows();
 }
 
@@ -2967,26 +3091,32 @@ function renderOrderRows(){
   if(!products.length){el.innerHTML=`<div class="empty"><div class="ei">🍄</div><div class="et">Ni produktov</div></div>`;return;}
   el.innerHTML=products.map(p=>{
     const st=productStock(p.id);
-    const isProd=orderChannel==='malo'||orderChannel==='velo';
+    const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
     const remAlc=isProd?st.prodAlc:st.intAlc;
     const remGly=isProd?st.prodGly:st.intGly;
-    const purpose=isProd?'🛒 Prodaja':'🔬 Interno';
+    const purpose=orderChannel==='kom'?'🤝 Komisija':isProd?'🛒 Prodaja':'🔬 Interno';
     return `<div class="order-row">
       <div class="order-row-info">
         <div class="order-row-name">${moji(p.name)} ${p.name}</div>
-        <div class="order-row-meta" style="color:var(--ch-${isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
+        <div class="order-row-meta" style="color:var(--ch-${orderChannel==='kom'?'kom':isProd?'malo':'int'})">${purpose}: 🥃${remAlc} 🌿${remGly}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:.3rem;flex-shrink:0">
         <div class="order-row-inputs">
           <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
           <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
         </div>
-        <div style="display:flex;gap:.3rem;align-items:center">
+        ${orderChannel==='kom'?`<div style="display:flex;gap:.3rem;align-items:center;margin-top:.1rem">
+          <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€/kos:</span>
+          <input type="number" id="okpa-${p.id}" step="0.01" min="0" placeholder="alc" inputmode="decimal"
+            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena alkohol / kos (opcijsko)">
+          <input type="number" id="okpg-${p.id}" step="0.01" min="0" placeholder="gly" inputmode="decimal"
+            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena glicerin / kos (opcijsko)">
+        </div>`:`<div style="display:flex;gap:.3rem;align-items:center">
           <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€ skupaj:</span>
           <input type="text" id="oprice-${p.id}" placeholder="auto" inputmode="decimal"
             style="width:65px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;color:var(--ink);outline:none"
             oninput="onFinalPriceChange('${p.id}');renderOrderSummary()" title="Vnesi končni znesek — popust se izračuna avtomatično">
-        </div>
+        </div>`}
       </div>
     </div>
     <div id="owarn-${p.id}" style="font-size:.7rem;padding:.15rem 1rem .4rem;display:none"></div>`;
@@ -3078,13 +3208,19 @@ function collectOrderLines(){
   const discMult=1-discount/100;
   const tier=getActiveTier();
   const isVelo=orderChannel==='velo';
+  const isKom=orderChannel==='kom';
   return products.map(p=>{
     const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
     const customTotal=parseNum(document.getElementById('oprice-'+p.id)?.value||'');
     let alcP,glyP,lineTotal;
-    if(customTotal){
+    if(isKom){
+      // Per-unit prices entered in the komisija form (optional — 0 if not entered)
+      alcP=parseFloat(document.getElementById('okpa-'+p.id)?.value)||0;
+      glyP=parseFloat(document.getElementById('okpg-'+p.id)?.value)||0;
+      lineTotal=alc*alcP+gly*glyP;
+    } else if(customTotal){
       // Custom total — distribute proportionally between alc and gly
       const alcBase=latestPrice(p.id,'alc');
       const glyBase=latestPrice(p.id,'gly');
@@ -3187,9 +3323,9 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
       // For prod - only take from prod-allocated qty, never from internal allocation
       const allocProd=b.alc?.alloc?.prod!=null?b.alc.alloc.prod:(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0);
       const allocProdGly=b.gly?.alloc?.prod!=null?b.gly.alloc.prod:(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0);
-      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp')
+      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='kom')
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp')
+      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='kom')
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       // If no alloc set, use total available
       avAlc=allocProd>0?Math.max(0,Math.min(allocProd-soldProd,totalAvAlc)):totalAvAlc;
@@ -3324,6 +3460,14 @@ function nextInvNum(ch, date){
   return CH[ch].short+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
+function nextDobNum(date){
+  const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
+  const key='dob_'+yr;
+  if(!invCounters[key])invCounters[key]=0;
+  invCounters[key]++;
+  return 'DOB-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
+}
+
 async function confirmOrder(withInvoice){
   try{
   const lines=collectOrderLines();
@@ -3344,7 +3488,7 @@ async function confirmOrder(withInvoice){
   // stock check per channel
   const byProduct={};
   lines.forEach(l=>{byProduct[l.p.id]={p:l.p,alc:l.alc,gly:l.gly};});
-  const isProdCh=ch==='malo'||ch==='velo';
+  const isProdCh=ch==='malo'||ch==='velo'||ch==='kom';
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
     const avAlc=isProdCh?st.prodAlc:st.intAlc;
@@ -3372,7 +3516,7 @@ if(!Object.keys(pendingBatchAlloc).length){
   });
     if(unfulfilled){
       // Not enough stock for this channel - block and offer alternatives
-      const isProd=orderChannel==='malo'||orderChannel==='velo';
+      const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
       const altMsg=isProd
         ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
         : '\n\nMožnosti:\n• Zmanjšaj količino\n• Prodaj prek maloprodaje namesto interno';
@@ -3400,10 +3544,11 @@ if(!Object.keys(pendingBatchAlloc).length){
   if(withInvoice){
     invoiceNum=nextInvNum(ch,date);
     invoiceId=uid();
-    const invStatus=(ch==='wp'||ch==='malo'||ch==='velo')?'caka':'placano';
+    const invStatus=(ch==='wp'||ch==='malo'||ch==='velo'||ch==='kom')?'caka':'placano';
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,
+  const deliveryNum=ch==='kom'?nextDobNum(date):null;
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -3419,10 +3564,11 @@ if(!Object.keys(pendingBatchAlloc).length){
     printInvoice(group);
     if(currentTab==='racuni'){renderInvStats();renderInvoices();}
   }
+  if(ch==='kom'&&deliveryNum){printDobavnica(group);}
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));
   closeNovaProdaja();
   renderSalesSummary();renderSales();
-  toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}`);
+  toast(`${CH[ch].icon} ${totalQty} kom.${isRevenue?' · '+grandTotal.toFixed(2)+' €':''}${invoiceNum?' · '+invoiceNum:''}${deliveryNum?' · '+deliveryNum:''}`);
   }catch(err){toast('⚠ Napaka: '+err.message);console.error('confirmOrder:',err);}
 }
 
@@ -3571,7 +3717,10 @@ function renderSales(){
         ${g.extDelivery?`<span class="ext-ref">D: ${g.extDelivery}</span>`:''}
         ${isStorno?`<span style="background:#8b3a2a;color:white;font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px">⊘ STORNIRANO${g.stornoDate?' · '+g.stornoDate.split('-').reverse().join('.'):''}${g.stornoRazlog?' · '+g.stornoRazlog:''}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:.35rem">
-          ${!hasInvoice&&!isStorno?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
+          ${!hasInvoice&&!isStorno&&g.channel!=='kom'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
+          ${g.channel==='kom'&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">${g.deliveryNum?g.deliveryNum:'🤝 Na komisiji'}</span>`:''}
+          ${g.channel==='kom'&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
+          ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
           ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 CSV</button>`:''}
@@ -3583,7 +3732,8 @@ function renderSales(){
             return `<button class="tbtn" style="background:rgba(60,107,74,.25);color:#3a6b4a;border-color:rgba(60,107,74,.5)" onclick="sendToPartner('${g.id}','${partner.id}')" title="Pošlji zalogo partnerju ${partner.name}">🤝 ${partner.name}</button>`;
           })()}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
-          ${!isStorno?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
+          ${!isStorno&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
+          ${!isStorno&&g.channel!=='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>
       </div>`:''}
@@ -3959,6 +4109,129 @@ function buildUpnString(amount, reference, purpose){
 
 // ── QR CDN URL ──
 const QRJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
+function printDobavnica(group){
+  const html=buildDobavnicaHTML(group);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+function buildDobavnicaHTML(group){
+  const dobNum=group.deliveryNum||'';
+  const tableRows=(group.lines||[]).map(l=>{
+    const rows=[];
+    const batchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>bb.batchNum).join(', ');
+    const pb=batches.filter(b=>b.productId===l.productId);
+    const alcSku=pb.length?pb[0].alc?.sku||'':'';
+    const glySku=pb.length?pb[0].gly?.sku||'':'';
+    if(l.alc>0){rows.push(`<tr>
+      <td>🥃 Alkohol<br><span class="desc">${l.productName}${alcSku?'<br>'+alcSku:''}${batchStr?'<br>serija: '+batchStr:''}</span></td>
+      <td>${l.alc}</td>
+      <td class="r">${l.alcPrice!=null?l.alcPrice.toFixed(2)+' €':'—'}</td>
+      <td class="r">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td>
+    </tr>`);}
+    if(l.gly>0){rows.push(`<tr>
+      <td>🌿 Glicerin<br><span class="desc">${l.productName}${glySku?'<br>'+glySku:''}${batchStr?'<br>serija: '+batchStr:''}</span></td>
+      <td>${l.gly}</td>
+      <td class="r">${l.glyPrice!=null?l.glyPrice.toFixed(2)+' €':'—'}</td>
+      <td class="r">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td>
+    </tr>`);}
+    return rows.join('');
+  }).join('');
+
+  return`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${dobNum||'Komisijska dobavnica'}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:2.5rem;max-width:700px;margin:0 auto;color:#1a1209;font-size:13.5px;line-height:1.5}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;letter-spacing:.06em}
+.logo span{color:#af8455}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #8b5a2a}
+.meta{text-align:right;font-size:.72rem;color:#7a6f60;line-height:1.9}
+.doc-type{font-size:.62rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#8b5a2a;margin-top:.2rem}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.plabel{font-size:.6rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.pname{font-weight:500;font-size:.9rem}
+.pdetail{font-size:.75rem;color:#7a6f60;line-height:1.65}
+table{width:100%;border-collapse:collapse;margin-bottom:1.25rem}
+th{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;padding:.45rem .6rem;border-bottom:1px solid #ede6d6;text-align:left}
+th:last-child,td:last-child,th:nth-child(2),td:nth-child(2){text-align:right}
+th:nth-child(3),td:nth-child(3){text-align:right}
+td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.82rem;vertical-align:top}
+.desc{font-size:.7rem;color:#7a6f60;line-height:1.5}
+.r{text-align:right}
+.totals{border-top:1.5px solid #8b5a2a;padding-top:.85rem;display:flex;flex-direction:column;gap:.35rem;align-items:flex-end}
+.trow{display:flex;gap:2.5rem;font-size:.82rem}
+.grand{font-family:'Cormorant Garamond',serif;font-size:1.35rem;margin-top:.25rem}
+.notice{margin-top:1.5rem;padding:1rem 1.25rem;border:1px solid rgba(139,90,42,.3);border-radius:6px;background:rgba(139,90,42,.04);font-size:.78rem;color:#5a3a1a;line-height:1.65}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem}
+.sig-box{border-top:1px solid #1a1209;padding-top:.5rem;font-size:.68rem;color:#7a6f60;letter-spacing:.06em;text-transform:uppercase}
+.footer-line{border:none;border-top:1px solid rgba(175,132,85,.3);margin:2rem 0 .75rem}
+.footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;color:#7a6f60;text-align:center}
+.btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;background:#8b5a2a;color:white;display:block;margin:1.75rem auto 0}
+@media print{.btn{display:none}body{padding:1.5rem}}
+</style></head><body>
+
+<div class="hdr">
+  <div>
+    <div class="logo">Go<span>Mushroom</span></div>
+    <div style="font-size:.7rem;color:#7a6f60;margin-top:.2rem">gomushroom.si</div>
+    <div class="doc-type">🤝 Komisijska dobavnica</div>
+  </div>
+  <div class="meta">
+    <div><strong>${dobNum||'—'}</strong></div>
+    <div>${fmtDateSl(group.date)}</div>
+  </div>
+</div>
+
+<div class="parties">
+  <div>
+    <div class="plabel">Dobavitelj</div>
+    <div class="pname">GoMushroom, Rok Golob s.p.</div>
+    <div class="pdetail">Slovenija<br>gomushroom.si</div>
+  </div>
+  <div>
+    <div class="plabel">Partner / Komisionar</div>
+    <div class="pname">${group.buyer||'—'}</div>
+    <div class="pdetail">
+      ${group.email?group.email+'<br>':''}${group.phone?group.phone+'<br>':''}${group.street?group.street+'<br>':''}${group.post||''}${group.vat?'<br>ID DDV: '+group.vat:''}
+    </div>
+  </div>
+</div>
+
+<table>
+  <tr><th>Artikel</th><th style="text-align:right">Kol.</th><th style="text-align:right">Cena/kom</th><th style="text-align:right">Vrednost</th></tr>
+  ${tableRows||'<tr><td colspan="4" style="color:#7a6f60;text-align:center">—</td></tr>'}
+</table>
+
+<div class="totals">
+  ${(group.discount||0)>0?`<div class="trow"><span>Popust ${group.discount}%</span><span style="color:#3a6b4a">–${(group.discountAmt||0).toFixed(2)} €</span></div>`:''}
+  <div class="trow grand"><span>Skupna vrednost</span><span>${(group.total||0).toFixed(2)} €</span></div>
+</div>
+
+<div class="notice">
+  <strong>Pogoji komisijske prodaje</strong><br>
+  Blago ostaja last GoMushroom do potrditve plačila. Partner je dolžan blago hraniti ločeno in ga vrniti v nespremenjeni obliki, če do prodaje ne pride. Račun se izda ob potrditvi plačila.
+  ${group.extInvoice||group.extDelivery?`<br><br>${group.extInvoice?'Zunanji račun: <strong>'+group.extInvoice+'</strong>  ':''}${group.extDelivery?'Ref. dobavnica: <strong>'+group.extDelivery+'</strong>':''}`:''}
+</div>
+
+<div class="sig-grid">
+  <div class="sig-box">Oddal — GoMushroom<br><br><br></div>
+  <div class="sig-box">Prevzel — Partner<br><br><br></div>
+</div>
+
+<hr class="footer-line">
+<div class="footer-tagline">Od narave. Z znanjem. Za vas.</div>
+
+<button class="btn" onclick="window.print()">🖨 Natisni</button>
+</body></html>`;
+}
 
 function buildInvoiceHTML(group, qrDataURL){
   const ch=CH[group.channel]||CH.malo;
@@ -4354,7 +4627,7 @@ async function restoreJSON(e){
       saleGroups=data.saleGroups||[];
       invoices=data.invoices||[];
       invCounters=data.invCounters||{malo:0,velo:0,dar:0,int:0};
-      ['malo','velo','dar','int'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
+      ['malo','velo','dar','int','kom'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
       save();
       // Restore customers if present in backup
       if(data.customers?.length){
@@ -4542,6 +4815,7 @@ function genReport(type){
     const showBatches=document.getElementById('rz-serije')?.checked??true;
     const showProd=document.getElementById('rz-prod')?.checked??true;
     const showInt=document.getElementById('rz-int')?.checked??true;
+    const showKom=document.getElementById('rz-kom')?.checked??true;
     const varFilter=document.querySelector('input[name="rz-var"]:checked')?.value||'all';
     const showAlc=varFilter==='all'||varFilter==='alc';
     const showGly=varFilter==='all'||varFilter==='gly';
@@ -4614,6 +4888,16 @@ function genReport(type){
           </tr>`;
         });
       }
+      if(showKom&&((st.komAlc||0)+(st.komGly||0)>0)){
+        rows+=`<tr style="font-size:.75rem;color:var(--ch-kom)">
+          <td style="padding-left:1.5rem">🤝 Na komisiji</td>
+          ${showAlc?`<td class="num">${st.komAlc||0}</td>`:''}
+          ${showGly?`<td class="num">${st.komGly||0}</td>`:''}
+          <td class="num">${(st.komAlc||0)+(st.komGly||0)}</td>
+          ${showPrices?`<td></td>`:''}
+          <td></td>
+        </tr>`;
+      }
     });
     const totAlc=showAlc?products.reduce((s,p)=>{
       const st=productStock(p.id);
@@ -4627,6 +4911,8 @@ function genReport(type){
       if(!hasAlloc||(!showProd&&!showInt)||(showProd&&showInt))return s+st.gly;
       return s+(showProd?st.prodGly:st.intGly);
     },0):0;
+    const totKomAlc=showKom&&showAlc?products.reduce((s,p)=>s+(productStock(p.id).komAlc||0),0):0;
+    const totKomGly=showKom&&showGly?products.reduce((s,p)=>s+(productStock(p.id).komGly||0),0):0;
     let totVal=0;
     if(showPrices)products.forEach(p=>{
       const st=productStock(p.id);
@@ -4640,6 +4926,7 @@ function genReport(type){
       ${showAlc?`<div class="s-item"><div class="s-label">🥃 Alkohol (${purposeLabel})</div><div class="s-val">${totAlc} kom.</div></div>`:''}
       ${showGly?`<div class="s-item"><div class="s-label">🌿 Glicerin (${purposeLabel})</div><div class="s-val">${totGly} kom.</div></div>`:''}
       <div class="s-item"><div class="s-label">Skupaj${varLabel}</div><div class="s-val">${totAlc+totGly} kom.</div></div>
+      ${showKom&&(totKomAlc+totKomGly>0)?`<div class="s-item"><div class="s-label" style="color:var(--ch-kom)">🤝 Na komisiji</div><div class="s-val" style="color:var(--ch-kom)">${totKomAlc+totKomGly} kom.</div></div>`:''}
       ${showPrices?`<div class="s-item"><div class="s-label">Vrednost</div><div class="s-val">${totVal.toFixed(2)} €</div></div>`:''}
     </div>
     <table>
@@ -4694,10 +4981,11 @@ function genReport(type){
       if(!showProdaja&&hasAny&&!hasInt)return; // samo int — izpusti prod-only
       if(!showInterno&&hasAny&&!hasProd)return; // samo prod — izpusti int-only
 
-      const soldAlc=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldGly=saleGroups.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
+      const soldAlc=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldGly=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);
@@ -4778,11 +5066,14 @@ function genReport(type){
     if(document.getElementById('rp-velo').checked)chFilter.push('velo');
     if(document.getElementById('rp-dar').checked)chFilter.push('dar');
     if(document.getElementById('rp-int').checked)chFilter.push('int');
+    if(document.getElementById('rp-wp').checked)chFilter.push('wp');
+    if(document.getElementById('rp-kom').checked)chFilter.push('kom');
     const od=document.getElementById('rp-od').value;
     const doVal=document.getElementById('rp-do').value;
     const filterProd=document.getElementById('rp-prod').value;
 
     const filtered=saleGroups.filter(g=>
+      g.status!=='stornirano'&&
       chFilter.includes(g.channel)&&
       (!od||g.date>=od)&&(!doVal||g.date<=doVal)&&
       (!filterProd||g.lines?.some(l=>l.productId===filterProd))
@@ -4802,7 +5093,7 @@ function genReport(type){
       <div class="s-item">
         <div class="s-label">${CH[ch].icon} ${CH[ch].label}</div>
         <div class="s-val">${v.alcQ+v.glyQ} kom.</div>
-        ${showPrices&&(ch==='malo'||ch==='velo')?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
+        ${showPrices&&ch!=='int'&&ch!=='dar'?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
       </div>`).join('');
 
     const totalRev=filtered.reduce((s,g)=>s+(g.total||0),0);
@@ -4820,7 +5111,7 @@ function genReport(type){
           <td><span class="badge b-${g.channel}">${ch.icon}</span></td>
           <td class="num">${l.alc||0}</td>
           <td class="num">${l.gly||0}</td>
-          ${showPrices?`<td class="num">${l.lineTotal?(g.channel==='malo'||g.channel==='velo'?l.lineTotal.toFixed(2)+' €':'—'):'—'}</td>`:''}
+          ${showPrices?`<td class="num">${l.lineTotal&&g.channel!=='int'&&g.channel!=='dar'?l.lineTotal.toFixed(2)+' €':'—'}</td>`:''}
         </tr>`;
       });
     });
@@ -4844,8 +5135,8 @@ function genReport(type){
 
     const prodList=filterProd?products.filter(p=>p.id===filterProd):products;
 
-    // Samo prod kanali (malo, velo, dar)
-    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp')&&g.status!=='stornirano';
+    // Prod kanali (vključno s komisijo)
+    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='kom')&&g.status!=='stornirano';
     const salesInPeriod=saleGroups.filter(g=>isProdChannel(g)&&g.date>=od&&g.date<=doVal);
     const salesUntilEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
 
@@ -4895,11 +5186,12 @@ function genReport(type){
       }).filter(Boolean).join('');
 
       // Izhodi — prodano v obdobju po kupcih
-      let totalProdano=0;
+      let totalProdanoFO=0,totalProdanoPO=0;
       const izhodiRows=[];
       salesInPeriod.sort((a,b)=>a.date.localeCompare(b.date)).forEach(g=>{
-        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
-        totalProdano+=(l.alc||0);
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
+        if(g.channel==='malo'||g.channel==='wp'||g.channel==='dar')totalProdanoFO+=(l.alc||0);
+        else totalProdanoPO+=(l.alc||0);
         grandProdano+=(l.alc||0);
         izhodiRows.push(`<tr>
           <td>${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
@@ -4909,6 +5201,7 @@ function genReport(type){
           <td class="num" style="color:#7a6f60;font-size:.72rem">${g.invoiceNum||'—'}</td>
         </tr>`);
       });
+      const totalProdano=totalProdanoFO+totalProdanoPO;
 
       // Zaloga konec obdobja
       let zalogaEnd=0;
@@ -4928,24 +5221,35 @@ function genReport(type){
       const karticaRows=[];
       let tekocaZaloga=zalogaStart;
 
-      // Vse serije in prodaje od začetka leta do konca obdobja, sortirano po datumu
-      const yearStart=od.slice(0,4)+'-01-01';
-      const allBatchesYear=batches.filter(b=>b.productId===p.id&&b.date>=yearStart&&b.date<=doVal&&(b.alc?.qty||0)>0);
-      const allSalesYear=saleGroups.filter(g=>isProdChannel(g)&&g.date>=yearStart&&g.date<=doVal);
-
-      // Zberi vse dogodke
+      // Zberi vse dogodke — serije + B2B posamezno + maloprodaja tedensko
+      const RETAIL_CH=new Set(['malo','wp','dar']);
+      const B2B_CH=new Set(['velo','kom']);
       const events=[];
-      allBatchesYear.forEach(b=>{
+      batchesInPeriod.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-        if(alloc>0)events.push({date:b.date,type:'prod',batchNum:b.batchNum,qty:alloc,doc:b.batchNum,buyer:''});
+        if(alloc>0)events.push({date:b.date,type:'prod',batchNum:b.batchNum,qty:alloc});
       });
-      allSalesYear.forEach(g=>{
-        const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
-        events.push({date:g.date,type:'sale',batchNum:'',qty:l.alc||0,doc:g.invoiceNum||'—',buyer:g.buyer||'—'});
+      // B2B (velo, kom) — vsaka prodaja posebej z dokumentom
+      salesInPeriod.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
+        events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
       });
+      // Maloprodaja (malo, wp, dar) — mesečni seštevek, opomba: število kupcev
+      let retailTotal=0,retailCount=0;
+      const retailChs=new Set();
+      salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
+        retailTotal+=(l.alc||0);
+        retailCount++;
+        retailChs.add(g.channel);
+      });
+      if(retailTotal>0){
+        const retailLabel=[...retailChs].map(c=>CH[c]?.label||c).join(' / ');
+        events.push({date:doVal,type:'sale',qty:retailTotal,doc:'—',buyer:retailLabel,channel:'retail',grouped:true,count:retailCount});
+      }
       events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
-      // Začetna zaloga (samo če > 0 ali je to prenosna zaloga)
+      // Začetna zaloga
       if(zalogaStart>0){
         karticaRows.push(`<tr class="prenosna">
           <td>${od.split('-').reverse().join('.')}</td>
@@ -4974,15 +5278,27 @@ function genReport(type){
         } else {
           tekocaZaloga-=ev.qty;
           const inPeriod=ev.date>=od;
-          karticaRows.push(`<tr class="izhod" style="${!inPeriod?'opacity:.65':''}">
-            <td>${ev.date.split('-').reverse().join('.')}</td>
-            <td>Prodaja</td>
-            <td>${ev.doc}</td>
-            <td class="num">—</td>
-            <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
-            <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
-            <td>${ev.buyer}${!inPeriod?' <span style="font-size:.6rem;color:#9a8a7a">(pred mesecem)</span>':''}</td>
-          </tr>`);
+          if(ev.grouped){
+            karticaRows.push(`<tr class="izhod">
+              <td>${ev.date.split('-').reverse().join('.')}</td>
+              <td>${ev.buyer}</td>
+              <td>—</td>
+              <td class="num">—</td>
+              <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
+              <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
+              <td style="font-size:.72rem;color:#7a6f60">${ev.count} kupcev</td>
+            </tr>`);
+          } else {
+            karticaRows.push(`<tr class="izhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
+              <td>${ev.date.split('-').reverse().join('.')}</td>
+              <td>${CH[ev.channel]?.label||'Prodaja'}</td>
+              <td style="font-size:.72rem">${ev.doc}</td>
+              <td class="num">—</td>
+              <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
+              <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
+              <td>${ev.buyer}${!inPeriod?' <span style="font-size:.6rem;color:#9a8a7a">(pred mesecem)</span>':''}</td>
+            </tr>`);
+          }
         }
       });
 
@@ -4995,7 +5311,8 @@ function genReport(type){
           <div class="kpi-row">
             <div class="kpi"><div class="kpi-label">Zaloga ${od.split('-').reverse().join('.')}</div><div class="kpi-val">${zalogaStart}</div></div>
             <div class="kpi"><div class="kpi-label" style="color:#1a4a2a">+ Narejeno</div><div class="kpi-val" style="color:#1a4a2a">+${totalNarejeno}</div></div>
-            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− Prodano</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdano}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− FO</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdanoFO}</div></div>
+            <div class="kpi"><div class="kpi-label" style="color:#8b3a2a">− B2B</div><div class="kpi-val" style="color:#8b3a2a">−${totalProdanoPO}</div></div>
             <div class="kpi"><div class="kpi-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="kpi-val" style="color:${zalogaEnd>0?'#1a4a2a':'#5a4a3a'}">${zalogaEnd}</div></div>
           </div>
           <table>

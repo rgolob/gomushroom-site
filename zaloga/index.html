@@ -5150,8 +5150,6 @@ function genReport(type){
       // Zberi vse dogodke — serije + B2B posamezno + maloprodaja tedensko
       const RETAIL_CH=new Set(['malo','wp','dar']);
       const B2B_CH=new Set(['velo','kom']);
-      const getWeekStart=ds=>{const d=new Date(ds);const dy=d.getDay()||7;d.setDate(d.getDate()-dy+1);return d.toISOString().slice(0,10);};
-      const weekLbl=ws=>{const s=new Date(ws),e=new Date(ws);e.setDate(e.getDate()+6);const f=d=>String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.';return f(s)+'–'+f(e);};
       const events=[];
       batchesInPeriod.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
@@ -5162,19 +5160,14 @@ function genReport(type){
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
         events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
       });
-      // Maloprodaja (malo, wp, dar) — tedenski seštevek
-      const retailWeeks={};
+      // Maloprodaja (malo, wp, dar) — mesečni seštevek, opomba: število kupcev
+      let retailTotal=0,retailCount=0;
       salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id);if(!l||!(l.alc||0))return;
-        const wk=getWeekStart(g.date);
-        if(!retailWeeks[wk])retailWeeks[wk]={qty:0,chs:new Set()};
-        retailWeeks[wk].qty+=(l.alc||0);
-        retailWeeks[wk].chs.add(g.channel);
+        retailTotal+=(l.alc||0);
+        retailCount++;
       });
-      Object.entries(retailWeeks).forEach(([wk,v])=>{
-        const chLbl=[...v.chs].map(c=>CH[c]?.short||c).join('/');
-        events.push({date:wk,type:'sale',qty:v.qty,doc:chLbl,buyer:'Teden '+weekLbl(wk),channel:'retail',grouped:true});
-      });
+      if(retailTotal>0)events.push({date:doVal,type:'sale',qty:retailTotal,doc:'—',buyer:'Maloprodaja',channel:'retail',grouped:true,count:retailCount});
       events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
       // Začetna zaloga
@@ -5207,14 +5200,14 @@ function genReport(type){
           tekocaZaloga-=ev.qty;
           const inPeriod=ev.date>=od;
           if(ev.grouped){
-            karticaRows.push(`<tr class="izhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
+            karticaRows.push(`<tr class="izhod">
               <td>${ev.date.split('-').reverse().join('.')}</td>
-              <td style="font-size:.72rem;color:#5a4a3a">${ev.buyer}</td>
-              <td style="font-size:.68rem;color:#9a8a7a">${ev.doc}</td>
+              <td>${ev.buyer}</td>
+              <td>—</td>
               <td class="num">—</td>
               <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
               <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
-              <td></td>
+              <td style="font-size:.72rem;color:#7a6f60">${ev.count} kupcev</td>
             </tr>`);
           } else {
             karticaRows.push(`<tr class="izhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">

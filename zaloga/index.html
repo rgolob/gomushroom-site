@@ -1618,6 +1618,7 @@ async function sbSaveGroup(g){
     discount:g.discount||0, discount_amt:g.discountAmt||0, full_total:g.fullTotal||0,
     ext_invoice:g.extInvoice||null, ext_delivery:g.extDelivery||null,
     note:g.note||null, invoice_num:g.invoiceNum||null, invoice_id:g.invoiceId||null,
+    delivery_num:g.deliveryNum||null,
     total:g.total||0, qty:g.qty||0, status:g.status||'active'
   }, true);
   // Briši stare vrstice in vpiši nove

@@ -3394,7 +3394,7 @@ function nextDobNum(date){
   return 'DOB-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
-
+async function confirmOrder(withInvoice){
   try{
   const lines=collectOrderLines();
   if(!lines.length){alert('Dodaj vsaj eno količino.');return;}

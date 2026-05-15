@@ -4210,15 +4210,13 @@ function buildDobavnicaHTML(group){
     if(l.alc>0){
       lineIdx++;
       const art=alcSku||('A'+String(lineIdx).padStart(2,'0'));
-      const qtyL=(l.alc*alcVol/1000);
-      const pricePerL=qtyL>0&&(l.alcPrice||0)>0?((l.alcPrice||0)*1000/alcVol):null;
       const znesek=l.alc*(l.alcPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Alkoholni ekstrakt – ${l.productName}${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
-        <td class="r">${qtyL%1===0?qtyL.toFixed(0):qtyL.toFixed(2)}</td>
-        <td>L</td>
-        <td class="r">${pricePerL!=null?pricePerL.toFixed(2)+' €':'—'}</td>
+        <td>Alkoholni ekstrakt – ${l.productName} (${alcVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td class="r">${l.alc}</td>
+        <td>kos</td>
+        <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
         <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
@@ -4226,15 +4224,13 @@ function buildDobavnicaHTML(group){
     if(l.gly>0){
       lineIdx++;
       const art=glySku||('G'+String(lineIdx).padStart(2,'0'));
-      const qtyL=(l.gly*glyVol/1000);
-      const pricePerL=qtyL>0&&(l.glyPrice||0)>0?((l.glyPrice||0)*1000/glyVol):null;
       const znesek=l.gly*(l.glyPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Glicerinski ekstrakt – ${l.productName}${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
-        <td class="r">${qtyL%1===0?qtyL.toFixed(0):qtyL.toFixed(2)}</td>
-        <td>L</td>
-        <td class="r">${pricePerL!=null?pricePerL.toFixed(2)+' €':'—'}</td>
+        <td>Glicerinski ekstrakt – ${l.productName} (${glyVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td class="r">${l.gly}</td>
+        <td>kos</td>
+        <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>
         <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);

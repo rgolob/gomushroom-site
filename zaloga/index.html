@@ -1697,7 +1697,8 @@ async function sbSaveGroup(g){
     delivery_num:g.deliveryNum||null,
     total:g.total||0, qty:g.qty||0, status:g.status||'active'
   }, true);
-  // Briši stare vrstice in vpiši nove
+  // Briši stare vrstice in vpiši nove — samo če lines niso prazni
+  if((g.lines||[]).length>0){
   try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
   for(const l of (g.lines||[])){
     const lineId=uid();
@@ -1716,7 +1717,7 @@ async function sbSaveGroup(g){
       });
     }
   }
-}
+  } // end if lines.length>0
 
 // Shrani račun
 async function sbSaveInvoice(inv){
@@ -4181,6 +4182,8 @@ async function ustvariDobavnico(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g){toast('❌ Prodaja ni najdena');return;}
   if(g.deliveryNum){toast('📦 Dobavnica že obstaja: '+g.deliveryNum);return;}
+  const ok=await showConfirm(`📦 Ustvari dobavnico\n\nKupec: ${g.buyer||'—'}\nDatum: ${g.date||'—'}\n\nDobavnica bo dobila naslednjo DOB številko in bo trajno zabeležena.`,'Ustvari');
+  if(!ok)return;
   const dobNum=nextDobNum(g.date);
   g.deliveryNum=dobNum;
   try{

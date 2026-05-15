@@ -4205,7 +4205,8 @@ function buildDobavnicaHTML(group){
   let lineIdx=0;
   const tableRows=(group.lines||[]).map(l=>{
     const rows=[];
-    const batchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>bb.batchNum).join(', ');
+    const alcBatchStr=(l.batchBreakdown||[]).filter(bb=>bb.alc>0).map(bb=>bb.batchNum).join(', ');
+    const glyBatchStr=(l.batchBreakdown||[]).filter(bb=>bb.gly>0).map(bb=>bb.batchNum).join(', ');
     const pb=batches.filter(b=>b.productId===l.productId);
     const alcVol=pb.length?pb[0].alc?.vol||50:50;
     const glyVol=pb.length?pb[0].gly?.vol||50:50;
@@ -4217,7 +4218,7 @@ function buildDobavnicaHTML(group){
       const znesek=l.alc*(l.alcPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Alkoholni ekstrakt – ${l.productName} (${alcVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td>Alkoholni ekstrakt – ${l.productName} (${alcVol} ml)${alcBatchStr?`<br><span class="desc">Serija: ${alcBatchStr}</span>`:''}</td>
         <td class="r">${l.alc}</td>
         <td>kos</td>
         <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
@@ -4230,7 +4231,7 @@ function buildDobavnicaHTML(group){
       const znesek=l.gly*(l.glyPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Glicerinski ekstrakt – ${l.productName} (${glyVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td>Glicerinski ekstrakt – ${l.productName} (${glyVol} ml)${glyBatchStr?`<br><span class="desc">Serija: ${glyBatchStr}</span>`:''}</td>
         <td class="r">${l.gly}</td>
         <td>kos</td>
         <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>

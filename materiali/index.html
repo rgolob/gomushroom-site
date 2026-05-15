@@ -1147,6 +1147,7 @@ function saveDN(){
   }
 
   save();
+  sbPushDN(d);
   closeSheet('dnOverlay');
   renderDNStats();renderDN();
   renderEtStats();
@@ -1224,7 +1225,7 @@ function knjizEtanolIzhod(id){
   const volPct=d.volPct||d.pctEtOH||96.25;
   const gostota=etohDensity(volPct);
   const volSkupaj=round(aaeSkupaj/(volPct/100),3);
-  etanolKnjiga.push({
+  const newEt={
     id:uid(),
     datum:d.datumZakljucka||d.datum,
     tip:'izhod_dn',
@@ -1232,8 +1233,10 @@ function knjizEtanolIzhod(id){
     opomba:`Ekstrakcija ${d.vrstaGobe} · ${d.kolAlc||0} kom alc · izgube: ${aaeIzgube.toFixed(4)} L AAE`,
     kolicina:volSkupaj,pct:volPct,gostota,
     lAAE:aaeSkupaj,aaeTinkture,aaeIzgube,
-  });
+  };
+  etanolKnjiga.push(newEt);
   save();
+  sbPushEt(newEt);
   closeSheet('dnDetailOverlay');
   renderEtStats();renderEtanol();
   toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
@@ -1268,8 +1271,12 @@ function zaklucDN(id){
   d.datumZakljucka=d.datumZakljucka||todayISO();
   d.aaeTinkture=aaeTinkture;
   d.trosarinaEUR=trosarinaEUR;
+  const matsBefore=materiali.length;
   const stMatov=knjizMaterjaleIzhod(d);
   save();
+  sbPushDN(d);
+  sbPushEt(etanolKnjiga[etanolKnjiga.length-1]);
+  materiali.slice(matsBefore).forEach(m=>sbPushMat(m));
   closeSheet('dnDetailOverlay');
   renderDNStats();renderDN();renderEtStats();renderEtanol();
   toast(`✓ DN zaključen · trošarina: ${trosarinaEUR.toFixed(2)} € · ${stMatov} materialov knjiženih`);
@@ -1313,6 +1320,7 @@ function deleteDN(id){
   if(!confirm('Izbriši ta delovni nalog?'))return;
   workOrders=workOrders.filter(x=>x.id!==id);
   save();
+  sbDel('gm_dn_work_orders',id).catch(e=>console.error('deleteDN sb',e));
   closeSheet('dnDetailOverlay');
   renderDNStats();renderDN();
   toast('Nalog izbrisan');
@@ -1428,6 +1436,7 @@ function deleteEtanol(id){
   if(!confirm(`Izbriši ta ${tipLabel}?\n\n${fmtDate(e.datum)} · ${(e.kolicina||0).toFixed(3)} L\n\nTo bo vplivalo na zalogo etanola!`))return;
   etanolKnjiga=etanolKnjiga.filter(x=>x.id!==id);
   save();
+  sbDel('gm_dn_etanol',id).catch(err=>console.error('deleteEt sb',err));
   renderEtStats();renderEtanol();
   toast('Vnos izbrisan');
 }
@@ -1471,6 +1480,7 @@ function saveEtanol(){
     etanolKnjiga.push(e);
   }
   save();
+  sbPushEt(e);
   closeSheet('etanolOverlay');
   renderEtStats();renderEtanol();
   toast(editingEtId?'✓ Vnos posodobljen':'✓ Etanol knjižen');
@@ -1846,6 +1856,7 @@ function saveMaterjal(){
     materiali.push(m);
   }
   save();
+  sbPushMat(m);
   closeSheet('materialiOverlay');
   renderMateriali();
   toast(`✓ ${MAT_IME[tip]||tip}: +${kolicina} ${MAT_ENOTA[tip]||''}`);
@@ -1856,7 +1867,9 @@ function deleteMaterjal(id){
   const m=materiali.find(x=>x.id===id);if(!m)return;
   if(!confirm(`Izbriši vnos?\n${MAT_IME[m.tip]} · ${m.kolicina} ${MAT_ENOTA[m.tip]||''}`))return;
   materiali=materiali.filter(x=>x.id!==id);
-  save();renderMateriali();
+  save();
+  sbDel('gm_dn_materiali',id).catch(err=>console.error('deleteMat sb',err));
+  renderMateriali();
   toast('Vnos izbrisan');
 }
 
@@ -2023,6 +2036,7 @@ function saveOprema(){
     oprema.push(o);
   }
   save();
+  sbPushOp(o);
   closeSheet('opremaOverlay');
   renderOprema();
   toast(`✓ ${naziv} shranjen`);
@@ -2057,6 +2071,8 @@ function applyImport(data){
   etanolKnjiga.push(...noviEt);
   etanolKnjiga.sort((a,b)=>a.datum.localeCompare(b.datum));
   save();
+  workOrders.forEach(d=>sbPushDN(d));
+  etanolKnjiga.forEach(e=>sbPushEt(e));
   renderDNStats();renderDN();renderEtStats();renderEtanol();
   toast(`✓ Uvoženo: ${incomingWO.length} DN, ${noviEt.length} etanol vnosov`);
 }
@@ -2081,6 +2097,131 @@ function backupDN(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
   toast('💾 Backup shranjen');
+}
+
+// ── SUPABASE ──
+const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
+const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+const SB_HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sbFetch(tbl,params=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${tbl}?${params}`,{headers:SB_HDR});
+  if(!r.ok)throw new Error(`${tbl}:${r.status}`);return r.json();
+}
+async function sbUpsert(tbl,data){
+  const r=await fetch(`${SB_URL}/rest/v1/${tbl}`,{
+    method:'POST',headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify(Array.isArray(data)?data:[data])});
+  if(!r.ok){const t=await r.text();throw new Error(`${tbl}:${t}`);}
+}
+async function sbDel(tbl,id){
+  const r=await fetch(`${SB_URL}/rest/v1/${tbl}?id=eq.${id}`,{method:'DELETE',headers:SB_HDR});
+  if(!r.ok)throw new Error(`${tbl}:${r.status}`);
+}
+
+// Converters DN ↔ Supabase
+function dnToSb(d){return{
+  id:d.id,oznaka:d.oznaka,datum:d.datum||null,namen:d.namen||null,
+  vrsta_gobe:d.vrstaGobe||null,serija_gobe:d.serijaGobe||null,masa_gobe:d.masaGobe||null,
+  serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
+  vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,
+  kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
+  vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,
+  izgube:d.izgube||0,aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
+  masa_etoh:d.masaEtOH||0,pct_etoh:d.pctEtOH||96.25,gostota:d.gostota||null,
+  vol_l:d.volL||0,vol_pct:d.volPct||null,l_aae:d.lAAE||0,
+  trosarina:d.trosarina||null,trosarina_eur:d.trosarinaEUR||null,
+  cena_alc:d.cenaAlc||null,cena_gly:d.cenaGly||null,opomba:d.opomba||null,
+  datum_zakljucka:d.datumZakljucka||null,status:d.status||'odprt',
+  ustvarjen:d.ustvarjen||new Date().toISOString()
+};}
+function sbToDn(r){return{
+  id:r.id,oznaka:r.oznaka,datum:r.datum,namen:r.namen,
+  vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
+  serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
+  vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,
+  kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
+  vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,
+  izgube:r.izgube||0,aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,
+  masaEtOH:r.masa_etoh||0,pctEtOH:r.pct_etoh||96.25,gostota:r.gostota||0,
+  volL:r.vol_l||0,volPct:r.vol_pct||0,lAAE:r.l_aae||0,
+  trosarina:r.trosarina||0,trosarinaEUR:r.trosarina_eur||0,
+  cenaAlc:r.cena_alc||0,cenaGly:r.cena_gly||0,opomba:r.opomba||'',
+  datumZakljucka:r.datum_zakljucka||'',status:r.status||'odprt',
+  ustvarjen:r.ustvarjen
+};}
+
+// Converters Etanol ↔ Supabase
+function etToSb(e){return{
+  id:e.id,datum:e.datum||null,tip:e.tip,dokument:e.dokument||null,
+  opomba:e.opomba||null,masa:e.masa||null,pct:e.pct||null,gostota:e.gostota||null,
+  kolicina:e.kolicina||0,l_aae:e.lAAE||0,mas_pct:e.masPct||null,
+  trosarina:e.trosarina||null,strosek:e.strosek||0,
+  aae_tinkture:e.aaeTinkture||null,aae_izgube:e.aaeIzgube||null
+};}
+function sbToEt(r){return{
+  id:r.id,datum:r.datum,tip:r.tip,dokument:r.dokument||'',
+  opomba:r.opomba||'',masa:r.masa||0,pct:r.pct||0,gostota:r.gostota||0,
+  kolicina:r.kolicina||0,lAAE:r.l_aae||0,masPct:r.mas_pct||0,
+  trosarina:r.trosarina||0,strosek:r.strosek||0,
+  aaeTinkture:r.aae_tinkture||0,aaeIzgube:r.aae_izgube||0
+};}
+
+// Converters Materiali ↔ Supabase
+function matToSb(m){return{
+  id:m.id,datum:m.datum||null,tip:m.tip,smer:m.smer||'vhod',
+  dokument:m.dokument||null,serija_gobe:m.serijaGobe||null,
+  kolicina:m.kolicina||0,strosek:m.strosek||0,opomba:m.opomba||null
+};}
+function sbToMat(r){return{
+  id:r.id,datum:r.datum,tip:r.tip,smer:r.smer||'vhod',
+  dokument:r.dokument||'',serijaGobe:r.serija_gobe||'',
+  kolicina:r.kolicina||0,strosek:r.strosek||0,opomba:r.opomba||''
+};}
+
+// Converters Oprema ↔ Supabase
+function opToSb(o){return{
+  id:o.id,kat:o.kat||'oprema',naziv:o.naziv,model:o.model||null,
+  status:o.status||'aktivna',opomba:o.opomba||null,
+  datum_nakupa:o.datumNakupa||null,cena:o.cena||null,
+  serijska:o.serijska||null,dobavitelj:o.dobavitelj||null,
+  garancija:o.garancija||null,vzdrz:o.vzdrz||null,kolicina:o.kolicina||null
+};}
+function sbToOp(r){return{
+  id:r.id,kat:r.kat||'oprema',naziv:r.naziv,model:r.model||'',
+  status:r.status||'aktivna',opomba:r.opomba||'',
+  datumNakupa:r.datum_nakupa||'',cena:r.cena||0,
+  serijska:r.serijska||'',dobavitelj:r.dobavitelj||'',
+  garancija:r.garancija||'',vzdrz:r.vzdrz||'',kolicina:r.kolicina||null
+};}
+
+// Sync helpers
+function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
+async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushDN',e);}}
+async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
+async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);}}
+async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+
+async function loadFromSB(){
+  setSyncStatus('↻');
+  try{
+    const [wos,ets,mats,ops]=await Promise.all([
+      sbFetch('gm_dn_work_orders','order=datum.desc'),
+      sbFetch('gm_dn_etanol','order=datum.asc'),
+      sbFetch('gm_dn_materiali','order=datum.desc'),
+      sbFetch('gm_dn_oprema','order=naziv.asc'),
+    ]);
+    workOrders=wos.map(sbToDn);
+    etanolKnjiga=ets.map(sbToEt);
+    materiali=mats.map(sbToMat);
+    oprema=ops.map(sbToOp);
+    save();
+    renderDNStats();renderDN();renderEtStats();
+    if(currentTab==='etanol')renderEtanol();
+    if(currentTab==='materiali')renderMateriali();
+    if(currentTab==='oprema')renderOprema();
+    setSyncStatus('✓');
+  }catch(e){setSyncStatus('⚠ offline');console.error('loadFromSB',e);}
 }
 
 // ── TOAST ──
@@ -2174,6 +2315,7 @@ function appInit(){
   renderDNStats();
   renderDN();
   document.getElementById('dnDatum').value=todayISO();
+  loadFromSB();
 }
 function init(){appInit();}
 </script>

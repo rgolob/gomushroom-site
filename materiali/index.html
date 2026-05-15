@@ -551,6 +551,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
       <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#2a5a8b;border-color:rgba(42,90,139,.3)" onclick="migrirajVSupabase()">☁️ Sinhroniziraj localStorage → Supabase</button>
       <div style="margin-bottom:.75rem">
         <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
       </div>
@@ -2201,6 +2202,29 @@ async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));set
 async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
 async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);}}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+
+async function migrirajVSupabase(){
+  if(!confirm(`Sinhroniziraj VSE lokalne podatke v Supabase?\n\nDN: ${workOrders.length}\nEtanol: ${etanolKnjiga.length}\nMateriali: ${materiali.length}\nOprema: ${oprema.length}\n\nObstoječi zapisi v Supabase bodo prepisani.`))return;
+  closeSheet('settingsOverlay');
+  setSyncStatus('↻');
+  toast('⏳ Sinhronizacija…');
+  try{
+    const chunk=async(tbl,rows)=>{
+      for(let i=0;i<rows.length;i+=50)
+        await sbUpsert(tbl,rows.slice(i,i+50));
+    };
+    await chunk('gm_dn_work_orders',workOrders.map(dnToSb));
+    await chunk('gm_dn_etanol',etanolKnjiga.map(etToSb));
+    await chunk('gm_dn_materiali',materiali.map(matToSb));
+    await chunk('gm_dn_oprema',oprema.map(opToSb));
+    setSyncStatus('✓');
+    toast(`✓ Sinhronizirano: ${workOrders.length} DN, ${etanolKnjiga.length} et, ${materiali.length} mat, ${oprema.length} op`);
+  }catch(e){
+    setSyncStatus('⚠');
+    toast('❌ Napaka: '+e.message);
+    console.error('migrirajVSupabase',e);
+  }
+}
 
 async function loadFromSB(){
   setSyncStatus('↻');

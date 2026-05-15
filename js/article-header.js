@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="wrap nav">
       <div class="brand">
         <a href="${homeUrl}" aria-label="GoMushroom domov">
-          <img src="/assets/logo-horizontal.webp" alt="GoMushroom">
+          <img src="/assets/gomushroom_logo_800px.webp" alt="GoMushroom" width="116" height="40">
         </a>
       </div>
 

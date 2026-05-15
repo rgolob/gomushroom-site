@@ -360,10 +360,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
-    <img src="/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:28px;background:white;border-radius:4px;padding:2px 7px;display:block">
-    <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em">v2.4</button>
-  </div>
+  <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;flex-shrink:0">v2.4</button>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -4220,7 +4217,6 @@ function buildDobavnicaHTML(group){
         <td class="r">${l.alc}</td>
         <td>kos</td>
         <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
     }
@@ -4234,7 +4230,6 @@ function buildDobavnicaHTML(group){
         <td class="r">${l.gly}</td>
         <td>kos</td>
         <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
     }
@@ -4314,15 +4309,14 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <table>
   <tr>
-    <th style="width:8%">Artikel</th>
+    <th style="width:14%">Artikel</th>
     <th>Opis</th>
     <th class="r" style="width:7%">Kol.</th>
     <th style="width:5%">Enota</th>
     <th class="r" style="width:12%">Prodajna cena</th>
-    <th class="r" style="width:6%">DDV</th>
     <th class="r" style="width:11%">Znesek</th>
   </tr>
-  ${tableRows||'<tr><td colspan="7" style="color:#7a6f60;text-align:center">—</td></tr>'}
+  ${tableRows||'<tr><td colspan="6" style="color:#7a6f60;text-align:center">—</td></tr>'}
 </table>
 
 <div class="totals">

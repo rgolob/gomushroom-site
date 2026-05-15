@@ -32,8 +32,10 @@
     <div class="wrap nav">
       <div class="brand">
         <a href="/" id="site-logo" class="brand">
-          <img src="/assets/gomushroom_logo_800px.webp"
-               alt="GoMushroom" width="116" height="40" fetchpriority="high">
+          <img src="/assets/logo-h168.webp"
+               srcset="/assets/logo-h168.webp 168w, /assets/logo-horizontal.webp 1536w"
+               sizes="84px"
+               alt="GoMushroom" width="84" height="42" fetchpriority="high">
         </a>
       </div>
       <nav id="primary-nav" aria-label="Glavna navigacija">

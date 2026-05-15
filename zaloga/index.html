@@ -4250,7 +4250,7 @@ function buildDobavnicaHTML(group){
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Jost',sans-serif;padding:2.5rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5}
+body{font-family:'Jost',sans-serif;padding:4rem 2.5rem 2.5rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5}
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem}
 .company{font-size:.78rem;line-height:1.8}
 .company strong{font-size:.9rem;display:block;margin-bottom:.2rem}
@@ -4275,11 +4275,13 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:2rem}
 .sig-box{font-size:.75rem}
 .sig-line{border-bottom:1px solid #1a1209;height:2.5rem;margin-bottom:.3rem}
-.footer-line{border:none;border-top:1px solid #ccc;margin:2rem 0 .6rem}
+.footer-section{position:fixed;bottom:1.5cm;left:0;right:0;padding:0 2.5rem}
+.footer-line{border:none;border-top:1px solid #ccc;margin:0 0 .6rem}
+.footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.75rem;color:#1a1209;text-align:center;margin-bottom:.25rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;color:#7a6f60;text-align:center}
 .btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;background:#1a1209;color:white;display:block;margin:1.5rem auto 0}
 @page{margin:0}
-@media print{.btn{display:none}body{padding:1.5rem}}
+@media print{.btn{display:none}body{padding:4rem 2.5rem 2.5rem}}
 </style></head><body>
 
 <div class="hdr">
@@ -4344,8 +4346,11 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   <div class="sig-box"><div class="sig-line"></div>Blago prevzel:</div>
 </div>
 
-<hr class="footer-line">
-<div class="footer-tagline">Ekstrakcije po meri – naravno, strokovno, učinkovito.</div>
+<div class="footer-section">
+  <hr class="footer-line">
+  <div class="footer-bold">Ekstrakcije po meri — naravno, strokovno, učinkovito.</div>
+  <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
+</div>
 
 <button class="btn" onclick="window.print()">🖨 Natisni</button>
 </body></html>`;
@@ -4456,7 +4461,9 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .qr-label{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60}
 .qr-info{font-size:.72rem;color:#7a6f60;line-height:1.75;flex:1}
 .qr-info strong{color:#1a1209;font-size:.78rem;display:block;margin-bottom:.25rem}
-.footer-line{border:none;border-top:1px solid #1a1209;margin:2rem 0 .85rem}
+.footer-section{position:fixed;bottom:1.5cm;left:0;right:0;padding:0 2.5rem}
+.footer-line{border:none;border-top:1px solid #1a1209;margin:0 0 .85rem}
+.footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.75rem;color:#1a1209;text-align:center;margin-bottom:.25rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.88rem;color:#7a6f60;text-align:center;letter-spacing:.02em}
 .actions{display:flex;gap:.75rem;justify-content:center;margin-top:1.75rem;flex-wrap:wrap}
 .btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
@@ -4520,8 +4527,11 @@ ${qrImgTag?`
   </div>
 </div>`:''}
 
-<hr class="footer-line">
-<div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob \u2014 GoMushroom ni produkt, je proces.</div>
+<div class="footer-section">
+  <hr class="footer-line">
+  <div class="footer-bold">Ekstrakcije po meri \u2014 naravno, strokovno, u\u010dinkovito.</div>
+  <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
+</div>
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>

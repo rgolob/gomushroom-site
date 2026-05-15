@@ -1697,7 +1697,8 @@ async function sbSaveGroup(g){
     delivery_num:g.deliveryNum||null,
     total:g.total||0, qty:g.qty||0, status:g.status||'active'
   }, true);
-  // Briši stare vrstice in vpiši nove
+  // Briši stare vrstice in vpiši nove — samo če lines niso prazni
+  if((g.lines||[]).length>0){
   try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
   for(const l of (g.lines||[])){
     const lineId=uid();
@@ -1716,7 +1717,7 @@ async function sbSaveGroup(g){
       });
     }
   }
-}
+  } // end if lines.length>0
 
 // Shrani račun
 async function sbSaveInvoice(inv){
@@ -4181,6 +4182,8 @@ async function ustvariDobavnico(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g){toast('❌ Prodaja ni najdena');return;}
   if(g.deliveryNum){toast('📦 Dobavnica že obstaja: '+g.deliveryNum);return;}
+  const ok=await showConfirm(`📦 Ustvari dobavnico\n\nKupec: ${g.buyer||'—'}\nDatum: ${g.date||'—'}\n\nDobavnica bo dobila naslednjo DOB številko in bo trajno zabeležena.`,'Ustvari');
+  if(!ok)return;
   const dobNum=nextDobNum(g.date);
   g.deliveryNum=dobNum;
   try{
@@ -4274,6 +4277,7 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .footer-line{border:none;border-top:1px solid #ccc;margin:2rem 0 .6rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;color:#7a6f60;text-align:center}
 .btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;background:#1a1209;color:white;display:block;margin:1.5rem auto 0}
+@page{margin:0}
 @media print{.btn{display:none}body{padding:1.5rem}}
 </style></head><body>
 
@@ -4458,6 +4462,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .btn-print{background:#af8455;color:#1a1209}
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-email{background:#3a6b4a;color:white}
+@page{margin:0}
 @media print{.actions{display:none}body{padding:1.5rem}}
 </style></head><body>
 

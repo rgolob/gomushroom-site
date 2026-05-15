@@ -3774,6 +3774,7 @@ function renderSales(){
           ${!hasInvoice&&!isStorno&&g.channel!=='kom'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${g.channel==='kom'&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">${g.deliveryNum?g.deliveryNum:'🤝 Na komisiji'}</span>`:''}
           ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
+          ${g.channel==='velo'&&!g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.12);color:#3a6b4a;border-color:rgba(58,107,74,.35)" onclick="ustvariDobavnico('${g.id}')">📦 Dobavnica</button>`:''}
           ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
@@ -4174,6 +4175,24 @@ function printDobavnica(group){
   const a=document.createElement('a');
   a.href=url;a.target='_blank';a.rel='noopener';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+async function ustvariDobavnico(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g){toast('❌ Prodaja ni najdena');return;}
+  if(g.deliveryNum){toast('📦 Dobavnica že obstaja: '+g.deliveryNum);return;}
+  const dobNum=nextDobNum(g.date);
+  g.deliveryNum=dobNum;
+  try{
+    await sbUpdate('gm_sale_groups',{id:g.id},{delivery_num:dobNum});
+    await sbSaveCounters();
+    renderSales();
+    toast('📦 '+dobNum+' ustvarjena');
+    printDobavnica(g);
+  }catch(e){
+    g.deliveryNum=null;
+    toast('❌ Napaka: '+e.message);
+  }
 }
 
 function buildDobavnicaHTML(group){

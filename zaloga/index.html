@@ -4330,8 +4330,7 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 <div class="totals">
   <table>
     ${(group.discount||0)>0?`<tr><td>Popust ${group.discount}%</td><td style="color:#3a6b4a">–${(group.discountAmt||0).toFixed(2)} €</td></tr>`:''}
-    <tr><td>Skupaj</td><td>${(group.total||0).toFixed(2)} €</td></tr>
-    <tr class="grand"><td>Za plačilo</td><td>${(group.total||0).toFixed(2)} €</td></tr>
+    <tr class="grand"><td>Vrednost blaga</td><td>${(group.total||0).toFixed(2)} €</td></tr>
   </table>
 </div>
 

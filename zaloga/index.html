@@ -4217,7 +4217,6 @@ function buildDobavnicaHTML(group){
         <td class="r">${l.alc}</td>
         <td>kos</td>
         <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
     }
@@ -4231,7 +4230,6 @@ function buildDobavnicaHTML(group){
         <td class="r">${l.gly}</td>
         <td>kos</td>
         <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
     }
@@ -4311,15 +4309,14 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <table>
   <tr>
-    <th style="width:8%">Artikel</th>
+    <th style="width:14%">Artikel</th>
     <th>Opis</th>
     <th class="r" style="width:7%">Kol.</th>
     <th style="width:5%">Enota</th>
     <th class="r" style="width:12%">Prodajna cena</th>
-    <th class="r" style="width:6%">DDV</th>
     <th class="r" style="width:11%">Znesek</th>
   </tr>
-  ${tableRows||'<tr><td colspan="7" style="color:#7a6f60;text-align:center">—</td></tr>'}
+  ${tableRows||'<tr><td colspan="6" style="color:#7a6f60;text-align:center">—</td></tr>'}
 </table>
 
 <div class="totals">

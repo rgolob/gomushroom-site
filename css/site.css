@@ -2090,7 +2090,7 @@ footer.site-footer{
   border:1px solid var(--line);
   border-radius:18px;
   overflow:hidden;
-  background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.98));
+  background:#fff;
   box-shadow:0 14px 34px rgba(0,0,0,.08);
 }
 

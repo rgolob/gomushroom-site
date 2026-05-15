@@ -360,7 +360,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <div class="logo">Go<em>Mushroom</em> <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;vertical-align:middle">v2.4</button></div>
+  <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
+    <img src="/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:28px;background:white;border-radius:4px;padding:2px 7px;display:block">
+    <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em">v2.4</button>
+  </div>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -4210,15 +4213,13 @@ function buildDobavnicaHTML(group){
     if(l.alc>0){
       lineIdx++;
       const art=alcSku||('A'+String(lineIdx).padStart(2,'0'));
-      const qtyL=(l.alc*alcVol/1000);
-      const pricePerL=qtyL>0&&(l.alcPrice||0)>0?((l.alcPrice||0)*1000/alcVol):null;
       const znesek=l.alc*(l.alcPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Alkoholni ekstrakt – ${l.productName}${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
-        <td class="r">${qtyL%1===0?qtyL.toFixed(0):qtyL.toFixed(2)}</td>
-        <td>L</td>
-        <td class="r">${pricePerL!=null?pricePerL.toFixed(2)+' €':'—'}</td>
+        <td>Alkoholni ekstrakt – ${l.productName} (${alcVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td class="r">${l.alc}</td>
+        <td>kos</td>
+        <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
         <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
@@ -4226,15 +4227,13 @@ function buildDobavnicaHTML(group){
     if(l.gly>0){
       lineIdx++;
       const art=glySku||('G'+String(lineIdx).padStart(2,'0'));
-      const qtyL=(l.gly*glyVol/1000);
-      const pricePerL=qtyL>0&&(l.glyPrice||0)>0?((l.glyPrice||0)*1000/glyVol):null;
       const znesek=l.gly*(l.glyPrice||0);
       rows.push(`<tr>
         <td>${art}</td>
-        <td>Glicerinski ekstrakt – ${l.productName}${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
-        <td class="r">${qtyL%1===0?qtyL.toFixed(0):qtyL.toFixed(2)}</td>
-        <td>L</td>
-        <td class="r">${pricePerL!=null?pricePerL.toFixed(2)+' €':'—'}</td>
+        <td>Glicerinski ekstrakt – ${l.productName} (${glyVol} ml)${batchStr?`<br><span class="desc">serija: ${batchStr}</span>`:''}</td>
+        <td class="r">${l.gly}</td>
+        <td>kos</td>
+        <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>
         <td class="r">0%</td>
         <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
       </tr>`);
@@ -4294,8 +4293,7 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
     Matična št.: ${UPN_MATICNA}
   </div>
   <div>
-    <div class="logo">Go<span>Mushroom</span></div>
-    <div class="logo-sub">ekstrakcije · naravno · strokovno</div>
+    <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block">
   </div>
 </div>
 
@@ -4470,7 +4468,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 </style></head><body>
 
 <div class="hdr">
-  <div><div class="logo">Go<span>Mushroom</span></div><div style="font-size:.7rem;color:#7a6f60;margin-top:.25rem">gomushroom.si</div></div>
+  <div><img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block"><div style="font-size:.7rem;color:#7a6f60;margin-top:.25rem">gomushroom.si</div></div>
   <div class="meta">
     <div><strong>${invNum||'Dobavnica / Izdaja'}</strong></div>
     <div>${fmtDateSl(group.date)}</div>
@@ -5519,7 +5517,7 @@ tr.subtotal{background:#f5f0e8;font-weight:600;border-top:2px solid #ede6d6}
 ${type==='trosarine'?`
 <div class="doc-header">
   <div>
-    <div class="doc-logo">Go<span>Mushroom</span></div>
+    <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:40px;display:block;margin-bottom:.25rem">
     <div style="font-size:.65rem;color:#7a6f60">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža</div>
   </div>
   <div class="doc-meta">
@@ -7227,12 +7225,8 @@ Rok`;
 <div class="wrap">
   <div class="header">
     <div class="header-top">
-      <div style="display:flex;align-items:center;gap:.85rem">
-        <img src="https://gomushroom.si/zaloga/icon-512.png" width="48" height="48" alt="G" style="border-radius:10px;display:block;background:#af8455">
-        <div>
-          <div class="logo">Go<b>Mushroom</b></div>
-          <div class="header-sub">Rok Golob s.p. · gomushroom.si</div>
-        </div>
+      <div style="display:flex;align-items:center">
+        <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block">
       </div>
       <div class="inv-info">
         <div class="inv-num">${isPaid?'Račun':'Predračun'} ${inv.num}</div>
@@ -7281,9 +7275,8 @@ Rok`;
 
   <div class="footer">
     <div style="display:flex;align-items:center;gap:.75rem">
-      <img src="https://gomushroom.si/zaloga/icon-512.png" width="36" height="36" alt="G" style="border-radius:8px;display:block;background:#af8455;flex-shrink:0">
       <div>
-        <div class="footer-logo">Go<b>Mushroom</b></div>
+        <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:36px;display:block;margin-bottom:.3rem">
         <div class="footer-info">
           Prapreče pri Straži 22, 8351 Straža<br>
           <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>

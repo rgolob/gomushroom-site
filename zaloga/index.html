@@ -1724,6 +1724,8 @@ async function sbSaveGroup(g){
 // Obnovi vrstice za prodajne skupine, ki so izgubile podatke v Supabase
 async function recoverMissingLines(){
   toast('⏳ Iščem manjkajoče vrstice…');
+  console.log('[recoverMissingLines] Začenjam…');
+  let grpCount=0,lineCount=0,batCount=0,batchCount=0;
   try{
     const [grpRes,lineRes,batRes,batchRef]=await Promise.all([
       sbFetch('gm_sale_groups','select=id,invoice_num,channel'),
@@ -1731,6 +1733,11 @@ async function recoverMissingLines(){
       sbFetch('gm_sale_line_batches','select=group_id,batch_id,alc,gly'),
       sbFetch('gm_batches','select=id,product_id,product_name'),
     ]);
+    grpCount=(Array.isArray(grpRes)?grpRes:[]).length;
+    lineCount=(Array.isArray(lineRes)?lineRes:[]).length;
+    batCount=(Array.isArray(batRes)?batRes:[]).length;
+    batchCount=(Array.isArray(batchRef)?batchRef:[]).length;
+    console.log(`[recoverMissingLines] Skupin: ${grpCount}, vrstic: ${lineCount}, batch-alloc: ${batCount}, serij: ${batchCount}`);
     const hasLines=new Set((Array.isArray(lineRes)?lineRes:[]).map(l=>l.group_id));
     const batchById={};
     (Array.isArray(batchRef)?batchRef:[]).forEach(b=>{batchById[b.id]=b;});
@@ -1741,6 +1748,9 @@ async function recoverMissingLines(){
       if(!orphans[b.group_id])orphans[b.group_id]=[];
       orphans[b.group_id].push(b);
     });
+    const grpById={};
+    (Array.isArray(grpRes)?grpRes:[]).forEach(g=>{grpById[g.id]=g;});
+    console.log(`[recoverMissingLines] Skupin brez vrstic a z batch podatki: ${Object.keys(orphans).length}`,Object.keys(orphans).map(id=>grpById[id]?.invoice_num||id));
     let recovered=0;
     for(const[groupId,obs]of Object.entries(orphans)){
       // Aggregate qty per product
@@ -1753,6 +1763,7 @@ async function recoverMissingLines(){
       });
       const g=saleGroups.find(x=>x.id===groupId);
       for(const[,prod]of Object.entries(byProd)){
+        console.log(`[recoverMissingLines] Vstavljam vrstico: ${grpById[groupId]?.invoice_num||groupId} → ${prod.productName} 🥃${prod.alc} 🌿${prod.gly}`);
         const lineId=uid();
         await sbInsert('gm_sale_lines',{
           id:lineId,group_id:groupId,
@@ -1769,11 +1780,18 @@ async function recoverMissingLines(){
         recovered++;
       }
     }
-    if(recovered===0){toast('✓ Ni manjkajočih vrstic');return;}
+    console.log(`[recoverMissingLines] Končano. Obnovljeno: ${recovered}`);
+    if(recovered===0){
+      alert(`✓ Obnova: ni manjkajočih vrstic.\n\nSupabase vsebuje:\n• ${grpCount} prodajnih skupin\n• ${lineCount} vrstic (sale_lines)\n• ${batCount} batch alokacij\n• ${batchCount} serij\n\nČe DAR-26-0003 še vedno nima artiklov, so bili podatki izgubljeni in jih je treba vnesti ročno.\nPoglej konzolo za podrobnosti.`);
+      return;
+    }
     save();
-    toast(`✓ Obnovljeno ${recovered} vrstic za ${Object.keys(orphans).length} prodaj`);
     renderStats();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
-  }catch(e){toast('⚠ Napaka: '+e.message);console.error('recoverMissingLines',e);}
+    alert(`✓ Obnovljeno ${recovered} vrstic za ${Object.keys(orphans).length} prodaj!\n\nPoglej konzolo za podrobnosti.`);
+  }catch(e){
+    console.error('[recoverMissingLines] Napaka:',e);
+    alert(`⚠ Napaka pri obnovi:\n${e.message}\n\nPoglej konzolo za podrobnosti.`);
+  }
 }
 
 // Shrani račun

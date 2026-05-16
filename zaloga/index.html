@@ -1795,37 +1795,66 @@ async function recoverMissingLines(){
 }
 
 // Ročna obnova vrstic za posamezni račun (klic iz konzole brskalnika)
-// Primer: manualRestoreLines('DAR-26-0003', [{name:'Chaga',gly:1},{name:'Smrekovi vršički',alc:1}])
+// Primer: manualRestoreLines('DAR-26-0003', [{name:'Chaga',gly:1,batch:'GM-CH-001'},{name:'Smrekovi vršički',alc:1,batch:'GM-SV-001'}])
+// Serijsko številko preveri z: listBatches('Chaga') ali listBatches('Smrekovi')
 window.manualRestoreLines=async function(invoiceNum, lines){
   console.log('[manualRestoreLines] Iščem račun',invoiceNum);
   const g=saleGroups.find(x=>x.invoiceNum===invoiceNum);
-  if(!g){alert('⚠ Račun '+invoiceNum+' ni najden v saleGroups. Osveži stran in poskusi znova.');return;}
-  console.log('[manualRestoreLines] Najdena skupina:',g.id,g.buyer);
+  if(!g){alert('⚠ Račun '+invoiceNum+' ni najden. Osveži stran in poskusi znova.');return;}
+  console.log('[manualRestoreLines] Skupina:',g.id,g.buyer);
   if(!g.lines)g.lines=[];
   let added=0;
   for(const l of lines){
     const alc=l.alc||0,gly=l.gly||0;
     const nameLC=(l.name||'').toLowerCase();
-    // Fuzzy match produkta
     const prod=products.find(p=>p.name&&p.name.toLowerCase().includes(nameLC))
              ||products.find(p=>nameLC.includes(p.name.toLowerCase().split(' ')[0]));
-    if(!prod){alert('⚠ Produkt ni najden: "'+l.name+'"\nDostopni produkti: '+products.map(p=>p.name).join(', '));return;}
-    console.log('[manualRestoreLines] Produkt:',prod.name,'alc='+alc,'gly='+gly);
+    if(!prod){alert('⚠ Produkt ni najden: "'+l.name+'"\nDostopni: '+products.map(p=>p.name).join(', '));return;}
+    // Poišči serijo
+    let bat=null;
+    if(l.batch){
+      bat=batches.find(b=>b.productId===prod.id&&b.batchNum===l.batch);
+      if(!bat){alert('⚠ Serija "'+l.batch+'" ni najdena za '+prod.name+'\nUporabi listBatches("'+l.name+'") za seznam');return;}
+    } else {
+      // Vzemi najstarejšo serijo za ta produkt (FIFO)
+      const pb=batches.filter(b=>b.productId===prod.id);
+      bat=pb.length?pb[pb.length-1]:null;
+      if(bat)console.warn('[manualRestoreLines] Serija ni podana — vzamem najstarejšo:',bat.batchNum);
+    }
+    console.log('[manualRestoreLines]',prod.name,'alc='+alc,'gly='+gly,'serija=',bat?.batchNum||'—');
     const lineId=uid();
     await sbInsert('gm_sale_lines',{
       id:lineId,group_id:g.id,
       product_id:prod.id,product_name:prod.name,
       alc,gly,alc_price:0,gly_price:0,line_total:0
     },true);
+    if(bat){
+      await sbInsert('gm_sale_line_batches',{
+        group_id:g.id,line_id:lineId,
+        batch_id:bat.id,batch_num:bat.batchNum,
+        alc,gly
+      }).catch(e=>console.warn('batch insert:',e));
+    }
+    const bb=bat?[{batchId:bat.id,batchNum:bat.batchNum,alc,gly}]:[];
     const existing=g.lines.find(x=>x.productId===prod.id);
-    if(!existing)g.lines.push({productId:prod.id,productName:prod.name,alc,gly,alcPrice:0,glyPrice:0,lineTotal:0,batchBreakdown:[]});
-    else{existing.alc=(existing.alc||0)+alc;existing.gly=(existing.gly||0)+gly;}
+    if(!existing)g.lines.push({productId:prod.id,productName:prod.name,alc,gly,alcPrice:0,glyPrice:0,lineTotal:0,batchBreakdown:bb});
+    else{existing.alc=(existing.alc||0)+alc;existing.gly=(existing.gly||0)+gly;existing.batchBreakdown.push(...bb);}
     added++;
   }
   save();
   renderStats();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
-  alert('✓ Dodano '+added+' vrstic za '+invoiceNum+'!\nRačun zdaj vsebuje artikle.');
-  console.log('[manualRestoreLines] Končano, dodano:',added);
+  alert('✓ Dodano '+added+' vrstic za '+invoiceNum+'!');
+  console.log('[manualRestoreLines] Končano:',added);
+};
+
+// Izpiši serije za produkt (klic iz konzole)
+window.listBatches=function(productName){
+  const nameLC=(productName||'').toLowerCase();
+  const prod=products.find(p=>p.name&&p.name.toLowerCase().includes(nameLC));
+  if(!prod){console.log('Produkt ni najden. Dostopni:',products.map(p=>p.name));return;}
+  const pb=batches.filter(b=>b.productId===prod.id);
+  console.table(pb.map(b=>({batchNum:b.batchNum,date:b.date,alc_qty:b.alc?.qty,gly_qty:b.gly?.qty})));
+  return pb.map(b=>b.batchNum);
 };
 
 // Shrani račun

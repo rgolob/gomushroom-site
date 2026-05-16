@@ -2235,11 +2235,19 @@ async function loadFromSB(){
       sbFetch('gm_dn_materiali','order=datum.desc'),
       sbFetch('gm_dn_oprema','order=naziv.asc'),
     ]);
+    // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
+    const sbTotal=wos.length+ets.length+mats.length+ops.length;
+    const localTotal=workOrders.length+etanolKnjiga.length+materiali.length+oprema.length;
+    if(sbTotal===0 && localTotal>0){
+      setSyncStatus('⚠ SB prazno');
+      console.warn('loadFromSB: Supabase vrnil prazne tabele, lokalni podatki ohranjeni');
+      return;
+    }
     workOrders=wos.map(sbToDn);
     etanolKnjiga=ets.map(sbToEt);
     materiali=mats.map(sbToMat);
     oprema=ops.map(sbToOp);
-    save();
+    // Ne kličemo save() — localStorage posodabljamo samo ob akcijah uporabnika
     renderDNStats();renderDN();renderEtStats();
     if(currentTab==='etanol')renderEtanol();
     if(currentTab==='materiali')renderMateriali();

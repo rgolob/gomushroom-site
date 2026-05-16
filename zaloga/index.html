@@ -1702,7 +1702,7 @@ async function sbSaveGroup(g){
   if((g.lines||[]).length>0){
   try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
   for(const l of (g.lines||[])){
-    const lineId=uid();
+    const lineId=crypto.randomUUID();
     await sbInsert('gm_sale_lines',{
       id:lineId, group_id:g.id,
       product_id:l.productId, product_name:l.productName,
@@ -1764,7 +1764,7 @@ async function recoverMissingLines(){
       const g=saleGroups.find(x=>x.id===groupId);
       for(const[,prod]of Object.entries(byProd)){
         console.log(`[recoverMissingLines] Vstavljam vrstico: ${grpById[groupId]?.invoice_num||groupId} → ${prod.productName} 🥃${prod.alc} 🌿${prod.gly}`);
-        const lineId=uid();
+        const lineId=crypto.randomUUID();
         await sbInsert('gm_sale_lines',{
           id:lineId,group_id:groupId,
           product_id:prod.productId,product_name:prod.productName,
@@ -1822,7 +1822,7 @@ window.manualRestoreLines=async function(invoiceNum, lines){
       if(bat)console.warn('[manualRestoreLines] Serija ni podana — vzamem najstarejšo:',bat.batchNum);
     }
     console.log('[manualRestoreLines]',prod.name,'alc='+alc,'gly='+gly,'serija=',bat?.batchNum||'—');
-    const lineId=uid();
+    const lineId=crypto.randomUUID();
     await sbInsert('gm_sale_lines',{
       id:lineId,group_id:g.id,
       product_id:prod.id,product_name:prod.name,

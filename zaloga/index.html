@@ -53,7 +53,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nicon{font-size:1.1rem;line-height:1}
 
 /* LAYOUT */
-.scroll-body{padding:.75rem .4rem calc(var(--sab)+90px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
+.scroll-body{padding:.75rem .4rem calc(var(--sab)+105px);max-width:600px;margin:0 auto;min-width:0;overflow-x:hidden;padding-top:calc(50px + .75rem)}
 .view{display:none;min-width:0}.view.active{display:block}
 
 /* STATS */
@@ -374,7 +374,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <a href="/materiali/" class="hbtn" style="text-decoration:none">🌿 Materiali</a>
     <button class="hbtn" onclick="setupFaceId()" title="Nastavi Face ID">🔒</button>
     <button class="hbtn" id="integrityBtn" onclick="runIntegrityCheck()" title="Preveri konsistentnost podatkov">✓</button>
-    <button class="hbtn" onclick="switchTab('stranke',null)" title="Stranke in partnerji">🤝</button>
     <button class="hbtn" onclick="doLogout()">⏻</button>
     <button class="hbtn" onclick="openZalogaSettings()" title="Nastavitve">⚙️</button>
   </div>
@@ -593,6 +592,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-header"><div class="view-title">📦 Dobavnice</div></div>
       <div class="stats-grid" id="dobStatsGrid"></div>
       <div id="dobList"></div>
+      <div id="dobPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
     </div>
   </div>
   <div class="view" id="view-stranke">
@@ -1702,7 +1702,7 @@ async function sbSaveGroup(g){
   if((g.lines||[]).length>0){
   try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
   for(const l of (g.lines||[])){
-    const lineId=uid();
+    const lineId=crypto.randomUUID();
     await sbInsert('gm_sale_lines',{
       id:lineId, group_id:g.id,
       product_id:l.productId, product_name:l.productName,
@@ -1764,7 +1764,7 @@ async function recoverMissingLines(){
       const g=saleGroups.find(x=>x.id===groupId);
       for(const[,prod]of Object.entries(byProd)){
         console.log(`[recoverMissingLines] Vstavljam vrstico: ${grpById[groupId]?.invoice_num||groupId} → ${prod.productName} 🥃${prod.alc} 🌿${prod.gly}`);
-        const lineId=uid();
+        const lineId=crypto.randomUUID();
         await sbInsert('gm_sale_lines',{
           id:lineId,group_id:groupId,
           product_id:prod.productId,product_name:prod.productName,
@@ -1822,7 +1822,7 @@ window.manualRestoreLines=async function(invoiceNum, lines){
       if(bat)console.warn('[manualRestoreLines] Serija ni podana — vzamem najstarejšo:',bat.batchNum);
     }
     console.log('[manualRestoreLines]',prod.name,'alc='+alc,'gly='+gly,'serija=',bat?.batchNum||'—');
-    const lineId=uid();
+    const lineId=crypto.randomUUID();
     await sbInsert('gm_sale_lines',{
       id:lineId,group_id:g.id,
       product_id:prod.id,product_name:prod.name,
@@ -2716,6 +2716,7 @@ function renderDobavnice(){
   const groups=saleGroups.filter(g=>g.deliveryNum&&g.status!=='stornirano').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const statsEl=document.getElementById('dobStatsGrid');
   const listEl=document.getElementById('dobList');
+  const pager=document.getElementById('dobPager');
   if(!statsEl||!listEl)return;
   const velo=groups.filter(g=>g.channel==='velo').length;
   const kom=groups.filter(g=>g.channel==='kom').length;
@@ -2723,9 +2724,12 @@ function renderDobavnice(){
     <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">${groups.length}</div></div>
     <div class="stat-card"><div class="stat-label">Velo</div><div class="stat-value">${velo}</div></div>
     <div class="stat-card"><div class="stat-label">Komisija</div><div class="stat-value">${kom}</div></div>`;
-  if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;return;}
+  if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;if(pager)pager.innerHTML='';return;}
+  const totalPages=Math.ceil(groups.length/DOB_PER_PAGE);
+  if(dobPage>=totalPages)dobPage=totalPages-1;
+  const page=groups.slice(dobPage*DOB_PER_PAGE,(dobPage+1)*DOB_PER_PAGE);
   const CH_LOCAL={velo:{label:'Veleprodaja',cls:'ch-velo'},kom:{label:'Komisija',cls:'ch-kom'}};
-  listEl.innerHTML=groups.map(g=>{
+  listEl.innerHTML=page.map(g=>{
     const ch=CH_LOCAL[g.channel]||{label:g.channel,cls:''};
     const dt=fmtDate(g.date);
     return`<div class="sale-group">
@@ -2743,6 +2747,9 @@ function renderDobavnice(){
       </div>
     </div>`;
   }).join('');
+  if(pager)pager.innerHTML=totalPages<=1?'':Array.from({length:totalPages},(_,p)=>
+    `<button onclick="dobPage=${p};renderDobavnice()" style="padding:.3rem .6rem;border-radius:6px;border:1px solid var(--border);background:${p===dobPage?'var(--ink)':'white'};color:${p===dobPage?'var(--cream)':'var(--ink)'};font-family:'Jost',sans-serif;font-size:.75rem;cursor:pointer">${p+1}</button>`
+  ).join('');
 }
 
 function switchTab(id,el){
@@ -4146,6 +4153,9 @@ async function deleteSaleGroup(id){
   save();renderStats();renderInventory();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Prodaja izbrisana');
 }
 const expandedSales=new Set();
+const expandedInvoices=new Set();
+let invPage=0, dobPage=0;
+const INV_PER_PAGE=10, DOB_PER_PAGE=10;
 
 function toggleSaleCard(id, e){
   if(e&&e.target.closest('button'))return; // don't toggle on button click
@@ -4210,24 +4220,30 @@ function renderInvoices(){
   }).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
 
   const el=document.getElementById('invoiceList');
-  if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🧾</div><div class="et">Ni računov</div><div class="es">Račun izstavi pri potrditvi prodaje.</div></div>`;return;}
+  const pager=document.getElementById('invPager');
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="ei">🧾</div><div class="et">Ni računov</div><div class="es">Račun izstavi pri potrditvi prodaje.</div></div>`;pager.innerHTML='';return;}
+
+  const totalPages=Math.ceil(rows.length/INV_PER_PAGE);
+  if(invPage>=totalPages)invPage=totalPages-1;
+  const page=rows.slice(invPage*INV_PER_PAGE,(invPage+1)*INV_PER_PAGE);
 
   const STATUS={
-    caka:{label:'🟡 Čaka',cls:'inv-status-caka',next:'placano'},
-    placano:{label:'🟢 Plačano',cls:'inv-status-placano',next:'predano'},
-    predano:{label:'📦 Predano',cls:'inv-status-predano',next:'caka'},
+    caka:{label:'🟡 Čaka',cls:'inv-status-caka'},
+    placano:{label:'🟢 Plačano',cls:'inv-status-placano'},
+    predano:{label:'📦 Predano',cls:'inv-status-predano'},
   };
 
-  el.innerHTML=rows.map(i=>{
+  el.innerHTML=page.map(i=>{
     const ch=CH[i.channel]||CH.malo;
     const st=i.invStatus||'caka';
     const s=STATUS[st]||STATUS.caka;
-    return `<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden">
-      <div class="sg-header" style="cursor:default">
+    const exp=expandedInvoices.has(i.id);
+    return `<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;cursor:pointer" onclick="toggleInvoiceCard('${i.id}')">
+      <div class="sg-header">
         <div class="sg-info">
           <div class="sg-buyer">🧾 ${i.num}
             <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;margin-left:.4rem">${ch.icon} ${ch.label}</span>
-            ${i.emailSent?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem" title="Email poslan ${new Date(i.emailSent).toLocaleDateString('sl-SI')}">📧 ✓</span>`:''}
+            ${i.emailSent?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem">📧 ✓</span>`:''}
           </div>
           <div class="sg-meta">
             <span>${i.buyer||'—'}</span>
@@ -4238,19 +4254,27 @@ function renderInvoices(){
         </div>
         <div class="sg-right">
           <div class="sg-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
-          <button class="inv-status ${s.cls}" onclick="cycleInvStatus('${i.id}')">${s.label}</button>
+          <button class="inv-status ${s.cls}" onclick="event.stopPropagation();cycleInvStatus('${i.id}')">${s.label}</button>
         </div>
       </div>
-      <div class="sg-footer" onclick="event.stopPropagation()">
+      ${exp?`<div class="sg-footer" onclick="event.stopPropagation()">
         <div style="margin-left:auto;display:flex;gap:.35rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨</button>
-          ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')" title="Pošlji email">📧</button>`:''}
-          <button class="tbtn" onclick="event.stopPropagation();openEditInvoice('${i.id}')">€ ✎</button>
+          ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
+          <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
-      </div>
+      </div>`:''}
     </div>`;
   }).join('');
+
+  pager.innerHTML=totalPages<=1?'':Array.from({length:totalPages},(_,p)=>
+    `<button onclick="invPage=${p};renderInvoices()" style="padding:.3rem .6rem;border-radius:6px;border:1px solid var(--border);background:${p===invPage?'var(--ink)':'white'};color:${p===invPage?'var(--cream)':'var(--ink)'};font-family:'Jost',sans-serif;font-size:.75rem;cursor:pointer">${p+1}</button>`
+  ).join('');
+}
+function toggleInvoiceCard(id){
+  if(expandedInvoices.has(id))expandedInvoices.delete(id);else expandedInvoices.add(id);
+  renderInvoices();
 }
 async function deleteInvoice(id){
   const ok=await showConfirm('Izbriši ta račun?\nProdaja bo ostala v evidenci.','Izbriši');if(!ok)return;

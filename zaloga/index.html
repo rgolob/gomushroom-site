@@ -4280,9 +4280,13 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .footer-line{border:none;border-top:1px solid #ccc;margin:0 0 .6rem}
 .footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.75rem;color:#1a1209;text-align:center;margin-bottom:.25rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;color:#7a6f60;text-align:center}
-.btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;background:#1a1209;color:white;display:block;margin:1.5rem auto 0}
+.btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+.btn-print{background:#af8455;color:#1a1209}
+.btn-pdf{background:#1a1209;color:#f5f0e8}
+.btn-close{background:rgba(0,0,0,.08);color:#1a1209}
+.actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 @page{margin:0}
-@media print{.btn{display:none}body{padding:4rem 2.5rem 2.5rem}}
+@media print{.actions{display:none}body{padding:4rem 2.5rem 2.5rem}}
 </style></head><body>
 
 <div class="hdr">
@@ -4352,7 +4356,11 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
 </div>
 
-<button class="btn" onclick="window.print()">🖨 Natisni</button>
+<div class="actions">
+  <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
+  <button class="btn btn-pdf" onclick="document.title='${dobNum||'Dobavnica'}';window.print()">📄 Shrani PDF</button>
+  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
+</div>
 </body></html>`;
 }
 
@@ -4470,6 +4478,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .btn-print{background:#af8455;color:#1a1209}
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-email{background:#3a6b4a;color:white}
+.btn-close{background:rgba(0,0,0,.08);color:#1a1209}
 @page{margin:0}
 @media print{.actions{display:none}body{padding:1.5rem}}
 </style></head><body>
@@ -4535,8 +4544,9 @@ ${qrImgTag?`
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
-  <button class="btn btn-pdf" data-title="${invNum||'Dobavnica'}" onclick="document.title=this.getAttribute('data-title');window.print()">\u{1F4C4} Shrani PDF</button>
+  <button class="btn btn-pdf" data-title="${invNum||'Racun'}" onclick="document.title=this.getAttribute('data-title');window.print()">\u{1F4C4} Shrani PDF</button>
   ${emailBtn}
+  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
 </div>
 
 </body></html>`;

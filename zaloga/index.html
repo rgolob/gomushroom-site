@@ -1720,6 +1720,61 @@ async function sbSaveGroup(g){
   } // end if lines.length>0
 } // end sbSaveGroup
 
+// Obnovi vrstice za prodajne skupine, ki so izgubile podatke v Supabase
+async function recoverMissingLines(){
+  toast('⏳ Iščem manjkajoče vrstice…');
+  try{
+    const [grpRes,lineRes,batRes,batchRef]=await Promise.all([
+      sbFetch('gm_sale_groups','select=id,invoice_num,channel'),
+      sbFetch('gm_sale_lines','select=group_id'),
+      sbFetch('gm_sale_line_batches','select=group_id,batch_id,alc,gly'),
+      sbFetch('gm_batches','select=id,product_id,product_name'),
+    ]);
+    const hasLines=new Set((Array.isArray(lineRes)?lineRes:[]).map(l=>l.group_id));
+    const batchById={};
+    (Array.isArray(batchRef)?batchRef:[]).forEach(b=>{batchById[b.id]=b;});
+    // Group orphan batches by group_id
+    const orphans={};
+    (Array.isArray(batRes)?batRes:[]).forEach(b=>{
+      if(hasLines.has(b.group_id))return;
+      if(!orphans[b.group_id])orphans[b.group_id]=[];
+      orphans[b.group_id].push(b);
+    });
+    let recovered=0;
+    for(const[groupId,obs]of Object.entries(orphans)){
+      // Aggregate qty per product
+      const byProd={};
+      obs.forEach(ob=>{
+        const bat=batchById[ob.batch_id];if(!bat)return;
+        if(!byProd[bat.product_id])byProd[bat.product_id]={productId:bat.product_id,productName:bat.product_name,alc:0,gly:0};
+        byProd[bat.product_id].alc+=(ob.alc||0);
+        byProd[bat.product_id].gly+=(ob.gly||0);
+      });
+      const g=saleGroups.find(x=>x.id===groupId);
+      for(const[,prod]of Object.entries(byProd)){
+        const lineId=uid();
+        await sbInsert('gm_sale_lines',{
+          id:lineId,group_id:groupId,
+          product_id:prod.productId,product_name:prod.productName,
+          alc:prod.alc,gly:prod.gly,
+          alc_price:0,gly_price:0,line_total:0
+        },true);
+        // Update local saleGroup lines too
+        if(g){
+          if(!g.lines)g.lines=[];
+          const existing=g.lines.find(l=>l.productId===prod.productId);
+          if(!existing)g.lines.push({productId:prod.productId,productName:prod.productName,alc:prod.alc,gly:prod.gly,alcPrice:0,glyPrice:0,lineTotal:0,batchBreakdown:[]});
+        }
+        recovered++;
+      }
+    }
+    if(recovered===0){toast('✓ Ni manjkajočih vrstic');return;}
+    save();
+    toast(`✓ Obnovljeno ${recovered} vrstic za ${Object.keys(orphans).length} prodaj`);
+    renderStats();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
+  }catch(e){toast('⚠ Napaka: '+e.message);console.error('recoverMissingLines',e);}
+}
+
 // Shrani račun
 async function sbSaveInvoice(inv){
   await sbInsert('gm_invoices',{
@@ -2418,7 +2473,19 @@ async function appInit(){
   loadCustomers();
   sbLoadSettings().catch(()=>{});
   try{
+    // Zapomni si lokalne vrstice pred Supabase prepisom
+    const _localLines={};
+    saleGroups.forEach(g=>{if((g.lines||[]).length>0)_localLines[g.id]=g.lines;});
     await sbLoadAll();
+    // Obnovi vrstice, ki jih Supabase nima, a so v lokalnem cache
+    let _recovered=0;
+    for(const g of saleGroups){
+      if((g.lines||[]).length===0&&_localLines[g.id]?.length>0){
+        g.lines=_localLines[g.id];_recovered++;
+        sbSaveGroup(g).catch(e=>console.warn('Obnova vrstic:',e));
+      }
+    }
+    if(_recovered>0)console.warn(`Obnovljene vrstice za ${_recovered} prodajnih skupin`);
     // Sinhroniziraj lokalni cache
     localStorage.setItem('gm_products',JSON.stringify(products));
     localStorage.setItem('gm_batches',JSON.stringify(batches));
@@ -6449,6 +6516,9 @@ function openZalogaSettings(){
           </button>
           <button onclick="uvozi2025Prodaje()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.06);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#3a6b4a">
             🛒 <span>Uvozi 2025 prodaje (DoB Fungalist)</span>
+          </button>
+          <button onclick="recoverMissingLines()" style="width:100%;padding:.55rem .75rem;border:1px solid rgba(175,132,85,.4);border-radius:8px;background:rgba(175,132,85,.07);font-family:'Jost',sans-serif;font-size:.85rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;color:#7a5a2a">
+            🔧 <span>Obnovi manjkajoče vrstice (iz serij)</span>
           </button>
         </div>
       </div>

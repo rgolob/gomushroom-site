@@ -878,8 +878,8 @@
 /* DISCOUNT BADGE */
 .gm-discount-badge {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
   background: rgba(175,132,85,.10);
   color: #7a5530;

@@ -489,6 +489,24 @@
   margin-top:14px;
 }
 
+.product-highlights{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.35rem;
+  margin:1rem 0;
+}
+.product-highlights span{
+  font-size:.7rem;
+  font-weight:600;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  padding:.3rem .75rem;
+  border-radius:999px;
+  background:rgba(43,11,57,.07);
+  color:rgba(43,11,57,.65);
+  white-space:nowrap;
+}
+
 .product-actions{
   display:flex;
   flex-wrap:wrap;

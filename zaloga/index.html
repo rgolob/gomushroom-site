@@ -6082,10 +6082,12 @@ async function potrdiRecenzijo(id) {
 
   try {
     // Posodobi recenzijo
-    await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
-      method: 'PATCH', headers: SB_HEADERS,
+    const patchRes = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
       body: JSON.stringify({ status: 'approved', coupon_code: couponCode, coupon_sent_at: new Date().toISOString() })
     });
+    const patched = patchRes.ok ? await patchRes.json() : [];
+    if (!patched.length) throw new Error('RLS blokada — manjka anon update politika na gm_reviews');
 
     // Dodaj kupon v gm_settings popusti
     const sRes = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, { headers: SB_HEADERS });
@@ -6135,10 +6137,12 @@ async function sendCouponEmail(rec, couponCode, validDays, validDo) {
 
 async function zavrniRecenzijo(id) {
   if (!confirm('Zavrni recenzijo?')) return;
-  await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
-    method: 'PATCH', headers: SB_HEADERS,
+  const zRes = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+    method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
     body: JSON.stringify({ status: 'rejected' })
   });
+  const zavrnjene = zRes.ok ? await zRes.json() : [];
+  if (!zavrnjene.length) { toast('⚠ Napaka: RLS blokada — manjka anon update politika'); return; }
   const idx = (_recenzije||[]).findIndex(r => r.id === id);
   if (idx >= 0) _recenzije[idx].status = 'rejected';
   renderRecenzije();

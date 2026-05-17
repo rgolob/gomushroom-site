@@ -6060,8 +6060,8 @@ function renderRecenzije() {
       ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a;margin-top:.3rem">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
       ${r.status === 'pending' ? `
       <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
-        <button class="bsave" onclick="potrdiRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi + pošlji kupon (${r.coupon_pct||10}%)</button>
-        <button class="bcancel" onclick="zavrniRecenzijo('${r.id}')" style="font-size:.72rem;padding:.3rem .65rem">❌ Zavrni</button>
+        <button class="tbtn sell" onclick="potrdiRecenzijo('${r.id}')">✅ Potrdi + kupon (${r.coupon_pct||10}%)</button>
+        <button class="tbtn del" onclick="zavrniRecenzijo('${r.id}')">❌ Zavrni</button>
       </div>` : ''}
     </div>`;
   }).join('');
@@ -6082,16 +6082,18 @@ async function potrdiRecenzijo(id) {
 
   try {
     // Posodobi recenzijo
-    await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
-      method: 'PATCH', headers: SB_HEADERS,
+    const patchRes = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
       body: JSON.stringify({ status: 'approved', coupon_code: couponCode, coupon_sent_at: new Date().toISOString() })
     });
+    const patched = patchRes.ok ? await patchRes.json() : [];
+    if (!patched.length) throw new Error('RLS blokada — manjka anon update politika na gm_reviews');
 
     // Dodaj kupon v gm_settings popusti
     const sRes = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, { headers: SB_HEADERS });
     const sRows = sRes.ok ? await sRes.json() : [];
     let popusti = sRows.length ? JSON.parse(sRows[0].value) : [];
-    popusti.push({ tip: 'koda', kod: couponCode, vrednost: rec.coupon_pct || 10, aktiven: true, validDo, opis: `Recenzija: ${rec.name}` });
+    popusti.push({ tip: 'koda', kod: couponCode, vrednost: rec.coupon_pct || 10, aktiven: true, validDo, opis: `Recenzija: ${rec.name}`, prikaziVTrgovini: false });
     await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, {
       method: 'PATCH', headers: SB_HEADERS,
       body: JSON.stringify({ value: JSON.stringify(popusti) })
@@ -6134,15 +6136,43 @@ async function sendCouponEmail(rec, couponCode, validDays, validDo) {
 }
 
 async function zavrniRecenzijo(id) {
-  if (!confirm('Zavrni recenzijo?')) return;
-  await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
-    method: 'PATCH', headers: SB_HEADERS,
-    body: JSON.stringify({ status: 'rejected' })
+  const rec = (_recenzije||[]).find(r => r.id === id);
+  if (!rec) return;
+  const razlog = prompt('Razlog za zavrnitev (bo poslan stranki po e-pošti):');
+  if (razlog === null) return;
+  const zRes = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+    method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ status: 'rejected', rejection_reason: razlog || null })
   });
+  const zavrnjene = zRes.ok ? await zRes.json() : [];
+  if (!zavrnjene.length) { toast('⚠ Napaka: RLS blokada — manjka anon update politika'); return; }
+  await sendRejectionEmail(rec, razlog);
   const idx = (_recenzije||[]).findIndex(r => r.id === id);
-  if (idx >= 0) _recenzije[idx].status = 'rejected';
+  if (idx >= 0) { _recenzije[idx].status = 'rejected'; _recenzije[idx].rejection_reason = razlog; }
   renderRecenzije();
-  toast('❌ Recenzija zavrnjena');
+  toast('❌ Recenzija zavrnjena · Mail poslan');
+}
+
+async function sendRejectionEmail(rec, razlog) {
+  const ime = rec.name.split(' ')[0];
+  const html = `<!DOCTYPE html><html><body style="font-family:Georgia,serif;color:#2b0b39;max-width:600px;margin:0 auto">
+    <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
+      <div style="font-size:1.4rem;font-weight:300">Go<strong style="color:#af8455">Mushroom</strong></div>
+    </div>
+    <div style="padding:1.5rem">
+      <p>Spoštovani ${ime},</p>
+      <p>hvala za vašo recenzijo izdelka <strong>${rec.product_name||rec.product_id}</strong>.</p>
+      <p>Po pregledu je žal nismo mogli objaviti${razlog?':':'.'}${razlog?`</p><div style="background:#f7f3ee;border-left:3px solid #c0392b;padding:.85rem 1rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem">${razlog}</div><p>`:' '}</p>
+      <p>Lep pozdrav,<br>Rok</p>
+    </div>
+  </body></html>`;
+  try {
+    await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: rec.email, subject: `Vaša recenzija — GoMushroom`, html })
+    });
+  } catch(e) { console.warn('Zavrnitev email napaka:', e); }
 }
 
 // ── INTEGRITY CHECK ──

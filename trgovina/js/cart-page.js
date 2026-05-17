@@ -15,16 +15,22 @@ let settings = {
   popusti: [],
   casovniPopust: { vrednost: 0, od: '', do: '', aktiven: false }
 };
+let reviewCoupons = [];
 
 async function loadSettings() {
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS });
-    if (!r.ok) return;
-    const rows = await r.json();
-    rows.forEach(row => {
-      try { settings[row.key] = JSON.parse(row.value); }
-      catch { settings[row.key] = row.value; }
-    });
+    const [r, rc] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS }),
+      fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&coupon_code=not.is.null&select=coupon_code,coupon_pct`, { headers: SB_HEADERS })
+    ]);
+    if (r.ok) {
+      const rows = await r.json();
+      rows.forEach(row => {
+        try { settings[row.key] = JSON.parse(row.value); }
+        catch { settings[row.key] = row.value; }
+      });
+    }
+    if (rc.ok) reviewCoupons = await rc.json();
   } catch(e) { console.warn('Nastavitve: fallback', e); }
 }
 
@@ -36,21 +42,25 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
   const c = settings.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
     ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
+  const vneseneKode = (kodaVnesena || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
     if (p.od && danes < p.od) continue;
     if (p.do && danes > p.do) continue;
     if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     let ok = false;
-    const kode = (kodaVnesena || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
     let matchedKod = '';
     if (p.tip === 'koda') {
       const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
-      const m = ruleKode.find(k => kode.includes(k));
+      const m = ruleKode.find(k => vneseneKode.includes(k));
       if (m) { ok = true; matchedKod = m; }
     }
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
     if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${matchedKod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
+  }
+  for (const rc of reviewCoupons) {
+    if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
+      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: `Koda ${rc.coupon_code}` });
   }
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
@@ -179,11 +189,13 @@ function bindKupon() {
     const raw = input.value.trim();
     if (!raw) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
     const kode = raw.split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
-    const veljavne = kode.filter(k => (settings.popusti || []).some(p => {
-      if (!p.aktiven || p.tip !== 'koda') return false;
-      const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
-      return ruleKode.includes(k);
-    }));
+    const veljavne = kode.filter(k =>
+      (settings.popusti || []).some(p => {
+        if (!p.aktiven || p.tip !== 'koda') return false;
+        const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
+        return ruleKode.includes(k);
+      }) || reviewCoupons.some(rc => rc.coupon_code && rc.coupon_code.toUpperCase() === k)
+    );
     if (veljavne.length === kode.length) {
       // All codes valid — green ✓
       input.style.borderColor = '#3a6b4a';

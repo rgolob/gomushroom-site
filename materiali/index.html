@@ -2349,6 +2349,30 @@ async function doLogin(){
   }
 })();
 
+// ── HEADER + NAV SAFE AREA FIX ──
+(function(){
+  const el=document.querySelector('.app-header');
+  if(!el)return;
+  const tester=document.createElement('div');
+  tester.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);height:0;visibility:hidden';
+  document.body.appendChild(tester);
+  setTimeout(()=>{
+    const sat=tester.getBoundingClientRect().top;
+    document.body.removeChild(tester);
+    const headerPad=Math.max(sat,0)+4;
+    el.style.paddingTop=headerPad+'px';
+    const headerH=el.offsetHeight;
+    const nav=document.querySelector('.bottom-nav');
+    const navH=nav?nav.offsetHeight:60;
+    document.querySelectorAll('.scroll-body').forEach(sb=>{
+      sb.style.paddingTop=(headerH+8)+'px';
+      sb.style.paddingBottom=(navH+16)+'px';
+      sb.style.paddingLeft='.75rem';
+      sb.style.paddingRight='.75rem';
+    });
+  },150);
+})();
+
 // ── INIT ──
 function appInit(){
   renderDNStats();

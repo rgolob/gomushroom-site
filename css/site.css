@@ -605,6 +605,8 @@ section{padding:32px 0}
 
 .card.service .media{
   height:var(--media-h);
+  aspect-ratio:unset;
+  width:100%;
 }
 
 .card.service .media img{
@@ -762,11 +764,40 @@ section{padding:32px 0}
   border:1px solid var(--line);
   border-radius:18px;
   box-shadow:0 20px 48px rgba(0,0,0,.12);
-  padding:22px 20px;
+  padding:22px 20px 28px;
   margin-top:10px;
 }
 
 .service-detail.is-open{ display:block; }
+
+.service-detail-close{
+  display:flex;
+  justify-content:center;
+  margin-top:24px;
+  padding-top:18px;
+  border-top:1px solid rgba(43,10,57,.08);
+}
+
+.service-detail-close button{
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  background:none;
+  border:1px solid rgba(43,10,57,.18);
+  border-radius:999px;
+  padding:.45rem 1.25rem;
+  font-size:.85rem;
+  font-weight:600;
+  color:rgba(43,10,57,.6);
+  cursor:pointer;
+  transition:background .15s, color .15s, border-color .15s;
+}
+
+.service-detail-close button:hover{
+  background:rgba(43,10,57,.06);
+  color:rgba(43,10,57,.85);
+  border-color:rgba(43,10,57,.3);
+}
 
 .service-detail .content{
   max-width:980px;
@@ -1544,7 +1575,7 @@ footer.site-footer{
   border-radius:8px;
 }
 
-.about-body{padding:14px 14px 16px}
+.about-body{padding:14px 20px 16px}
 
 .about-body h3{
   margin:0 0 8px;

@@ -110,6 +110,16 @@
 
     panelContent.innerHTML = '';
     panelContent.appendChild(tpl.content.cloneNode(true));
+
+    const closeRow = document.createElement('div');
+    closeRow.className = 'service-detail-close';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = '× Zapri';
+    closeBtn.addEventListener('click', closePanel);
+    closeRow.appendChild(closeBtn);
+    panelContent.appendChild(closeRow);
+
     panel.classList.add('is-open');
 
     const headerHeight = document.querySelector('header')?.offsetHeight || 0;

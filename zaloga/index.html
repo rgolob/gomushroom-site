@@ -360,7 +360,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <header class="app-header">
-  <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;flex-shrink:0">v2.4</button>
+  <button onclick="openChangelog()" style="background:none;border:none;font-family:'Jost',sans-serif;font-size:.55rem;color:rgba(238,242,247,.3);cursor:pointer;padding:0;letter-spacing:.05em;flex-shrink:0">v2.5</button>
   <div class="header-tabs">
     <button class="htab" onclick="switchTab('zaloga',this)">📦 Zaloga</button>
     <button class="htab" onclick="switchTab('prodaja',this)">🛒 Prodaja</button>
@@ -6089,16 +6089,6 @@ async function potrdiRecenzijo(id) {
     const patched = patchRes.ok ? await patchRes.json() : [];
     if (!patched.length) throw new Error('RLS blokada — manjka anon update politika na gm_reviews');
 
-    // Dodaj kupon v gm_settings popusti
-    const sRes = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, { headers: SB_HEADERS });
-    const sRows = sRes.ok ? await sRes.json() : [];
-    let popusti = sRows.length ? JSON.parse(sRows[0].value) : [];
-    popusti.push({ tip: 'koda', kod: couponCode, vrednost: rec.coupon_pct || 10, aktiven: true, validDo, opis: `Recenzija: ${rec.name}`, prikaziVTrgovini: false });
-    await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.popusti`, {
-      method: 'PATCH', headers: SB_HEADERS,
-      body: JSON.stringify({ value: JSON.stringify(popusti) })
-    });
-
     // Pošlji email kupcu
     await sendCouponEmail(rec, couponCode, validDays, validDo);
 
@@ -6477,6 +6467,23 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
 })();
 // ── CHANGELOG ──
 const CHANGELOG=[
+  {v:'v2.5',datum:'17.05.2026',spremembe:[
+    'Novo: sistem recenzij — oddaja, pregled, potrditev/zavrnitev z emailom',
+    'Novo: zavrnitev recenzije pošlje email stranki z razlogom',
+    'Novo: recenzije na produktnih straneh — prikaz prvih 3, gumb za vse',
+    'Novo: kupon za recenzijo skrit pred javnim prikazom popustov v trgovini',
+    'Novo: RLS zaznavanje pri potrditvi/zavrnitvi recenzije (Prefer: return=representation)',
+    'Novo: Smrekovi vršički dodani v spletno trgovino (produktna stran + variante)',
+    'Novo: mapa smrekovi-vrscki preimenovana v smrekovi-vrsicki',
+    'Novo: safe area fix za app Materiali (header + bottom nav)',
+    'Izboljšava: safe area fix za app Zaloga — dinamičen bottom padding glede na višino nava',
+    'Izboljšava: sekcija recenzij omejena na širino .wrap (1180px) — usklajena z ostalimi kartami',
+    'Izboljšava: popust na kartici artikla prikazan levo zgoraj',
+    'Izboljšava: .product-highlights slog (pilule) dodan v CSS',
+    'Izboljšava: gumbi za potrditev/zavrnitev recenzij usklajeni z ostalimi gumbi v applikaciji',
+    'Popravek: slike chaga in bradovec tinktur — popravljena pot do datotek',
+    'Popravek: "O meni" besedilo posodobljeno (SL + EN)',
+  ]},
   {v:'v2.4',datum:'03.05.2026',spremembe:[
     'Popravek: UPN QR koda v emailu se prikaže samo pri statusu 🟡 Čaka (ne glede na kanal)',
     'Popravek: Plačano in Predano status pošljeta račun brez QR kode',

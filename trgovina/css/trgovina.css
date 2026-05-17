@@ -2,6 +2,8 @@
   --gm-accent:#af8455;
   --gm-dark:#2b0b39;
   --gm-neutral:#6a6670;
+  --gm-fg:#101311;
+  --gm-muted:#6b726d;
   --gm-line:rgba(43,11,57,.08);
   --gm-line-strong:rgba(43,11,57,.12);
   --gm-card-bg:rgba(255,255,255,.96);
@@ -369,7 +371,7 @@
 
 .shop-manifesto-text{
   font-size:.88rem;
-  color:rgba(43,11,57,.58);
+  color:var(--gm-muted);
   line-height:1.65;
   max-width:40ch;
   margin:0;
@@ -417,7 +419,7 @@
 
 .shop-process-item span{
   font-size:.76rem;
-  color:rgba(43,11,57,.52);
+  color:var(--gm-muted);
   line-height:1.45;
 }
 
@@ -482,7 +484,7 @@
   max-width:58ch;
   font-size:1rem;
   line-height:1.82;
-  color:rgba(43,11,57,.74);
+  color:var(--gm-fg);
 }
 
 .product-sub + .product-sub{
@@ -617,7 +619,7 @@
 .product-bullets li{
   position:relative;
   padding-left:22px;
-  color:rgba(43,11,57,.78);
+  color:var(--gm-fg);
   line-height:1.55;
   font-size:.95rem;
 }
@@ -640,7 +642,7 @@
 .mini-note{
   margin:12px 0 0;
   font-size:.9rem;
-  color:rgba(43,11,57,.58);
+  color:var(--gm-muted);
   line-height:1.6;
 }
 
@@ -694,7 +696,7 @@
 
 .info-tile p{
   margin:0;
-  color:rgba(43,11,57,.72);
+  color:var(--gm-fg);
   line-height:1.65;
 }
 
@@ -720,7 +722,7 @@
 }
 
 .product-story p{
-  color:rgba(43,11,57,.74);
+  color:var(--gm-fg);
   line-height:1.82;
   margin:0;
 }
@@ -793,7 +795,7 @@
 
 .acc-content-inner{
   padding:0 14px 18px;
-  color:rgba(43,11,57,.76);
+  color:var(--gm-fg);
   line-height:1.7;
 }
 

@@ -1534,7 +1534,7 @@ footer.site-footer{
 .icon-btn:hover{background:#fff}
 
 .about-scroll{
-  padding:16px;
+  padding:20px;
   overflow:auto;
 }
 
@@ -1575,7 +1575,7 @@ footer.site-footer{
   border-radius:8px;
 }
 
-.about-body{padding:14px 20px 16px}
+.about-body{padding:16px 24px 20px}
 
 .about-body h3{
   margin:0 0 8px;

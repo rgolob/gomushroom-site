@@ -231,16 +231,11 @@ async function loadReviews(slug){
 function renderReviews(rows){
   const el=document.getElementById('gmr-list');
   if(!el||!rows.length)return;
+  const INITIAL=3;
   const avg=(rows.reduce((s,r)=>s+(r.rating||0),0)/rows.length).toFixed(1);
   const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
   const fmt=iso=>new Date(iso).toLocaleDateString('sl-SI',{year:'numeric',month:'long',day:'numeric'});
-  el.innerHTML=`
-    <div class="gmr-summary">
-      <span class="gmr-avg">${avg}</span>
-      <span class="gmr-avg-stars">${stars(avg)}</span>
-      <span class="gmr-avg-count">${rows.length} ${rows.length===1?'recenzija':rows.length<5?'recenzije':'recenzij'}</span>
-    </div>
-    ${rows.map(r=>`<div class="gmr-item">
+  const itemHtml=r=>`<div class="gmr-item">
       <div class="gmr-item-hdr">
         <span class="gmr-item-stars">${'★'.repeat(r.rating||0)}${'☆'.repeat(5-(r.rating||0))}</span>
         <strong class="gmr-item-name">${esc(r.name||'Anonimno')}</strong>
@@ -248,7 +243,21 @@ function renderReviews(rows){
       </div>
       ${r.title?`<div class="gmr-item-title">${esc(r.title)}</div>`:''}
       <div class="gmr-item-body">${esc(r.body||'')}</div>
-    </div>`).join('')}`;
+    </div>`;
+  el.innerHTML=`
+    <div class="gmr-summary">
+      <span class="gmr-avg">${avg}</span>
+      <span class="gmr-avg-stars">${stars(avg)}</span>
+      <span class="gmr-avg-count">${rows.length} ${rows.length===1?'recenzija':rows.length<5?'recenzije':'recenzij'}</span>
+    </div>
+    <div id="gmr-items">${rows.slice(0,INITIAL).map(itemHtml).join('')}</div>
+    ${rows.length>INITIAL?`<button class="gmr-show-more" id="gmr-show-more">Prikaži vse recenzije (${rows.length}) ↓</button>`:''}`;
+  if(rows.length>INITIAL){
+    document.getElementById('gmr-show-more').addEventListener('click',()=>{
+      document.getElementById('gmr-items').innerHTML+=rows.slice(INITIAL).map(itemHtml).join('');
+      document.getElementById('gmr-show-more').remove();
+    });
+  }
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -301,6 +310,8 @@ function injectStyles(){
 .gmr-item-date{font-size:.75rem;color:var(--muted,#6b726d);margin-left:auto}
 .gmr-item-title{font-size:.9rem;font-weight:600;color:var(--brand,#2b0a39);margin-bottom:.25rem}
 .gmr-item-body{font-size:.88rem;color:var(--fg,#101311);line-height:1.55;white-space:pre-line}
+.gmr-show-more{display:block;width:100%;margin:1rem 0 .5rem;padding:.65rem;background:none;border:1px solid var(--line,#e6e9e6);border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:500;color:var(--brand,#2b0a39);cursor:pointer;transition:background .15s}
+.gmr-show-more:hover{background:var(--card,#f9f7f4)}
 @media(max-width:520px){
   .gmr-ig-row{flex-direction:column;align-items:flex-start}
   .gmr-ig-btn{align-self:flex-end}

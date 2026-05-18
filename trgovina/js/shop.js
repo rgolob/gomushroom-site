@@ -72,21 +72,27 @@ function renderActiveDiscountBanner() {
 
 // ── Produkti iz Supabase ──────────────────────────────────
 async function loadProducts() {
-  const [prodRes, varRes, stockRes] = await Promise.all([
+  const [prodRes, varRes, stockRes, batchRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_batches?alc_qty=eq.0&gly_qty=eq.0&work_order=not.is.null&select=product_id,batch_num,work_order`, { headers: SB_HEADERS })
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
   const variants = await varRes.json();
   const stockData = stockRes.ok ? await stockRes.json() : [];
+  const batchData = batchRes.ok ? await batchRes.json() : [];
 
   // Naredi map za hiter dostop: variant_id -> stock_status
   const stockMap = Object.fromEntries(stockData.map(s => [s.variant_id, s]));
+  // Naredi map: product_id -> serija v produkciji (alc_qty=0, gly_qty=0, work_order set)
+  const batchMap = {};
+  batchData.forEach(b => { batchMap[b.product_id] = b; });
 
   return products.map(p => ({
     ...p,
+    activeBatch: batchMap[p.id] || null,
     variants: variants
       .filter(v => v.product_id === p.id)
       .map(v => {
@@ -150,6 +156,7 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
+            ${p.activeBatch ? `<p style="font-size:.65rem;color:#3a6b4a;letter-spacing:.04em;margin:.25rem 0 0;font-weight:500">🔄 V produkciji · ${p.activeBatch.batch_num}</p>` : ''}
           </a>
 
           <div class="shop-product-foot">

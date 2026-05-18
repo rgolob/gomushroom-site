@@ -274,9 +274,9 @@
   margin-top:7px;
   align-self:flex-start;
   display:inline-flex;
-  align-items:center;
-  gap:.2rem;
-  padding:.14rem .5rem;
+  align-items:flex-start;
+  gap:.22rem;
+  padding:.22rem .55rem;
   border-radius:999px;
   background:#efe7dd;
   font-size:.57rem;
@@ -284,6 +284,7 @@
   letter-spacing:.05em;
   text-transform:uppercase;
   color:#7a5a2a;
+  line-height:1.45;
 }
 
 .shop-product-variants{

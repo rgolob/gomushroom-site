@@ -1,4 +1,7 @@
 // ── GoMushroom Blagajna ───────────────────────────────────
+// STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
+const STRIPE_PK = 'pk_test_51TYJYTLIli0Bkm77pPfBZDtCMP4sN10PniU4eAEW6yhYWXaILfiA5VgLSI3YJ49CGrDgKyNqeGuOFBTR26dafGWX00UUPQw1QG';
+const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';const SB_HEADERS = {
   'Content-Type': 'application/json',
@@ -664,8 +667,205 @@ function validate() {
   return ok;
 }
 
+// ── Izbira načina plačila ─────────────────────────────────
+let selectedPayMethod = 'upn';
+
+window.selectPayMethod = function(method) {
+  selectedPayMethod = method;
+  document.getElementById('pm-upn').classList.toggle('active', method === 'upn');
+  document.getElementById('pm-stripe').classList.toggle('active', method === 'stripe');
+  const btn = document.getElementById('place-order-btn');
+  btn.textContent = method === 'stripe' ? 'Nadaljuj na plačilo →' : 'Naroči in plačaj →';
+};
+
+// ── Stripe flow ───────────────────────────────────────────
+let stripeInstance = null;
+let stripeElements = null;
+let stripeElementMounted = false;
+
+async function stripeFlow() {
+  if (!validate()) return;
+
+  const calc = window._orderCalc;
+  const wrap = document.getElementById('stripe-element-wrap');
+  const errEl = document.getElementById('stripe-error');
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('place-order-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Pripravljam...';
+
+  try {
+    const res = await fetch('/.netlify/functions/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: calc.skupaj }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    stripeInstance = Stripe(STRIPE_PK);
+    stripeElements = stripeInstance.elements({ clientSecret: data.clientSecret, locale: 'sl' });
+
+    if (!stripeElementMounted) {
+      stripeElements.create('payment').mount('#stripe-payment-element');
+      stripeElementMounted = true;
+    }
+
+    wrap.style.display = 'block';
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    document.getElementById('stripe-confirm-btn').onclick = confirmStripePayment;
+  } catch(e) {
+    errEl.textContent = e.message || 'Napaka pri inicializaciji plačila.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Nadaljuj na plačilo →';
+  }
+}
+
+async function confirmStripePayment() {
+  const confirmBtn = document.getElementById('stripe-confirm-btn');
+  const errEl = document.getElementById('stripe-error');
+  errEl.style.display = 'none';
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = '⏳ Obdelujem plačilo...';
+
+  try {
+    const { error, paymentIntent } = await stripeInstance.confirmPayment({
+      elements: stripeElements,
+      confirmParams: { return_url: window.location.origin + '/trgovina/blagajna/' },
+      redirect: 'if_required',
+    });
+
+    if (error) throw new Error(error.message);
+
+    if (paymentIntent && paymentIntent.status === 'succeeded') {
+      await saveStripeOrder(paymentIntent.id);
+    }
+  } catch(e) {
+    errEl.textContent = e.message || 'Plačilo ni uspelo.';
+    errEl.style.display = 'block';
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Potrdi plačilo';
+  }
+}
+
+async function saveStripeOrder(paymentIntentId) {
+  const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
+  const calc = window._orderCalc;
+
+  const orderData = {
+    name:     document.getElementById('c-name').value.trim(),
+    email:    document.getElementById('c-email').value.trim(),
+    phone:    document.getElementById('c-phone').value.trim() || null,
+    street:   document.getElementById('c-street').value.trim(),
+    post:     document.getElementById('c-post').value.trim(),
+    city:     document.getElementById('c-city').value.trim(),
+    country:  'Slovenija',
+    note:     document.getElementById('c-note').value.trim() || null,
+    items:    cart,
+    subtotal: calc.bruto,
+    discount_pct: calc.pct,
+    discount_amt: calc.popustZnesek,
+    shipping: calc.postnina,
+    total:    calc.skupaj,
+    coupon_code: calc.koda || null,
+    status:   'paid',
+    rf_reference: paymentIntentId,
+    is_test:  STRIPE_TEST_MODE,
+  };
+
+  const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify(orderData),
+  });
+  if (!r.ok) throw new Error('Shranjevanje naročila ni uspelo');
+  const [order] = await r.json();
+
+  await sendStripeConfirmationEmail(order, calc);
+  showStripeSuccess(order);
+
+  if (typeof gmPurchase === 'function')
+    gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
+
+  localStorage.setItem('gomushroom_cart', '[]');
+  try { saveCart([]); } catch(e) {}
+  sessionStorage.removeItem('gm_kupon');
+}
+
+async function sendStripeConfirmationEmail(order, calc) {
+  const itemsList = order.items.map(i =>
+    `<tr><td style="padding:.4rem .5rem;border-bottom:1px solid #f5f0e8">${i.name} - ${i.variantLabel||''}</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8">${i.quantity}×</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(Number(i.price)*i.quantity).toFixed(2)} €</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
+  <div style="max-width:600px;margin:0 auto;background:#fff">
+    <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:1.4rem;font-weight:300;letter-spacing:.04em">Go<strong style="color:#af8455">Mushroom</strong></div>
+          <div style="font-size:.72rem;color:#9a8f82;margin-top:.15rem">Rok Golob s.p. · gomushroom.si</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.9rem;font-weight:500">Potrditev plačila</div>
+          <div style="font-size:.72rem;color:#9a8f82">${new Date().toLocaleDateString('sl-SI')}</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:1.5rem">
+      <p style="margin:0 0 1rem">Spoštovani ${order.name},</p>
+      <p style="margin:0 0 1.25rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Plačilo je bilo uspešno potrjeno. Naročilo bomo kmalu odpremili.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem">
+        <thead><tr style="background:#f7f3ee">
+          <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Artikel</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Kol.</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Skupaj</th>
+        </tr></thead>
+        <tbody>${itemsList}</tbody>
+      </table>
+      ${calc.pct > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust (${calc.pct}%): −${calc.popustZnesek.toFixed(2)} €</div>` : ''}
+      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : calc.postnina.toFixed(2) + ' €'}</div>
+      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${calc.skupaj.toFixed(2)} €</div>
+      <div style="background:#f0f7f0;border-left:3px solid #3a6b4a;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;font-size:.85rem">
+        ✅ Plačilo potrjeno. Naročilo je v obdelavi.
+      </div>
+      <p style="margin:0">Lep pozdrav,<br>Rok</p>
+    </div>
+    <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
+      GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+      <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ·
+      <a href="https://gomushroom.si" style="color:#af8455">gomushroom.si</a>
+    </div>
+  </div>
+  </body></html>`;
+
+  try {
+    await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: order.email, subject: 'Plačilo potrjeno — GoMushroom', html }),
+    });
+  } catch(e) { console.warn('Email failed:', e); }
+}
+
+function showStripeSuccess(order) {
+  document.getElementById('checkout-form-wrap').style.display = 'none';
+  document.getElementById('stripe-element-wrap').style.display = 'none';
+  const successEl = document.getElementById('order-success');
+  successEl.classList.add('visible');
+  document.getElementById('qr-section').style.display = 'none';
+  successEl.querySelector('h2').textContent = 'Plačilo uspešno! ✅';
+  successEl.querySelector('p').textContent = 'Vaše naročilo je potrjeno. Poslali smo potrdilo na vaš email.';
+  successEl.scrollIntoView({ behavior: 'smooth' });
+}
+
 // ── Submit ────────────────────────────────────────────────
 async function placeOrder() {
+  if (selectedPayMethod === 'stripe') return stripeFlow();
   if (!validate()) {
     document.querySelector('.checkout-field input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;

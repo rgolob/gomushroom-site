@@ -221,6 +221,10 @@
             <span id="order-discount-label">Popust</span>
             <span id="order-discount-amt">—</span>
           </div>
+          <div class="order-total-row" id="order-upn-discount-row" style="display:none;color:#3a6b4a">
+            <span>Popust za nakazilo (−1%)</span>
+            <span id="order-upn-discount-amt">—</span>
+          </div>
           <div class="order-total-row">
             <span>Poštnina</span>
             <span id="order-shipping">—</span>
@@ -248,8 +252,9 @@
           <div class="pay-divider"><span>ali</span></div>
 
           <button class="gm-btn gm-btn--secondary" id="upn-pay-btn"
-            style="width:100%;min-height:48px;font-size:.9rem">
-            🏦 Bančno nakazilo →
+            style="width:100%;min-height:52px;font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:.15rem">
+            <span>🏦 Bančno nakazilo →</span>
+            <span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>
           </button>
 
         </div>

@@ -922,10 +922,23 @@ async function placeOrder() {
 
   const btn = document.getElementById('upn-pay-btn');
   btn.disabled = true;
-  btn.textContent = '⏳ Pošiljam...';
+  btn.innerHTML = '⏳ Pošiljam...';
 
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
   const calc = window._orderCalc;
+
+  // Apliciramo 1% UPN popust
+  const upnDiscountAmt = Math.round(calc.skupaj * 0.01 * 100) / 100;
+  const skupajUpn = Math.round((calc.skupaj - upnDiscountAmt) * 100) / 100;
+
+  // Posodobi povzetek v UI
+  const upnRow = document.getElementById('order-upn-discount-row');
+  if (upnRow) {
+    upnRow.style.display = 'flex';
+    document.getElementById('order-upn-discount-amt').textContent = `−${fmt(upnDiscountAmt)}`;
+    document.getElementById('order-total').textContent = fmt(skupajUpn);
+  }
+
   const name = document.getElementById('c-name').value.trim();
   const email = document.getElementById('c-email').value.trim();
 
@@ -940,9 +953,9 @@ async function placeOrder() {
     items: cart,
     subtotal: calc.bruto,
     discount_pct: calc.pct,
-    discount_amt: calc.popustZnesek,
+    discount_amt: calc.popustZnesek + upnDiscountAmt,
     shipping: calc.postnina,
-    total: calc.skupaj,
+    total: skupajUpn,
     coupon_code: calc.koda || null,
     status: 'pending',
     rf_reference: '',
@@ -965,11 +978,11 @@ async function placeOrder() {
       body: JSON.stringify({ rf_reference: rf })
     });
 
-    await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calc);
-    showSuccess({ ...order, rf_reference: rf }, rf, calc);
-    // GA4 - purchase
+    const calcUpn = { ...calc, skupaj: skupajUpn, popustZnesek: calc.popustZnesek + upnDiscountAmt };
+    await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calcUpn);
+    showSuccess({ ...order, rf_reference: rf }, rf, calcUpn);
     if (typeof gmPurchase === 'function') {
-      gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
+      gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     }
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
@@ -977,7 +990,7 @@ async function placeOrder() {
   } catch(e) {
     console.error('Order error:', e);
     btn.disabled = false;
-    btn.textContent = '🏦 Bančno nakazilo →';
+    btn.innerHTML = '<span>🏦 Bančno nakazilo →</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>';
     alert('Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na info@gomushroom.si');
   }
 }

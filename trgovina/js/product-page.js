@@ -20,7 +20,7 @@ function formatPrice(value) {
 }
 
 function stockLabel(v) {
-  if (!v.in_stock) return `<span style="color:#c0392b;font-size:.8rem">● Ni na zalogi</span>`;
+  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.8rem">Ni na zalogi</span>`;
   if (v.low_stock) return `<span style="color:#e67e22;font-size:.8rem">● Zadnje kose</span>`;
   return `<span style="color:#3a6b4a;font-size:.8rem">● Na zalogi</span>`;
 }

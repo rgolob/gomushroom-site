@@ -131,7 +131,7 @@ async function loadProducts() {
 
 // ── Pomočne funkcije ──────────────────────────────────────
 function stockBadge(v) {
-  if (!v.in_stock) return `<span style="color:#c0392b;font-size:.75rem;letter-spacing:.04em">● Ni na zalogi</span>`;
+  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.75rem;letter-spacing:.04em">Ni na zalogi</span>`;
   if (v.low_stock) return `<span style="color:#e67e22;font-size:.75rem;letter-spacing:.04em">● Zadnji kosi</span>`;
   return `<span style="color:#3a6b4a;font-size:.75rem;letter-spacing:.04em">● Na zalogi</span>`;
 }
@@ -175,7 +175,7 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
-            ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.75rem;line-height:1.3;flex-shrink:0">⏳</span><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum)}</span>` : ''}</span></div>` : ''}
+            ${p.activeBatch ? `<div class="batch-production-bar"><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum)}</span>` : ''}</span></div>` : ''}
           </a>
 
           <div class="shop-product-foot">

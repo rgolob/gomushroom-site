@@ -271,14 +271,10 @@
 }
 
 .batch-production-bar{
-  margin-top:7px;
-  align-self:flex-start;
-  display:inline-flex;
+  margin:.3rem 0 0;
+  display:flex;
   align-items:flex-start;
   gap:.22rem;
-  padding:.22rem .55rem;
-  border-radius:999px;
-  background:#efe7dd;
   font-size:.57rem;
   font-weight:600;
   letter-spacing:.05em;

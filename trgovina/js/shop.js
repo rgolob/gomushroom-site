@@ -175,7 +175,7 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
-            ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.48rem;line-height:1.6">⏳</span><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum)}</span>` : ''}</span></div>` : ''}
+            ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.75rem;line-height:1.3;flex-shrink:0">⏳</span><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum)}</span>` : ''}</span></div>` : ''}
           </a>
 
           <div class="shop-product-foot">

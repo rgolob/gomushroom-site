@@ -68,7 +68,7 @@ async function loadProductVariants() {
   return { product, variants };
 }
 
-function initProductPage(variants) {
+function initProductPage(variants, product) {
   let activeVariant = variants.find(v => v.type === 'alc') || variants[0];
 
   const priceWrap = document.getElementById('product-price-wrap');
@@ -113,8 +113,8 @@ function initProductPage(variants) {
   updateUI(activeVariant);
 
   // GA4 - view_item
-  if (typeof gmViewItem === 'function' && data.product) {
-    gmViewItem(data.product, activeVariant);
+  if (typeof gmViewItem === 'function' && product) {
+    gmViewItem(product, activeVariant);
   }
 }
 
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const data = await loadProductVariants();
     if (!data) return;
-    initProductPage(data.variants);
+    initProductPage(data.variants, data.product);
   } catch(e) {
     console.error('Product page error:', e);
   }

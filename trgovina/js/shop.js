@@ -156,7 +156,6 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
-            ${p.activeBatch ? `<p style="font-size:.65rem;color:#3a6b4a;letter-spacing:.04em;margin:.25rem 0 0;font-weight:500">🔄 V produkciji · ${p.activeBatch.batch_num}</p>` : ''}
           </a>
 
           <div class="shop-product-foot">
@@ -182,6 +181,9 @@ function renderShopGrid(products) {
             </button>
 
           </div>
+
+          ${p.activeBatch ? `<div class="batch-production-bar"><span>⏳</span> Serija ${p.activeBatch.batch_num} · v produkciji</div>` : ''}
+
         </div>
 
       </article>`;

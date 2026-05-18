@@ -146,6 +146,14 @@
       .checkout-field { margin-bottom: .65rem; }
       .checkout-page { padding-top: 16px; padding-bottom: 48px; }
     }
+    .checkout-col-form { grid-column: 1; grid-row: 1 / 3; }
+    #express-section  { grid-column: 2; grid-row: 1; }
+    .checkout-col-summary { grid-column: 2; grid-row: 2; }
+    @media(max-width: 760px) {
+      .checkout-col-form    { grid-column: 1; grid-row: 2; }
+      #express-section      { grid-column: 1; grid-row: 1; }
+      .checkout-col-summary { grid-column: 1; grid-row: 3; }
+    }
   </style>
   <script src="https://js.stripe.com/v3/" async></script>
 </head>
@@ -162,7 +170,7 @@
   <div class="checkout-grid" id="checkout-form-wrap">
 
     <!-- Levo: Podatki kupca -->
-    <div>
+    <div class="checkout-col-form">
       <div class="checkout-card" style="margin-bottom:1rem">
         <p class="checkout-section-title">Podatki za dostavo</p>
 
@@ -205,8 +213,16 @@
 
     </div>
 
-    <!-- Desno: Povzetek naročila -->
-    <div>
+    <!-- Desno zgoraj: Ekspresno plačilo -->
+    <div id="express-section">
+      <div class="checkout-card">
+        <p class="checkout-section-title" style="margin-bottom:.75rem">⚡ Ekspresno plačilo</p>
+        <div id="express-checkout-element"></div>
+      </div>
+    </div>
+
+    <!-- Desno spodaj: Povzetek naročila -->
+    <div class="checkout-col-summary">
       <div class="checkout-card" style="position:sticky;top:24px">
         <p class="checkout-section-title">Povzetek naročila</p>
 
@@ -237,24 +253,19 @@
 
         <div id="payment-section" style="margin-top:1.25rem">
 
-          <div id="express-checkout-wrap">
-            <div id="express-checkout-element"></div>
-            <div class="pay-divider" id="express-divider"><span>ali plačaj s kartico</span></div>
-          </div>
+          <button class="gm-btn gm-btn--secondary" id="upn-pay-btn"
+            style="width:100%;min-height:52px;font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:.15rem">
+            <span>🏦 Bančno nakazilo →</span>
+            <span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>
+          </button>
+
+          <div class="pay-divider"><span>ali plačaj s kartico</span></div>
 
           <div id="card-payment-element" style="min-height:4rem"></div>
           <div id="card-error"></div>
           <button class="gm-btn gm-btn--primary" id="card-pay-btn"
             style="width:100%;margin-top:1rem;min-height:50px;font-size:.95rem">
             Plačaj s kartico
-          </button>
-
-          <div class="pay-divider"><span>ali</span></div>
-
-          <button class="gm-btn gm-btn--secondary" id="upn-pay-btn"
-            style="width:100%;min-height:52px;font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:.15rem">
-            <span>🏦 Bančno nakazilo →</span>
-            <span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>
           </button>
 
         </div>

@@ -708,8 +708,8 @@ async function initPaymentUI() {
   expressEl.on('ready', ({ availablePaymentMethods }) => {
     const hasWallets = availablePaymentMethods &&
       Object.values(availablePaymentMethods).some(v => v);
-    const wrap = document.getElementById('express-checkout-wrap');
-    if (wrap) wrap.style.display = hasWallets ? '' : 'none';
+    const section = document.getElementById('express-section');
+    if (section) section.style.display = hasWallets ? '' : 'none';
   });
 
   expressEl.on('confirm', async (event) => {

@@ -71,6 +71,15 @@ function renderActiveDiscountBanner() {
 }
 
 // ── Produkti iz Supabase ──────────────────────────────────
+const SL_MESECI = ['januar','februar','marec','april','maj','junij','julij','avgust','september','oktober','november','december'];
+
+function predvidenoDatum(datumStr) {
+  if (!datumStr) return null;
+  const [y, m, d] = datumStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d + 18);
+  return `${dt.getDate()}. ${SL_MESECI[dt.getMonth()]}`;
+}
+
 const VRSTA_TO_SLUG = {
   'Reishi': 'reishi',
   'Resasti bradovec': 'resasti-bradovec',
@@ -83,7 +92,7 @@ async function loadProducts() {
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka,datum`, { headers: SB_HEADERS })
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
@@ -166,6 +175,7 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
+            ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.48rem;line-height:1.6">⏳</span><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum)}</span>` : ''}</span></div>` : ''}
           </a>
 
           <div class="shop-product-foot">
@@ -191,8 +201,6 @@ function renderShopGrid(products) {
             </button>
 
           </div>
-
-          ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.5rem">⏳</span> Serija ${p.activeBatch.serija_alc} · v produkciji</div>` : ''}
 
         </div>
 

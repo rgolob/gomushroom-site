@@ -271,19 +271,16 @@
 }
 
 .batch-production-bar{
-  margin-top:7px;
-  align-self:flex-start;
-  display:inline-flex;
-  align-items:center;
-  gap:.2rem;
-  padding:.14rem .5rem;
-  border-radius:999px;
-  background:#efe7dd;
+  margin:.3rem 0 0;
+  display:flex;
+  align-items:flex-start;
+  gap:.22rem;
   font-size:.57rem;
   font-weight:600;
   letter-spacing:.05em;
   text-transform:uppercase;
   color:#7a5a2a;
+  line-height:1.45;
 }
 
 .shop-product-variants{

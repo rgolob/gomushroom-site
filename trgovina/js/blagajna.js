@@ -1,6 +1,6 @@
 // ── GoMushroom Blagajna ───────────────────────────────────
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
-const STRIPE_PK = 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXX';
+const STRIPE_PK = 'pk_test_51TYJYTLIli0Bkm77pPfBZDtCMP4sN10PniU4eAEW6yhYWXaILfiA5VgLSI3YJ49CGrDgKyNqeGuOFBTR26dafGWX00UUPQw1QG';
 const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';const SB_HEADERS = {

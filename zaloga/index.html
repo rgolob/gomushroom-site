@@ -3820,6 +3820,7 @@ function renderSales(){
   if(!fCh || fCh === 'wp') {
     wpOrders = (_narocila||[]).filter(n => {
       if(n.status === 'cancelled' || n.status === 'abandoned') return false;
+      if(n.is_test) return false;
       // Ne prikazuj tistih ki so že potrjena in imajo invoice_id (so že v saleGroups)
      // if(n.status === 'paid' && n.invoice_id) return false;
       if((n.status === 'paid' || n.status === 'shipped') && n.invoice_id) return false;

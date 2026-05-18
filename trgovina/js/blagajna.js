@@ -1,6 +1,7 @@
 // ── GoMushroom Blagajna ───────────────────────────────────
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
 const STRIPE_PK = 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXX';
+const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';const SB_HEADERS = {
   'Content-Type': 'application/json',
@@ -773,6 +774,7 @@ async function saveStripeOrder(paymentIntentId) {
     coupon_code: calc.koda || null,
     status:   'paid',
     rf_reference: paymentIntentId,
+    is_test:  STRIPE_TEST_MODE,
   };
 
   const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {

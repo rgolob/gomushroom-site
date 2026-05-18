@@ -54,7 +54,7 @@
       border: 1px solid rgba(43,11,57,.15);
       border-radius: 10px;
       font-family: inherit;
-      font-size: .9rem;
+      font-size: 1rem;
       color: #2b0b39;
       background: #fff;
       outline: none;
@@ -136,17 +136,9 @@
       padding: 2rem 1rem;
     }
     .success-wrap.visible { display: block; }
-    .pay-method-card{
-      display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;
-      border-radius:10px;border:2px solid transparent;cursor:pointer;
-      background:#f7f3ee;transition:.15s ease;margin-bottom:.5rem;
-    }
-    .pay-method-card.active{
-      background:#fff;border-color:#2b0b39;
-    }
-    .pay-method-card:last-child{margin-bottom:0}
-    #stripe-element-wrap{margin-top:1.5rem}
-    #stripe-error{color:#c0392b;font-size:.85rem;margin-top:.75rem;display:none}
+    .pay-divider{display:flex;align-items:center;gap:.75rem;margin:1rem 0;color:rgba(43,11,57,.35);font-size:.75rem;letter-spacing:.04em}
+    .pay-divider::before,.pay-divider::after{content:'';flex:1;height:1px;background:rgba(43,11,57,.1)}
+    #card-error{color:#c0392b;font-size:.85rem;margin-top:.75rem;display:none}
     @media(max-width: 760px) {
       .checkout-grid { grid-template-columns: 1fr; gap: 14px; }
       .checkout-row { grid-template-columns: 1fr 1fr; gap: .6rem; }
@@ -211,23 +203,6 @@
         </div>
       </div>
 
-      <div class="checkout-card">
-        <p class="checkout-section-title">Način plačila</p>
-        <div class="pay-method-card active" id="pm-upn" onclick="selectPayMethod('upn')">
-          <span style="font-size:1.4rem">🏦</span>
-          <div>
-            <div style="font-weight:600;font-size:.88rem;color:#2b0b39">Bančno nakazilo</div>
-            <div style="font-size:.75rem;color:rgba(43,11,57,.5)">Po naročilu prejmete predračun z UPN QR kodo</div>
-          </div>
-        </div>
-        <div class="pay-method-card" id="pm-stripe" onclick="selectPayMethod('stripe')">
-          <span style="font-size:1.4rem">💳</span>
-          <div>
-            <div style="font-weight:600;font-size:.88rem;color:#2b0b39">Kartica / Google Pay / Apple Pay</div>
-            <div style="font-size:.75rem;color:rgba(43,11,57,.5)">Takojšnje plačilo — Visa, Mastercard, Google Pay, Apple Pay</div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Desno: Povzetek naročila -->
@@ -246,6 +221,10 @@
             <span id="order-discount-label">Popust</span>
             <span id="order-discount-amt">—</span>
           </div>
+          <div class="order-total-row" id="order-upn-discount-row" style="display:none;color:#3a6b4a">
+            <span>Popust za nakazilo (−1%)</span>
+            <span id="order-upn-discount-amt">—</span>
+          </div>
           <div class="order-total-row">
             <span>Poštnina</span>
             <span id="order-shipping">—</span>
@@ -256,27 +235,35 @@
           </div>
         </div>
 
-        <button class="gm-btn gm-btn--primary" type="button" id="place-order-btn"
-          style="width:100%;margin-top:1.25rem;min-height:50px;font-size:.95rem">
-          Naroči in plačaj →
-        </button>
+        <div id="payment-section" style="margin-top:1.25rem">
+
+          <div id="express-checkout-wrap">
+            <div id="express-checkout-element"></div>
+            <div class="pay-divider" id="express-divider"><span>ali plačaj s kartico</span></div>
+          </div>
+
+          <div id="card-payment-element" style="min-height:4rem"></div>
+          <div id="card-error"></div>
+          <button class="gm-btn gm-btn--primary" id="card-pay-btn"
+            style="width:100%;margin-top:1rem;min-height:50px;font-size:.95rem">
+            Plačaj s kartico
+          </button>
+
+          <div class="pay-divider"><span>ali</span></div>
+
+          <button class="gm-btn gm-btn--secondary" id="upn-pay-btn"
+            style="width:100%;min-height:52px;font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:.15rem">
+            <span>🏦 Bančno nakazilo →</span>
+            <span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>
+          </button>
+
+        </div>
 
         <p style="font-size:.72rem;color:rgba(43,11,57,.4);text-align:center;margin:.75rem 0 0;line-height:1.6">
           S klikom potrjuješ naročilo in se strinjaš s pogoji poslovanja.
         </p>
       </div>
     </div>
-  </div>
-
-  <!-- Stripe Payment Element -->
-  <div id="stripe-element-wrap" class="checkout-card" style="display:none">
-    <p class="checkout-section-title">Plačilni podatki</p>
-    <div id="stripe-payment-element"></div>
-    <div id="stripe-error"></div>
-    <button class="gm-btn gm-btn--primary" id="stripe-confirm-btn"
-      style="width:100%;margin-top:1.25rem;min-height:50px;font-size:.95rem">
-      Potrdi plačilo
-    </button>
   </div>
 
   <!-- QR / Potrditev -->

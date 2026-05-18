@@ -230,6 +230,16 @@ function bindVariantPickers(products) {
     }
 
     btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.variantBtn)));
+
+    // Celotna kartica klikabilna → produktna stran
+    const detailUrl = card.querySelector('.shop-product-img-link')?.getAttribute('href');
+    if (detailUrl && detailUrl !== '/trgovina/') {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', e => {
+        if (e.target.closest('button, a')) return;
+        window.location.href = detailUrl;
+      });
+    }
   });
 }
 

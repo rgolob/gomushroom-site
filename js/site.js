@@ -116,7 +116,7 @@
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.textContent = '× Zapri';
-    closeBtn.addEventListener('click', closePanel);
+    closeBtn.addEventListener('click', () => closePanel(true));
     closeRow.appendChild(closeBtn);
     panelContent.appendChild(closeRow);
 
@@ -129,11 +129,16 @@
     });
   }
 
-  function closePanel(){
+  function closePanel(scrollBack = false){
+    const activeCard = grid.querySelector('.card.service.is-active');
     cards.forEach(c => c.classList.remove('is-active'));
     grid.classList.remove('has-open');
     panel.classList.remove('is-open');
     panelContent.innerHTML = '';
+    if (scrollBack && activeCard) {
+      const headerH = document.querySelector('#site-header')?.offsetHeight || 60;
+      window.scrollTo({ top: activeCard.getBoundingClientRect().top + window.scrollY - headerH - 16, behavior: 'smooth' });
+    }
   }
 
   cards.forEach(card=>{

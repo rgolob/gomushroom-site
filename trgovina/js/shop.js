@@ -192,7 +192,7 @@ function renderShopGrid(products) {
 
           </div>
 
-          ${p.activeBatch ? `<div class="batch-production-bar"><span>⏳</span> Serija ${p.activeBatch.serija_alc} · v produkciji</div>` : ''}
+          ${p.activeBatch ? `<div class="batch-production-bar"><span style="font-size:.5rem">⏳</span> Serija ${p.activeBatch.serija_alc} · v produkciji</div>` : ''}
 
         </div>
 

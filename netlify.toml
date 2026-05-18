@@ -1,9 +1,4 @@
 [[redirects]]
-  from = "/favicon.ico"
-  to = "/assets/favicon-32.png"
-  status = 200
-
-[[redirects]]
   from = "/trgovina/bradovec-tinktura/"
   to = "/trgovina/resasti-bradovec-tinktura/"
   status = 301

@@ -6561,6 +6561,7 @@ const ZS_DEFAULTS={
   autoEmailPredano:false,
   postnina:3.90,
   brezplacnaPosninaOd:60,
+  upnPopust:{ aktiven:false, vrednost:1 },
   popusti:[], // [{kod, tip:'koda'|'kolicina'|'znesek', vrednost, min, aktiven}]
   recenzijeNastavitve:{recenzijaPct:10,igFollowPct:5,igStoryPct:10,igObjavaLnk:15,igObjavaTag:20},
 };
@@ -6683,6 +6684,23 @@ function openZalogaSettings(){
           <div style="display:flex;gap:.5rem;align-items:center">
             <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Brezplačna od (€)</label>
             <input id="zsBrezplacnaPosninaOd" type="text" inputmode="decimal" value="${getZS('brezplacnaPosninaOd')}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+        </div>
+
+        <!-- UPN POPUST -->
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Popust za bančno nakazilo (UPN)</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.25rem;display:grid;gap:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.15rem 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:.82rem;font-weight:500">Aktiven</div>
+              <div style="font-size:.68rem;color:var(--muted)">Prikaže popust na gumbu in ga aplicira pri oddaji</div>
+            </div>
+            <input type="checkbox" id="zs_upnPopustAktiven" ${getZS('upnPopust')?.aktiven?'checked':''} style="width:1.2rem;height:1.2rem;cursor:pointer">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Popust (%)</label>
+            <input id="zsUpnPopustVrednost" type="text" inputmode="decimal" value="${getZS('upnPopust')?.vrednost??1}"
               style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
           </div>
         </div>
@@ -7024,6 +7042,10 @@ function saveZalogaSettings(){
     autoEmailPredano:document.getElementById('zs_autoEmailPredano').checked,
     sestevajPopuste:document.getElementById('zs_sestevajPopuste').checked,
     maxPopust:parseFloat(document.getElementById('zsMaxPopust').value.replace(',','.'))||50,
+    upnPopust:{
+      aktiven:document.getElementById('zs_upnPopustAktiven').checked,
+      vrednost:parseFloat(document.getElementById('zsUpnPopustVrednost').value.replace(',','.'))||1,
+    },
     casovniPopust:{
       vrednost:parseFloat(document.getElementById('zsCasovniVrednost').value)||0,
       od:document.getElementById('zsCasovniOd').value,

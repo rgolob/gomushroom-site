@@ -750,6 +750,15 @@ async function initPaymentUI() {
 
   document.getElementById('card-pay-btn').addEventListener('click', payWithCard);
   document.getElementById('upn-pay-btn').addEventListener('click', placeOrder);
+
+  // Prikaži UPN popust na gumbu, če je aktiven v nastavitvah
+  const upnCfg = settings.upnPopust;
+  if (upnCfg?.aktiven && upnCfg.vrednost > 0) {
+    const upnBtn = document.getElementById('upn-pay-btn');
+    if (upnBtn) upnBtn.innerHTML =
+      `<span>🏦 Bančno nakazilo →</span>` +
+      `<span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfg.vrednost}% popusta</span>`;
+  }
 }
 
 function showCardError(msg) {
@@ -927,13 +936,15 @@ async function placeOrder() {
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
   const calc = window._orderCalc;
 
-  // Apliciramo 1% UPN popust
-  const upnDiscountAmt = Math.round(calc.skupaj * 0.01 * 100) / 100;
+  // UPN popust iz nastavitev
+  const upnCfg = settings.upnPopust;
+  const upnPct = (upnCfg?.aktiven && upnCfg.vrednost > 0) ? upnCfg.vrednost : 0;
+  const upnDiscountAmt = Math.round(calc.skupaj * upnPct / 100 * 100) / 100;
   const skupajUpn = Math.round((calc.skupaj - upnDiscountAmt) * 100) / 100;
 
-  // Posodobi povzetek v UI
+  // Posodobi povzetek v UI (samo če je popust > 0)
   const upnRow = document.getElementById('order-upn-discount-row');
-  if (upnRow) {
+  if (upnRow && upnDiscountAmt > 0) {
     upnRow.style.display = 'flex';
     document.getElementById('order-upn-discount-amt').textContent = `−${fmt(upnDiscountAmt)}`;
     document.getElementById('order-total').textContent = fmt(skupajUpn);
@@ -990,7 +1001,10 @@ async function placeOrder() {
   } catch(e) {
     console.error('Order error:', e);
     btn.disabled = false;
-    btn.innerHTML = '<span>🏦 Bančno nakazilo →</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −1% popusta</span>';
+    const upnCfgErr = settings.upnPopust;
+    btn.innerHTML = upnCfgErr?.aktiven && upnCfgErr.vrednost > 0
+      ? `<span>🏦 Bančno nakazilo →</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfgErr.vrednost}% popusta</span>`
+      : '🏦 Bančno nakazilo →';
     alert('Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na info@gomushroom.si');
   }
 }

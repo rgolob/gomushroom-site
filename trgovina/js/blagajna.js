@@ -667,35 +667,115 @@ function validate() {
   return ok;
 }
 
-// ── Izbira načina plačila ─────────────────────────────────
-let selectedPayMethod = 'upn';
-
-window.selectPayMethod = function(method) {
-  selectedPayMethod = method;
-  document.getElementById('pm-upn').classList.toggle('active', method === 'upn');
-  document.getElementById('pm-stripe').classList.toggle('active', method === 'stripe');
-  const btn = document.getElementById('place-order-btn');
-  btn.textContent = method === 'stripe' ? 'Nadaljuj na plačilo →' : 'Naroči in plačaj →';
-};
-
-// ── Stripe flow ───────────────────────────────────────────
+// ── Stripe – Express Checkout + kartica ──────────────────
 let stripeInstance = null;
 let stripeElements = null;
-let stripeElementMounted = false;
 
-async function stripeFlow() {
-  if (!validate()) return;
+function waitForStripe() {
+  return new Promise(resolve => {
+    if (typeof Stripe !== 'undefined') return resolve(true);
+    const script = document.querySelector('script[src*="stripe.com"]');
+    if (!script) return resolve(false);
+    script.addEventListener('load', () => resolve(true));
+    script.addEventListener('error', () => resolve(false));
+    setTimeout(() => resolve(typeof Stripe !== 'undefined'), 5000);
+  });
+}
 
+async function initPaymentUI() {
   const calc = window._orderCalc;
-  const wrap = document.getElementById('stripe-element-wrap');
-  const errEl = document.getElementById('stripe-error');
-  errEl.style.display = 'none';
+  if (!calc) return;
 
-  const btn = document.getElementById('place-order-btn');
+  stripeInstance = Stripe(STRIPE_PK);
+  stripeElements = stripeInstance.elements({
+    mode: 'payment',
+    amount: Math.round(calc.skupaj * 100),
+    currency: 'eur',
+    locale: 'sl',
+    appearance: {
+      theme: 'stripe',
+      variables: { colorPrimary: '#2b0b39', borderRadius: '10px', fontFamily: 'inherit' }
+    }
+  });
+
+  // Express Checkout – Apple Pay, Google Pay, Revolut
+  const expressEl = stripeElements.create('expressCheckout', {
+    buttonType: { applePay: 'buy', googlePay: 'buy' },
+    layout: { maxColumns: 1, maxRows: 5, overflow: 'auto' }
+  });
+  expressEl.mount('#express-checkout-element');
+
+  expressEl.on('ready', ({ availablePaymentMethods }) => {
+    const hasWallets = availablePaymentMethods &&
+      Object.values(availablePaymentMethods).some(v => v);
+    const wrap = document.getElementById('express-checkout-wrap');
+    if (wrap) wrap.style.display = hasWallets ? '' : 'none';
+  });
+
+  expressEl.on('confirm', async (event) => {
+    if (!validate()) {
+      event.paymentFailed({ reason: 'fail' });
+      document.querySelector('.checkout-field input.error')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    try {
+      const calc = window._orderCalc;
+      const res = await fetch('/.netlify/functions/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: calc.skupaj }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const { error, paymentIntent } = await stripeInstance.confirmPayment({
+        elements: stripeElements,
+        clientSecret: data.clientSecret,
+        redirect: 'if_required',
+      });
+      if (error) { event.paymentFailed({ reason: 'fail' }); showCardError(error.message); return; }
+      if (paymentIntent?.status === 'succeeded') await saveStripeOrder(paymentIntent.id);
+    } catch(e) {
+      event.paymentFailed({ reason: 'fail' });
+      showCardError(e.message || 'Napaka pri plačilu.');
+    }
+  });
+
+  // Kartični obrazec (brez wallet gumbov – ti so zgoraj)
+  const cardEl = stripeElements.create('payment', {
+    wallets: { applePay: 'never', googlePay: 'never' }
+  });
+  cardEl.mount('#card-payment-element');
+
+  document.getElementById('card-pay-btn').addEventListener('click', payWithCard);
+  document.getElementById('upn-pay-btn').addEventListener('click', placeOrder);
+}
+
+function showCardError(msg) {
+  const el = document.getElementById('card-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function payWithCard() {
+  if (!validate()) {
+    document.querySelector('.checkout-field input.error')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const btn = document.getElementById('card-pay-btn');
+  const errEl = document.getElementById('card-error');
+  errEl.style.display = 'none';
   btn.disabled = true;
-  btn.textContent = '⏳ Pripravljam...';
+  btn.textContent = '⏳ Obdelujem...';
 
   try {
+    const { error: submitErr } = await stripeElements.submit();
+    if (submitErr) throw new Error(submitErr.message);
+
+    const calc = window._orderCalc;
     const res = await fetch('/.netlify/functions/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -704,53 +784,20 @@ async function stripeFlow() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    stripeInstance = Stripe(STRIPE_PK);
-    stripeElements = stripeInstance.elements({ clientSecret: data.clientSecret, locale: 'sl' });
-
-    if (!stripeElementMounted) {
-      stripeElements.create('payment').mount('#stripe-payment-element');
-      stripeElementMounted = true;
-    }
-
-    wrap.style.display = 'block';
-    wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    document.getElementById('stripe-confirm-btn').onclick = confirmStripePayment;
-  } catch(e) {
-    errEl.textContent = e.message || 'Napaka pri inicializaciji plačila.';
-    errEl.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Nadaljuj na plačilo →';
-  }
-}
-
-async function confirmStripePayment() {
-  const confirmBtn = document.getElementById('stripe-confirm-btn');
-  const errEl = document.getElementById('stripe-error');
-  errEl.style.display = 'none';
-  confirmBtn.disabled = true;
-  confirmBtn.textContent = '⏳ Obdelujem plačilo...';
-
-  try {
     const { error, paymentIntent } = await stripeInstance.confirmPayment({
       elements: stripeElements,
-      confirmParams: { return_url: window.location.origin + '/trgovina/blagajna/' },
+      clientSecret: data.clientSecret,
       redirect: 'if_required',
     });
-
     if (error) throw new Error(error.message);
-
-    if (paymentIntent && paymentIntent.status === 'succeeded') {
-      await saveStripeOrder(paymentIntent.id);
-    }
+    if (paymentIntent?.status === 'succeeded') await saveStripeOrder(paymentIntent.id);
   } catch(e) {
-    errEl.textContent = e.message || 'Plačilo ni uspelo.';
-    errEl.style.display = 'block';
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = 'Potrdi plačilo';
+    showCardError(e.message || 'Plačilo ni uspelo.');
+    btn.disabled = false;
+    btn.textContent = 'Plačaj s kartico';
   }
 }
+
 
 async function saveStripeOrder(paymentIntentId) {
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
@@ -854,7 +901,6 @@ async function sendStripeConfirmationEmail(order, calc) {
 
 function showStripeSuccess(order) {
   document.getElementById('checkout-form-wrap').style.display = 'none';
-  document.getElementById('stripe-element-wrap').style.display = 'none';
   const successEl = document.getElementById('order-success');
   successEl.classList.add('visible');
   document.getElementById('qr-section').style.display = 'none';
@@ -863,20 +909,18 @@ function showStripeSuccess(order) {
   successEl.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ── Submit ────────────────────────────────────────────────
+// ── Submit (UPN bančno nakazilo) ──────────────────────────
 async function placeOrder() {
-  if (selectedPayMethod === 'stripe') return stripeFlow();
   if (!validate()) {
     document.querySelector('.checkout-field input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
-  // GA4 - add_payment_info
   if (typeof gmAddPaymentInfo === 'function' && window._orderCalc) {
     const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
     gmAddPaymentInfo(cart, window._orderCalc.skupaj, window._orderCalc.koda);
   }
 
-  const btn = document.getElementById('place-order-btn');
+  const btn = document.getElementById('upn-pay-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Pošiljam...';
 
@@ -933,7 +977,7 @@ async function placeOrder() {
   } catch(e) {
     console.error('Order error:', e);
     btn.disabled = false;
-    btn.textContent = 'Naroči in plačaj →';
+    btn.textContent = '🏦 Bančno nakazilo →';
     alert('Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na info@gomushroom.si');
   }
 }
@@ -1043,7 +1087,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (typeof gmInitCheckoutPage === 'function') gmInitCheckoutPage();
   try { updateCartBadge && updateCartBadge(); } catch(e) {}
 
-  document.getElementById('place-order-btn')?.addEventListener('click', placeOrder);
+  // Inicializacija Stripe plačilnega UI
+  const stripeReady = await waitForStripe();
+  if (stripeReady) initPaymentUI();
 
   // Avtopolnjenje kraja iz poštne številke
   const postInput = document.getElementById('c-post');

@@ -71,28 +71,38 @@ function renderActiveDiscountBanner() {
 }
 
 // ── Produkti iz Supabase ──────────────────────────────────
+const VRSTA_TO_SLUG = {
+  'Reishi': 'reishi',
+  'Resasti bradovec': 'resasti-bradovec',
+  'Chaga': 'chaga',
+  'Smrekovi vršički': 'smrekovi-vrsicki'
+};
+
 async function loadProducts() {
-  const [prodRes, varRes, stockRes, batchRes] = await Promise.all([
+  const [prodRes, varRes, stockRes, dnRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_batches?alc_qty=eq.0&gly_qty=eq.0&work_order=not.is.null&select=product_id,batch_num,work_order`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka`, { headers: SB_HEADERS })
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
   const variants = await varRes.json();
   const stockData = stockRes.ok ? await stockRes.json() : [];
-  const batchData = batchRes.ok ? await batchRes.json() : [];
+  const dnData = dnRes.ok ? await dnRes.json() : [];
 
   // Naredi map za hiter dostop: variant_id -> stock_status
   const stockMap = Object.fromEntries(stockData.map(s => [s.variant_id, s]));
-  // Naredi map: product_id -> serija v produkciji (alc_qty=0, gly_qty=0, work_order set)
-  const batchMap = {};
-  batchData.forEach(b => { batchMap[b.product_id] = b; });
+  // Odprti delovni nalogi: slug -> { serija_alc, oznaka }
+  const dnMap = {};
+  dnData.forEach(d => {
+    const slug = VRSTA_TO_SLUG[d.vrsta_gobe];
+    if (slug) dnMap[slug] = d;
+  });
 
   return products.map(p => ({
     ...p,
-    activeBatch: batchMap[p.id] || null,
+    activeBatch: dnMap[p.slug] || null,
     variants: variants
       .filter(v => v.product_id === p.id)
       .map(v => {
@@ -182,7 +192,7 @@ function renderShopGrid(products) {
 
           </div>
 
-          ${p.activeBatch ? `<div class="batch-production-bar"><span>⏳</span> Serija ${p.activeBatch.batch_num} · v produkciji</div>` : ''}
+          ${p.activeBatch ? `<div class="batch-production-bar"><span>⏳</span> Serija ${p.activeBatch.serija_alc} · v produkciji</div>` : ''}
 
         </div>
 

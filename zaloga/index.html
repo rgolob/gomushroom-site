@@ -5578,7 +5578,6 @@ function genReport(type){
       });
 
       // B2B (velo, kom) — vsaka prodaja posebej z dokumentom (vse do konca obdobja)
-      const allSalesUpToEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
       allSalesUpToEnd.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
         events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
@@ -7889,9 +7888,8 @@ async function confirmSign(){
     renderDobavnice();
     toast('✓ Podpis shranjen');
 
-    // Generate PDF & send email
+    // Pošlji PDF po emailu
     if(g.email){
-      btn.textContent='Pošiljanje…';
       await sendDobavnicaByEmail(g,signatureDataURL,signedAt);
     }
   }catch(e){
@@ -7949,11 +7947,11 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
     });
     if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||res.status);}
     toast(`✉ Dobavnica poslana: ${group.email}`);
-    await sbUpdate('gm_sale_groups',{id:group.id},{dobavnica_sent:true}).catch(()=>{});
   }catch(e){
     toast('❌ E-pošta ni bila poslana: '+e.message);
   }
 }
+
 </script>
 
 <!-- SIGNATURE MODAL -->

@@ -340,13 +340,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .sign-modal-close{background:none;border:none;color:rgba(245,240,232,.6);font-size:1.1rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
 .sign-modal-body{padding:1rem 1.1rem}
 .sign-doc-info{font-size:.78rem;color:var(--muted);margin-bottom:.75rem;line-height:1.6}
-.sign-canvas-wrap{border:2px solid var(--border);border-radius:var(--rs);background:white;position:relative;overflow:hidden;cursor:crosshair;touch-action:none;margin-bottom:.5rem}
-#signCanvas{display:block;width:100%;height:160px}
-.sign-canvas-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:.75rem;color:rgba(122,111,96,.5);letter-spacing:.04em;transition:opacity .2s}
-.sign-canvas-hint.hidden{opacity:0}
-.sign-canvas-actions{display:flex;gap:.5rem;margin-bottom:1rem}
-.sign-clear-btn{font-family:'Jost',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .75rem;border:1px solid var(--border);border-radius:20px;background:white;color:var(--muted);cursor:pointer}
-.sign-clear-btn:hover{border-color:var(--accent);color:var(--ink)}
 .sign-modal-footer{display:flex;gap:.5rem;padding:.9rem 1.1rem;background:rgba(0,0,0,.03);border-top:1px solid var(--border)}
 .sign-confirm-btn{flex:1;font-family:'Jost',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.65rem 1rem;border:none;border-radius:var(--rs);background:var(--accent);color:var(--ink);cursor:pointer}
 .sign-confirm-btn:disabled{opacity:.5;cursor:not-allowed}
@@ -4397,7 +4390,7 @@ async function ustvariDobavnico(groupId){
   }
 }
 
-function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
+function buildDobavnicaHTML(group, signedAt=null){
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4544,13 +4537,11 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 </div>
 
 <div class="sig-grid">
-  <div class="sig-box"><div class="sig-line"></div>Blago izdal: GoMushroom</div>
   <div class="sig-box">
-    ${signatureDataURL
-      ? `<img src="${signatureDataURL}" style="height:2.5rem;max-width:100%;display:block;margin-bottom:.3rem">`
-      : `<div class="sig-line"></div>`}
-    Blago prevzel:${signedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${signedAt}</span>` : ''}
+    <div class="sig-line"></div>
+    Blago izdal: GoMushroom${signedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${signedAt}</span>` : ''}
   </div>
+  <div class="sig-box"><div class="sig-line"></div>Blago prevzel:</div>
 </div>
 
 <div class="footer-section">
@@ -7778,10 +7769,6 @@ function saveEditInvoice(invId){
 
 // ── ELECTRONIC SIGNATURE ──────────────────────────────────────────
 let _signGroupId=null;
-let _signDrawing=false;
-let _signHasMark=false;
-let _signLastX=0;
-let _signLastY=0;
 
 function showSignModal(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
@@ -7791,70 +7778,6 @@ function showSignModal(groupId){
   const info=document.getElementById('signDocInfo');
   if(info)info.innerHTML=`<strong>${g.deliveryNum}</strong> · ${g.buyer||'—'}<br>${g.email?`E-pošta: ${g.email}`:'<span style="color:#b85c2a">⚠ Stranka nima e-naslova — PDF ne bo poslan</span>'}`;
   document.getElementById('signOverlay').style.display='flex';
-  _initSignCanvas();
-}
-
-function _initSignCanvas(){
-  // Replace canvas node to cleanly remove old event listeners
-  const old=document.getElementById('signCanvas');
-  const nc=old.cloneNode(false);
-  old.parentNode.replaceChild(nc,old);
-
-  const rect=nc.getBoundingClientRect();
-  const dpr=window.devicePixelRatio||1;
-  const cssW=rect.width||440;
-  const cssH=160;
-  nc.width=Math.round(cssW*dpr);
-  nc.height=Math.round(cssH*dpr);
-  nc.style.width=cssW+'px';
-  nc.style.height=cssH+'px';
-
-  const ctx=nc.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.strokeStyle='#1a1209';
-  ctx.lineWidth=2.5;
-  ctx.lineCap='round';
-  ctx.lineJoin='round';
-
-  _signDrawing=false;
-  _signHasMark=false;
-  document.getElementById('signCanvasHint').classList.remove('hidden');
-  document.getElementById('signConfirmBtn').disabled=true;
-
-  function getPos(e){
-    const r=nc.getBoundingClientRect();
-    const src=e.touches?e.touches[0]:e;
-    return{x:src.clientX-r.left,y:src.clientY-r.top};
-  }
-  function startDraw(e){e.preventDefault();const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);_signDrawing=true;}
-  function draw(e){
-    e.preventDefault();
-    if(!_signDrawing)return;
-    const p=getPos(e);
-    ctx.lineTo(p.x,p.y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y);
-    if(!_signHasMark){_signHasMark=true;document.getElementById('signCanvasHint').classList.add('hidden');document.getElementById('signConfirmBtn').disabled=false;}
-  }
-  function endDraw(e){e.preventDefault();_signDrawing=false;ctx.beginPath();}
-
-  nc.addEventListener('mousedown',startDraw);
-  nc.addEventListener('mousemove',draw);
-  nc.addEventListener('mouseup',endDraw);
-  nc.addEventListener('mouseleave',endDraw);
-  nc.addEventListener('touchstart',startDraw,{passive:false});
-  nc.addEventListener('touchmove',draw,{passive:false});
-  nc.addEventListener('touchend',endDraw,{passive:false});
-}
-
-function clearSignCanvas(){
-  const canvas=document.getElementById('signCanvas');
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  _signHasMark=false;
-  document.getElementById('signCanvasHint').classList.remove('hidden');
-  document.getElementById('signConfirmBtn').disabled=true;
 }
 
 function cancelSign(){
@@ -7866,36 +7789,30 @@ async function confirmSign(){
   if(!_signGroupId)return;
   const g=saleGroups.find(x=>x.id===_signGroupId);
   if(!g)return;
-  const canvas=document.getElementById('signCanvas');
-  if(!_signHasMark){toast('⚠ Prosim, podpišite');return;}
 
   const btn=document.getElementById('signConfirmBtn');
   btn.disabled=true;
   btn.textContent='Obdelava…';
 
   try{
-    const signatureDataURL=canvas.toDataURL('image/png');
     const now=new Date();
     const signedAt=now.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-    // Save to Supabase
-    await sbUpdate('gm_sale_groups',{id:g.id},{signature_data:signatureDataURL,signed_at:now.toISOString()});
-    g.signatureData=signatureDataURL;
+    await sbUpdate('gm_sale_groups',{id:g.id},{signed_at:now.toISOString()});
     g.signedAt=signedAt;
 
     cancelSign();
     renderSales();
     renderDobavnice();
-    toast('✓ Podpis shranjen');
+    toast('✓ Predaja zabeležena');
 
-    // Pošlji PDF po emailu
     if(g.email){
-      await sendDobavnicaByEmail(g,signatureDataURL,signedAt);
+      await sendDobavnicaByEmail(g,signedAt);
     }
   }catch(e){
     toast('❌ Napaka: '+e.message);
     btn.disabled=false;
-    btn.textContent='Potrdi in pošlji PDF →';
+    btn.textContent='Potrdi predajo →';
   }
 }
 
@@ -7929,10 +7846,10 @@ async function _generatePDFBase64(htmlContent){
   });
 }
 
-async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
+async function sendDobavnicaByEmail(group,signedAt){
   try{
     toast('📄 Generiram PDF…');
-    const htmlContent=buildDobavnicaHTML(group,signatureDataURL,signedAt);
+    const htmlContent=buildDobavnicaHTML(group,signedAt);
     const pdfBase64=await _generatePDFBase64(htmlContent);
     const filename=(group.deliveryNum||'dobavnica')+'.pdf';
     const res=await fetch('/.netlify/functions/send-email',{
@@ -7954,26 +7871,23 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
 
 </script>
 
-<!-- SIGNATURE MODAL -->
+<!-- PREDAJA MODAL -->
 <div id="signOverlay" class="sign-overlay" style="display:none" onclick="if(event.target===this)cancelSign()">
   <div class="sign-modal">
     <div class="sign-modal-header">
-      <span class="sign-modal-title">✍ Podpis dobavnice</span>
+      <span class="sign-modal-title">📤 Potrdi predajo</span>
       <button class="sign-modal-close" onclick="cancelSign()">✕</button>
     </div>
     <div class="sign-modal-body">
       <div class="sign-doc-info" id="signDocInfo"></div>
-      <div class="sign-canvas-wrap">
-        <canvas id="signCanvas"></canvas>
-        <div class="sign-canvas-hint" id="signCanvasHint">Podpišite tukaj</div>
-      </div>
-      <div class="sign-canvas-actions">
-        <button class="sign-clear-btn" onclick="clearSignCanvas()">↺ Počisti</button>
+      <div style="font-size:.82rem;color:var(--ink);line-height:1.7;padding:.5rem 0">
+        Ob potrditvi se zabeleži datum in ura predaje.<br>
+        Dobavnica se pošlje stranki na email.
       </div>
     </div>
     <div class="sign-modal-footer">
       <button class="sign-cancel-btn" onclick="cancelSign()">Prekliči</button>
-      <button class="sign-confirm-btn" id="signConfirmBtn" onclick="confirmSign()" disabled>Potrdi in pošlji PDF →</button>
+      <button class="sign-confirm-btn" id="signConfirmBtn" onclick="confirmSign()">Potrdi predajo →</button>
     </div>
   </div>
 </div>

@@ -135,11 +135,42 @@ document.addEventListener('click', e => {
   }
 });
 
+async function loadRatingBadge(slug) {
+  try {
+    const r = await fetch(
+      `${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating`,
+      { headers: SB_HEADERS }
+    );
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows.length) return;
+
+    const avg = rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length;
+    const avgStr = avg.toFixed(1);
+    const full = Math.round(avg);
+    const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+    const label = rows.length === 1 ? 'ocena' : rows.length < 5 ? 'ocene' : 'ocen';
+
+    const title = document.querySelector('.product-title');
+    if (!title) return;
+
+    const badge = document.createElement('a');
+    badge.href = '#gm-recenzije';
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:.4rem;margin:.4rem 0 .6rem;text-decoration:none;color:inherit';
+    badge.innerHTML = `
+      <span style="color:#b18556;font-size:.95rem;letter-spacing:.04em">${stars}</span>
+      <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${avgStr}</span>
+      <span style="font-size:.78rem;color:rgba(43,11,57,.45)">${rows.length} ${label}</span>`;
+    title.insertAdjacentElement('afterend', badge);
+  } catch(e) {}
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const data = await loadProductVariants();
     if (!data) return;
     initProductPage(data.variants, data.product);
+    loadRatingBadge(PRODUCT_SLUG);
   } catch(e) {
     console.error('Product page error:', e);
   }

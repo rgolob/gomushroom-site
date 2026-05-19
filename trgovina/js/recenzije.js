@@ -48,18 +48,18 @@ function buildHTML(){
   return`<div class="gmr-wrap">
   <h2 class="gmr-h2">Ocene strank</h2>
 
-  <div id="gmr-list"></div>
+  <div id="gmr-list"><div class="gmr-loading">Nalagam ocene…</div></div>
 
   <!-- Recenzija -->
-  <div class="gmr-card">
-    <div class="gmr-card-hdr">
+  <details class="gmr-card gmr-details">
+    <summary class="gmr-details-sum">
       <span class="gmr-card-icon">✍️</span>
-      <div>
-        <h3 class="gmr-h3">Napiši recenzijo</h3>
-        <p class="gmr-sub">Za vsako potrjeno recenzijo prejmete <strong>${cfg.recenzijaPct}% popust</strong> na naslednji nakup.</p>
-      </div>
-    </div>
-    <form id="gmr-form" novalidate>
+      <span>
+        <strong class="gmr-h3">Napiši recenzijo</strong>
+        <span class="gmr-sub"> — za vsako potrjeno oceno prejmete <strong>${cfg.recenzijaPct}% popust</strong></span>
+      </span>
+    </summary>
+    <form id="gmr-form" novalidate style="margin-top:1.1rem">
       <div class="gmr-stars" role="group" aria-label="Ocena">
         ${[1,2,3,4,5].map(i=>`<button type="button" class="gmr-star" data-v="${i}" aria-label="${i} zvezd${i===1?'a':i<5?'e':''}">★</button>`).join('')}
         <span class="gmr-stars-hint">Izberite oceno</span>
@@ -74,7 +74,7 @@ function buildHTML(){
       <button type="submit" class="gmr-btn-submit">Pošlji recenzijo</button>
       <div id="gmr-msg" class="gmr-msg"></div>
     </form>
-  </div>
+  </details>
 
   <!-- Instagram -->
   <div class="gmr-card gmr-ig-card">
@@ -230,7 +230,11 @@ async function loadReviews(slug){
 
 function renderReviews(rows){
   const el=document.getElementById('gmr-list');
-  if(!el||!rows.length)return;
+  if(!el)return;
+  if(!rows.length){
+    el.innerHTML=`<div class="gmr-empty">Še ni ocen. Bodite prvi, ki delite izkušnjo!</div>`;
+    return;
+  }
   const INITIAL=3;
   const avg=(rows.reduce((s,r)=>s+(r.rating||0),0)/rows.length).toFixed(1);
   const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
@@ -312,6 +316,13 @@ function injectStyles(){
 .gmr-item-body{font-size:.88rem;color:var(--fg,#101311);line-height:1.55;white-space:pre-line}
 .gmr-show-more{display:block;width:100%;margin:1rem 0 .5rem;padding:.65rem;background:none;border:1px solid var(--line,#e6e9e6);border-radius:8px;font-family:inherit;font-size:.85rem;font-weight:500;color:var(--brand,#2b0a39);cursor:pointer;transition:background .15s}
 .gmr-show-more:hover{background:var(--card,#f9f7f4)}
+.gmr-loading{color:var(--muted,#6b726d);font-size:.85rem;padding:.5rem 0}
+.gmr-empty{font-size:.88rem;color:var(--muted,#6b726d);padding:.75rem 1rem;background:var(--card,#fff);border:1px solid var(--line,#e6e9e6);border-radius:10px;margin-bottom:1rem}
+.gmr-details{padding:1.1rem 1.5rem}
+.gmr-details-sum{display:flex;align-items:flex-start;gap:.9rem;cursor:pointer;list-style:none;outline:none}
+.gmr-details-sum::-webkit-details-marker{display:none}
+.gmr-details-sum::after{content:'＋';margin-left:auto;font-size:1.1rem;color:var(--muted,#6b726d);flex-shrink:0;line-height:1.4}
+details[open] .gmr-details-sum::after{content:'−'}
 @media(max-width:520px){
   .gmr-ig-row{flex-direction:column;align-items:flex-start}
   .gmr-ig-btn{align-self:flex-end}

@@ -5588,7 +5588,7 @@ function genReport(type){
         if(ev.type==='prod'){
           tekocaZaloga+=ev.qty;
           const inPeriod=ev.date>=od;
-          const hlEtanol=(ev.qty*0.050*0.30/100).toFixed(4);
+          const lAae=(ev.qty*0.050*0.30).toFixed(3);
           karticaRows.push(`<tr class="vhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
             <td>${ev.noDate?'—':ev.date.split('-').reverse().join('.')}</td>
             <td>Proizvodnja</td>
@@ -5596,7 +5596,7 @@ function genReport(type){
             <td class="num" style="color:#1a4a2a;font-weight:600">+${ev.qty}</td>
             <td class="num">—</td>
             <td class="num" style="font-weight:600">${tekocaZaloga}</td>
-            <td style="font-size:.65rem;color:#9a8a7a">${ev.noDate?'uvoz':!inPeriod?'pred mesecem':''}<br><span style="color:#5a7a6a">${hlEtanol} hl EtOH</span></td>
+            <td style="font-size:.65rem;color:#9a8a7a">${ev.noDate?'uvoz':!inPeriod?'pred mesecem':''}<br><span style="color:#5a7a6a">${lAae} L AAE</span></td>
           </tr>`);
         } else {
           tekocaZaloga-=ev.qty;

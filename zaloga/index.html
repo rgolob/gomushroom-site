@@ -6098,10 +6098,11 @@ async function potrdiRecenzijo(id) {
     // Posodobi recenzijo
     const patchRes = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
       method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
-      body: JSON.stringify({ status: 'approved', coupon_code: couponCode, coupon_sent_at: new Date().toISOString() })
+      body: JSON.stringify({ status: 'approved', coupon_code: couponCode, coupon_sent: true })
     });
-    const patched = patchRes.ok ? await patchRes.json() : [];
-    if (!patched.length) throw new Error('RLS blokada — manjka anon update politika na gm_reviews');
+    if (!patchRes.ok) { const err = await patchRes.json().catch(()=>{}); throw new Error('Napaka ' + patchRes.status + (err?.message ? ': ' + err.message : '')); }
+    const patched = await patchRes.json();
+    if (!patched.length) throw new Error('Recenzija ni bila najdena');
 
     // Pošlji email kupcu
     await sendCouponEmail(rec, couponCode, validDays, validDo);

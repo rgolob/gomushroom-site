@@ -265,6 +265,9 @@
   color:inherit;
   margin-bottom:auto;
 }
+.shop-product-text-link:hover{
+  text-decoration:none;
+}
 
 .shop-product-foot{
   margin-top:8px;

@@ -5532,24 +5532,28 @@ function genReport(type){
       grandZaloga+=zalogaEnd;
 
       // ── MATERIALNA KARTICA — kronološka tabela ──
-      // Sestavimo vse vrstice: začetna zaloga + vhodi + izhodi, sortirano po datumu
+      // Vse serije + vse prodaje od začetka, sortirano po datumu
       const karticaRows=[];
-      let tekocaZaloga=zalogaStart;
+      let tekocaZaloga=0;
 
-      // Zberi vse dogodke — serije + B2B posamezno + maloprodaja tedensko
       const RETAIL_CH=new Set(['malo','wp','dar']);
       const B2B_CH=new Set(['velo','kom']);
       const events=[];
-      batchesInPeriod.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
+
+      // Vse serije tega produkta (vključno pred izbranim obdobjem)
+      allBatches.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
         const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
         if(alloc>0)events.push({date:b.date,type:'prod',batchNum:b.batchNum,qty:alloc});
       });
-      // B2B (velo, kom) — vsaka prodaja posebej z dokumentom
-      salesInPeriod.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
+
+      // B2B (velo, kom) — vsaka prodaja posebej z dokumentom (vse do konca obdobja)
+      const allSalesUpToEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
+      allSalesUpToEnd.filter(g=>B2B_CH.has(g.channel)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
         events.push({date:g.date,type:'sale',qty:l.alc||0,doc:g.invoiceNum||g.deliveryNum||'—',buyer:g.buyer||'—',channel:g.channel,grouped:false});
       });
-      // Maloprodaja (malo, wp, dar) — mesečni seštevek, opomba: število kupcev
+
+      // Maloprodaja V obdobju — seštevek za period
       let retailTotal=0,retailCount=0;
       const retailChs=new Set();
       salesInPeriod.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
@@ -5562,31 +5566,22 @@ function genReport(type){
         const retailLabel=[...retailChs].map(c=>CH[c]?.label||c).join(' / ');
         events.push({date:doVal,type:'sale',qty:retailTotal,doc:'—',buyer:retailLabel,channel:'retail',grouped:true,count:retailCount});
       }
-      events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
-      // Začetna zaloga — razdelimo po serijah (prenosna zaloga)
-      if(zalogaStart>0){
-        let tempZaloga=0;
-        batchesBeforePeriod.forEach(b=>{
-          const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
-          const sold=salesBefore.reduce((s,g)=>{
-            const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
-            return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
-          },0);
-          const remaining=Math.max(0,alloc-sold);
-          if(!remaining)return;
-          tempZaloga+=remaining;
-          karticaRows.push(`<tr class="prenosna">
-            <td>${(b.date||od).split('-').reverse().join('.')}</td>
-            <td>Serija ${b.batchNum}</td>
-            <td>prenos</td>
-            <td class="num" style="color:#1a4a2a;font-weight:600">+${remaining}</td>
-            <td class="num">—</td>
-            <td class="num">${tempZaloga}</td>
-            <td style="font-size:.65rem;color:#9a8a7a">pred obdobjem</td>
-          </tr>`);
-        });
+      // Maloprodaja PRED obdobjem — seštevek (skupaj, pred izbranim datumom)
+      let preRetailTotal=0,preRetailCount=0;
+      const preRetailChs=new Set();
+      salesBefore.filter(g=>RETAIL_CH.has(g.channel)).forEach(g=>{
+        const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
+        preRetailTotal+=(l.alc||0);
+        preRetailCount++;
+        preRetailChs.add(g.channel);
+      });
+      if(preRetailTotal>0){
+        const preRetailLabel=[...preRetailChs].map(c=>CH[c]?.label||c).join(' / ');
+        events.push({date:dayBeforeStr,type:'sale',qty:preRetailTotal,doc:'—',buyer:preRetailLabel,channel:'retail',grouped:true,count:preRetailCount});
       }
+
+      events.sort((a,b2)=>a.date.localeCompare(b2.date));
 
       // Dogodki
       events.forEach(ev=>{
@@ -5606,14 +5601,14 @@ function genReport(type){
           tekocaZaloga-=ev.qty;
           const inPeriod=ev.date>=od;
           if(ev.grouped){
-            karticaRows.push(`<tr class="izhod">
+            karticaRows.push(`<tr class="izhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
               <td>${ev.date.split('-').reverse().join('.')}</td>
               <td>${ev.buyer}</td>
               <td>—</td>
               <td class="num">—</td>
               <td class="num" style="color:#8b3a2a;font-weight:600">−${ev.qty}</td>
               <td class="num" style="font-weight:600;color:${tekocaZaloga>0?'#1a4a2a':tekocaZaloga===0?'#5a4a3a':'#8b3a2a'}">${tekocaZaloga}</td>
-              <td style="font-size:.72rem;color:#7a6f60">${ev.count} kupcev</td>
+              <td style="font-size:.72rem;color:#7a6f60">${ev.count} kupcev${!inPeriod?' <span style="font-size:.6rem;color:#9a8a7a">(pred obdobjem)</span>':''}</td>
             </tr>`);
           } else {
             karticaRows.push(`<tr class="izhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">

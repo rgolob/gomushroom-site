@@ -271,7 +271,7 @@ function injectStyles(){
   const s=document.createElement('style');
   s.id='gmr-styles';
   s.textContent=`
-.gmr-wrap{max-width:1180px;margin:0 auto;padding:2.5rem 20px 4rem;font-family:inherit}
+.gmr-wrap{max-width:1180px;margin:0 auto;padding:1rem 20px 3rem;font-family:inherit}
 .gmr-h2{font-size:1.45rem;font-weight:700;color:var(--brand,#2b0a39);margin:0 0 1.5rem;letter-spacing:var(--ls-h2,-.022em)}
 .gmr-h3{font-size:1rem;font-weight:600;color:var(--brand,#2b0a39);margin:0 0 .2rem}
 .gmr-sub{font-size:.85rem;color:var(--muted,#6b726d);margin:0}

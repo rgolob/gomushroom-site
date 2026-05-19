@@ -151,17 +151,17 @@ async function loadRatingBadge(slug) {
     const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
     const label = rows.length === 1 ? 'ocena' : rows.length < 5 ? 'ocene' : 'ocen';
 
-    const title = document.querySelector('.product-title');
-    if (!title) return;
+    const anchor = document.querySelector('.variant-picker') || document.querySelector('.product-title');
+    if (!anchor) return;
 
     const badge = document.createElement('a');
     badge.href = '#gm-recenzije';
-    badge.style.cssText = 'display:inline-flex;align-items:center;gap:.4rem;margin:.4rem 0 .6rem;text-decoration:none;color:inherit';
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:.4rem;margin:0 0 .6rem;text-decoration:none;color:inherit';
     badge.innerHTML = `
       <span style="color:#b18556;font-size:.95rem;letter-spacing:.04em">${stars}</span>
       <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${avgStr}</span>
       <span style="font-size:.78rem;color:rgba(43,11,57,.45)">${rows.length} ${label}</span>`;
-    title.insertAdjacentElement('afterend', badge);
+    anchor.insertAdjacentElement('beforebegin', badge);
   } catch(e) {}
 }
 

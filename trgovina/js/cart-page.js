@@ -83,7 +83,7 @@ function renderCart() {
     wrap.innerHTML = `
       <div style="text-align:center;padding:3rem 1rem;color:rgba(43,11,57,.4)">
         <div style="font-size:2.5rem;margin-bottom:.75rem">🛒</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300">Košarica je prazna</div>
+        <div style="font-size:1.4rem;font-weight:300">Košarica je prazna</div>
         <a href="/trgovina/" style="display:inline-block;margin-top:1.25rem;padding:.55rem 1.25rem;background:#2b0b39;color:#f0ebe3;border-radius:999px;text-decoration:none;font-size:.85rem">← Nazaj v trgovino</a>
       </div>`;
     updateSummary(0, 0, 0, 0, []);
@@ -96,7 +96,7 @@ function renderCart() {
         ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;border-radius:10px;display:block">` : '<div style="width:100%;height:100%;background:rgba(43,11,57,.06);border-radius:10px"></div>'}
       </div>
       <div class="gm-cart-item__content">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:#2b0b39;line-height:1.2">${item.name}</div>
+        <div style="font-size:1.1rem;font-weight:400;color:#2b0b39;line-height:1.2">${item.name}</div>
         <div style="font-size:.78rem;color:rgba(43,11,57,.5);margin:.2rem 0 .5rem">${item.variantLabel || ''}</div>
         <div style="font-size:.85rem;color:#2b0b39;font-weight:500">${fmt(item.price)} / kom</div>
       </div>

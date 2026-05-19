@@ -5463,7 +5463,7 @@ function genReport(type){
       const allBatches=batches.filter(b=>b.productId===p.id&&(!b.date||b.date<=doVal)&&(b.alc?.qty||0)>0);
 
       // Prod alokacija skupaj — preskoči produkt brez nje
-      const totalProdAlloc=allBatches.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0),0);
+      const totalProdAlloc=allBatches.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0),0);
       if(!totalProdAlloc)return;
 
       // Serije narejene V mesecu
@@ -5476,7 +5476,7 @@ function genReport(type){
       const salesBefore=saleGroups.filter(g=>isProdChannel(g)&&g.date<=dayBeforeStr);
       let zalogaStart=0;
       batchesBeforePeriod.forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
         const sold=salesBefore.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
@@ -5487,7 +5487,7 @@ function genReport(type){
       // Vhodi — narejeno v obdobju (prod alokacija serij narejenih v mesecu)
       let totalNarejeno=0;
       const vhodiRows=batchesInPeriod.map(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
         if(!alloc)return'';
         totalNarejeno+=alloc;
         grandNarejeno+=alloc;
@@ -5521,7 +5521,7 @@ function genReport(type){
       // Zaloga konec obdobja
       let zalogaEnd=0;
       allBatches.forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
         if(!alloc)return;
         const soldEnd=salesUntilEnd.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
@@ -5542,7 +5542,7 @@ function genReport(type){
 
       // Vse serije tega produkta (vključno pred izbranim obdobjem)
       allBatches.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||0;
+        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
         if(alloc>0)events.push({date:b.date||'0000-01-01',type:'prod',batchNum:b.batchNum,qty:alloc,noDate:!b.date});
       });
 

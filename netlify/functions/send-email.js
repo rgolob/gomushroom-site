@@ -16,7 +16,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, subject, html, from } = JSON.parse(event.body);
+    const { to, subject, html, from, attachments } = JSON.parse(event.body);
 
     if (!to || !subject || !html) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -40,6 +40,7 @@ exports.handler = async (event) => {
         reply_to: 'info@gomushroom.si',
         subject,
         html,
+        ...(attachments && attachments.length ? { attachments } : {}),
       }),
     });
 

@@ -331,6 +331,26 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   .order-actions{display:flex!important}
   #orderActionBar{display:none!important}
 }
+
+/* SIGNATURE MODAL */
+.sign-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem}
+.sign-modal{background:var(--cream);border-radius:var(--r);box-shadow:0 8px 40px rgba(0,0,0,.25);width:100%;max-width:480px;overflow:hidden}
+.sign-modal-header{background:var(--ink);color:var(--cream);padding:.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between}
+.sign-modal-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;letter-spacing:.04em}
+.sign-modal-close{background:none;border:none;color:rgba(245,240,232,.6);font-size:1.1rem;cursor:pointer;padding:.1rem .3rem;line-height:1}
+.sign-modal-body{padding:1rem 1.1rem}
+.sign-doc-info{font-size:.78rem;color:var(--muted);margin-bottom:.75rem;line-height:1.6}
+.sign-canvas-wrap{border:2px solid var(--border);border-radius:var(--rs);background:white;position:relative;overflow:hidden;cursor:crosshair;touch-action:none;margin-bottom:.5rem}
+#signCanvas{display:block;width:100%;height:160px}
+.sign-canvas-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:.75rem;color:rgba(122,111,96,.5);letter-spacing:.04em;transition:opacity .2s}
+.sign-canvas-hint.hidden{opacity:0}
+.sign-canvas-actions{display:flex;gap:.5rem;margin-bottom:1rem}
+.sign-clear-btn{font-family:'Jost',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .75rem;border:1px solid var(--border);border-radius:20px;background:white;color:var(--muted);cursor:pointer}
+.sign-clear-btn:hover{border-color:var(--accent);color:var(--ink)}
+.sign-modal-footer{display:flex;gap:.5rem;padding:.9rem 1.1rem;background:rgba(0,0,0,.03);border-top:1px solid var(--border)}
+.sign-confirm-btn{flex:1;font-family:'Jost',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.65rem 1rem;border:none;border-radius:var(--rs);background:var(--accent);color:var(--ink);cursor:pointer}
+.sign-confirm-btn:disabled{opacity:.5;cursor:not-allowed}
+.sign-cancel-btn{font-family:'Jost',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.65rem 1rem;border:1px solid var(--border);border-radius:var(--rs);background:white;color:var(--muted);cursor:pointer}
 </style>
 </head>
 <body>
@@ -1476,6 +1496,8 @@ function sbGroupToApp(g, lines, lineBatches){
     deliveryNum:g.delivery_num||null,
     total:g.total||0, qty:g.qty||0,
     status:g.status||'active',
+    signatureData:g.signature_data||null,
+    signedAt:g.signed_at?new Date(g.signed_at).toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,
     lines:gLines
   };
 }
@@ -2744,6 +2766,7 @@ function renderDobavnice(){
       </div>
       <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4">
         <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
+        ${g.signedAt?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`:`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`}
       </div>
     </div>`;
   }).join('');
@@ -3933,6 +3956,7 @@ function renderSales(){
           ${!hasInvoice&&!isStorno&&g.channel!=='kom'?`<button class="tbtn" onclick="issueInvoiceForGroup('${g.id}')">🧾 Račun</button>`:''}
           ${g.channel==='kom'&&!isStorno?`<span style="font-size:.62rem;font-weight:600;letter-spacing:.06em;padding:.2rem .5rem;border-radius:10px;background:rgba(139,90,42,.12);color:var(--ch-kom);border:1px solid rgba(139,90,42,.3)">${g.deliveryNum?g.deliveryNum:'🤝 Na komisiji'}</span>`:''}
           ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
+          ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?(g.signedAt?'<span style="font-size:.62rem;color:var(--success);padding:.2rem .45rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podp.</span>':`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`):''}
           ${g.channel==='velo'&&!g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.12);color:#3a6b4a;border-color:rgba(58,107,74,.35)" onclick="ustvariDobavnico('${g.id}')">📦 Dobavnica</button>`:''}
           ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
@@ -4373,7 +4397,7 @@ async function ustvariDobavnico(groupId){
   }
 }
 
-function buildDobavnicaHTML(group){
+function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4521,7 +4545,12 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <div class="sig-grid">
   <div class="sig-box"><div class="sig-line"></div>Blago izdal: GoMushroom</div>
-  <div class="sig-box"><div class="sig-line"></div>Blago prevzel:</div>
+  <div class="sig-box">
+    ${signatureDataURL
+      ? `<img src="${signatureDataURL}" style="height:2.5rem;max-width:100%;display:block;margin-bottom:.3rem">`
+      : `<div class="sig-line"></div>`}
+    Blago prevzel:${signedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${signedAt}</span>` : ''}
+  </div>
 </div>
 
 <div class="footer-section">
@@ -5462,9 +5491,11 @@ function genReport(type){
       // Samo serije narejene DO konca obdobja (ne po!); brez datuma = stare uvožene serije, vključimo
       const allBatches=batches.filter(b=>b.productId===p.id&&(!b.date||b.date<=doVal)&&(b.alc?.qty||0)>0);
 
-      // Prod alokacija skupaj — preskoči produkt brez nje
-      const totalProdAlloc=allBatches.reduce((s,b)=>s+(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0),0);
-      if(!totalProdAlloc)return;
+      // Preskoči produkte brez prodajnih alokacij in brez dejanskih prodaj (npr. samo interni)
+      const allSalesUpToEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
+      const hasSales=allSalesUpToEnd.some(g=>g.lines?.some(l=>l.productId===p.id||l.productName===p.name));
+      const totalProdAlloc=allBatches.reduce((s,b)=>s+(b.alc?.alloc?.prod||0),0);
+      if(!totalProdAlloc&&!hasSales)return;
 
       // Serije narejene V mesecu
       const batchesInPeriod=allBatches.filter(b=>b.date>=od&&b.date<=doVal);
@@ -5476,7 +5507,7 @@ function genReport(type){
       const salesBefore=saleGroups.filter(g=>isProdChannel(g)&&g.date<=dayBeforeStr);
       let zalogaStart=0;
       batchesBeforePeriod.forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
+        const alloc=b.alc?.alloc?.prod||(hasSales?b.alc?.qty:0)||0;
         const sold=salesBefore.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
           return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);
@@ -5487,7 +5518,7 @@ function genReport(type){
       // Vhodi — narejeno v obdobju (prod alokacija serij narejenih v mesecu)
       let totalNarejeno=0;
       const vhodiRows=batchesInPeriod.map(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
+        const alloc=b.alc?.alloc?.prod||(hasSales?b.alc?.qty:0)||0;
         if(!alloc)return'';
         totalNarejeno+=alloc;
         grandNarejeno+=alloc;
@@ -5521,7 +5552,7 @@ function genReport(type){
       // Zaloga konec obdobja
       let zalogaEnd=0;
       allBatches.forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
+        const alloc=b.alc?.alloc?.prod||(hasSales?b.alc?.qty:0)||0;
         if(!alloc)return;
         const soldEnd=salesUntilEnd.reduce((s,g)=>{
           const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;
@@ -5542,7 +5573,7 @@ function genReport(type){
 
       // Vse serije tega produkta (vključno pred izbranim obdobjem)
       allBatches.filter(b=>(b.alc?.qty||0)>0).forEach(b=>{
-        const alloc=b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0)||b.alc?.qty||0;
+        const alloc=b.alc?.alloc?.prod||(hasSales?b.alc?.qty:0)||0;
         if(alloc>0)events.push({date:b.date||'0000-01-01',type:'prod',batchNum:b.batchNum,qty:alloc,noDate:!b.date});
       });
 
@@ -7745,6 +7776,208 @@ function saveEditInvoice(invId){
   const popustInfo=g?.discount>0?` · Popust: ${g.discount.toFixed(1)}% (−${(g.discountAmt||0).toFixed(2)} €)`:'';
   toast(`✓ ${noviZnesek.toFixed(2)} €${popustInfo}`);
 }
+
+// ── ELECTRONIC SIGNATURE ──────────────────────────────────────────
+let _signGroupId=null;
+let _signDrawing=false;
+let _signHasMark=false;
+let _signLastX=0;
+let _signLastY=0;
+
+function showSignModal(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g){toast('❌ Prodaja ni najdena');return;}
+  if(!g.deliveryNum){toast('⚠ Dobavnica nima številke');return;}
+  _signGroupId=groupId;
+  const info=document.getElementById('signDocInfo');
+  if(info)info.innerHTML=`<strong>${g.deliveryNum}</strong> · ${g.buyer||'—'}<br>${g.email?`E-pošta: ${g.email}`:'<span style="color:#b85c2a">⚠ Stranka nima e-naslova — PDF ne bo poslan</span>'}`;
+  document.getElementById('signOverlay').style.display='flex';
+  _initSignCanvas();
+}
+
+function _initSignCanvas(){
+  // Replace canvas node to cleanly remove old event listeners
+  const old=document.getElementById('signCanvas');
+  const nc=old.cloneNode(false);
+  old.parentNode.replaceChild(nc,old);
+
+  const rect=nc.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  const cssW=rect.width||440;
+  const cssH=160;
+  nc.width=Math.round(cssW*dpr);
+  nc.height=Math.round(cssH*dpr);
+  nc.style.width=cssW+'px';
+  nc.style.height=cssH+'px';
+
+  const ctx=nc.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.strokeStyle='#1a1209';
+  ctx.lineWidth=2.5;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+
+  _signDrawing=false;
+  _signHasMark=false;
+  document.getElementById('signCanvasHint').classList.remove('hidden');
+  document.getElementById('signConfirmBtn').disabled=true;
+
+  function getPos(e){
+    const r=nc.getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    return{x:src.clientX-r.left,y:src.clientY-r.top};
+  }
+  function startDraw(e){e.preventDefault();const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);_signDrawing=true;}
+  function draw(e){
+    e.preventDefault();
+    if(!_signDrawing)return;
+    const p=getPos(e);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    if(!_signHasMark){_signHasMark=true;document.getElementById('signCanvasHint').classList.add('hidden');document.getElementById('signConfirmBtn').disabled=false;}
+  }
+  function endDraw(e){e.preventDefault();_signDrawing=false;ctx.beginPath();}
+
+  nc.addEventListener('mousedown',startDraw);
+  nc.addEventListener('mousemove',draw);
+  nc.addEventListener('mouseup',endDraw);
+  nc.addEventListener('mouseleave',endDraw);
+  nc.addEventListener('touchstart',startDraw,{passive:false});
+  nc.addEventListener('touchmove',draw,{passive:false});
+  nc.addEventListener('touchend',endDraw,{passive:false});
+}
+
+function clearSignCanvas(){
+  const canvas=document.getElementById('signCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  _signHasMark=false;
+  document.getElementById('signCanvasHint').classList.remove('hidden');
+  document.getElementById('signConfirmBtn').disabled=true;
+}
+
+function cancelSign(){
+  document.getElementById('signOverlay').style.display='none';
+  _signGroupId=null;
+}
+
+async function confirmSign(){
+  if(!_signGroupId)return;
+  const g=saleGroups.find(x=>x.id===_signGroupId);
+  if(!g)return;
+  const canvas=document.getElementById('signCanvas');
+  if(!_signHasMark){toast('⚠ Prosim, podpišite');return;}
+
+  const btn=document.getElementById('signConfirmBtn');
+  btn.disabled=true;
+  btn.textContent='Obdelava…';
+
+  try{
+    const signatureDataURL=canvas.toDataURL('image/png');
+    const now=new Date();
+    const signedAt=now.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    // Save to Supabase
+    await sbUpdate('gm_sale_groups',{id:g.id},{signature_data:signatureDataURL,signed_at:now.toISOString()});
+    g.signatureData=signatureDataURL;
+    g.signedAt=signedAt;
+
+    cancelSign();
+    renderSales();
+    renderDobavnice();
+    toast('✓ Podpis shranjen');
+
+    // Generate PDF & send email
+    if(g.email){
+      btn.textContent='Pošiljanje…';
+      await sendDobavnicaByEmail(g,signatureDataURL,signedAt);
+    }
+  }catch(e){
+    toast('❌ Napaka: '+e.message);
+    btn.disabled=false;
+    btn.textContent='Potrdi in pošlji PDF →';
+  }
+}
+
+async function _loadHtml2pdf(){
+  if(window.html2pdf)return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('html2pdf.js ni mogoče naložiti'));
+    document.head.appendChild(s);
+  });
+}
+
+async function _generatePDFBase64(htmlContent){
+  await _loadHtml2pdf();
+  return new Promise((resolve,reject)=>{
+    const opt={
+      margin:[10,10,10,10],
+      filename:'dobavnica.pdf',
+      image:{type:'jpeg',quality:0.95},
+      html2canvas:{scale:2,useCORS:true,logging:false,allowTaint:true},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    };
+    html2pdf().set(opt).from(htmlContent,'string').output('blob').then(blob=>{
+      const reader=new FileReader();
+      reader.onloadend=()=>resolve(reader.result.split(',')[1]);
+      reader.onerror=reject;
+      reader.readAsDataURL(blob);
+    }).catch(reject);
+  });
+}
+
+async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
+  try{
+    toast('📄 Generiram PDF…');
+    const htmlContent=buildDobavnicaHTML(group,signatureDataURL,signedAt);
+    const pdfBase64=await _generatePDFBase64(htmlContent);
+    const filename=(group.deliveryNum||'dobavnica')+'.pdf';
+    const res=await fetch('/.netlify/functions/send-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        to:group.email,
+        subject:`Dobavnica ${group.deliveryNum||''} – GoMushroom`,
+        html:`<p>Pozdravljeni,</p><p>v prilogi vam pošiljamo dobavnico <strong>${group.deliveryNum||''}</strong>.</p><p>Lep pozdrav,<br>GoMushroom</p>`,
+        attachments:[{filename,content:pdfBase64}]
+      })
+    });
+    if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||res.status);}
+    toast(`✉ Dobavnica poslana: ${group.email}`);
+    await sbUpdate('gm_sale_groups',{id:group.id},{dobavnica_sent:true}).catch(()=>{});
+  }catch(e){
+    toast('❌ E-pošta ni bila poslana: '+e.message);
+  }
+}
 </script>
+
+<!-- SIGNATURE MODAL -->
+<div id="signOverlay" class="sign-overlay" style="display:none" onclick="if(event.target===this)cancelSign()">
+  <div class="sign-modal">
+    <div class="sign-modal-header">
+      <span class="sign-modal-title">✍ Podpis dobavnice</span>
+      <button class="sign-modal-close" onclick="cancelSign()">✕</button>
+    </div>
+    <div class="sign-modal-body">
+      <div class="sign-doc-info" id="signDocInfo"></div>
+      <div class="sign-canvas-wrap">
+        <canvas id="signCanvas"></canvas>
+        <div class="sign-canvas-hint" id="signCanvasHint">Podpišite tukaj</div>
+      </div>
+      <div class="sign-canvas-actions">
+        <button class="sign-clear-btn" onclick="clearSignCanvas()">↺ Počisti</button>
+      </div>
+    </div>
+    <div class="sign-modal-footer">
+      <button class="sign-cancel-btn" onclick="cancelSign()">Prekliči</button>
+      <button class="sign-confirm-btn" id="signConfirmBtn" onclick="confirmSign()" disabled>Potrdi in pošlji PDF →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

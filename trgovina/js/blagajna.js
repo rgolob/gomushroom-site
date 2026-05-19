@@ -653,6 +653,73 @@ function renderSummary() {
   window._orderCalc = { bruto, pct, popustZnesek, zneskPoPopustu, postnina, skupaj, kolicina, koda };
 }
 
+// ── Validacija zaloge ─────────────────────────────────────
+async function validateStock() {
+  let cart = [];
+  try { cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]'); } catch(e) {}
+  if (!cart.length) return { ok: true };
+
+  const skus = [...new Set(cart.map(i => i.sku).filter(Boolean))];
+  if (!skus.length) return { ok: true };
+
+  try {
+    const varRes = await fetch(
+      `${SB_URL}/rest/v1/gm_product_variants?sku=in.(${skus.join(',')})&select=id,sku`,
+      { headers: SB_HEADERS }
+    );
+    if (!varRes.ok) return { ok: true };
+    const variants = await varRes.json();
+    const ids = variants.map(v => v.id);
+    if (!ids.length) return { ok: true };
+
+    const stockRes = await fetch(
+      `${SB_URL}/rest/v1/gm_variant_stock_status?variant_id=in.(${ids.join(',')})&select=variant_id,qty_available`,
+      { headers: SB_HEADERS }
+    );
+    if (!stockRes.ok) return { ok: true };
+    const stockData = await stockRes.json();
+
+    const qtyBySku = {};
+    variants.forEach(v => {
+      const s = stockData.find(s => s.variant_id === v.id);
+      if (s != null) qtyBySku[v.sku] = s.qty_available ?? Infinity;
+    });
+
+    const adjustments = [];
+    const newCart = cart.map(item => {
+      const avail = qtyBySku[item.sku];
+      if (avail == null || item.quantity <= avail) return item;
+      adjustments.push({ name: item.name, variantLabel: item.variantLabel, requested: item.quantity, available: avail });
+      return avail > 0 ? { ...item, quantity: avail } : null;
+    }).filter(Boolean);
+
+    if (!adjustments.length) return { ok: true };
+
+    localStorage.setItem('gomushroom_cart', JSON.stringify(newCart));
+    try { saveCart && saveCart(newCart); } catch(e) {}
+    return { ok: false, adjustments };
+  } catch(e) {
+    return { ok: true };
+  }
+}
+
+function showStockWarning(adjustments) {
+  let warn = document.getElementById('stock-warning');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.id = 'stock-warning';
+    warn.style.cssText = 'background:#fdf8f3;border:1px solid rgba(175,132,85,.3);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.82rem;color:#2b0b39;line-height:1.5';
+    const card = document.querySelector('.checkout-col-summary .checkout-card');
+    if (card) card.insertBefore(warn, card.firstChild);
+  }
+  const rows = adjustments.map(a =>
+    a.available === 0
+      ? `<li>${a.name} (${a.variantLabel || ''}) — <strong>odstranjen</strong>, ni na zalogi</li>`
+      : `<li>${a.name} (${a.variantLabel || ''}) — količina prilagojena na <strong>${a.available} kos</strong></li>`
+  ).join('');
+  warn.innerHTML = `<strong style="display:block;margin-bottom:.35rem">Zaloga se je spremenila</strong><ul style="margin:.25rem 0 0 1.1rem;padding:0">${rows}</ul><p style="margin:.5rem 0 0;color:rgba(43,11,57,.5);font-size:.78rem">Preverite povzetek in nadaljujte.</p>`;
+}
+
 // ── Validacija ────────────────────────────────────────────
 function validate() {
   const fields = ['c-name', 'c-email', 'c-street', 'c-post', 'c-city'];
@@ -774,6 +841,12 @@ async function payWithCard() {
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
+  const stockCheck = await validateStock();
+  if (!stockCheck.ok) {
+    showStockWarning(stockCheck.adjustments);
+    renderSummary();
+    return;
+  }
   const btn = document.getElementById('card-pay-btn');
   const errEl = document.getElementById('card-error');
   errEl.style.display = 'none';
@@ -793,13 +866,30 @@ async function payWithCard() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
+    // Shrani formo za primer preusmeritve (Revolut Pay)
+    sessionStorage.setItem('gm_redirect_form', JSON.stringify({
+      name:   document.getElementById('c-name').value.trim(),
+      email:  document.getElementById('c-email').value.trim(),
+      phone:  document.getElementById('c-phone').value.trim(),
+      street: document.getElementById('c-street').value.trim(),
+      post:   document.getElementById('c-post').value.trim(),
+      city:   document.getElementById('c-city').value.trim(),
+      note:   document.getElementById('c-note').value.trim(),
+      calc,
+      clientSecret: data.clientSecret,
+    }));
+
     const { error, paymentIntent } = await stripeInstance.confirmPayment({
       elements: stripeElements,
       clientSecret: data.clientSecret,
+      confirmParams: { return_url: window.location.href.split('?')[0] },
       redirect: 'if_required',
     });
     if (error) throw new Error(error.message);
-    if (paymentIntent?.status === 'succeeded') await saveStripeOrder(paymentIntent.id);
+    if (paymentIntent?.status === 'succeeded') {
+      sessionStorage.removeItem('gm_redirect_form');
+      await saveStripeOrder(paymentIntent.id);
+    }
   } catch(e) {
     showCardError(e.message || 'Plačilo ni uspelo.');
     btn.disabled = false;
@@ -922,6 +1012,12 @@ function showStripeSuccess(order) {
 async function placeOrder() {
   if (!validate()) {
     document.querySelector('.checkout-field input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const stockCheck = await validateStock();
+  if (!stockCheck.ok) {
+    showStockWarning(stockCheck.adjustments);
+    renderSummary();
     return;
   }
   if (typeof gmAddPaymentInfo === 'function' && window._orderCalc) {
@@ -1109,6 +1205,35 @@ function showSuccess(order, rf, calc) {
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
+
+  // Obravnava Stripe redirect (npr. Revolut Pay)
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectStatus = urlParams.get('redirect_status');
+  const paymentIntentId = urlParams.get('payment_intent');
+  if (paymentIntentId && redirectStatus) {
+    const saved = JSON.parse(sessionStorage.getItem('gm_redirect_form') || 'null');
+    if (saved) {
+      document.getElementById('c-name').value   = saved.name;
+      document.getElementById('c-email').value  = saved.email;
+      document.getElementById('c-phone').value  = saved.phone;
+      document.getElementById('c-street').value = saved.street;
+      document.getElementById('c-post').value   = saved.post;
+      document.getElementById('c-city').value   = saved.city;
+      document.getElementById('c-note').value   = saved.note;
+      window._orderCalc = saved.calc;
+      sessionStorage.removeItem('gm_redirect_form');
+    }
+    if (redirectStatus === 'succeeded') {
+      await saveStripeOrder(paymentIntentId);
+    } else {
+      renderSummary();
+      const errEl = document.getElementById('card-error');
+      if (errEl) { errEl.textContent = 'Plačilo ni uspelo. Prosimo poskusite znova.'; errEl.style.display = 'block'; }
+    }
+    history.replaceState(null, '', window.location.pathname);
+    return;
+  }
+
   renderSummary();
   // GA4 - begin_checkout (prihod na blagajno)
   if (typeof gmInitCheckoutPage === 'function') gmInitCheckoutPage();

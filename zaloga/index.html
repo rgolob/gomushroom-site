@@ -4398,6 +4398,8 @@ async function ustvariDobavnico(groupId){
 }
 
 function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
+  const sigImg=signatureDataURL||group.signatureData||null;
+  const sigAt=signedAt||group.signedAt||null;
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4544,12 +4546,15 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 </div>
 
 <div class="sig-grid">
-  <div class="sig-box"><div class="sig-line"></div>Blago izdal: GoMushroom</div>
   <div class="sig-box">
-    ${signatureDataURL
-      ? `<img src="${signatureDataURL}" style="height:2.5rem;max-width:100%;display:block;margin-bottom:.3rem">`
+    <div class="sig-line"></div>
+    Blago izdal: GoMushroom${sigAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${sigAt}</span>` : ''}
+  </div>
+  <div class="sig-box">
+    ${sigImg
+      ? `<img src="${sigImg}" style="height:2.5rem;max-width:100%;display:block;margin-bottom:.3rem">`
       : `<div class="sig-line"></div>`}
-    Blago prevzel:${signedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${signedAt}</span>` : ''}
+    Blago prevzel:
   </div>
 </div>
 
@@ -7887,8 +7892,8 @@ async function confirmSign(){
     renderSales();
     renderDobavnice();
     toast('✓ Podpis shranjen');
+    printDobavnica(g);
 
-    // Pošlji PDF po emailu
     if(g.email){
       await sendDobavnicaByEmail(g,signatureDataURL,signedAt);
     }
@@ -7958,11 +7963,12 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
 <div id="signOverlay" class="sign-overlay" style="display:none" onclick="if(event.target===this)cancelSign()">
   <div class="sign-modal">
     <div class="sign-modal-header">
-      <span class="sign-modal-title">✍ Podpis dobavnice</span>
+      <span class="sign-modal-title">✍ Podpis stranke</span>
       <button class="sign-modal-close" onclick="cancelSign()">✕</button>
     </div>
     <div class="sign-modal-body">
       <div class="sign-doc-info" id="signDocInfo"></div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem">Stranka podpiše spodaj:</div>
       <div class="sign-canvas-wrap">
         <canvas id="signCanvas"></canvas>
         <div class="sign-canvas-hint" id="signCanvasHint">Podpišite tukaj</div>

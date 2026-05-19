@@ -5588,6 +5588,7 @@ function genReport(type){
         if(ev.type==='prod'){
           tekocaZaloga+=ev.qty;
           const inPeriod=ev.date>=od;
+          const hlEtanol=(ev.qty*0.050*0.30/100).toFixed(4);
           karticaRows.push(`<tr class="vhod${!inPeriod?' pred':''}" style="${!inPeriod?'opacity:.65':''}">
             <td>${ev.noDate?'—':ev.date.split('-').reverse().join('.')}</td>
             <td>Proizvodnja</td>
@@ -5595,7 +5596,7 @@ function genReport(type){
             <td class="num" style="color:#1a4a2a;font-weight:600">+${ev.qty}</td>
             <td class="num">—</td>
             <td class="num" style="font-weight:600">${tekocaZaloga}</td>
-            <td style="font-size:.65rem;color:#9a8a7a">${ev.noDate?'uvoz':!inPeriod?'pred mesecem':''}</td>
+            <td style="font-size:.65rem;color:#9a8a7a">${ev.noDate?'uvoz':!inPeriod?'pred mesecem':''}<br><span style="color:#5a7a6a">${hlEtanol} hl EtOH</span></td>
           </tr>`);
         } else {
           tekocaZaloga-=ev.qty;
@@ -5725,6 +5726,7 @@ ${type==='trosarine'?`
     <div style="font-size:.8rem;font-weight:500">Poročilo trošarin</div>
     <div>Alkoholne tinkture medicinskih gob</div>
     <div style="margin-top:.2rem">Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    <div style="margin-top:.3rem;font-size:.65rem;color:#9a8a7a;letter-spacing:.03em">OBR-0008/01 · SOP-0004/01</div>
   </div>
 </div>
 <div class="doc-title">Evidenca proizvodnje in prometa — alkoholne tinkture</div>

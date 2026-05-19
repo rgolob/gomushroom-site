@@ -4391,6 +4391,7 @@ async function ustvariDobavnico(groupId){
 }
 
 function buildDobavnicaHTML(group, signedAt=null){
+  const handedAt=signedAt||group.signedAt||null;
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4539,7 +4540,7 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 <div class="sig-grid">
   <div class="sig-box">
     <div class="sig-line"></div>
-    Blago izdal: GoMushroom${signedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${signedAt}</span>` : ''}
+    Blago izdal: GoMushroom${handedAt ? `<br><span style="font-size:.65rem;color:#7a6f60">${handedAt}</span>` : ''}
   </div>
   <div class="sig-box"><div class="sig-line"></div>Blago prevzel:</div>
 </div>
@@ -7805,6 +7806,7 @@ async function confirmSign(){
     renderSales();
     renderDobavnice();
     toast('✓ Predaja zabeležena');
+    printDobavnica(g);
 
     if(g.email){
       await sendDobavnicaByEmail(g,signedAt);

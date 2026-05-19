@@ -7888,12 +7888,67 @@ async function confirmSign(){
     renderDobavnice();
     toast('✓ Podpis shranjen');
 
-    // Odpri podpisano dobavnico v novem tabu (tiskanje / shranjevanje PDF)
-    printDobavnica(g);
+    // Pošlji PDF po emailu
+    if(g.email){
+      await sendDobavnicaByEmail(g,signatureDataURL,signedAt);
+    }
   }catch(e){
     toast('❌ Napaka: '+e.message);
     btn.disabled=false;
-    btn.textContent='Potrdi in odpri →';
+    btn.textContent='Potrdi in pošlji PDF →';
+  }
+}
+
+async function _loadHtml2pdf(){
+  if(window.html2pdf)return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload=resolve;
+    s.onerror=()=>reject(new Error('html2pdf.js ni mogoče naložiti'));
+    document.head.appendChild(s);
+  });
+}
+
+async function _generatePDFBase64(htmlContent){
+  await _loadHtml2pdf();
+  return new Promise((resolve,reject)=>{
+    const opt={
+      margin:[10,10,10,10],
+      filename:'dobavnica.pdf',
+      image:{type:'jpeg',quality:0.95},
+      html2canvas:{scale:2,useCORS:true,logging:false,allowTaint:true},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    };
+    html2pdf().set(opt).from(htmlContent,'string').output('blob').then(blob=>{
+      const reader=new FileReader();
+      reader.onloadend=()=>resolve(reader.result.split(',')[1]);
+      reader.onerror=reject;
+      reader.readAsDataURL(blob);
+    }).catch(reject);
+  });
+}
+
+async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
+  try{
+    toast('📄 Generiram PDF…');
+    const htmlContent=buildDobavnicaHTML(group,signatureDataURL,signedAt);
+    const pdfBase64=await _generatePDFBase64(htmlContent);
+    const filename=(group.deliveryNum||'dobavnica')+'.pdf';
+    const res=await fetch('/.netlify/functions/send-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        to:group.email,
+        subject:`Dobavnica ${group.deliveryNum||''} – GoMushroom`,
+        html:`<p>Pozdravljeni,</p><p>v prilogi vam pošiljamo dobavnico <strong>${group.deliveryNum||''}</strong>.</p><p>Lep pozdrav,<br>GoMushroom</p>`,
+        attachments:[{filename,content:pdfBase64}]
+      })
+    });
+    if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||res.status);}
+    toast(`✉ Dobavnica poslana: ${group.email}`);
+  }catch(e){
+    toast('❌ E-pošta ni bila poslana: '+e.message);
   }
 }
 
@@ -7918,7 +7973,7 @@ async function confirmSign(){
     </div>
     <div class="sign-modal-footer">
       <button class="sign-cancel-btn" onclick="cancelSign()">Prekliči</button>
-      <button class="sign-confirm-btn" id="signConfirmBtn" onclick="confirmSign()" disabled>Potrdi in odpri →</button>
+      <button class="sign-confirm-btn" id="signConfirmBtn" onclick="confirmSign()" disabled>Potrdi in pošlji PDF →</button>
     </div>
   </div>
 </div>

@@ -4550,7 +4550,6 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 <div class="sig-grid">
   <div class="sig-box">
     <div class="sig-label">Predal</div>
-    <div class="sig-line"></div>
     <div class="sig-name">GoMushroom, Rok Golob</div>
     ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
   </div>
@@ -4560,6 +4559,7 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
       ? `<img src="${sigImg}" style="height:3rem;max-width:100%;display:block;margin-bottom:.4rem">`
       : `<div class="sig-line"></div>`}
     <div class="sig-name">${group.buyer||''}</div>
+    ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
   </div>
 </div>
 

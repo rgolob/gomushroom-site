@@ -4568,16 +4568,11 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
 </div>
 
-<div class="actions" id="docActions"></div>
-<script>
-(function(){
-  var d=document.getElementById('docActions');
-  if(!d)return;
-  d.innerHTML='<button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>'
-    +'<button class="btn btn-pdf" onclick="document.title=\\'${dobNum||'Dobavnica'}\\';window.print()">📄 Shrani PDF</button>'
-    +'<button class="btn btn-close" onclick="window.close()">✕ Zapri</button>';
-})();
-</script>
+<div class="actions">
+  <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
+  <button class="btn btn-pdf" onclick="document.title='${dobNum||'Dobavnica'}';window.print()">📄 Shrani PDF</button>
+  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
+</div>
 </body></html>`;
 }
 

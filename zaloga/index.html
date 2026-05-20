@@ -4586,9 +4586,16 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
-  <button class="btn btn-pdf" onclick="document.title='${dobNum||'Dobavnica'}';window.print()">📄 Shrani PDF</button>
+  <button class="btn btn-pdf" onclick="saveDobPDF()">📄 Shrani PDF</button>
   <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<script>
+function saveDobPDF(){
+  document.querySelector('.actions').style.display='none';
+  html2pdf().set({filename:'${dobNum||'dobavnica'}.pdf',margin:0,jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:2,useCORS:true}}).from(document.body).save().then(()=>{document.querySelector('.actions').style.display='';});
+}
+<\/script>
 </body></html>`;
 }
 
@@ -5775,8 +5782,9 @@ tr.subtotal{background:#f5f0e8;font-weight:600;border-top:2px solid #ede6d6}
 .sign-label{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
 .sign-name{font-size:.82rem}
 .sign-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
-.printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
-@media print{.printbtn{display:none}body{padding:.5rem 1rem}page{size:A4;margin:1.5cm}}
+.btnrow{display:flex;gap:.75rem;justify-content:center;margin-top:1.5rem}
+.printbtn{padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
+@media print{.btnrow{display:none}body{padding:.5rem 1rem}page{size:A4;margin:1.5cm}}
 </style>`:reportCSS()}
 </head><body>
 ${type==='trosarine'?`
@@ -5804,7 +5812,19 @@ ${type==='trosarine'?`
   Enota merjenja: 1 kos = 50 ml tinkture pri 30 vol% alkohola (etanol).
 </div>
 ${_signSection}
-<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+<div class="btnrow">
+  <button class="printbtn" onclick="window.print()">🖨 Natisni</button>
+  <button class="printbtn" onclick="saveTrosarinePDF()">📄 Shrani PDF</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<script>
+function saveTrosarinePDF(){
+  var btns=document.querySelector('.btnrow');
+  if(btns)btns.style.display='none';
+  var fn='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';
+  html2pdf().set({filename:fn,margin:0,jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:2,useCORS:true}}).from(document.body).save().then(function(){if(btns)btns.style.display='';});
+}
+<\/script>
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
@@ -5827,7 +5847,7 @@ ${_signSection}
       <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
       <div style="display:flex;gap:.5rem">
         <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
-        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Shrani PDF</button>`:''}
+        ${type==='trosarine'?`<button onclick="openTrosarineWindow()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Shrani PDF</button>`:''}
         <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
       </div>
     </div>
@@ -7863,6 +7883,15 @@ function saveEditInvoice(invId){
 
   const popustInfo=g?.discount>0?` · Popust: ${g.discount.toFixed(1)}% (−${(g.discountAmt||0).toFixed(2)} €)`:'';
   toast(`✓ ${noviZnesek.toFixed(2)} €${popustInfo}`);
+}
+
+function openTrosarineWindow(){
+  if(!_currentReportHTML)return;
+  const blob=new Blob([_currentReportHTML],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 // ── ELECTRONIC SIGNATURE ──────────────────────────────────────────

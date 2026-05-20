@@ -4412,6 +4412,7 @@ async function ustvariDobavnico(groupId){
 function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
   const sigImg=signatureDataURL||group.signatureData||null;
   const sigAt=signedAt||group.signedAt||null;
+  const gmSig=getZS('podpisSlika')||null;
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4498,9 +4499,10 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .btn-print{background:#af8455;color:#1a1209}
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
-.actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+.actions{display:none;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+@media screen{.actions{display:flex}}
 @page{margin:0}
-@media print{.actions{display:none!important}body{padding:3rem 2.5rem 7cm}}
+@media print{body{padding:3rem 2.5rem 7cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -4565,6 +4567,7 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
       <div class="sig-label">Predal</div>
       <div class="sig-name">GoMushroom, Rok Golob</div>
       ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
+      ${gmSig ? `<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">` : ''}
     </div>
     <div class="sig-box">
       <div class="sig-label">Prejel</div>

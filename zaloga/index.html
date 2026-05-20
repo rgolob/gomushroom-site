@@ -5735,7 +5735,7 @@ function showReport(type,html){
 
   const _gmSig=getZS('podpisSlika')||null;
   const _gmTs=_gmSig?new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null;
-  const _signSection=`<div class="sign-section"><div class="sign-box">Odgovorna oseba: Rok Golob${_gmTs?`<br><span style="font-size:.65rem;color:#7a6f60">${_gmTs}</span>`:''}${_gmSig?`<br><img src="${_gmSig}" style="height:2rem;display:block;margin-top:.25rem">`:''}</div><div class="sign-box sign-datum">Datum in podpis:<br><br></div></div>`;
+  const _signSection=`<div class="sign-section"><div class="sign-box"><div class="sign-label">Odgovorna oseba</div><div class="sign-name">GoMushroom, Rok Golob</div>${_gmTs?`<div class="sign-ts">${_gmTs}</div>`:''}${_gmSig?`<img src="${_gmSig}" style="height:2rem;display:block;margin-top:.3rem">`:''}</div></div>`;
 
   const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titles[type]}</title>
@@ -5769,8 +5769,11 @@ tr.vhod{background:#f0f6f2}
 tr.izhod td{background:white}
 tr.prenosna{background:#f9f6f0;font-style:italic;color:#7a6f60}
 tr.subtotal{background:#f5f0e8;font-weight:600;border-top:2px solid #ede6d6}
-.sign-section{margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem}
-.sign-box{border-top:1px solid #1a1209;padding-top:.4rem;font-size:.68rem;color:#7a6f60}
+.sign-section{margin-top:2rem}
+.sign-box{font-size:.75rem;color:#1a1209}
+.sign-label{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.sign-name{font-size:.82rem}
+.sign-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
 .printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
 @media print{.printbtn{display:none}body{padding:.5rem 1rem}page{size:A4;margin:1.5cm}}
 </style>`:reportCSS()}

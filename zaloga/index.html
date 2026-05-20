@@ -1498,6 +1498,7 @@ function sbGroupToApp(g, lines, lineBatches){
     status:g.status||'active',
     signatureData:g.signature_data||null,
     signedAt:g.signed_at?new Date(g.signed_at).toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,
+    dobavnicaSentAt:g.dobavnica_sent_at?new Date(g.dobavnica_sent_at).toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,
     lines:gLines
   };
 }
@@ -2764,9 +2765,20 @@ function renderDobavnice(){
         </div>
         <div style="font-size:.85rem;font-weight:500">${(g.total||0).toFixed(2)} €</div>
       </div>
-      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4">
+      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4;flex-wrap:wrap;align-items:center">
         <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
-        ${g.signedAt?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`:`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`}
+        ${g.signedAt
+          ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
+          :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
+        }
+        ${g.signedAt&&g.email
+          ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova pošlji':'Pošlji'}</button>`
+          :''
+        }
+        ${g.dobavnicaSentAt
+          ?`<span style="font-size:.62rem;color:#3a6b4a;margin-left:auto;white-space:nowrap">📧 ${g.dobavnicaSentAt}</span>`
+          :''
+        }
       </div>
     </div>`;
   }).join('');
@@ -6728,6 +6740,22 @@ function openZalogaSettings(){
             🔧 <span>Obnovi manjkajoče vrstice (iz serij)</span>
           </button>
         </div>
+
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Moj podpis</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.75rem .85rem;margin-bottom:1.25rem">
+          <div style="min-height:2.5rem;margin-bottom:.6rem;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:6px;padding:.4rem">
+            <img id="zsPodpisImg" style="max-height:3rem;max-width:100%;display:none">
+            <span id="zsPodpisEmpty" style="font-size:.75rem;color:var(--muted)">Ni shranjenega podpisa</span>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <label style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-sizing:border-box">
+              📁 <span>Naloži sliko podpisa</span>
+              <input type="file" accept="image/*" style="display:none" onchange="zsNaloziPodpis(event)">
+            </label>
+            <button id="zsPodpisBrisi" onclick="zsIzbrisiPodpis()" style="padding:.5rem .75rem;border:1px solid rgba(139,58,42,.3);border-radius:8px;background:rgba(139,58,42,.06);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer;color:#8b3a2a;display:none">🗑 Odstrani</button>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.5rem">Slika se uporabi pri podpisu PDF poročil namesto risanja na platno.</div>
+        </div>
       </div>
 
       <!-- TAB 2: SPLETNA STRAN -->
@@ -6883,6 +6911,16 @@ function openZalogaSettings(){
       </div>
     </div>`;
   document.body.appendChild(el);
+  // Show stored signature preview
+  const _storedURL=getZS('podpisURL')||getZS('podpisSlika');
+  if(_storedURL){
+    const _img=document.getElementById('zsPodpisImg');
+    const _empty=document.getElementById('zsPodpisEmpty');
+    const _btn=document.getElementById('zsPodpisBrisi');
+    if(_img){_img.src=_storedURL;_img.style.display='';}
+    if(_empty)_empty.style.display='none';
+    if(_btn)_btn.style.display='';
+  }
 }
 
 function zsSwitch(tab){
@@ -7122,6 +7160,41 @@ function saveZalogaSettings(){
   });
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
+}
+
+async function zsNaloziPodpis(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  toast('⏳ Nalagam podpis…');
+  try{
+    const r=await fetch(`${SB_URL}/storage/v1/object/podpisi/podpis.png`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type,'x-upsert':'true'},
+      body:file,
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||r.status);}
+    const publicURL=`${SB_URL}/storage/v1/object/public/podpisi/podpis.png?t=${Date.now()}`;
+    saveZS({podpisURL:publicURL,podpisSlika:null});
+    const img=document.getElementById('zsPodpisImg');
+    const empty=document.getElementById('zsPodpisEmpty');
+    const btn=document.getElementById('zsPodpisBrisi');
+    if(img){img.src=publicURL;img.style.display='';}
+    if(empty)empty.style.display='none';
+    if(btn)btn.style.display='';
+    toast('✓ Podpis shranjen');
+  }catch(e){toast('❌ Napaka: '+e.message);}
+}
+
+function zsIzbrisiPodpis(){
+  saveZS({podpisURL:null,podpisSlika:null});
+  fetch(`${SB_URL}/storage/v1/object/podpisi/podpis.png`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+  const img=document.getElementById('zsPodpisImg');
+  const empty=document.getElementById('zsPodpisEmpty');
+  const btn=document.getElementById('zsPodpisBrisi');
+  if(img){img.src='';img.style.display='none';}
+  if(empty)empty.style.display='';
+  if(btn)btn.style.display='none';
+  toast('✓ Podpis odstranjen');
 }
 
 function simulirajCeno(){
@@ -7798,7 +7871,23 @@ let _signHasMark=false;
 let _signLastX=0;
 let _signLastY=0;
 
-function signReportPDF(){
+async function signReportPDF(){
+  const url=getZS('podpisURL');
+  const base64=getZS('podpisSlika');
+  if(url||base64){
+    const ts=new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    let sigDataURL=base64;
+    if(url){
+      try{
+        const r=await fetch(url);
+        if(!r.ok)throw new Error(r.status);
+        const blob=await r.blob();
+        sigDataURL=await new Promise(res=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(blob);});
+      }catch(e){toast('❌ Napaka pri nalaganju podpisa: '+e.message);return;}
+    }
+    _downloadReportPDF(_currentReportHTML,sigDataURL,ts);
+    return;
+  }
   _signMode='report';
   _signGroupId=null;
   const info=document.getElementById('signDocInfo');
@@ -7998,10 +8087,22 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
       })
     });
     if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||res.status);}
+    const sentNow=new Date();
+    const sentAt=sentNow.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    sbUpdate('gm_sale_groups',{id:group.id},{dobavnica_sent_at:sentNow.toISOString()}).catch(()=>{});
+    group.dobavnicaSentAt=sentAt;
+    renderDobavnice();
     toast(`✉ Dobavnica poslana: ${group.email}`);
   }catch(e){
     toast('❌ E-pošta ni bila poslana: '+e.message);
   }
+}
+
+async function sendDobavnicaManual(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  if(!g.email){toast('⚠ Stranka nima e-naslova');return;}
+  await sendDobavnicaByEmail(g);
 }
 
 </script>

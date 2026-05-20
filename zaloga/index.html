@@ -4488,7 +4488,7 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
 .actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 @page{margin:0}
-@media print{.actions{display:none}body{padding:3rem 2.5rem 5cm}}
+@media print{.actions{display:none!important}body{padding:3rem 2.5rem 5cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -4568,11 +4568,16 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
 </div>
 
-<div class="actions">
-  <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
-  <button class="btn btn-pdf" onclick="document.title='${dobNum||'Dobavnica'}';window.print()">📄 Shrani PDF</button>
-  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
-</div>
+<div class="actions" id="docActions"></div>
+<script>
+(function(){
+  var d=document.getElementById('docActions');
+  if(!d)return;
+  d.innerHTML='<button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>'
+    +'<button class="btn btn-pdf" onclick="document.title=\\'${dobNum||'Dobavnica'}\\';window.print()">📄 Shrani PDF</button>'
+    +'<button class="btn btn-close" onclick="window.close()">✕ Zapri</button>';
+})();
+</script>
 </body></html>`;
 }
 

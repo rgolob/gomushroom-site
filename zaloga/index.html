@@ -1498,6 +1498,7 @@ function sbGroupToApp(g, lines, lineBatches){
     status:g.status||'active',
     signatureData:g.signature_data||null,
     signedAt:g.signed_at?new Date(g.signed_at).toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,
+    dobavnicaSentAt:g.dobavnica_sent_at?new Date(g.dobavnica_sent_at).toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,
     lines:gLines
   };
 }
@@ -2764,9 +2765,20 @@ function renderDobavnice(){
         </div>
         <div style="font-size:.85rem;font-weight:500">${(g.total||0).toFixed(2)} €</div>
       </div>
-      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4">
+      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4;flex-wrap:wrap;align-items:center">
         <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
-        ${g.signedAt?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`:`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`}
+        ${g.signedAt
+          ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
+          :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
+        }
+        ${g.signedAt&&g.email
+          ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova pošlji':'Pošlji'}</button>`
+          :''
+        }
+        ${g.dobavnicaSentAt
+          ?`<span style="font-size:.62rem;color:#3a6b4a;margin-left:auto;white-space:nowrap">📧 ${g.dobavnicaSentAt}</span>`
+          :''
+        }
       </div>
     </div>`;
   }).join('');
@@ -8075,10 +8087,22 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
       })
     });
     if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||res.status);}
+    const sentNow=new Date();
+    const sentAt=sentNow.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    sbUpdate('gm_sale_groups',{id:group.id},{dobavnica_sent_at:sentNow.toISOString()}).catch(()=>{});
+    group.dobavnicaSentAt=sentAt;
+    renderDobavnice();
     toast(`✉ Dobavnica poslana: ${group.email}`);
   }catch(e){
     toast('❌ E-pošta ni bila poslana: '+e.message);
   }
+}
+
+async function sendDobavnicaManual(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  if(!g.email){toast('⚠ Stranka nima e-naslova');return;}
+  await sendDobavnicaByEmail(g);
 }
 
 </script>

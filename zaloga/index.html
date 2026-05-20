@@ -4492,7 +4492,8 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .sig-line{border-bottom:1px solid #1a1209;height:3rem;margin-bottom:.4rem}
 .sig-name{font-size:.75rem;color:#1a1209}
 .sig-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
-.page-footer{position:fixed;bottom:0;left:0;right:0;padding:.75rem 2.5rem 1rem;background:white;border-top:1px solid #ccc}
+.page-footer{position:fixed;bottom:0;left:0;right:0;padding:.75rem 2cm 1rem;background:white;border-top:1px solid #ccc}
+@media screen{.page-footer{padding:.75rem 2.5rem 1rem}}
 .footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.7rem;color:#1a1209;text-align:center;margin-bottom:.15rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:#7a6f60;text-align:center}
 .btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
@@ -4501,8 +4502,8 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
 .actions{display:none;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 @media screen{.actions{display:flex}}
-@page{margin:0}
-@media print{body{padding:3rem 2.5rem 7cm}}
+@page{size:A4;margin:1.5cm 2cm}
+@media print{body{max-width:none;width:100%;padding:0 0 7cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -5732,6 +5733,10 @@ function showReport(type,html){
     prodaja:`Obdobje: ${document.getElementById('rp-od')?.value?fmtDateSl(document.getElementById('rp-od').value):'začetek'} – ${document.getElementById('rp-do')?.value?fmtDateSl(document.getElementById('rp-do').value):'danes'}`
   };
 
+  const _gmSig=getZS('podpisSlika')||null;
+  const _gmTs=_gmSig?new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null;
+  const _signSection=`<div class="sign-section"><div class="sign-box">Odgovorna oseba: Rok Golob${_gmTs?`<br><span style="font-size:.65rem;color:#7a6f60">${_gmTs}</span>`:''}${_gmSig?`<br><img src="${_gmSig}" style="height:2rem;display:block;margin-top:.25rem">`:''}</div><div class="sign-box sign-datum">Datum in podpis:<br><br></div></div>`;
+
   const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titles[type]}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
@@ -5794,10 +5799,7 @@ ${type==='trosarine'?`
 <div style="font-size:.7rem;color:#7a6f60;border-top:1px solid #e8e0d5;padding-top:.6rem;margin:.5rem 0 1rem">
   Enota merjenja: 1 kos = 50 ml tinkture pri 30 vol% alkohola (etanol).
 </div>
-<div class="sign-section">
-  <div class="sign-box">Odgovorna oseba: Rok Golob<br><br></div>
-  <div class="sign-box">Datum in podpis:<br><br></div>
-</div>
+${_signSection}
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
@@ -7868,10 +7870,8 @@ let _signLastX=0;
 let _signLastY=0;
 
 function signReportPDF(){
-  const sigDataURL=getZS('podpisSlika');
-  if(sigDataURL){
-    const ts=new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    _downloadReportPDF(_currentReportHTML,sigDataURL,ts);
+  if(getZS('podpisSlika')){
+    _downloadReportPDF(_currentReportHTML,null,null);
     return;
   }
   _signMode='report';
@@ -8044,11 +8044,14 @@ async function _generatePDFBase64(htmlContent){
 
 async function _downloadReportPDF(reportHTML,sigDataURL,ts){
   toast('📄 Generiram PDF…');
-  const signed=reportHTML.replace(
-    '<div class="sign-box">Datum in podpis:<br><br></div>',
-    `<div class="sign-box">Rok Golob<br><span style="font-size:.65rem;color:#7a6f60">${ts}</span><br><img src="${sigDataURL}" style="height:2rem;display:block;margin-top:.3rem"></div>`
-  );
-  const pdfBase64=await _generatePDFBase64(signed);
+  let html=reportHTML;
+  if(sigDataURL&&ts){
+    html=html.replace(
+      /<div class="sign-box sign-datum">Datum in podpis:<br><br><\/div>/,
+      `<div class="sign-box">Rok Golob<br><span style="font-size:.65rem;color:#7a6f60">${ts}</span><br><img src="${sigDataURL}" style="height:2rem;display:block;margin-top:.3rem"></div>`
+    );
+  }
+  const pdfBase64=await _generatePDFBase64(html);
   const a=document.createElement('a');
   a.href='data:application/pdf;base64,'+pdfBase64;
   a.download='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';

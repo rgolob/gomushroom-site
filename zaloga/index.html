@@ -2767,6 +2767,7 @@ function renderDobavnice(){
       </div>
       <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4;flex-wrap:wrap;align-items:center">
         <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
+        <button class="tbtn" onclick="downloadDobavnicaPDF('${g.id}')">📄 Shrani PDF</button>
         ${g.signedAt
           ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
           :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
@@ -5735,7 +5736,7 @@ function showReport(type,html){
 
   const _gmSig=getZS('podpisSlika')||null;
   const _gmTs=_gmSig?new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null;
-  const _signSection=`<div class="sign-section"><div class="sign-box">Odgovorna oseba: Rok Golob${_gmTs?`<br><span style="font-size:.65rem;color:#7a6f60">${_gmTs}</span>`:''}${_gmSig?`<br><img src="${_gmSig}" style="height:2rem;display:block;margin-top:.25rem">`:''}</div><div class="sign-box sign-datum">Datum in podpis:<br><br></div></div>`;
+  const _signSection=`<div class="sign-section"><div class="sign-box"><div class="sign-label">Odgovorna oseba</div><div class="sign-name">GoMushroom, Rok Golob</div>${_gmTs?`<div class="sign-ts">${_gmTs}</div>`:''}${_gmSig?`<img src="${_gmSig}" style="height:2rem;display:block;margin-top:.3rem">`:''}</div></div>`;
 
   const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titles[type]}</title>
@@ -5769,8 +5770,11 @@ tr.vhod{background:#f0f6f2}
 tr.izhod td{background:white}
 tr.prenosna{background:#f9f6f0;font-style:italic;color:#7a6f60}
 tr.subtotal{background:#f5f0e8;font-weight:600;border-top:2px solid #ede6d6}
-.sign-section{margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem}
-.sign-box{border-top:1px solid #1a1209;padding-top:.4rem;font-size:.68rem;color:#7a6f60}
+.sign-section{margin-top:2rem}
+.sign-box{font-size:.75rem;color:#1a1209}
+.sign-label{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.sign-name{font-size:.82rem}
+.sign-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
 .printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
 @media print{.printbtn{display:none}body{padding:.5rem 1rem}page{size:A4;margin:1.5cm}}
 </style>`:reportCSS()}
@@ -5823,7 +5827,7 @@ ${_signSection}
       <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
       <div style="display:flex;gap:.5rem">
         <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
-        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✍ Podpiši PDF</button>`:''}
+        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Shrani PDF</button>`:''}
         <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
       </div>
     </div>
@@ -8057,6 +8061,21 @@ async function _downloadReportPDF(reportHTML,sigDataURL,ts){
   a.download='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';
   a.click();
   toast('✓ PDF prenesen');
+}
+
+async function downloadDobavnicaPDF(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  toast('📄 Generiram PDF…');
+  try{
+    const html=buildDobavnicaHTML(g);
+    const pdfBase64=await _generatePDFBase64(html);
+    const a=document.createElement('a');
+    a.href='data:application/pdf;base64,'+pdfBase64;
+    a.download=(g.deliveryNum||'dobavnica')+'.pdf';
+    a.click();
+    toast('✓ PDF prenesen');
+  }catch(e){toast('❌ Napaka: '+e.message);}
 }
 
 async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){

@@ -1601,6 +1601,7 @@ th.num{text-align:right}
   <div style="text-align:right">
     <div style="font-size:.9rem;font-weight:500">Materialna kartica etanola</div>
     <div style="font-size:.65rem;color:#7a6f60">Vse količine v L AAE · Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    <div style="font-size:.6rem;color:#9a8a7a;letter-spacing:.03em;margin-top:.2rem">OBR-0007/01 · SOP-0004/01</div>
     ${od||doo?`<div style="font-size:.62rem;color:#af8455;margin-top:.15rem">Obdobje: ${od?fmtDate(od):'začetek'} – ${doo?fmtDate(doo):'danes'}${zalogaPred?` · Začetna zaloga: ${zalogaPred.toFixed(4)} L AAE`:''}</div>`:''}
     ${(!showNabava||!showRegen||!showEkstr)?`<div style="font-size:.62rem;color:#af8455">Prikazano: ${[showNabava?'nabave':'',showRegen?'regeneracije':'',showEkstr?'ekstrakcije':''].filter(Boolean).join(', ')}</div>`:''}
   </div>

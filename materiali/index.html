@@ -1637,16 +1637,8 @@ th.num{text-align:right}
   ${gmSig?`<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">`:`<div style="border-bottom:1px solid #1a1209;width:12rem;margin-top:.5rem"></div>`}
 </div>
 <div class="btnrow">
-  <button class="savepdfbtn" onclick="savePDF()">📄 Shrani PDF</button>
-  <button class="printbtn" onclick="window.print()">🖨 Natisni</button>
+  <button class="savepdfbtn" onclick="window.print()">📄 Shrani / Natisni</button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-<script>
-function savePDF(){
-  document.querySelector('.btnrow').style.display='none';
-  html2pdf().set({filename:'etanol-kartica-${new Date().toISOString().slice(0,10)}.pdf',margin:[10,15,10,15],jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:1,useCORS:true,windowWidth:800}}).from(document.body).save().then(function(){document.querySelector('.btnrow').style.display='';});
-}
-<\/script>
 </body></html>`;
 
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});

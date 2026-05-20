@@ -4584,17 +4584,9 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
-  <button class="btn btn-pdf" onclick="saveDobPDF()">📄 Shrani PDF</button>
+  <button class="btn btn-pdf" onclick="window.print()">📄 Shrani / Natisni</button>
   <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-<script>
-function saveDobPDF(){
-  var a=document.querySelector('.actions');
-  if(a)a.style.display='none';
-  html2pdf().set({filename:'${dobNum||'dobavnica'}.pdf',margin:[10,15,10,15],jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:1.5,useCORS:true,windowWidth:750}}).from(document.body).save().then(function(){if(a)a.style.display='';});
-}
-<\/script>
 </body></html>`;
 }
 
@@ -5812,18 +5804,8 @@ ${type==='trosarine'?`
 </div>
 ${_signSection}
 <div class="btnrow">
-  <button class="printbtn" onclick="window.print()">🖨 Natisni</button>
-  <button class="printbtn" onclick="saveTrosarinePDF()">📄 Shrani PDF</button>
+  <button class="printbtn" onclick="window.print()">📄 Shrani / Natisni</button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-<script>
-function saveTrosarinePDF(){
-  var btns=document.querySelector('.btnrow');
-  if(btns)btns.style.display='none';
-  var fn='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';
-  html2pdf().set({filename:fn,margin:0,jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:2,useCORS:true}}).from(document.body).save().then(function(){if(btns)btns.style.display='';});
-}
-<\/script>
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
@@ -8098,16 +8080,10 @@ async function _downloadReportPDF(reportHTML,sigDataURL,ts){
   toast('✓ PDF prenesen');
 }
 
-async function downloadDobavnicaPDF(groupId){
+function downloadDobavnicaPDF(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g)return;
-  toast('📄 Generiram PDF…');
-  try{
-    const html=buildDobavnicaHTML(g).replace('<div class="actions">','<div class="actions" style="display:none">');
-    const pdfBase64=await _generatePDFBase64(html);
-    _openPDFBlob(pdfBase64,(g.deliveryNum||'dobavnica')+'.pdf');
-    toast('✓ PDF prenesen');
-  }catch(e){toast('❌ Napaka: '+e.message);}
+  printDobavnica(g);
 }
 
 async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){

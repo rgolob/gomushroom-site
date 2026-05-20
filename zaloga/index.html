@@ -6728,6 +6728,22 @@ function openZalogaSettings(){
             🔧 <span>Obnovi manjkajoče vrstice (iz serij)</span>
           </button>
         </div>
+
+        <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Moj podpis</div>
+        <div style="background:var(--parchment);border-radius:8px;padding:.75rem .85rem;margin-bottom:1.25rem">
+          <div style="min-height:2.5rem;margin-bottom:.6rem;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:6px;padding:.4rem">
+            <img id="zsPodpisImg" style="max-height:3rem;max-width:100%;display:none">
+            <span id="zsPodpisEmpty" style="font-size:.75rem;color:var(--muted)">Ni shranjenega podpisa</span>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <label style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-sizing:border-box">
+              📁 <span>Naloži sliko podpisa</span>
+              <input type="file" accept="image/*" style="display:none" onchange="zsNaloziPodpis(event)">
+            </label>
+            <button id="zsPodpisBrisi" onclick="zsIzbrisiPodpis()" style="padding:.5rem .75rem;border:1px solid rgba(139,58,42,.3);border-radius:8px;background:rgba(139,58,42,.06);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer;color:#8b3a2a;display:none">🗑 Odstrani</button>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.5rem">Slika se uporabi pri podpisu PDF poročil namesto risanja na platno.</div>
+        </div>
       </div>
 
       <!-- TAB 2: SPLETNA STRAN -->
@@ -6883,6 +6899,16 @@ function openZalogaSettings(){
       </div>
     </div>`;
   document.body.appendChild(el);
+  // Show stored signature preview
+  const _storedSig=getZS('podpisSlika');
+  if(_storedSig){
+    const _img=document.getElementById('zsPodpisImg');
+    const _empty=document.getElementById('zsPodpisEmpty');
+    const _btn=document.getElementById('zsPodpisBrisi');
+    if(_img){_img.src=_storedSig;_img.style.display='';}
+    if(_empty)_empty.style.display='none';
+    if(_btn)_btn.style.display='';
+  }
 }
 
 function zsSwitch(tab){
@@ -7122,6 +7148,35 @@ function saveZalogaSettings(){
   });
   document.getElementById('zalogaSettingsOverlay').remove();
   toast('✓ Nastavitve shranjene');
+}
+
+function zsNaloziPodpis(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const dataURL=e.target.result;
+    saveZS({podpisSlika:dataURL});
+    const img=document.getElementById('zsPodpisImg');
+    const empty=document.getElementById('zsPodpisEmpty');
+    const btn=document.getElementById('zsPodpisBrisi');
+    if(img){img.src=dataURL;img.style.display='';}
+    if(empty)empty.style.display='none';
+    if(btn)btn.style.display='';
+    toast('✓ Podpis shranjen');
+  };
+  reader.readAsDataURL(file);
+}
+
+function zsIzbrisiPodpis(){
+  saveZS({podpisSlika:null});
+  const img=document.getElementById('zsPodpisImg');
+  const empty=document.getElementById('zsPodpisEmpty');
+  const btn=document.getElementById('zsPodpisBrisi');
+  if(img){img.src='';img.style.display='none';}
+  if(empty)empty.style.display='';
+  if(btn)btn.style.display='none';
+  toast('✓ Podpis odstranjen');
 }
 
 function simulirajCeno(){
@@ -7799,6 +7854,12 @@ let _signLastX=0;
 let _signLastY=0;
 
 function signReportPDF(){
+  const stored=getZS('podpisSlika');
+  if(stored){
+    const ts=new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    _downloadReportPDF(_currentReportHTML,stored,ts);
+    return;
+  }
   _signMode='report';
   _signGroupId=null;
   const info=document.getElementById('signDocInfo');

@@ -1515,6 +1515,8 @@ function openPorociloFilter(){
 }
 
 function genEtanolPorocilo(){
+  const _zsRaw=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
+  const gmSig=_zsRaw.podpisSlika||null;
   const od=document.getElementById('porOd')?.value||'';
   const doo=document.getElementById('porDo')?.value||'';
   const showNabava=document.getElementById('porNabava')?.checked!==false;
@@ -1624,6 +1626,18 @@ th.num{text-align:right}
     <td style="text-align:right;color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)}</td>
   </tr>
 </table>
+<div style="margin-top:2rem;border-top:1px solid #e8e0d5;padding-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:3rem">
+  <div style="font-size:.75rem">
+    <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Odgovorna oseba</div>
+    <div>GoMushroom, Rok Golob</div>
+    <div style="font-size:.65rem;color:#7a6f60;margin-top:.1rem">${new Date().toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+    ${gmSig?`<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">`:`<div style="border-bottom:1px solid #1a1209;height:2.5rem;margin-top:.5rem"></div>`}
+  </div>
+  <div style="font-size:.75rem">
+    <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Žig / pečat</div>
+    <div style="border-bottom:1px solid #1a1209;height:2.5rem;margin-top:1.3rem"></div>
+  </div>
+</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
 </body></html>`;
 

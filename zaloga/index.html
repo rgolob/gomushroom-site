@@ -4412,6 +4412,7 @@ async function ustvariDobavnico(groupId){
 function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
   const sigImg=signatureDataURL||group.signatureData||null;
   const sigAt=signedAt||group.signedAt||null;
+  const gmSig=getZS('podpisSlika')||null;
   const dobNum=group.deliveryNum||'';
   const isKom=group.channel==='kom';
   let lineIdx=0;
@@ -4463,7 +4464,7 @@ function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Jost',sans-serif;padding:3rem 2.5rem 7rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5}
+body{font-family:'Jost',sans-serif;padding:3rem 2.5rem 14rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5}
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem}
 .company{font-size:.78rem;line-height:1.8}
 .company strong{font-size:.9rem;display:block;margin-bottom:.2rem}
@@ -4485,22 +4486,23 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .totals td{border:none;padding:.2rem .5rem}
 .totals .grand{font-weight:700;border-top:2px solid #1a1209}
 .notice{font-size:.76rem;line-height:1.7;margin-bottom:2rem}
-.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:1.5rem}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-bottom:.6rem}
 .sig-box{font-size:.75rem}
-.sig-label{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.5rem}
+.sig-label{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem}
 .sig-line{border-bottom:1px solid #1a1209;height:3rem;margin-bottom:.4rem}
-.sig-name{font-size:.75rem;color:#1a1209;margin-top:.2rem}
+.sig-name{font-size:.75rem;color:#1a1209}
 .sig-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
-.page-footer{position:fixed;bottom:0;left:0;right:0;padding:.5rem 2.5rem .75rem;background:white;border-top:1px solid #ccc}
+.page-footer{position:fixed;bottom:0;left:0;right:0;padding:.75rem 2.5rem 1rem;background:white;border-top:1px solid #ccc}
 .footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.7rem;color:#1a1209;text-align:center;margin-bottom:.15rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.78rem;color:#7a6f60;text-align:center}
 .btn{font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
 .btn-print{background:#af8455;color:#1a1209}
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
-.actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+.actions{display:none;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+@media screen{.actions{display:flex}}
 @page{margin:0}
-@media print{.actions{display:none!important}body{padding:3rem 2.5rem 5cm}}
+@media print{body{padding:3rem 2.5rem 7cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -4559,23 +4561,23 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   ${group.extInvoice||group.extDelivery?`<br><br>${group.extInvoice?'Zunanji račun: <strong>'+group.extInvoice+'</strong>  ':''}${group.extDelivery?'Ref. dobavnica: <strong>'+group.extDelivery+'</strong>':''}`:''}
 </div>
 
-<div class="sig-grid">
-  <div class="sig-box">
-    <div class="sig-label">Predal</div>
-    <div class="sig-name">GoMushroom, Rok Golob</div>
-    ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
-  </div>
-  <div class="sig-box">
-    <div class="sig-label">Prejel</div>
-    <div class="sig-name">${group.buyer||''}</div>
-    ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
-    ${sigImg
-      ? `<img src="${sigImg}" style="height:3rem;max-width:100%;display:block;margin-top:.5rem">`
-      : `<div class="sig-line" style="margin-top:.5rem"></div>`}
-  </div>
-</div>
-
 <div class="page-footer">
+  <div class="sig-grid">
+    <div class="sig-box">
+      <div class="sig-label">Predal</div>
+      <div class="sig-name">GoMushroom, Rok Golob</div>
+      ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
+      ${gmSig ? `<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">` : ''}
+    </div>
+    <div class="sig-box">
+      <div class="sig-label">Prejel</div>
+      <div class="sig-name">${group.buyer||''}</div>
+      ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
+      ${sigImg
+        ? `<img src="${sigImg}" style="height:3rem;max-width:100%;display:block;margin-top:.4rem">`
+        : `<div class="sig-line" style="margin-top:.4rem"></div>`}
+    </div>
+  </div>
   <div class="footer-bold">Ekstrakcije po meri — naravno, strokovno, učinkovito.</div>
   <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
 </div>

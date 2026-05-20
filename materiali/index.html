@@ -1587,8 +1587,11 @@ th{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;p
 th.num{text-align:right}
 .subtotal{background:#f5f0e8;font-weight:700;border-top:2px solid #1a1209}
 .subtotal td{padding:.35rem .5rem}
-.printbtn{display:block;margin:1.5rem auto 0;padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer}
-@media print{.printbtn{display:none}body{padding:.5rem 1rem}}
+.btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem}
+.printbtn,.savepdfbtn{padding:.55rem 1.5rem;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer}
+.printbtn{background:rgba(0,0,0,.08);color:#1a1209}
+.savepdfbtn{background:#1a1209;color:white}
+@media print{.btnrow{display:none}body{padding:.5rem 1rem;max-width:none}}
 </style></head><body>
 <div class="doc-header">
   <div>
@@ -1626,19 +1629,23 @@ th.num{text-align:right}
     <td style="text-align:right;color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)}</td>
   </tr>
 </table>
-<div style="margin-top:2rem;border-top:1px solid #e8e0d5;padding-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:3rem">
-  <div style="font-size:.75rem">
-    <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Odgovorna oseba</div>
-    <div>GoMushroom, Rok Golob</div>
-    <div style="font-size:.65rem;color:#7a6f60;margin-top:.1rem">${new Date().toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
-    ${gmSig?`<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">`:`<div style="border-bottom:1px solid #1a1209;height:2.5rem;margin-top:.5rem"></div>`}
-  </div>
-  <div style="font-size:.75rem">
-    <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Žig / pečat</div>
-    <div style="border-bottom:1px solid #1a1209;height:2.5rem;margin-top:1.3rem"></div>
-  </div>
+<div style="margin-top:2rem;border-top:1px solid #e8e0d5;padding-top:1rem">
+  <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Odgovorna oseba</div>
+  <div style="font-size:.75rem">GoMushroom, Rok Golob</div>
+  <div style="font-size:.65rem;color:#7a6f60;margin-top:.1rem">${new Date().toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+  ${gmSig?`<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">`:`<div style="border-bottom:1px solid #1a1209;width:12rem;margin-top:.5rem"></div>`}
 </div>
-<button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+<div class="btnrow">
+  <button class="savepdfbtn" onclick="savePDF()">📄 Shrani PDF</button>
+  <button class="printbtn" onclick="window.print()">🖨 Natisni</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<script>
+function savePDF(){
+  document.querySelector('.btnrow').style.display='none';
+  html2pdf().set({filename:'etanol-kartica-${new Date().toISOString().slice(0,10)}.pdf',margin:[10,15,10,15],jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:2,useCORS:true}}).from(document.body).save().then(()=>{document.querySelector('.btnrow').style.display='';});
+}
+<\/script>
 </body></html>`;
 
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});

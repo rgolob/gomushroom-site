@@ -2767,6 +2767,7 @@ function renderDobavnice(){
       </div>
       <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4;flex-wrap:wrap;align-items:center">
         <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
+        <button class="tbtn" onclick="downloadDobavnicaPDF('${g.id}')">📄 Shrani PDF</button>
         ${g.signedAt
           ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
           :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
@@ -5826,7 +5827,7 @@ ${_signSection}
       <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
       <div style="display:flex;gap:.5rem">
         <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
-        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✍ Podpiši PDF</button>`:''}
+        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Shrani PDF</button>`:''}
         <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
       </div>
     </div>
@@ -8060,6 +8061,21 @@ async function _downloadReportPDF(reportHTML,sigDataURL,ts){
   a.download='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';
   a.click();
   toast('✓ PDF prenesen');
+}
+
+async function downloadDobavnicaPDF(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g)return;
+  toast('📄 Generiram PDF…');
+  try{
+    const html=buildDobavnicaHTML(g);
+    const pdfBase64=await _generatePDFBase64(html);
+    const a=document.createElement('a');
+    a.href='data:application/pdf;base64,'+pdfBase64;
+    a.download=(g.deliveryNum||'dobavnica')+'.pdf';
+    a.click();
+    toast('✓ PDF prenesen');
+  }catch(e){toast('❌ Napaka: '+e.message);}
 }
 
 async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){

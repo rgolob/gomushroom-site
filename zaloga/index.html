@@ -5080,6 +5080,7 @@ function selectRsBatch(id,label){
 
 
 let _currentReportType='';
+let _currentReportHTML='';
 
 function openReportSheet(type){
   try{
@@ -5790,6 +5791,9 @@ ${type==='trosarine'?`
 `}
 </body></html>`;
 
+  _currentReportHTML = full;
+  _currentReportType = type;
+
   // Prikaži v overlay znotraj app (deluje na mobilnem)
   let reportWrap = document.getElementById('reportViewOverlay');
   if (!reportWrap) {
@@ -5803,6 +5807,7 @@ ${type==='trosarine'?`
       <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
       <div style="display:flex;gap:.5rem">
         <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
+        ${type==='trosarine'?`<button onclick="signReportPDF()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✍ Podpiši PDF</button>`:''}
         <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
       </div>
     </div>
@@ -7787,12 +7792,24 @@ function saveEditInvoice(invId){
 
 // ── ELECTRONIC SIGNATURE ──────────────────────────────────────────
 let _signGroupId=null;
+let _signMode='dobavnica'; // 'dobavnica' | 'report'
 let _signDrawing=false;
 let _signHasMark=false;
 let _signLastX=0;
 let _signLastY=0;
 
+function signReportPDF(){
+  _signMode='report';
+  _signGroupId=null;
+  const info=document.getElementById('signDocInfo');
+  const titles={trosarine:'Poročilo trošarin'};
+  if(info)info.innerHTML=`<strong>${titles[_currentReportType]||'Poročilo'}</strong> · podpis odgovorne osebe`;
+  document.getElementById('signOverlay').style.display='flex';
+  _initSignCanvas();
+}
+
 function showSignModal(groupId){
+  _signMode='dobavnica';
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g){toast('❌ Prodaja ni najdena');return;}
   if(!g.deliveryNum){toast('⚠ Dobavnica nima številke');return;}
@@ -7802,6 +7819,7 @@ function showSignModal(groupId){
   document.getElementById('signOverlay').style.display='flex';
   _initSignCanvas();
 }
+
 
 function _initSignCanvas(){
   // Replace canvas node to cleanly remove old event listeners
@@ -7872,15 +7890,26 @@ function cancelSign(){
 }
 
 async function confirmSign(){
+  const canvas=document.getElementById('signCanvas');
+  if(!_signHasMark){toast('⚠ Prosim, podpišite');return;}
+  const btn=document.getElementById('signConfirmBtn');
+  btn.disabled=true;btn.textContent='Obdelava…';
+
+  if(_signMode==='report'){
+    try{
+      const sigDataURL=canvas.toDataURL('image/png');
+      const now=new Date();
+      const ts=now.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      cancelSign();
+      await _downloadReportPDF(_currentReportHTML,sigDataURL,ts);
+    }catch(e){toast('❌ Napaka: '+e.message);}
+    btn.disabled=false;btn.textContent='Potrdi →';
+    return;
+  }
+
   if(!_signGroupId)return;
   const g=saleGroups.find(x=>x.id===_signGroupId);
   if(!g)return;
-  const canvas=document.getElementById('signCanvas');
-  if(!_signHasMark){toast('⚠ Prosim, podpišite');return;}
-
-  const btn=document.getElementById('signConfirmBtn');
-  btn.disabled=true;
-  btn.textContent='Obdelava…';
 
   try{
     const signatureDataURL=canvas.toDataURL('image/png');
@@ -7936,6 +7965,20 @@ async function _generatePDFBase64(htmlContent){
       reader.readAsDataURL(blob);
     }).catch(reject);
   });
+}
+
+async function _downloadReportPDF(reportHTML,sigDataURL,ts){
+  toast('📄 Generiram PDF…');
+  const signed=reportHTML.replace(
+    '<div class="sign-box">Datum in podpis:<br><br></div>',
+    `<div class="sign-box">Rok Golob<br><span style="font-size:.65rem;color:#7a6f60">${ts}</span><br><img src="${sigDataURL}" style="height:2rem;display:block;margin-top:.3rem"></div>`
+  );
+  const pdfBase64=await _generatePDFBase64(signed);
+  const a=document.createElement('a');
+  a.href='data:application/pdf;base64,'+pdfBase64;
+  a.download='trosarine-'+new Date().toISOString().slice(0,10)+'.pdf';
+  a.click();
+  toast('✓ PDF prenesen');
 }
 
 async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){

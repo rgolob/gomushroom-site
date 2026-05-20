@@ -6912,7 +6912,7 @@ function openZalogaSettings(){
     </div>`;
   document.body.appendChild(el);
   // Show stored signature preview
-  const _storedURL=getZS('podpisURL')||getZS('podpisSlika');
+  const _storedURL=getZS('podpisSlika');
   if(_storedURL){
     const _img=document.getElementById('zsPodpisImg');
     const _empty=document.getElementById('zsPodpisEmpty');
@@ -7162,32 +7162,26 @@ function saveZalogaSettings(){
   toast('✓ Nastavitve shranjene');
 }
 
-async function zsNaloziPodpis(event){
+function zsNaloziPodpis(event){
   const file=event.target.files[0];
   if(!file)return;
-  toast('⏳ Nalagam podpis…');
-  try{
-    const r=await fetch(`${SB_URL}/storage/v1/object/podpisi/podpis.png`,{
-      method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type,'x-upsert':'true'},
-      body:file,
-    });
-    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||r.status);}
-    const publicURL=`${SB_URL}/storage/v1/object/public/podpisi/podpis.png?t=${Date.now()}`;
-    saveZS({podpisURL:publicURL,podpisSlika:null});
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const dataURL=e.target.result;
+    saveZS({podpisSlika:dataURL,podpisURL:null});
     const img=document.getElementById('zsPodpisImg');
     const empty=document.getElementById('zsPodpisEmpty');
     const btn=document.getElementById('zsPodpisBrisi');
-    if(img){img.src=publicURL;img.style.display='';}
+    if(img){img.src=dataURL;img.style.display='';}
     if(empty)empty.style.display='none';
     if(btn)btn.style.display='';
     toast('✓ Podpis shranjen');
-  }catch(e){toast('❌ Napaka: '+e.message);}
+  };
+  reader.readAsDataURL(file);
 }
 
 function zsIzbrisiPodpis(){
-  saveZS({podpisURL:null,podpisSlika:null});
-  fetch(`${SB_URL}/storage/v1/object/podpisi/podpis.png`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+  saveZS({podpisSlika:null,podpisURL:null});
   const img=document.getElementById('zsPodpisImg');
   const empty=document.getElementById('zsPodpisEmpty');
   const btn=document.getElementById('zsPodpisBrisi');
@@ -7871,20 +7865,10 @@ let _signHasMark=false;
 let _signLastX=0;
 let _signLastY=0;
 
-async function signReportPDF(){
-  const url=getZS('podpisURL');
-  const base64=getZS('podpisSlika');
-  if(url||base64){
+function signReportPDF(){
+  const sigDataURL=getZS('podpisSlika');
+  if(sigDataURL){
     const ts=new Date().toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    let sigDataURL=base64;
-    if(url){
-      try{
-        const r=await fetch(url);
-        if(!r.ok)throw new Error(r.status);
-        const blob=await r.blob();
-        sigDataURL=await new Promise(res=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(blob);});
-      }catch(e){toast('❌ Napaka pri nalaganju podpisa: '+e.message);return;}
-    }
     _downloadReportPDF(_currentReportHTML,sigDataURL,ts);
     return;
   }

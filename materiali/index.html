@@ -1570,12 +1570,12 @@ function genEtanolPorocilo(){
   const skupajVhod=vsi.filter(e=>e.tip==='nabava'||e.tip==='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
   const skupajIzhod=vsi.filter(e=>e.tip!=='nabava'&&e.tip!=='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=794">
 <title>Materialna kartica etanola</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:800px;margin:0 auto;color:#1a1209;font-size:12px}
+body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;width:794px;color:#1a1209;font-size:12px}
 .doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #1a1209}
 .doc-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300}.doc-logo span{color:#af8455}
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.25rem}
@@ -1630,7 +1630,7 @@ th.num{text-align:right}
     <td style="text-align:right;color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)}</td>
   </tr>
 </table>
-<div style="margin-top:2rem;border-top:1px solid #e8e0d5;padding-top:1rem">
+<div class="sign-section" style="margin-top:2rem;border-top:1px solid #e8e0d5;padding-top:1rem;page-break-inside:avoid;break-inside:avoid">
   <div style="font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem">Odgovorna oseba</div>
   <div style="font-size:.75rem">GoMushroom, Rok Golob</div>
   <div style="font-size:.65rem;color:#7a6f60;margin-top:.1rem">${new Date().toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
@@ -1644,7 +1644,7 @@ th.num{text-align:right}
 <script>
 function savePDF(){
   document.querySelector('.btnrow').style.display='none';
-  html2pdf().set({filename:'etanol-kartica-${new Date().toISOString().slice(0,10)}.pdf',margin:[10,15,10,15],jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:2,useCORS:true}}).from(document.body).save().then(()=>{document.querySelector('.btnrow').style.display='';});
+  html2pdf().set({filename:'etanol-kartica-${new Date().toISOString().slice(0,10)}.pdf',margin:0,jsPDF:{unit:'mm',format:'a4'},html2canvas:{scale:1,useCORS:true,windowWidth:794}}).from(document.body).save().then(function(){document.querySelector('.btnrow').style.display='';});
 }
 <\/script>
 </body></html>`;

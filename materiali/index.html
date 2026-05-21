@@ -1174,6 +1174,9 @@ function openDNDetail(id){
   // Preveri ali je etanol izhod že knjižen za ta DN
   const etKnjizen=etanolKnjiga.some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
   const canKnjizEt=d.status==='zakljucen'&&!etKnjizen;
+  // Preveri ali so materiali izhod že knjiženi za ta DN
+  const matKnjizen=materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka);
+  const canKnjizMat=d.status==='zakljucen'&&!matKnjizen;
 
   document.getElementById('dnDetailBody').innerHTML=`
     <div class="stats-grid" style="margin-bottom:.5rem">
@@ -1216,6 +1219,8 @@ function openDNDetail(id){
       ${canClose?`<button class="bsave green" onclick="zaklucDN('${d.id}')">✓ Zaključi DN</button>`:''}
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
+      ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">📦 Knjiži materiale izhod</button>`:''}
+      ${matKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Materiali izhod že knjižen</div>`:''}
       ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
@@ -1250,6 +1255,20 @@ function knjizEtanolIzhod(id){
   closeSheet('dnDetailOverlay');
   renderEtStats();renderEtanol();
   toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
+}
+
+function knjizMaterialeIzhodRetro(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  if(materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka)){
+    toast('⚠ Materiali izhod je že knjižen za ta DN');return;
+  }
+  const matsBefore=materiali.length;
+  const stMatov=knjizMaterjaleIzhod(d);
+  save();
+  materiali.slice(matsBefore).forEach(m=>sbPushMat(m));
+  closeSheet('dnDetailOverlay');
+  renderMateriali();
+  toast(`✓ ${stMatov} materialov knjiženih za ${d.oznaka}`);
 }
 
 function zaklucDN(id){

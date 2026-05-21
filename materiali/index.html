@@ -2274,7 +2274,7 @@ function sbToOp(r){return{
 function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
 async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushDN',e);}}
 async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
-async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);}}
+async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);toast('⚠ '+e.message.slice(0,120));}}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
 
 async function migrirajVSupabase(){

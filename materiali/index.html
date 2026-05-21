@@ -1410,7 +1410,7 @@ function syncGobaIzhod(d,oldOznaka){
   const serije=d.serije?.filter(r=>r.masa>0)||[];
   if(!serije.length&&d.masaGobe>0)serije.push({serija:d.serijaGobe||'',masa:d.masaGobe});
   serije.forEach(row=>{
-    const m={id:uid(),datum:d.datum,tip:gobaTip,smer:'izhod',
+    const m={id:uid(),datum:d.datum||todayISO(),tip:gobaTip,smer:'izhod',
       dokument:d.oznaka,serijaGobe:row.serija||'',
       kolicina:row.masa,opomba:'DN goba izhod'};
     materiali.push(m);
@@ -1918,7 +1918,7 @@ function renderMatZaloga(){
 
 function renderMateriali(){
   renderMatZaloga();
-  let rows=[...materiali].sort((a,b)=>b.datum.localeCompare(a.datum));
+  let rows=[...materiali].sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
   // Kategorija filter
   if(matKatFilter!=='vsi')rows=rows.filter(m=>matKat(m.tip)===matKatFilter);
   // Podfilter

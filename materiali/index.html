@@ -456,7 +456,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <!-- Dobavitelj -->
       <div id="matDobaviteljField" class="field" style="display:none">
-        <label>Dobavitelj</label><input id="matDobavitelj" list="matDobaviteljList" placeholder="npr. iHerb, ECP d.o.o." autocomplete="off"><datalist id="matDobaviteljList"></datalist>
+        <label>Dobavitelj</label>
+        <select id="matDobaviteljSel" onchange="onDobaviteljSelChange()"></select>
+        <input id="matDobaviteljNew" style="display:none;margin-top:.4rem" placeholder="Vnesite novega dobavitelja…" autocomplete="off">
       </div>
       <div class="frow">
         <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0"></div>
@@ -1818,7 +1820,18 @@ function openMaterijalSheet(id){
   document.getElementById('matStrosek').value=m?.strosek||'';
   document.getElementById('matOpomba').value=m?.opomba||'';
   onMatTipChange();
-  document.getElementById('matDobavitelj').value=m?.dobavitelj||'';
+  // Nastavi dobavitelja po tem, ko onMatTipChange zgradi dropdown
+  const _dob=m?.dobavitelj||'';
+  const _sel=document.getElementById('matDobaviteljSel');
+  const _opt=[..._sel.options].find(o=>o.value===_dob);
+  if(_dob&&!_opt){
+    _sel.value='__new__';
+    document.getElementById('matDobaviteljNew').value=_dob;
+    document.getElementById('matDobaviteljNew').style.display='';
+  } else {
+    _sel.value=_dob;
+    document.getElementById('matDobaviteljNew').style.display='none';
+  }
   openSheet('materialiOverlay');
 }
 
@@ -1856,16 +1869,41 @@ function onMatTipChange(){
   const isGoba=tip.startsWith('goba');
   document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
   document.getElementById('matDobaviteljField').style.display=tip?'':'none';
-  // Sugestije dobaviteljev za ta tip
-  const dl=document.getElementById('matDobaviteljList');
-  dl.innerHTML='';
+  // Zgradi dropdown dobaviteljev za ta tip (bere dobavitelj in opomba kot vir)
+  const sel=document.getElementById('matDobaviteljSel');
+  const cur=getDobaviteljValue();
+  const seen=new Set();
   if(tip){
-    const seen=new Set();
-    materiali.filter(m=>m.tip===tip&&m.dobavitelj).forEach(m=>{
-      const d=m.dobavitelj.trim();
-      if(d&&!seen.has(d)){seen.add(d);const o=document.createElement('option');o.value=d;dl.appendChild(o);}
+    materiali.filter(m=>m.tip===tip).forEach(m=>{
+      [m.dobavitelj,m.opomba].forEach(v=>{
+        const d=(v||'').trim();
+        if(d&&!seen.has(d))seen.add(d);
+      });
     });
   }
+  sel.innerHTML='<option value="">— Izberite —</option>';
+  [...seen].sort().forEach(d=>{
+    const o=document.createElement('option');
+    o.value=d;o.textContent=d;
+    if(d===cur)o.selected=true;
+    sel.appendChild(o);
+  });
+  const newOpt=document.createElement('option');
+  newOpt.value='__new__';newOpt.textContent='+ Vnesite novega…';
+  sel.appendChild(newOpt);
+  document.getElementById('matDobaviteljNew').style.display='none';
+}
+function onDobaviteljSelChange(){
+  const isNew=document.getElementById('matDobaviteljSel').value==='__new__';
+  const inp=document.getElementById('matDobaviteljNew');
+  inp.style.display=isNew?'':'none';
+  if(isNew)setTimeout(()=>inp.focus(),50);
+}
+function getDobaviteljValue(){
+  const sel=document.getElementById('matDobaviteljSel');
+  if(!sel)return'';
+  if(sel.value==='__new__')return(document.getElementById('matDobaviteljNew')?.value||'').trim();
+  return sel.value==='—'?'':sel.value;
 }
 
 function saveMaterjal(){
@@ -1878,7 +1916,7 @@ function saveMaterjal(){
     tip,smer:'vhod',
     dokument:document.getElementById('matDok').value.trim(),
     serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
-    dobavitelj:document.getElementById('matDobavitelj').value.trim(),
+    dobavitelj:getDobaviteljValue(),
     kolicina,
     strosek:parseNum(document.getElementById('matStrosek').value||'0'),
     opomba:document.getElementById('matOpomba').value.trim(),
@@ -2451,8 +2489,22 @@ async function appInit(){
   document.getElementById('dnDatum').value=todayISO();
   await loadFromSB();
   importHistoricalMateriali();
+  migrateOpombaToDoabvitelj();
 }
 function init(){appInit();}
+
+function migrateOpombaToDoabvitelj(){
+  let migrated=0;
+  materiali.forEach(m=>{
+    if(!m.dobavitelj&&m.opomba){
+      m.dobavitelj=m.opomba;
+      m.opomba='';
+      sbPushMat(m);
+      migrated++;
+    }
+  });
+  if(migrated>0){save();renderMateriali();console.log(`Migrirano ${migrated} dobaviteljev iz opombe`);}
+}
 </script>
 </body>
 </html>

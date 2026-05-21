@@ -1874,7 +1874,8 @@ function onMatTipChange(){
   const cur=getDobaviteljValue();
   const seen=new Set();
   if(tip){
-    materiali.filter(m=>m.tip===tip).forEach(m=>{
+    const prefix=tip.split('_')[0];
+    materiali.filter(m=>m.tip.split('_')[0]===prefix).forEach(m=>{
       [m.dobavitelj,m.opomba].forEach(v=>{
         const d=(v||'').trim();
         if(d&&!seen.has(d))seen.add(d);

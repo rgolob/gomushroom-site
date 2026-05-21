@@ -2413,7 +2413,7 @@ function sbToEt(r){return{
 
 // Converters Materiali ↔ Supabase
 function matToSb(m){return{
-  id:m.id,datum:m.datum||null,tip:m.tip,smer:m.smer||'vhod',
+  id:m.id,datum:m.datum||todayISO(),tip:m.tip,smer:m.smer||'vhod',
   dokument:m.dokument||null,serija_gobe:m.serijaGobe||null,
   dobavitelj:m.dobavitelj||null,
   kolicina:m.kolicina||0,strosek:m.strosek||0,opomba:m.opomba||null

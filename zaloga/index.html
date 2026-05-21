@@ -742,8 +742,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
       <div class="slabel">Poraba surovin</div>
       <div class="frow">
-        <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" list="serijaGobeList" placeholder="izberite ali vpišite…" autocapitalize="characters"><datalist id="serijaGobeList"></datalist></div>
-        <div class="field"><label>Masa gobe (kg)</label><input type="number" id="bMasaGobe" min="0" step="0.001" placeholder="0.000" inputmode="decimal"></div>
+        <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" list="serijaGobeList" placeholder="izberite ali vpišite…" autocapitalize="characters" oninput="checkGobaStock()"><datalist id="serijaGobeList"></datalist></div>
+        <div class="field"><label>Masa gobe (kg)</label><input type="number" id="bMasaGobe" min="0" step="0.001" placeholder="0.000" inputmode="decimal" oninput="checkGobaStock()"></div>
+      </div>
+      <div id="bGobaStockWarn" style="display:none;font-size:.75rem;color:#e07060;padding:.2rem .1rem;margin-top:-.25rem"></div>
+      <div id="bSerijaGobe2Row" class="frow" style="display:none">
+        <div class="field"><label>Dodatna serija gobe</label><input id="bSerijaGobe2" list="serijaGobeList2" placeholder="izberite serijo…" autocapitalize="characters"><datalist id="serijaGobeList2"></datalist></div>
+        <div class="field"><label>Masa (kg)</label><input type="number" id="bMasaGobe2" min="0" step="0.001" placeholder="0.000" inputmode="decimal"></div>
       </div>
       <div class="field"><label>Masa glicerina (kg)</label><input type="number" id="bMasaGlicerina" min="0" step="0.001" placeholder="0.000" inputmode="decimal"></div>
       <div class="frow">
@@ -1468,6 +1473,7 @@ function sbBatchToApp(b){
     id:b.id, productId:b.product_id, productName:b.product_name,
     batchNum:b.batch_num, date:b.date, note:b.note, workOrder:b.work_order,
     serijaGobe:b.serija_gobe||'', masaGobe:b.masa_gobe||0, masaGlicerina:b.masa_glicerina||0,
+    serijaGobe2:b.serija_gobe2||'', masaGobe2:b.masa_gobe2||0,
     safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
     alc:{
       sku:b.alc_sku, qty:b.alc_qty||0, priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
@@ -1486,6 +1492,7 @@ function appBatchToSb(b){
     id:b.id, product_id:b.productId, product_name:b.productName,
     batch_num:b.batchNum, date:b.date||null, note:b.note||null, work_order:b.workOrder||null,
     serija_gobe:b.serijaGobe||null, masa_gobe:b.masaGobe||null, masa_glicerina:b.masaGlicerina||null,
+    serija_gobe2:b.serijaGobe2||null, masa_gobe2:b.masaGobe2||null,
     safety_alc:b.safetyAlc||0, safety_gly:b.safetyGly||0,
     alc_sku:b.alc?.sku||null, alc_qty:b.alc?.qty||0, alc_price_malo:b.alc?.priceMalo||0,
     alc_vol:b.alc?.vol||null, alc_alloc_prod:b.alc?.alloc?.prod||0, alc_alloc_int:b.alc?.alloc?.int||0,
@@ -3029,28 +3036,60 @@ function deriveGobaType(name){
   if(n.includes('chaga'))return'goba_chaga';
   return null;
 }
+let _gobaSerijeMap={};
+let _gobaDatumMap={};
 async function updateSerijaGobeList(){
   const id=document.getElementById('bProductSel').value;
   const pName=products.find(p=>p.id===id)?.name||'';
   const gobaType=deriveGobaType(pName);
   const dl=document.getElementById('serijaGobeList');
   dl.innerHTML='';
+  _gobaSerijeMap={};_gobaDatumMap={};
   if(!gobaType)return;
   try{
     const rows=await sbFetch('gm_dn_materiali',`tip=eq.${gobaType}&smer=eq.vhod&order=datum.asc`);
-    const map={};
     rows.forEach(r=>{
       const s=r.serija_gobe||r.serijaGobe||'';if(!s)return;
-      if(!map[s])map[s]={serija:s,kolicina:0};
-      map[s].kolicina+=(r.kolicina||0);
+      if(!_gobaSerijeMap[s]){_gobaSerijeMap[s]=0;_gobaDatumMap[s]=r.datum||'';}
+      _gobaSerijeMap[s]+=(r.kolicina||0);
     });
-    Object.values(map).sort((a,b)=>a.serija.localeCompare(b.serija)).forEach(({serija,kolicina})=>{
+    Object.entries(_gobaSerijeMap).sort((a,b)=>(_gobaDatumMap[a[0]]||'').localeCompare(_gobaDatumMap[b[0]]||'')).forEach(([serija,kolicina])=>{
       const opt=document.createElement('option');
       opt.value=serija;
-      opt.label=`${serija} (${kolicina} g na zalogi)`;
+      opt.label=`${serija} (${kolicina} kg na zalogi)`;
       dl.appendChild(opt);
     });
   }catch(e){console.warn('updateSerijaGobeList',e);}
+}
+function updateSerijaGobeList2(exclude){
+  const dl=document.getElementById('serijaGobeList2');
+  dl.innerHTML='';
+  Object.entries(_gobaSerijeMap).filter(([s])=>s!==exclude)
+    .sort((a,b)=>(_gobaDatumMap[a[0]]||'').localeCompare(_gobaDatumMap[b[0]]||''))
+    .forEach(([serija,kolicina])=>{
+      const opt=document.createElement('option');
+      opt.value=serija;
+      opt.label=`${serija} (${kolicina} kg)`;
+      dl.appendChild(opt);
+    });
+}
+function checkGobaStock(){
+  const serija=document.getElementById('bSerijaGobe').value.trim();
+  const masa=parseFloat(document.getElementById('bMasaGobe').value)||0;
+  const avail=_gobaSerijeMap[serija]||0;
+  const warn=document.getElementById('bGobaStockWarn');
+  const row2=document.getElementById('bSerijaGobe2Row');
+  if(serija&&masa>0&&avail>0&&masa>avail){
+    warn.textContent=`⚠ ${serija}: na zalogi ${avail} kg, manjka ${(masa-avail).toFixed(3)} kg — dodajte drugo serijo`;
+    warn.style.display='';
+    row2.style.display='';
+    updateSerijaGobeList2(serija);
+  }else{
+    warn.style.display='none';
+    row2.style.display='none';
+    document.getElementById('bSerijaGobe2').value='';
+    document.getElementById('bMasaGobe2').value='';
+  }
 }
 function onBatchProductChange(){
   document.getElementById('bNewProduct').value='';
@@ -3079,6 +3118,8 @@ function openBatchSheet(id=null){
     updateSerijaGobeList();
     document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
     document.getElementById('bSerijaGobe').value=b.serijaGobe||'';document.getElementById('bMasaGobe').value=b.masaGobe||'';document.getElementById('bMasaGlicerina').value=b.masaGlicerina||'';
+    document.getElementById('bSerijaGobe2').value=b.serijaGobe2||'';document.getElementById('bMasaGobe2').value=b.masaGobe2||'';
+    setTimeout(checkGobaStock,200);
     document.getElementById('bSafetyAlc').value=b.safetyAlc??10;document.getElementById('bSafetyGly').value=b.safetyGly??10;
     // Lock batch number if batch has sales
     const hasSales=saleGroups.some(g=>(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
@@ -3095,7 +3136,9 @@ function openBatchSheet(id=null){
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
-    ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bMasaGlicerina','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bSerijaGobe2','bMasaGobe2','bMasaGlicerina','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('bSerijaGobe2Row').style.display='none';
+    document.getElementById('bGobaStockWarn').style.display='none';
     document.getElementById('bBatch').removeAttribute('readonly');
     document.getElementById('bBatchLockWarn').style.display='none';
     // Prefill safety stock from last batch of selected product
@@ -3124,6 +3167,8 @@ function saveBatch(){
   const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),
     serijaGobe:document.getElementById('bSerijaGobe').value.trim(),
     masaGobe:parseFloat(document.getElementById('bMasaGobe').value)||0,
+    serijaGobe2:document.getElementById('bSerijaGobe2').value.trim(),
+    masaGobe2:parseFloat(document.getElementById('bMasaGobe2').value)||0,
     masaGlicerina:parseFloat(document.getElementById('bMasaGlicerina').value)||0,
     safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
     alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},

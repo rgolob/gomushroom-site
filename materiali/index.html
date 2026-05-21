@@ -2388,12 +2388,56 @@ async function doLogin(){
   },150);
 })();
 
+// ── HISTORICAL IMPORT ──
+const _HIST_MAT=[
+  {datum:'2025-02-08',serijaGobe:'R1',tip:'goba_reishi',kolicina:16.6,dokument:'/',opomba:'Lastna pridelava'},
+  {datum:'2025-02-14',serijaGobe:'',tip:'steklenicka_crna',kolicina:1000,dokument:'RJGG20250214',opomba:'Guangzhou Ruijia Packing Products Co., Ltd'},
+  {datum:'2025-02-16',serijaGobe:'B1',tip:'goba_bradovec',kolicina:1.5,dokument:'DOB-001',opomba:'Fungalist'},
+  {datum:'2025-04-09',serijaGobe:'',tip:'glicerin',kolicina:10.0,dokument:'1-2-21092',opomba:'ECP d.o.o.'},
+  {datum:'2025-05-22',serijaGobe:'C1',tip:'goba_chaga',kolicina:2.0,dokument:'20250121226',opomba:'Guangzhou Shennghongming Trading Co., Ltd.'},
+  {datum:'2025-06-08',serijaGobe:'B2',tip:'goba_bradovec',kolicina:3.1,dokument:'DOB-002',opomba:'Fungalist'},
+  {datum:'2025-06-15',serijaGobe:'C2',tip:'goba_chaga',kolicina:2.0,dokument:'20250526001',opomba:'Guangzhou Shennghongming Trading Co., Ltd.'},
+  {datum:'2025-07-19',serijaGobe:'',tip:'glicerin',kolicina:10.0,dokument:'1-4-41000',opomba:'ECP d.o.o.'},
+  {datum:'2025-08-08',serijaGobe:'B3',tip:'goba_bradovec',kolicina:2.9,dokument:'DOB-003',opomba:'Fungalist'},
+  {datum:'2025-09-01',serijaGobe:'R2',tip:'goba_reishi',kolicina:9.7,dokument:'/',opomba:'Lastna pridelava'},
+  {datum:'2025-09-10',serijaGobe:'B4',tip:'goba_bradovec',kolicina:3.0,dokument:'DOB-004',opomba:'Fungalist'},
+  {datum:'2025-10-01',serijaGobe:'C3',tip:'goba_chaga',kolicina:10.0,dokument:'20250804001',opomba:'Guangzhou Shennghongming Trading Co., Ltd.'},
+  {datum:'2025-10-02',serijaGobe:'',tip:'steklenicka_crna',kolicina:1000,dokument:'20250250807',opomba:'Guangzhou Ruijia Packing Products Co., Ltd'},
+  {datum:'2025-10-07',serijaGobe:'',tip:'vitc',kolicina:454,dokument:'540743877',opomba:'iHerb.com'},
+  {datum:'2025-10-07',serijaGobe:'',tip:'lecitin',kolicina:454,dokument:'540743877',opomba:'iHerb.com'},
+  {datum:'2025-10-07',serijaGobe:'',tip:'glicerin',kolicina:20.0,dokument:'1-5-51170',opomba:'ECP d.o.o.'},
+  {datum:'2025-11-07',serijaGobe:'B5',tip:'goba_bradovec',kolicina:3.0,dokument:'DOB-005',opomba:'Fungalist'},
+  {datum:'2025-11-19',serijaGobe:'',tip:'steklenicka_crna',kolicina:1000,dokument:'RJGG2025119',opomba:'Guangzhou Ruijia Packing Products Co., Ltd'},
+  {datum:'2025-12-11',serijaGobe:'',tip:'glicerin',kolicina:30.0,dokument:'1-9-03',opomba:'ECP d.o.o.'},
+  {datum:'2025-12-25',serijaGobe:'B6',tip:'goba_bradovec',kolicina:2.9,dokument:'DOB-006',opomba:'Fungalist'},
+  {datum:'2026-02-03',serijaGobe:'R3-1',tip:'goba_reishi',kolicina:3.4,dokument:'/',opomba:'Lastna pridelava'},
+  {datum:'2026-02-23',serijaGobe:'',tip:'steklenicka_crna',kolicina:1000,dokument:'AR20251219RO',opomba:'Aquiman (Hebei) glass Packaging products'},
+  {datum:'2026-03-05',serijaGobe:'B7',tip:'goba_bradovec',kolicina:1.5,dokument:'32/2026/26-0021',opomba:'GRAD LES, Folt Janez s.p. - Pohorska Gobarna'},
+  {datum:'2026-03-05',serijaGobe:'R3-2',tip:'goba_reishi',kolicina:3.5,dokument:'/',opomba:'Lastna pridelava'},
+  {datum:'2026-03-06',serijaGobe:'',tip:'glicerin',kolicina:30.0,dokument:'1-5-51170',opomba:'ECP d.o.o.'},
+  {datum:'2026-04-02',serijaGobe:'R3-3',tip:'goba_reishi',kolicina:0.7,dokument:'/',opomba:'Lastna pridelava'},
+];
+function importHistoricalMateriali(){
+  let added=0;
+  _HIST_MAT.forEach(e=>{
+    const exists=materiali.some(m=>m.datum===e.datum&&m.tip===e.tip&&Math.abs((m.kolicina||0)-(e.kolicina||0))<0.01);
+    if(!exists){
+      const m={id:uid(),...e,smer:'vhod',strosek:0};
+      materiali.push(m);
+      sbPushMat(m);
+      added++;
+    }
+  });
+  if(added>0){save();renderMateriali();toast('✓ Uvoženo '+added+' vnosov');}
+}
+
 // ── INIT ──
-function appInit(){
+async function appInit(){
   renderDNStats();
   renderDN();
   document.getElementById('dnDatum').value=todayISO();
-  loadFromSB();
+  await loadFromSB();
+  importHistoricalMateriali();
 }
 function init(){appInit();}
 </script>

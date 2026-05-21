@@ -528,6 +528,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="display:flex;gap:.5rem;align-items:center">
         <button class="hbtn2" onclick="openReportSheet('serije')">📊 Poročilo</button>
         <button class="hbtn2" onclick="openReportSheet('trosarine')">📋 Trošarine</button>
+        <button class="hbtn2" onclick="openReportSheet('evidenca')">📋 Evidenca DN</button>
         <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
@@ -742,9 +743,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="slabel">Poraba surovin</div>
       <div class="frow">
         <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" list="serijaGobeList" placeholder="izberite ali vpišite…" autocapitalize="characters"><datalist id="serijaGobeList"></datalist></div>
-        <div class="field"><label>Masa gobe (g)</label><input type="number" id="bMasaGobe" min="0" placeholder="0" inputmode="decimal"></div>
+        <div class="field"><label>Masa gobe (kg)</label><input type="number" id="bMasaGobe" min="0" step="0.001" placeholder="0.000" inputmode="decimal"></div>
       </div>
-      <div class="field"><label>Masa glicerina (g)</label><input type="number" id="bMasaGlicerina" min="0" placeholder="0" inputmode="decimal"></div>
+      <div class="field"><label>Masa glicerina (kg)</label><input type="number" id="bMasaGlicerina" min="0" step="0.001" placeholder="0.000" inputmode="decimal"></div>
       <div class="frow">
         <div class="field"><label>Varnostna zaloga alc (kom.)</label><input type="number" id="bSafetyAlc" min="0" placeholder="10" inputmode="numeric"></div>
         <div class="field"><label>Varnostna zaloga gly (kom.)</label><input type="number" id="bSafetyGly" min="0" placeholder="10" inputmode="numeric"></div>
@@ -954,6 +955,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div style="display:flex;gap:.75rem">
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-cene" checked> Prikaži cene</label>
+      </div>
+    </div>
+
+    <!-- EVIDENCA DN filters -->
+    <div id="reFilters" class="shbody" style="display:none">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Evidenca delovnih nalogov in serij končnih izdelkov (OBR-0009/01) za inšpekcijske namene.</div>
+      <div class="slabel">Obdobje</div>
+      <div class="frow">
+        <div class="field"><label>Od</label><input type="date" id="re-od"></div>
+        <div class="field"><label>Do</label><input type="date" id="re-do"></div>
       </div>
     </div>
 
@@ -5145,10 +5156,10 @@ function openReportSheet(type){
   try{
   populateReportDropdowns();
   _currentReportType=type;
-  ['rzFilters','rsFilters','rpFilters','rtFilters'].forEach(id=>{
+  ['rzFilters','rsFilters','rpFilters','rtFilters','reFilters'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
-  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin'};
+  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin',evidenca:'Evidenca delovnih nalogov'};
   document.getElementById('reportSheetTitle').textContent=titles[type]||'Poročilo';
   if(type==='zaloga'){
     document.getElementById('rzFilters').style.display='';
@@ -5166,6 +5177,11 @@ function openReportSheet(type){
     const d=new Date();
     document.getElementById('rp-do').value=todayISO();
     document.getElementById('rp-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
+  } else if(type==='evidenca'){
+    document.getElementById('reFilters').style.display='';
+    const d=new Date();
+    document.getElementById('re-do').value=todayISO();
+    document.getElementById('re-od').value=d.getFullYear()+'-01-01';
   } else if(type==='trosarine'){
     document.getElementById('rtFilters').style.display='';
     const d=new Date();
@@ -5764,17 +5780,59 @@ function genReport(type){
       <div class="s-item"><div class="s-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#1a4a2a">${grandZaloga} kom.</div></div>
     </div>
     ${productCards||'<p style="color:#7a6f60;padding:1rem">Ni alkoholnih tinktur z razporejeno prodajno zalogo.</p>'}`;
+  } else if(type==='evidenca'){
+    const od=document.getElementById('re-od')?.value||'';
+    const doVal=document.getElementById('re-do')?.value||'';
+    const GOBA_LABEL={goba_reishi:'Reishi',goba_bradovec:'Bradovec',goba_chaga:'Chaga'};
+    const rows=[...batches]
+      .filter(b=>{
+        if(od&&b.date<od)return false;
+        if(doVal&&b.date>doVal)return false;
+        return true;
+      })
+      .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!rows.length){toast('Ni podatkov za izbrano obdobje');return;}
+    const e=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const tableRows=rows.map((b,i)=>{
+      const gobaType=deriveGobaType(b.productName);
+      const gobaLabel=GOBA_LABEL[gobaType]||b.productName||'—';
+      const alcQty=b.alc?.qty||0;
+      const glyQty=b.gly?.qty||0;
+      const total=alcQty+glyQty;
+      const masa=b.masaGobe?Number(b.masaGobe).toFixed(3).replace('.',','):'—';
+      return`<tr>
+        <td class="td-bold">${e(b.workOrder||'—')}</td>
+        <td>${b.date?fmtDateSl(b.date):'—'}</td>
+        <td>${e(gobaLabel)}</td>
+        <td>${e(b.serijaGobe||'—')}</td>
+        <td class="num">${masa}</td>
+        <td class="num">${alcQty||'—'}</td>
+        <td class="num">${glyQty||'—'}</td>
+        <td class="num td-bold">${total||'—'}</td>
+        <td>${e(b.batchNum||'—')}</td>
+        <td style="color:#7a6f60;font-size:.75rem">${e(b.note||'')}</td>
+      </tr>`;
+    }).join('');
+    html=`<table>
+      <thead><tr>
+        <th>DN</th><th>Datum</th><th>Vrsta gobe</th><th>Serija</th><th class="num">Masa [kg]</th>
+        <th class="num">ALC [kos]</th><th class="num">GLY [kos]</th><th class="num">Skupaj</th>
+        <th>Lot izdelka</th><th>Opombe</th>
+      </tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
   }
   showReport(type,html);
 }
 
 function showReport(type,html){
-  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin — alkoholne tinkture'};
+  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin — alkoholne tinkture',evidenca:'Evidenca delovnih nalogov in serij končnih izdelkov'};
   const subtitles={
     zaloga:'Trenutno stanje po produktih',
     serije:'Proizvedene serije z ostanki',
     trosarine:`Obdobje: ${document.getElementById('rt-od')?.value?fmtDateSl(document.getElementById('rt-od').value):'—'} – ${document.getElementById('rt-do')?.value?fmtDateSl(document.getElementById('rt-do').value):'danes'}`,
-    prodaja:`Obdobje: ${document.getElementById('rp-od')?.value?fmtDateSl(document.getElementById('rp-od').value):'začetek'} – ${document.getElementById('rp-do')?.value?fmtDateSl(document.getElementById('rp-do').value):'danes'}`
+    prodaja:`Obdobje: ${document.getElementById('rp-od')?.value?fmtDateSl(document.getElementById('rp-od').value):'začetek'} – ${document.getElementById('rp-do')?.value?fmtDateSl(document.getElementById('rp-do').value):'danes'}`,
+    evidenca:`Obdobje: ${document.getElementById('re-od')?.value?fmtDateSl(document.getElementById('re-od').value):'—'} – ${document.getElementById('re-do')?.value?fmtDateSl(document.getElementById('re-do').value):'danes'} · OBR-0009/01`
   };
 
   const _gmSig=getZS('podpisSlika')||null;
@@ -5784,7 +5842,28 @@ function showReport(type,html){
   const full=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${titles[type]}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-${type==='trosarine'?`<style>
+${type==='evidenca'?`<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:none;color:#1a1209;font-size:11px}
+h1{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;margin-bottom:.15rem}
+h1 span{color:#af8455}
+.subtitle{font-size:.68rem;color:#7a6f60;margin-bottom:1rem;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{font-size:.55rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:#7a6f60;padding:.3rem .45rem;border-bottom:2px solid #1a1209;text-align:left;white-space:nowrap}
+td{padding:.28rem .45rem;border-bottom:1px solid rgba(175,132,85,.12);vertical-align:middle}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.td-bold{font-weight:500}
+tr:nth-child(even){background:#faf8f4}
+.sign-section{margin-top:2rem}
+.sign-box{font-size:.75rem;color:#1a1209}
+.sign-label{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.sign-name{font-size:.82rem}
+.sign-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
+.btnrow{display:flex;gap:.75rem;justify-content:center;margin-top:1.5rem}
+.printbtn{padding:.6rem 2rem;background:#1a1209;color:white;border:none;border-radius:4px;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.08em}
+@page{size:A4 landscape;margin:0}
+@media print{.btnrow{display:none}body{padding:1cm 1.5cm}}
+</style>`:type==='trosarine'?`<style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:960px;margin:0 auto;color:#1a1209;font-size:12px}
 .doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #1a1209}
@@ -5842,6 +5921,18 @@ ${type==='trosarine'?`
 <div style="font-size:.7rem;color:#7a6f60;border:1px solid #e8e0d5;border-radius:6px;padding:.4rem .75rem;margin:.4rem 0 .6rem;background:#faf8f5;display:inline-block">
   <strong>Enota:</strong> 1 kos = 50 ml tinkture · alkoholna vsebnost: 30 vol%
 </div>
+`:type==='evidenca'?`
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:2px solid #1a1209">
+  <div>
+    <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:36px;display:block;margin-bottom:.2rem">
+    <div style="font-size:.6rem;color:#7a6f60">GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22 · 8351 Straža</div>
+  </div>
+  <div style="text-align:right;font-size:.68rem;color:#7a6f60">
+    <div style="font-size:.85rem;font-weight:500;color:#1a1209">Evidenca delovnih nalogov in serij končnih izdelkov</div>
+    <div style="margin-top:.15rem">OBR-0009/01 · Datum izpisa: ${new Date().toLocaleDateString('sl-SI')}</div>
+    <div style="margin-top:.1rem">${subtitles['evidenca']||''}</div>
+  </div>
+</div>
 `:reportHeader(titles[type],subtitles[type])}
 ${html}
 ${type==='trosarine'?`
@@ -5852,6 +5943,12 @@ ${_signSection}
 <div class="btnrow">
   <button class="printbtn" onclick="window.print()">📄 Shrani / Natisni</button>
 </div>
+`:type==='evidenca'?`
+${_signSection}
+<div class="btnrow">
+  <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
+</div>
+
 `:`<hr class="footer-line">
 <div class="footer-tagline">Laboratorijski pristop k ekstrakciji medicinskih gob — GoMushroom ni produkt, je proces.</div>
 <button class="printbtn" onclick="window.print()">🖨 Natisni / Shrani PDF</button>
@@ -5874,7 +5971,7 @@ ${_signSection}
       <span style="color:white;font-size:.85rem;font-weight:500">${titles[type]||'Poročilo'}</span>
       <div style="display:flex;gap:.5rem">
         <button onclick="window.print()" style="background:var(--accent);color:var(--ink);border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">🖨 Natisni</button>
-        ${type==='trosarine'?`<button onclick="openTrosarineWindow()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Shrani PDF</button>`:''}
+        ${(type==='trosarine'||type==='evidenca')?`<button onclick="openTrosarineWindow()" style="background:rgba(175,132,85,.35);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">📄 Odpri za tisk</button>`:''}
         <button onclick="document.getElementById('reportViewOverlay').remove()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;padding:.35rem .75rem;font-family:'Jost',sans-serif;font-size:.78rem;cursor:pointer">✕ Zapri</button>
       </div>
     </div>

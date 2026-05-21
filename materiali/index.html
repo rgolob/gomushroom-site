@@ -2489,8 +2489,22 @@ async function appInit(){
   document.getElementById('dnDatum').value=todayISO();
   await loadFromSB();
   importHistoricalMateriali();
+  migrateOpombaToDoabvitelj();
 }
 function init(){appInit();}
+
+function migrateOpombaToDoabvitelj(){
+  let migrated=0;
+  materiali.forEach(m=>{
+    if(!m.dobavitelj&&m.opomba){
+      m.dobavitelj=m.opomba;
+      m.opomba='';
+      sbPushMat(m);
+      migrated++;
+    }
+  });
+  if(migrated>0){save();renderMateriali();console.log(`Migrirano ${migrated} dobaviteljev iz opombe`);}
+}
 </script>
 </body>
 </html>

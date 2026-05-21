@@ -2490,21 +2490,20 @@ async function appInit(){
   document.getElementById('dnDatum').value=todayISO();
   await loadFromSB();
   importHistoricalMateriali();
-  migrateOpombaToDoabvitelj();
+  await migrateOpombaToDoabvitelj();
 }
 function init(){appInit();}
 
-function migrateOpombaToDoabvitelj(){
-  let migrated=0;
-  materiali.forEach(m=>{
-    if(!m.dobavitelj&&m.opomba){
-      m.dobavitelj=m.opomba;
-      m.opomba='';
-      sbPushMat(m);
-      migrated++;
-    }
-  });
-  if(migrated>0){save();renderMateriali();console.log(`Migrirano ${migrated} dobaviteljev iz opombe`);}
+async function migrateOpombaToDoabvitelj(){
+  const toMigrate=materiali.filter(m=>!m.dobavitelj&&m.opomba);
+  if(!toMigrate.length)return;
+  toMigrate.forEach(m=>{m.dobavitelj=m.opomba;m.opomba='';});
+  try{
+    setSyncStatus('↻');
+    await sbUpsert('gm_dn_materiali',toMigrate.map(matToSb));
+    setSyncStatus('✓');
+    save();renderMateriali();
+  }catch(e){setSyncStatus('⚠');console.error('migrateOpombaToDoabvitelj',e);}
 }
 </script>
 </body>

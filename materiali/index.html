@@ -293,9 +293,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <input id="dnNamen" type="text" readonly style="background:var(--parchment);font-size:.82rem" placeholder="—">
         </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Serija gobe</label><input id="dnSerijaGobe" placeholder="npr. BG-2024-01"></div>
-        <div class="field"><label>Masa gobe (kg)</label><input id="dnMasaGobe" type="text" step="0.01" placeholder="0.00" inputmode="decimal" oninput="calcDN()"></div>
+      <div id="dnSerijeContainer"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
+        <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
       </div>
       <div class="slabel">Etanol — vhod</div>
       <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
@@ -309,13 +310,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="slabel">Alkoholna tinktura (produkt — 30 vol% EtOH)</div>
       <div class="frow">
-        <div class="field"><label>Alkohol (kom. × 50 mL)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        <div class="field"><label>Alc prodaja (kom.)</label><input id="dnKolAlcProdaja" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        <div class="field"><label>Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Steklenička alc</label>
           <select id="dnStekAlc">
             <option value="bela">⬜ Bela</option>
             <option value="crna">⬛ Črna</option>
           </select>
         </div>
+        <div class="field"><label>Skupaj alc (kom.)</label><input id="dnKolAlc" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
       </div>
       <div class="frow">
         <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
@@ -323,13 +328,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="slabel">Glicerinska tinktura</div>
       <div class="frow">
-        <div class="field"><label>Glicerin (kom. × 50 mL)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGlyProdaja" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Steklenička gly</label>
           <select id="dnStekGly">
             <option value="bela">⬜ Bela</option>
             <option value="crna">⬛ Črna</option>
           </select>
         </div>
+        <div class="field"><label>Skupaj gly (kom.)</label><input id="dnKolGly" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
       </div>
       <div class="frow">
         <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
@@ -791,14 +800,21 @@ const TINKTURA_VOL_PCT=30;
 const TINKTURA_VOL_KOM=0.050; // L na kos
 
 function calcDNTinktura(){
-  const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
+  const alcProd=parseInt(document.getElementById('dnKolAlcProdaja')?.value)||0;
+  const alcInt=parseInt(document.getElementById('dnKolAlcInterno')?.value)||0;
+  const kom=alcProd+alcInt;
+  const glyProd=parseInt(document.getElementById('dnKolGlyProdaja')?.value)||0;
+  const glyInt=parseInt(document.getElementById('dnKolGlyInterno')?.value)||0;
+  const komGly=glyProd+glyInt;
+  document.getElementById('dnKolAlc').value=kom||'';
+  document.getElementById('dnKolGly').value=komGly||'';
   if(!kom){
     document.getElementById('dnAAETinkture').value='';
     calcDNBilanca();
     return;
   }
-  const volT=kom*TINKTURA_VOL_KOM;          // skupni volumen tinktur
-  const aaeT=calcAAE(volT,TINKTURA_VOL_PCT); // AAE = V × 30%
+  const volT=kom*TINKTURA_VOL_KOM;
+  const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
   document.getElementById('dnAAETinkture').value=
     `${aaeT.toFixed(4)} L  (${kom} × 0,050 L × 30%)`;
   calcDNBilanca();
@@ -886,7 +902,7 @@ function calcDN(){
   document.getElementById('dnLAAE').value=aae.toFixed(4)+' L';
   document.getElementById('dnCalcHint').textContent=
     `ρ(${volPct} vol%) = ${gostota.toFixed(5)} g/mL · AAE/hL: ${tros.toFixed(5)}`;
-  calcDNBilanca();
+  calcDNTinktura();
 
   // Posodobi indikator zaloge
   const aaeZaloga=calcEtZaloga();
@@ -1052,15 +1068,24 @@ function openDNSheet(id){
   document.getElementById('dnVrstaGobe').value=d?.vrstaGobe||'Reishi';
   updateDNNamen();
   if(d?.namen)document.getElementById('dnNamen').value=d.namen;
-  document.getElementById('dnSerijaGobe').value=d?.serijaGobe||'';
-  document.getElementById('dnMasaGobe').value=d?.masaGobe||'';
+  if(id){
+    const izhodi=materiali.filter(m=>m.smer==='izhod'&&m.dokument===(d?.oznaka||'')&&m.tip.startsWith('goba_')).sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
+    dnSerijeRows=izhodi.length>0
+      ?izhodi.map(m=>({serija:m.serijaGobe||'',masa:String(m.kolicina||'')}))
+      :(d?.serijaGobe||d?.masaGobe>0?[{serija:d.serijaGobe||'',masa:String(d.masaGobe||'')}]:[{serija:'',masa:''}]);
+  } else {
+    dnSerijeRows=[{serija:'',masa:''}];
+  }
+  renderDNSerijeRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
-  document.getElementById('dnKolAlc').value=d?.kolAlc||'';
+  document.getElementById('dnKolAlcProdaja').value='kolAlcProdaja' in (d||{})?d.kolAlcProdaja:(d?.kolAlc||'');
+  document.getElementById('dnKolAlcInterno').value=d?.kolAlcInterno||'';
   document.getElementById('dnStekAlc').value=d?.stekAlc||'bela';
   document.getElementById('dnVitCAlc').value=d?.vitCAlc||'';
   document.getElementById('dnLecitinAlc').value=d?.lecitinAlc||'';
-  document.getElementById('dnKolGly').value=d?.kolGly||'';
+  document.getElementById('dnKolGlyProdaja').value='kolGlyProdaja' in (d||{})?d.kolGlyProdaja:(d?.kolGly||'');
+  document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno||'';
   document.getElementById('dnStekGly').value=d?.stekGly||'bela';
   document.getElementById('dnVitCGly').value=d?.vitCGly||'';
   document.getElementById('dnLecitinGly').value=d?.lecitinGly||'';
@@ -1091,9 +1116,102 @@ function nextDNNum(){
   return`DN-${y}-${String(next).padStart(3,'0')}`;
 }
 
+// ── SERIJE GOBE v DN ──
+let dnSerijeRows=[{serija:'',masa:''}];
+
+function getGobaTip(vrsta){
+  return vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+}
+
+function getAvailableSeries(gobaTip){
+  const sm={};
+  materiali.filter(m=>m.tip===gobaTip&&m.serijaGobe).forEach(m=>{
+    const s=m.serijaGobe;
+    if(!sm[s])sm[s]={serija:s,vhod:0,izhod:0,datum:m.datum};
+    if(m.datum<sm[s].datum)sm[s].datum=m.datum;
+    if(m.smer==='vhod')sm[s].vhod+=m.kolicina||0;
+    else sm[s].izhod+=m.kolicina||0;
+  });
+  return Object.values(sm)
+    .map(s=>({...s,zaloga:round(s.vhod-s.izhod,3)}))
+    .filter(s=>s.zaloga>0.001)
+    .sort((a,b)=>a.datum.localeCompare(b.datum));
+}
+
+function renderDNSerijeRows(){
+  const vrstaGobe=document.getElementById('dnVrstaGobe')?.value||'Reishi';
+  const gobaTip=getGobaTip(vrstaGobe.toLowerCase());
+  const available=getAvailableSeries(gobaTip);
+  const container=document.getElementById('dnSerijeContainer');
+  if(!container)return;
+  const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
+  const totalEl=document.getElementById('dnMasaGobeTotal');
+  if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
+  container.innerHTML=dnSerijeRows.map((row,idx)=>{
+    const opts=available.map(s=>`<option value="${s.serija}"${s.serija===row.serija?' selected':''}>${s.serija} (${s.zaloga.toFixed(3)} kg)</option>`).join('');
+    const rowZaloga=available.find(s=>s.serija===row.serija)?.zaloga||0;
+    const masaNum=parseNum(row.masa);
+    const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
+    const hintTxt=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(row.serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.15rem">
+      <div class="field" style="flex:2;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Serija gobe (FIFO)':'Dodatna serija'}</label>
+        <select onchange="onDNSerijaChange(${idx},this.value)">
+          <option value="">— izberi —</option>${opts}
+        </select>
+      </div>
+      <div class="field" style="flex:1;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Masa (kg)':'&nbsp;'}</label>
+        <input id="dnMasaGobe-${idx}" type="text" inputmode="decimal" value="${row.masa||''}" placeholder="0.000" style="${prevec?'border-color:var(--danger);':''}" oninput="onDNMasaChange(${idx},this.value)">
+      </div>
+      ${idx>0?`<button type="button" onclick="removeDNSerijaRow(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1;margin-bottom:.05rem">✕</button>`:''}
+    </div>
+    <div id="dnSerijeHint-${idx}" style="font-size:.67rem;color:${prevec?'var(--danger)':'var(--muted)'};min-height:.85rem;padding-left:.1rem;margin-bottom:.3rem">${hintTxt}</div>`;
+  }).join('');
+}
+
+function addDNSerijaRow(){
+  dnSerijeRows.push({serija:'',masa:''});
+  renderDNSerijeRows();
+}
+
+function removeDNSerijaRow(idx){
+  dnSerijeRows.splice(idx,1);
+  renderDNSerijeRows();
+}
+
+function onDNSerijaChange(idx,val){
+  dnSerijeRows[idx].serija=val;
+  if(!parseNum(dnSerijeRows[idx].masa)&&val){
+    const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
+    const s=getAvailableSeries(gobaTip).find(x=>x.serija===val);
+    if(s)dnSerijeRows[idx].masa=String(s.zaloga);
+  }
+  renderDNSerijeRows();
+}
+
+function onDNMasaChange(idx,val){
+  dnSerijeRows[idx].masa=val;
+  const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
+  const rowZaloga=getAvailableSeries(gobaTip).find(s=>s.serija===dnSerijeRows[idx].serija)?.zaloga||0;
+  const masaNum=parseNum(val);
+  const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
+  const hintEl=document.getElementById(`dnSerijeHint-${idx}`);
+  if(hintEl){
+    hintEl.style.color=prevec?'var(--danger)':'var(--muted)';
+    hintEl.textContent=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(dnSerijeRows[idx].serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+  }
+  const inputEl=document.getElementById(`dnMasaGobe-${idx}`);
+  if(inputEl)inputEl.style.borderColor=prevec?'var(--danger)':'';
+  const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
+  const totalEl=document.getElementById('dnMasaGobeTotal');
+  if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
+}
+
 function updateDNNamen(){
   const g=document.getElementById('dnVrstaGobe').value;
   document.getElementById('dnNamen').value='Ekstrakcija '+g;
+  renderDNSerijeRows();
 }
 
 // ── SAVE DN ──
@@ -1110,20 +1228,25 @@ function saveDN(){
     datum:document.getElementById('dnDatum').value,
     namen:document.getElementById('dnNamen').value,
     vrstaGobe:document.getElementById('dnVrstaGobe').value,
-    serijaGobe:document.getElementById('dnSerijaGobe').value.trim(),
-    masaGobe:parseNum(document.getElementById('dnMasaGobe').value),
+    serije:dnSerijeRows.filter(r=>parseNum(r.masa)>0).map(r=>({serija:r.serija,masa:parseNum(r.masa)})),
+    serijaGobe:dnSerijeRows[0]?.serija||'',
+    masaGobe:round(dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0),3),
     serijaAlc:document.getElementById('dnSerijaAlc').value.trim().toUpperCase(),
-    kolAlc:parseInt(document.getElementById('dnKolAlc').value)||0,
+    kolAlcProdaja:parseInt(document.getElementById('dnKolAlcProdaja').value)||0,
+    kolAlcInterno:parseInt(document.getElementById('dnKolAlcInterno').value)||0,
+    kolAlc:(parseInt(document.getElementById('dnKolAlcProdaja').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0),
     stekAlc:document.getElementById('dnStekAlc').value,
     vitCAlc:parseNum(document.getElementById('dnVitCAlc').value||'0'),
     lecitinAlc:parseNum(document.getElementById('dnLecitinAlc').value||'0'),
-    kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
+    kolGlyProdaja:parseInt(document.getElementById('dnKolGlyProdaja').value)||0,
+    kolGlyInterno:parseInt(document.getElementById('dnKolGlyInterno').value)||0,
+    kolGly:(parseInt(document.getElementById('dnKolGlyProdaja').value)||0)+(parseInt(document.getElementById('dnKolGlyInterno').value)||0),
     stekGly:document.getElementById('dnStekGly').value,
     vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
     lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
     izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
-    aaeTinkture:calcAAE((parseInt(document.getElementById('dnKolAlc').value)||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT),
-    volTinkture:(parseInt(document.getElementById('dnKolAlc').value)||0)*TINKTURA_VOL_KOM,
+    aaeTinkture:calcAAE(((parseInt(document.getElementById('dnKolAlcProdaja').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT),
+    volTinkture:((parseInt(document.getElementById('dnKolAlcProdaja').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,
     masaEtOH,pctEtOH:volPct,gostota,
     volL,volPct:round(volPct,2),lAAE,
     trosarina:calcTrosarina(lAAE,volL),
@@ -1149,6 +1272,7 @@ function saveDN(){
     }
   }
 
+  const oldOznaka=editingDNId?workOrders.find(x=>x.id===editingDNId)?.oznaka:null;
   if(editingDNId){
     const idx=workOrders.findIndex(x=>x.id===editingDNId);
     if(idx>=0){d.status=workOrders[idx].status;workOrders[idx]=d;}
@@ -1156,11 +1280,12 @@ function saveDN(){
     workOrders.unshift(d);
   }
 
+  syncGobaIzhod(d,oldOznaka);
   save();
   sbPushDN(d);
   closeSheet('dnOverlay');
   renderDNStats();renderDN();
-  renderEtStats();
+  renderEtStats();renderMateriali();
   toast('✓ DN shranjen · etanol rezerviran');
 }
 
@@ -1174,6 +1299,9 @@ function openDNDetail(id){
   // Preveri ali je etanol izhod že knjižen za ta DN
   const etKnjizen=etanolKnjiga.some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
   const canKnjizEt=d.status==='zakljucen'&&!etKnjizen;
+  // Preveri ali so materiali izhod (stekleničke, etikete) že knjiženi za ta DN
+  const matKnjizen=materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&!m.tip.startsWith('goba_'));
+  const canKnjizMat=d.status==='zakljucen'&&!matKnjizen;
 
   document.getElementById('dnDetailBody').innerHTML=`
     <div class="stats-grid" style="margin-bottom:.5rem">
@@ -1199,10 +1327,13 @@ function openDNDetail(id){
 
     <div class="slabel">Zaloga app</div>
     <table class="mini-table">
-      <tr><td>Alkohol (kom.)</td><td>${d.kolAlc} × ${d.stekAlc==='crna'?'⬛':'⬜'} ${d.stekAlc||'bela'}</td></tr>
+      <tr><td>Alc prodaja</td><td>${d.kolAlcProdaja??d.kolAlc} × ${'crna'===d.stekAlc?'⬛':'⬜'} ${d.stekAlc||'bela'}</td></tr>
+      ${(d.kolAlcInterno||0)>0?`<tr><td>Alc interno</td><td>${d.kolAlcInterno} × ${'crna'===d.stekAlc?'⬛':'⬜'} ${d.stekAlc||'bela'}</td></tr>`:''}
       <tr><td>Vit. C alc</td><td>${d.vitCAlc?d.vitCAlc+' g':'—'}</td></tr>
       <tr><td>Lecitin alc</td><td>${d.lecitinAlc?d.lecitinAlc+' g':'—'}</td></tr>
-      <tr><td>Glicerin (kom.)</td><td>${d.kolGly} × ${d.stekGly==='crna'?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>
+      <tr><td>Gly prodaja</td><td>${d.kolGlyProdaja??d.kolGly} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>
+      ${(d.kolGlyInterno||0)>0?`<tr><td>Gly interno</td><td>${d.kolGlyInterno} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>`:''}
+
       <tr><td>Vit. C gly</td><td>${d.vitCGly?d.vitCGly+' g':'—'}</td></tr>
       <tr><td>Lecitin gly</td><td>${d.lecitinGly?d.lecitinGly+' g':'—'}</td></tr>
       <tr><td>Cena alc</td><td>${d.cenaAlc?d.cenaAlc.toFixed(2)+' €':'—'}</td></tr>
@@ -1216,6 +1347,8 @@ function openDNDetail(id){
       ${canClose?`<button class="bsave green" onclick="zaklucDN('${d.id}')">✓ Zaključi DN</button>`:''}
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
+      ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">📦 Knjiži materiale izhod</button>`:''}
+      ${matKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Materiali izhod že knjižen</div>`:''}
       ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
@@ -1250,6 +1383,39 @@ function knjizEtanolIzhod(id){
   closeSheet('dnDetailOverlay');
   renderEtStats();renderEtanol();
   toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
+}
+
+function knjizMaterialeIzhodRetro(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  if(materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka)){
+    toast('⚠ Materiali izhod je že knjižen za ta DN');return;
+  }
+  const matsBefore=materiali.length;
+  const stMatov=knjizMaterjaleIzhod(d);
+  save();
+  materiali.slice(matsBefore).forEach(m=>sbPushMat(m));
+  closeSheet('dnDetailOverlay');
+  renderMateriali();
+  toast(`✓ ${stMatov} materialov knjiženih za ${d.oznaka}`);
+}
+
+function syncGobaIzhod(d,oldOznaka){
+  const gobaTip=getGobaTip((d.vrstaGobe||'').toLowerCase());
+  const searchOznaka=oldOznaka||d.oznaka;
+  // Odstrani vse obstoječe goba izhode za ta DN
+  const toDelete=materiali.filter(m=>m.smer==='izhod'&&m.dokument===searchOznaka&&m.tip.startsWith('goba_'));
+  toDelete.forEach(m=>sbDel('gm_dn_materiali',m.id).catch(e=>console.error('del gobaIzhod',e)));
+  materiali=materiali.filter(m=>!(m.smer==='izhod'&&m.dokument===searchOznaka&&m.tip.startsWith('goba_')));
+  // Ustvari nove izhode za vsako serijo
+  const serije=d.serije?.filter(r=>r.masa>0)||[];
+  if(!serije.length&&d.masaGobe>0)serije.push({serija:d.serijaGobe||'',masa:d.masaGobe});
+  serije.forEach(row=>{
+    const m={id:uid(),datum:d.datum,tip:gobaTip,smer:'izhod',
+      dokument:d.oznaka,serijaGobe:row.serija||'',
+      kolicina:row.masa,opomba:'DN goba izhod'};
+    materiali.push(m);
+    sbPushMat(m);
+  });
 }
 
 function zaklucDN(id){
@@ -1963,13 +2129,14 @@ function knjizMaterjaleIzhod(d){
   const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
 
   // Goba / surovina
-  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+  const gobaTip=getGobaTip(vrsta);
 
   const izhodi=[];
   if(skupajBela>0)izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
   if(skupajCrna>0)izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
   if(skupajEtikete>0)izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
-  if(d.masaGobe>0)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
+  const gobaAlreadyBooked=materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip.startsWith('goba_'));
+  if(d.masaGobe>0&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
   if((d.vitCAlc||0)+(d.vitCGly||0)>0)izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
   if((d.lecitinAlc||0)+(d.lecitinGly||0)>0)izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
 
@@ -2197,8 +2364,10 @@ function dnToSb(d){return{
   id:d.id,oznaka:d.oznaka,datum:d.datum||null,namen:d.namen||null,
   vrsta_gobe:d.vrstaGobe||null,serija_gobe:d.serijaGobe||null,masa_gobe:d.masaGobe||null,
   serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
+  kol_alc_prodaja:d.kolAlcProdaja??null,kol_alc_interno:d.kolAlcInterno??null,
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,
   kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
+  kol_gly_prodaja:d.kolGlyProdaja??null,kol_gly_interno:d.kolGlyInterno??null,
   vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,
   izgube:d.izgube||0,aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
   masa_etoh:d.masaEtOH||0,pct_etoh:d.pctEtOH||96.25,gostota:d.gostota||null,
@@ -2212,8 +2381,10 @@ function sbToDn(r){return{
   id:r.id,oznaka:r.oznaka,datum:r.datum,namen:r.namen,
   vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
   serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
+  kolAlcProdaja:r.kol_alc_prodaja??null,kolAlcInterno:r.kol_alc_interno??null,
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,
   kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
+  kolGlyProdaja:r.kol_gly_prodaja??null,kolGlyInterno:r.kol_gly_interno??null,
   vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,
   izgube:r.izgube||0,aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,
   masaEtOH:r.masa_etoh||0,pctEtOH:r.pct_etoh||96.25,gostota:r.gostota||0,

@@ -741,7 +741,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
       <div class="slabel">Poraba surovin</div>
       <div class="frow">
-        <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" placeholder="npr. R1, B3" autocapitalize="characters"></div>
+        <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" list="serijaGobeList" placeholder="izberite ali vpišite…" autocapitalize="characters"><datalist id="serijaGobeList"></datalist></div>
         <div class="field"><label>Masa gobe (g)</label><input type="number" id="bMasaGobe" min="0" placeholder="0" inputmode="decimal"></div>
       </div>
       <div class="field"><label>Masa glicerina (g)</label><input type="number" id="bMasaGlicerina" min="0" placeholder="0" inputmode="decimal"></div>
@@ -3011,9 +3011,40 @@ function suggestSKU(name){
   return{alc:prefix+'-ALC-50',gly:prefix+'-GLY-50'};
 }
 
+function deriveGobaType(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('reishi'))return'goba_reishi';
+  if(n.includes('bradovec')||n.includes('lion')||n.includes('bradavičar'))return'goba_bradovec';
+  if(n.includes('chaga'))return'goba_chaga';
+  return null;
+}
+async function updateSerijaGobeList(){
+  const id=document.getElementById('bProductSel').value;
+  const pName=products.find(p=>p.id===id)?.name||'';
+  const gobaType=deriveGobaType(pName);
+  const dl=document.getElementById('serijaGobeList');
+  dl.innerHTML='';
+  if(!gobaType)return;
+  try{
+    const rows=await sbFetch('gm_dn_materiali',`tip=eq.${gobaType}&smer=eq.vhod&order=datum.asc`);
+    const map={};
+    rows.forEach(r=>{
+      const s=r.serija_gobe||r.serijaGobe||'';if(!s)return;
+      if(!map[s])map[s]={serija:s,kolicina:0};
+      map[s].kolicina+=(r.kolicina||0);
+    });
+    Object.values(map).sort((a,b)=>a.serija.localeCompare(b.serija)).forEach(({serija,kolicina})=>{
+      const opt=document.createElement('option');
+      opt.value=serija;
+      opt.label=`${serija} (${kolicina} g na zalogi)`;
+      dl.appendChild(opt);
+    });
+  }catch(e){console.warn('updateSerijaGobeList',e);}
+}
 function onBatchProductChange(){
   document.getElementById('bNewProduct').value='';
   const id=document.getElementById('bProductSel').value;if(!id)return;
+  updateSerijaGobeList();
   const lb=batches.filter(b=>b.productId===id);
   if(lb.length){
     const b=lb[0];
@@ -3034,6 +3065,7 @@ function openBatchSheet(id=null){
     const b=batches.find(x=>x.id===id);if(!b)return;
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
+    updateSerijaGobeList();
     document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
     document.getElementById('bSerijaGobe').value=b.serijaGobe||'';document.getElementById('bMasaGobe').value=b.masaGobe||'';document.getElementById('bMasaGlicerina').value=b.masaGlicerina||'';
     document.getElementById('bSafetyAlc').value=b.safetyAlc??10;document.getElementById('bSafetyGly').value=b.safetyGly??10;

@@ -293,9 +293,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <input id="dnNamen" type="text" readonly style="background:var(--parchment);font-size:.82rem" placeholder="—">
         </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Serija gobe</label><input id="dnSerijaGobe" placeholder="npr. BG-2024-01"></div>
-        <div class="field"><label>Masa gobe (kg)</label><input id="dnMasaGobe" type="text" step="0.01" placeholder="0.00" inputmode="decimal" oninput="calcDN()"></div>
+      <div id="dnSerijeContainer"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
+        <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
       </div>
       <div class="slabel">Etanol — vhod</div>
       <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
@@ -1067,8 +1068,15 @@ function openDNSheet(id){
   document.getElementById('dnVrstaGobe').value=d?.vrstaGobe||'Reishi';
   updateDNNamen();
   if(d?.namen)document.getElementById('dnNamen').value=d.namen;
-  document.getElementById('dnSerijaGobe').value=d?.serijaGobe||'';
-  document.getElementById('dnMasaGobe').value=d?.masaGobe||'';
+  if(id){
+    const izhodi=materiali.filter(m=>m.smer==='izhod'&&m.dokument===(d?.oznaka||'')&&m.tip.startsWith('goba_')).sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
+    dnSerijeRows=izhodi.length>0
+      ?izhodi.map(m=>({serija:m.serijaGobe||'',masa:String(m.kolicina||'')}))
+      :(d?.serijaGobe||d?.masaGobe>0?[{serija:d.serijaGobe||'',masa:String(d.masaGobe||'')}]:[{serija:'',masa:''}]);
+  } else {
+    dnSerijeRows=[{serija:'',masa:''}];
+  }
+  renderDNSerijeRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
   document.getElementById('dnKolAlcProdaja').value='kolAlcProdaja' in (d||{})?d.kolAlcProdaja:(d?.kolAlc||'');
@@ -1108,9 +1116,102 @@ function nextDNNum(){
   return`DN-${y}-${String(next).padStart(3,'0')}`;
 }
 
+// ── SERIJE GOBE v DN ──
+let dnSerijeRows=[{serija:'',masa:''}];
+
+function getGobaTip(vrsta){
+  return vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+}
+
+function getAvailableSeries(gobaTip){
+  const sm={};
+  materiali.filter(m=>m.tip===gobaTip&&m.serijaGobe).forEach(m=>{
+    const s=m.serijaGobe;
+    if(!sm[s])sm[s]={serija:s,vhod:0,izhod:0,datum:m.datum};
+    if(m.datum<sm[s].datum)sm[s].datum=m.datum;
+    if(m.smer==='vhod')sm[s].vhod+=m.kolicina||0;
+    else sm[s].izhod+=m.kolicina||0;
+  });
+  return Object.values(sm)
+    .map(s=>({...s,zaloga:round(s.vhod-s.izhod,3)}))
+    .filter(s=>s.zaloga>0.001)
+    .sort((a,b)=>a.datum.localeCompare(b.datum));
+}
+
+function renderDNSerijeRows(){
+  const vrstaGobe=document.getElementById('dnVrstaGobe')?.value||'Reishi';
+  const gobaTip=getGobaTip(vrstaGobe.toLowerCase());
+  const available=getAvailableSeries(gobaTip);
+  const container=document.getElementById('dnSerijeContainer');
+  if(!container)return;
+  const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
+  const totalEl=document.getElementById('dnMasaGobeTotal');
+  if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
+  container.innerHTML=dnSerijeRows.map((row,idx)=>{
+    const opts=available.map(s=>`<option value="${s.serija}"${s.serija===row.serija?' selected':''}>${s.serija} (${s.zaloga.toFixed(3)} kg)</option>`).join('');
+    const rowZaloga=available.find(s=>s.serija===row.serija)?.zaloga||0;
+    const masaNum=parseNum(row.masa);
+    const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
+    const hintTxt=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(row.serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.15rem">
+      <div class="field" style="flex:2;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Serija gobe (FIFO)':'Dodatna serija'}</label>
+        <select onchange="onDNSerijaChange(${idx},this.value)">
+          <option value="">— izberi —</option>${opts}
+        </select>
+      </div>
+      <div class="field" style="flex:1;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Masa (kg)':'&nbsp;'}</label>
+        <input id="dnMasaGobe-${idx}" type="text" inputmode="decimal" value="${row.masa||''}" placeholder="0.000" style="${prevec?'border-color:var(--danger);':''}" oninput="onDNMasaChange(${idx},this.value)">
+      </div>
+      ${idx>0?`<button type="button" onclick="removeDNSerijaRow(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1;margin-bottom:.05rem">✕</button>`:''}
+    </div>
+    <div id="dnSerijeHint-${idx}" style="font-size:.67rem;color:${prevec?'var(--danger)':'var(--muted)'};min-height:.85rem;padding-left:.1rem;margin-bottom:.3rem">${hintTxt}</div>`;
+  }).join('');
+}
+
+function addDNSerijaRow(){
+  dnSerijeRows.push({serija:'',masa:''});
+  renderDNSerijeRows();
+}
+
+function removeDNSerijaRow(idx){
+  dnSerijeRows.splice(idx,1);
+  renderDNSerijeRows();
+}
+
+function onDNSerijaChange(idx,val){
+  dnSerijeRows[idx].serija=val;
+  if(!parseNum(dnSerijeRows[idx].masa)&&val){
+    const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
+    const s=getAvailableSeries(gobaTip).find(x=>x.serija===val);
+    if(s)dnSerijeRows[idx].masa=String(s.zaloga);
+  }
+  renderDNSerijeRows();
+}
+
+function onDNMasaChange(idx,val){
+  dnSerijeRows[idx].masa=val;
+  const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
+  const rowZaloga=getAvailableSeries(gobaTip).find(s=>s.serija===dnSerijeRows[idx].serija)?.zaloga||0;
+  const masaNum=parseNum(val);
+  const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
+  const hintEl=document.getElementById(`dnSerijeHint-${idx}`);
+  if(hintEl){
+    hintEl.style.color=prevec?'var(--danger)':'var(--muted)';
+    hintEl.textContent=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(dnSerijeRows[idx].serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+  }
+  const inputEl=document.getElementById(`dnMasaGobe-${idx}`);
+  if(inputEl)inputEl.style.borderColor=prevec?'var(--danger)':'';
+  const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
+  const totalEl=document.getElementById('dnMasaGobeTotal');
+  if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
+}
+
 function updateDNNamen(){
   const g=document.getElementById('dnVrstaGobe').value;
   document.getElementById('dnNamen').value='Ekstrakcija '+g;
+  renderDNSerijeRows();
 }
 
 // ── SAVE DN ──
@@ -1127,8 +1228,9 @@ function saveDN(){
     datum:document.getElementById('dnDatum').value,
     namen:document.getElementById('dnNamen').value,
     vrstaGobe:document.getElementById('dnVrstaGobe').value,
-    serijaGobe:document.getElementById('dnSerijaGobe').value.trim(),
-    masaGobe:parseNum(document.getElementById('dnMasaGobe').value),
+    serije:dnSerijeRows.filter(r=>parseNum(r.masa)>0).map(r=>({serija:r.serija,masa:parseNum(r.masa)})),
+    serijaGobe:dnSerijeRows[0]?.serija||'',
+    masaGobe:round(dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0),3),
     serijaAlc:document.getElementById('dnSerijaAlc').value.trim().toUpperCase(),
     kolAlcProdaja:parseInt(document.getElementById('dnKolAlcProdaja').value)||0,
     kolAlcInterno:parseInt(document.getElementById('dnKolAlcInterno').value)||0,
@@ -1298,25 +1400,22 @@ function knjizMaterialeIzhodRetro(id){
 }
 
 function syncGobaIzhod(d,oldOznaka){
-  const vrsta=d.vrstaGobe?.toLowerCase()||'';
-  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+  const gobaTip=getGobaTip((d.vrstaGobe||'').toLowerCase());
   const searchOznaka=oldOznaka||d.oznaka;
-  const existingIdx=materiali.findIndex(m=>m.smer==='izhod'&&m.dokument===searchOznaka&&m.tip.startsWith('goba_'));
-  if(d.masaGobe>0){
-    const m={
-      id:existingIdx>=0?materiali[existingIdx].id:uid(),
-      datum:d.datum,tip:gobaTip,smer:'izhod',
-      dokument:d.oznaka,serijaGobe:d.serijaGobe||'',
-      kolicina:d.masaGobe,opomba:'DN goba izhod'
-    };
-    if(existingIdx>=0){materiali[existingIdx]=m;}
-    else{materiali.push(m);}
+  // Odstrani vse obstoječe goba izhode za ta DN
+  const toDelete=materiali.filter(m=>m.smer==='izhod'&&m.dokument===searchOznaka&&m.tip.startsWith('goba_'));
+  toDelete.forEach(m=>sbDel('gm_dn_materiali',m.id).catch(e=>console.error('del gobaIzhod',e)));
+  materiali=materiali.filter(m=>!(m.smer==='izhod'&&m.dokument===searchOznaka&&m.tip.startsWith('goba_')));
+  // Ustvari nove izhode za vsako serijo
+  const serije=d.serije?.filter(r=>r.masa>0)||[];
+  if(!serije.length&&d.masaGobe>0)serije.push({serija:d.serijaGobe||'',masa:d.masaGobe});
+  serije.forEach(row=>{
+    const m={id:uid(),datum:d.datum,tip:gobaTip,smer:'izhod',
+      dokument:d.oznaka,serijaGobe:row.serija||'',
+      kolicina:row.masa,opomba:'DN goba izhod'};
+    materiali.push(m);
     sbPushMat(m);
-  } else if(existingIdx>=0){
-    const toDelete=materiali[existingIdx];
-    materiali.splice(existingIdx,1);
-    sbDel('gm_dn_materiali',toDelete.id).catch(e=>console.error('del gobaIzhod',e));
-  }
+  });
 }
 
 function zaklucDN(id){
@@ -2030,7 +2129,7 @@ function knjizMaterjaleIzhod(d){
   const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
 
   // Goba / surovina
-  const gobaTip=vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
+  const gobaTip=getGobaTip(vrsta);
 
   const izhodi=[];
   if(skupajBela>0)izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});

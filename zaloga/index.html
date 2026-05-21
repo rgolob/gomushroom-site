@@ -739,6 +739,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="field"><label>Opomba</label><input id="bNote" placeholder="npr. ekstrakcija #12…"></div>
       <div class="field"><label>Delovni nalog (DN)</label><input id="bWorkOrder" placeholder="npr. DN-2024-042" autocapitalize="characters"></div>
+      <div class="slabel">Poraba surovin</div>
+      <div class="frow">
+        <div class="field"><label>Serija gobe</label><input id="bSerijaGobe" placeholder="npr. R1, B3" autocapitalize="characters"></div>
+        <div class="field"><label>Masa gobe (g)</label><input type="number" id="bMasaGobe" min="0" placeholder="0" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Masa glicerina (g)</label><input type="number" id="bMasaGlicerina" min="0" placeholder="0" inputmode="decimal"></div>
       <div class="frow">
         <div class="field"><label>Varnostna zaloga alc (kom.)</label><input type="number" id="bSafetyAlc" min="0" placeholder="10" inputmode="numeric"></div>
         <div class="field"><label>Varnostna zaloga gly (kom.)</label><input type="number" id="bSafetyGly" min="0" placeholder="10" inputmode="numeric"></div>
@@ -1450,6 +1456,7 @@ function sbBatchToApp(b){
   return {
     id:b.id, productId:b.product_id, productName:b.product_name,
     batchNum:b.batch_num, date:b.date, note:b.note, workOrder:b.work_order,
+    serijaGobe:b.serija_gobe||'', masaGobe:b.masa_gobe||0, masaGlicerina:b.masa_glicerina||0,
     safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
     alc:{
       sku:b.alc_sku, qty:b.alc_qty||0, priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
@@ -1467,6 +1474,7 @@ function appBatchToSb(b){
   return {
     id:b.id, product_id:b.productId, product_name:b.productName,
     batch_num:b.batchNum, date:b.date||null, note:b.note||null, work_order:b.workOrder||null,
+    serija_gobe:b.serijaGobe||null, masa_gobe:b.masaGobe||null, masa_glicerina:b.masaGlicerina||null,
     safety_alc:b.safetyAlc||0, safety_gly:b.safetyGly||0,
     alc_sku:b.alc?.sku||null, alc_qty:b.alc?.qty||0, alc_price_malo:b.alc?.priceMalo||0,
     alc_vol:b.alc?.vol||null, alc_alloc_prod:b.alc?.alloc?.prod||0, alc_alloc_int:b.alc?.alloc?.int||0,
@@ -3027,6 +3035,7 @@ function openBatchSheet(id=null){
     document.getElementById('batchSheetTitle').textContent='Uredi serijo';
     document.getElementById('bProductSel').value=b.productId;document.getElementById('bNewProduct').value='';
     document.getElementById('bBatch').value=b.batchNum||'';document.getElementById('bDate').value=b.date||'';document.getElementById('bNote').value=b.note||'';document.getElementById('bWorkOrder').value=b.workOrder||'';
+    document.getElementById('bSerijaGobe').value=b.serijaGobe||'';document.getElementById('bMasaGobe').value=b.masaGobe||'';document.getElementById('bMasaGlicerina').value=b.masaGlicerina||'';
     document.getElementById('bSafetyAlc').value=b.safetyAlc??10;document.getElementById('bSafetyGly').value=b.safetyGly??10;
     // Lock batch number if batch has sales
     const hasSales=saleGroups.some(g=>(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>bb.batchId===b.id)));
@@ -3043,7 +3052,7 @@ function openBatchSheet(id=null){
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
-    ['bBatch','bNote','bWorkOrder','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bMasaGlicerina','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('bBatch').removeAttribute('readonly');
     document.getElementById('bBatchLockWarn').style.display='none';
     // Prefill safety stock from last batch of selected product
@@ -3069,7 +3078,11 @@ function saveBatch(){
   const alcAlloc=getAlloc('Alc'),glyAlloc=getAlloc('Gly');
   if((alcAlloc.prod+alcAlloc.int)>alcQty){alert('Alkohol: razporejenih preveč.');return;}
   if((glyAlloc.prod+glyAlloc.int)>glyQty){alert('Glicerin: razporejenih preveč.');return;}
-  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
+  const bData={productId,productName,batchNum,date:document.getElementById('bDate').value,note:document.getElementById('bNote').value.trim(),workOrder:document.getElementById('bWorkOrder').value.trim(),
+    serijaGobe:document.getElementById('bSerijaGobe').value.trim(),
+    masaGobe:parseFloat(document.getElementById('bMasaGobe').value)||0,
+    masaGlicerina:parseFloat(document.getElementById('bMasaGlicerina').value)||0,
+    safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
     alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
     gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
   };

@@ -454,9 +454,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div id="matGobaSerija" style="display:none" class="field">
         <label>Serija gobe</label><input id="matSerijaGobe" placeholder="npr. BG-2024-01">
       </div>
-      <!-- Samo za surovine: dobavitelj -->
+      <!-- Dobavitelj -->
       <div id="matDobaviteljField" class="field" style="display:none">
-        <label>Dobavitelj</label><input id="matDobavitelj" placeholder="npr. iHerb, ECP d.o.o.">
+        <label>Dobavitelj</label><input id="matDobavitelj" list="matDobaviteljList" placeholder="npr. iHerb, ECP d.o.o." autocomplete="off"><datalist id="matDobaviteljList"></datalist>
       </div>
       <div class="frow">
         <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0"></div>
@@ -1818,6 +1818,7 @@ function openMaterijalSheet(id){
   document.getElementById('matStrosek').value=m?.strosek||'';
   document.getElementById('matOpomba').value=m?.opomba||'';
   onMatTipChange();
+  document.getElementById('matDobavitelj').value=m?.dobavitelj||'';
   openSheet('materialiOverlay');
 }
 
@@ -1853,9 +1854,18 @@ function onMatTipChange(){
   const enota=MAT_ENOTA[tip]||'kom';
   document.getElementById('matKolLabel').textContent=`Količina (${enota})`;
   const isGoba=tip.startsWith('goba');
-  const isSurovina=MAT_KAT[tip]==='surovina';
   document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
-  document.getElementById('matDobaviteljField').style.display=isSurovina?'':'none';
+  document.getElementById('matDobaviteljField').style.display=tip?'':'none';
+  // Sugestije dobaviteljev za ta tip
+  const dl=document.getElementById('matDobaviteljList');
+  dl.innerHTML='';
+  if(tip){
+    const seen=new Set();
+    materiali.filter(m=>m.tip===tip&&m.dobavitelj).forEach(m=>{
+      const d=m.dobavitelj.trim();
+      if(d&&!seen.has(d)){seen.add(d);const o=document.createElement('option');o.value=d;dl.appendChild(o);}
+    });
+  }
 }
 
 function saveMaterjal(){
@@ -1868,6 +1878,7 @@ function saveMaterjal(){
     tip,smer:'vhod',
     dokument:document.getElementById('matDok').value.trim(),
     serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
+    dobavitelj:document.getElementById('matDobavitelj').value.trim(),
     kolicina,
     strosek:parseNum(document.getElementById('matStrosek').value||'0'),
     opomba:document.getElementById('matOpomba').value.trim(),
@@ -2194,11 +2205,13 @@ function sbToEt(r){return{
 function matToSb(m){return{
   id:m.id,datum:m.datum||null,tip:m.tip,smer:m.smer||'vhod',
   dokument:m.dokument||null,serija_gobe:m.serijaGobe||null,
+  dobavitelj:m.dobavitelj||null,
   kolicina:m.kolicina||0,strosek:m.strosek||0,opomba:m.opomba||null
 };}
 function sbToMat(r){return{
   id:r.id,datum:r.datum,tip:r.tip,smer:r.smer||'vhod',
   dokument:r.dokument||'',serijaGobe:r.serija_gobe||'',
+  dobavitelj:r.dobavitelj||'',
   kolicina:r.kolicina||0,strosek:r.strosek||0,opomba:r.opomba||''
 };}
 

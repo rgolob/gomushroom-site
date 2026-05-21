@@ -2499,11 +2499,9 @@ async function migrateOpombaToDoabvitelj(){
   if(!toMigrate.length)return;
   toMigrate.forEach(m=>{m.dobavitelj=m.opomba;m.opomba='';});
   try{
-    setSyncStatus('↻');
     await sbUpsert('gm_dn_materiali',toMigrate.map(matToSb));
-    setSyncStatus('✓');
     save();renderMateriali();
-  }catch(e){setSyncStatus('⚠');console.error('migrateOpombaToDoabvitelj',e);}
+  }catch(e){console.error('migrateOpombaToDoabvitelj',e);}
 }
 </script>
 </body>

@@ -3041,13 +3041,13 @@ async function updateSerijaGobeList(){
     const map={};
     rows.forEach(r=>{
       const s=r.serija_gobe||r.serijaGobe||'';if(!s)return;
-      if(!map[s])map[s]={serija:s,kolicina:0};
+      if(!map[s])map[s]={serija:s,kolicina:0,datum:r.datum||''};
       map[s].kolicina+=(r.kolicina||0);
     });
-    Object.values(map).sort((a,b)=>a.serija.localeCompare(b.serija)).forEach(({serija,kolicina})=>{
+    Object.values(map).sort((a,b)=>a.datum.localeCompare(b.datum)).forEach(({serija,kolicina})=>{
       const opt=document.createElement('option');
       opt.value=serija;
-      opt.label=`${serija} (${kolicina} g na zalogi)`;
+      opt.label=`${serija} (${kolicina} kg na zalogi)`;
       dl.appendChild(opt);
     });
   }catch(e){console.warn('updateSerijaGobeList',e);}

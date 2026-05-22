@@ -2164,17 +2164,21 @@ function knjizMaterjaleIzhod(d){
   // Goba / surovina
   const gobaTip=getGobaTip(vrsta);
 
+  // Datumski filter: odštej samo materiale ki so bili na zalogi na/pred datumom DN
+  const dnDate=datum||'';
+  const bilNaZalogi=tip=>materiali.some(m=>m.smer==='vhod'&&m.tip===tip&&(m.datum||'')<=dnDate);
+
   // Idempotency: preskoči tipe ki so za ta DN že knjiženi
   const alreadyBooked=tip=>materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip===tip);
   const gobaAlreadyBooked=materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip.startsWith('goba_'));
 
   const izhodi=[];
-  if(skupajBela>0&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
-  if(skupajCrna>0&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
-  if(skupajEtikete>0&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
+  if(skupajBela>0&&bilNaZalogi('steklenicka_bela')&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
+  if(skupajCrna>0&&bilNaZalogi('steklenicka_crna')&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
+  if(skupajEtikete>0&&bilNaZalogi(etiketaTip)&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
   if(d.masaGobe>0&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
-  if((d.vitCAlc||0)+(d.vitCGly||0)>0&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
-  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
+  if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
+  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
 
   izhodi.forEach(iz=>{
     materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',

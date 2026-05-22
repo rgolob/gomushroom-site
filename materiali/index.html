@@ -332,6 +332,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
       </div>
       <div class="frow">
+        <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
+        <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Steklenička gly</label>
           <select id="dnStekGly">
             <option value="bela">⬜ Bela</option>
@@ -810,7 +814,13 @@ function calcTrosarina(aae,volL){if(!volL)return 0;return round(aae/(volL/100),6
 // AAE tinkture — vedno 30 vol% EtOH, 50 mL/kom
 const TINKTURA_VOL_PCT=30;
 const TINKTURA_VOL_KOM=0.050; // L na kos
+const GLICERIN_GOSTOTA=1.261; // g/mL → 1261 g/L
 
+function calcGlicerin(){
+  const masa=parseNum(document.getElementById('dnMasaGlicerina').value||'0');
+  const vol=masa>0?round(masa/(GLICERIN_GOSTOTA*1000),4):null;
+  document.getElementById('dnVolGlicerina').value=vol?vol+' L':'';
+}
 function calcDNTinktura(){
   const alcProd=parseInt(document.getElementById('dnKolAlc')?.value)||0;
   const alcInt=parseInt(document.getElementById('dnKolAlcInterno')?.value)||0;
@@ -1101,6 +1111,8 @@ function openDNSheet(id){
   document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno||'';
   document.getElementById('dnKolGlySkupaj').value=((d?.kolGly||0)+(d?.kolGlyInterno||0))||'';
   document.getElementById('dnStekGly').value=d?.stekGly||'bela';
+  document.getElementById('dnMasaGlicerina').value=d?.masaGlicerina||'';
+  calcGlicerin();
   document.getElementById('dnVitCGly').value=d?.vitCGly||'';
   document.getElementById('dnLecitinGly').value=d?.lecitinGly||'';
   document.getElementById('dnIzgube').value=d?.izgube||'';
@@ -1254,6 +1266,7 @@ function saveDN(){
     kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
     kolGlyInterno:parseInt(document.getElementById('dnKolGlyInterno').value)||0,
     stekGly:document.getElementById('dnStekGly').value,
+    masaGlicerina:parseNum(document.getElementById('dnMasaGlicerina').value||'0'),
     vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
     lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
     izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
@@ -1346,6 +1359,7 @@ function openDNDetail(id){
       <tr><td>Gly prodaja</td><td>${d.kolGly||0} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>
       ${(d.kolGlyInterno||0)>0?`<tr><td>Gly interno</td><td>${d.kolGlyInterno} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>`:''}
 
+      ${(d.masaGlicerina||0)>0?`<tr><td>Masa glicerina</td><td>${d.masaGlicerina} g</td></tr>`:''}
       <tr><td>Vit. C gly</td><td>${d.vitCGly?d.vitCGly+' g':'—'}</td></tr>
       <tr><td>Lecitin gly</td><td>${d.lecitinGly?d.lecitinGly+' g':'—'}</td></tr>
       <tr><td>Cena alc</td><td>${d.cenaAlc?d.cenaAlc.toFixed(2)+' €':'—'}</td></tr>
@@ -2216,6 +2230,8 @@ function knjizMaterjaleIzhod(d){
   if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
   if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
   if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
+  const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
+  if(volGlicerin>0&&bilNaZalogi('glicerin')&&!alreadyBooked('glicerin'))izhodi.push({tip:'glicerin',kolicina:volGlicerin});
 
   izhodi.forEach(iz=>{
     materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',
@@ -2460,12 +2476,14 @@ async function retroaktivnoPoknjiziVseDN(){
     const vitc=round((d.vitCAlc||0)+(d.vitCGly||0),3);
     const lecitin=round((d.lecitinAlc||0)+(d.lecitinGly||0),3);
 
+    const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
     const kandidati=[
       {tip:'steklenicka_bela',kolicina:skupajBela},
       {tip:'steklenicka_crna',kolicina:skupajCrna},
       {tip:etiketaTip,kolicina:skupajEtikete},
       {tip:'vitc',kolicina:vitc},
       {tip:'lecitin',kolicina:lecitin},
+      {tip:'glicerin',kolicina:volGlicerin},
     ];
     kandidati.forEach(({tip,kolicina})=>{
       if(kolicina<=0)return;
@@ -2561,6 +2579,7 @@ function dnToSb(d){return{
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,
   kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
   kol_gly_interno:d.kolGlyInterno??null,
+  masa_glicerina:d.masaGlicerina||0,
   vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,
   izgube:d.izgube||0,aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
   masa_etoh:d.masaEtOH||0,pct_etoh:d.pctEtOH||96.25,gostota:d.gostota||null,
@@ -2578,6 +2597,7 @@ function sbToDn(r){return{
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,
   kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
   kolGlyInterno:r.kol_gly_interno??null,
+  masaGlicerina:r.masa_glicerina||0,
   vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,
   izgube:r.izgube||0,aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,
   masaEtOH:r.masa_etoh||0,pctEtOH:r.pct_etoh||96.25,gostota:r.gostota||0,

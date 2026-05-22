@@ -83,7 +83,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* ── FORMS ── */
 .field{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.6rem}
 .field label{font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-.field input,.field select,.field textarea{padding:.55rem .75rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none;width:100%}
+.field input,.field select,.field textarea{padding:.55rem .75rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none;width:100%}
 .field input:focus,.field select:focus{border-color:var(--accent)}
 .field textarea{min-height:60px;resize:vertical}
 .frow{display:flex;gap:.5rem}.frow .field{flex:1;min-width:0}
@@ -107,8 +107,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* ── SLABEL ── */
 .slabel{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.6rem 0 .3rem}
-.slabel-alc{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b5a2a;margin:.6rem 0 .3rem;padding:.25rem .5rem;border-left:3px solid #af8455;background:rgba(175,132,85,.07);border-radius:0 4px 4px 0}
-.slabel-gly{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2a6b4a;margin:.6rem 0 .3rem;padding:.25rem .5rem;border-left:3px solid #3a7a5a;background:rgba(58,122,90,.07);border-radius:0 4px 4px 0}
+.slabel-alc{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b5a2a;margin:0 0 .4rem;padding:.25rem .5rem;border-left:3px solid #af8455;background:rgba(175,132,85,.12);border-radius:0 4px 4px 0}
+.slabel-gly{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2a6b4a;margin:0 0 .4rem;padding:.25rem .5rem;border-left:3px solid #3a7a5a;background:rgba(58,122,90,.12);border-radius:0 4px 4px 0}
+.dn-block-alc{background:rgba(175,132,85,.05);border:1px solid rgba(175,132,85,.2);border-radius:8px;padding:.6rem .6rem .4rem;margin-bottom:.5rem}
+.dn-block-gly{background:rgba(58,122,90,.05);border:1px solid rgba(58,122,90,.2);border-radius:8px;padding:.6rem .6rem .4rem;margin-bottom:.5rem}
 .dn-separator{border:none;border-top:1px solid var(--border);margin:1rem 0}
 
 /* ── SEARCH ── */
@@ -301,57 +303,60 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
         <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
       </div>
-      <div class="slabel-alc">🥃 Etanol — vhod</div>
-      <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
-      <div class="frow">
-        <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
-        <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="dnPctEtOH" type="text" placeholder="npr. 96,25" inputmode="decimal" oninput="calcDN()"></div>
-      </div>
-      <div class="frow">
-        <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
-        <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
-      </div>
-      <div class="slabel-alc">🥃 Alkoholna tinktura</div>
-      <div class="frow">
-        <div class="field"><label>Alc prodaja (kom.)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-        <div class="field"><label>Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-      </div>
-      <div class="frow">
-        <div class="field"><label>Steklenička alc</label>
-          <select id="dnStekAlc">
-            <option value="bela">⬜ Bela</option>
-            <option value="crna">⬛ Črna</option>
-          </select>
+      <div class="dn-block-alc">
+        <div class="slabel-alc">🥃 Etanol — vhod</div>
+        <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
+        <div class="frow">
+          <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
+          <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="dnPctEtOH" type="text" placeholder="npr. 96,25" inputmode="decimal" oninput="calcDN()"></div>
         </div>
-        <div class="field"><label>Skupaj alc (kom.)</label><input id="dnKolAlcSkupaj" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
-      </div>
-      <div class="frow">
-        <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
-        <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
-      </div>
-      <hr class="dn-separator">
-      <div class="slabel-gly">🌿 Glicerin — vhod</div>
-      <div class="frow">
-        <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
-        <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
-      </div>
-      <div class="slabel-gly">🌿 Glicerinska tinktura</div>
-      <div class="frow">
-        <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-        <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-      </div>
-      <div class="frow">
-        <div class="field"><label>Steklenička gly</label>
-          <select id="dnStekGly">
-            <option value="bela">⬜ Bela</option>
-            <option value="crna">⬛ Črna</option>
-          </select>
+        <div class="frow">
+          <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+          <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
         </div>
-        <div class="field"><label>Skupaj gly (kom.)</label><input id="dnKolGlySkupaj" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+        <div class="slabel-alc">🥃 Alkoholna tinktura</div>
+        <div class="frow">
+          <div class="field"><label>Alc prodaja (kom.)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label>Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Steklenička alc</label>
+            <select id="dnStekAlc">
+              <option value="bela">⬜ Bela</option>
+              <option value="crna">⬛ Črna</option>
+            </select>
+          </div>
+          <div class="field"><label>Skupaj alc (kom.)</label><input id="dnKolAlcSkupaj" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+          <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+        </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
-        <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+      <div class="dn-block-gly">
+        <div class="slabel-gly">🌿 Glicerin — vhod</div>
+        <div class="frow">
+          <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
+          <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
+        </div>
+        <div class="slabel-gly">🌿 Glicerinska tinktura</div>
+        <div class="frow">
+          <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Steklenička gly</label>
+            <select id="dnStekGly">
+              <option value="bela">⬜ Bela</option>
+              <option value="crna">⬛ Črna</option>
+            </select>
+          </div>
+          <div class="field"><label>Skupaj gly (kom.)</label><input id="dnKolGlySkupaj" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+          <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+        </div>
       </div>
       <div class="frow">
         <div class="field"><label>AAE v tinktaurah (L) ⚡ trošarina</label><input id="dnAAETinkture" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent)" placeholder="—"></div>

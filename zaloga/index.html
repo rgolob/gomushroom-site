@@ -3915,6 +3915,10 @@ if(!Object.keys(pendingBatchAlloc).length){
     if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice failed:',e));
     printInvoice(group);
     if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
+    // Samodejno pošlji email z računom in QR kodo če ima kupec email
+    if(inv&&email&&(ch==='malo'||ch==='velo')){
+      sendInvoiceEmail(inv.id).catch(e=>console.warn('auto email failed:',e));
+    }
   }
   if((ch==='kom'||ch==='velo')&&deliveryNum){printDobavnica(group);}
   sbSaveCounters().catch(e=>console.warn('sbSaveCounters failed:',e));

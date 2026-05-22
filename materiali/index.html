@@ -1303,7 +1303,7 @@ function openDNDetail(id){
   const canKnjizEt=d.status==='zakljucen'&&!etKnjizen;
   // Preveri ali so materiali izhod (stekleničke, etikete) že knjiženi za ta DN
   const matKnjizen=materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&!m.tip.startsWith('goba_'));
-  const canKnjizMat=d.status==='zakljucen'&&!matKnjizen;
+  const canKnjizMat=d.status==='zakljucen';
 
   document.getElementById('dnDetailBody').innerHTML=`
     <div class="stats-grid" style="margin-bottom:.5rem">
@@ -1349,8 +1349,7 @@ function openDNDetail(id){
       ${canClose?`<button class="bsave green" onclick="zaklucDN('${d.id}')">✓ Zaključi DN</button>`:''}
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
-      ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">📦 Knjiži materiale izhod</button>`:''}
-      ${matKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Materiali izhod že knjižen</div>`:''}
+      ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">${matKnjizen?'↻ Posodobi materiale izhod':'📦 Knjiži materiale izhod'}</button>`:''}
       ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
@@ -1387,19 +1386,25 @@ function knjizEtanolIzhod(id){
   toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
 }
 
-function knjizMaterialeIzhodRetro(id){
+async function knjizMaterialeIzhodRetro(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
-  if(materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka)){
-    toast('⚠ Materiali izhod je že knjižen za ta DN');return;
-  }
-  if(!confirm(`Retroaktivno knjiži materiale izhod za ${d.oznaka}?\n\nStekleničke, etikete in surovine bodo odštete iz zaloge.\nDejanje ni mogoče razveljaviti.`))return;
+  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&m.opomba==='DN izhod retro');
+  const jePonoviKnjiz=obstojeciRetro.length>0;
+  const msg=jePonoviKnjiz
+    ?`Posodobi materiale izhod za ${d.oznaka}?\n\nObstoječi retro vnosi bodo zamenjani z aktualnimi količinami.`
+    :`Retroaktivno knjiži materiale izhod za ${d.oznaka}?\n\nStekleničke, etikete in surovine bodo odštete iz zaloge.`;
+  if(!confirm(msg))return;
+  // Izbriši obstoječe retro vnose za ta DN
+  const delIds=obstojeciRetro.map(m=>m.id);
+  materiali=materiali.filter(m=>!delIds.includes(m.id));
   const matsBefore=materiali.length;
   const stMatov=knjizMaterjaleIzhod(d);
   save();
+  for(const id of delIds){try{await sbDel('gm_dn_materiali',id);}catch(e){console.error('delRetro',e);}}
   materiali.slice(matsBefore).forEach(m=>sbPushMat(m));
   closeSheet('dnDetailOverlay');
   renderMateriali();
-  toast(`✓ ${stMatov} materialov knjiženih za ${d.oznaka}`);
+  toast(`✓ ${stMatov} materialov knjiženih za ${d.oznaka}${jePonoviKnjiz?' (posodobljeno)':''}`);
 }
 
 function syncGobaIzhod(d,oldOznaka){
@@ -2144,34 +2149,40 @@ function knjizMaterjaleIzhod(d){
   const dok=d.oznaka;
   const vrsta=d.vrstaGobe?.toLowerCase()||'';
 
-  // Stekleničke — alc + gly skupaj po tipu
+  // Stekleničke — prodaja + interno, alc + gly skupaj po tipu
   const stekAlcTip='steklenicka_'+(d.stekAlc||'bela');
   const stekGlyTip='steklenicka_'+(d.stekGly||'bela');
-  const skupajBela=(stekAlcTip==='steklenicka_bela'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_bela'?d.kolGly||0:0);
-  const skupajCrna=(stekAlcTip==='steklenicka_crna'?d.kolAlc||0:0)+(stekGlyTip==='steklenicka_crna'?d.kolGly||0:0);
+  const totAlc=(d.kolAlc||0)+(d.kolAlcInterno||0);
+  const totGly=(d.kolGly||0)+(d.kolGlyInterno||0);
+  const skupajBela=(stekAlcTip==='steklenicka_bela'?totAlc:0)+(stekGlyTip==='steklenicka_bela'?totGly:0);
+  const skupajCrna=(stekAlcTip==='steklenicka_crna'?totAlc:0)+(stekGlyTip==='steklenicka_crna'?totGly:0);
 
   // Etikete
   const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
-  const skupajEtikete=(d.kolAlc||0)+(d.kolGly||0);
+  const skupajEtikete=totAlc+totGly;
 
   // Goba / surovina
   const gobaTip=getGobaTip(vrsta);
+
+  // Datumski filter: odštej samo materiale ki so bili na zalogi na/pred datumom DN
+  const dnDate=datum||'';
+  const bilNaZalogi=tip=>materiali.some(m=>m.smer==='vhod'&&m.tip===tip&&(m.datum||'')<=dnDate);
 
   // Idempotency: preskoči tipe ki so za ta DN že knjiženi
   const alreadyBooked=tip=>materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip===tip);
   const gobaAlreadyBooked=materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip.startsWith('goba_'));
 
   const izhodi=[];
-  if(skupajBela>0&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
-  if(skupajCrna>0&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
-  if(skupajEtikete>0&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
-  if(d.masaGobe>0&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
-  if((d.vitCAlc||0)+(d.vitCGly||0)>0&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
-  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
+  if(skupajBela>0&&bilNaZalogi('steklenicka_bela')&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
+  if(skupajCrna>0&&bilNaZalogi('steklenicka_crna')&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
+  if(skupajEtikete>0&&bilNaZalogi(etiketaTip)&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
+  if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
+  if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
+  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
 
   izhodi.forEach(iz=>{
     materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',
-      dokument:dok,serijaGobe:iz.serijaGobe||'',kolicina:iz.kolicina,opomba:'DN izhod'});
+      dokument:dok,serijaGobe:iz.serijaGobe||'',kolicina:iz.kolicina,opomba:'DN izhod retro'});
   });
   return izhodi.length;
 }
@@ -2386,14 +2397,7 @@ async function retroaktivnoPoknjiziVseDN(){
     .sort((a,b)=>(a.datumZakljucka||a.datum||'').localeCompare(b.datumZakljucka||b.datum||''));
   if(!closedDNs.length){toast('Ni zaključenih DN');return;}
 
-  // Samo DNji ki nimajo še knjiženih ne-goba materialov izhod
-  const toProcess=closedDNs.filter(d=>
-    !materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&!m.tip.startsWith('goba_'))
-  );
-  if(!toProcess.length){toast('Vsi zaključeni DN imajo že knjižene materiale');return;}
-
   // Preveri razpoložljivost na datum DN
-  // (ali je bil kateri koli vhod tega tipa na zalogi na ali pred datumom DN)
   const vhodByType={};
   materiali.filter(m=>m.smer==='vhod').forEach(m=>{
     if(!vhodByType[m.tip])vhodByType[m.tip]=[];
@@ -2401,9 +2405,9 @@ async function retroaktivnoPoknjiziVseDN(){
   });
   const bilNaZalogi=(tip,dnDate)=>(vhodByType[tip]||[]).some(d=>d<=dnDate);
 
-  // Sestavi seznam vseh vnosov za knjiženje
+  // Sestavi plan za vse DNje (vključno z že knjiženim — retro vnosi se osvežijo)
   const plan=[];
-  for(const d of toProcess){
+  for(const d of closedDNs){
     const dnDate=d.datumZakljucka||d.datum||'';
     const datum=d.datumZakljucka||d.datum;
     const dok=d.oznaka;
@@ -2433,30 +2437,53 @@ async function retroaktivnoPoknjiziVseDN(){
     });
   }
 
+  // Obstoječi retro vnosi ki bodo izbrisani in zamenjani
+  const retro=materiali.filter(m=>m.smer==='izhod'&&m.opomba==='DN izhod retro');
   const book=plan.filter(p=>p.ok);
   const skip=plan.filter(p=>!p.ok);
+
+  // Ugotovi koliko se dejansko spremeni (novo ali drugačna količina)
+  const toAdd=book.filter(p=>{
+    const obs=retro.find(m=>m.dokument===p.dok&&m.tip===p.tip);
+    return !obs||Math.abs((obs.kolicina||0)-p.kolicina)>0.001;
+  });
+  const toDel=retro.filter(m=>!book.some(p=>p.dok===m.dokument&&p.tip===m.tip));
+
   const skipInfo=skip.length
     ?'\n\nPreskočeno (ni vhoda ≤ datum DN):\n'+[...new Set(skip.map(p=>`  ${p.dok}: ${MAT_IME[p.tip]||p.tip}`))].join('\n')
     :'';
 
+  if(!toAdd.length&&!toDel.length){toast('Vsi retro vnosi so že usklajeni');return;}
+
   if(!confirm(
-    `Retroaktivno knjiženje za ${toProcess.length} DN:\n`+
-    `✓ Knjižiti: ${book.length} vnosov\n`+
-    `⏭ Preskočiti: ${skip.length} vnosov${skipInfo}\n\n`+
+    `Retroaktivno knjiženje — uskladi retro vnose:\n`+
+    `+ Dodati/posodobiti: ${toAdd.length} vnosov\n`+
+    `− Odstraniti zastarele: ${toDel.length} vnosov`+
+    `${skip.length?'\n⏭ Preskočeno (datum): '+skip.length:''}${skipInfo}\n\n`+
     `Nadaljuješ?`
   ))return;
 
-  const newMats=book.map(p=>({id:uid(),datum:p.datum,tip:p.tip,smer:'izhod',
+  // Izbriši zastarele retro vnose
+  const delIds=toDel.map(m=>m.id);
+  materiali=materiali.filter(m=>!delIds.includes(m.id));
+  // Posodobi spremenjene (izbriši stari, dodaj novega)
+  const updateIds=toAdd.filter(p=>retro.find(m=>m.dokument===p.dok&&m.tip===p.tip)).map(p=>retro.find(m=>m.dokument===p.dok&&m.tip===p.tip).id);
+  materiali=materiali.filter(m=>!updateIds.includes(m.id));
+
+  const newMats=toAdd.map(p=>({id:uid(),datum:p.datum,tip:p.tip,smer:'izhod',
     dokument:p.dok,serijaGobe:'',kolicina:p.kolicina,opomba:'DN izhod retro'}));
   newMats.forEach(m=>materiali.push(m));
   save();renderMateriali();
   setSyncStatus('↻');
   let ok=0,fail=0;
+  for(const id of [...delIds,...updateIds]){
+    try{await sbDel('gm_dn_materiali',id);}catch(e){console.error('retroDel',e);}
+  }
   for(const m of newMats){
     try{await sbPushMat(m);ok++;}catch(e){fail++;console.error('retroPush',e);}
   }
   setSyncStatus(fail?'⚠':'✓');
-  toast(`✓ ${ok} vnosov knjiženih${skip.length?' · '+skip.length+' preskočenih (datum)':''}${fail?' · ⚠ '+fail+' napak':''}`);}
+  toast(`✓ ${ok} posodobljeno${toDel.length?' · '+toDel.length+' odstranjeno':''}${fail?' · ⚠ '+fail+' napak':''}`);}
 
 function backupDN(){
   const data={version:1,exportedAt:new Date().toISOString(),workOrders,etanolKnjiga};

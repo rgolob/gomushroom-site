@@ -3915,8 +3915,8 @@ if(!Object.keys(pendingBatchAlloc).length){
     if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice failed:',e));
     printInvoice(group);
     if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
-    // Samodejno pošlji email z računom in QR kodo če ima kupec email
-    if(inv&&email&&(ch==='malo'||ch==='velo')){
+    // Samodejno pošlji email z računom (QR za malo/velo, brez za interno/podaritev)
+    if(inv&&email&&ch!=='wp'){
       sendInvoiceEmail(inv.id).catch(e=>console.warn('auto email failed:',e));
     }
   }
@@ -7740,14 +7740,13 @@ async function sendInvoiceEmail(invId){
     return;
   }
 
-  const subject=isPaid
-    ?`Račun ${inv.num} — GoMushroom`
-    :`Predračun ${inv.num} — GoMushroom`;
+  const isMaloVelo=g?.channel==='malo'||g?.channel==='velo';
+  const subject=`Račun ${inv.num} — GoMushroom`;
 
-  const bodyText=isPaid
+  const bodyText=(isPaid||isMaloVelo)
     ?`Spoštovani ${inv.buyer||''},
 
-hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.
+hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}${isMaloVelo&&!isPaid?'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.':''}.
 
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
@@ -7772,7 +7771,7 @@ Rok`;
 
   const htmlBody=`<!DOCTYPE html>
 <html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${isPaid?'Račun':'Predračun'} ${inv.num}</title>
+<title>Račun ${inv.num}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased;margin:0;padding:0}
@@ -7819,7 +7818,7 @@ Rok`;
         <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block">
       </div>
       <div class="inv-info">
-        <div class="inv-num">${isPaid?'Račun':'Predračun'} ${inv.num}</div>
+        <div class="inv-num">Račun ${inv.num}</div>
         <div class="inv-date">${dateStr}</div>
       </div>
     </div>
@@ -7966,9 +7965,10 @@ async function cycleInvStatus(invId){
     }
   }
 
-  // Avtomatsko pošiljanje
+  // Avtomatsko pošiljanje samo za WP kanal
+  const _g=saleGroups.find(x=>x.id===i.groupId);
   const autoKey={placano:'autoEmailPlacano',predano:'autoEmailPredano'};
-  if(autoKey[i.invStatus]&&getZS(autoKey[i.invStatus])&&i.email){
+  if(_g?.channel==='wp'&&autoKey[i.invStatus]&&getZS(autoKey[i.invStatus])&&i.email){
     sendInvoiceEmail(i.id);
   }
 }

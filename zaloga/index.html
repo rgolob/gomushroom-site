@@ -7870,7 +7870,7 @@ Rok`;
       </tbody>
     </table>
 
-    ${(inv.invStatus==='caka')?`<div class="payment-box">
+    ${(g?.channel==='malo'||g?.channel==='velo')&&(inv.total||0)>0?`<div class="payment-box">
       <div class="payment-details">
         <strong>Podatki za plačilo</strong>
         Prejemnik: ${UPN_NAME}<br>

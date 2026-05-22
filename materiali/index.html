@@ -2787,7 +2787,6 @@ async function appInit(){
   renderDN();
   document.getElementById('dnDatum').value=todayISO();
   await loadFromSB();
-  importHistoricalMateriali();
   await migrateOpombaToDoabvitelj();
 }
 function init(){appInit();}

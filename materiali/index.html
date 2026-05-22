@@ -1682,9 +1682,15 @@ function openPorociloFilter(){
   openSheet('porociloOverlay');
 }
 
-function genEtanolPorocilo(){
+async function genEtanolPorocilo(){
   const _zsRaw=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
   const gmSig=_zsRaw.podpisSlika||null;
+  let gmLogo='';
+  try{
+    const r=await fetch('/assets/logo-h168.webp');
+    const b=await r.blob();
+    gmLogo=await new Promise(res=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(b);});
+  }catch(e){}
   const od=document.getElementById('porOd')?.value||'';
   const doo=document.getElementById('porDo')?.value||'';
   const showNabava=document.getElementById('porNabava')?.checked!==false;
@@ -1760,11 +1766,11 @@ th.num{text-align:right}
 .printbtn{background:rgba(0,0,0,.08);color:#1a1209}
 .savepdfbtn{background:#1a1209;color:white}
 @page{margin:0}
-@media print{.btnrow{display:none}body{padding:1.5cm 2cm;max-width:none}}
+@media print{.btnrow{display:none}body{padding:1.2cm 1.3cm;max-width:none}}
 </style></head><body>
 <div class="doc-header">
   <div>
-    <div class="doc-logo">Go<span>Mushroom</span></div>
+    ${gmLogo?`<img src="${gmLogo}" style="height:2.2rem;display:block;margin-bottom:.2rem">`:`<div class="doc-logo">Go<span>Mushroom</span></div>`}
     <div style="font-size:.65rem;color:#7a6f60">GoMushroom, Rok Golob s.p.</div>
   </div>
   <div style="text-align:right">

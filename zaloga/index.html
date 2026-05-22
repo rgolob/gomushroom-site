@@ -2784,32 +2784,34 @@ function renderDobavnice(){
   listEl.innerHTML=page.map(g=>{
     const ch=CH_LOCAL[g.channel]||{label:g.channel,cls:''};
     const dt=fmtDate(g.date);
-    return`<div class="sale-group">
+    const exp=expandedDobavnice.has(g.id);
+    return`<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;cursor:pointer" onclick="toggleDobavnicaCard('${g.id}')">
       <div class="sg-header" style="display:flex;align-items:center;gap:.65rem;padding:.65rem .9rem">
         <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
         <div class="sg-div"></div>
         <div class="sg-info" style="flex:1;min-width:0">
-          <div class="sg-buyer">${g.deliveryNum} <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;border-radius:8px">${ch.label}</span></div>
+          <div class="sg-buyer">${g.deliveryNum} <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;border-radius:8px">${ch.label}</span>
+            ${g.dobavnicaSentAt?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem">📧 ✓</span>`:''}
+            ${g.signedAt?`<span style="font-size:.6rem;color:var(--success);margin-left:.3rem">✍ ✓</span>`:''}
+          </div>
           <div class="sg-meta" style="font-size:.72rem;color:var(--muted)">${g.buyer||'—'}</div>
         </div>
         <div style="font-size:.85rem;font-weight:500">${(g.total||0).toFixed(2)} €</div>
       </div>
-      <div style="display:flex;gap:.4rem;padding:.35rem .75rem .55rem;border-top:1px solid var(--border);background:#faf8f4;flex-wrap:wrap;align-items:center">
-        <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
-        <button class="tbtn" onclick="downloadDobavnicaPDF('${g.id}')">📄 Shrani PDF</button>
-        ${g.signedAt
-          ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
-          :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
-        }
-        ${g.signedAt&&g.email
-          ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova pošlji':'Pošlji'}</button>`
-          :''
-        }
-        ${g.dobavnicaSentAt
-          ?`<span style="font-size:.62rem;color:#3a6b4a;margin-left:auto;white-space:nowrap">📧 ${g.dobavnicaSentAt}</span>`
-          :''
-        }
-      </div>
+      ${exp?`<div class="sg-footer" onclick="event.stopPropagation()">
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;width:100%">
+          <button class="tbtn" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Natisni</button>
+          <button class="tbtn" onclick="downloadDobavnicaPDF('${g.id}')">📄 PDF</button>
+          ${g.signedAt
+            ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
+            :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
+          }
+          ${g.signedAt&&g.email
+            ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova':'Pošlji'}</button>`
+            :''
+          }
+        </div>
+      </div>`:''}
     </div>`;
   }).join('');
   if(pager)pager.innerHTML=totalPages<=1?'':Array.from({length:totalPages},(_,p)=>
@@ -4300,6 +4302,7 @@ async function deleteSaleGroup(id){
 }
 const expandedSales=new Set();
 const expandedInvoices=new Set();
+const expandedDobavnice=new Set();
 let invPage=0, dobPage=0;
 const INV_PER_PAGE=10, DOB_PER_PAGE=10;
 
@@ -4421,6 +4424,10 @@ function renderInvoices(){
 function toggleInvoiceCard(id){
   if(expandedInvoices.has(id))expandedInvoices.delete(id);else expandedInvoices.add(id);
   renderInvoices();
+}
+function toggleDobavnicaCard(id){
+  if(expandedDobavnice.has(id))expandedDobavnice.delete(id);else expandedDobavnice.add(id);
+  renderDobavnice();
 }
 async function deleteInvoice(id){
   const ok=await showConfirm('Izbriši ta račun?\nProdaja bo ostala v evidenci.','Izbriši');if(!ok)return;

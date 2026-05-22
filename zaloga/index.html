@@ -1304,7 +1304,10 @@ async function _komPayConfirm(){
     l.lineTotal=round((l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),2);
     grandTotal+=l.lineTotal;
   });
-  g.total=round(grandTotal,2);g.fullTotal=g.total;
+  g.total=round(grandTotal,2);
+  let komFull=0;lines.forEach(l=>{komFull+=(l.alc||0)*latestPrice(l.productId,'alc')+(l.gly||0)*latestPrice(l.productId,'gly');});
+  g.fullTotal=komFull>0?round(komFull,2):g.total;
+  g.discountAmt=Math.max(0,round(g.fullTotal-g.total,2));
   document.getElementById('komPlaciloOverlay')?.remove();
   const invoiceNum=nextInvNum(g.channel,date);
   const invoiceId=uid();
@@ -4761,7 +4764,8 @@ if(l.gly>0){
   return rows.join('');
 }).join('');
 
-  const discountAmt = group.discountAmt || ((group.fullTotal||0) - (group.total||0));
+  const _dAmt=(group.fullTotal||0)-(group.total||0);
+  const discountAmt = group.discountAmt>0 ? group.discountAmt : _dAmt>0 ? round(_dAmt,2) : (group.discount>0&&total>0) ? round(total*group.discount/(100-group.discount),2) : 0;
   const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>Popust ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
   const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
@@ -4796,7 +4800,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .qr-label{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60}
 .qr-info{font-size:.72rem;color:#7a6f60;line-height:1.75;flex:1}
 .qr-info strong{color:#1a1209;font-size:.78rem;display:block;margin-bottom:.25rem}
-.footer-section{position:fixed;bottom:1.5cm;left:0;right:0;padding:0 2.5rem}
+.footer-section{margin-top:2.5rem;padding:0}
 .footer-line{border:none;border-top:1px solid #1a1209;margin:0 0 .85rem}
 .footer-bold{font-family:'Jost',sans-serif;font-weight:600;font-size:.75rem;color:#1a1209;text-align:center;margin-bottom:.25rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.88rem;color:#7a6f60;text-align:center;letter-spacing:.02em}

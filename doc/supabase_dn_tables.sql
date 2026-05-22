@@ -12,10 +12,14 @@ CREATE TABLE IF NOT EXISTS gm_dn_work_orders (
   serija_alc      text,
   kol_alc         integer DEFAULT 0,
   stek_alc        text DEFAULT 'bela',
+  kol_alc_prodaja integer,
+  kol_alc_interno integer,
   vit_c_alc       numeric DEFAULT 0,
   lecitin_alc     numeric DEFAULT 0,
   kol_gly         integer DEFAULT 0,
   stek_gly        text DEFAULT 'bela',
+  kol_gly_prodaja integer,
+  kol_gly_interno integer,
   vit_c_gly       numeric DEFAULT 0,
   lecitin_gly     numeric DEFAULT 0,
   izgube          numeric DEFAULT 0,
@@ -57,11 +61,12 @@ CREATE TABLE IF NOT EXISTS gm_dn_etanol (
 
 CREATE TABLE IF NOT EXISTS gm_dn_materiali (
   id          text PRIMARY KEY,
-  datum       text NOT NULL,
+  datum       text,
   tip         text NOT NULL,
   smer        text NOT NULL DEFAULT 'vhod',
   dokument    text,
   serija_gobe text,
+  dobavitelj  text,
   kolicina    numeric DEFAULT 0,
   strosek     numeric DEFAULT 0,
   opomba      text
@@ -83,7 +88,22 @@ CREATE TABLE IF NOT EXISTS gm_dn_oprema (
   kolicina     numeric
 );
 
--- Dovoli dostop z anon ključem (RLS mora biti izključen ali dodaj politike)
+-- ── ALTER TABLE za posodobitve (zaženi če tabele že obstajajo) ──────────────
+
+-- gm_dn_work_orders: dodaj stolpce za prodaja/interno razdelitev
+ALTER TABLE gm_dn_work_orders
+  ADD COLUMN IF NOT EXISTS kol_alc_prodaja integer,
+  ADD COLUMN IF NOT EXISTS kol_alc_interno integer,
+  ADD COLUMN IF NOT EXISTS kol_gly_prodaja integer,
+  ADD COLUMN IF NOT EXISTS kol_gly_interno integer;
+
+-- gm_dn_materiali: dodaj dobavitelj + sprosti NOT NULL na datum
+ALTER TABLE gm_dn_materiali
+  ADD COLUMN IF NOT EXISTS dobavitelj text;
+ALTER TABLE gm_dn_materiali
+  ALTER COLUMN datum DROP NOT NULL;
+
+-- ── Dovoli dostop z anon ključem ────────────────────────────────────────────
 -- Najlažje: v Supabase -> Authentication -> Policies -> onemogoči RLS za te tabele
 -- ALI dodaj politiko:
 -- ALTER TABLE gm_dn_work_orders ENABLE ROW LEVEL SECURITY;

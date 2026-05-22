@@ -1060,6 +1060,14 @@ function renderDN(){
   el.innerHTML=page.map(d=>{
     const statusCls=`status-${d.status}`;
     const statusLabel=d.status==='odprt'?'Odprt':d.status==='zakljucen'?'Zaključen':'Prenesen';
+    const isZakljucen=d.status==='zakljucen'||d.status==='prenos';
+    const etKnjizen=isZakljucen&&etanolKnjiga.some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
+    const matKnjizen=isZakljucen&&materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&!m.tip.startsWith('goba_'));
+    const knjizeniIndikator=isZakljucen?`
+      <div style="display:flex;gap:.25rem;margin-top:.3rem;justify-content:flex-end">
+        <span style="font-size:.58rem;padding:.1rem .35rem;border-radius:4px;background:${etKnjizen?'rgba(58,107,74,.15)':'rgba(180,180,180,.15)'};color:${etKnjizen?'var(--success)':'var(--muted)'}">⚡Et</span>
+        <span style="font-size:.58rem;padding:.1rem .35rem;border-radius:4px;background:${matKnjizen?'rgba(58,107,74,.15)':'rgba(180,180,180,.15)'};color:${matKnjizen?'var(--success)':'var(--muted)'}">📦Mat</span>
+      </div>`:'';
     return`<div class="dn-card">
       <div class="dn-header" onclick="openDNDetail('${d.id}')">
         <div>
@@ -1073,6 +1081,7 @@ function renderDN(){
         <div class="dn-right">
           <div class="status-badge ${statusCls}">${statusLabel}</div>
           <div class="dn-meta" style="margin-top:.3rem">${d.lAAE?d.lAAE.toFixed(3)+' L AAE':''}</div>
+          ${knjizeniIndikator}
         </div>
       </div>
     </div>`;

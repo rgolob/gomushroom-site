@@ -2176,7 +2176,7 @@ function knjizMaterjaleIzhod(d){
   if(skupajBela>0&&bilNaZalogi('steklenicka_bela')&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
   if(skupajCrna>0&&bilNaZalogi('steklenicka_crna')&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
   if(skupajEtikete>0&&bilNaZalogi(etiketaTip)&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
-  if(d.masaGobe>0&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
+  if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
   if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
   if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
 

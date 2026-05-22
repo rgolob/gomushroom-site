@@ -1065,8 +1065,8 @@ function renderDN(){
     const matKnjizen=isZakljucen&&materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&!m.tip.startsWith('goba_'));
     const knjizeniIndikator=isZakljucen?`
       <div style="display:flex;gap:.25rem;margin-top:.3rem;justify-content:flex-end">
-        <span style="font-size:.58rem;padding:.1rem .35rem;border-radius:4px;background:${etKnjizen?'rgba(58,107,74,.15)':'rgba(180,180,180,.15)'};color:${etKnjizen?'var(--success)':'var(--muted)'}">⚡Et</span>
-        <span style="font-size:.58rem;padding:.1rem .35rem;border-radius:4px;background:${matKnjizen?'rgba(58,107,74,.15)':'rgba(180,180,180,.15)'};color:${matKnjizen?'var(--success)':'var(--muted)'}">📦Mat</span>
+        <span style="font-size:.62rem;font-weight:600;padding:.15rem .4rem;border-radius:4px;background:${etKnjizen?'#3a6b4a':'#d0d0d0'};color:${etKnjizen?'white':'#888'}">⚡Et${etKnjizen?' ✓':''}</span>
+        <span style="font-size:.62rem;font-weight:600;padding:.15rem .4rem;border-radius:4px;background:${matKnjizen?'#3a6b4a':'#d0d0d0'};color:${matKnjizen?'white':'#888'}">📦Mat${matKnjizen?' ✓':''}</span>
       </div>`:'';
     return`<div class="dn-card">
       <div class="dn-header" onclick="openDNDetail('${d.id}')">

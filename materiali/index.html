@@ -445,6 +445,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div class="shbody">
       <div class="frow">
+        <div class="field" style="flex:1">
+          <label>Smer</label>
+          <select id="matSmer" onchange="onMatSmerChange()">
+            <option value="vhod">↑ Vhod (nakup)</option>
+            <option value="izhod">↓ Izhod (ročno)</option>
+            <option value="uskladitev">⚖ Uskladitev (inventura)</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Kategorija</label>
           <select id="matKatSel" onchange="onMatKatSelChange()">
             <option value="surovina">🌿 Surovina</option>
@@ -1388,7 +1398,7 @@ function knjizEtanolIzhod(id){
 
 async function knjizMaterialeIzhodRetro(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
-  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&m.opomba==='DN izhod retro');
+  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&(m.opomba==='DN izhod retro'||m.opomba==='DN izhod'));
   const jePonoviKnjiz=obstojeciRetro.length>0;
   const msg=jePonoviKnjiz
     ?`Posodobi materiale izhod za ${d.oznaka}?\n\nObstoječi retro vnosi bodo zamenjani z aktualnimi količinami.`
@@ -1966,16 +1976,19 @@ function renderMateriali(){
   }
   el.innerHTML=page.map(m=>{
     const isIn=m.smer==='vhod';
+    const isUsk=m.smer==='izhod'&&(m.opomba||'').startsWith('Uskladitev');
     const enota=MAT_ENOTA[m.tip]||'';
+    const typeLabel=isIn?'Nabava':isUsk?'Uskladitev':'Izhod';
+    const typeCls=isIn?'eth-nabava':isUsk?'eth-reg':'eth-izhod';
     return`<div class="eth-card" style="flex-wrap:wrap;gap:.3rem">
       <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
-        <div class="eth-type ${isIn?'eth-nabava':'eth-izhod'}" style="min-width:4rem;font-size:.6rem">${isIn?'Nabava':'Izhod'}</div>
+        <div class="eth-type ${typeCls}" style="min-width:4rem;font-size:.6rem">${typeLabel}</div>
         <div class="eth-info">
           <div class="eth-doc">${MAT_IME[m.tip]||m.tip}</div>
           <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${m.opomba?' · '+m.opomba:''}</div>
         </div>
         <div class="eth-qty">
-          <div class="eth-L" style="color:${isIn?'var(--success)':'var(--danger)'}">${isIn?'+':'-'}${m.kolicina} ${enota}</div>
+          <div class="eth-L" style="color:${isIn?'var(--success)':isUsk?'#2a5a8b':'var(--danger)'}">${isIn?'+':isUsk?'⚖':'-'}${m.kolicina} ${enota}</div>
           ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${m.strosek.toFixed(2)} €</div>`:''}
         </div>
       </div>
@@ -1995,10 +2008,28 @@ function renderMateriali(){
 }
 
 let editingMatId=null;
+function onMatSmerChange(){
+  const smer=document.getElementById('matSmer').value;
+  const isVhod=smer==='vhod';
+  const isUsk=smer==='uskladitev';
+  // Dobavitelj in strosek samo pri vhodu
+  document.getElementById('matDobaviteljField').style.display=isVhod?'':'none';
+  document.getElementById('matStrosek').closest('.frow').style.display=isVhod?'':'none';
+  // Dokument placeholder
+  document.getElementById('matDok').placeholder=isUsk?'npr. INV-2026-05':isVhod?'npr. DOB-2026-01':'—';
+  // Opomba: predizpolni za uskladitev
+  const opEl=document.getElementById('matOpomba');
+  if(isUsk&&!opEl.value){opEl.value='Uskladitev zaloge — inventura';}
+  else if(!isUsk&&opEl.value==='Uskladitev zaloge — inventura'){opEl.value='';}
+}
 function openMaterijalSheet(id){
   editingMatId=id||null;
   const m=id?materiali.find(x=>x.id===id):null;
   document.getElementById('matSheetTitle').textContent=m?'Uredi vnos':'Vnos materiala';
+  // Smer
+  const smer=m?.smer||'vhod';
+  document.getElementById('matSmer').value=smer==='uskladitev'?'uskladitev':smer==='izhod'&&m?.opomba?.startsWith('Uskladitev')?'uskladitev':smer;
+  onMatSmerChange();
   // Nastavi kategorijo in zapolni dropdown
   const kat=m?MAT_KAT[m.tip]||'surovina':'surovina';
   document.getElementById('matKatSel').value=kat;
@@ -2103,16 +2134,21 @@ function saveMaterjal(){
   const tip=document.getElementById('matTip').value;
   const kolicina=parseNum(document.getElementById('matKolicina').value);
   if(!kolicina){toast('⚠ Vnesi količino');return;}
+  const smerSel=document.getElementById('matSmer').value;
+  const smer=smerSel==='vhod'?'vhod':'izhod';
+  const isVhod=smer==='vhod';
+  const opombaBase=document.getElementById('matOpomba').value.trim();
+  const opomba=smerSel==='uskladitev'&&!opombaBase.startsWith('Uskladitev')?'Uskladitev zaloge — '+opombaBase:opombaBase||( smerSel==='uskladitev'?'Uskladitev zaloge — inventura':'');
   const m={
     id:editingMatId||uid(),
     datum:document.getElementById('matDatum').value,
-    tip,smer:'vhod',
+    tip,smer,
     dokument:document.getElementById('matDok').value.trim(),
     serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
-    dobavitelj:getDobaviteljValue(),
+    dobavitelj:isVhod?getDobaviteljValue():'',
     kolicina,
-    strosek:parseNum(document.getElementById('matStrosek').value||'0'),
-    opomba:document.getElementById('matOpomba').value.trim(),
+    strosek:isVhod?parseNum(document.getElementById('matStrosek').value||'0'):0,
+    opomba,
   };
   if(editingMatId){
     const idx=materiali.findIndex(x=>x.id===editingMatId);
@@ -2124,7 +2160,8 @@ function saveMaterjal(){
   sbPushMat(m);
   closeSheet('materialiOverlay');
   renderMateriali();
-  toast(`✓ ${MAT_IME[tip]||tip}: +${kolicina} ${MAT_ENOTA[tip]||''}`);
+  const smerLabel=smerSel==='uskladitev'?'⚖ Uskladitev':smer==='izhod'?'↓ Izhod':'↑ Vhod';
+  toast(`✓ ${smerLabel} · ${MAT_IME[tip]||tip}: ${kolicina} ${MAT_ENOTA[tip]||''}`);
   editingMatId=null;
 }
 
@@ -2438,7 +2475,7 @@ async function retroaktivnoPoknjiziVseDN(){
   }
 
   // Obstoječi retro vnosi ki bodo izbrisani in zamenjani
-  const retro=materiali.filter(m=>m.smer==='izhod'&&m.opomba==='DN izhod retro');
+  const retro=materiali.filter(m=>m.smer==='izhod'&&(m.opomba==='DN izhod retro'||m.opomba==='DN izhod'));
   const book=plan.filter(p=>p.ok);
   const skip=plan.filter(p=>!p.ok);
 

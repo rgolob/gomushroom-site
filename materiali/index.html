@@ -107,6 +107,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* ── SLABEL ── */
 .slabel{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.6rem 0 .3rem}
+.slabel-alc{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b5a2a;margin:.6rem 0 .3rem;padding:.25rem .5rem;border-left:3px solid #af8455;background:rgba(175,132,85,.07);border-radius:0 4px 4px 0}
+.slabel-gly{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2a6b4a;margin:.6rem 0 .3rem;padding:.25rem .5rem;border-left:3px solid #3a7a5a;background:rgba(58,122,90,.07);border-radius:0 4px 4px 0}
+.dn-separator{border:none;border-top:1px solid var(--border);margin:1rem 0}
 
 /* ── SEARCH ── */
 .swrap{position:relative;flex:1}.sicon{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
@@ -298,7 +301,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
         <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
       </div>
-      <div class="slabel">Etanol — vhod</div>
+      <div class="slabel-alc">🥃 Etanol — vhod</div>
       <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
       <div class="frow">
         <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
@@ -308,7 +311,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
         <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
       </div>
-      <div class="slabel">Alkoholna tinktura (produkt — 30 vol% EtOH)</div>
+      <div class="slabel-alc">🥃 Alkoholna tinktura</div>
       <div class="frow">
         <div class="field"><label>Alc prodaja (kom.)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
         <div class="field"><label>Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
@@ -326,14 +329,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
         <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
       </div>
-      <div class="slabel">Glicerinska tinktura</div>
-      <div class="frow">
-        <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-        <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-      </div>
+      <hr class="dn-separator">
+      <div class="slabel-gly">🌿 Glicerin — vhod</div>
       <div class="frow">
         <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
         <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
+      </div>
+      <div class="slabel-gly">🌿 Glicerinska tinktura</div>
+      <div class="frow">
+        <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+        <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
       </div>
       <div class="frow">
         <div class="field"><label>Steklenička gly</label>

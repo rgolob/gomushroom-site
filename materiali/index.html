@@ -1398,7 +1398,7 @@ function knjizEtanolIzhod(id){
 
 async function knjizMaterialeIzhodRetro(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
-  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&m.opomba==='DN izhod retro');
+  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&(m.opomba==='DN izhod retro'||m.opomba==='DN izhod'));
   const jePonoviKnjiz=obstojeciRetro.length>0;
   const msg=jePonoviKnjiz
     ?`Posodobi materiale izhod za ${d.oznaka}?\n\nObstoječi retro vnosi bodo zamenjani z aktualnimi količinami.`
@@ -2475,7 +2475,7 @@ async function retroaktivnoPoknjiziVseDN(){
   }
 
   // Obstoječi retro vnosi ki bodo izbrisani in zamenjani
-  const retro=materiali.filter(m=>m.smer==='izhod'&&m.opomba==='DN izhod retro');
+  const retro=materiali.filter(m=>m.smer==='izhod'&&(m.opomba==='DN izhod retro'||m.opomba==='DN izhod'));
   const book=plan.filter(p=>p.ok);
   const skip=plan.filter(p=>!p.ok);
 

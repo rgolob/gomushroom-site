@@ -332,6 +332,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
       </div>
       <div class="frow">
+        <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0"></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Steklenička gly</label>
           <select id="dnStekGly">
             <option value="bela">⬜ Bela</option>
@@ -1101,6 +1104,7 @@ function openDNSheet(id){
   document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno||'';
   document.getElementById('dnKolGlySkupaj').value=((d?.kolGly||0)+(d?.kolGlyInterno||0))||'';
   document.getElementById('dnStekGly').value=d?.stekGly||'bela';
+  document.getElementById('dnMasaGlicerina').value=d?.masaGlicerina||'';
   document.getElementById('dnVitCGly').value=d?.vitCGly||'';
   document.getElementById('dnLecitinGly').value=d?.lecitinGly||'';
   document.getElementById('dnIzgube').value=d?.izgube||'';
@@ -1254,6 +1258,7 @@ function saveDN(){
     kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
     kolGlyInterno:parseInt(document.getElementById('dnKolGlyInterno').value)||0,
     stekGly:document.getElementById('dnStekGly').value,
+    masaGlicerina:parseNum(document.getElementById('dnMasaGlicerina').value||'0'),
     vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
     lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
     izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
@@ -1346,6 +1351,7 @@ function openDNDetail(id){
       <tr><td>Gly prodaja</td><td>${d.kolGly||0} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>
       ${(d.kolGlyInterno||0)>0?`<tr><td>Gly interno</td><td>${d.kolGlyInterno} × ${'crna'===d.stekGly?'⬛':'⬜'} ${d.stekGly||'bela'}</td></tr>`:''}
 
+      ${(d.masaGlicerina||0)>0?`<tr><td>Masa glicerina</td><td>${d.masaGlicerina} g</td></tr>`:''}
       <tr><td>Vit. C gly</td><td>${d.vitCGly?d.vitCGly+' g':'—'}</td></tr>
       <tr><td>Lecitin gly</td><td>${d.lecitinGly?d.lecitinGly+' g':'—'}</td></tr>
       <tr><td>Cena alc</td><td>${d.cenaAlc?d.cenaAlc.toFixed(2)+' €':'—'}</td></tr>
@@ -2561,6 +2567,7 @@ function dnToSb(d){return{
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,
   kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
   kol_gly_interno:d.kolGlyInterno??null,
+  masa_glicerina:d.masaGlicerina||0,
   vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,
   izgube:d.izgube||0,aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
   masa_etoh:d.masaEtOH||0,pct_etoh:d.pctEtOH||96.25,gostota:d.gostota||null,
@@ -2578,6 +2585,7 @@ function sbToDn(r){return{
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,
   kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
   kolGlyInterno:r.kol_gly_interno??null,
+  masaGlicerina:r.masa_glicerina||0,
   vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,
   izgube:r.izgube||0,aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,
   masaEtOH:r.masa_etoh||0,pctEtOH:r.pct_etoh||96.25,gostota:r.gostota||0,

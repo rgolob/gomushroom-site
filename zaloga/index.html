@@ -566,6 +566,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="dar">🎁 Podaritev</option>
         <option value="int">🔬 Interni</option>
         <option value="wp">🌐 Splet</option>
+        <option value="stripe">💳 Stripe</option>
         <option value="kom">🤝 Komisija</option>
       </select>
       <div class="swrap" style="min-width:100px"><span class="sicon">🏷</span><input type="text" id="salesFilterBatch" placeholder="Serija…" oninput="renderSales()"></div>
@@ -597,6 +598,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="dar">🎁 Promo</option>
           <option value="int">🔬 Int</option>
           <option value="kom">🤝 Kom</option>
+          <option value="stripe">💳 Stripe</option>
         </select>
         <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
           <option value="">Vsi statusi</option>
@@ -1425,7 +1427,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Stripe',icon:'💳',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -3963,12 +3965,12 @@ function renderSales(){
 
   // Dodaj WP naročila iz gm_orders (pending/paid/shipped)
   let wpOrders = [];
-  if(!fCh || fCh === 'wp') {
+  if(!fCh || fCh === 'wp' || fCh === 'stripe') {
     wpOrders = (_narocila||[]).filter(n => {
       if(n.status === 'cancelled' || n.status === 'abandoned') return false;
       if(n.is_test) return false;
-      // Ne prikazuj tistih ki so že potrjena in imajo invoice_id (so že v saleGroups)
-     // if(n.status === 'paid' && n.invoice_id) return false;
+      if(fCh === 'stripe' && n.channel !== 'stripe') return false;
+      if(fCh === 'wp' && n.channel === 'stripe') return false;
       if((n.status === 'paid' || n.status === 'shipped') && n.invoice_id) return false;
       const datum = n.created_at?.split('T')[0] || '';
       const mq = !q || (n.name||'').toLowerCase().includes(q) || (n.email||'').toLowerCase().includes(q);
@@ -3984,21 +3986,25 @@ function renderSales(){
     document.getElementById('salesPager').innerHTML='';return;
   }
 
-  // WP naročila kartice (pending/paid brez invoice)
+  // WP/Stripe naročila kartice (pending/paid brez invoice)
   const wpHtml = wpOrders.map(n => {
     const datum = n.created_at?.split('T')[0] || '';
     const dt = fmtDate(datum);
     const artikli = (n.items||[]).map(i=>`<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(i.price*i.quantity).toFixed(2)} €</span></div>`).join('');
     const isPaid = n.status === 'paid';
     const isShipped = n.status === 'shipped';
+    const isStripe = n.channel === 'stripe';
     const isExpanded = expandedSales.has('wp-'+n.id);
     const prodSummary = (n.items||[]).map(i=>`${i.name} ×${i.quantity}`).join(' · ');
-    return `<div class="sale-group" style="border-left:3px solid #7c3aed;cursor:pointer" onclick="toggleSaleCard('wp-${n.id}',event)">
+    const needsProcessing = (!isPaid && !isShipped) || (isStripe && isPaid && !n.invoice_id);
+    const chLabel = isStripe ? '💳 Stripe' : '🌐 Splet';
+    const chColor = isStripe ? '#1a7f64' : '#7c3aed';
+    return `<div class="sale-group" style="border-left:3px solid ${chColor};cursor:pointer" onclick="toggleSaleCard('wp-${n.id}',event)">
       <div class="sg-header">
         <div class="sg-datecol"><div class="sg-day">${dt.d}</div><div class="sg-mon">${MONTHS[parseInt(dt.m)]||dt.m}</div></div>
         <div class="sg-div"></div>
         <div class="sg-info">
-          <div class="sg-buyer">${n.name||'—'} <span style="font-size:.62rem;background:#7c3aed;color:white;padding:.1rem .4rem;border-radius:6px;vertical-align:middle">🌐 Splet</span></div>
+          <div class="sg-buyer">${n.name||'—'} <span style="font-size:.62rem;background:${chColor};color:white;padding:.1rem .4rem;border-radius:6px;vertical-align:middle">${chLabel}</span></div>
           ${isExpanded ? `
           <div class="sg-meta">
             ${n.email?`<span style="font-size:.72rem;color:var(--muted)">✉ ${n.email}</span>`:''}
@@ -4024,8 +4030,8 @@ function renderSales(){
       <div class="sg-items">${artikli}</div>
       <div class="sg-footer" onclick="event.stopPropagation()">
         <div style="margin-left:auto;display:flex;gap:.35rem;flex-wrap:wrap">
-          ${!isPaid && !isShipped ? `<button class="bsave" onclick="potrdiNarocilo('${n.id}')" style="font-size:.72rem;padding:.3rem .65rem">✅ Potrdi plačilo</button>` : ''}
-          ${isPaid || isShipped ? `<span style="font-size:.72rem;color:var(--muted)">Račun v zavihku 🧾</span>` : ''}
+          ${needsProcessing ? `<button class="bsave" onclick="potrdiNarocilo('${n.id}')" style="font-size:.72rem;padding:.3rem .65rem">${isStripe?'💳':'✅'} Potrdi naročilo</button>` : ''}
+          ${!needsProcessing && (isPaid || isShipped) ? `<span style="font-size:.72rem;color:var(--muted)">Račun v zavihku 🧾</span>` : ''}
           <button class="tbtn" onclick="prekliNarocilo('${n.id}')" style="font-size:.72rem;color:#8b3a2a">❌ Prekliči</button>
         </div>
       </div>` : ''}
@@ -4252,7 +4258,7 @@ function issueInvoiceForGroup(groupId){
   const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
-  const invStatus=(g.channel==='wp'||g.channel==='malo'||g.channel==='velo')?'caka':'placano';
+  const invStatus=(g.channel==='stripe')?'placano':(g.channel==='wp'||g.channel==='malo'||g.channel==='velo')?'caka':'placano';
   invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus});
   save();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
@@ -6110,10 +6116,15 @@ function renderNarocila() {
 async function potrdiNarocilo(orderId) {
   const narocilo = _narocila.find(n => n.id === orderId);
   if (!narocilo) return;
-  if (!confirm(`Potrdi plačilo od ${narocilo.name} (${(narocilo.total||0).toFixed(2)} €) in ustvari WP prodajno skupino?`)) return;
+  const isStripeOrder = narocilo.channel === 'stripe';
+  const confirmMsg = isStripeOrder
+    ? `Potrdi Stripe naročilo od ${narocilo.name} (${(narocilo.total||0).toFixed(2)} €) in ustvari račun + odštej zalogo?`
+    : `Potrdi plačilo od ${narocilo.name} (${(narocilo.total||0).toFixed(2)} €) in ustvari prodajno skupino?`;
+  if (!confirm(confirmMsg)) return;
 
   try {
     const items = narocilo.items || [];
+    const orderChannel = isStripeOrder ? 'stripe' : 'wp';
 
     // Poišči variante po SKU → product_id
     const prodRes = await fetch(`${SB_URL}/rest/v1/gm_product_variants?select=sku,product_id,type,price_malo&active=eq.true`, { headers: SB_HEADERS });
@@ -6128,7 +6139,7 @@ async function potrdiNarocilo(orderId) {
 
     const groupData = {
       id: groupId,
-      channel: 'wp',
+      channel: orderChannel,
       buyer: narocilo.name,
       email: narocilo.email || null,
       phone: narocilo.phone || null,
@@ -6210,7 +6221,7 @@ async function potrdiNarocilo(orderId) {
     }
 
     // Ustvari račun
-    const invNum = nextInvNum('wp', today);
+    const invNum = nextInvNum(orderChannel, today);
     const invId = uid();
     await fetch(`${SB_URL}/rest/v1/gm_invoices`, {
       method: 'POST',
@@ -6218,7 +6229,7 @@ async function potrdiNarocilo(orderId) {
       body: JSON.stringify({
         id: invId,
         num: invNum,
-        channel: 'wp',
+        channel: orderChannel,
         buyer: narocilo.name,
         email: narocilo.email || null,
         phone: narocilo.phone || null,

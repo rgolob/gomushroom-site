@@ -919,6 +919,7 @@ async function saveStripeOrder(paymentIntentId) {
     total:    calc.skupaj,
     coupon_code: calc.koda || null,
     status:   'paid',
+    channel:  'stripe',
     rf_reference: paymentIntentId,
     is_test:  STRIPE_TEST_MODE,
   };

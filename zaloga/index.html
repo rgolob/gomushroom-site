@@ -3464,10 +3464,10 @@ function renderOrderRows(){
         ${`<div style="display:flex;gap:.3rem;align-items:center;margin-top:.1rem">
           <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€/kos:</span>
           <input type="text" id="okpa-${p.id}" inputmode="decimal" placeholder="alc ${latestPrice(p.id,'alc').toFixed(2)}"
-            style="width:62px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none;font-size:16px"
+            style="width:56px;padding:.2rem .25rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:16px;transform:scale(.8);transform-origin:left center;text-align:center;background:white;outline:none"
             oninput="onPerUnitPriceChange('${p.id}');renderOrderSummary()" title="Cena alkohol / kos (opcijsko — za popust)">
           <input type="text" id="okpg-${p.id}" inputmode="decimal" placeholder="gly ${latestPrice(p.id,'gly').toFixed(2)}"
-            style="width:62px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none;font-size:16px"
+            style="width:56px;padding:.2rem .25rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:16px;transform:scale(.8);transform-origin:left center;text-align:center;background:white;outline:none"
             oninput="onPerUnitPriceChange('${p.id}');renderOrderSummary()" title="Cena glicerin / kos (opcijsko — za popust)">
         </div>`}
       </div>

@@ -3461,17 +3461,14 @@ function renderOrderRows(){
           <div class="qty-box"><span class="qty-label alc">🥃</span><input class="qty-input alc" type="number" id="oalc-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
           <div class="qty-box"><span class="qty-label gly">🌿</span><input class="qty-input gly" type="number" id="ogly-${p.id}" min="0" placeholder="0" inputmode="numeric" oninput="checkOrderChannelStock('${p.id}');onQtyChange('${p.id}');renderOrderSummary()"></div>
         </div>
-        ${orderChannel==='kom'?`<div style="display:flex;gap:.3rem;align-items:center;margin-top:.1rem">
+        ${`<div style="display:flex;gap:.3rem;align-items:center;margin-top:.1rem">
           <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€/kos:</span>
-          <input type="text" id="okpa-${p.id}" inputmode="decimal" placeholder="alc"
-            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena alkohol / kos (opcijsko)">
-          <input type="text" id="okpg-${p.id}" inputmode="decimal" placeholder="gly"
-            style="width:55px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none" title="Cena glicerin / kos (opcijsko)">
-        </div>`:`<div style="display:flex;gap:.3rem;align-items:center">
-          <span style="font-size:.6rem;color:var(--muted);white-space:nowrap">€ skupaj:</span>
-          <input type="text" id="oprice-${p.id}" placeholder="auto" inputmode="decimal"
-            style="width:65px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;color:var(--ink);outline:none"
-            oninput="onFinalPriceChange('${p.id}');renderOrderSummary()" title="Vnesi končni znesek — popust se izračuna avtomatično">
+          <input type="text" id="okpa-${p.id}" inputmode="decimal" placeholder="alc ${latestPrice(p.id,'alc').toFixed(2)}"
+            style="width:62px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none;font-size:16px"
+            oninput="onPerUnitPriceChange('${p.id}');renderOrderSummary()" title="Cena alkohol / kos (opcijsko — za popust)">
+          <input type="text" id="okpg-${p.id}" inputmode="decimal" placeholder="gly ${latestPrice(p.id,'gly').toFixed(2)}"
+            style="width:62px;padding:.25rem .3rem;border:1px solid rgba(175,132,85,.5);border-radius:6px;font-size:.75rem;text-align:center;background:white;outline:none;font-size:16px"
+            oninput="onPerUnitPriceChange('${p.id}');renderOrderSummary()" title="Cena glicerin / kos (opcijsko — za popust)">
         </div>`}
       </div>
     </div>
@@ -3481,10 +3478,35 @@ function renderOrderRows(){
 }
 
 function onQtyChange(productId){
-  const priceEl=document.getElementById('oprice-'+productId);
-  if(priceEl?.value)onFinalPriceChange(productId);
-  // Also update global final price field if discount is set
+  onPerUnitPriceChange(productId);
   syncFinalPrice();
+}
+
+function onPerUnitPriceChange(productId){
+  const alcEl=document.getElementById('okpa-'+productId);
+  const glyEl=document.getElementById('okpg-'+productId);
+  const warn=document.getElementById('owarn-'+productId);
+  if(!warn)return;
+  const alcP=parseNum(alcEl?.value||'');
+  const glyP=parseNum(glyEl?.value||'');
+  if(!alcP&&!glyP){warn.style.display='none';return;}
+  const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
+  const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
+  if(!alc&&!gly){warn.style.display='none';return;}
+  const baseAlcP=latestPrice(productId,'alc');
+  const baseGlyP=latestPrice(productId,'gly');
+  const fullTotal=alc*baseAlcP+gly*baseGlyP;
+  const lineTotal=alc*(alcP||baseAlcP)+gly*(glyP||baseGlyP);
+  const disc=fullTotal>0?((1-lineTotal/fullTotal)*100):0;
+  if(disc>0.01){
+    const parts=[];
+    if(alcP>0&&baseAlcP>0&&alcP<baseAlcP)parts.push(`🥃 –${Math.round((1-alcP/baseAlcP)*100)}% (${baseAlcP.toFixed(2)}→${alcP.toFixed(2)} €)`);
+    if(glyP>0&&baseGlyP>0&&glyP<baseGlyP)parts.push(`🌿 –${Math.round((1-glyP/baseGlyP)*100)}% (${baseGlyP.toFixed(2)}→${glyP.toFixed(2)} €)`);
+    warn.textContent=parts.join(' · ')||`Popust: ${disc.toFixed(1)}%`;
+    warn.style.color='var(--ch-velo)';warn.style.display='';
+  } else {
+    warn.style.display='none';
+  }
 }
 
 function onDiscountChange(){
@@ -3524,24 +3546,7 @@ function getFullTotal(){
 }
 
 function onFinalPriceChange(productId){
-  if(productId){
-    // Per-product hint (existing logic)
-    const finalTotal=parseNum(document.getElementById('oprice-'+productId)?.value||'');
-    const warn=document.getElementById('owarn-'+productId);
-    if(!warn)return;
-    if(!finalTotal){warn.style.display='none';return;}
-    const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
-    const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
-    if(!alc&&!gly){warn.style.display='none';return;}
-    const alcP=latestPrice(productId,'alc');
-    const glyP=latestPrice(productId,'gly');
-    const fullTotal=alc*alcP+gly*glyP;
-    if(!fullTotal){warn.style.display='none';return;}
-    const disc=((1-finalTotal/fullTotal)*100);
-    if(disc>0){warn.textContent=`Popust: ${disc.toFixed(2)}% (redna: ${fullTotal.toFixed(2)} €)`;warn.style.color='var(--ch-velo)';warn.style.display='';}
-    else{warn.style.display='none';}
-    return;
-  }
+  if(productId){onPerUnitPriceChange(productId);return;}
   // Global final price field — calculate discount
   const finalPrice=parseNum(document.getElementById('orderFinalPrice')?.value||'');
   const discEl=document.getElementById('orderDiscount');
@@ -3569,30 +3574,15 @@ function collectOrderLines(){
     const alc=parseInt(document.getElementById('oalc-'+p.id)?.value)||0;
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
-    const customTotal=parseNum(document.getElementById('oprice-'+p.id)?.value||'');
     let alcP,glyP,lineTotal;
-    if(isKom){
-      // Per-unit prices entered in the komisija form (optional — 0 if not entered)
-      alcP=parseNum(document.getElementById('okpa-'+p.id)?.value)||0;
-      glyP=parseNum(document.getElementById('okpg-'+p.id)?.value)||0;
-      lineTotal=alc*alcP+gly*glyP;
-    } else if(customTotal){
-      // Custom total — distribute proportionally between alc and gly
-      const alcBase=latestPrice(p.id,'alc');
-      const glyBase=latestPrice(p.id,'gly');
-      const fullTotal=alc*alcBase+gly*glyBase;
-      const ratio=fullTotal>0?customTotal/fullTotal:1;
-      alcP=alcBase*ratio;
-      glyP=glyBase*ratio;
-      lineTotal=customTotal;
-    } else if(isVelo&&tier){
-      alcP=tier.alc*discMult;glyP=tier.gly*discMult;
-      lineTotal=alc*alcP+gly*glyP;
-    } else {
-      alcP=latestPrice(p.id,'alc')*discMult;
-      glyP=latestPrice(p.id,'gly')*discMult;
-      lineTotal=alc*alcP+gly*glyP;
-    }
+    const customAlcP=parseNum(document.getElementById('okpa-'+p.id)?.value||'');
+    const customGlyP=parseNum(document.getElementById('okpg-'+p.id)?.value||'');
+    const baseAlcP=isVelo&&tier?tier.alc:latestPrice(p.id,'alc');
+    const baseGlyP=isVelo&&tier?tier.gly:latestPrice(p.id,'gly');
+    // Per-unit price: custom if entered, else global discount, else base
+    alcP=customAlcP>0?customAlcP:baseAlcP*discMult;
+    glyP=customGlyP>0?customGlyP:baseGlyP*discMult;
+    lineTotal=alc*alcP+gly*glyP;
     return{p,alc,gly,alcP,glyP,lineTotal};
   }).filter(Boolean);
 }
@@ -3613,10 +3603,19 @@ function renderOrderSummary(){
     fp.value=grandTotal.toFixed(2);
   }
   box.style.display='';
-  const linesHtml=lines.map(l=>`<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}</span><span class="os-val">${l.lineTotal.toFixed(2)+' €'}</span></div>`).join('');
+  const linesHtml=lines.map(l=>{
+    const baseAlcP=isVelo&&tier?tier.alc:latestPrice(l.p.id,'alc');
+    const baseGlyP=isVelo&&tier?tier.gly:latestPrice(l.p.id,'gly');
+    const fullLineTotal=l.alc*baseAlcP+l.gly*baseGlyP;
+    const lineDisc=fullLineTotal>0?round(fullLineTotal-l.lineTotal,2):0;
+    const lineDiscPct=fullLineTotal>0?Math.round((lineDisc/fullLineTotal)*100):0;
+    const discHint=lineDisc>0&&discount===0?`<span style="font-size:.68rem;color:var(--success);margin-left:.3rem">–${lineDiscPct}%</span>`:'';
+    return `<div class="os-line"><span class="os-label">${l.p.name} ${l.alc?'🥃×'+l.alc:''} ${l.gly?'🌿×'+l.gly:''}${discHint}</span><span class="os-val">${l.lineTotal.toFixed(2)+' €'}</span></div>`;
+  }).join('');
   const fullTotal=getFullTotal();
+  const totalDisc=round(fullTotal-grandTotal,2);
   box.innerHTML=`<div class="os-title">Povzetek</div><div class="os-lines">${linesHtml}
-    ${discount>0?`<div class="os-line"><span class="os-label">Popust ${discount}%</span><span class="os-val" style="color:var(--success)">–${(fullTotal-grandTotal).toFixed(2)} €</span></div>`:''}
+    ${totalDisc>0?`<div class="os-line"><span class="os-label">Skupni popust${discount>0?` ${discount}%`:''}</span><span class="os-val" style="color:var(--success)">–${totalDisc.toFixed(2)} €</span></div>`:''}
     ${tier&&orderChannel==='velo'?`<div class="os-line"><span class="os-label">Razred</span><span style="color:var(--ch-velo)">${tier.label}</span></div>`:''}
     <div class="os-divider"></div>
     <div class="os-total-row"><span class="os-total-label">Skupaj (${totalQty} kom.)</span><span class="os-total-val">${grandTotal.toFixed(2)+' €'}</span></div>
@@ -3627,9 +3626,11 @@ function clearOrder(){
   products.forEach(p=>{
     const a=document.getElementById('oalc-'+p.id);
     const g=document.getElementById('ogly-'+p.id);
-    const pr=document.getElementById('oprice-'+p.id);
-    if(a)a.value='';if(g)g.value='';if(pr)pr.value='';
-  });;
+    const pa=document.getElementById('okpa-'+p.id);
+    const pg=document.getElementById('okpg-'+p.id);
+    if(a)a.value='';if(g)g.value='';if(pa)pa.value='';if(pg)pg.value='';
+    const w=document.getElementById('owarn-'+p.id);if(w)w.style.display='none';
+  });
   document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
@@ -7864,28 +7865,31 @@ Rok`;
           if(l.alc){
             const fullP=latestPrice(l.productId,'alc');
             const isFree=(l.alcPrice||0)===0&&fullP>0;
+            const discPct=isFree?100:fullP>0&&(l.alcPrice||0)<fullP?Math.round(((fullP-(l.alcPrice||0))/fullP)*100):0;
             const priceCell=isFree
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              :discPct>0
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.alcPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.alcPrice||0).toFixed(2)} €`;
             rows.push(`<tr><td>${l.productName} — alkoholna${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.alc} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           if(l.gly){
             const fullP=latestPrice(l.productId,'gly');
             const isFree=(l.glyPrice||0)===0&&fullP>0;
+            const discPct=isFree?100:fullP>0&&(l.glyPrice||0)<fullP?Math.round(((fullP-(l.glyPrice||0))/fullP)*100):0;
             const priceCell=isFree
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              :discPct>0
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.glyPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.glyPrice||0).toFixed(2)} €`;
             rows.push(`<tr><td>${l.productName} — glicerinska${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.gly} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           return rows.join('');
         }).join('')}
         ${(()=>{
-          const refTotal=(g?.lines||[]).reduce((s,l)=>{
-            const aFull=latestPrice(l.productId,'alc');const gFull=latestPrice(l.productId,'gly');
-            return s+(l.alc||0)*(l.alcPrice>0?l.alcPrice:aFull)+(l.gly||0)*(l.glyPrice>0?l.glyPrice:gFull);
-          },0);
-          const disc=round(refTotal-(inv.total||0),2);
-          return disc>0?`<tr class="discount-row"><td colspan="3">Popust${g?.discount?` (${g.discount}%)`:''}</td><td>−${disc.toFixed(2)} €</td></tr>`:'';
+          const _dAmt=(g?.fullTotal||0)-(inv.total||0);
+          const discAmt=g?.discountAmt>0?g.discountAmt:_dAmt>0?round(_dAmt,2):0;
+          return discAmt>0?`<tr class="discount-row"><td colspan="3">Popust${g?.discount?` (${g.discount}%)`:''}</td><td>−${discAmt.toFixed(2)} €</td></tr>`:'';
         })()}
         <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
       </tbody>

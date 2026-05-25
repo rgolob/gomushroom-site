@@ -948,15 +948,31 @@ async function sendStripeConfirmationEmail(order, calc) {
   const ujemajoci = calc.ujemajoci || [];
   const dateStr = new Date().toLocaleDateString('sl-SI');
 
+  // Ločimo popuste na artikel-nivo (količina, znesek) in koda-nivo
+  const codeDiscounts = ujemajoci.filter(u => u.opis.startsWith('Koda '));
+  const itemDiscounts = ujemajoci.filter(u => !u.opis.startsWith('Koda '));
+  const hasItemDiscount = itemDiscounts.length > 0 && pct > 0;
+  const hasCodeDiscount = codeDiscounts.length > 0 && pct > 0;
+
+  // Efektivni % za prikaz na artiklu (samo ne-koda popusti)
+  const rawItemPct = itemDiscounts.reduce((s, u) => s + (u.vrednost || 0), 0);
+  const rawCodePct = codeDiscounts.reduce((s, u) => s + (u.vrednost || 0), 0);
+  const rawTotal = rawItemPct + rawCodePct || 1;
+  const itemDisplayPct = hasItemDiscount ? (hasCodeDiscount ? rawItemPct : pct) : 0;
+  const codeAmt = hasCodeDiscount
+    ? Math.round(Number(calc.popustZnesek) * rawCodePct / rawTotal * 100) / 100
+    : 0;
+  const itemAmt = Number(calc.popustZnesek) - codeAmt;
+
   const tdBase = 'padding:.55rem .6rem;border-bottom:1px solid #f5f0e8;vertical-align:middle;font-size:.82rem';
   const thBase = 'padding:.5rem .6rem;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6;background:#f7f3ee';
 
   const itemRows = order.items.map(i => {
     const orig = Number(i.price);
-    const disc = pct > 0 ? Math.round(orig * (1 - pct / 100) * 100) / 100 : orig;
+    const disc = itemDisplayPct > 0 ? Math.round(orig * (1 - itemDisplayPct / 100) * 100) / 100 : orig;
     const lineTotal = disc * i.quantity;
-    const priceCell = pct > 0
-      ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em;display:block">${orig.toFixed(2)} €</span>${disc.toFixed(2)} €<span style="font-size:.72em;color:#3a6b4a;margin-left:.2em">−${pct}%</span>`
+    const priceCell = itemDisplayPct > 0
+      ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em;display:block">${orig.toFixed(2)} €</span>${disc.toFixed(2)} €<span style="font-size:.72em;color:#3a6b4a;margin-left:.2em">−${itemDisplayPct}%</span>`
       : `${orig.toFixed(2)} €`;
     return `<tr>
       <td style="${tdBase}">${i.name}${i.variantLabel ? `<br><small style="color:#9a8f82;font-size:.8em">${i.variantLabel}</small>` : ''}</td>
@@ -966,15 +982,23 @@ async function sendStripeConfirmationEmail(order, calc) {
     </tr>`;
   }).join('');
 
-  const discountRow = pct > 0 ? (() => {
-    const labels = ujemajoci.length
-      ? ujemajoci.map(u => `${u.opis}${u.vrednost ? ` (${u.vrednost}%)` : ''}`).join(' · ')
-      : `Popust (${pct}%)`;
-    return `<tr>
-      <td colspan="3" style="${tdBase};color:#3a6b4a">${labels}</td>
-      <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${Number(calc.popustZnesek).toFixed(2)} €</td>
-    </tr>`;
-  })() : '';
+  // Vrstica za količinski popust (če obstaja)
+  const itemDiscRow = hasItemDiscount && itemAmt > 0 ? `<tr>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${itemDiscounts.map(u => `${u.opis} (${u.vrednost}%)`).join(' · ')}</td>
+    <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${itemAmt.toFixed(2)} €</td>
+  </tr>` : '';
+
+  // Vrstica za kodo
+  const codeDiscRow = hasCodeDiscount ? `<tr>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${codeDiscounts.map(u => `${u.opis} (${u.vrednost}%)`).join(' · ')}</td>
+    <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${codeAmt.toFixed(2)} €</td>
+  </tr>` : '';
+
+  // Če ni ločenih tipov, pokaži skupno vrstico
+  const simpleDiscRow = pct > 0 && !hasItemDiscount && !hasCodeDiscount ? `<tr>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">Popust (${pct}%)</td>
+    <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${Number(calc.popustZnesek).toFixed(2)} €</td>
+  </tr>` : '';
 
   const shippingRow = `<tr>
     <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">Poštnina</td>
@@ -988,25 +1012,29 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   const html = `<!DOCTYPE html>
 <html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased}
+  body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased;color-scheme:light}
   .wrap{max-width:600px;margin:0 auto;background:#fff}
   @media(min-width:640px){.wrap{margin:2rem auto;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,.08);overflow:hidden}}
 </style></head>
 <body>
 <div class="wrap">
   <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;flex-wrap:wrap">
-      <div>
-        <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;background-color:#f7f3ee;margin-bottom:.3rem">
-        <div style="font-size:.7rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
-        <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
-      </div>
-    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td style="vertical-align:middle">
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="150" height="75" style="display:block;width:150px;height:auto;background-color:#f7f3ee;margin-bottom:.25rem">
+          <div style="font-size:.7rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
+        </td>
+        <td style="vertical-align:middle;text-align:right;white-space:nowrap">
+          <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
+          <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <div style="padding:1.5rem">
@@ -1025,7 +1053,9 @@ async function sendStripeConfirmationEmail(order, calc) {
       </tr></thead>
       <tbody>
         ${itemRows}
-        ${discountRow}
+        ${itemDiscRow}
+        ${codeDiscRow}
+        ${simpleDiscRow}
         ${shippingRow}
         ${totalRow}
       </tbody>

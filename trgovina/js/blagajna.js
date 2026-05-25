@@ -954,7 +954,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <img src="https://gomushroom.si/assets/logo-horizontal.jpg" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem;background-color:#f7f3ee">
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
@@ -1121,7 +1121,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <img src="https://gomushroom.si/assets/logo-horizontal.jpg" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem;background-color:#f7f3ee">
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">

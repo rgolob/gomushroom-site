@@ -2239,7 +2239,7 @@ footer.site-footer{
     grid-template-columns:repeat(2, minmax(0,1fr));
   }
   .gm-product-media{
-    aspect-ratio:4/3;
+    aspect-ratio:1/1;
   }
 }
 

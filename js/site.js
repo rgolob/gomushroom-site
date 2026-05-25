@@ -622,18 +622,18 @@ document.addEventListener('DOMContentLoaded', function(){
 (function(){
   // ── CONFIG — posodobi ob vsakem novem članku ──────────────────
   const NOTICE = {
-    id:   'gm_notice_v2',   // povečaj za ponastavitev pri vsakem novem članku
+    id:   'gm_notice_v3',   // povečaj za ponastavitev pri vsakem novem članku
     days: 7,                // koliko dni je obvestilo vidno
     sl: {
       label: 'Nov članek',
-      title: 'Kaj je ekstrakcija?',
-      url:   '/znanje/kaj-je-ekstrakcija/',
+      title: 'Smrekovi vršički: zakaj ne gre za klasično tinkturo?',
+      url:   '/znanje/ekstrakt-smrekovih-vrsickov/',
       cta:   'Preberi →'
     },
     en: {
       label: 'New article',
-      title: 'What Is Extraction?',
-      url:   '/en/learn/what-is-extraction/',
+      title: 'Spruce bud extract: beyond a classic tincture',
+      url:   '/en/learn/spruce-bud-extract/',
       cta:   'Read →'
     }
   };

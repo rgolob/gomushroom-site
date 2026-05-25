@@ -954,8 +954,8 @@ async function sendStripeConfirmationEmail(order, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-size:1.4rem;font-weight:300;letter-spacing:.04em">Go<strong style="color:#af8455">Mushroom</strong></div>
-          <div style="font-size:.72rem;color:#9a8f82;margin-top:.15rem">Rok Golob s.p. · gomushroom.si</div>
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:.9rem;font-weight:500">Potrditev plačila</div>
@@ -965,7 +965,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     </div>
     <div style="padding:1.5rem">
       <p style="margin:0 0 1rem">Spoštovani ${order.name},</p>
-      <p style="margin:0 0 1.25rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Plačilo je bilo uspešno potrjeno. Naročilo bomo kmalu odpremili.</p>
+      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Plačilo je bilo uspešno potrjeno. Naročilo bomo kmalu odpremili.</p>
       <table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem">
         <thead><tr style="background:#f7f3ee">
           <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Artikel</th>
@@ -974,13 +974,13 @@ async function sendStripeConfirmationEmail(order, calc) {
         </tr></thead>
         <tbody>${itemsList}</tbody>
       </table>
-      ${calc.pct > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust (${calc.pct}%): −${calc.popustZnesek.toFixed(2)} €</div>` : ''}
-      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : calc.postnina.toFixed(2) + ' €'}</div>
-      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${calc.skupaj.toFixed(2)} €</div>
+      ${Number(calc.popustZnesek) > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust${calc.pct > 0 ? ` (${calc.pct}%)` : ''}: −${Number(calc.popustZnesek).toFixed(2)} €</div>` : ''}
+      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : Number(calc.postnina).toFixed(2) + ' €'}</div>
+      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${Number(calc.skupaj).toFixed(2)} €</div>
       <div style="background:#f0f7f0;border-left:3px solid #3a6b4a;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;font-size:.85rem">
         ✅ Plačilo potrjeno. Naročilo je v obdelavi.
       </div>
-      <p style="margin:0">Lep pozdrav,<br>Rok</p>
+      <p style="margin:1.25rem 0 0">Lep pozdrav,<br>Rok</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
@@ -1121,8 +1121,8 @@ async function sendConfirmationEmail(order, rf, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-size:1.4rem;font-weight:300;letter-spacing:.04em">Go<strong style="color:#af8455">Mushroom</strong></div>
-          <div style="font-size:.72rem;color:#9a8f82;margin-top:.15rem">Rok Golob s.p. · gomushroom.si</div>
+          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:.9rem;font-weight:500">Predračun</div>
@@ -1132,7 +1132,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     </div>
     <div style="padding:1.5rem">
       <p style="margin:0 0 1rem">Spoštovani ${order.name},</p>
-      <p style="margin:0 0 1.25rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Spodaj najdete podatke za plačilo.</p>
+      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Spodaj najdete podatke za plačilo.</p>
       <table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem">
         <thead><tr style="background:#f7f3ee">
           <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Artikel</th>
@@ -1141,9 +1141,9 @@ async function sendConfirmationEmail(order, rf, calc) {
         </tr></thead>
         <tbody>${itemsList}</tbody>
       </table>
-      ${calc.pct > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust (${calc.pct}%): −${calc.popustZnesek.toFixed(2)} €</div>` : ''}
-      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : calc.postnina.toFixed(2) + ' €'}</div>
-      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${calc.skupaj.toFixed(2)} €</div>
+      ${Number(calc.popustZnesek) > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust${calc.pct > 0 ? ` (${calc.pct}%)` : ''}: −${Number(calc.popustZnesek).toFixed(2)} €</div>` : ''}
+      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : Number(calc.postnina).toFixed(2) + ' €'}</div>
+      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${Number(calc.skupaj).toFixed(2)} €</div>
 
       <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
         <div style="flex:1;min-width:160px;font-size:.82rem;line-height:1.8">
@@ -1158,7 +1158,7 @@ async function sendConfirmationEmail(order, rf, calc) {
       </div>
 
       <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">Po prejemu plačila bomo naročilo nemudoma odpremili.</p>
-      <p style="margin:0">Lep pozdrav,<br>Rok</p>
+      <p style="margin:1.25rem 0 0">Lep pozdrav,<br>Rok</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·

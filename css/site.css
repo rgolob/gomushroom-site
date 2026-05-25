@@ -27,6 +27,7 @@ html,body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%;
 }
 
 img{max-width:100%;display:block}
@@ -1381,7 +1382,7 @@ footer.site-footer{
   opacity:.7;
 }
 
-.footer-copy{
+.site-footer .footer-copy{
   margin:0;
   font-size:11.5px;
   color:rgba(255,255,255,.6);

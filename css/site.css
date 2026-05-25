@@ -2138,7 +2138,7 @@ footer.site-footer{
 .gm-product-media{
   aspect-ratio:3 / 4;
   overflow:hidden;
-  background:radial-gradient(ellipse 80% 70% at 50% 40%, #f7f3ee, #f0ebe3);
+  background:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -2146,8 +2146,8 @@ footer.site-footer{
 
 .gm-product-media img{
   width:auto;
-  height:82%;
-  max-width:82%;
+  height:72%;
+  max-width:72%;
   object-fit:contain;
   display:block;
   transition:transform .3s ease;
@@ -2187,8 +2187,8 @@ footer.site-footer{
 .gm-meta{
   display:flex;
   flex-wrap:wrap;
-  gap:6px 12px;
-  margin-top:.75rem;
+  gap:3px 12px;
+  margin-top:.65rem;
   font-size:.8rem;
   color:#5a605b;
   flex:1;

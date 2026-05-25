@@ -954,7 +954,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <img src="https://gomushroom.si/assets/logo-horizontal.jpg" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
@@ -980,7 +980,7 @@ async function sendStripeConfirmationEmail(order, calc) {
       <div style="background:#f0f7f0;border-left:3px solid #3a6b4a;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;font-size:.85rem">
         ✅ Plačilo potrjeno. Naročilo je v obdelavi.
       </div>
-      <p style="margin:1.25rem 0 0">Lep pozdrav,<br>Rok</p>
+      <p style="margin:2.5rem 0 0">Lep pozdrav,<br>Rok</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
@@ -1121,7 +1121,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
+          <img src="https://gomushroom.si/assets/logo-horizontal.jpg" alt="GoMushroom" width="160" height="80" style="display:block;width:160px;height:auto;margin-bottom:.35rem">
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
@@ -1158,7 +1158,7 @@ async function sendConfirmationEmail(order, rf, calc) {
       </div>
 
       <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">Po prejemu plačila bomo naročilo nemudoma odpremili.</p>
-      <p style="margin:1.25rem 0 0">Lep pozdrav,<br>Rok</p>
+      <p style="margin:2.5rem 0 0">Lep pozdrav,<br>Rok</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·

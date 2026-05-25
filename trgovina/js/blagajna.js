@@ -969,28 +969,30 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   const itemRows = order.items.map(i => {
     const orig = Number(i.price);
-    const disc = itemDisplayPct > 0 ? Math.round(orig * (1 - itemDisplayPct / 100) * 100) / 100 : orig;
-    const lineTotal = disc * i.quantity;
-    const priceCell = itemDisplayPct > 0
-      ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em;display:block">${orig.toFixed(2)} €</span>${disc.toFixed(2)} €<span style="font-size:.72em;color:#3a6b4a;margin-left:.2em">−${itemDisplayPct}%</span>`
-      : `${orig.toFixed(2)} €`;
+    const lineTotal = orig * i.quantity;
     return `<tr>
       <td style="${tdBase}">${i.name}${i.variantLabel ? `<br><small style="color:#9a8f82;font-size:.8em">${i.variantLabel}</small>` : ''}</td>
       <td style="${tdBase};text-align:right">${i.quantity}×</td>
-      <td style="${tdBase};text-align:right">${priceCell}</td>
+      <td style="${tdBase};text-align:right">${orig.toFixed(2)} €</td>
       <td style="${tdBase};text-align:right;font-weight:600">${lineTotal.toFixed(2)} €</td>
     </tr>`;
   }).join('');
 
   // Vrstica za količinski popust (če obstaja)
+  const itemDiscLabel = itemDiscounts.length === 1
+    ? `Količinski popust (${itemDiscounts[0].vrednost}%)`
+    : `Količinski popust (${itemDisplayPct}%)`;
   const itemDiscRow = hasItemDiscount && itemAmt > 0 ? `<tr>
-    <td colspan="3" style="${tdBase};color:#3a6b4a">${itemDiscounts.map(u => `${u.opis} (${u.vrednost}%)`).join(' · ')}</td>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${itemDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${itemAmt.toFixed(2)} €</td>
   </tr>` : '';
 
   // Vrstica za kodo
+  const codeDiscLabel = codeDiscounts.length === 1
+    ? `${codeDiscounts[0].opis} (${codeDiscounts[0].vrednost}%)`
+    : `Promocijska koda (${rawCodePct}%)`;
   const codeDiscRow = hasCodeDiscount ? `<tr>
-    <td colspan="3" style="${tdBase};color:#3a6b4a">${codeDiscounts.map(u => `${u.opis} (${u.vrednost}%)`).join(' · ')}</td>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${codeDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${codeAmt.toFixed(2)} €</td>
   </tr>` : '';
 
@@ -1026,7 +1028,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     <table style="width:100%;border-collapse:collapse">
       <tr>
         <td style="vertical-align:middle">
-          <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" width="52" height="52" style="display:block;height:52px;width:auto">
+          <img src="https://gomushroom.si/assets/logo-square.jpg" alt="GoMushroom" width="52" height="52" style="display:block;height:52px;width:52px">
         </td>
         <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
           <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>

@@ -1026,12 +1026,12 @@ async function sendStripeConfirmationEmail(order, calc) {
     <table style="width:100%;border-collapse:collapse">
       <tr>
         <td style="vertical-align:middle">
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="150" height="75" style="display:block;width:150px;height:auto;background-color:#f7f3ee;margin-bottom:.25rem">
-          <div style="font-size:.7rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
+          <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" width="52" height="52" style="display:block;height:52px;width:auto">
         </td>
-        <td style="vertical-align:middle;text-align:right;white-space:nowrap">
+        <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
           <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
           <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
+          <div style="font-size:.68rem;color:#9a8f82;margin-top:.1rem">Rok Golob s.p. · gomushroom.si</div>
         </td>
       </tr>
     </table>

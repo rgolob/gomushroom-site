@@ -41,7 +41,7 @@ async function loadProductVariants() {
     fetch(`${SB_URL}/rest/v1/gm_products?slug=eq.${PRODUCT_SLUG}&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_batches?order=date.desc&select=product_id,batch_num,alc_sku,gly_sku`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_batches?order=date.asc&select=product_id,batch_num,alc_sku,gly_sku`, { headers: SB_HEADERS })
   ]);
 
   const products = await prodRes.json();

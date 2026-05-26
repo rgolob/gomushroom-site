@@ -56,7 +56,6 @@ function addToCart(item) {
       price: Number(item.price || 0),
       originalPrice: Number(item.originalPrice || item.price || 0),
       discountPct: Number(item.discountPct || 0),
-      batchNum: item.batchNum || '',
       sku: item.sku || "",
       image: item.image || "",
       quantity: Number(item.quantity || 1)
@@ -80,7 +79,6 @@ function handleAddToCartClick(button) {
     price: Number(button.dataset.price),
     originalPrice: Number(button.dataset.originalPrice || button.dataset.price),
     discountPct: Number(button.dataset.discountPct || 0),
-    batchNum: button.dataset.batchNum || '',
     sku: button.dataset.sku || "",
     image: button.dataset.image || "",
     quantity

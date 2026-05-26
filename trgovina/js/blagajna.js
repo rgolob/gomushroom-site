@@ -976,7 +976,7 @@ async function sendStripeConfirmationEmail(order, calc) {
       ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em;display:block">${origPrice.toFixed(2)} €</span><span>${price.toFixed(2)} €</span><span style="font-size:.72em;color:#3a6b4a;margin-left:.25em">−${itemDiscPct}%</span>`
       : `${price.toFixed(2)} €`;
     return `<tr>
-      <td style="${tdBase}">${i.name}${i.variantLabel ? `<br><small style="color:#9a8f82;font-size:.8em">${i.variantLabel}</small>` : ''}${i.batchNum ? `<br><small style="color:#9a8f82;font-size:.75em">Serija: ${i.batchNum}</small>` : ''}</td>
+      <td style="${tdBase}">${i.name}${i.variantLabel ? `<br><small style="color:#9a8f82;font-size:.8em">${i.variantLabel}</small>` : ''}</td>
       <td style="${tdBase};text-align:right">${i.quantity}×</td>
       <td style="${tdBase};text-align:right">${priceCell}</td>
       <td style="${tdBase};text-align:right;font-weight:600">${lineTotal.toFixed(2)} €</td>

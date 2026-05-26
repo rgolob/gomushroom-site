@@ -242,11 +242,10 @@ function bindVariantPickers(products) {
         addBtn.textContent = v.in_stock ? '+ Dodaj' : 'Ni na zalogi';
       }
 
-      // Badge
-      let badge = card.querySelector('[data-discount-badge]');
+      // Badge — poišči obstoječega (statičnega ali dinamičnega), ne ustvari duplikata
+      let badge = card.querySelector('.gm-discount-badge');
       if (!badge && v.discount_pct > 0) {
         badge = document.createElement('span');
-        badge.dataset.discountBadge = '';
         badge.className = 'gm-discount-badge';
         const imgWrap = card.querySelector('.shop-product-image');
         if (imgWrap) imgWrap.appendChild(badge);

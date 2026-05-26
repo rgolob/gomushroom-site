@@ -90,6 +90,8 @@ function initProductPage(variants, product) {
       addBtn.dataset.variant = v.type;
       addBtn.dataset.variantLabel = v.name;
       addBtn.dataset.price = discPrice.toFixed(2);
+      addBtn.dataset.originalPrice = v.price_malo.toFixed(2);
+      addBtn.dataset.discountPct = v.discount_pct || 0;
       addBtn.dataset.sku = v.sku || '';
       addBtn.disabled = !v.in_stock;
       addBtn.textContent = v.in_stock ? 'Dodaj v košarico' : 'Ni na zalogi';

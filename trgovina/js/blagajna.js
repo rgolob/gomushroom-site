@@ -968,12 +968,17 @@ async function sendStripeConfirmationEmail(order, calc) {
   const thBase = 'padding:.5rem .6rem;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6;background:#f7f3ee';
 
   const itemRows = order.items.map(i => {
-    const orig = Number(i.price);
-    const lineTotal = orig * i.quantity;
+    const price = Number(i.price);
+    const origPrice = Number(i.originalPrice || i.price);
+    const itemDiscPct = Number(i.discountPct || 0);
+    const lineTotal = price * i.quantity;
+    const priceCell = itemDiscPct > 0
+      ? `<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em;display:block">${origPrice.toFixed(2)} €</span><span>${price.toFixed(2)} €</span><span style="font-size:.72em;color:#3a6b4a;margin-left:.25em">−${itemDiscPct}%</span>`
+      : `${price.toFixed(2)} €`;
     return `<tr>
       <td style="${tdBase}">${i.name}${i.variantLabel ? `<br><small style="color:#9a8f82;font-size:.8em">${i.variantLabel}</small>` : ''}</td>
       <td style="${tdBase};text-align:right">${i.quantity}×</td>
-      <td style="${tdBase};text-align:right">${orig.toFixed(2)} €</td>
+      <td style="${tdBase};text-align:right">${priceCell}</td>
       <td style="${tdBase};text-align:right;font-weight:600">${lineTotal.toFixed(2)} €</td>
     </tr>`;
   }).join('');

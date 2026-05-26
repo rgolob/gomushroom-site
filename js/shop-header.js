@@ -64,10 +64,16 @@
 
   function updateCartCount() {
     if (!cartCountEl) return;
+    const prev = Number(cartCountEl.textContent) || 0;
     const count = getCartCount();
     cartCountEl.textContent = count;
     cartCountEl.classList.toggle("is-empty", count === 0);
     cartCountEl.classList.toggle("has-items", count > 0);
+    if (count > prev) {
+      cartCountEl.classList.remove("cart-count--pulse");
+      void cartCountEl.offsetWidth;
+      cartCountEl.classList.add("cart-count--pulse");
+    }
   }
 
   updateCartCount();

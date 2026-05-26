@@ -92,13 +92,29 @@ function handleAddToCartClick(button) {
   addToCart(item);
 
   const originalText = button.textContent;
-  button.textContent = "Dodano";
+  button.textContent = "✓ Dodano v košarico";
   button.disabled = true;
 
   setTimeout(() => {
     button.textContent = originalText;
     button.disabled = false;
-  }, 900);
+  }, 2000);
+
+  showCartToast(item.name);
+}
+
+function showCartToast(name) {
+  let toast = document.getElementById('gm-cart-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'gm-cart-toast';
+    toast.innerHTML = `<span class="gm-toast-msg"></span><a href="/trgovina/kosarica/" class="gm-toast-btn">Poglej košarico →</a>`;
+    document.body.appendChild(toast);
+  }
+  toast.querySelector('.gm-toast-msg').textContent = `✓ ${name} dodano v košarico`;
+  toast.classList.add('gm-toast-show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('gm-toast-show'), 3000);
 }
 
 document.addEventListener("click", (event) => {

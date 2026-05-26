@@ -12,6 +12,11 @@
   --gm-shadow-soft:0 10px 24px rgba(0,0,0,.04);
 }
 
+/* iOS: prepreči samodejni zoom pri fokus na vnosno polje (font-size mora biti >= 16px) */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
 /* BUTTONS */
 
 .gm-btn{

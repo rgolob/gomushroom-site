@@ -1033,7 +1033,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     <table style="width:100%;border-collapse:collapse">
       <tr>
         <td style="vertical-align:middle">
-          <img src="https://gomushroom.si/assets/logo-square.jpg" alt="GoMushroom" width="52" height="52" style="display:block;height:52px;width:52px">
+          <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
         </td>
         <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
           <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>

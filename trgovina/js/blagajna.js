@@ -1038,7 +1038,7 @@ async function sendStripeConfirmationEmail(order, calc) {
 <div class="wrap">
   <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-bottom:2px solid #af8455">
     <tr>
-      <td bgcolor="#f7f3ee" style="background:#f7f3ee;padding:1.5rem">
+      <td bgcolor="#f7f3ee" style="background:#f7f3ee;padding:.75rem 1.25rem">
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
           <tr>
             <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle">

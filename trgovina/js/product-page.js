@@ -28,10 +28,7 @@ function stockLabel(v) {
 function priceHtml(v) {
   if (v.discount_pct > 0) {
     const discPrice = v.price_malo * (1 - v.discount_pct / 100);
-    return `
-      <s style="color:#9a8f82;font-size:1rem;font-weight:400;display:block">${formatPrice(v.price_malo)}</s>
-      <span class="price" style="color:#2b0b39">${formatPrice(discPrice)}</span>
-      <span style="display:inline-block;margin-left:.5rem;background:#2b0b39;color:#af8455;font-size:.75rem;font-weight:700;padding:.15rem .5rem;border-radius:999px">−${v.discount_pct}%</span>`;
+    return `<s style="color:#9a8f82;font-size:1rem;font-weight:400">${formatPrice(v.price_malo)}</s> <span class="price" style="color:#2b0b39">${formatPrice(discPrice)}</span>`;
   }
   return `<span class="price">${formatPrice(v.price_malo)}</span>`;
 }
@@ -84,6 +81,20 @@ function initProductPage(variants, product) {
     if (priceWrap) priceWrap.innerHTML = priceHtml(v);
     if (stockWrap) stockWrap.innerHTML = stockLabel(v);
     if (variantLabel) variantLabel.textContent = v.name;
+
+    const imgWrap = document.querySelector('.product-image-wrap');
+    if (imgWrap) {
+      let badge = imgWrap.querySelector('.gm-discount-badge');
+      if (!badge && v.discount_pct > 0) {
+        badge = document.createElement('span');
+        badge.className = 'gm-discount-badge';
+        imgWrap.appendChild(badge);
+      }
+      if (badge) {
+        badge.textContent = `−${v.discount_pct}%`;
+        badge.style.display = v.discount_pct > 0 ? '' : 'none';
+      }
+    }
     if (variantNote) variantNote.textContent = v.type === 'alc' ? 'Alkoholna različica.' : 'Brezalkoholna različica z glicerinom.';
 
     if (addBtn) {

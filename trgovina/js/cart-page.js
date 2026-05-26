@@ -98,7 +98,11 @@ function renderCart() {
       <div class="gm-cart-item__content">
         <div style="font-size:1.1rem;font-weight:400;color:#2b0b39;line-height:1.2">${item.name}</div>
         <div style="font-size:.78rem;color:rgba(43,11,57,.5);margin:.2rem 0 .5rem">${item.variantLabel || ''}</div>
-        <div style="font-size:.85rem;color:#2b0b39;font-weight:500">${fmt(item.price)} / kom</div>
+        <div style="font-size:.85rem;color:#2b0b39;font-weight:500">${
+          item.discountPct > 0
+            ? `<span style="text-decoration:line-through;color:rgba(43,11,57,.4);font-weight:400">${fmt(item.originalPrice)}</span> ${fmt(item.price)} <span style="font-size:.72em;color:#3a6b4a;font-weight:600">−${item.discountPct}%</span>`
+            : `${fmt(item.price)}`
+        } / kom</div>
       </div>
       <div class="gm-cart-item__controls">
         <div style="display:flex;align-items:center;gap:.4rem;background:rgba(43,11,57,.05);border-radius:999px;padding:.2rem .3rem">

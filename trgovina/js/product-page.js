@@ -37,10 +37,11 @@ function priceHtml(v) {
 }
 
 async function loadProductVariants() {
-  const [prodRes, varRes, stockRes] = await Promise.all([
+  const [prodRes, varRes, stockRes, batchRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?slug=eq.${PRODUCT_SLUG}&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_batches?order=date.desc&select=product_id,batch_num,alc_sku,gly_sku`, { headers: SB_HEADERS })
   ]);
 
   const products = await prodRes.json();
@@ -50,6 +51,13 @@ async function loadProductVariants() {
   const allVariants = await varRes.json();
   const stockData = stockRes.ok ? await stockRes.json() : [];
   const stockMap = Object.fromEntries(stockData.map(s => [s.variant_id, s]));
+
+  const batchData = batchRes.ok ? await batchRes.json() : [];
+  const batchBySku = {};
+  batchData.forEach(b => {
+    if (b.alc_sku && !batchBySku[b.alc_sku]) batchBySku[b.alc_sku] = b.batch_num;
+    if (b.gly_sku && !batchBySku[b.gly_sku]) batchBySku[b.gly_sku] = b.batch_num;
+  });
 
   const variants = allVariants
     .filter(v => v.product_id === product.id)
@@ -61,7 +69,8 @@ async function loadProductVariants() {
         discount_pct: Number(v.discount_pct) || 0,
         price_malo: Number(v.price_malo) || 0,
         in_stock: status !== 'out_of_stock',
-        low_stock: status === 'low_stock'
+        low_stock: status === 'low_stock',
+        batchNum: batchBySku[v.sku] || ''
       };
     });
 
@@ -92,6 +101,7 @@ function initProductPage(variants, product) {
       addBtn.dataset.price = discPrice.toFixed(2);
       addBtn.dataset.originalPrice = v.price_malo.toFixed(2);
       addBtn.dataset.discountPct = v.discount_pct || 0;
+      addBtn.dataset.batchNum = v.batchNum || '';
       addBtn.dataset.sku = v.sku || '';
       addBtn.disabled = !v.in_stock;
       addBtn.textContent = v.in_stock ? 'Dodaj v košarico' : 'Ni na zalogi';

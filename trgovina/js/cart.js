@@ -100,10 +100,10 @@ function handleAddToCartClick(button) {
     button.disabled = false;
   }, 2000);
 
-  showCartToast(item.name);
+  showCartToast(item.name, button);
 }
 
-function showCartToast(name) {
+function showCartToast(name, triggerEl) {
   let toast = document.getElementById('gm-cart-toast');
   if (!toast) {
     toast = document.createElement('div');
@@ -112,6 +112,25 @@ function showCartToast(name) {
     document.body.appendChild(toast);
   }
   toast.querySelector('.gm-toast-msg').textContent = `✓ ${name} dodano v košarico`;
+
+  toast.classList.remove('gm-toast-show');
+  if (triggerEl) {
+    const rect = triggerEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    let ty = rect.top - 52; // above button (estimated toast height ~44px + 8px gap)
+    if (ty < 10) ty = rect.bottom + 8; // flip below if near top of viewport
+    const halfW = 160;
+    const clampedLeft = Math.min(Math.max(cx, halfW + 8), window.innerWidth - halfW - 8);
+    toast.style.top = ty + 'px';
+    toast.style.left = clampedLeft + 'px';
+    toast.style.bottom = '';
+  } else {
+    toast.style.top = '';
+    toast.style.bottom = '1.25rem';
+    toast.style.left = '50%';
+  }
+
+  void toast.offsetWidth;
   toast.classList.add('gm-toast-show');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => toast.classList.remove('gm-toast-show'), 3000);

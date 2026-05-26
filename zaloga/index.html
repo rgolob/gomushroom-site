@@ -4785,6 +4785,7 @@ if(l.gly>0){
 
   const _dAmt=(group.fullTotal||0)-(group.total||0);
   const discountAmt = group.discountAmt>0 ? group.discountAmt : _dAmt>0 ? round(_dAmt,2) : (group.discount>0&&total>0) ? round(total*group.discount/(100-group.discount),2) : 0;
+  const subtotalLine = (group.discount||0) > 0 ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Skupaj artikli</span><span style="color:#7a6f60">${(group.fullTotal||0).toFixed(2)} €</span></div>` : '';
   const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>Popust ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
   const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
@@ -4864,6 +4865,7 @@ ${extRefs}
 </table>
 
 <div class="totals">
+  ${subtotalLine}
   ${discountLine}
   <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' \u20AC':'\u2013'}</span></div>
 </div>

@@ -1007,6 +1007,13 @@ async function sendStripeConfirmationEmail(order, calc) {
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${Number(calc.popustZnesek).toFixed(2)} €</td>
   </tr>` : '';
 
+  // Vmesna vsota (po individualnih popustih, pred skupinskimi) — samo če obstajajo skupinski popusti
+  const hasOrderDiscount = Number(calc.popustZnesek) > 0;
+  const subtotalRow = hasOrderDiscount ? `<tr>
+    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.55);font-style:italic">Skupaj artikli</td>
+    <td style="${tdBase};text-align:right;color:rgba(26,18,9,.55)">${Number(calc.bruto).toFixed(2)} €</td>
+  </tr>` : '';
+
   const shippingRow = `<tr>
     <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">Poštnina</td>
     <td style="${tdBase};text-align:right;color:rgba(26,18,9,.6)">${calc.postnina === 0 ? 'Brezplačno' : Number(calc.postnina).toFixed(2) + ' €'}</td>
@@ -1029,20 +1036,24 @@ async function sendStripeConfirmationEmail(order, calc) {
 </style></head>
 <body>
 <div class="wrap">
-  <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
-    <table style="width:100%;border-collapse:collapse">
-      <tr>
-        <td style="vertical-align:middle">
-          <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
-        </td>
-        <td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
-          <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
-          <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
-          <div style="font-size:.68rem;color:#9a8f82;margin-top:.1rem">Rok Golob s.p. · gomushroom.si</div>
-        </td>
-      </tr>
-    </table>
-  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-bottom:2px solid #af8455">
+    <tr>
+      <td bgcolor="#f7f3ee" style="background:#f7f3ee;padding:1.5rem">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+          <tr>
+            <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle">
+              <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
+            </td>
+            <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
+              <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
+              <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
+              <div style="font-size:.68rem;color:#9a8f82;margin-top:.1rem">Rok Golob s.p. · gomushroom.si</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 
   <div style="padding:1.5rem">
     <div style="font-size:.88rem;line-height:1.8;color:#1a1209;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #ede6d6">
@@ -1060,6 +1071,7 @@ async function sendStripeConfirmationEmail(order, calc) {
       </tr></thead>
       <tbody>
         ${itemRows}
+        ${subtotalRow}
         ${itemDiscRow}
         ${codeDiscRow}
         ${simpleDiscRow}

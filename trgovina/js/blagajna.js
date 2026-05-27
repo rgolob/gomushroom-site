@@ -765,10 +765,12 @@ async function initPaymentUI() {
     }
   });
 
-  // Express Checkout – Apple Pay, Google Pay, Revolut
+  // Express Checkout – Apple Pay, Google Pay, PayPal, Revolut
   const expressEl = stripeElements.create('expressCheckout', {
     buttonType: { applePay: 'buy', googlePay: 'buy' },
-    layout: { maxColumns: 1, maxRows: 5, overflow: 'auto' }
+    layout: { maxColumns: 1, maxRows: 5, overflow: 'auto' },
+    shippingAddressRequired: true,
+    emailRequired: true,
   });
   expressEl.mount('#express-checkout-element');
 
@@ -780,6 +782,18 @@ async function initPaymentUI() {
   });
 
   expressEl.on('confirm', async (event) => {
+    // Pre-populate delivery form from Express Checkout payer data
+    const bd = event.billingDetails || {};
+    const sa = event.shippingAddress;
+    const addr = (sa && sa.address) || bd.address || {};
+    const setVal = (id, val) => { if (val) document.getElementById(id).value = val; };
+    setVal('c-name',   (sa && sa.name) || bd.name);
+    setVal('c-email',  bd.email);
+    setVal('c-phone',  bd.phone || (sa && sa.phone));
+    setVal('c-street', addr.line1);
+    setVal('c-post',   addr.postal_code);
+    setVal('c-city',   addr.city);
+
     if (!validate()) {
       event.paymentFailed({ reason: 'fail' });
       document.querySelector('.checkout-field input.error')

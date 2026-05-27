@@ -166,7 +166,7 @@ function renderShopGrid(products) {
 
         <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
           <div class="shop-product-image">
-            <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+            <img src="${p.image || '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy">
             ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
           </div>
         </a>

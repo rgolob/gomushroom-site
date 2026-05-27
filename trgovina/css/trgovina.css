@@ -279,7 +279,7 @@ input, select, textarea {
 }
 
 .shop-product-img-link{
-  width:26%;
+  width:38%;
   flex-shrink:0;
   display:block;
   text-decoration:none;
@@ -288,7 +288,6 @@ input, select, textarea {
 .shop-product-image{
   width:100%;
   height:100%;
-  max-height:200px;
   min-height:150px;
   background:#fff;
   border-radius:20px 0 0 20px;
@@ -296,7 +295,7 @@ input, select, textarea {
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:24px 10px;
+  padding:12px 8px;
   position:relative;
 }
 

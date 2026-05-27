@@ -8,7 +8,7 @@ const HEADERS = {
 };
 
 function stripePost(path, params) {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = process.env.STRIPE_SK_LIVE || process.env.STRIPE_SECRET_KEY;
   const body = querystring.stringify(params);
   return new Promise((resolve, reject) => {
     const req = https.request({

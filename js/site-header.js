@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/en/#gallery">Gallery</a>
       <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
       <a href="/en/#references">References</a>
+      <a href="/trgovina/">Shop</a>
     `
     : `
       <a href="/znanje/">Znanje</a>
@@ -23,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/#galerija">Galerija</a>
       <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
       <a href="/#reference">Reference</a>
+      <a href="/trgovina/">Trgovina</a>
     `;
 
   const homeUrl = isEn ? "/en/" : "/";

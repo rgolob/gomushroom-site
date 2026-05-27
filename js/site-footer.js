@@ -10,11 +10,13 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/en/">Home</a>
       <a href="/en/learn/">Learn</a>
       <a href="/en/qc/heavy-metals/">Quality</a>
+      <a href="/trgovina/">Shop</a>
     `
     : `
       <a href="/">Domov</a>
       <a href="/znanje/">Znanje</a>
       <a href="/qc/tezke-kovine/">Kakovost</a>
+      <a href="/trgovina/">Trgovina</a>
     `;
 
   const tags = isEn

@@ -279,7 +279,7 @@ input, select, textarea {
 }
 
 .shop-product-img-link{
-  width:38%;
+  width:26%;
   flex-shrink:0;
   display:block;
   text-decoration:none;

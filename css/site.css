@@ -2139,21 +2139,24 @@ footer.site-footer{
 .gm-product-media{
   height:240px;
   overflow:hidden;
-  background:linear-gradient(160deg,#faf7f3 0%,#f2ece3 100%);
+  background:#fff;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   flex-shrink:0;
+  position:relative;
+  padding-top:1rem;
 }
 
 .gm-product-media img{
   width:auto;
-  height:84%;
+  height:100%;
   max-width:80%;
   object-fit:contain;
+  object-position:top center;
   display:block;
   transition:transform .3s ease;
-  filter:drop-shadow(0 6px 14px rgba(0,0,0,.13));
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.10));
 }
 
 @media (hover:hover){
@@ -2163,7 +2166,12 @@ footer.site-footer{
 }
 
 .gm-product-media::after{
-  display:none;
+  content:'';
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:56px;
+  background:linear-gradient(to bottom, transparent, #fff);
+  pointer-events:none;
 }
 
 .gm-product-body{

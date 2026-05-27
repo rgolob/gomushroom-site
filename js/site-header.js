@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/en/#gallery">Gallery</a>
       <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
       <a href="/en/#references">References</a>
-      <a href="/trgovina/">Shop</a>
     `
     : `
       <a href="/znanje/">Znanje</a>

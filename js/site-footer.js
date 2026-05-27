@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/en/">Home</a>
       <a href="/en/learn/">Learn</a>
       <a href="/en/qc/heavy-metals/">Quality</a>
-      <a href="/trgovina/">Shop</a>
     `
     : `
       <a href="/">Domov</a>

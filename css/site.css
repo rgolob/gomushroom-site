@@ -1113,7 +1113,7 @@ body.gallery-open .gallery-backdrop{display:block}
   .dots{bottom:10px}
 
   .nav{padding:10px 0}
-  .brand img{height:34px}
+  .brand img{height:34px;width:auto}
   .nav-toggle{display:inline-flex;align-items:center;justify-content:center}
 
   #site-header nav{

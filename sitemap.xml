@@ -49,7 +49,7 @@
     <lastmod>2026-05-12</lastmod>
   </url>
   <url>
-    <loc>https://gomushroom.si/trgovina/smrekovi-vrscki/</loc>
+    <loc>https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/</loc>
     <lastmod>2026-05-12</lastmod>
   </url>
 
@@ -83,5 +83,21 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
   </url>
 
+
+  <!-- Article: Ekstrakt smrekovih vršičkov / Spruce bud extract -->
+  <url>
+    <loc>https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/</loc>
+    <lastmod>2026-05-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-extract/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/spruce-bud-extract/</loc>
+    <lastmod>2026-05-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-extract/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
+  </url>
 
 </urlset>

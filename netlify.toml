@@ -9,6 +9,11 @@
   status = 301
 
 [[redirects]]
+  from = "/trgovina/smrekovi-vrsicki/"
+  to = "/trgovina/smrekovi-vrsicki-tinktura/"
+  status = 301
+
+[[redirects]]
   from = "/znanje/beta-glukani-medicinske-gobe/"
   to = "/znanje/beta-glukani/"
   status = 301

@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/">Domov</a>
       <a href="/znanje/">Znanje</a>
       <a href="/qc/tezke-kovine/">Kakovost</a>
+      <a href="/trgovina/">Trgovina</a>
     `;
 
   const tags = isEn

@@ -437,7 +437,7 @@ input, select, textarea {
 }
 
 .shop-manifesto-title{
-  font-size:clamp(1.9rem,6vw,2.8rem);
+  font-size:clamp(1.65rem,5.2vw,2.45rem);
   font-weight:800;
   color:#2b0b39;
   letter-spacing:-.04em;

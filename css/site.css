@@ -2137,7 +2137,7 @@ footer.site-footer{
 }
 
 .gm-product-media{
-  height:320px;
+  height:260px;
   overflow:hidden;
   background:#fff;
   display:flex;
@@ -2149,7 +2149,7 @@ footer.site-footer{
 }
 
 .gm-product-media img{
-  width:75%;
+  width:88%;
   height:auto;
   display:block;
   transition:transform .3s ease;
@@ -2245,11 +2245,8 @@ footer.site-footer{
   .gm-products{
     grid-template-columns:repeat(2, minmax(0,1fr));
   }
-  .gm-product-media{
-    height:320px;
-  }
   .gm-product-media img{
-    width:38%;
+    width:46%;
   }
 }
 
@@ -2257,11 +2254,8 @@ footer.site-footer{
   .gm-products{
     grid-template-columns:1fr;
   }
-  .gm-product-media{
-    height:300px;
-  }
   .gm-product-media img{
-    width:58%;
+    width:85%;
   }
 }
 

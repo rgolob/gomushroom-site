@@ -801,6 +801,9 @@ async function initPaymentUI() {
       return;
     }
     try {
+      const { error: submitErr } = await stripeElements.submit();
+      if (submitErr) throw new Error(submitErr.message);
+
       const calc = window._orderCalc;
       const res = await fetch('/.netlify/functions/create-payment-intent', {
         method: 'POST',
@@ -810,13 +813,30 @@ async function initPaymentUI() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
+      // Save form data in case payment method redirects (e.g. PayPal)
+      sessionStorage.setItem('gm_redirect_form', JSON.stringify({
+        name:   document.getElementById('c-name').value.trim(),
+        email:  document.getElementById('c-email').value.trim(),
+        phone:  document.getElementById('c-phone').value.trim(),
+        street: document.getElementById('c-street').value.trim(),
+        post:   document.getElementById('c-post').value.trim(),
+        city:   document.getElementById('c-city').value.trim(),
+        note:   document.getElementById('c-note').value.trim(),
+        calc,
+        clientSecret: data.clientSecret,
+      }));
+
       const { error, paymentIntent } = await stripeInstance.confirmPayment({
         elements: stripeElements,
         clientSecret: data.clientSecret,
+        confirmParams: { return_url: window.location.href.split('?')[0] },
         redirect: 'if_required',
       });
       if (error) { event.paymentFailed({ reason: 'fail' }); showCardError(error.message); return; }
-      if (paymentIntent?.status === 'succeeded') await saveStripeOrder(paymentIntent.id);
+      if (paymentIntent?.status === 'succeeded') {
+        sessionStorage.removeItem('gm_redirect_form');
+        await saveStripeOrder(paymentIntent.id);
+      }
     } catch(e) {
       event.paymentFailed({ reason: 'fail' });
       showCardError(e.message || 'Napaka pri plačilu.');

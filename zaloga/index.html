@@ -388,6 +388,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('dokumenti',this)">🧾 Dokumenti</button>
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
     <button class="htab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
+    <button class="htab" onclick="switchTab('osnutki',this)">📝 Osnutki</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
@@ -669,6 +670,28 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </select>
     </div>
     <div id="recenzije-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+  </div>
+
+  <!-- OSNUTKI -->
+  <div class="view" id="view-osnutki">
+    <div class="view-hdr">
+      <div class="view-title">📝 Osnutki člankov</div>
+    </div>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Neobjavljeni članki (noindex). Klikni za ogled in urejanje.</p>
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+
+      <a href="/znanje/kaj-je-ekstrakt/" target="_blank" style="display:block;padding:.85rem 1rem;background:white;border:1px solid var(--border);border-radius:var(--rs);text-decoration:none;color:var(--ink)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+          <div>
+            <div style="font-size:.88rem;font-weight:500;margin-bottom:.2rem">Kaj je ekstrakt? Razlika med tinkturo, maceratom, destilatom in koncentratom</div>
+            <div style="font-size:.72rem;color:var(--muted)">/znanje/kaj-je-ekstrakt/ · slike manjkajo</div>
+          </div>
+          <span style="font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .5rem;border-radius:20px;background:#fffbe6;color:#7a5c00;white-space:nowrap;flex-shrink:0">OSNUTEK</span>
+        </div>
+      </a>
+
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:1.25rem;line-height:1.6">Za objavo: dodaj slike, nastavi <code style="font-size:.7rem;background:#f0ece6;padding:.1rem .3rem;border-radius:4px">robots: index,follow</code>, dodaj canonical in OG meta, dodaj v znanje/index.html.</p>
   </div>
 
 </div>

@@ -92,7 +92,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* ── OVERLAY / SHEET ── */
 .overlay{position:fixed;inset:0;background:rgba(26,18,9,.45);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;padding:0 5px}
 .overlay.open{opacity:1;pointer-events:all}
-.sheet{background:var(--cream);border-radius:16px 16px 0 0;height:92vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,0,.67,0);overflow:hidden;width:100%}
+.sheet{background:var(--cream);border-radius:16px 16px 0 0;height:92vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,0,.67,0);overflow:hidden;width:100%;max-width:560px;margin:0 auto}
 .overlay.open .sheet{transform:translateY(0)}
 .shandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:.6rem auto .2rem}
 .shdr{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem .4rem}
@@ -286,6 +286,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Datum odprtja</label><input id="dnDatum" type="date"></div>
       </div>
       <div class="frow">
+        <div class="field"><label>Oznaka serije</label><input id="dnSerijaAlc" placeholder="npr. R010131" autocapitalize="characters"></div>
+        <div class="field"><label>Predviden zaključek</label><input id="dnPredvidenZakljucek" type="date"></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Vrsta gobe</label>
           <select id="dnVrstaGobe" onchange="updateDNNamen()">
             <option value="Reishi">Reishi</option>
@@ -377,7 +381,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="slabel">Zaključek</div>
       <div class="frow">
         <div class="field"><label>Datum zaključka</label><input id="dnDatumZakljucka" type="date"></div>
-        <div class="field"><label>Oznaka serije</label><input id="dnSerijaAlc" placeholder="npr. R010131" autocapitalize="characters"></div>
       </div>
     </div>
     <div class="shfoot">
@@ -1138,8 +1141,9 @@ function openDNSheet(id){
   document.getElementById('dnCenaAlc').value=d?.cenaAlc||settings.cenaAlc||31.9;
   document.getElementById('dnCenaGly').value=d?.cenaGly||settings.cenaGly||33.9;
   document.getElementById('dnOpomba').value=d?.opomba||'';
-  document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
   document.getElementById('dnSerijaAlc').value=d?.serijaAlc||'';
+  document.getElementById('dnPredvidenZakljucek').value=d?.predvidenZakljucek||'';
+  document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
   calcDN();
   const aaeProsto=round(calcEtZaloga()-calcEtRezervirano(),4);
   const indEl=document.getElementById('etZaloгаDN');
@@ -1277,6 +1281,7 @@ function saveDN(){
     serijaGobe:dnSerijeRows[0]?.serija||'',
     masaGobe:round(dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0),3),
     serijaAlc:document.getElementById('dnSerijaAlc').value.trim().toUpperCase(),
+    predvidenZakljucek:document.getElementById('dnPredvidenZakljucek').value||'',
     kolAlc:parseInt(document.getElementById('dnKolAlc').value)||0,
     kolAlcInterno:parseInt(document.getElementById('dnKolAlcInterno').value)||0,
     stekAlc:document.getElementById('dnStekAlc').value,
@@ -2605,7 +2610,7 @@ function dnToSb(d){return{
   vol_l:d.volL||0,vol_pct:d.volPct||null,l_aae:d.lAAE||0,
   trosarina:d.trosarina||null,trosarina_eur:d.trosarinaEUR||null,
   cena_alc:d.cenaAlc||null,cena_gly:d.cenaGly||null,opomba:d.opomba||null,
-  datum_zakljucka:d.datumZakljucka||null,status:d.status||'odprt',
+  datum_zakljucka:d.datumZakljucka||null,predviden_zakljucek:d.predvidenZakljucek||null,status:d.status||'odprt',
   ustvarjen:d.ustvarjen||new Date().toISOString()
 };}
 function sbToDn(r){return{
@@ -2623,7 +2628,7 @@ function sbToDn(r){return{
   volL:r.vol_l||0,volPct:r.vol_pct||0,lAAE:r.l_aae||0,
   trosarina:r.trosarina||0,trosarinaEUR:r.trosarina_eur||0,
   cenaAlc:r.cena_alc||0,cenaGly:r.cena_gly||0,opomba:r.opomba||'',
-  datumZakljucka:r.datum_zakljucka||'',status:r.status||'odprt',
+  datumZakljucka:r.datum_zakljucka||'',predvidenZakljucek:r.predviden_zakljucek||'',status:r.status||'odprt',
   ustvarjen:r.ustvarjen
 };}
 

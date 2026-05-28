@@ -1929,8 +1929,23 @@ function calcMatZaloga(tip){
 
 let matKatFilter='vsi';
 let matFilter='vsi';
+let matTipFilter=null;
 let matPage=0;
 const MAT_PER_PAGE=15;
+
+function tipMatchesFilter(tip){
+  if(matKatFilter!=='vsi'&&matKat(tip)!==matKatFilter)return false;
+  if(matFilter==='vsi'||matFilter==='vsi_s'||matFilter==='vsi_e')return true;
+  if(matFilter==='goba')return tip.startsWith('goba');
+  if(matFilter==='etiketa')return tip.startsWith('etiketa');
+  return tip===matFilter;
+}
+
+function setMatTip(tip){
+  matTipFilter=matTipFilter===tip?null:tip;
+  matPage=0;
+  renderMateriali();
+}
 
 // Podfilterji po kategoriji
 const MAT_PODFILTER={
@@ -1950,7 +1965,7 @@ const MAT_PODFILTER={
 };
 
 function setMatKat(kat,btn){
-  matKatFilter=kat;matFilter='vsi';matPage=0;
+  matKatFilter=kat;matFilter='vsi';matTipFilter=null;matPage=0;
   document.querySelectorAll('[id^="mk-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   // Prikaži podfilter
@@ -1967,22 +1982,22 @@ function setMatKat(kat,btn){
 }
 
 function setMatFilter(f,btn){
-  matFilter=f;matPage=0;
+  matFilter=f;matTipFilter=null;matPage=0;
   document.querySelectorAll('#matFilterRow .fpill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderMateriali();
 }
 
 function renderMatZaloga(){
-  const tipi=Object.keys(MAT_IME);
+  const tipi=Object.keys(MAT_IME).filter(tipMatchesFilter);
   const grid=document.getElementById('matZalogaGrid');
   if(!grid)return;
-  // Pokaži samo tiste ki imajo podatke
   const zalogeHtml=tipi.map(tip=>{
     const z=calcMatZaloga(tip);
     if(z===0&&!materiali.some(m=>m.tip===tip))return'';
     const enota=MAT_ENOTA[tip]||'';
-    return`<div class="stat-card" style="padding:.4rem .6rem">
+    const isActive=matTipFilter===tip;
+    return`<div class="stat-card" style="padding:.4rem .6rem;cursor:pointer;${isActive?'border:2px solid var(--accent);background:rgba(175,132,85,.08)':''}" onclick="setMatTip('${tip}')">
       <div class="stat-label" style="font-size:.58rem">${MAT_IME[tip]}</div>
       <div class="stat-value ${z<0?'warn':''}" style="font-size:1rem">${z} <span style="font-size:.65rem;color:var(--muted)">${enota}</span></div>
     </div>`;
@@ -2003,6 +2018,8 @@ function renderMateriali(){
       m.tip===matFilter
     );
   }
+  // Kartica filter (klik na kartico)
+  if(matTipFilter)rows=rows.filter(m=>m.tip===matTipFilter);
   const total=rows.length;
   const pages=Math.ceil(total/MAT_PER_PAGE)||1;
   if(matPage>=pages)matPage=0;

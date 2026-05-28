@@ -178,12 +178,44 @@ async function loadRatingBadge(slug) {
   } catch(e) {}
 }
 
+const SLUG_TO_VRSTA = {
+  'reishi': 'Reishi',
+  'bradovec': 'Resasti bradovec',
+  'chaga': 'Chaga',
+  'smrekovi-vrsicki': 'Smrekovi vršički'
+};
+
+async function loadOpenDN(slug) {
+  try {
+    const vrsta = SLUG_TO_VRSTA[slug];
+    if (!vrsta) return;
+    const r = await fetch(
+      `${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&vrsta_gobe=eq.${encodeURIComponent(vrsta)}&select=predviden_zakljucek&order=datum.desc&limit=1`,
+      { headers: SB_HEADERS }
+    );
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows.length || !rows[0].predviden_zakljucek) return;
+
+    const datum = new Date(rows[0].predviden_zakljucek);
+    const formatted = datum.toLocaleDateString('sl-SI', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const highlights = document.querySelector('.product-highlights');
+    if (!highlights) return;
+    const badge = document.createElement('p');
+    badge.style.cssText = 'margin-top:.5rem;font-size:.8rem;color:#7a4f2e;font-weight:500';
+    badge.textContent = `📋 Serija v pripravi · predviden zaključek: ${formatted}`;
+    highlights.insertAdjacentElement('afterend', badge);
+  } catch(e) {}
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const data = await loadProductVariants();
     if (!data) return;
     initProductPage(data.variants, data.product);
     loadRatingBadge(PRODUCT_SLUG);
+    loadOpenDN(PRODUCT_SLUG);
   } catch(e) {
     console.error('Product page error:', e);
   }

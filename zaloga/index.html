@@ -592,8 +592,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="stats-grid" id="invStatsGrid"></div>
       <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
         <div class="swrap" style="min-width:100px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec…" oninput="renderInvoices()"></div>
-        <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-        <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+        <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
+        <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
         <select class="fpill" id="invFilterCh" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
           <option value="">Vsi kanali</option>
           <option value="malo">🛒 MP</option>
@@ -2691,6 +2691,8 @@ async function appInit(){
   const _initRange=getSalesDateRange('year');
   document.getElementById('dateFrom').value=_initRange.from;
   document.getElementById('dateTo').value=_initRange.to;
+  document.getElementById('invDateFrom').value=_initRange.from;
+  document.getElementById('invDateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
   try{
@@ -4516,19 +4518,42 @@ function clearSalesFilters(){
 }
 
 // ── INVOICES VIEW ──
+let invDatePreset='year';
+function applyInvDatePreset(){
+  const r=getSalesDateRange(invDatePreset);
+  document.getElementById('invDateFrom').value=r.from;
+  document.getElementById('invDateTo').value=r.to;
+  renderInvStats();renderInvoices();
+}
+function cycleInvDatePreset(){
+  const order=['year','curmonth','month','prevyear','all'];
+  invDatePreset=order[(order.indexOf(invDatePreset)+1)%order.length];
+  applyInvDatePreset();
+}
+
 function renderInvStats(){
-  const f=invoices;
-  const total=f.reduce((a,i)=>a+(i.total||0),0);
+  const fFrom=document.getElementById('invDateFrom')?.value||'';
+  const fTo=document.getElementById('invDateTo')?.value||'';
   const activeCh=document.getElementById('invFilterCh').value;
+  const periodLabel=getSalesDateLabel(invDatePreset);
+  const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
+
+  // Filtered by date + channel for totals
+  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
+  const total=f.reduce((a,i)=>a+(i.total||0),0);
+  const avgInv=f.length>0?total/f.length:0;
+
+  // Channel cards: date filter only (no channel filter, so counts per channel visible)
+  const chBase=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo));
   const byChannel=Object.entries(CH).map(([k,c])=>{
-    const n=f.filter(i=>i.channel===k).length;
+    const n=chBase.filter(i=>i.channel===k).length;
     if(!n)return'';
     const isActive=activeCh===k;
     return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')"><div class="stat-label">${c.icon} ${c.label}</div><div class="stat-value">${n}</div></div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
-    <div class="stat-card${!activeCh?' active':''}" onclick="setInvChFilter('')"><div class="stat-label">Skupaj računov</div><div class="stat-value">${f.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Skupaj €</div><div class="stat-value ok">${total.toFixed(2)} €</div></div>
+    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${f.length>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgInv.toFixed(2)} € / račun</div>`:''}</div>
     ${byChannel}`;
 }
 function setInvChFilter(ch){
@@ -4540,12 +4565,10 @@ function setInvChFilter(ch){
 }
 function clearInvFilters(){
   document.getElementById('invSearch').value='';
-  document.getElementById('invDateFrom').value='';
-  document.getElementById('invDateTo').value='';
   document.getElementById('invFilterCh').value='';
   document.getElementById('invFilterStatus').value='';
-  renderInvoices();
-  renderInvStats();
+  invDatePreset='year';
+  applyInvDatePreset();
 }
 
 function renderInvoices(){

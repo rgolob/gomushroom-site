@@ -4556,12 +4556,15 @@ function renderInvStats(){
     const n=chBase.filter(i=>i.channel===k).length;
     if(!n)return'';
     const isActive=activeCh===k;
-    return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')"><div class="stat-label">${c.icon} ${c.label}</div><div class="stat-value">${n}</div></div>`;
+    return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')" style="padding:.3rem .45rem">
+      <div class="stat-label" style="font-size:.55rem">${c.icon} ${c.short}</div>
+      <div class="stat-value" style="font-size:1rem">${n}</div>
+    </div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
     <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
     <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
-    ${byChannel}`;
+    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem">${byChannel}</div>`;
 }
 function setInvChFilter(ch){
   const sel=document.getElementById('invFilterCh');

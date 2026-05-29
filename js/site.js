@@ -171,6 +171,12 @@
   const backdrop = document.getElementById('gallery-backdrop');
   if(!items.length) return;
 
+  const mobileOverlay = document.getElementById('g-mobile-overlay');
+  const mobileClose   = document.getElementById('g-mobile-close');
+  const mobileImg     = document.getElementById('g-mobile-img');
+  const mobileTitle   = document.getElementById('g-mobile-title');
+  const mobileText    = document.getElementById('g-mobile-text');
+
   function isDesktop(){
     return window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
   }
@@ -178,31 +184,48 @@
     return !isDesktop();
   }
 
+  function closeMobileOverlay(){
+    if(!mobileOverlay) return;
+    mobileOverlay.classList.remove('is-open');
+    mobileOverlay.setAttribute('aria-hidden','true');
+    document.body.classList.remove('gallery-open');
+  }
+
+  function openMobileOverlay(it){
+    if(!mobileOverlay) return;
+    const img = it.querySelector('img');
+    const h4  = it.querySelector('h4') || it.querySelector('h3');
+    const p   = it.querySelector('p');
+    mobileImg.src   = img ? img.src : '';
+    mobileImg.alt   = img ? img.alt : '';
+    mobileTitle.textContent = h4 ? h4.textContent : '';
+    mobileText.textContent  = p  ? p.textContent  : '';
+    mobileOverlay.classList.add('is-open');
+    mobileOverlay.setAttribute('aria-hidden','false');
+    document.body.classList.add('gallery-open');
+  }
+
   function closeAll(except){
     items.forEach(it => { if(it !== except) it.classList.remove('is-open'); });
-    document.body.classList.remove('gallery-open');
+    closeMobileOverlay();
   }
 
   function openItem(it){
     closeAll(it);
     it.classList.add('is-open');
-
-    if(isMobile()) document.body.classList.add('gallery-open');
-    else document.body.classList.remove('gallery-open');
+    if(isMobile()) openMobileOverlay(it);
   }
 
   function closeItem(it){
     it.classList.remove('is-open');
-    document.body.classList.remove('gallery-open');
+    closeMobileOverlay();
   }
 
   items.forEach(it=>{
     const closeBtn = it.querySelector('.g-close');
 
     it.addEventListener('click', (e)=>{
-      // če klikneš close gumb, zapri
       if(closeBtn && (e.target === closeBtn || closeBtn.contains(e.target))) return;
-
       const open = it.classList.contains('is-open');
       if(open) closeItem(it);
       else openItem(it);
@@ -222,6 +245,7 @@
     });
   });
 
+  if(mobileClose) mobileClose.addEventListener('click', ()=>{ closeAll(); });
   if(backdrop) backdrop.addEventListener('click', ()=>closeAll());
 
   document.addEventListener('keydown', e=>{
@@ -229,7 +253,7 @@
   });
 
   window.addEventListener('resize', ()=>{
-    if(isDesktop()) document.body.classList.remove('gallery-open');
+    if(isDesktop()) closeMobileOverlay();
   });
 })();
 

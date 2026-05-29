@@ -1118,6 +1118,18 @@
   <!-- Backdrop used only for mobile fullscreen gallery -->
   <div class="gallery-backdrop" id="gallery-backdrop" aria-hidden="true"></div>
 
+  <!-- Mobile fullscreen gallery overlay (direct body child to avoid fixed-in-grid iOS bug) -->
+  <div id="g-mobile-overlay" aria-hidden="true" aria-label="Galerija" role="dialog">
+    <button class="g-close" id="g-mobile-close" type="button" aria-label="Zapri">×</button>
+    <img id="g-mobile-img" src="" alt="">
+    <div class="g-overlay">
+      <div class="box">
+        <h4 id="g-mobile-title"></h4>
+        <p id="g-mobile-text"></p>
+      </div>
+    </div>
+  </div>
+
 <script defer src="/js/site-header.js"></script>
 <script defer src="/js/site-footer.js"></script>
 <script defer src="/js/site.js"></script>

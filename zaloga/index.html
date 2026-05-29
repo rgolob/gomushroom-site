@@ -4065,18 +4065,30 @@ function renderSalesSummary(filteredGroups){
   const activeCh=document.getElementById('salesFilterCh').value;
   const periodLabel=getSalesDateLabel(salesDatePreset);
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
-  const byChannel=Object.entries(CH).map(([k,c])=>{
-    const n=saleGroups.filter(g=>g.channel===k&&g.status!=='stornirano').length;
-    if(!n)return'';
-    const isActive=activeCh===k;
-    return `<div class="stat-card${isActive?' active':''}" onclick="setSalesChFilter('${k}')"><div class="stat-label">${c.icon} ${c.short}</div><div class="stat-value">${n}</div></div>`;
-  }).join('');
+
+  // Kanalne kartice — šteje samo znotraj aktivnega datumskega obsega
+  const fFrom=document.getElementById('dateFrom').value;
+  const fTo=document.getElementById('dateTo').value;
+  const chBase=saleGroups.filter(g=>g.status!=='stornirano'&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo));
+  function chRow(k){
+    const c=CH[k];if(!c)return'';
+    const n=chBase.filter(g=>g.channel===k).length;
+    const isAct=activeCh===k;
+    return `<div onclick="setSalesChFilter('${k}')" style="display:flex;justify-content:space-between;align-items:center;padding:.18rem .1rem;cursor:pointer;border-radius:4px;${isAct?'background:rgba(43,11,57,.07);':''}">
+      <span style="font-size:.58rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:${isAct?'var(--ink)':'var(--muted)'}">${c.icon} ${c.short}</span>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:${isAct?500:300};color:${isAct?'var(--ink)':'var(--ink)'}">${n}</span>
+    </div>`;
+  }
+  const g1=['malo','velo','wp'].map(chRow).join('');
+  const g2=['dar','int','kom'].map(chRow).join('');
+
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
-    ${byChannel}`;
+    <div class="stat-card" style="grid-column:span 1">${g1}</div>
+    <div class="stat-card" style="grid-column:span 1">${g2}</div>`;
 }
 function setSalesChFilter(ch){
   const sel=document.getElementById('salesFilterCh');

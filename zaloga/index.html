@@ -4115,7 +4115,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / kom</div>`:''}</div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>
@@ -4544,7 +4544,11 @@ function renderInvStats(){
   // Filtered by date + channel for totals
   const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
-  const avgInv=f.length>0?total/f.length:0;
+  const totalUnits=f.reduce((a,i)=>{
+    const g=saleGroups.find(x=>x.id===i.groupId);
+    return a+(g?.lines||[]).reduce((s,l)=>s+(l.alc||0)+(l.gly||0),0);
+  },0);
+  const avgUnit=totalUnits>0?total/totalUnits:0;
 
   // Channel cards: date filter only (no channel filter, so counts per channel visible)
   const chBase=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo));
@@ -4552,12 +4556,15 @@ function renderInvStats(){
     const n=chBase.filter(i=>i.channel===k).length;
     if(!n)return'';
     const isActive=activeCh===k;
-    return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')"><div class="stat-label">${c.icon} ${c.label}</div><div class="stat-value">${n}</div></div>`;
+    return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')" style="padding:.3rem .45rem">
+      <div class="stat-label" style="font-size:.55rem">${c.icon} ${c.short}</div>
+      <div class="stat-value" style="font-size:1rem">${n}</div>
+    </div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
     <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
-    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${f.length>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgInv.toFixed(2)} € / račun</div>`:''}</div>
-    ${byChannel}`;
+    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
+    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem">${byChannel}</div>`;
 }
 function setInvChFilter(ch){
   const sel=document.getElementById('invFilterCh');

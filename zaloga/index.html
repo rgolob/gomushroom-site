@@ -4022,12 +4022,13 @@ if(!Object.keys(pendingBatchAlloc).length){
 async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
-let salesDatePreset='year'; // 'year'|'month'|'prevyear'|'all'
+let salesDatePreset='year'; // 'year'|'curmonth'|'month'|'prevyear'|'all'
 const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
 
 function getSalesDateRange(preset){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   if(preset==='year')return{from:`${y}-01-01`,to:todayISO()};
+  if(preset==='curmonth')return{from:`${y}-${String(m+1).padStart(2,'0')}-01`,to:todayISO()};
   if(preset==='month'){
     const lm=m===0?11:m-1,ly=m===0?y-1:y;
     const end=new Date(ly,lm+1,0);
@@ -4039,6 +4040,7 @@ function getSalesDateRange(preset){
 function getSalesDateLabel(preset){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   if(preset==='year')return`${y}`;
+  if(preset==='curmonth')return`${MONTHS_SL_SHORT[m]} ${y}`;
   if(preset==='month'){const lm=m===0?11:m-1,ly=m===0?y-1:y;return`${MONTHS_SL_SHORT[lm]} ${ly}`;}
   if(preset==='prevyear')return`${y-1}`;
   return'vse';
@@ -4050,7 +4052,7 @@ function applySalesDatePreset(){
   salesPage=0;renderSales();
 }
 function cycleSalesDatePreset(){
-  const order=['year','month','prevyear','all'];
+  const order=['year','curmonth','month','prevyear','all'];
   salesDatePreset=order[(order.indexOf(salesDatePreset)+1)%order.length];
   applySalesDatePreset();
 }
@@ -4108,7 +4110,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / kom</div>`:''}</div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>

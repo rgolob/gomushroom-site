@@ -2688,6 +2688,9 @@ async function appInit(){
   seed();
   renderStats();renderInventory();
   document.getElementById('orderDate').value=todayISO();
+  const _initRange=getSalesDateRange('year');
+  document.getElementById('dateFrom').value=_initRange.from;
+  document.getElementById('dateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
   try{
@@ -4019,6 +4022,39 @@ if(!Object.keys(pendingBatchAlloc).length){
 async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
+let salesDatePreset='year'; // 'year'|'month'|'prevyear'|'all'
+const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
+
+function getSalesDateRange(preset){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  if(preset==='year')return{from:`${y}-01-01`,to:todayISO()};
+  if(preset==='month'){
+    const lm=m===0?11:m-1,ly=m===0?y-1:y;
+    const end=new Date(ly,lm+1,0);
+    return{from:`${ly}-${String(lm+1).padStart(2,'0')}-01`,to:`${ly}-${String(lm+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`};
+  }
+  if(preset==='prevyear')return{from:`${y-1}-01-01`,to:`${y-1}-12-31`};
+  return{from:'',to:''};
+}
+function getSalesDateLabel(preset){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  if(preset==='year')return`${y}`;
+  if(preset==='month'){const lm=m===0?11:m-1,ly=m===0?y-1:y;return`${MONTHS_SL_SHORT[lm]} ${ly}`;}
+  if(preset==='prevyear')return`${y-1}`;
+  return'vse';
+}
+function applySalesDatePreset(){
+  const r=getSalesDateRange(salesDatePreset);
+  document.getElementById('dateFrom').value=r.from;
+  document.getElementById('dateTo').value=r.to;
+  salesPage=0;renderSales();
+}
+function cycleSalesDatePreset(){
+  const order=['year','month','prevyear','all'];
+  salesDatePreset=order[(order.indexOf(salesDatePreset)+1)%order.length];
+  applySalesDatePreset();
+}
+
 function renderSalesSummary(filteredGroups){
   const f=filteredGroups||saleGroups;
   const active=f.filter(g=>g.status!=='stornirano');
@@ -4027,6 +4063,8 @@ function renderSalesSummary(filteredGroups){
   const glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
   const storno=f.filter(g=>g.status==='stornirano').length;
   const activeCh=document.getElementById('salesFilterCh').value;
+  const periodLabel=getSalesDateLabel(salesDatePreset);
+  const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
   const byChannel=Object.entries(CH).map(([k,c])=>{
     const n=saleGroups.filter(g=>g.channel===k&&g.status!=='stornirano').length;
     if(!n)return'';
@@ -4034,9 +4072,9 @@ function renderSalesSummary(filteredGroups){
     return `<div class="stat-card${isActive?' active':''}" onclick="setSalesChFilter('${k}')"><div class="stat-label">${c.icon} ${c.short}</div><div class="stat-value">${n}</div></div>`;
   }).join('');
   document.getElementById('salesStatsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card"><div class="stat-label">Prihodki</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
-    <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
+    <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     ${byChannel}`;
 }
@@ -4432,13 +4470,11 @@ function populateSalesBatchFilter(){
 }
 
 function clearSalesFilters(){
-  const now=new Date();
   document.getElementById('salesSearch').value='';
   document.getElementById('salesFilterBatch').value='';
   document.getElementById('salesFilterCh').value='';
-  document.getElementById('dateFrom').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
-  document.getElementById('dateTo').value=todayISO();
-  renderSales();
+  salesDatePreset='year';
+  applySalesDatePreset();
 }
 
 // ── INVOICES VIEW ──

@@ -227,6 +227,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .view-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.03em}
 .hbtn2{background:var(--parchment);border:1px solid var(--border);color:var(--ink);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .6rem;border-radius:16px;cursor:pointer;white-space:nowrap}
 .hbtn2:active{background:rgba(175,132,85,.2)}
+.dok-switcher{display:flex;gap:0;background:rgba(43,11,57,.07);border-radius:10px;padding:3px;flex:1}
+.dok-switcher .subdok-tab{flex:1;font-family:'Jost',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:.4rem .3rem;border:none;background:transparent;color:var(--muted);border-radius:7px;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;text-align:center}
+.dok-switcher .subdok-tab.active{background:var(--ink);color:var(--cream);box-shadow:0 1px 4px rgba(0,0,0,.18)}
 
 /* EMPTY */
 .empty{text-align:center;padding:3.5rem 1.5rem;color:var(--muted)}
@@ -581,9 +584,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
   <!-- DOKUMENTI -->
   <div class="view" id="view-dokumenti">
-    <div style="display:flex;gap:.4rem;padding:.75rem .9rem .1rem;background:var(--cream)">
-      <button class="subdok-tab active" id="sdtab-racuni" onclick="switchDokTab('racuni',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:var(--ink);color:var(--cream);border-radius:7px;cursor:pointer;text-align:center">🧾 Računi</button>
-      <button class="subdok-tab" id="sdtab-dobavnice" onclick="switchDokTab('dobavnice',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:none;color:var(--muted);border-radius:7px;cursor:pointer;text-align:center;border:1px solid var(--border)">📦 Dobavnice</button>
+    <div style="padding:.65rem .9rem .15rem;background:var(--cream)">
+      <div class="dok-switcher">
+        <button class="subdok-tab active" id="sdtab-racuni" onclick="switchDokTab('racuni',this)">🧾 Računi</button>
+        <button class="subdok-tab" id="sdtab-dobavnice" onclick="switchDokTab('dobavnice',this)">📦 Dobavnice</button>
+      </div>
     </div>
     <div id="subdok-racuni">
       <div class="view-header">
@@ -2844,10 +2849,8 @@ function confirmResolve(v){document.getElementById('confirmOverlay').classList.r
 
 // ── TABS ──
 function switchDokTab(id, el){
-  document.querySelectorAll('.subdok-tab').forEach(t=>{
-    t.style.background='none';t.style.color='var(--muted)';t.style.border='1px solid var(--border)';t.classList.remove('active');
-  });
-  el.style.background='var(--ink)';el.style.color='var(--cream)';el.style.border='none';el.classList.add('active');
+  document.querySelectorAll('.subdok-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
   document.getElementById('subdok-racuni').style.display=id==='racuni'?'':'none';
   document.getElementById('subdok-dobavnice').style.display=id==='dobavnice'?'':'none';
   if(id==='dobavnice')renderDobavnice();

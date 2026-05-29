@@ -610,6 +610,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="predano">📦 Predano</option>
         </select>
         <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
+        <button class="fpill" id="printLabelsBtn" onclick="printAllPaidLabels()" style="flex:0 0 auto;background:rgba(43,11,57,.07);border-color:rgba(43,11,57,.2)" title="Natisni nalepke za plačane račune z naslovom">🏷</button>
       </div>
       <div id="invoiceList"></div>
       <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
@@ -4667,6 +4668,70 @@ function printSaleLabel(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g) return;
   printShippingLabel(g.buyer||'', g.street||g.address||'', g.post||'');
+}
+
+function printAllPaidLabels(){
+  const fCh=document.getElementById('invFilterCh').value;
+  const fFrom=document.getElementById('invDateFrom').value||'';
+  const fTo=document.getElementById('invDateTo').value||'';
+  const candidates=invoices.filter(i=>
+    (i.invStatus==='placano')&&
+    (i.street||i.address)&&
+    (!fCh||i.channel===fCh)&&
+    (!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)
+  );
+  if(!candidates.length){toast('Ni plačanih računov z naslovom za tisk');return;}
+
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const labels=candidates.map(i=>`
+    <div class="label">
+      <div class="sender">
+        <div class="lbl-tag">Pošiljatelj</div>
+        <strong>GoMushroom, Rok Golob s.p.</strong>
+        Prapreče pri Straži 22<br>8351 Straža
+      </div>
+      <div class="recipient">
+        <div class="lbl-tag">Prejemnik</div>
+        <div class="rname">${esc(i.buyer||'')}</div>
+        <div class="raddr">${esc(i.street||i.address||'')}${i.post?`<br>${esc(i.post)}`:''}</div>
+      </div>
+      <div class="ref">🧾 ${esc(i.num||'')}${i.date?' · '+i.date.split('-').reverse().join('.'):''}
+      </div>
+    </div>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Nalepke (${candidates.length})</title>
+<style>
+@page{size:148mm 105mm;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#fff}
+.label{width:148mm;height:105mm;padding:8mm;display:flex;flex-direction:column;page-break-after:always;break-after:page}
+.label:last-child{page-break-after:avoid;break-after:avoid}
+.lbl-tag{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:1.5mm}
+.sender{padding-bottom:4mm;margin-bottom:4mm;border-bottom:1px solid #ddd;font-size:8.5pt;color:#555;line-height:1.5}
+.sender strong{display:block;font-size:9pt;color:#333;margin-bottom:.5mm}
+.recipient{flex:1;display:flex;flex-direction:column;justify-content:center}
+.rname{font-size:15pt;font-weight:700;color:#111;margin-bottom:1.5mm;line-height:1.2}
+.raddr{font-size:11pt;color:#333;line-height:1.6}
+.ref{font-size:7pt;color:#aaa;margin-top:3mm;text-align:right}
+.print-btn{display:none}
+@media screen{
+  body{padding:1rem;background:#eee}
+  .label{background:#fff;border:1px dashed #bbb;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .print-btn{display:block;position:fixed;top:.75rem;right:.75rem;padding:.5rem 1.1rem;font-size:.85rem;cursor:pointer;background:#2b0b39;color:#fff;border:none;border-radius:8px;font-family:Arial,sans-serif;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .count{position:fixed;top:.75rem;left:.75rem;font-size:.78rem;color:#555;font-family:Arial,sans-serif;background:#fff;padding:.4rem .8rem;border-radius:8px;border:1px solid #ddd}
+}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Natisni / PDF (${candidates.length} nalepk)</button>
+<div class="count">${candidates.length} nalepk</div>
+${labels}
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 async function ustvariDobavnico(groupId){

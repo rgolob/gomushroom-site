@@ -2862,12 +2862,18 @@ function renderDobavnice(){
   const listEl=document.getElementById('dobList');
   const pager=document.getElementById('dobPager');
   if(!statsEl||!listEl)return;
-  const velo=groups.filter(g=>g.channel==='velo').length;
-  const kom=groups.filter(g=>g.channel==='kom').length;
+  const byChannel=Object.entries(CH).map(([k,c])=>{
+    const n=groups.filter(g=>g.channel===k).length;
+    if(!n)return'';
+    return`<div class="stat-card" style="padding:.3rem .45rem">
+      <div class="stat-label" style="font-size:.55rem">${c.icon} ${c.short}</div>
+      <div class="stat-value" style="font-size:1rem">${n}</div>
+    </div>`;
+  }).join('');
   statsEl.innerHTML=`
     <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">${groups.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Velo</div><div class="stat-value">${velo}</div></div>
-    <div class="stat-card"><div class="stat-label">Komisija</div><div class="stat-value">${kom}</div></div>`;
+    <div class="stat-card"></div>
+    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
   if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;if(pager)pager.innerHTML='';return;}
   const totalPages=Math.ceil(groups.length/DOB_PER_PAGE);
   if(dobPage>=totalPages)dobPage=totalPages-1;

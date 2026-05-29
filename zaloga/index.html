@@ -4076,44 +4076,61 @@ function renderSalesSummary(filteredGroups){
   const fBatch=(document.getElementById('salesFilterBatch')?.value||'').toLowerCase();
 
   // Prihodki/alc/gly: pri serija filtru samo vrstice ki vsebujejo to serijo
-  // avgRev: vedno iz cen po vrsticah (za komisijsko uposteva dejansko prodajno ceno/kos)
+  // gRev: revenue iz vrstic z fallback na g.total (za komisijsko kjer l.alcPrice ni nastavljen)
   let rev,alcQ,glyQ,avgAlcQ,avgGlyQ,avgRev;
   const typeF=salesTypeFilter;
   const paidActive=active.filter(g=>g.channel!=='kom'||g.invoiceNum);
+  function gRev(g,type){
+    const ls=g.lines||[];
+    const aR=ls.reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0),0);
+    const bR=ls.reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0);
+    const sum=aR+bR;
+    if(sum>0) return type==='alc'?aR:type==='gly'?bR:sum;
+    if(!(g.total||0)) return 0;
+    const aQ=ls.reduce((s,l)=>s+(l.alc||0),0),bQ=ls.reduce((s,l)=>s+(l.gly||0),0),tQ=aQ+bQ;
+    if(!tQ) return 0;
+    return type==='alc'?g.total*aQ/tQ:type==='gly'?g.total*bQ/tQ:g.total;
+  }
   if(fBatch){
     rev=0;alcQ=0;glyQ=0;avgAlcQ=0;avgGlyQ=0;avgRev=0;
     active.forEach(g=>{
       const paid=g.channel!=='kom'||g.invoiceNum;
-      (g.lines||[]).forEach(l=>{
+      const ls=g.lines||[];
+      const gLineSum=ls.reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0);
+      const useFallback=!gLineSum&&(g.total||0)>0;
+      const tQ=ls.reduce((s,l)=>s+(l.alc||0)+(l.gly||0),0);
+      ls.forEach(l=>{
         if((l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch))){
           const a=l.alc||0,b=l.gly||0,ap=l.alcPrice||0,bp=l.glyPrice||0;
-          const lRev=typeF==='alc'?a*ap:typeF==='gly'?b*bp:l.lineTotal||0;
+          const fb=useFallback&&tQ>0?g.total/tQ:0;
+          const aP=ap||fb,bP=bp||fb;
+          const lRev=typeF==='alc'?a*aP:typeF==='gly'?b*bP:useFallback?(a+b)*fb:l.lineTotal||0;
           rev+=lRev;
           if(!typeF||typeF==='alc'){alcQ+=a;if(paid)avgAlcQ+=a;}
           if(!typeF||typeF==='gly'){glyQ+=b;if(paid)avgGlyQ+=b;}
-          if(paid)avgRev+=typeF==='alc'?a*ap:typeF==='gly'?b*bp:a*ap+b*bp;
+          if(paid)avgRev+=typeF==='alc'?a*aP:typeF==='gly'?b*bP:a*aP+b*bP;
         }
       });
     });
   } else if(typeF==='alc'){
-    rev=active.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0),0),0);
+    rev=active.reduce((a,g)=>a+gRev(g,'alc'),0);
     alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     glyQ=0;avgGlyQ=0;
     avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
-    avgRev=paidActive.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0),0),0);
+    avgRev=paidActive.reduce((a,g)=>a+gRev(g,'alc'),0);
   } else if(typeF==='gly'){
-    rev=active.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0),0);
+    rev=active.reduce((a,g)=>a+gRev(g,'gly'),0);
     alcQ=0;avgAlcQ=0;
     glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
     avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
-    avgRev=paidActive.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0),0);
+    avgRev=paidActive.reduce((a,g)=>a+gRev(g,'gly'),0);
   } else {
     rev=active.reduce((a,g)=>a+(g.total||0),0);
     alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
     avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
-    avgRev=paidActive.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0),0);
+    avgRev=paidActive.reduce((a,g)=>a+gRev(g,''),0);
   }
 
   const storno=f.filter(g=>g.status==='stornirano').length;

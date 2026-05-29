@@ -1139,6 +1139,12 @@ async function sendStripeConfirmationEmail(order, calc) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to: order.email, subject: 'Plačilo potrjeno — GoMushroom', html }),
     });
+    // Obvestilo lastniku
+    const ownerHtml = `<b>Novo naročilo (Stripe)</b><br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
+    fetch('/.netlify/functions/send-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${Number(calc.skupaj).toFixed(2)} €`, html: ownerHtml })
+    }).catch(()=>{});
   } catch(e) { console.warn('Email failed:', e); }
 }
 
@@ -1208,6 +1214,7 @@ async function placeOrder() {
     shipping: calc.postnina,
     total: skupajUpn,
     coupon_code: calc.koda || null,
+    channel: 'wp',
     status: 'pending',
     rf_reference: '',
   };
@@ -1321,6 +1328,12 @@ async function sendConfirmationEmail(order, rf, calc) {
       method: 'PATCH', headers: SB_HEADERS,
       body: JSON.stringify({ confirmation_sent_at: new Date().toISOString() })
     });
+    // Obvestilo lastniku
+    const ownerHtml = `<b>Novo naročilo (bančno nakazilo)</b><br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${calc.skupaj.toFixed(2)} €<br>Referenca: ${order.rf_reference||'—'}<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
+    fetch('/.netlify/functions/send-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${calc.skupaj.toFixed(2)} €`, html: ownerHtml })
+    }).catch(()=>{});
   } catch(e) { console.warn('Email failed:', e); }
 }
 

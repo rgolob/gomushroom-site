@@ -227,6 +227,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .view-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.03em}
 .hbtn2{background:var(--parchment);border:1px solid var(--border);color:var(--ink);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .6rem;border-radius:16px;cursor:pointer;white-space:nowrap}
 .hbtn2:active{background:rgba(175,132,85,.2)}
+.dok-switcher{display:flex;gap:0;background:rgba(43,11,57,.07);border-radius:10px;padding:3px;flex:1}
+.dok-switcher .subdok-tab{flex:1;font-family:'Jost',sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:.4rem .3rem;border:none;background:transparent;color:var(--muted);border-radius:7px;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;text-align:center}
+.dok-switcher .subdok-tab.active{background:var(--ink);color:var(--cream);box-shadow:0 1px 4px rgba(0,0,0,.18)}
 
 /* EMPTY */
 .empty{text-align:center;padding:3.5rem 1.5rem;color:var(--muted)}
@@ -581,9 +584,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
   <!-- DOKUMENTI -->
   <div class="view" id="view-dokumenti">
-    <div style="display:flex;gap:.4rem;padding:.75rem .9rem .1rem;background:var(--cream)">
-      <button class="subdok-tab active" id="sdtab-racuni" onclick="switchDokTab('racuni',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:var(--ink);color:var(--cream);border-radius:7px;cursor:pointer;text-align:center">🧾 Računi</button>
-      <button class="subdok-tab" id="sdtab-dobavnice" onclick="switchDokTab('dobavnice',this)" style="flex:1;font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:.45rem .3rem;border:none;background:none;color:var(--muted);border-radius:7px;cursor:pointer;text-align:center;border:1px solid var(--border)">📦 Dobavnice</button>
+    <div style="padding:.65rem .9rem .15rem;background:var(--cream)">
+      <div class="dok-switcher">
+        <button class="subdok-tab active" id="sdtab-racuni" onclick="switchDokTab('racuni',this)">🧾 Računi</button>
+        <button class="subdok-tab" id="sdtab-dobavnice" onclick="switchDokTab('dobavnice',this)">📦 Dobavnice</button>
+      </div>
     </div>
     <div id="subdok-racuni">
       <div class="view-header">
@@ -592,8 +597,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="stats-grid" id="invStatsGrid"></div>
       <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
         <div class="swrap" style="min-width:100px;flex:1"><span class="sicon">⌕</span><input type="text" id="invSearch" placeholder="Kupec…" oninput="renderInvoices()"></div>
-        <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
-        <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
+        <input type="date" class="fpill" id="invDateFrom" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
+        <input type="date" class="fpill" id="invDateTo" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
         <select class="fpill" id="invFilterCh" onchange="renderInvoices();renderInvStats()" style="min-width:0;flex:0 0 auto">
           <option value="">Vsi kanali</option>
           <option value="malo">🛒 MP</option>
@@ -2691,6 +2696,8 @@ async function appInit(){
   const _initRange=getSalesDateRange('year');
   document.getElementById('dateFrom').value=_initRange.from;
   document.getElementById('dateTo').value=_initRange.to;
+  document.getElementById('invDateFrom').value=_initRange.from;
+  document.getElementById('invDateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
   try{
@@ -2842,10 +2849,8 @@ function confirmResolve(v){document.getElementById('confirmOverlay').classList.r
 
 // ── TABS ──
 function switchDokTab(id, el){
-  document.querySelectorAll('.subdok-tab').forEach(t=>{
-    t.style.background='none';t.style.color='var(--muted)';t.style.border='1px solid var(--border)';t.classList.remove('active');
-  });
-  el.style.background='var(--ink)';el.style.color='var(--cream)';el.style.border='none';el.classList.add('active');
+  document.querySelectorAll('.subdok-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
   document.getElementById('subdok-racuni').style.display=id==='racuni'?'':'none';
   document.getElementById('subdok-dobavnice').style.display=id==='dobavnice'?'':'none';
   if(id==='dobavnice')renderDobavnice();
@@ -4022,12 +4027,13 @@ if(!Object.keys(pendingBatchAlloc).length){
 async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
-let salesDatePreset='year'; // 'year'|'month'|'prevyear'|'all'
+let salesDatePreset='year'; // 'year'|'curmonth'|'month'|'prevyear'|'all'
 const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
 
 function getSalesDateRange(preset){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   if(preset==='year')return{from:`${y}-01-01`,to:todayISO()};
+  if(preset==='curmonth')return{from:`${y}-${String(m+1).padStart(2,'0')}-01`,to:todayISO()};
   if(preset==='month'){
     const lm=m===0?11:m-1,ly=m===0?y-1:y;
     const end=new Date(ly,lm+1,0);
@@ -4039,6 +4045,7 @@ function getSalesDateRange(preset){
 function getSalesDateLabel(preset){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   if(preset==='year')return`${y}`;
+  if(preset==='curmonth')return`${MONTHS_SL_SHORT[m]} ${y}`;
   if(preset==='month'){const lm=m===0?11:m-1,ly=m===0?y-1:y;return`${MONTHS_SL_SHORT[lm]} ${ly}`;}
   if(preset==='prevyear')return`${y-1}`;
   return'vse';
@@ -4050,7 +4057,7 @@ function applySalesDatePreset(){
   salesPage=0;renderSales();
 }
 function cycleSalesDatePreset(){
-  const order=['year','month','prevyear','all'];
+  const order=['year','curmonth','month','prevyear','all'];
   salesDatePreset=order[(order.indexOf(salesDatePreset)+1)%order.length];
   applySalesDatePreset();
 }
@@ -4108,7 +4115,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / kom</div>`:''}</div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>
@@ -4514,19 +4521,42 @@ function clearSalesFilters(){
 }
 
 // ── INVOICES VIEW ──
+let invDatePreset='year';
+function applyInvDatePreset(){
+  const r=getSalesDateRange(invDatePreset);
+  document.getElementById('invDateFrom').value=r.from;
+  document.getElementById('invDateTo').value=r.to;
+  renderInvStats();renderInvoices();
+}
+function cycleInvDatePreset(){
+  const order=['year','curmonth','month','prevyear','all'];
+  invDatePreset=order[(order.indexOf(invDatePreset)+1)%order.length];
+  applyInvDatePreset();
+}
+
 function renderInvStats(){
-  const f=invoices;
-  const total=f.reduce((a,i)=>a+(i.total||0),0);
+  const fFrom=document.getElementById('invDateFrom')?.value||'';
+  const fTo=document.getElementById('invDateTo')?.value||'';
   const activeCh=document.getElementById('invFilterCh').value;
+  const periodLabel=getSalesDateLabel(invDatePreset);
+  const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
+
+  // Filtered by date + channel for totals
+  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
+  const total=f.reduce((a,i)=>a+(i.total||0),0);
+  const avgInv=f.length>0?total/f.length:0;
+
+  // Channel cards: date filter only (no channel filter, so counts per channel visible)
+  const chBase=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo));
   const byChannel=Object.entries(CH).map(([k,c])=>{
-    const n=f.filter(i=>i.channel===k).length;
+    const n=chBase.filter(i=>i.channel===k).length;
     if(!n)return'';
     const isActive=activeCh===k;
     return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')"><div class="stat-label">${c.icon} ${c.label}</div><div class="stat-value">${n}</div></div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
-    <div class="stat-card${!activeCh?' active':''}" onclick="setInvChFilter('')"><div class="stat-label">Skupaj računov</div><div class="stat-value">${f.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Skupaj €</div><div class="stat-value ok">${total.toFixed(2)} €</div></div>
+    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${f.length>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgInv.toFixed(2)} € / račun</div>`:''}</div>
     ${byChannel}`;
 }
 function setInvChFilter(ch){
@@ -4538,12 +4568,10 @@ function setInvChFilter(ch){
 }
 function clearInvFilters(){
   document.getElementById('invSearch').value='';
-  document.getElementById('invDateFrom').value='';
-  document.getElementById('invDateTo').value='';
   document.getElementById('invFilterCh').value='';
   document.getElementById('invFilterStatus').value='';
-  renderInvoices();
-  renderInvStats();
+  invDatePreset='year';
+  applyInvDatePreset();
 }
 
 function renderInvoices(){

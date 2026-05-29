@@ -4035,6 +4035,7 @@ async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
 let salesDatePreset='year'; // 'year'|'curmonth'|'month'|'prevyear'|'all'
+let salesTypeFilter=''; // 'alc'|'gly'|''
 const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
 
 function getSalesDateRange(preset){
@@ -4076,23 +4077,37 @@ function renderSalesSummary(filteredGroups){
 
   // Prihodki/alc/gly: pri serija filtru samo vrstice ki vsebujejo to serijo
   let rev,alcQ,glyQ,avgAlcQ,avgGlyQ;
+  const typeF=salesTypeFilter;
+  const paidActive=active.filter(g=>g.channel!=='kom'||g.invoiceNum);
   if(fBatch){
     rev=0;alcQ=0;glyQ=0;avgAlcQ=0;avgGlyQ=0;
     active.forEach(g=>{
-      const paidKom=g.channel!=='kom'||g.invoiceNum;
+      const paid=g.channel!=='kom'||g.invoiceNum;
       (g.lines||[]).forEach(l=>{
         if((l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch))){
-          rev+=l.lineTotal||0;alcQ+=l.alc||0;glyQ+=l.gly||0;
-          if(paidKom){avgAlcQ+=l.alc||0;avgGlyQ+=l.gly||0;}
+          const lRev=typeF==='alc'?(l.alc||0)*(l.alcPrice||0):typeF==='gly'?(l.gly||0)*(l.glyPrice||0):l.lineTotal||0;
+          rev+=lRev;
+          if(!typeF||typeF==='alc'){alcQ+=l.alc||0;if(paid)avgAlcQ+=l.alc||0;}
+          if(!typeF||typeF==='gly'){glyQ+=l.gly||0;if(paid)avgGlyQ+=l.gly||0;}
         }
       });
     });
+  } else if(typeF==='alc'){
+    rev=active.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0),0),0);
+    alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    glyQ=0;
+    avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    avgGlyQ=0;
+  } else if(typeF==='gly'){
+    rev=active.reduce((a,g)=>a+(g.lines||[]).reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0),0);
+    alcQ=0;
+    glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+    avgAlcQ=0;
+    avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
   } else {
     rev=active.reduce((a,g)=>a+(g.total||0),0);
     alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
-    // Za povprečje izloci neplačane komisijske količine
-    const paidActive=active.filter(g=>g.channel!=='kom'||g.invoiceNum);
     avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
   }
@@ -4129,8 +4144,8 @@ function renderSalesSummary(filteredGroups){
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(avgAlcQ+avgGlyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(avgAlcQ+avgGlyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
-    <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
+    <div class="stat-card${typeF==='alc'?' active':''}" onclick="setSalesTypeFilter('alc')"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div>${typeF==='alc'&&avgAlcQ>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/avgAlcQ).toFixed(2)} € / kom</div>`:''}</div>
+    <div class="stat-card${typeF==='gly'?' active':''}" onclick="setSalesTypeFilter('gly')"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div>${typeF==='gly'&&avgGlyQ>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/avgGlyQ).toFixed(2)} € / kom</div>`:''}</div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>
     <div class="stat-card" style="grid-column:span 1">${g2}</div>`;
 }
@@ -4139,6 +4154,11 @@ function setSalesChFilter(ch){
   sel.value=sel.value===ch?'':ch;
   salesPage=0;
   renderSales();
+}
+function setSalesTypeFilter(t){
+  salesTypeFilter=salesTypeFilter===t?'':t;
+  salesPage=0;
+  renderSalesSummary();renderSales();
 }
 
 let salesPage=0;
@@ -4152,7 +4172,8 @@ function renderSales(){
   let groups=saleGroups.filter(g=>{
     const mq=!q||(g.buyer||'').toLowerCase().includes(q)||(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q));
     const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)));
-    return mq&&mBatch&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
+    const mType=!salesTypeFilter||(g.lines||[]).some(l=>salesTypeFilter==='alc'?(l.alc||0)>0:(l.gly||0)>0);
+    return mq&&mBatch&&mType&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
   });
 
   // Dodaj WP naročila iz gm_orders (pending/paid/shipped)

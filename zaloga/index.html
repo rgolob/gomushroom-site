@@ -4570,7 +4570,7 @@ function renderInvStats(){
   document.getElementById('invStatsGrid').innerHTML=`
     <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
     <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
-    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem">${byChannel}</div>`;
+    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
 }
 function setInvChFilter(ch){
   const sel=document.getElementById('invFilterCh');

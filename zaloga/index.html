@@ -4106,29 +4106,30 @@ function renderSalesSummary(filteredGroups){
           const aP=ap||fb,bP=bp||fb;
           const lRev=typeF==='alc'?a*aP:typeF==='gly'?b*bP:useFallback?(a+b)*fb:l.lineTotal||0;
           rev+=lRev;
-          if(!typeF||typeF==='alc'){if(paid)alcQ+=a;if(paid)avgAlcQ+=a;}
-          if(!typeF||typeF==='gly'){if(paid)glyQ+=b;if(paid)avgGlyQ+=b;}
+          if(!typeF||typeF==='alc'){alcQ+=a;if(paid)avgAlcQ+=a;}
+          if(!typeF||typeF==='gly'){glyQ+=b;if(paid)avgGlyQ+=b;}
           if(paid)avgRev+=typeF==='alc'?a*aP:typeF==='gly'?b*bP:a*aP+b*bP;
         }
       });
     });
   } else if(typeF==='alc'){
-    rev=paidActive.reduce((a,g)=>a+gRev(g,'alc'),0);
-    alcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    rev=active.reduce((a,g)=>a+gRev(g,'alc'),0);
+    alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     glyQ=0;avgGlyQ=0;
-    avgAlcQ=alcQ;
-    avgRev=rev;
+    avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    avgRev=paidActive.reduce((a,g)=>a+gRev(g,'alc'),0);
   } else if(typeF==='gly'){
-    rev=paidActive.reduce((a,g)=>a+gRev(g,'gly'),0);
+    rev=active.reduce((a,g)=>a+gRev(g,'gly'),0);
     alcQ=0;avgAlcQ=0;
-    glyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
-    avgGlyQ=glyQ;
-    avgRev=rev;
+    glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+    avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+    avgRev=paidActive.reduce((a,g)=>a+gRev(g,'gly'),0);
   } else {
     rev=active.reduce((a,g)=>a+(g.total||0),0);
-    alcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
-    glyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
-    avgAlcQ=alcQ;avgGlyQ=glyQ;
+    alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+    avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
     avgRev=paidActive.reduce((a,g)=>a+gRev(g,''),0);
   }
 
@@ -4143,7 +4144,6 @@ function renderSalesSummary(filteredGroups){
   const fTo=document.getElementById('dateTo').value;
   const chBase=saleGroups.filter(g=>{
     if(g.status==='stornirano') return false;
-    if(g.channel==='kom'&&!g.invoiceNum) return false;
     if(fFrom&&g.date<fFrom) return false;
     if(fTo&&g.date>fTo) return false;
     if(q&&!(g.buyer||'').toLowerCase().includes(q)&&!(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q))) return false;

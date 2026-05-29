@@ -1001,7 +1001,7 @@ section{padding:32px 0}
 }
 
 .g-overlay .box{max-width:92%}
-.g-overlay h3{margin:0 0 6px;font-size:17px}
+.g-overlay h3{margin:0 0 6px;font-size:17px;font-weight:500;letter-spacing:normal;line-height:1.3}
 .g-overlay p{margin:0;font-size:14.5px;color:#4a504b;line-height:1.6}
 
 @media (hover:hover){

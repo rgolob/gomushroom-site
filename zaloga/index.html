@@ -4115,7 +4115,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / kom</div>`:''}</div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>

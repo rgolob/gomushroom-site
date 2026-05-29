@@ -2862,18 +2862,19 @@ function renderDobavnice(){
   const listEl=document.getElementById('dobList');
   const pager=document.getElementById('dobPager');
   if(!statsEl||!listEl)return;
-  const byChannel=Object.entries(CH).map(([k,c])=>{
+  function chRow(k){
+    const c=CH[k];if(!c)return'';
     const n=groups.filter(g=>g.channel===k).length;
     if(!n)return'';
-    return`<div class="stat-card" style="padding:.3rem .45rem">
-      <div class="stat-label" style="font-size:.55rem">${c.icon} ${c.short}</div>
-      <div class="stat-value" style="font-size:1rem">${n}</div>
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:.18rem .1rem">
+      <span style="font-size:.58rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">${c.icon} ${c.short}</span>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300">${n}</span>
     </div>`;
-  }).join('');
+  }
+  const dobCh=Object.keys(CH).map(chRow).join('');
   statsEl.innerHTML=`
     <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">${groups.length}</div></div>
-    <div class="stat-card"></div>
-    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
+    <div class="stat-card">${dobCh}</div>`;
   if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;if(pager)pager.innerHTML='';return;}
   const totalPages=Math.ceil(groups.length/DOB_PER_PAGE);
   if(dobPage>=totalPages)dobPage=totalPages-1;

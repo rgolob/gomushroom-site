@@ -1043,55 +1043,55 @@ section{padding:32px 0}
 
 body.gallery-open .gallery-backdrop{display:block}
 
+/* Mobile fullscreen gallery — direct-child-of-body overlay (avoids iOS fixed-in-grid bug) */
+#g-mobile-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:110;
+  background:#000;
+}
+#g-mobile-overlay.is-open{display:block}
+#g-mobile-overlay img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+#g-mobile-overlay .g-overlay{
+  opacity:1;
+  pointer-events:auto;
+  position:absolute;
+  align-items:flex-end;
+  justify-content:flex-start;
+  padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(to bottom,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.78) 38%,
+    rgba(255,255,255,.92) 100%);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+#g-mobile-overlay .g-overlay .box{
+  max-width:100%;
+  width:100%;
+  max-height:min(66vh, 560px);
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding-right:8px;
+}
+#g-mobile-overlay .g-close{
+  display:block;
+  top:calc(10px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right));
+}
+
 @media (max-width:899px){
   body.gallery-open{overflow:hidden}
-
-  body.gallery-open .g-item.is-open{
-    position:fixed;
-    inset:0;
-    z-index:110;
-    margin:0;
-    border-radius:0;
-    background:#000;
-    box-shadow:0 26px 80px rgba(0,0,0,.22);
-  }
-
-  body.gallery-open .g-item.is-open img{
-    width:100%;
-    height:100%;
-    aspect-ratio:auto;
-    object-fit:cover;
-  }
-
-  body.gallery-open .g-item.is-open .g-overlay{
-    opacity:1;
-    pointer-events:auto;
-    align-items:flex-end;
-    justify-content:flex-start;
-    padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
-    background:linear-gradient(to bottom,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.78) 38%,
-      rgba(255,255,255,.92) 100%);
-  }
-
-  body.gallery-open .g-item.is-open .g-overlay .box{
-    max-width:100%;
-    width:100%;
-    max-height:min(66vh, 560px);
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-right:8px;
-  }
-
-  body.gallery-open .g-item.is-open .g-close{
-    display:block;
-    top:calc(10px + env(safe-area-inset-top));
-    right:calc(10px + env(safe-area-inset-right));
-  }
 }
 
 @media (min-width:900px){
+  #g-mobile-overlay{display:none!important}
   body.gallery-open{overflow:auto}
   body.gallery-open .gallery-backdrop{display:none}
   .g-item.is-open .g-close{display:none}

@@ -225,7 +225,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* view header */
 .view-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:.5rem}
 .view-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.03em}
-.hbtn2{background:var(--parchment);border:1px solid var(--border);color:var(--ink);font-family:'Jost',sans-serif;font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.45rem .85rem;border-radius:20px;cursor:pointer;white-space:nowrap}
+.hbtn2{background:var(--parchment);border:1px solid var(--border);color:var(--ink);font-family:'Jost',sans-serif;font-size:.62rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .6rem;border-radius:16px;cursor:pointer;white-space:nowrap}
 .hbtn2:active{background:rgba(175,132,85,.2)}
 
 /* EMPTY */
@@ -4058,18 +4058,42 @@ function cycleSalesDatePreset(){
 function renderSalesSummary(filteredGroups){
   const f=filteredGroups||saleGroups;
   const active=f.filter(g=>g.status!=='stornirano');
-  const rev=active.reduce((a,g)=>a+(g.total||0),0);
-  const alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
-  const glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+  const fBatch=(document.getElementById('salesFilterBatch')?.value||'').toLowerCase();
+
+  // Prihodki/alc/gly: pri serija filtru samo vrstice ki vsebujejo to serijo
+  let rev,alcQ,glyQ;
+  if(fBatch){
+    rev=0;alcQ=0;glyQ=0;
+    active.forEach(g=>{
+      (g.lines||[]).forEach(l=>{
+        if((l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch))){
+          rev+=l.lineTotal||0;alcQ+=l.alc||0;glyQ+=l.gly||0;
+        }
+      });
+    });
+  } else {
+    rev=active.reduce((a,g)=>a+(g.total||0),0);
+    alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+  }
+
   const storno=f.filter(g=>g.status==='stornirano').length;
   const activeCh=document.getElementById('salesFilterCh').value;
   const periodLabel=getSalesDateLabel(salesDatePreset);
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
 
-  // Kanalne kartice — šteje samo znotraj aktivnega datumskega obsega
+  // Kanalne kartice — upoštevajo vse filtre razen kanalnega (datum+kupec+serija)
+  const q=(document.getElementById('salesSearch')?.value||'').toLowerCase();
   const fFrom=document.getElementById('dateFrom').value;
   const fTo=document.getElementById('dateTo').value;
-  const chBase=saleGroups.filter(g=>g.status!=='stornirano'&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo));
+  const chBase=saleGroups.filter(g=>{
+    if(g.status==='stornirano') return false;
+    if(fFrom&&g.date<fFrom) return false;
+    if(fTo&&g.date>fTo) return false;
+    if(q&&!(g.buyer||'').toLowerCase().includes(q)&&!(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q))) return false;
+    if(fBatch&&!(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)))) return false;
+    return true;
+  });
   function chRow(k){
     const c=CH[k];if(!c)return'';
     const n=chBase.filter(g=>g.channel===k).length;

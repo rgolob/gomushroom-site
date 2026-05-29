@@ -4187,6 +4187,7 @@ function renderSales(){
           ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
+          ${(g.street||g.address)&&!isStorno?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printSaleLabel('${g.id}')">🏷 Nalepka</button>`:''}
           ${g.channel==='velo'&&!isStorno?`<button class="tbtn" style="background:rgba(60,107,74,.15);color:#3a6b4a;border-color:rgba(60,107,74,.3)" onclick="exportPartnerCSV('${g.id}')" title="Izvozi CSV za partnerja">📦 CSV</button>`:''}
           ${(()=>{
             if(g.channel!=='velo'||isStorno)return '';
@@ -4527,6 +4528,7 @@ function renderInvoices(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨</button>
           ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
+          ${(i.street||i.address)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
           <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
@@ -4620,6 +4622,51 @@ function printDobavnica(group){
   const a=document.createElement('a');
   a.href=url;a.target='_blank';a.rel='noopener';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+function printShippingLabel(name, street, post) {
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nalepka − ${esc(name)}</title>
+<style>
+@page{size:148mm 105mm;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:148mm;height:105mm;font-family:Arial,Helvetica,sans-serif;padding:8mm;display:flex;flex-direction:column;gap:0;background:#fff}
+.lbl-tag{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:1.5mm}
+.sender{padding-bottom:4mm;margin-bottom:4mm;border-bottom:1px solid #ddd;font-size:8.5pt;color:#555;line-height:1.5}
+.sender strong{display:block;font-size:9pt;color:#333;margin-bottom:.5mm}
+.recipient{flex:1;display:flex;flex-direction:column;justify-content:center}
+.rname{font-size:15pt;font-weight:700;color:#111;margin-bottom:1.5mm;line-height:1.2}
+.raddr{font-size:11pt;color:#333;line-height:1.6}
+.print-btn{display:none}
+@media screen{body{border:1px dashed #bbb;margin:1rem;width:calc(148mm);height:calc(105mm)}.print-btn{display:block;position:fixed;top:.5rem;right:.5rem;padding:.4rem .9rem;font-size:.82rem;cursor:pointer;background:#2b0b39;color:#fff;border:none;border-radius:6px;font-family:Arial,sans-serif}}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Natisni / PDF</button>
+<div class="sender">
+  <div class="lbl-tag">Pošiljatelj</div>
+  <strong>GoMushroom, Rok Golob s.p.</strong>
+  Prapreče pri Straži 22<br>8351 Straža
+</div>
+<div class="recipient">
+  <div class="lbl-tag">Prejemnik</div>
+  <div class="rname">${esc(name)}</div>
+  <div class="raddr">${esc(street)}${post?`<br>${esc(post)}`:''}</div>
+</div>
+</body></html>`;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.target='_blank'; a.rel='noopener'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+function printInvoiceLabel(invId){
+  const i=invoices.find(x=>x.id===invId);
+  if(!i) return;
+  printShippingLabel(i.buyer||'', i.street||i.address||'', i.post||'');
+}
+function printSaleLabel(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g) return;
+  printShippingLabel(g.buyer||'', g.street||g.address||'', g.post||'');
 }
 
 async function ustvariDobavnico(groupId){

@@ -2862,12 +2862,19 @@ function renderDobavnice(){
   const listEl=document.getElementById('dobList');
   const pager=document.getElementById('dobPager');
   if(!statsEl||!listEl)return;
-  const velo=groups.filter(g=>g.channel==='velo').length;
-  const kom=groups.filter(g=>g.channel==='kom').length;
+  function chRow(k){
+    const c=CH[k];if(!c)return'';
+    const n=groups.filter(g=>g.channel===k).length;
+    if(!n)return'';
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:.18rem .1rem">
+      <span style="font-size:.58rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">${c.icon} ${c.short}</span>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:300">${n}</span>
+    </div>`;
+  }
+  const dobCh=Object.keys(CH).map(chRow).join('');
   statsEl.innerHTML=`
     <div class="stat-card"><div class="stat-label">Skupaj</div><div class="stat-value">${groups.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Velo</div><div class="stat-value">${velo}</div></div>
-    <div class="stat-card"><div class="stat-label">Komisija</div><div class="stat-value">${kom}</div></div>`;
+    <div class="stat-card">${dobCh}</div>`;
   if(!groups.length){listEl.innerHTML=`<div class="empty"><div class="ei">📦</div><div class="et">Ni dobavnic</div></div>`;if(pager)pager.innerHTML='';return;}
   const totalPages=Math.ceil(groups.length/DOB_PER_PAGE);
   if(dobPage>=totalPages)dobPage=totalPages-1;
@@ -4068,13 +4075,15 @@ function renderSalesSummary(filteredGroups){
   const fBatch=(document.getElementById('salesFilterBatch')?.value||'').toLowerCase();
 
   // Prihodki/alc/gly: pri serija filtru samo vrstice ki vsebujejo to serijo
-  let rev,alcQ,glyQ;
+  let rev,alcQ,glyQ,avgAlcQ,avgGlyQ;
   if(fBatch){
-    rev=0;alcQ=0;glyQ=0;
+    rev=0;alcQ=0;glyQ=0;avgAlcQ=0;avgGlyQ=0;
     active.forEach(g=>{
+      const paidKom=g.channel!=='kom'||g.invoiceNum;
       (g.lines||[]).forEach(l=>{
         if((l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch))){
           rev+=l.lineTotal||0;alcQ+=l.alc||0;glyQ+=l.gly||0;
+          if(paidKom){avgAlcQ+=l.alc||0;avgGlyQ+=l.gly||0;}
         }
       });
     });
@@ -4082,6 +4091,10 @@ function renderSalesSummary(filteredGroups){
     rev=active.reduce((a,g)=>a+(g.total||0),0);
     alcQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
     glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
+    // Za povprečje izloci neplačane komisijske količine
+    const paidActive=active.filter(g=>g.channel!=='kom'||g.invoiceNum);
+    avgAlcQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.alc||0),0)||0),0);
+    avgGlyQ=paidActive.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
   }
 
   const storno=f.filter(g=>g.status==='stornirano').length;
@@ -4115,7 +4128,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(alcQ+glyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(alcQ+glyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(avgAlcQ+avgGlyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(rev/(avgAlcQ+avgGlyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
     <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>
@@ -4564,7 +4577,7 @@ function renderInvStats(){
   document.getElementById('invStatsGrid').innerHTML=`
     <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
     <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
-    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem">${byChannel}</div>`;
+    <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
 }
 function setInvChFilter(ch){
   const sel=document.getElementById('invFilterCh');

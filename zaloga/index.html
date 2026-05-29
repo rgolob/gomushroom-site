@@ -610,6 +610,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="predano">📦 Predano</option>
         </select>
         <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
+        <button class="fpill" id="printLabelsBtn" onclick="printAllPaidLabels()" style="flex:0 0 auto;background:rgba(43,11,57,.07);border-color:rgba(43,11,57,.2)" title="Natisni nalepke za plačane račune z naslovom">🏷</button>
       </div>
       <div id="invoiceList"></div>
       <div id="invPager" style="display:flex;justify-content:center;gap:.4rem;margin:.75rem 0;flex-wrap:wrap"></div>
@@ -2687,6 +2688,9 @@ async function appInit(){
   seed();
   renderStats();renderInventory();
   document.getElementById('orderDate').value=todayISO();
+  const _initRange=getSalesDateRange('year');
+  document.getElementById('dateFrom').value=_initRange.from;
+  document.getElementById('dateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
   try{
@@ -4018,6 +4022,39 @@ if(!Object.keys(pendingBatchAlloc).length){
 async function confirmAndInvoice(){await confirmOrder(true);}
 
 // ── SALES VIEW ──
+let salesDatePreset='year'; // 'year'|'month'|'prevyear'|'all'
+const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
+
+function getSalesDateRange(preset){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  if(preset==='year')return{from:`${y}-01-01`,to:todayISO()};
+  if(preset==='month'){
+    const lm=m===0?11:m-1,ly=m===0?y-1:y;
+    const end=new Date(ly,lm+1,0);
+    return{from:`${ly}-${String(lm+1).padStart(2,'0')}-01`,to:`${ly}-${String(lm+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`};
+  }
+  if(preset==='prevyear')return{from:`${y-1}-01-01`,to:`${y-1}-12-31`};
+  return{from:'',to:''};
+}
+function getSalesDateLabel(preset){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  if(preset==='year')return`${y}`;
+  if(preset==='month'){const lm=m===0?11:m-1,ly=m===0?y-1:y;return`${MONTHS_SL_SHORT[lm]} ${ly}`;}
+  if(preset==='prevyear')return`${y-1}`;
+  return'vse';
+}
+function applySalesDatePreset(){
+  const r=getSalesDateRange(salesDatePreset);
+  document.getElementById('dateFrom').value=r.from;
+  document.getElementById('dateTo').value=r.to;
+  salesPage=0;renderSales();
+}
+function cycleSalesDatePreset(){
+  const order=['year','month','prevyear','all'];
+  salesDatePreset=order[(order.indexOf(salesDatePreset)+1)%order.length];
+  applySalesDatePreset();
+}
+
 function renderSalesSummary(filteredGroups){
   const f=filteredGroups||saleGroups;
   const active=f.filter(g=>g.status!=='stornirano');
@@ -4026,6 +4063,8 @@ function renderSalesSummary(filteredGroups){
   const glyQ=active.reduce((a,g)=>a+(g.lines?.reduce((s,l)=>s+(l.gly||0),0)||0),0);
   const storno=f.filter(g=>g.status==='stornirano').length;
   const activeCh=document.getElementById('salesFilterCh').value;
+  const periodLabel=getSalesDateLabel(salesDatePreset);
+  const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
   const byChannel=Object.entries(CH).map(([k,c])=>{
     const n=saleGroups.filter(g=>g.channel===k&&g.status!=='stornirano').length;
     if(!n)return'';
@@ -4033,9 +4072,9 @@ function renderSalesSummary(filteredGroups){
     return `<div class="stat-card${isActive?' active':''}" onclick="setSalesChFilter('${k}')"><div class="stat-label">${c.icon} ${c.short}</div><div class="stat-value">${n}</div></div>`;
   }).join('');
   document.getElementById('salesStatsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Transakcij</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card"><div class="stat-label">Prihodki</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
-    <div class="stat-card"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
+    <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div></div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div></div>
     <div class="stat-card"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div></div>
     ${byChannel}`;
 }
@@ -4431,13 +4470,11 @@ function populateSalesBatchFilter(){
 }
 
 function clearSalesFilters(){
-  const now=new Date();
   document.getElementById('salesSearch').value='';
   document.getElementById('salesFilterBatch').value='';
   document.getElementById('salesFilterCh').value='';
-  document.getElementById('dateFrom').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
-  document.getElementById('dateTo').value=todayISO();
-  renderSales();
+  salesDatePreset='year';
+  applySalesDatePreset();
 }
 
 // ── INVOICES VIEW ──
@@ -4667,6 +4704,70 @@ function printSaleLabel(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g) return;
   printShippingLabel(g.buyer||'', g.street||g.address||'', g.post||'');
+}
+
+function printAllPaidLabels(){
+  const fCh=document.getElementById('invFilterCh').value;
+  const fFrom=document.getElementById('invDateFrom').value||'';
+  const fTo=document.getElementById('invDateTo').value||'';
+  const candidates=invoices.filter(i=>
+    (i.invStatus==='placano')&&
+    (i.street||i.address)&&
+    (!fCh||i.channel===fCh)&&
+    (!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)
+  );
+  if(!candidates.length){toast('Ni plačanih računov z naslovom za tisk');return;}
+
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const labels=candidates.map(i=>`
+    <div class="label">
+      <div class="sender">
+        <div class="lbl-tag">Pošiljatelj</div>
+        <strong>GoMushroom, Rok Golob s.p.</strong>
+        Prapreče pri Straži 22<br>8351 Straža
+      </div>
+      <div class="recipient">
+        <div class="lbl-tag">Prejemnik</div>
+        <div class="rname">${esc(i.buyer||'')}</div>
+        <div class="raddr">${esc(i.street||i.address||'')}${i.post?`<br>${esc(i.post)}`:''}</div>
+      </div>
+      <div class="ref">🧾 ${esc(i.num||'')}${i.date?' · '+i.date.split('-').reverse().join('.'):''}
+      </div>
+    </div>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Nalepke (${candidates.length})</title>
+<style>
+@page{size:148mm 105mm;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#fff}
+.label{width:148mm;height:105mm;padding:8mm;display:flex;flex-direction:column;page-break-after:always;break-after:page}
+.label:last-child{page-break-after:avoid;break-after:avoid}
+.lbl-tag{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:1.5mm}
+.sender{padding-bottom:4mm;margin-bottom:4mm;border-bottom:1px solid #ddd;font-size:8.5pt;color:#555;line-height:1.5}
+.sender strong{display:block;font-size:9pt;color:#333;margin-bottom:.5mm}
+.recipient{flex:1;display:flex;flex-direction:column;justify-content:center}
+.rname{font-size:15pt;font-weight:700;color:#111;margin-bottom:1.5mm;line-height:1.2}
+.raddr{font-size:11pt;color:#333;line-height:1.6}
+.ref{font-size:7pt;color:#aaa;margin-top:3mm;text-align:right}
+.print-btn{display:none}
+@media screen{
+  body{padding:1rem;background:#eee}
+  .label{background:#fff;border:1px dashed #bbb;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .print-btn{display:block;position:fixed;top:.75rem;right:.75rem;padding:.5rem 1.1rem;font-size:.85rem;cursor:pointer;background:#2b0b39;color:#fff;border:none;border-radius:8px;font-family:Arial,sans-serif;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .count{position:fixed;top:.75rem;left:.75rem;font-size:.78rem;color:#555;font-family:Arial,sans-serif;background:#fff;padding:.4rem .8rem;border-radius:8px;border:1px solid #ddd}
+}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Natisni / PDF (${candidates.length} nalepk)</button>
+<div class="count">${candidates.length} nalepk</div>
+${labels}
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 async function ustvariDobavnico(groupId){

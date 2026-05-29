@@ -4148,6 +4148,7 @@ function renderSalesSummary(filteredGroups){
     if(fTo&&g.date>fTo) return false;
     if(q&&!(g.buyer||'').toLowerCase().includes(q)&&!(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q))) return false;
     if(fBatch&&!(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)))) return false;
+    if(typeF&&!(g.lines||[]).some(l=>typeF==='alc'?(l.alc||0)>0:(l.gly||0)>0)) return false;
     return true;
   });
   function chRow(k){

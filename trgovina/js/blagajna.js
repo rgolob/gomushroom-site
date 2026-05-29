@@ -854,11 +854,15 @@ async function initPaymentUI() {
 
   // Prikaži UPN popust na gumbu, če je aktiven v nastavitvah
   const upnCfg = settings.upnPopust;
-  if (upnCfg?.aktiven && upnCfg.vrednost > 0) {
-    const upnBtn = document.getElementById('upn-pay-btn');
-    if (upnBtn) upnBtn.innerHTML =
-      `<span>🏦 Bančno nakazilo →</span>` +
-      `<span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfg.vrednost}% popusta</span>`;
+  const upnBtn = document.getElementById('upn-pay-btn');
+  if (upnBtn) {
+    if (upnCfg?.aktiven && upnCfg.vrednost > 0) {
+      upnBtn.innerHTML =
+        `<span>🏦 Bančno nakazilo →</span>` +
+        `<span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfg.vrednost}% popusta</span>`;
+    } else {
+      upnBtn.innerHTML = '🏦 Bančno nakazilo →';
+    }
   }
 }
 

@@ -4544,7 +4544,11 @@ function renderInvStats(){
   // Filtered by date + channel for totals
   const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
-  const avgInv=f.length>0?total/f.length:0;
+  const totalUnits=f.reduce((a,i)=>{
+    const g=saleGroups.find(x=>x.id===i.groupId);
+    return a+(g?.lines||[]).reduce((s,l)=>s+(l.alc||0)+(l.gly||0),0);
+  },0);
+  const avgUnit=totalUnits>0?total/totalUnits:0;
 
   // Channel cards: date filter only (no channel filter, so counts per channel visible)
   const chBase=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo));
@@ -4556,7 +4560,7 @@ function renderInvStats(){
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
     <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
-    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${f.length>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgInv.toFixed(2)} € / račun</div>`:''}</div>
+    <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
     ${byChannel}`;
 }
 function setInvChFilter(ch){

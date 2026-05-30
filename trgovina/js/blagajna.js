@@ -1,4 +1,15 @@
 // ── GoMushroom Blagajna ───────────────────────────────────
+function getGaClientId() {
+  const m = document.cookie.match(/_ga=GA\d+\.\d+\.(\d+\.\d+)/);
+  return m ? m[1] : null;
+}
+function trackPurchaseServer(orderId, items, total, shipping, discount, coupon) {
+  fetch('/.netlify/functions/track-purchase', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId, items, total, shipping, discount, coupon, clientId: getGaClientId() }),
+  }).catch(() => {});
+}
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
 const STRIPE_PK = 'pk_live_51TYJWhLYTCFQNvWnrcdDl8I9BvW7uBLGLZuuV5XY1sV4Kwzho4Oo9lAsLZjcV9roh38ezVvFEq3uQ0PZcOouoGMg00sNtGFH54';
 const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
@@ -975,6 +986,7 @@ async function saveStripeOrder(paymentIntentId) {
 
   if (typeof gmPurchase === 'function')
     gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
+  trackPurchaseServer(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
 
   localStorage.setItem('gomushroom_cart', '[]');
   try { saveCart([]); } catch(e) {}
@@ -1242,6 +1254,7 @@ async function placeOrder() {
     if (typeof gmPurchase === 'function') {
       gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     }
+    trackPurchaseServer(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
 

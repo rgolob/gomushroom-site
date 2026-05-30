@@ -747,14 +747,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
 
       <!-- Resasti bradovec – raziskave -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-bradovec-raziskave">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj raziskave preučujejo pri resastem bradovcu?</div>
-          <div style="font-size:.7rem;color:#b85c2a">⚠ Osnutek (noindex) · Slika začasna</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-bradovec-status">⚠ Osnutek (noindex) · Slika začasna</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
           <a href="/znanje/resasti-bradovec-raziskave/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
-          <a href="/en/learn/lions-mane-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇬🇧 EN →</a>
+          <a href="/en/learn/lions-mane-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('bradovec-raziskave',['znanje/resasti-bradovec-raziskave/index.html','en/learn/lions-mane-research/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
@@ -8736,6 +8737,32 @@ async function sendDobavnicaManual(groupId){
   if(!g)return;
   if(!g.email){toast('⚠ Stranka nima e-naslova');return;}
   await sendDobavnicaByEmail(g);
+}
+
+async function publishArticle(id, paths) {
+  if (!confirm(`Objavi članek?\n\n${paths.join('\n')}\n\nnoindex → index,follow`)) return;
+  const btn = document.querySelector(`#article-${id} button`);
+  if (btn) { btn.textContent = '⏳ Objavljam…'; btn.disabled = true; }
+  try {
+    const r = await fetch('/.netlify/functions/publish-article', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || 'Napaka');
+    const allOk = data.results.every(x => x.status === 'published' || x.status === 'already_published');
+    if (allOk) {
+      const statusEl = document.getElementById(`article-${id}-status`);
+      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = '✅ Objavljeno — deploy v teku (~1 min)'; }
+      if (btn) { btn.textContent = '✅ Objavljeno'; }
+    } else {
+      throw new Error(JSON.stringify(data.results));
+    }
+  } catch(e) {
+    toast('❌ ' + e.message);
+    if (btn) { btn.textContent = '🚀 Objavi'; btn.disabled = false; }
+  }
 }
 
 </script>

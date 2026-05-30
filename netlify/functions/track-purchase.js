@@ -14,10 +14,11 @@ exports.handler = async (event) => {
   if (!GA_API_SECRET) return { statusCode: 200, headers: HEADERS, body: '{"ok":false,"reason":"no_secret"}' };
 
   try {
-    const { orderId, items, total, shipping, discount, coupon, clientId } = JSON.parse(event.body);
+    const { orderId, items, total, shipping, discount, coupon, clientId, timestampMicros } = JSON.parse(event.body);
 
     const payload = {
       client_id: clientId || `srv.${Date.now()}`,
+      ...(timestampMicros ? { timestamp_micros: timestampMicros } : {}),
       events: [{
         name: 'purchase',
         params: {

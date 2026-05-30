@@ -31,37 +31,25 @@ async function send() {
   btn.disabled = true;
   btn.textContent = 'Pošiljam…';
   try {
-    const r = await fetch(
-      'https://www.google-analytics.com/mp/collect?measurement_id=G-L2PGE7VDHB&api_secret=SUGRHUnNQMOu353IPXmFQw',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: 'srv.1780065298000000',
-          timestamp_micros: 1780065298000000,
-          events: [{
-            name: 'purchase',
-            params: {
-              transaction_id: 'e7e5f674-015e-41',
-              currency: 'EUR',
-              value: 162.69,
-              shipping: 0,
-              discount: 28.71,
-              coupon: 'Max',
-              items: [{
-                item_id: 'LM-ALC-50',
-                item_name: 'Resasti bradovec',
-                item_variant: 'Alkoholna',
-                item_category: 'Tinkture',
-                price: 31.9,
-                quantity: 6,
-                index: 0
-              }]
-            }
-          }]
-        })
-      }
-    );
+    const r = await fetch('/.netlify/functions/track-purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: 'e7e5f674-015e-413a-a024-2a7097790424',
+        total: 162.69,
+        shipping: 0,
+        discount: 28.71,
+        coupon: 'Max',
+        timestampMicros: 1780065298000000,
+        items: [{
+          sku: 'LM-ALC-50',
+          name: 'Resasti bradovec',
+          variantLabel: 'Alkoholna',
+          price: 31.9,
+          quantity: 6
+        }]
+      })
+    });
     if (r.status === 204 || r.ok) {
       status.style.color = 'green';
       status.textContent = '✅ Uspelo! Event poslan v GA4.';

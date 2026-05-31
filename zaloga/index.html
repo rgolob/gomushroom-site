@@ -606,7 +606,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="dar">🎁 Promo</option>
           <option value="int">🔬 Int</option>
           <option value="kom">🤝 Kom</option>
-          <option value="stripe">💳 Stripe</option>
+          <option value="wp">🌐 Splet</option>
         </select>
         <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
           <option value="">Vsi statusi</option>
@@ -1574,7 +1574,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Stripe',icon:'💳',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -3969,10 +3969,11 @@ function updateAllBatchAllocHints(){
 
 function nextInvNum(ch, date){
   const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
-  const key=ch+'_'+yr;
+  const prefix=(CH[ch]?.short||ch.toUpperCase()).toLowerCase();
+  const key=prefix+'_'+yr;
   if(!invCounters[key])invCounters[key]=0;
   invCounters[key]++;
-  return CH[ch].short+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
+  return (CH[ch]?.short||ch.toUpperCase())+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
 function nextDobNum(date){
@@ -4265,7 +4266,7 @@ function renderSales(){
       if(n.status === 'cancelled' || n.status === 'abandoned') return false;
       if(n.is_test) return false;
       if(fCh === 'stripe' && n.channel !== 'stripe') return false;
-      if(fCh === 'wp' && n.channel === 'stripe') return false;
+      if(fCh === 'wp' && n.channel !== 'wp' && n.channel !== 'stripe') return false;
       if((n.status === 'paid' || n.status === 'shipped') && n.invoice_id) return false;
       const datum = n.created_at?.split('T')[0] || '';
       const mq = !q || (n.name||'').toLowerCase().includes(q) || (n.email||'').toLowerCase().includes(q);
@@ -4661,7 +4662,7 @@ function renderInvStats(){
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
 
   // Filtered by date + channel for totals
-  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
+  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
   const totalUnits=f.reduce((a,i)=>{
     const g=saleGroups.find(x=>x.id===i.groupId);
@@ -4710,7 +4711,8 @@ function renderInvoices(){
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
     const ms=!fSt||(i.invStatus||'caka')===fSt;
     const md=(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo);
-    return mq&&(!fCh||i.channel===fCh)&&ms&&md;
+    const chMatch=!fCh||(fCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===fCh);
+    return mq&&chMatch&&ms&&md;
   }).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
 
   const el=document.getElementById('invoiceList');
@@ -4737,6 +4739,7 @@ function renderInvoices(){
         <div class="sg-info">
           <div class="sg-buyer">🧾 ${i.num}
             <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;margin-left:.4rem">${ch.icon} ${ch.label}</span>
+            ${i.channel==='stripe'?`<span style="font-size:.58rem;background:#635bff;color:white;padding:.1rem .35rem;border-radius:5px;margin-left:.25rem">💳 Stripe</span>`:''}
             ${i.emailSent?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem">📧 ✓</span>`:''}
           </div>
           <div class="sg-meta">
@@ -4778,9 +4781,18 @@ function toggleDobavnicaCard(id){
 async function deleteInvoice(id){
   const ok=await showConfirm('Izbriši ta račun?\nProdaja bo ostala v evidenci.','Izbriši');if(!ok)return;
   const inv=invoices.find(x=>x.id===id);
+  // Izbriši iz Supabase
+  await fetch(`${SB_URL}/rest/v1/gm_invoices?id=eq.${id}`,{method:'DELETE',headers:SB_HEADERS});
+  // Pobriši invoice_id na naročilu (če obstaja)
+  const narocilo=(_narocila||[]).find(n=>n.invoice_id===inv?.groupId);
+  if(narocilo){
+    await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${narocilo.id}`,{method:'PATCH',headers:SB_HEADERS,body:JSON.stringify({invoice_id:null})});
+    const ni=_narocila.findIndex(n=>n.id===narocilo.id);
+    if(ni>=0)_narocila[ni].invoice_id=null;
+  }
   if(inv?.groupId){const g=saleGroups.find(x=>x.id===inv.groupId);if(g){g.invoiceNum=null;g.invoiceId=null;}}
   invoices=invoices.filter(x=>x.id!==id);
-  save();renderInvStats();renderInvoices();if(currentTab==='prodaja')renderSales();toast('Račun izbrisan');
+  save();renderInvStats();renderInvoices();renderSales();renderNarocila();toast('Račun izbrisan');
 }
 
 // ── PRINT INVOICE ──
@@ -8517,6 +8529,12 @@ function openEditInvoice(invId){
         <span style="color:var(--muted)">Popust:</span><span style="text-align:right;color:var(--success)">−${popust.toFixed(2)} € (${popustPct}%)</span>
         <span style="color:var(--muted)">Trenutni znesek:</span><span style="text-align:right"><strong>${(inv.total||0).toFixed(2)} €</strong></span>
       </div>`:''}
+      <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.75rem">
+        <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Številka računa</label>
+        <input id="editInvNum" type="text"
+          value="${inv.num||''}"
+          style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+      </div>
       <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem">
         <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Nov znesek (€)</label>
         <input id="editInvZnesek" type="text" inputmode="decimal"
@@ -8552,12 +8570,14 @@ function saveEditInvoice(invId){
   const raw=document.getElementById('editInvZnesek').value;
   const noviZnesek=parseFloat(raw.replace(',','.'));
   if(isNaN(noviZnesek)||noviZnesek<0){toast('⚠ Vnesi veljaven znesek');return;}
+  const novaStvilka=(document.getElementById('editInvNum')?.value||'').trim();
 
   const stariZnesek=inv.total||0;
   const razlika=noviZnesek-stariZnesek;
 
   // Posodobi račun
   inv.total=noviZnesek;
+  if(novaStvilka&&novaStvilka!==inv.num)inv.num=novaStvilka;
 
   // Posodobi prodajno skupino in izračunaj popust
   const g=saleGroups.find(x=>x.id===inv.groupId);
@@ -8569,6 +8589,7 @@ function saveEditInvoice(invId){
     g.total=noviZnesek;
     g.discount=noviPopustPct;
     g.discountAmt=noviPopustZnesek;
+    if(novaStvilka&&novaStvilka!==g.invoiceNum)g.invoiceNum=novaStvilka;
   }
 
   document.getElementById('editInvOverlay').remove();

@@ -948,7 +948,11 @@ async function payWithCard() {
 
 
 async function saveStripeOrder(paymentIntentId) {
-  const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
+  let cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
+  if (!cart.length) {
+    const backup = JSON.parse(sessionStorage.getItem('gm_cart_backup') || '[]');
+    if (backup.length) cart = backup;
+  }
   const calc = window._orderCalc;
 
   const orderData = {
@@ -1255,6 +1259,7 @@ async function placeOrder() {
       gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     }
     trackPurchaseServer(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
+    sessionStorage.setItem('gm_cart_backup', JSON.stringify(cart));
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
 

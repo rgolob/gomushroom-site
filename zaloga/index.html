@@ -6622,6 +6622,9 @@ async function potrdiNarocilo(orderId) {
     const groupId = 'wp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
     const postFull = [narocilo.post, narocilo.city].filter(Boolean).join(' ');
     const totalQty = items.reduce((s, i) => s + (i.quantity || 0), 0);
+    // fullTotal = vsota košarice pred kuponom; actualTotal = plačano za artikle (brez poštnine)
+    const fullTotal = items.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
+    const actualTotal = Math.max(0, (parseFloat(narocilo.total) || 0) - (parseFloat(narocilo.shipping) || 0));
 
     const groupData = {
       id: groupId,
@@ -6635,8 +6638,8 @@ async function potrdiNarocilo(orderId) {
       note: ['Spletno naročilo', narocilo.street, postFull].filter(Boolean).join(' · '),
       discount: parseFloat(narocilo.discount_pct) || 0,
       discount_amt: parseFloat(narocilo.discount_amt) || 0,
-      full_total: parseFloat(narocilo.subtotal) || parseFloat(narocilo.total) || 0,
-      total: parseFloat(narocilo.total) || 0,
+      full_total: fullTotal,
+      total: actualTotal,
       qty: totalQty,
       status: 'active',
     };
@@ -6660,8 +6663,6 @@ async function potrdiNarocilo(orderId) {
       const variantType = item.variant || variant.type || 'alc';
       const qty = parseInt(item.quantity) || 1;
       const price = parseFloat(item.price) || 0;
-      const discountPct = parseFloat(narocilo.discount_pct) || 0;
-      const priceAfterDiscount = discountPct > 0 ? Math.round(price * (1 - discountPct / 100) * 100) / 100 : price;
       const isAlc = variantType === 'alc';
 
       const lineRes = await fetch(`${SB_URL}/rest/v1/gm_sale_lines`, {
@@ -6673,9 +6674,9 @@ async function potrdiNarocilo(orderId) {
           product_name: item.name,
           alc: isAlc ? qty : 0,
           gly: isAlc ? 0 : qty,
-          alc_price: isAlc ? priceAfterDiscount : 0,
-          gly_price: isAlc ? 0 : priceAfterDiscount,
-          line_total: priceAfterDiscount * qty,
+          alc_price: isAlc ? price : 0,
+          gly_price: isAlc ? 0 : price,
+          line_total: price * qty,
         })
       });
       if (!lineRes.ok) {
@@ -6722,7 +6723,7 @@ async function potrdiNarocilo(orderId) {
         street: narocilo.street || null,
         post: postFull || null,
         date: today,
-        total: parseFloat(narocilo.total) || 0,
+        total: actualTotal,
         group_id: group.id,
         inv_status: 'placano',
         email_sent: null,

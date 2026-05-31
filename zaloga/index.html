@@ -606,7 +606,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="dar">🎁 Promo</option>
           <option value="int">🔬 Int</option>
           <option value="kom">🤝 Kom</option>
-          <option value="stripe">💳 Stripe</option>
+          <option value="wp">🌐 Splet</option>
         </select>
         <select class="fpill" id="invFilterStatus" onchange="renderInvoices()" style="min-width:0;flex:0 0 auto">
           <option value="">Vsi statusi</option>
@@ -3969,10 +3969,11 @@ function updateAllBatchAllocHints(){
 
 function nextInvNum(ch, date){
   const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
-  const key=ch+'_'+yr;
+  const prefix=(CH[ch]?.short||ch.toUpperCase()).toLowerCase();
+  const key=prefix+'_'+yr;
   if(!invCounters[key])invCounters[key]=0;
   invCounters[key]++;
-  return CH[ch].short+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
+  return (CH[ch]?.short||ch.toUpperCase())+'-'+yr+'-'+String(invCounters[key]).padStart(4,'0');
 }
 
 function nextDobNum(date){
@@ -4661,7 +4662,7 @@ function renderInvStats(){
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
 
   // Filtered by date + channel for totals
-  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||i.channel===activeCh));
+  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
   const totalUnits=f.reduce((a,i)=>{
     const g=saleGroups.find(x=>x.id===i.groupId);
@@ -4710,7 +4711,8 @@ function renderInvoices(){
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
     const ms=!fSt||(i.invStatus||'caka')===fSt;
     const md=(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo);
-    return mq&&(!fCh||i.channel===fCh)&&ms&&md;
+    const chMatch=!fCh||(fCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===fCh);
+    return mq&&chMatch&&ms&&md;
   }).sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
 
   const el=document.getElementById('invoiceList');
@@ -4779,9 +4781,18 @@ function toggleDobavnicaCard(id){
 async function deleteInvoice(id){
   const ok=await showConfirm('Izbriši ta račun?\nProdaja bo ostala v evidenci.','Izbriši');if(!ok)return;
   const inv=invoices.find(x=>x.id===id);
+  // Izbriši iz Supabase
+  await fetch(`${SB_URL}/rest/v1/gm_invoices?id=eq.${id}`,{method:'DELETE',headers:SB_HEADERS});
+  // Pobriši invoice_id na naročilu (če obstaja)
+  const narocilo=(_narocila||[]).find(n=>n.invoice_id===inv?.groupId);
+  if(narocilo){
+    await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${narocilo.id}`,{method:'PATCH',headers:SB_HEADERS,body:JSON.stringify({invoice_id:null})});
+    const ni=_narocila.findIndex(n=>n.id===narocilo.id);
+    if(ni>=0)_narocila[ni].invoice_id=null;
+  }
   if(inv?.groupId){const g=saleGroups.find(x=>x.id===inv.groupId);if(g){g.invoiceNum=null;g.invoiceId=null;}}
   invoices=invoices.filter(x=>x.id!==id);
-  save();renderInvStats();renderInvoices();if(currentTab==='prodaja')renderSales();toast('Račun izbrisan');
+  save();renderInvStats();renderInvoices();renderSales();renderNarocila();toast('Račun izbrisan');
 }
 
 // ── PRINT INVOICE ──

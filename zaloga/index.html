@@ -6574,7 +6574,30 @@ async function potrdiNarocilo(orderId) {
   if (!confirm(confirmMsg)) return;
 
   try {
-    const items = narocilo.items || [];
+    let items = narocilo.items || [];
+
+    // Če so artikli prazni (košarica je bila prazna ob plačilu), poišči sorodno naročilo
+    if (!items.length) {
+      const related = (_narocila || []).find(n =>
+        n.id !== narocilo.id &&
+        n.email === narocilo.email &&
+        Math.abs((n.total || 0) - (narocilo.total || 0)) < 0.02 &&
+        (n.items || []).length > 0
+      );
+      if (related) {
+        items = related.items;
+        await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${narocilo.id}`, {
+          method: 'PATCH', headers: SB_HEADERS,
+          body: JSON.stringify({ items: related.items })
+        });
+        const idx = _narocila.findIndex(n => n.id === narocilo.id);
+        if (idx >= 0) _narocila[idx].items = related.items;
+      } else {
+        alert('Artikli tega naročila niso shranjeni in ni sorodnega naročila z istim kupcem in zneskom.\n\nNe morem ustvariti sale lines.');
+        return;
+      }
+    }
+
     const orderChannel = isStripeOrder ? 'stripe' : 'wp';
 
     // Poišči variante po SKU → product_id

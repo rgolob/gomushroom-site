@@ -45,7 +45,11 @@ exports.handler = async (event) => {
         continue;
       }
 
-      const updated = original.replace(/noindex,nofollow/g, 'index,follow');
+      const today = new Date().toISOString().split('T')[0];
+      const updated = original
+        .replace(/noindex,nofollow/g, 'index,follow')
+        .replace(/"dateModified": "[^"]*"/g, `"dateModified": "${today}"`)
+        .replace(/"datePublished": "[^"]*"/g, `"datePublished": "${today}"`);
       const res = await ghPut(token, filePath, updated, file.sha, `Objavi: ${filePath}`);
       results.push({ path: filePath, status: res.ok ? 'published' : 'error', code: res.status });
     }

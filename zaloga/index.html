@@ -4285,12 +4285,15 @@ function renderSales(){
   const wpHtml = wpOrders.map(n => {
     const datum = n.created_at?.split('T')[0] || '';
     const dt = fmtDate(datum);
-    const artikli = (n.items||[]).map(i=>`<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(i.price*i.quantity).toFixed(2)} €</span></div>`).join('');
+    const _items = n.items || [];
+    const artikli = _items.length
+      ? _items.map(i=>`<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(i.price*i.quantity).toFixed(2)} €</span></div>`).join('')
+      : `<div style="font-size:.72rem;color:var(--muted);font-style:italic;padding:.2rem 0">Artikli niso shranjeni — košarica je bila prazna ob plačilu</div>`;
     const isPaid = n.status === 'paid';
     const isShipped = n.status === 'shipped';
     const isStripe = n.channel === 'stripe';
     const isExpanded = expandedSales.has('wp-'+n.id);
-    const prodSummary = (n.items||[]).map(i=>`${i.name} ×${i.quantity}`).join(' · ');
+    const prodSummary = _items.length ? _items.map(i=>`${i.name} ×${i.quantity}`).join(' · ') : '(artikli niso shranjeni)';
     const needsProcessing = (!isPaid && !isShipped) || (isStripe && isPaid && !n.invoice_id);
     const chLabel = isStripe ? '💳 Stripe' : '🌐 Splet';
     const chColor = isStripe ? '#1a7f64' : '#7c3aed';
@@ -6741,6 +6744,32 @@ async function oznacOdposlano(orderId) {
   if (idx >= 0) _narocila[idx].status = 'shipped';
   renderNarocila();
   toast('📦 Označeno kot odposlano');
+}
+
+async function prekliNarocilo(orderId) {
+  const narocilo = _narocila?.find(n => n.id === orderId);
+  const label = narocilo ? `${narocilo.name} (${(narocilo.total||0).toFixed(2)} €)` : orderId;
+  const isStripePaid = narocilo?.channel === 'stripe' && narocilo?.status === 'paid';
+  const msg = isStripePaid
+    ? `Prekličeš Stripe naročilo od ${label}?\n\nPovračilo (refund) moraš narediti ročno v Stripe Dashboardu.`
+    : `Prekličeš naročilo od ${label}?`;
+  if (!confirm(msg)) return;
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
+      method: 'PATCH', headers: SB_HEADERS,
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    if (_narocila) {
+      const idx = _narocila.findIndex(n => n.id === orderId);
+      if (idx >= 0) _narocila[idx].status = 'cancelled';
+    }
+    renderSales();
+    renderNarocila();
+    toast('❌ Naročilo preklicano.');
+  } catch(e) {
+    toast('Napaka: ' + e.message);
+  }
 }
 
 // ── RECENZIJE ─────────────────────────────────────────────

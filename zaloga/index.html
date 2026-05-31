@@ -1574,7 +1574,7 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
-const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Stripe',icon:'💳',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
+const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -4265,7 +4265,7 @@ function renderSales(){
       if(n.status === 'cancelled' || n.status === 'abandoned') return false;
       if(n.is_test) return false;
       if(fCh === 'stripe' && n.channel !== 'stripe') return false;
-      if(fCh === 'wp' && n.channel === 'stripe') return false;
+      if(fCh === 'wp' && n.channel !== 'wp' && n.channel !== 'stripe') return false;
       if((n.status === 'paid' || n.status === 'shipped') && n.invoice_id) return false;
       const datum = n.created_at?.split('T')[0] || '';
       const mq = !q || (n.name||'').toLowerCase().includes(q) || (n.email||'').toLowerCase().includes(q);
@@ -4737,6 +4737,7 @@ function renderInvoices(){
         <div class="sg-info">
           <div class="sg-buyer">🧾 ${i.num}
             <span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem;margin-left:.4rem">${ch.icon} ${ch.label}</span>
+            ${i.channel==='stripe'?`<span style="font-size:.58rem;background:#635bff;color:white;padding:.1rem .35rem;border-radius:5px;margin-left:.25rem">💳 Stripe</span>`:''}
             ${i.emailSent?`<span style="font-size:.6rem;color:#3a6b4a;margin-left:.3rem">📧 ✓</span>`:''}
           </div>
           <div class="sg-meta">

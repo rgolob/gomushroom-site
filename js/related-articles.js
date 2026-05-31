@@ -7,6 +7,11 @@
       title: 'Kaj je ekstrakcija?',
       desc: 'Kako se spojine prenesejo iz trdne snovi v topilo in zakaj ima postopek ekstrakcije neposreden vpliv na sestavo končnega ekstrakta.',
     },
+    {
+      url: '/znanje/resasti-bradovec-raziskave/',
+      title: 'Kaj raziskave preučujejo pri resastem bradovcu?',
+      desc: 'Pregled področij, ki jih znanstveniki danes preučujejo pri resastem bradovcu: NGF, nevroplastičnost, regeneracija živcev, prebavila in imunomodulacija.',
+    },
   ];
 
   function render(){

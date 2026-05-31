@@ -691,58 +691,118 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div style="display:flex;flex-direction:column;gap:.6rem">
 
       <!-- Trojna ekstrakcija -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-trojna-ekstrakcija">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Trojna ekstrakcija: zakaj eno topilo ni dovolj</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-trojna-ekstrakcija-status">⚠ Osnutek (noindex)</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
           <a href="/znanje/trojna-ekstrakcija/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
-          <a href="/en/learn/triple-extraction/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇬🇧 EN →</a>
+          <a href="/en/learn/triple-extraction/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('trojna-ekstrakcija',['znanje/trojna-ekstrakcija/index.html','en/learn/triple-extraction/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
       <!-- Ultrazvočna ekstrakcija -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-ultrazvocna-ekstrakcija">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Ultrazvočna ekstrakcija medicinskih gob</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-ultrazvocna-ekstrakcija-status">⚠ Osnutek (noindex)</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
           <a href="/znanje/ultrazvocna-ekstrakcija/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
-          <a href="/en/learn/ultrasonic-extraction/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇬🇧 EN →</a>
+          <a href="/en/learn/ultrasonic-extraction/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('ultrazvocna-ekstrakcija',['znanje/ultrazvocna-ekstrakcija/index.html','en/learn/ultrasonic-extraction/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
       <!-- Vakuumsko koncentriranje -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-vakuumsko-koncentriranje">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Vakuumsko koncentriranje ekstraktov gob</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-vakuumsko-koncentriranje-status">⚠ Osnutek (noindex)</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
           <a href="/znanje/vakuumsko-koncentriranje/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
-          <a href="/en/learn/vacuum-concentration/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇬🇧 EN →</a>
+          <a href="/en/learn/vacuum-concentration/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('vakuumsko-koncentriranje',['znanje/vakuumsko-koncentriranje/index.html','en/learn/vacuum-concentration/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
       <!-- Beta-glukani -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-beta-glukani">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Beta-glukani v gobah: zakaj odstotek ni dovolj</div>
-          <div style="font-size:.7rem;color:var(--muted)">Opomba: /znanje/beta-glukani/ — stara pot? Objavljena verzija je /znanje/beta-glukani-medicinske-gobe/</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-beta-glukani-status">⚠ Osnutek (noindex)</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
           <a href="/znanje/beta-glukani/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
-          <a href="/en/learn/beta-glucans/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇬🇧 EN →</a>
+          <a href="/en/learn/beta-glucans/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('beta-glukani',['znanje/beta-glukani/index.html','en/learn/beta-glucans/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
       <!-- Kaj je ekstrakt -->
-      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-kaj-je-ekstrakt">
         <div style="padding:.7rem 1rem .5rem">
           <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj je ekstrakt? Razlika med tinkturo, maceratom, destilatom in koncentratom</div>
-          <div style="font-size:.7rem;color:#b85c2a">⚠ Slike manjkajo · EN verzija še ne obstaja</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-kaj-je-ekstrakt-status">⚠ Osnutek (noindex) · Slike manjkajo · EN verzija še ne obstaja</div>
         </div>
         <div style="display:flex;border-top:1px solid var(--border)">
-          <a href="/znanje/kaj-je-ekstrakt/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none">🇸🇮 SL →</a>
+          <a href="/znanje/kaj-je-ekstrakt/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
+          <button onclick="publishArticle('kaj-je-ekstrakt',['znanje/kaj-je-ekstrakt/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
+        </div>
+      </div>
+
+      <!-- Resasti bradovec – raziskave -->
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-bradovec-raziskave">
+        <div style="padding:.7rem 1rem .5rem">
+          <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj raziskave preučujejo pri resastem bradovcu?</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-bradovec-status">⚠ Osnutek (noindex) · Slika začasna</div>
+        </div>
+        <div style="display:flex;border-top:1px solid var(--border)">
+          <a href="/znanje/resasti-bradovec-raziskave/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
+          <a href="/en/learn/lions-mane-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('bradovec-raziskave',['znanje/resasti-bradovec-raziskave/index.html','en/learn/lions-mane-research/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
+        </div>
+      </div>
+
+      <!-- Reishi – raziskave -->
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-reishi-raziskave">
+        <div style="padding:.7rem 1rem .5rem">
+          <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj raziskave preučujejo pri reishiju?</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-reishi-raziskave-status">⚠ Osnutek (noindex) · Slika začasna</div>
+        </div>
+        <div style="display:flex;border-top:1px solid var(--border)">
+          <a href="/znanje/reishi-raziskave/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
+          <a href="/en/learn/reishi-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('reishi-raziskave',['znanje/reishi-raziskave/index.html','en/learn/reishi-research/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
+        </div>
+      </div>
+
+      <!-- Chaga – raziskave -->
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-chaga-raziskave">
+        <div style="padding:.7rem 1rem .5rem">
+          <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj raziskave preučujejo pri chagi?</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-chaga-raziskave-status">⚠ Osnutek (noindex)</div>
+        </div>
+        <div style="display:flex;border-top:1px solid var(--border)">
+          <a href="/znanje/chaga-raziskave/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
+          <a href="/en/learn/chaga-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('chaga-raziskave',['znanje/chaga-raziskave/index.html','en/learn/chaga-research/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
+        </div>
+      </div>
+
+      <!-- Smrekovi vršički – raziskave -->
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden" id="article-smrekovi-vrsicki-raziskave">
+        <div style="padding:.7rem 1rem .5rem">
+          <div style="font-size:.88rem;font-weight:500;margin-bottom:.15rem">Kaj raziskave preučujejo pri smrekovih vršičkih?</div>
+          <div style="font-size:.7rem;color:#b85c2a" id="article-smrekovi-vrsicki-raziskave-status">⚠ Osnutek (noindex)</div>
+        </div>
+        <div style="display:flex;border-top:1px solid var(--border)">
+          <a href="/znanje/smrekovi-vrsicki-raziskave/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>
+          <a href="/en/learn/spruce-bud-research/" target="_blank" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇬🇧 EN →</a>
+          <button onclick="publishArticle('smrekovi-vrsicki-raziskave',['znanje/smrekovi-vrsicki-raziskave/index.html','en/learn/spruce-bud-research/index.html'])" style="flex:1;padding:.45rem .75rem;font-size:.75rem;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer">🚀 Objavi</button>
         </div>
       </div>
 
@@ -8724,6 +8784,32 @@ async function sendDobavnicaManual(groupId){
   if(!g)return;
   if(!g.email){toast('⚠ Stranka nima e-naslova');return;}
   await sendDobavnicaByEmail(g);
+}
+
+async function publishArticle(id, paths) {
+  if (!confirm(`Objavi članek?\n\n${paths.join('\n')}\n\nnoindex → index,follow`)) return;
+  const btn = document.querySelector(`#article-${id} button`);
+  if (btn) { btn.textContent = '⏳ Objavljam…'; btn.disabled = true; }
+  try {
+    const r = await fetch('/.netlify/functions/publish-article', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || 'Napaka');
+    const allOk = data.results.every(x => x.status === 'published' || x.status === 'already_published');
+    if (allOk) {
+      const statusEl = document.getElementById(`article-${id}-status`);
+      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = '✅ Objavljeno — deploy v teku (~1 min)'; }
+      if (btn) { btn.textContent = '✅ Objavljeno'; }
+    } else {
+      throw new Error(JSON.stringify(data.results));
+    }
+  } catch(e) {
+    toast('❌ ' + e.message);
+    if (btn) { btn.textContent = '🚀 Objavi'; btn.disabled = false; }
+  }
 }
 
 </script>

@@ -4814,8 +4814,10 @@ const UPN_BIC     = 'REVOLT21';
 const UPN_DAVCNA  = '20581041';
 const UPN_MATICNA = '9851798000';
 const UPN_NAME    = 'GoMushroom, Rok Golob s.p.';
-const UPN_ADDRESS = 'Prapreče pri Straži 22';
-const UPN_CITY    = '8351 Straža';
+const UPN_ADDRESS = 'Prapece pri Strazi 22';       // brez šumnikov — za QR bralnik
+const UPN_CITY    = '8351 Straza';                 // brez šumnikov — za QR bralnik
+const UPN_ADDRESS_DISPLAY = 'Prapreče pri Straži 22'; // s šumniki — za prikaz na računu
+const UPN_CITY_DISPLAY    = '8351 Straža';            // s šumniki — za prikaz na računu
 
 // ISO 11649 RF referenca generator
 function generateRF(orderId){
@@ -4878,35 +4880,48 @@ function printShippingLabel(name, street, post) {
   const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nalepka − ${esc(name)}</title>
 <style>
-@page{size:148mm 105mm;margin:0}
+@page{size:148mm 105mm landscape;margin:0!important}
 *{box-sizing:border-box;margin:0;padding:0}
-body{width:148mm;height:105mm;font-family:Arial,Helvetica,sans-serif;padding:8mm;display:flex;flex-direction:column;gap:0;background:#fff}
-.lbl-tag{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:1.5mm}
-.sender{padding-bottom:4mm;margin-bottom:4mm;border-bottom:1px solid #ddd;font-size:8.5pt;color:#555;line-height:1.5}
-.sender strong{display:block;font-size:9pt;color:#333;margin-bottom:.5mm}
-.recipient{flex:1;display:flex;flex-direction:column;justify-content:center}
-.rname{font-size:15pt;font-weight:700;color:#111;margin-bottom:1.5mm;line-height:1.2}
-.raddr{font-size:11pt;color:#333;line-height:1.6}
+body{width:148mm;height:105mm;font-family:Arial,Helvetica,sans-serif;background:#fff;display:flex;align-items:stretch;padding:5mm;gap:0}
+.frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
+.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:5mm 5mm 4mm;display:flex;flex-direction:column;gap:0;background:#fff}
+.logo-img{width:30mm;margin-bottom:3mm;display:block}
+.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:2mm;margin-top:auto;padding-top:3mm}
+.sender-name{font-size:8pt;font-weight:700;color:#111;line-height:1.4}
+.sender-addr{font-size:7pt;color:#555;line-height:1.55;margin-top:1mm}
+.website{font-size:7pt;color:#888;margin-top:2mm}
+.recipient-col{flex:1;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center;gap:0}
+.rec-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:4mm}
+.rname{font-size:15pt;font-weight:900;color:#111;line-height:1.15;letter-spacing:-.01em;margin-bottom:3mm}
+.raddr{font-size:12pt;color:#333;line-height:1.55;font-weight:500}
 .print-btn{display:none}
-@media screen{body{border:1px dashed #bbb;margin:1rem;width:calc(148mm);height:calc(105mm)}.print-btn{display:block;position:fixed;top:.5rem;right:.5rem;padding:.4rem .9rem;font-size:.82rem;cursor:pointer;background:#2b0b39;color:#fff;border:none;border-radius:6px;font-family:Arial,sans-serif}}
+@media screen{
+  body{margin:1rem;background:#eee;width:auto;height:auto;padding:1.5rem}
+  .frame{box-shadow:0 4px 20px rgba(0,0,0,.15)}
+  .print-btn{display:block;position:fixed;top:.75rem;right:.75rem;padding:.55rem 1.2rem;font-size:.85rem;cursor:pointer;background:#111;color:#fff;border:none;border-radius:7px;font-family:Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+}
 </style></head><body>
 <button class="print-btn" onclick="window.print()">🖨 Natisni / PDF</button>
-<div class="sender">
-  <div class="lbl-tag">Pošiljatelj</div>
-  <strong>GoMushroom, Rok Golob s.p.</strong>
-  Prapreče pri Straži 22<br>8351 Straža
-</div>
-<div class="recipient">
-  <div class="lbl-tag">Prejemnik</div>
-  <div class="rname">${esc(name)}</div>
-  <div class="raddr">${esc(street)}${post?`<br>${esc(post)}`:''}</div>
+<div class="frame">
+  <div class="sender-col">
+    <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
+    <div class="section-label">Pošiljatelj</div>
+    <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
+    <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
+    <div class="website">gomushroom.si</div>
+  </div>
+  <div class="recipient-col">
+    <div class="rec-label">Prejemnik</div>
+    <div class="rname">${esc(name)}</div>
+    <div class="raddr">${esc(street)}${post?`<br>${esc(post)}`:''}</div>
+  </div>
 </div>
 </body></html>`;
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.target='_blank'; a.rel='noopener'; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  const win = window.open('', '_blank');
+  if(!win){alert('Popup blokiran — dovoli popup za tisk');return;}
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 function printInvoiceLabel(invId){
   const i=invoices.find(x=>x.id===invId);
@@ -4934,40 +4949,50 @@ function printAllPaidLabels(){
   const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const labels=candidates.map(i=>`
     <div class="label">
-      <div class="sender">
-        <div class="lbl-tag">Pošiljatelj</div>
-        <strong>GoMushroom, Rok Golob s.p.</strong>
-        Prapreče pri Straži 22<br>8351 Straža
-      </div>
-      <div class="recipient">
-        <div class="lbl-tag">Prejemnik</div>
-        <div class="rname">${esc(i.buyer||'')}</div>
-        <div class="raddr">${esc(i.street||i.address||'')}${i.post?`<br>${esc(i.post)}`:''}</div>
-      </div>
-      <div class="ref">🧾 ${esc(i.num||'')}${i.date?' · '+i.date.split('-').reverse().join('.'):''}
+      <div class="frame">
+        <div class="sender-col">
+          <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
+          <div class="section-label">Pošiljatelj</div>
+          <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
+          <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
+          <div class="website">gomushroom.si</div>
+        </div>
+        <div class="recipient-col">
+          <div class="rec-label">Prejemnik</div>
+          <div class="rname">${esc(i.buyer||'')}</div>
+          <div class="raddr">${esc(i.street||i.address||'')}${i.post?`<br>${esc(i.post)}`:''}</div>
+          <div class="ref">${esc(i.num||'')}${i.date?' · '+i.date.split('-').reverse().join('.'):''}
+          </div>
+        </div>
       </div>
     </div>`).join('');
 
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Nalepke (${candidates.length})</title>
 <style>
-@page{size:148mm 105mm;margin:0}
+@page{size:148mm 105mm landscape;margin:0!important}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;background:#fff}
-.label{width:148mm;height:105mm;padding:8mm;display:flex;flex-direction:column;page-break-after:always;break-after:page}
+.label{width:148mm;height:105mm;padding:5mm;page-break-after:always;break-after:page}
 .label:last-child{page-break-after:avoid;break-after:avoid}
-.lbl-tag{font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:1.5mm}
-.sender{padding-bottom:4mm;margin-bottom:4mm;border-bottom:1px solid #ddd;font-size:8.5pt;color:#555;line-height:1.5}
-.sender strong{display:block;font-size:9pt;color:#333;margin-bottom:.5mm}
-.recipient{flex:1;display:flex;flex-direction:column;justify-content:center}
-.rname{font-size:15pt;font-weight:700;color:#111;margin-bottom:1.5mm;line-height:1.2}
-.raddr{font-size:11pt;color:#333;line-height:1.6}
-.ref{font-size:7pt;color:#aaa;margin-top:3mm;text-align:right}
+.frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
+.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:5mm 5mm 4mm;display:flex;flex-direction:column}
+.logo-img{width:30mm;margin-bottom:3mm;display:block}
+.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:2mm;margin-top:auto;padding-top:3mm}
+.sender-name{font-size:8pt;font-weight:700;color:#111;line-height:1.4}
+.sender-addr{font-size:7pt;color:#555;line-height:1.55;margin-top:1mm}
+.website{font-size:7pt;color:#888;margin-top:2mm}
+.recipient-col{flex:1;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center}
+.rec-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:4mm}
+.rname{font-size:15pt;font-weight:900;color:#111;line-height:1.15;letter-spacing:-.01em;margin-bottom:3mm}
+.raddr{font-size:12pt;color:#333;line-height:1.55;font-weight:500}
+.ref{font-size:6pt;color:#ccc;margin-top:auto;padding-top:2mm}
 .print-btn{display:none}
 @media screen{
   body{padding:1rem;background:#eee}
-  .label{background:#fff;border:1px dashed #bbb;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-  .print-btn{display:block;position:fixed;top:.75rem;right:.75rem;padding:.5rem 1.1rem;font-size:.85rem;cursor:pointer;background:#2b0b39;color:#fff;border:none;border-radius:8px;font-family:Arial,sans-serif;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .label{background:#fff;margin-bottom:1.5rem}
+  .frame{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+  .print-btn{display:block;position:fixed;top:.75rem;right:.75rem;padding:.55rem 1.2rem;font-size:.85rem;cursor:pointer;background:#111;color:#fff;border:none;border-radius:8px;font-family:Arial,sans-serif;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.25)}
   .count{position:fixed;top:.75rem;left:.75rem;font-size:.78rem;color:#555;font-family:Arial,sans-serif;background:#fff;padding:.4rem .8rem;border-radius:8px;border:1px solid #ddd}
 }
 </style></head><body>
@@ -4976,11 +5001,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff}
 ${labels}
 </body></html>`;
 
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const win=window.open('','_blank');
+  if(!win){alert('Popup blokiran — dovoli popup za tisk');return;}
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 async function ustvariDobavnico(groupId){
@@ -5220,7 +5245,7 @@ function buildInvoiceHTML(group, qrDataURL){
     ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
     ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc}</td>
+    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Alkohol</span></div>${descAlc}</td>
     <td>${l.alc}</td>
     <td>
       ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
@@ -5240,7 +5265,7 @@ if(l.gly>0){
     ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
     ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div>🌿 Glicerin</div>${descGly}</td>
+    <td><div style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Brezalkoholna</div>${descGly}</td>
     <td>${l.gly}</td>
     <td>
       ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
@@ -5300,8 +5325,8 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-email{background:#3a6b4a;color:white}
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
-@page{margin:0}
-@media print{.actions{display:none}body{padding:1.5rem}}
+@page{margin:0!important;size:A4}
+@media print{.actions{display:none!important}body{padding:1.5cm 2cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -5318,7 +5343,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
   <div>
     <div class="plabel">Izdajatelj</div>
     <div class="pname">${UPN_NAME}</div>
-    <div class="pdetail">${UPN_ADDRESS}<br>${UPN_CITY}<br>gomushroom.si</div>
+    <div class="pdetail">${UPN_ADDRESS_DISPLAY}<br>${UPN_CITY_DISPLAY}<br>gomushroom.si</div>
   </div>
   <div>
     <div class="plabel">Kupec / Prejemnik</div>
@@ -5342,7 +5367,7 @@ ${extRefs}
 
 ${(group.lines||[]).some(l=>(l.alc||0)>0)?`<div style="margin-top:1rem;padding:.6rem .85rem;border:1px solid rgba(175,132,85,.35);border-radius:6px;background:rgba(175,132,85,.05);font-size:.72rem;color:#5a3a1a;line-height:1.65">Tro\u0161arina za etanol v izdelku je bila \u017Ee poravnana. Kupec nima dodatnih obveznosti glede tro\u0161arine. Podlaga: Zakon o tro\u0161arinah (ZTro-1).</div>`:''}
 
-${qrImgTag?`
+<div style="margin-top:.75rem;font-size:.72rem;color:#7a6f60;font-style:italic">Nisem zavezanec za DDV po 1. odstavku 94. \u010Dlena ZDDV-1.</div>
 <div class="qr-section">
   <div class="qr-wrap">
     <div class="qr-label">UPN QR</div>
@@ -5469,11 +5494,11 @@ async function printInvoice(group){
   }
 
   const html=buildInvoiceHTML(group,qrDataURL);
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const win=window.open('','_blank');
+  if(!win){toast('⚠ Popup blokiran — dovoli popup za tisk');return;}
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── BACKUP / RESTORE ──
@@ -8885,8 +8910,10 @@ async function publishArticle(id, paths) {
     if (!r.ok || data.error) throw new Error(data.error || 'Napaka');
     const allOk = data.results.every(x => x.status === 'published' || x.status === 'already_published');
     if (allOk) {
+      const added = (data.relatedResults||[]).filter(x => x.status === 'added').map(x => x.url);
       const statusEl = document.getElementById(`article-${id}-status`);
-      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = '✅ Objavljeno — deploy v teku (~1 min)'; }
+      const raNote = added.length ? ` + sorodni članki posodobljeni` : '';
+      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = `✅ Objavljeno${raNote} — deploy v teku (~1 min)`; }
       if (btn) { btn.textContent = '✅ Objavljeno'; }
     } else {
       throw new Error(JSON.stringify(data.results));

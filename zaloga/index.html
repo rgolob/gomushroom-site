@@ -8885,8 +8885,10 @@ async function publishArticle(id, paths) {
     if (!r.ok || data.error) throw new Error(data.error || 'Napaka');
     const allOk = data.results.every(x => x.status === 'published' || x.status === 'already_published');
     if (allOk) {
+      const added = (data.relatedResults||[]).filter(x => x.status === 'added').map(x => x.url);
       const statusEl = document.getElementById(`article-${id}-status`);
-      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = '✅ Objavljeno — deploy v teku (~1 min)'; }
+      const raNote = added.length ? ` + sorodni članki posodobljeni` : '';
+      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = `✅ Objavljeno${raNote} — deploy v teku (~1 min)`; }
       if (btn) { btn.textContent = '✅ Objavljeno'; }
     } else {
       throw new Error(JSON.stringify(data.results));

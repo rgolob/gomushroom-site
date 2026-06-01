@@ -4673,9 +4673,11 @@ function renderInvStats(){
   // Channel cards: date filter only (no channel filter, so counts per channel visible)
   const chBase=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo));
   const byChannel=Object.entries(CH).map(([k,c])=>{
-    const n=chBase.filter(i=>i.channel===k).length;
+    if(k==='stripe')return''; // združeno z wp kartico
+    let n=chBase.filter(i=>i.channel===k).length;
+    if(k==='wp')n+=chBase.filter(i=>i.channel==='stripe').length;
     if(!n)return'';
-    const isActive=activeCh===k;
+    const isActive=activeCh===k||(k==='wp'&&activeCh==='stripe');
     return `<div class="stat-card${isActive?' active':''}" onclick="setInvChFilter('${k}')" style="padding:.3rem .45rem">
       <div class="stat-label" style="font-size:.55rem">${c.icon} ${c.short}</div>
       <div class="stat-value" style="font-size:1rem">${n}</div>

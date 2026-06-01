@@ -3842,9 +3842,18 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='kom')
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      // If no alloc set, use total available
-      avAlc=allocProd>0?Math.max(0,Math.min(allocProd-soldProd,totalAvAlc)):totalAvAlc;
-      avGly=allocProdGly>0?Math.max(0,Math.min(allocProdGly-soldProdGly,totalAvGly)):totalAvGly;
+      // Internal reservation that still hasn't been consumed by int sales
+      const allocInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+      const soldIntB=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldIntBGly=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+        .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const netIntReserved=Math.max(0,allocInt-soldIntB);
+      const netIntReservedGly=Math.max(0,allocIntGly-soldIntBGly);
+      // If alloc.prod is set, respect it; otherwise use total minus still-reserved internal
+      avAlc=allocProd>0?Math.max(0,Math.min(allocProd-soldProd,totalAvAlc)):Math.max(0,totalAvAlc-netIntReserved);
+      avGly=allocProdGly>0?Math.max(0,Math.min(allocProdGly-soldProdGly,totalAvGly)):Math.max(0,totalAvGly-netIntReservedGly);
     }
     const takeAlc=Math.min(remAlc,avAlc);
     const takeGly=Math.min(remGly,avGly);

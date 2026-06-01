@@ -1714,6 +1714,7 @@ async function sbLoadAll(){
   invoices=invs.map(sbInvoiceToApp);
   invCounters={malo:0,velo:0,dar:0,int:0};
   counters.forEach(c=>{invCounters[c.key]=c.val;});
+  syncCountersFromInvoices();
   // Posodobi TIERS iz baze
   if(tiers.length){
     window._TIERS=tiers.map(t=>({min:t.min_qty,max:t.max_qty||Infinity,alc:t.alc_price,gly:t.gly_price,label:t.label}));
@@ -2744,6 +2745,7 @@ function loadFromLocal(){
     invCounters=JSON.parse(localStorage.getItem('gm_invCounters')||'{}');
     ['malo','velo','dar','int','kom'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
   }catch{invCounters={malo:0,velo:0,dar:0,int:0};}
+  syncCountersFromInvoices();
 }
 
 async function appInit(){
@@ -3975,6 +3977,21 @@ function updateAllBatchAllocHints(){
   });
 }
 
+
+function syncCountersFromInvoices(){
+  const allNums=[];
+  invoices.forEach(i=>{if(i.num)allNums.push(i.num);});
+  saleGroups.forEach(g=>{if(g.invoiceNum)allNums.push(g.invoiceNum);if(g.deliveryNum)allNums.push(g.deliveryNum);});
+  allNums.forEach(num=>{
+    const parts=num.split('-');
+    if(parts.length<3)return;
+    const n=parseInt(parts[parts.length-1],10);
+    const yr=parts[parts.length-2];
+    if(isNaN(n)||!/^\d{2}$/.test(yr))return;
+    const key=parts.slice(0,parts.length-2).join('-').toLowerCase()+'_'+yr;
+    if(!invCounters[key]||invCounters[key]<n)invCounters[key]=n;
+  });
+}
 
 function nextInvNum(ch, date){
   const yr=date?(new Date(date)).getFullYear().toString().slice(2):(new Date()).getFullYear().toString().slice(2);
@@ -5368,7 +5385,7 @@ ${extRefs}
 ${(group.lines||[]).some(l=>(l.alc||0)>0)?`<div style="margin-top:1rem;padding:.6rem .85rem;border:1px solid rgba(175,132,85,.35);border-radius:6px;background:rgba(175,132,85,.05);font-size:.72rem;color:#5a3a1a;line-height:1.65">Tro\u0161arina za etanol v izdelku je bila \u017Ee poravnana. Kupec nima dodatnih obveznosti glede tro\u0161arine. Podlaga: Zakon o tro\u0161arinah (ZTro-1).</div>`:''}
 
 <div style="margin-top:.75rem;font-size:.72rem;color:#7a6f60;font-style:italic">Nisem zavezanec za DDV po 1. odstavku 94. \u010Dlena ZDDV-1.</div>
-<div class="qr-section">
+${qrImgTag?`<div class="qr-section">
   <div class="qr-wrap">
     <div class="qr-label">UPN QR</div>
     ${qrImgTag}
@@ -5616,6 +5633,7 @@ async function restoreJSON(e){
       invoices=data.invoices||[];
       invCounters=data.invCounters||{malo:0,velo:0,dar:0,int:0};
       ['malo','velo','dar','int','kom'].forEach(k=>{if(!invCounters[k])invCounters[k]=0;});
+      syncCountersFromInvoices();
       save();
       // Restore customers if present in backup
       if(data.customers?.length){

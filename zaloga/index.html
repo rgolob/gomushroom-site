@@ -5385,7 +5385,7 @@ ${extRefs}
 ${(group.lines||[]).some(l=>(l.alc||0)>0)?`<div style="margin-top:1rem;padding:.6rem .85rem;border:1px solid rgba(175,132,85,.35);border-radius:6px;background:rgba(175,132,85,.05);font-size:.72rem;color:#5a3a1a;line-height:1.65">Tro\u0161arina za etanol v izdelku je bila \u017Ee poravnana. Kupec nima dodatnih obveznosti glede tro\u0161arine. Podlaga: Zakon o tro\u0161arinah (ZTro-1).</div>`:''}
 
 <div style="margin-top:.75rem;font-size:.72rem;color:#7a6f60;font-style:italic">Nisem zavezanec za DDV po 1. odstavku 94. \u010Dlena ZDDV-1.</div>
-<div class="qr-section">
+${qrImgTag?`<div class="qr-section">
   <div class="qr-wrap">
     <div class="qr-label">UPN QR</div>
     ${qrImgTag}

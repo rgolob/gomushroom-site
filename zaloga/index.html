@@ -4814,8 +4814,10 @@ const UPN_BIC     = 'REVOLT21';
 const UPN_DAVCNA  = '20581041';
 const UPN_MATICNA = '9851798000';
 const UPN_NAME    = 'GoMushroom, Rok Golob s.p.';
-const UPN_ADDRESS = 'Prapece pri Strazi 22';
-const UPN_CITY    = '8351 Straza';
+const UPN_ADDRESS = 'Prapece pri Strazi 22';       // brez šumnikov — za QR bralnik
+const UPN_CITY    = '8351 Straza';                 // brez šumnikov — za QR bralnik
+const UPN_ADDRESS_DISPLAY = 'Prapreče pri Straži 22'; // s šumniki — za prikaz na računu
+const UPN_CITY_DISPLAY    = '8351 Straža';            // s šumniki — za prikaz na računu
 
 // ISO 11649 RF referenca generator
 function generateRF(orderId){
@@ -5220,7 +5222,7 @@ function buildInvoiceHTML(group, qrDataURL){
     ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
     ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span>🥃 Alkohol</span></div>${descAlc}</td>
+    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Alkohol</span></div>${descAlc}</td>
     <td>${l.alc}</td>
     <td>
       ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
@@ -5240,7 +5242,7 @@ if(l.gly>0){
     ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
     ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div>🌿 Glicerin</div>${descGly}</td>
+    <td><div style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Brezalkoholna</div>${descGly}</td>
     <td>${l.gly}</td>
     <td>
       ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
@@ -5318,7 +5320,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
   <div>
     <div class="plabel">Izdajatelj</div>
     <div class="pname">${UPN_NAME}</div>
-    <div class="pdetail">${UPN_ADDRESS}<br>${UPN_CITY}<br>gomushroom.si</div>
+    <div class="pdetail">${UPN_ADDRESS_DISPLAY}<br>${UPN_CITY_DISPLAY}<br>gomushroom.si</div>
   </div>
   <div>
     <div class="plabel">Kupec / Prejemnik</div>

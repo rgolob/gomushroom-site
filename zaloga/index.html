@@ -5302,8 +5302,8 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-email{background:#3a6b4a;color:white}
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
-@page{margin:0}
-@media print{.actions{display:none}body{padding:1.5rem}}
+@page{margin:0!important;size:A4}
+@media print{.actions{display:none!important}body{padding:1.5cm 2cm}}
 </style></head><body>
 
 <div class="hdr">
@@ -5471,11 +5471,11 @@ async function printInvoice(group){
   }
 
   const html=buildInvoiceHTML(group,qrDataURL);
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const win=window.open('','_blank');
+  if(!win){toast('⚠ Popup blokiran — dovoli popup za tisk');return;}
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── BACKUP / RESTORE ──

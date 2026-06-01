@@ -4172,7 +4172,8 @@ function renderSalesSummary(filteredGroups){
     const aR=ls.reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0),0);
     const bR=ls.reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0);
     const sum=aR+bR;
-    if(sum>0) return type==='alc'?aR:type==='gly'?bR:sum;
+    if(!type) return g.total||0;
+    if(sum>0) return type==='alc'?aR:bR;
     if(!(g.total||0)) return 0;
     const aQ=ls.reduce((s,l)=>s+(l.alc||0),0),bQ=ls.reduce((s,l)=>s+(l.gly||0),0),tQ=aQ+bQ;
     if(!tQ) return 0;
@@ -4240,7 +4241,7 @@ function renderSalesSummary(filteredGroups){
   });
   function chRow(k){
     const c=CH[k];if(!c)return'';
-    const n=chBase.filter(g=>g.channel===k).length;
+    const n=k==='wp'?chBase.filter(g=>g.channel==='wp'||g.channel==='stripe').length:chBase.filter(g=>g.channel===k).length;
     const isAct=activeCh===k;
     return `<div onclick="setSalesChFilter('${k}')" style="display:flex;justify-content:space-between;align-items:center;padding:.18rem .1rem;cursor:pointer;border-radius:4px;${isAct?'background:rgba(43,11,57,.07);':''}">
       <span style="font-size:.58rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:${isAct?'var(--ink)':'var(--muted)'}">${c.icon} ${c.short}</span>
@@ -4282,7 +4283,7 @@ function renderSales(){
     const mq=!q||(g.buyer||'').toLowerCase().includes(q)||(g.lines||[]).some(l=>l.productName.toLowerCase().includes(q));
     const mBatch=!fBatch||(g.lines||[]).some(l=>(l.batchBreakdown||[]).some(bb=>(bb.batchNum||'').toLowerCase().includes(fBatch)));
     const mType=!salesTypeFilter||(g.lines||[]).some(l=>salesTypeFilter==='alc'?(l.alc||0)>0:(l.gly||0)>0);
-    return mq&&mBatch&&mType&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||g.channel===fCh);
+    return mq&&mBatch&&mType&&(!fFrom||g.date>=fFrom)&&(!fTo||g.date<=fTo)&&(!fCh||(fCh==='wp'?g.channel==='wp'||g.channel==='stripe':g.channel===fCh));
   });
 
   // Dodaj WP naročila iz gm_orders (pending/paid/shipped)

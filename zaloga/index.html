@@ -4902,13 +4902,16 @@ function printShippingLabel(name, street, post, phone) {
 *{box-sizing:border-box;margin:0;padding:0}
 body{width:148mm;height:105mm;font-family:Arial,Helvetica,sans-serif;background:#fff;display:flex;align-items:stretch;padding:5mm;gap:0}
 .frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
-.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:5mm 5mm 4mm;display:flex;flex-direction:column;gap:0;background:#fff}
-.logo-img{width:30mm;margin-bottom:3mm;display:block}
-.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:2mm;margin-top:auto;padding-top:3mm}
+.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:4mm 4mm 4mm;display:flex;flex-direction:column;gap:0;background:#fff}
+.logo-img{width:28mm;display:block;margin-bottom:3mm}
+.sender-data{flex:1}
+.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:1.5mm}
 .sender-name{font-size:8pt;font-weight:700;color:#111;line-height:1.4}
 .sender-addr{font-size:7pt;color:#555;line-height:1.55;margin-top:1mm}
 .sender-phone{font-size:7pt;color:#555;margin-top:1mm}
-.website{font-size:7pt;color:#888;margin-top:2mm}
+.sender-qr{margin-top:2mm;text-align:center}
+.qr-img{width:22mm;height:22mm;display:block;margin:0 auto 1.5mm}
+.website{font-size:6pt;color:#888;text-align:center}
 .recipient-col{flex:1;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center;gap:0}
 .rec-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:4mm}
 .rname{font-size:15pt;font-weight:900;color:#111;line-height:1.15;letter-spacing:-.01em;margin-bottom:3mm}
@@ -4925,11 +4928,16 @@ body{width:148mm;height:105mm;font-family:Arial,Helvetica,sans-serif;background:
 <div class="frame">
   <div class="sender-col">
     <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
-    <div class="section-label">Pošiljatelj</div>
-    <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
-    <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
-    <div class="sender-phone">031 373 836</div>
-    <div class="website">gomushroom.si</div>
+    <div class="sender-data">
+      <div class="section-label">Pošiljatelj</div>
+      <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
+      <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
+      <div class="sender-phone">031 373 836</div>
+    </div>
+    <div class="sender-qr">
+      <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&ecc=M&data=https://gomushroom.si" alt="gomushroom.si">
+      <div class="website">gomushroom.si</div>
+    </div>
   </div>
   <div class="recipient-col">
     <div class="rec-label">Prejemnik</div>
@@ -4974,11 +4982,16 @@ function printAllPaidLabels(){
       <div class="frame">
         <div class="sender-col">
           <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
-          <div class="section-label">Pošiljatelj</div>
-          <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
-          <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
-          <div class="sender-phone">031 373 836</div>
-          <div class="website">gomushroom.si</div>
+          <div class="sender-data">
+            <div class="section-label">Pošiljatelj</div>
+            <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
+            <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža</div>
+            <div class="sender-phone">031 373 836</div>
+          </div>
+          <div class="sender-qr">
+            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&ecc=M&data=https://gomushroom.si" alt="gomushroom.si">
+            <div class="website">gomushroom.si</div>
+          </div>
         </div>
         <div class="recipient-col">
           <div class="rec-label">Prejemnik</div>
@@ -5000,13 +5013,16 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff}
 .label{width:148mm;height:105mm;padding:5mm;page-break-after:always;break-after:page}
 .label:last-child{page-break-after:avoid;break-after:avoid}
 .frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
-.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:5mm 5mm 4mm;display:flex;flex-direction:column}
-.logo-img{width:30mm;margin-bottom:3mm;display:block}
-.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:2mm;margin-top:auto;padding-top:3mm}
+.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:4mm 4mm 4mm;display:flex;flex-direction:column}
+.logo-img{width:28mm;display:block;margin-bottom:3mm}
+.sender-data{flex:1}
+.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:1.5mm}
 .sender-name{font-size:8pt;font-weight:700;color:#111;line-height:1.4}
 .sender-addr{font-size:7pt;color:#555;line-height:1.55;margin-top:1mm}
 .sender-phone{font-size:7pt;color:#555;margin-top:1mm}
-.website{font-size:7pt;color:#888;margin-top:2mm}
+.sender-qr{margin-top:2mm;text-align:center}
+.qr-img{width:22mm;height:22mm;display:block;margin:0 auto 1.5mm}
+.website{font-size:6pt;color:#888;text-align:center}
 .recipient-col{flex:1;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center}
 .rec-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:4mm}
 .rname{font-size:15pt;font-weight:900;color:#111;line-height:1.15;letter-spacing:-.01em;margin-bottom:3mm}

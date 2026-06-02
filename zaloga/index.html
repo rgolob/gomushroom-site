@@ -4195,11 +4195,12 @@ function renderSalesSummary(filteredGroups){
     const bR=ls.reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0);
     const sum=aR+bR;
     if(!type) return g.total||0;
-    if(sum>0) return type==='alc'?aR:bR;
+    const scale=(sum>0&&(g.total||0)>0)?g.total/sum:1;
+    if(sum>0) return type==='alc'?aR*scale:bR*scale;
     if(!(g.total||0)) return 0;
     const aQ=ls.reduce((s,l)=>s+(l.alc||0),0),bQ=ls.reduce((s,l)=>s+(l.gly||0),0),tQ=aQ+bQ;
     if(!tQ) return 0;
-    return type==='alc'?g.total*aQ/tQ:type==='gly'?g.total*bQ/tQ:g.total;
+    return type==='alc'?g.total*aQ/tQ:g.total*bQ/tQ;
   }
   if(fBatch){
     rev=0;alcQ=0;glyQ=0;avgAlcQ=0;avgGlyQ=0;avgRev=0;
@@ -4393,8 +4394,12 @@ function renderSales(){
   el.innerHTML = wpHtml + page.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
     const isExpanded=expandedSales.has(g.id);
+    const _lineSum=(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0);
+    const _pScale=(_lineSum>0&&(g.total||0)>0)?g.total/_lineSum:1;
     const itemsHtml=(g.lines||[]).map(l=>{
-      const parts=[l.alc>0?`🥃 ${l.alc} × ${l.alcPrice?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${l.glyPrice?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
+      const ap=l.alcPrice?l.alcPrice*_pScale:null;
+      const gp=l.glyPrice?l.glyPrice*_pScale:null;
+      const parts=[l.alc>0?`🥃 ${l.alc} × ${ap?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${gp?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
       const batchHtml=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>`<span style="font-size:.65rem;color:var(--muted);margin-left:.5rem">🏷 ${bb.batchNum}${bb.alc?` 🥃${bb.alc}`:''}${bb.gly?` 🌿${bb.gly}`:''}</span>`).join('');
       return `<div class="sg-item"><span class="sg-item-label">${l.productName}</span><span class="sg-item-val">${parts}</span></div>${batchHtml?`<div style="padding:.1rem 0 .2rem">${batchHtml}</div>`:''}`;
     }).join('');

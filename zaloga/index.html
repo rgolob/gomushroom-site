@@ -4145,6 +4145,7 @@ async function confirmAndInvoice(){await confirmOrder(true);}
 // ── SALES VIEW ──
 let salesDatePreset='year'; // 'year'|'curmonth'|'month'|'prevyear'|'all'
 let salesTypeFilter=''; // 'alc'|'gly'|''
+let poroFilterCh='';
 const MONTHS_SL_SHORT=['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
 
 function getSalesDateRange(preset){
@@ -4952,11 +4953,11 @@ function renderPorocilo(){
     wp:{label:'Splet (WP + Stripe)',icon:'🌐'},dar:{label:'Darila',icon:'🎁'},
     int:{label:'Interno',icon:'🔬'},kom:{label:'Komisija',icon:'🤝'}};
 
-  let totalRev=0,totalAlcQ=0,totalGlyQ=0,totalAlcRev=0,totalGlyRev=0;
+  let totalRev=0;
   const byChannel={};
   groups.forEach(g=>{
     const ch=g.channel==='stripe'?'wp':g.channel;
-    if(!byChannel[ch])byChannel[ch]={rev:0,n:0,alcQ:0,glyQ:0};
+    if(!byChannel[ch])byChannel[ch]={rev:0,n:0,alcQ:0,glyQ:0,alcRev:0,glyRev:0};
     byChannel[ch].rev+=(g.total||0);
     byChannel[ch].n++;
     totalRev+=(g.total||0);
@@ -4965,12 +4966,19 @@ function renderPorocilo(){
     const scale=(lineSum>0&&(g.total||0)>0)?g.total/lineSum:1;
     ls.forEach(l=>{
       const a=l.alc||0,b=l.gly||0;
-      totalAlcQ+=a; totalGlyQ+=b;
       byChannel[ch].alcQ+=a; byChannel[ch].glyQ+=b;
-      totalAlcRev+=a*(l.alcPrice||0)*scale;
-      totalGlyRev+=b*(l.glyPrice||0)*scale;
+      byChannel[ch].alcRev+=a*(l.alcPrice||0)*scale;
+      byChannel[ch].glyRev+=b*(l.glyPrice||0)*scale;
     });
   });
+
+  // Seštej skupaj ali samo izbrani kanal
+  const fCh=poroFilterCh&&byChannel[poroFilterCh]?poroFilterCh:'';
+  const qSrc=fCh?[byChannel[fCh]]:Object.values(byChannel);
+  const qAlcQ=qSrc.reduce((s,d)=>s+d.alcQ,0);
+  const qGlyQ=qSrc.reduce((s,d)=>s+d.glyQ,0);
+  const qAlcRev=qSrc.reduce((s,d)=>s+d.alcRev,0);
+  const qGlyRev=qSrc.reduce((s,d)=>s+d.glyRev,0);
 
   const postnina=getZS('postnina')||3.90;
   const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
@@ -4998,27 +5006,35 @@ function renderPorocilo(){
   ['malo','velo','wp','dar','int','kom'].forEach(k=>{
     const d=byChannel[k];
     if(!d)return;
+    const isAct=poroFilterCh===k;
     const qHint=[d.alcQ?`🥃${d.alcQ}`:null,d.glyQ?`🌿${d.glyQ}`:null].filter(Boolean).join(' ');
-    chRows+=row(`${CH[k]?.icon||''} ${CH[k]?.label||k}`,d.rev,`${d.n} transakcij${qHint?' · '+qHint:''}`);
+    chRows+=`<div onclick="poroFilterCh=poroFilterCh==='${k}'?'':'${k}';renderPorocilo()" style="display:flex;justify-content:space-between;align-items:baseline;padding:.45rem .5rem;border-bottom:1px solid var(--border);cursor:pointer;border-radius:6px;margin:0 -.5rem;${isAct?'background:rgba(43,11,57,.07);':''}" >
+      <div>
+        <div style="font-size:.82rem;font-weight:${isAct?600:400};color:var(--ink)">${CH[k]?.icon||''} ${CH[k]?.label||k}</div>
+        <div style="font-size:.65rem;color:var(--muted)">${d.n} transakcij${qHint?' · '+qHint:''}</div>
+      </div>
+      <div style="font-size:.88rem;font-weight:${isAct?600:400};color:var(--ink)">${d.rev.toFixed(2)} €</div>
+    </div>`;
   });
   chRows+=row('Skupaj',totalRev,`${groups.length} transakcij`,true);
 
+  const qTitle='Količine'+(fCh?` — ${CH[fCh]?.icon||''} ${CH[fCh]?.label||fCh}`:'');
   const qRows=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;padding:.3rem 0">
       <div style="background:rgba(139,90,42,.07);border-radius:8px;padding:.6rem .75rem">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem">🥃 Alkohol</div>
-        <div style="font-size:1.5rem;font-weight:900;color:var(--ink);line-height:1">${totalAlcQ}</div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:.3rem">${totalAlcRev.toFixed(2)} €${totalAlcQ>0?` · ø ${(totalAlcRev/totalAlcQ).toFixed(2)} € / kos`:''}</div>
+        <div style="font-size:1.5rem;font-weight:900;color:var(--ink);line-height:1">${qAlcQ}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.3rem">${qAlcRev.toFixed(2)} €${qAlcQ>0?` · ø ${(qAlcRev/qAlcQ).toFixed(2)} € / kos`:''}</div>
       </div>
       <div style="background:rgba(45,106,79,.07);border-radius:8px;padding:.6rem .75rem">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem">🌿 Glicerin</div>
-        <div style="font-size:1.5rem;font-weight:900;color:var(--ink);line-height:1">${totalGlyQ}</div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:.3rem">${totalGlyRev.toFixed(2)} €${totalGlyQ>0?` · ø ${(totalGlyRev/totalGlyQ).toFixed(2)} € / kos`:''}</div>
+        <div style="font-size:1.5rem;font-weight:900;color:var(--ink);line-height:1">${qGlyQ}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.3rem">${qGlyRev.toFixed(2)} €${qGlyQ>0?` · ø ${(qGlyRev/qGlyQ).toFixed(2)} € / kos`:''}</div>
       </div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-top:1px solid var(--border);margin-top:.25rem">
       <div style="font-size:.78rem;color:var(--muted)">Skupaj kosov</div>
-      <div style="font-size:.88rem;font-weight:600;color:var(--ink)">${totalAlcQ+totalGlyQ}${(totalAlcQ+totalGlyQ)>0?` · ø ${((totalAlcRev+totalGlyRev)/(totalAlcQ+totalGlyQ)).toFixed(2)} € / kos`:''}</div>
+      <div style="font-size:.88rem;font-weight:600;color:var(--ink)">${qAlcQ+qGlyQ}${(qAlcQ+qGlyQ)>0?` · ø ${((qAlcRev+qGlyRev)/(qAlcQ+qGlyQ)).toFixed(2)} € / kos`:''}</div>
     </div>`;
 
   let costRows=shippingCost>0
@@ -5034,7 +5050,7 @@ function renderPorocilo(){
 
   document.getElementById('poroBody').innerHTML=
     card('Prihodki',chRows)+
-    card('Količine',qRows)+
+    card(qTitle,qRows)+
     card('Stroški',costRows)+
     card('Rezultat',netoRow);
 }

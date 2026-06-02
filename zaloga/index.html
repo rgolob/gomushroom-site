@@ -394,6 +394,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="htab" onclick="switchTab('stranke',this)">👥 Stranke</button>
     <button class="htab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
     <button class="htab" onclick="switchTab('osnutki',this)">📝 Osnutki</button>
+    <button class="htab" onclick="switchTab('porocilo',this)">📊 Poročilo</button>
   </div>
   <div style="display:flex;gap:.5rem;align-items:center">
     <span id="syncStatus" style="font-size:.6rem;color:rgba(245,240,232,.5);letter-spacing:.04em;display:none"></span>
@@ -411,6 +412,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="dtab" onclick="switchTab('serije',this)">🏷 Serije</button>
   <button class="dtab" onclick="switchTab('dokumenti',this)">🧾 Dokumenti</button>
   <button class="dtab" onclick="switchTab('recenzije',this)">⭐ Recenzije</button>
+  <button class="dtab" onclick="switchTab('porocilo',this)">📊 Poročilo</button>
   
 </nav>
 
@@ -855,6 +857,25 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <button class="bcancel" onclick="closeSheet('customerEditOverlay')">Prekliči</button>
         <button class="bsave blue" onclick="saveCustomerEdit()">Shrani</button>
       </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-porocilo">
+    <div class="view-hdr">
+      <div class="view-title">📊 Poročilo dobička</div>
+    </div>
+    <div style="padding:1rem;max-width:600px;margin:0 auto">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap">
+        <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
+        <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
+          <option value="">Celo leto</option>
+          <option value="01">Januar</option><option value="02">Februar</option><option value="03">Marec</option>
+          <option value="04">April</option><option value="05">Maj</option><option value="06">Junij</option>
+          <option value="07">Julij</option><option value="08">Avgust</option><option value="09">September</option>
+          <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+      <div id="poroBody"></div>
     </div>
   </div>
 
@@ -3008,6 +3029,7 @@ function switchTab(id,el){
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaja'){renderSalesSummary();renderSales();}
   if(id==='dokumenti'){renderInvStats();renderInvoices();renderDobavnice();}
+  if(id==='porocilo'){initPorocilo();renderPorocilo();}
 }
 
 // ── STATS ──
@@ -4173,11 +4195,12 @@ function renderSalesSummary(filteredGroups){
     const bR=ls.reduce((s,l)=>s+(l.gly||0)*(l.glyPrice||0),0);
     const sum=aR+bR;
     if(!type) return g.total||0;
-    if(sum>0) return type==='alc'?aR:bR;
+    const scale=(sum>0&&(g.total||0)>0)?g.total/sum:1;
+    if(sum>0) return type==='alc'?aR*scale:bR*scale;
     if(!(g.total||0)) return 0;
     const aQ=ls.reduce((s,l)=>s+(l.alc||0),0),bQ=ls.reduce((s,l)=>s+(l.gly||0),0),tQ=aQ+bQ;
     if(!tQ) return 0;
-    return type==='alc'?g.total*aQ/tQ:type==='gly'?g.total*bQ/tQ:g.total;
+    return type==='alc'?g.total*aQ/tQ:g.total*bQ/tQ;
   }
   if(fBatch){
     rev=0;alcQ=0;glyQ=0;avgAlcQ=0;avgGlyQ=0;avgRev=0;
@@ -4376,8 +4399,12 @@ function renderSales(){
   el.innerHTML = wpHtml + page.map(g=>{
     const dt=fmtDate(g.date);const ch=CH[g.channel]||CH.malo;const isRevenue=true;
     const isExpanded=expandedSales.has(g.id);
+    const _lineSum=(g.lines||[]).reduce((s,l)=>s+(l.alc||0)*(l.alcPrice||0)+(l.gly||0)*(l.glyPrice||0),0);
+    const _pScale=(_lineSum>0&&(g.total||0)>0)?g.total/_lineSum:1;
     const itemsHtml=(g.lines||[]).map(l=>{
-      const parts=[l.alc>0?`🥃 ${l.alc} × ${l.alcPrice?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${l.glyPrice?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
+      const ap=l.alcPrice?l.alcPrice*_pScale:null;
+      const gp=l.glyPrice?l.glyPrice*_pScale:null;
+      const parts=[l.alc>0?`🥃 ${l.alc} × ${ap?.toFixed(2)||'–'} €`:null,l.gly>0?`🌿 ${l.gly} × ${gp?.toFixed(2)||'–'} €`:null].filter(Boolean).join(' · ');
       const batchHtml=(l.batchBreakdown||[]).filter(bb=>bb.alc||bb.gly).map(bb=>`<span style="font-size:.65rem;color:var(--muted);margin-left:.5rem">🏷 ${bb.batchNum}${bb.alc?` 🥃${bb.alc}`:''}${bb.gly?` 🌿${bb.gly}`:''}</span>`).join('');
       return `<div class="sg-item"><span class="sg-item-label">${l.productName}</span><span class="sg-item-val">${parts}</span></div>${batchHtml?`<div style="padding:.1rem 0 .2rem">${batchHtml}</div>`:''}`;
     }).join('');
@@ -4897,6 +4924,94 @@ function printDobavnica(group){
   const a=document.createElement('a');
   a.href=url;a.target='_blank';a.rel='noopener';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+function initPorocilo(){
+  const sel=document.getElementById('poroLeto');
+  if(sel.options.length>1) return;
+  const curY=new Date().getFullYear();
+  const years=new Set([curY]);
+  saleGroups.forEach(g=>{if(g.date)years.add(parseInt(g.date.substring(0,4)));});
+  invoices.forEach(i=>{if(i.date)years.add(parseInt(i.date.substring(0,4)));});
+  [...years].sort((a,b)=>b-a).forEach(y=>{
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y;
+    if(y===curY)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function renderPorocilo(){
+  const leto=parseInt(document.getElementById('poroLeto').value)||new Date().getFullYear();
+  const mesec=document.getElementById('poroMesec').value;
+  const pfx=String(leto);
+  const pfxM=mesec?pfx+'-'+mesec:'';
+
+  const groups=saleGroups.filter(g=>{
+    if(g.status==='stornirano') return false;
+    if(!g.date) return false;
+    return pfxM?g.date.startsWith(pfxM):g.date.startsWith(pfx);
+  });
+
+  const CH={malo:{label:'Maloprodaja',icon:'🏪'},velo:{label:'Veleprodaja',icon:'🏭'},
+    wp:{label:'Splet (WP + Stripe)',icon:'🌐'},dar:{label:'Darila',icon:'🎁'},
+    int:{label:'Interno',icon:'🔬'},kom:{label:'Komisija',icon:'🤝'}};
+
+  let totalRev=0;
+  const byChannel={};
+  groups.forEach(g=>{
+    const ch=g.channel==='stripe'?'wp':g.channel;
+    if(!byChannel[ch])byChannel[ch]={rev:0,n:0};
+    byChannel[ch].rev+=(g.total||0);
+    byChannel[ch].n++;
+    totalRev+=(g.total||0);
+  });
+
+  const postnina=getZS('postnina')||3.90;
+  const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
+  const freeShipN=groups.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&
+    (g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd)).length;
+  const shippingCost=freeShipN*postnina;
+  const neto=totalRev-shippingCost;
+
+  const row=(label,val,sub,bold)=>`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:.45rem 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:${bold?'.88':'.82'}rem;font-weight:${bold?600:400};color:var(--ink)">${label}</div>
+        ${sub?`<div style="font-size:.65rem;color:var(--muted)">${sub}</div>`:''}
+      </div>
+      <div style="font-size:${bold?'1rem':'.88rem'};font-weight:${bold?700:400};color:${bold?'var(--ink)':'var(--muted)'}${val<0?';color:#c0392b':''}">${val<0?'−'+(Math.abs(val)).toFixed(2):val.toFixed(2)} €</div>
+    </div>`;
+
+  const card=(title,body)=>`
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1rem">
+      <div style="font-size:.65rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">${title}</div>
+      ${body}
+    </div>`;
+
+  let chRows='';
+  ['malo','velo','wp','dar','int','kom'].forEach(k=>{
+    const d=byChannel[k];
+    if(!d)return;
+    chRows+=row(`${CH[k]?.icon||''} ${CH[k]?.label||k}`,d.rev,`${d.n} transakcij`);
+  });
+  chRows+=row('Skupaj',totalRev,`${groups.length} transakcij`,true);
+
+  let costRows=shippingCost>0
+    ?row(`📦 Poštnina`,-shippingCost,`${freeShipN} naročil × ${postnina.toFixed(2)} €`)
+    :'<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni stroškov poštnine v tem obdobju.</div>';
+  if(shippingCost>0) costRows+=row('Skupaj stroški',-shippingCost,'',true);
+
+  const netoRow=`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0">
+      <div style="font-size:1rem;font-weight:700;color:var(--ink)">Neto prihodki</div>
+      <div style="font-size:1.25rem;font-weight:900;color:var(--ink)">${neto.toFixed(2)} €</div>
+    </div>`;
+
+  document.getElementById('poroBody').innerHTML=
+    card('Prihodki',chRows)+
+    card('Stroški',costRows)+
+    card('Rezultat',netoRow);
 }
 
 function printShippingLabel(name, street, post, phone) {

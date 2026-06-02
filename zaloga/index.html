@@ -4245,11 +4245,6 @@ function renderSalesSummary(filteredGroups){
   }
 
   const storno=f.filter(g=>g.status==='stornirano').length;
-  const postnina=getZS('postnina')||3.90;
-  const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
-  const freeShipOrders=active.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&(g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd));
-  const shippingCost=freeShipOrders.length*postnina;
-  const neto=rev-shippingCost;
   const activeCh=document.getElementById('salesFilterCh').value;
   const periodLabel=getSalesDateLabel(salesDatePreset);
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
@@ -4281,7 +4276,7 @@ function renderSalesSummary(filteredGroups){
 
   document.getElementById('salesStatsGrid').innerHTML=`
     <div class="stat-card active" onclick="cycleSalesDatePreset()"><div class="stat-label">Transakcij${periodBadge}</div><div class="stat-value">${active.length}${storno?`<span style="font-size:.65rem;color:#8b3a2a;margin-left:.35rem">+${storno}⊘</span>`:''}</div></div>
-    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${shippingCost>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.1rem;letter-spacing:.02em">📦 −${shippingCost.toFixed(2)} € → <strong style="color:var(--ink)">${neto.toFixed(2)} €</strong> neto</div>`:''} ${(avgAlcQ+avgGlyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.1rem;letter-spacing:.02em">ø ${(avgRev/(avgAlcQ+avgGlyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
+    <div class="stat-card" onclick="cycleSalesDatePreset()"><div class="stat-label">Prihodki${periodBadge}</div><div class="stat-value ok">${rev.toFixed(2)} €</div>${(avgAlcQ+avgGlyQ)>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(avgRev/(avgAlcQ+avgGlyQ)).toFixed(2)} € / tinktura</div>`:''}</div>
     <div class="stat-card${typeF==='alc'?' active':''}" onclick="setSalesTypeFilter('alc')"><div class="stat-label">🥃 Alkohol</div><div class="stat-value">${alcQ}</div>${typeF==='alc'&&avgAlcQ>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(avgRev/avgAlcQ).toFixed(2)} € / kom</div>`:''}</div>
     <div class="stat-card${typeF==='gly'?' active':''}" onclick="setSalesTypeFilter('gly')"><div class="stat-label">🌿 Glicerin</div><div class="stat-value">${glyQ}</div>${typeF==='gly'&&avgGlyQ>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${(avgRev/avgGlyQ).toFixed(2)} € / kom</div>`:''}</div>
     <div class="stat-card" style="grid-column:span 1">${g1}</div>

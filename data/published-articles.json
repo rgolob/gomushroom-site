@@ -1,0 +1,172 @@
+[
+  {
+    "id": "beta-glukani-medicinske-gobe",
+    "sl": {
+      "url": "/znanje/beta-glukani-medicinske-gobe/",
+      "title": "Beta-glukani medicinskih gob",
+      "phrases": ["beta-glukani", "Beta-glukani"],
+      "publishedAt": "2026-04-09"
+    },
+    "en": null
+  },
+  {
+    "id": "kaj-je-ekstrakcija",
+    "sl": {
+      "url": "/znanje/kaj-je-ekstrakcija/",
+      "title": "Kaj je ekstrakcija?",
+      "phrases": ["Kaj je ekstrakcija?"],
+      "publishedAt": "2026-05-12"
+    },
+    "en": {
+      "url": "/en/learn/what-is-extraction/",
+      "title": "What Is Extraction?",
+      "phrases": ["What Is Extraction?"],
+      "publishedAt": "2026-05-12"
+    }
+  },
+  {
+    "id": "ekstrakt-smrekovih-vrsickov",
+    "sl": {
+      "url": "/znanje/ekstrakt-smrekovih-vrsickov/",
+      "title": "Ekstrakt smrekovih vrščkov",
+      "phrases": [],
+      "publishedAt": "2026-05-25"
+    },
+    "en": {
+      "url": "/en/learn/spruce-bud-extract/",
+      "title": "Spruce Bud Extract",
+      "phrases": [],
+      "publishedAt": "2026-05-25"
+    }
+  },
+  {
+    "id": "trojna-ekstrakcija",
+    "sl": {
+      "url": "/znanje/trojna-ekstrakcija/",
+      "title": "Trojna ekstrakcija medicinskih gob",
+      "phrases": ["trojno ekstrakcijo", "trojna ekstrakcija", "Trojna ekstrakcija"],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/triple-extraction/",
+      "title": "Triple Extraction of Medicinal Mushrooms",
+      "phrases": ["triple extraction", "Triple Extraction"],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "ultrazvocna-ekstrakcija",
+    "sl": {
+      "url": "/znanje/ultrazvocna-ekstrakcija/",
+      "title": "Ultrazvočna ekstrakcija",
+      "phrases": ["ultrazvočno podprta ekstrakcija", "ultrazvočno podprto ekstrakcijo"],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/ultrasonic-extraction/",
+      "title": "Ultrasonic Extraction",
+      "phrases": ["ultrasound-assisted extraction"],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "vakuumsko-koncentriranje",
+    "sl": {
+      "url": "/znanje/vakuumsko-koncentriranje/",
+      "title": "Vakuumsko koncentriranje",
+      "phrases": ["Vakuumsko koncentriranje", "vakuumsko koncentriranje"],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/vacuum-concentration/",
+      "title": "Vacuum Concentration",
+      "phrases": ["Vacuum Concentration", "vacuum concentration"],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "beta-glukani",
+    "sl": {
+      "url": "/znanje/beta-glukani/",
+      "title": "Beta-glukani",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/beta-glucans/",
+      "title": "Beta-Glucans",
+      "phrases": ["beta-glucans", "Beta-glucans"],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "chaga-raziskave",
+    "sl": {
+      "url": "/znanje/chaga-raziskave/",
+      "title": "Chaga: pregled raziskav",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/chaga-research/",
+      "title": "Chaga Research",
+      "phrases": [],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "reishi-raziskave",
+    "sl": {
+      "url": "/znanje/reishi-raziskave/",
+      "title": "Reishi: pregled raziskav",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/reishi-research/",
+      "title": "Reishi Research",
+      "phrases": [],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "bradovec-raziskave",
+    "sl": {
+      "url": "/znanje/resasti-bradovec-raziskave/",
+      "title": "Resasti bradovec: pregled raziskav",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/lions-mane-research/",
+      "title": "Lion's Mane Research",
+      "phrases": [],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "smrekovi-vrsicki-raziskave",
+    "sl": {
+      "url": "/znanje/smrekovi-vrsicki-raziskave/",
+      "title": "Smrekovi vrščki: pregled raziskav",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": {
+      "url": "/en/learn/spruce-bud-research/",
+      "title": "Spruce Bud Research",
+      "phrases": [],
+      "publishedAt": null
+    }
+  },
+  {
+    "id": "kaj-je-ekstrakt",
+    "sl": {
+      "url": "/znanje/kaj-je-ekstrakt/",
+      "title": "Kaj je ekstrakt?",
+      "phrases": [],
+      "publishedAt": null
+    },
+    "en": null
+  }
+]

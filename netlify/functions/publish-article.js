@@ -46,6 +46,12 @@ function getArticleUrl(filePath) {
   return null;
 }
 
+function getLang(filePath) {
+  if (filePath.startsWith('znanje/')) return 'sl';
+  if (filePath.startsWith('en/learn/')) return 'en';
+  return null;
+}
+
 function getRelatedArticlesPath(filePath) {
   if (filePath.startsWith('znanje/')) return 'js/related-articles.js';
   if (filePath.startsWith('en/learn/')) return 'js/related-articles-en.js';
@@ -74,6 +80,33 @@ async function addToRelatedArticles(token, rePath, url, title, desc) {
   return { status: res.ok ? 'added' : 'error', code: res.status };
 }
 
+async function updatePublishedJson(token, publishedUrls, today) {
+  const jsonPath = 'data/published-articles.json';
+  let jsonFile;
+  try {
+    jsonFile = await ghGet(token, jsonPath);
+  } catch { return { status: 'json_not_found' }; }
+
+  const articles = JSON.parse(Buffer.from(jsonFile.content, 'base64').toString('utf-8'));
+  let changed = false;
+
+  for (const { url, lang } of publishedUrls) {
+    for (const art of articles) {
+      const v = art[lang];
+      if (v && v.url === url && !v.publishedAt) {
+        v.publishedAt = today;
+        changed = true;
+      }
+    }
+  }
+
+  if (!changed) return { status: 'no_change' };
+
+  const updated = JSON.stringify(articles, null, 2) + '\n';
+  const res = await ghPut(token, jsonPath, updated, jsonFile.sha, `Nastavi publishedAt za ${publishedUrls.map(x => x.url).join(', ')}`);
+  return { status: res.ok ? 'updated' : 'error', code: res.status };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: HEADERS, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: HEADERS, body: 'Method Not Allowed' };
@@ -87,6 +120,9 @@ exports.handler = async (event) => {
 
     const results = [];
     const publishedFiles = [];
+    const publishedUrls = [];
+
+    const today = new Date().toISOString().split('T')[0];
 
     for (const filePath of paths) {
       const file = await ghGet(token, filePath);
@@ -97,7 +133,6 @@ exports.handler = async (event) => {
         continue;
       }
 
-      const today = new Date().toISOString().split('T')[0];
       const updated = original
         .replace(/noindex,nofollow/g, 'index,follow')
         .replace(/"dateModified": "[^"]*"/g, `"dateModified": "${today}"`)
@@ -107,12 +142,15 @@ exports.handler = async (event) => {
       if (res.ok) {
         results.push({ path: filePath, status: 'published' });
         publishedFiles.push({ path: filePath, html: original });
+        const url = getArticleUrl(filePath);
+        const lang = getLang(filePath);
+        if (url && lang) publishedUrls.push({ url, lang });
       } else {
         results.push({ path: filePath, status: 'error', code: res.status });
       }
     }
 
-    // Update related-articles.js / related-articles-en.js for each published file
+    // Update related-articles.js / related-articles-en.js
     const relatedResults = [];
     for (const { path: filePath, html } of publishedFiles) {
       const url = getArticleUrl(filePath);
@@ -126,7 +164,13 @@ exports.handler = async (event) => {
       relatedResults.push({ path: rePath, url, ...rRes });
     }
 
-    return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, results, relatedResults }) };
+    // Update published-articles.json
+    let jsonResult = { status: 'skipped' };
+    if (publishedUrls.length) {
+      jsonResult = await updatePublishedJson(token, publishedUrls, today);
+    }
+
+    return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, results, relatedResults, jsonResult }) };
   } catch (err) {
     return { statusCode: 500, headers: HEADERS, body: JSON.stringify({ error: err.message }) };
   }

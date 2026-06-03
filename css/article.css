@@ -383,3 +383,58 @@
   color: #9a96a0;
 }
 
+/* ===== Article tables ===== */
+.article-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 20px 0 8px;
+  font-size: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.article-table th,
+.article-table td{
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.article-table thead th{
+  font-weight: 700;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  background: linear-gradient(90deg, rgba(43,10,57,.07), rgba(177,133,86,.07));
+}
+
+.article-table tr:last-child td{ border-bottom: none; }
+
+/* Phase color stripes – left border on first cell */
+.article-table tr.phase-etanol td:first-child{ border-left: 3px solid #b18556; }
+.article-table tr.phase-voda   td:first-child{ border-left: 3px solid #3a7f6c; }
+.article-table tr.phase-tlak   td:first-child{ border-left: 3px solid #2b0a39; }
+
+/* Yes / No indicators */
+.article-table .td-yes{ color: #2d7a4f; font-weight: 650; }
+.article-table .td-no { color: var(--muted); }
+
+/* Comparison table – GoMushroom last column highlight */
+.article-table--compare thead th:last-child{
+  background: linear-gradient(90deg, rgba(43,10,57,.09), rgba(43,10,57,.15));
+}
+.article-table--compare tbody td:last-child{
+  background: rgba(43,10,57,.03);
+}
+
+@media (max-width: 600px){
+  .article-table{ font-size: 12.5px; }
+  .article-table th,
+  .article-table td{ padding: 9px 10px; }
+}
+

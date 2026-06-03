@@ -688,7 +688,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">📝 Osnutki člankov</div>
     </div>
     <div style="max-width:600px;margin:0 auto">
-    <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Neobjavljeni članki (noindex,nofollow). Za vsak članek so na voljo SL in EN povezave.</p>
+
+    <div style="margin-bottom:1.4rem">
+      <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">✅ Objavljeni članki</div>
+      <div id="published-articles-list" style="display:flex;flex-direction:column;gap:.45rem">
+        <div style="font-size:.78rem;color:var(--muted)">Nalagam…</div>
+      </div>
+    </div>
+
+    <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">📝 Osnutki</div>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:.85rem">Neobjavljeni članki (noindex,nofollow). Za vsak članek so na voljo SL in EN povezave.</p>
 
     <div style="display:flex;flex-direction:column;gap:.6rem">
 
@@ -3016,6 +3025,7 @@ function switchTab(id,el){
   document.getElementById('fab').style.display='none'; // FAB replaced by button in Serije header
   if(id==='prodaja'){renderOrderRows();if(!_narocila)naloziNarocila();}
   if(id==='recenzije'){naloziRecenzije();}
+  if(id==='osnutki'){loadPublishedArticles();}
   if(id==='stranke'){
     if(!_customers){
       loadCustomers().then(()=>{renderCustomerStats();renderCustomers();});
@@ -9101,6 +9111,39 @@ async function sendDobavnicaManual(groupId){
   await sendDobavnicaByEmail(g);
 }
 
+let _publishedArticlesLoaded = false;
+async function loadPublishedArticles() {
+  if (_publishedArticlesLoaded) return;
+  const el = document.getElementById('published-articles-list');
+  if (!el) return;
+  try {
+    const r = await fetch('/data/published-articles.json');
+    if (!r.ok) { el.innerHTML = '<div style="font-size:.78rem;color:var(--muted)">Napaka pri nalaganju.</div>'; return; }
+    const articles = await r.json();
+    const published = articles.filter(a => (a.sl && a.sl.publishedAt) || (a.en && a.en.publishedAt));
+    if (!published.length) { el.innerHTML = '<div style="font-size:.78rem;color:var(--muted)">Ni objavljenih člankov.</div>'; return; }
+    published.sort((a, b) => {
+      const da = a.sl?.publishedAt || a.en?.publishedAt || '';
+      const db = b.sl?.publishedAt || b.en?.publishedAt || '';
+      return db.localeCompare(da);
+    });
+    el.innerHTML = published.map(a => {
+      const date = a.sl?.publishedAt || a.en?.publishedAt;
+      const title = a.sl?.title || a.en?.title || a.id;
+      const slLink = a.sl?.url ? `<a href="${a.sl.url}" target="_blank" style="flex:1;padding:.4rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none;border-right:1px solid var(--border)">🇸🇮 SL →</a>` : '';
+      const enLink = a.en?.url ? `<a href="${a.en.url}" target="_blank" style="flex:1;padding:.4rem .75rem;font-size:.75rem;font-weight:500;color:var(--accent-dark);text-decoration:none${a.sl?.url ? '' : ''}">🇬🇧 EN →</a>` : '';
+      return `<div style="background:white;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+        <div style="padding:.6rem 1rem .45rem">
+          <div style="font-size:.85rem;font-weight:500;margin-bottom:.1rem">${title}</div>
+          <div style="font-size:.7rem;color:#2d7a4f">✅ Objavljeno: ${date}</div>
+        </div>
+        <div style="display:flex;border-top:1px solid var(--border)">${slLink}${enLink}</div>
+      </div>`;
+    }).join('');
+    _publishedArticlesLoaded = true;
+  } catch { el.innerHTML = '<div style="font-size:.78rem;color:var(--muted)">Napaka pri nalaganju.</div>'; }
+}
+
 async function publishArticle(id, paths) {
   if (!confirm(`Objavi članek?\n\n${paths.join('\n')}\n\nnoindex → index,follow`)) return;
   const btn = document.querySelector(`#article-${id} button`);
@@ -9116,6 +9159,7 @@ async function publishArticle(id, paths) {
     const allOk = data.results.every(x => x.status === 'published' || x.status === 'already_published');
     if (allOk) {
       const added = (data.relatedResults||[]).filter(x => x.status === 'added').map(x => x.url);
+      _publishedArticlesLoaded = false;
       const statusEl = document.getElementById(`article-${id}-status`);
       const raNote = added.length ? ` + sorodni članki posodobljeni` : '';
       if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = `✅ Objavljeno${raNote} — deploy v teku (~1 min)`; }

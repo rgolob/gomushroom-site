@@ -84,6 +84,22 @@
   </url>
 
 
+  <!-- Article: Trojna ekstrakcija / Triple extraction -->
+  <url>
+    <loc>https://gomushroom.si/znanje/trojna-ekstrakcija/</loc>
+    <lastmod>2026-06-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/trojna-ekstrakcija/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/triple-extraction/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/trojna-ekstrakcija/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/triple-extraction/</loc>
+    <lastmod>2026-06-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/trojna-ekstrakcija/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/triple-extraction/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/trojna-ekstrakcija/"/>
+  </url>
+
   <!-- Article: Ekstrakt smrekovih vršičkov / Spruce bud extract -->
   <url>
     <loc>https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/</loc>

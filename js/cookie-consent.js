@@ -49,6 +49,23 @@ function gmHideBanner() {
 function gmShowBanner() {
   if (document.getElementById('gm-cookie-banner')) return;
 
+  const isEn = window.location.pathname.startsWith('/en/');
+  const t = isEn ? {
+    title: '🍪 Cookies',
+    text: '— We use analytics cookies (Google Analytics) to understand site traffic.',
+    moreInfo: 'More info',
+    moreInfoUrl: '/en/legal/cookie-policy/',
+    necessary: 'Essential only',
+    acceptAll: 'Accept all',
+  } : {
+    title: '🍪 Piškotki',
+    text: '— Uporabljamo analitične piškotke (Google Analytics) za razumevanje obiskanosti strani.',
+    moreInfo: 'Več info',
+    moreInfoUrl: '/pravno/politika-piskotkov/',
+    necessary: 'Samo nujne',
+    acceptAll: 'Sprejmi vse',
+  };
+
   const banner = document.createElement('div');
   banner.id = 'gm-cookie-banner';
   banner.style.cssText = `
@@ -69,9 +86,9 @@ function gmShowBanner() {
   banner.innerHTML = `
     <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
       <div style="flex:1;min-width:200px">
-        <span style="font-weight:600;color:#af8455">🍪 Piškotki</span>
-        — Uporabljamo analitične piškotke (Google Analytics) za razumevanje obiskanosti strani.
-        <a href="/pravno/politika-piskotkov/" style="color:#af8455;text-decoration:underline;white-space:nowrap">Več info</a>
+        <span style="font-weight:600;color:#af8455">${t.title}</span>
+        ${t.text}
+        <a href="${t.moreInfoUrl}" style="color:#af8455;text-decoration:underline;white-space:nowrap">${t.moreInfo}</a>
       </div>
       <div style="display:flex;gap:.5rem;flex-shrink:0">
         <button onclick="gmAcceptNecessary()" style="
@@ -84,7 +101,7 @@ function gmShowBanner() {
           font-size:.78rem;
           cursor:pointer;
           white-space:nowrap;
-        ">Samo nujne</button>
+        ">${t.necessary}</button>
         <button onclick="gmAcceptAll()" style="
           padding:.45rem .9rem;
           border:none;
@@ -96,7 +113,7 @@ function gmShowBanner() {
           font-weight:600;
           cursor:pointer;
           white-space:nowrap;
-        ">Sprejmi vse</button>
+        ">${t.acceptAll}</button>
       </div>
     </div>
   `;

@@ -872,6 +872,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="view" id="view-porocilo">
     <div class="view-hdr">
       <div class="view-title">📊 Poročilo dobička</div>
+      <button onclick="openExpenseSheet()" style="background:var(--brand);color:#fff;border:none;border-radius:8px;padding:.4rem .85rem;font-family:'Jost',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer">➕ Strošek</button>
     </div>
     <div style="padding:1rem;max-width:600px;margin:0 auto">
       <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap">
@@ -896,6 +897,35 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem"        id="nav-stranke"   onclick="switchTab('stranke',this)"><span class="nicon">👥</span>Stranke</button>
 </nav>
 <button class="fab" id="fab" style="display:none" onclick="openBatchSheet()">＋</button>
+
+<!-- SHEET: EXPENSE -->
+<div class="overlay" id="expenseOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr"><span class="shtitle">Nov strošek</span><button class="shclose" onclick="closeSheet('expenseOverlay')">✕</button></div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="expDate" type="date"></div>
+        <div class="field"><label>Znesek (€)</label><input type="number" id="expAmount" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Kategorija</label>
+        <select id="expCategory">
+          <option value="akontacija">Akontacija dohodnine</option>
+          <option value="prispevki_zpiz">Prispevki ZPIZ</option>
+          <option value="prispevki_zzzs">Prispevki ZZZS</option>
+          <option value="racunovodstvo">Računovodstvo</option>
+          <option value="nabava">Nabava</option>
+          <option value="drugo">Drugo</option>
+        </select>
+      </div>
+      <div class="field"><label>Opis</label><input id="expDesc" placeholder="npr. akontacija Q1 2026…"></div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
+        <button onclick="closeSheet('expenseOverlay')" style="flex:1;padding:.7rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:'Jost',sans-serif;font-size:.88rem;cursor:pointer;color:var(--muted)">Prekliči</button>
+        <button class="btn-exp-save" onclick="submitExpense()" style="flex:2;padding:.7rem;border:none;border-radius:8px;background:var(--brand);color:#fff;font-family:'Jost',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">Shrani</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- SHEET: BATCH -->
 <div class="overlay" id="batchOverlay">
@@ -2114,6 +2144,71 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
+// ── EXPENSES SUPABASE ──
+let _expenses=[];
+const EXPENSE_CATS={
+  akontacija:'Akontacija dohodnine',
+  prispevki_zpiz:'Prispevki ZPIZ',
+  prispevki_zzzs:'Prispevki ZZZS',
+  racunovodstvo:'Računovodstvo',
+  nabava:'Nabava',
+  drugo:'Drugo'
+};
+
+async function loadExpenses(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_expenses?select=*&order=date.desc`,{headers:SB_HEADERS});
+    if(!r.ok)return;
+    _expenses=await r.json();
+    renderPorocilo();
+  }catch(e){console.error('loadExpenses',e);}
+}
+
+async function saveExpense(data){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_expenses`,{
+      method:'POST',
+      headers:{...SB_HEADERS,'Prefer':'return=representation'},
+      body:JSON.stringify(data)
+    });
+    if(!r.ok)throw new Error(await r.text());
+    const rows=await r.json();
+    if(rows&&rows[0])_expenses.unshift(rows[0]);
+    renderPorocilo();
+    return true;
+  }catch(e){console.error('saveExpense',e);return false;}
+}
+
+async function deleteExpense(id){
+  if(!confirm('Izbriši ta strošek?'))return;
+  try{
+    await fetch(`${SB_URL}/rest/v1/gm_expenses?id=eq.${id}`,{method:'DELETE',headers:SB_HEADERS});
+    _expenses=_expenses.filter(e=>e.id!==id);
+    renderPorocilo();
+  }catch(e){console.error('deleteExpense',e);}
+}
+
+function openExpenseSheet(){
+  document.getElementById('expDate').value=todayISO();
+  document.getElementById('expAmount').value='';
+  document.getElementById('expCategory').value='akontacija';
+  document.getElementById('expDesc').value='';
+  document.getElementById('expenseOverlay').classList.add('open');
+}
+
+async function submitExpense(){
+  const date=document.getElementById('expDate').value;
+  const amount=parseFloat(document.getElementById('expAmount').value);
+  const category=document.getElementById('expCategory').value;
+  const description=document.getElementById('expDesc').value.trim();
+  if(!date||!amount||amount<=0){alert('Vnesi datum in znesek.');return;}
+  const btn=document.querySelector('#expenseOverlay .btn-exp-save');
+  btn.textContent='Shranjujem…';btn.disabled=true;
+  const ok=await saveExpense({date,category,amount,description,source:'manual'});
+  btn.textContent='Shrani';btn.disabled=false;
+  if(ok)closeSheet('expenseOverlay');
+}
+
 // ── CUSTOMERS SUPABASE ──
 let _customers=null; // in-memory cache
 
@@ -3039,7 +3134,7 @@ function switchTab(id,el){
   if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
   if(id==='prodaja'){renderSalesSummary();renderSales();}
   if(id==='dokumenti'){renderInvStats();renderInvoices();renderDobavnice();}
-  if(id==='porocilo'){initPorocilo();renderPorocilo();}
+  if(id==='porocilo'){initPorocilo();loadExpenses();}
 }
 
 // ── STATS ──
@@ -5047,22 +5142,73 @@ function renderPorocilo(){
       <div style="font-size:.88rem;font-weight:600;color:var(--ink)">${qAlcQ+qGlyQ}${(qAlcQ+qGlyQ)>0?` · ø ${((qAlcRev+qGlyRev)/(qAlcQ+qGlyQ)).toFixed(2)} € / kos`:''}</div>
     </div>`;
 
-  let costRows=shippingCost>0
-    ?row(`📦 Poštnina`,-shippingCost,`${freeShipN} naročil × ${postnina.toFixed(2)} €`)
-    :'<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni stroškov poštnine v tem obdobju.</div>';
-  if(shippingCost>0) costRows+=row('Skupaj stroški',-shippingCost,'',true);
+  // Expenses for selected period
+  const expFiltered=_expenses.filter(e=>{
+    if(!e.date)return false;
+    return pfxM?e.date.startsWith(pfxM):e.date.startsWith(pfx);
+  });
+  const expByCategory={};
+  let totalExp=0;
+  expFiltered.forEach(e=>{
+    const amt=parseFloat(e.amount)||0;
+    if(!expByCategory[e.category])expByCategory[e.category]=0;
+    expByCategory[e.category]+=amt;
+    totalExp+=amt;
+  });
+  const totalCosts=shippingCost+totalExp;
 
-  const netoRow=`
+  let costRows='';
+  if(shippingCost>0) costRows+=row(`📦 Poštnina`,-shippingCost,`${freeShipN} naročil × ${postnina.toFixed(2)} €`);
+  Object.entries(expByCategory).forEach(([cat,amt])=>{
+    costRows+=row(`${EXPENSE_CATS[cat]||cat}`,-amt,'');
+  });
+  if(!costRows) costRows='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">Ni zabeleženih stroškov.</div>';
+  else costRows+=row('Skupaj stroški',-totalCosts,'',true);
+
+  // Expense list for current period (deletable)
+  let expListRows='';
+  if(expFiltered.length){
+    expListRows=expFiltered.map(e=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border);gap:.5rem">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.78rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${EXPENSE_CATS[e.category]||e.category}${e.description?` · <span style="color:var(--muted)">${e.description}</span>`:''}</div>
+          <div style="font-size:.65rem;color:var(--muted)">${e.date}</div>
+        </div>
+        <div style="font-size:.85rem;font-weight:600;color:var(--ink);white-space:nowrap">${parseFloat(e.amount).toFixed(2)} €</div>
+        <button onclick="deleteExpense('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--muted);padding:.1rem .25rem;line-height:1">🗑</button>
+      </div>`).join('');
+  }
+
+  // Dobiček
+  const dobiček=totalRev-totalCosts;
+  const dobičekColor=dobiček>=0?'var(--ink)':'#c0392b';
+  const dobičekRow=`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0">
-      <div style="font-size:1rem;font-weight:700;color:var(--ink)">Neto prihodki</div>
-      <div style="font-size:1.25rem;font-weight:900;color:var(--ink)">${neto.toFixed(2)} €</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--ink)">Dobiček</div>
+      <div style="font-size:1.25rem;font-weight:900;color:${dobičekColor}">${dobiček<0?'−':'+'}${Math.abs(dobiček).toFixed(2)} €</div>
+    </div>`;
+
+  // Premoženje — zaloga vseh izdelkov × 15 €
+  let totalStockPcs=0;
+  products.forEach(p=>{const st=productStock(p.id);totalStockPcs+=(st.alc||0)+(st.gly||0);});
+  const stockValue=totalStockPcs*15;
+  const naRacunu=totalRev-totalCosts;
+  const premozenjeRows=`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:.4rem 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:.82rem;color:var(--ink)">📦 Zaloga izdelkov</div>
+      <div style="font-size:.88rem;color:var(--muted)">${totalStockPcs} kos × 15 € = <span style="font-weight:600;color:var(--ink)">${stockValue.toFixed(2)} €</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:.4rem 0">
+      <div style="font-size:.82rem;color:var(--muted)">💳 Na računu (obdobje)</div>
+      <div style="font-size:.88rem;font-weight:600;color:var(--ink)">${naRacunu.toFixed(2)} €</div>
     </div>`;
 
   document.getElementById('poroBody').innerHTML=
     card('Prihodki',chRows)+
     card(qTitle,qRows)+
-    card('Stroški',costRows)+
-    card('Rezultat',netoRow);
+    card('Stroški',costRows+(expListRows?`<div style="margin-top:.5rem">${expListRows}</div>`:''))+
+    card('Dobiček',dobičekRow)+
+    card('Premoženje',premozenjeRows);
 }
 
 function printShippingLabel(name, street, post, phone) {

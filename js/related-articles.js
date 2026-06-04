@@ -17,6 +17,11 @@
       title: 'Ekstrakt smrekovih vršičkov: zakaj pri GoMushroom ne gre za klasično tinkturo',
       desc: 'Smrekovi vršički so več kot sirup. Zakaj je nadzorovan hidroetanolni ekstrakcijski proces bistveno drugačen od tradicionalnih pripravkov.',
     },
+    {
+      url: '/znanje/trojna-ekstrakcija/',
+      title: 'Trojna ekstrakcija medicinskih gob: alkohol, voda in tlak v enem postopku',
+      desc: 'Trojna ekstrakcija medicinskih gob združuje alkoholno, vročevodno in tlačno vodno ekstrakcijo. Spoznajte, zakaj en sam postopek pogosto ni dovolj.',
+    },
   ];
 
   function render(){

@@ -19,6 +19,12 @@ document.addEventListener("DOMContentLoaded", () => {
     "/en/learn/beta-glucans/": "/znanje/beta-glukani/",
 
     "/znanje/beta-glukani-medicinske-gobe/": "/en/learn/beta-glucans/",
+
+    "/znanje/ekstrakt-smrekovih-vrsickov/": "/en/learn/spruce-bud-extract/",
+    "/en/learn/spruce-bud-extract/": "/znanje/ekstrakt-smrekovih-vrsickov/",
+
+    "/znanje/smrekovi-vrsicki-raziskave/": "/en/learn/spruce-bud-research/",
+    "/en/learn/spruce-bud-research/": "/znanje/smrekovi-vrsicki-raziskave/",
   };
 
   const path = window.location.pathname;

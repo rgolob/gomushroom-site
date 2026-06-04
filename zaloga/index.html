@@ -906,7 +906,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shbody">
       <div class="frow">
         <div class="field"><label>Datum</label><input id="expDate" type="date"></div>
-        <div class="field"><label>Znesek (€)</label><input type="text" id="expAmount" placeholder="0,00" inputmode="decimal"></div>
+        <div class="field">
+          <label>Znesek (€)</label>
+          <input type="text" id="expAmount" placeholder="0,00" inputmode="decimal">
+          <div id="expAmountHint" style="font-size:.68rem;color:var(--muted);margin-top:.2rem;min-height:.9rem"></div>
+        </div>
       </div>
       <div class="field"><label>Kategorija</label>
         <select id="expCategory" onchange="onExpCategoryChange()">
@@ -2187,18 +2191,31 @@ async function deleteExpense(id){
   }catch(e){console.error('deleteExpense',e);}
 }
 
+function expPrefillAmount(category){
+  if(!category||category==='drugo')return;
+  const last=_expenses.find(e=>e.category===category);
+  const hint=document.getElementById('expAmountHint');
+  if(last){
+    document.getElementById('expAmount').value=parseFloat(last.amount).toFixed(2).replace('.',',');
+    if(hint)hint.textContent=`Zadnji vnos: ${parseFloat(last.amount).toFixed(2)} € (${last.date})`;
+  } else {
+    if(hint)hint.textContent='';
+  }
+}
+
 function onExpCategoryChange(){
   const v=document.getElementById('expCategory').value;
   document.getElementById('expCustomRow').style.display=v==='drugo'?'':'none';
+  expPrefillAmount(v);
 }
 
 function openExpenseSheet(){
   document.getElementById('expDate').value=todayISO();
-  document.getElementById('expAmount').value='';
   document.getElementById('expCategory').value='akontacija';
   document.getElementById('expCustomRow').style.display='none';
   document.getElementById('expCustomCat').value='';
   document.getElementById('expDesc').value='';
+  expPrefillAmount('akontacija');
   document.getElementById('expenseOverlay').classList.add('open');
 }
 

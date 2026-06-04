@@ -870,23 +870,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <div class="view" id="view-porocilo">
-    <div class="view-hdr">
+    <div class="view-header">
       <div class="view-title">📊 Poročilo dobička</div>
       <button onclick="openExpenseSheet()" style="background:var(--brand);color:#fff;border:none;border-radius:8px;padding:.4rem .85rem;font-family:'Jost',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer">➕ Strošek</button>
     </div>
-    <div style="padding:1rem;max-width:600px;margin:0 auto">
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap">
-        <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
-        <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
-          <option value="">Celo leto</option>
-          <option value="01">Januar</option><option value="02">Februar</option><option value="03">Marec</option>
-          <option value="04">April</option><option value="05">Maj</option><option value="06">Junij</option>
-          <option value="07">Julij</option><option value="08">Avgust</option><option value="09">September</option>
-          <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
-        </select>
-      </div>
-      <div id="poroBody"></div>
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+      <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
+      <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
+        <option value="">Celo leto</option>
+        <option value="01">Januar</option><option value="02">Februar</option><option value="03">Marec</option>
+        <option value="04">April</option><option value="05">Maj</option><option value="06">Junij</option>
+        <option value="07">Julij</option><option value="08">Avgust</option><option value="09">September</option>
+        <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+      </select>
     </div>
+    <div id="poroBody"></div>
   </div>
 
 <nav class="bottom-nav">
@@ -5139,12 +5137,15 @@ function renderPorocilo(){
       <div style="font-size:${bold?'1rem':'.88rem'};font-weight:${bold?700:400};color:${bold?'var(--ink)':'var(--muted)'}${val<0?';color:#c0392b':''}">${val<0?'−'+(Math.abs(val)).toFixed(2):val.toFixed(2)} €</div>
     </div>`;
 
-  const card=(title,body,id)=>{
+  const card=(title,body,id,summary)=>{
     const col=id&&_poroCollapsed[id];
-    return `<div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1rem">
+    return `<div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:.6rem">
       <div onclick="${id?`togglePoroCard('${id}')`:''}" style="display:flex;justify-content:space-between;align-items:center;${id?'cursor:pointer;user-select:none;':''}${col?'':'margin-bottom:.5rem'}">
         <div style="font-size:.65rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">${title}</div>
-        ${id?`<span style="font-size:.7rem;color:var(--muted)">${col?'▼':'▲'}</span>`:''}
+        <div style="display:flex;align-items:center;gap:.5rem">
+          ${col&&summary?`<span style="font-size:.88rem;font-weight:700;color:var(--ink)">${summary}</span>`:''}
+          ${id?`<span style="font-size:.7rem;color:var(--muted)">${col?'▼':'▲'}</span>`:''}
+        </div>
       </div>
       ${col?'':body}
     </div>`;
@@ -5257,12 +5258,13 @@ function renderPorocilo(){
       <div style="font-size:.88rem;font-weight:600;color:var(--ink)">${naRacunu.toFixed(2)} €</div>
     </div>`;
 
+  const dobičekSign=dobiček>=0?'+':'−';
   document.getElementById('poroBody').innerHTML=
-    card('Prihodki',chRows,'prihodki')+
-    card(qTitle,qRows,'kolicine')+
-    card('Stroški',costRows,'stroski')+
-    card('Dobiček',dobičekRow,'dobicek')+
-    card('Premoženje',premozenjeRows,'premozenje');
+    card('Prihodki',chRows,'prihodki',`${totalRev.toFixed(2)} €`)+
+    card(qTitle,qRows,'kolicine',`${qAlcQ+qGlyQ} kosov`)+
+    card('Stroški',costRows,'stroski',`−${totalCosts.toFixed(2)} €`)+
+    card('Dobiček',dobičekRow,'dobicek',`${dobičekSign}${Math.abs(dobiček).toFixed(2)} €`)+
+    card('Premoženje',premozenjeRows,'premozenje',`${stockValue.toFixed(2)} €`);
 }
 
 function printShippingLabel(name, street, post, phone) {

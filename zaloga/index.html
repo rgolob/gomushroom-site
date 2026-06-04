@@ -2150,7 +2150,6 @@ const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorizati
 // ── EXPENSES SUPABASE ──
 let _expenses=[];
 let _expExpandedCat=null;
-let _poroCollapsed={};
 const EXPENSE_CATS={
   akontacija:'Akontacija dohodnine',
   prispevki_sp:'Prispevki SP',
@@ -2183,8 +2182,6 @@ async function saveExpense(data){
     return true;
   }catch(e){console.error('saveExpense',e);return false;}
 }
-
-function togglePoroCard(id){_poroCollapsed[id]=!_poroCollapsed[id];renderPorocilo();}
 
 function toggleExpCat(cat){
   _expExpandedCat=_expExpandedCat===cat?null:cat;
@@ -5139,16 +5136,11 @@ function renderPorocilo(){
       <div style="font-size:${bold?'1rem':'.88rem'};font-weight:${bold?700:400};color:${bold?'var(--ink)':'var(--muted)'}${val<0?';color:#c0392b':''}">${val<0?'−'+(Math.abs(val)).toFixed(2):val.toFixed(2)} €</div>
     </div>`;
 
-  const card=(title,body,id)=>{
-    const col=id&&_poroCollapsed[id];
-    return `<div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1rem">
-      <div onclick="${id?`togglePoroCard('${id}')`:''}" style="display:flex;justify-content:space-between;align-items:center;${id?'cursor:pointer;user-select:none;':''}${col?'':'margin-bottom:.5rem'}">
-        <div style="font-size:.65rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">${title}</div>
-        ${id?`<span style="font-size:.7rem;color:var(--muted)">${col?'▼':'▲'}</span>`:''}
-      </div>
-      ${col?'':body}
+  const card=(title,body)=>`
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1rem">
+      <div style="font-size:.65rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">${title}</div>
+      ${body}
     </div>`;
-  };
 
   let chRows='';
   ['malo','velo','wp','dar','int','kom'].forEach(k=>{
@@ -5250,11 +5242,11 @@ function renderPorocilo(){
     </div>`;
 
   document.getElementById('poroBody').innerHTML=
-    card('Prihodki',chRows,'prihodki')+
-    card(qTitle,qRows,'kolicine')+
-    card('Stroški',costRows,'stroski')+
-    card('Dobiček',dobičekRow,'dobicek')+
-    card('Premoženje',premozenjeRows,'premozenje');
+    card('Prihodki',chRows)+
+    card(qTitle,qRows)+
+    card('Stroški',costRows)+
+    card('Dobiček',dobičekRow)+
+    card('Premoženje',premozenjeRows);
 }
 
 function printShippingLabel(name, street, post, phone) {

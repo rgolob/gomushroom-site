@@ -12,6 +12,11 @@
       title: 'Spruce Bud Extract: Beyond a Classic Tincture',
       desc: 'Most people know spruce buds as syrup. Why a controlled hydroethanolic extraction process is fundamentally different.',
     },
+    {
+      url: '/en/learn/triple-extraction/',
+      title: 'Triple Extraction of Medicinal Mushrooms: Alcohol, Water and Pressure in One Process',
+      desc: 'Triple extraction of medicinal mushrooms combines alcohol, hot water and pressurised water extraction. Learn why a single method is often not enough.',
+    },
   ];
 
   function render(){

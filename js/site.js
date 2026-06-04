@@ -646,18 +646,18 @@ document.addEventListener('DOMContentLoaded', function(){
 (function(){
   // ── CONFIG — posodobi ob vsakem novem članku ──────────────────
   const NOTICE = {
-    id:   'gm_notice_v3',   // povečaj za ponastavitev pri vsakem novem članku
+    id:   'gm_notice_v4',   // povečaj za ponastavitev pri vsakem novem članku
     days: 7,                // koliko dni je obvestilo vidno
     sl: {
       label: 'Nov članek',
-      title: 'Smrekovi vršički: zakaj ne gre za klasično tinkturo?',
-      url:   '/znanje/ekstrakt-smrekovih-vrsickov/',
+      title: 'Trojna ekstrakcija medicinskih gob: alkohol, voda in tlak v enem postopku',
+      url:   '/znanje/trojna-ekstrakcija/',
       cta:   'Preberi →'
     },
     en: {
       label: 'New article',
-      title: 'Spruce bud extract: beyond a classic tincture',
-      url:   '/en/learn/spruce-bud-extract/',
+      title: 'Triple extraction of medicinal mushrooms: alcohol, water and pressure in one process',
+      url:   '/en/learn/triple-extraction/',
       cta:   'Read →'
     }
   };

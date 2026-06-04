@@ -906,18 +906,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shbody">
       <div class="frow">
         <div class="field"><label>Datum</label><input id="expDate" type="date"></div>
-        <div class="field"><label>Znesek (€)</label><input type="number" id="expAmount" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+        <div class="field"><label>Znesek (€)</label><input type="text" id="expAmount" placeholder="0,00" inputmode="decimal"></div>
       </div>
       <div class="field"><label>Kategorija</label>
-        <select id="expCategory">
+        <select id="expCategory" onchange="onExpCategoryChange()">
           <option value="akontacija">Akontacija dohodnine</option>
-          <option value="prispevki_zpiz">Prispevki ZPIZ</option>
-          <option value="prispevki_zzzs">Prispevki ZZZS</option>
-          <option value="racunovodstvo">Računovodstvo</option>
+          <option value="prispevki_sp">Prispevki SP (ZPIZ + ZZZS)</option>
           <option value="nabava">Nabava</option>
-          <option value="drugo">Drugo</option>
+          <option value="drugo">Drugo…</option>
         </select>
       </div>
+      <div class="field" id="expCustomRow" style="display:none"><label>Ime kategorije</label><input id="expCustomCat" placeholder="npr. Računovodstvo…"></div>
       <div class="field"><label>Opis</label><input id="expDesc" placeholder="npr. akontacija Q1 2026…"></div>
       <div style="display:flex;gap:.75rem;margin-top:1rem">
         <button onclick="closeSheet('expenseOverlay')" style="flex:1;padding:.7rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:'Jost',sans-serif;font-size:.88rem;cursor:pointer;color:var(--muted)">Prekliči</button>
@@ -2148,9 +2147,9 @@ const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorizati
 let _expenses=[];
 const EXPENSE_CATS={
   akontacija:'Akontacija dohodnine',
-  prispevki_zpiz:'Prispevki ZPIZ',
-  prispevki_zzzs:'Prispevki ZZZS',
-  racunovodstvo:'Računovodstvo',
+  prispevki_sp:'Prispevki SP',
+  prispevki_zpiz:'Prispevki ZPIZ',   // legacy
+  prispevki_zzzs:'Prispevki ZZZS',  // legacy
   nabava:'Nabava',
   drugo:'Drugo'
 };
@@ -2188,18 +2187,31 @@ async function deleteExpense(id){
   }catch(e){console.error('deleteExpense',e);}
 }
 
+function onExpCategoryChange(){
+  const v=document.getElementById('expCategory').value;
+  document.getElementById('expCustomRow').style.display=v==='drugo'?'':'none';
+}
+
 function openExpenseSheet(){
   document.getElementById('expDate').value=todayISO();
   document.getElementById('expAmount').value='';
   document.getElementById('expCategory').value='akontacija';
+  document.getElementById('expCustomRow').style.display='none';
+  document.getElementById('expCustomCat').value='';
   document.getElementById('expDesc').value='';
   document.getElementById('expenseOverlay').classList.add('open');
 }
 
 async function submitExpense(){
   const date=document.getElementById('expDate').value;
-  const amount=parseFloat(document.getElementById('expAmount').value);
-  const category=document.getElementById('expCategory').value;
+  const amountRaw=document.getElementById('expAmount').value.replace(',','.');
+  const amount=parseFloat(amountRaw);
+  let category=document.getElementById('expCategory').value;
+  if(category==='drugo'){
+    const custom=document.getElementById('expCustomCat').value.trim();
+    if(!custom){alert('Vnesi ime kategorije.');return;}
+    category=custom;
+  }
   const description=document.getElementById('expDesc').value.trim();
   if(!date||!amount||amount<=0){alert('Vnesi datum in znesek.');return;}
   const btn=document.querySelector('#expenseOverlay .btn-exp-save');

@@ -870,11 +870,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <div class="view" id="view-porocilo">
-    <div class="view-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.5rem">
       <div class="view-title">📊 Poročilo dobička</div>
       <button onclick="openExpenseSheet()" style="background:var(--brand);color:#fff;border:none;border-radius:8px;padding:.4rem .85rem;font-family:'Jost',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer">➕ Strošek</button>
     </div>
-    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;flex-wrap:wrap">
       <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
       <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
         <option value="">Celo leto</option>

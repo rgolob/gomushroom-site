@@ -870,23 +870,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <div class="view" id="view-porocilo">
-    <div class="view-hdr">
+    <div class="view-header">
       <div class="view-title">📊 Poročilo dobička</div>
       <button onclick="openExpenseSheet()" style="background:var(--brand);color:#fff;border:none;border-radius:8px;padding:.4rem .85rem;font-family:'Jost',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer">➕ Strošek</button>
     </div>
-    <div style="padding:.5rem 1rem 1rem;max-width:600px;margin:0 auto">
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
-        <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
-        <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
-          <option value="">Celo leto</option>
-          <option value="01">Januar</option><option value="02">Februar</option><option value="03">Marec</option>
-          <option value="04">April</option><option value="05">Maj</option><option value="06">Junij</option>
-          <option value="07">Julij</option><option value="08">Avgust</option><option value="09">September</option>
-          <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
-        </select>
-      </div>
-      <div id="poroBody"></div>
+    <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+      <select id="poroLeto" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)"></select>
+      <select id="poroMesec" onchange="renderPorocilo()" style="font-family:'Jost',sans-serif;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--ink)">
+        <option value="">Celo leto</option>
+        <option value="01">Januar</option><option value="02">Februar</option><option value="03">Marec</option>
+        <option value="04">April</option><option value="05">Maj</option><option value="06">Junij</option>
+        <option value="07">Julij</option><option value="08">Avgust</option><option value="09">September</option>
+        <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+      </select>
     </div>
+    <div id="poroBody"></div>
   </div>
 
 <nav class="bottom-nav">

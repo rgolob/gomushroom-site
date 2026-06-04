@@ -5200,11 +5200,14 @@ function renderPorocilo(){
   });
   const totalCosts=shippingCost+totalExp;
 
+  const SL_MES=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Avg','Sep','Okt','Nov','Dec'];
+  const mesLabel=d=>{const[y,m]=d.split('-');return`${SL_MES[parseInt(m)-1]} ${y}`;};
+
   const expEntryRow=e=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0 .3rem .75rem;border-bottom:1px solid var(--border);gap:.5rem;background:rgba(0,0,0,.02)">
       <div style="flex:1;min-width:0">
-        <div style="font-size:.75rem;color:var(--ink)">${e.description||'—'}</div>
-        <div style="font-size:.63rem;color:var(--muted)">${e.date}</div>
+        <div style="font-size:.78rem;font-weight:500;color:var(--ink)">${mesLabel(e.date)}</div>
+        ${e.description?`<div style="font-size:.63rem;color:var(--muted)">${e.description}</div>`:''}
       </div>
       <div style="font-size:.82rem;font-weight:500;color:var(--ink);white-space:nowrap">${parseFloat(e.amount).toFixed(2)} €</div>
       <button onclick="deleteExpense('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:.82rem;color:var(--muted);padding:.1rem .25rem;line-height:1">🗑</button>
@@ -5216,8 +5219,13 @@ function renderPorocilo(){
     const isOpen=_expExpandedCat===cat;
     const catEntries=expFiltered.filter(e=>e.category===cat).sort((a,b)=>b.date.localeCompare(a.date));
     const label=EXPENSE_CATS[cat]||cat;
-    costRows+=`<div onclick="toggleExpCat('${cat}')" style="display:flex;justify-content:space-between;align-items:baseline;padding:.45rem 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none">
-      <div style="font-size:.82rem;color:var(--ink)">${label} <span style="font-size:.65rem;color:var(--muted)">${isOpen?'▲':'▼'}</span></div>
+    const n=catEntries.length;
+    const hint=n===1?'1 vnos':`${n} vnosov`;
+    costRows+=`<div onclick="toggleExpCat('${cat}')" style="display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none">
+      <div>
+        <div style="font-size:.82rem;color:var(--ink)">${label} <span style="font-size:.65rem;color:var(--muted)">${isOpen?'▲':'▼'}</span></div>
+        <div style="font-size:.63rem;color:var(--muted)">${hint}</div>
+      </div>
       <div style="font-size:.88rem;color:#c0392b">−${amt.toFixed(2)} €</div>
     </div>`;
     if(isOpen) costRows+=catEntries.map(expEntryRow).join('');

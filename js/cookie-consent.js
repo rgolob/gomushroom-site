@@ -1,8 +1,22 @@
-// ── GoMushroom Cookie Consent ─────────────────────────────
+// ── GoMushroom Cookie Consent — Consent Mode v2 Advanced ──
 // GDPR skladen cookie banner z GA4 integracijo
 
 const GA_ID = 'G-L2PGE7VDHB';
 const CONSENT_KEY = 'gm_cookie_consent';
+
+// Consent Mode v2: inicializiraj dataLayer in nastavi privzeto stanje
+// PRED nalaganjem GA skripta — obvezno za Advanced mode
+window.dataLayer = window.dataLayer || [];
+function gtag(){ dataLayer.push(arguments); }
+window.gtag = gtag;
+
+gtag('consent', 'default', {
+  analytics_storage:  'denied',
+  ad_storage:         'denied',
+  ad_user_data:       'denied',
+  ad_personalization: 'denied',
+  wait_for_update:    500
+});
 
 function gmLoadGA() {
   if (window.gmIsGADisabled && window.gmIsGADisabled()) {
@@ -15,11 +29,17 @@ function gmLoadGA() {
   s1.async = true;
   s1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   document.head.appendChild(s1);
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ dataLayer.push(arguments); }
-  window.gtag = gtag;
   gtag('js', new Date());
   gtag('config', GA_ID, { anonymize_ip: true });
+}
+
+function gmGrantConsent() {
+  gtag('consent', 'update', {
+    analytics_storage:  'granted',
+    ad_storage:         'granted',
+    ad_user_data:       'granted',
+    ad_personalization: 'granted'
+  });
 }
 
 function gmGetConsent() {
@@ -32,7 +52,7 @@ function gmSetConsent(value) {
 
 function gmAcceptAll() {
   gmSetConsent('all');
-  gmLoadGA();
+  gmGrantConsent();
   gmHideBanner();
 }
 
@@ -123,16 +143,19 @@ function gmShowBanner() {
 
 // Init ob zagonu
 (function() {
+  // Advanced mode: GA vedno naloži — pošilja cookieless pinge za modeliranje
+  // tudi pri zavrnitvi piškotkov (consent ostane denied, brez osebnih podatkov)
+  gmLoadGA();
+
   const consent = gmGetConsent();
   if (consent === 'all') {
-    gmLoadGA();
+    gmGrantConsent();
   } else if (!consent) {
-    // Prikaži banner ko je DOM pripravljen
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', gmShowBanner);
     } else {
       gmShowBanner();
     }
   }
-  // consent === 'necessary' → ne naloži GA, ne prikaži bannera
+  // consent === 'necessary' → GA teče v cookieless načinu, baner skrit
 })();

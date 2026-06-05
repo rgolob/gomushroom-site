@@ -722,3 +722,57 @@ document.addEventListener("scroll", function () {
 
   progress.style.width = percent + "%";
 });
+
+
+/* =========================
+   GA4 — scroll depth na člankih
+========================= */
+(function () {
+  if (!document.querySelector('.article-shell')) return;
+
+  const milestones = [25, 50, 75, 100];
+  const fired = new Set();
+
+  document.addEventListener('scroll', function () {
+    if (!window.gtag) return;
+
+    const article = document.querySelector('.article-shell');
+    if (!article) return;
+
+    const articleTop = article.offsetTop;
+    const articleHeight = article.offsetHeight;
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const end = articleTop + articleHeight - windowHeight;
+
+    let pct = ((scrollY - articleTop) / (end - articleTop)) * 100;
+    pct = Math.max(0, Math.min(100, pct));
+
+    for (const m of milestones) {
+      if (pct >= m && !fired.has(m)) {
+        fired.add(m);
+        gtag('event', 'scroll_depth', { percent_scrolled: m });
+      }
+    }
+  }, { passive: true });
+})();
+
+
+/* =========================
+   GA4 — outbound link kliki
+========================= */
+document.addEventListener('click', function (e) {
+  if (!window.gtag) return;
+  const a = e.target.closest('a[href]');
+  if (!a) return;
+  try {
+    const url = new URL(a.href);
+    if (url.hostname && url.hostname !== location.hostname) {
+      gtag('event', 'click', {
+        event_category: 'outbound',
+        event_label: a.href,
+        transport_type: 'beacon'
+      });
+    }
+  } catch {}
+});

@@ -39,6 +39,34 @@
   max-width: 1180px;
 }
 
+/* ── Storitve page header (outside card) ── */
+.svc-page-head{
+  padding:.5rem 0 1.25rem;
+}
+.svc-kicker{
+  margin:0 0 .45rem;
+  font-size:.7rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#9a7a58;
+  font-weight:700;
+}
+.svc-title{
+  margin:0 0 .55rem;
+  font-size:clamp(26px,3.6vw,46px);
+  line-height:1.08;
+  letter-spacing:-.01em;
+  color:var(--brand);
+}
+.svc-sub{
+  margin:0;
+  max-width:64ch;
+  font-size:1rem;
+  line-height:1.65;
+  color:var(--fg);
+  opacity:.88;
+}
+
 .article-shell{
   background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.92));
   border: 1px solid var(--line);

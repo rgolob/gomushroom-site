@@ -461,6 +461,87 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 /* =========================
+   SERVICES — panel under cards (EN homepage)
+========================= */
+(function(){
+  const grid  = document.getElementById('services-grid');
+  const panel = document.getElementById('service-detail');
+  if(!grid || !panel) return;
+
+  const panelContent = panel.querySelector('.content');
+  if(!panelContent) return;
+
+  const cards = Array.from(grid.querySelectorAll('.card.service'));
+  if(!cards.length) return;
+
+  const templates = {
+    ekstrakcije: document.getElementById('tpl-ekstrakcije'),
+    gojenje:     document.getElementById('tpl-gojenje'),
+    botanicne:   document.getElementById('tpl-botanicne'),
+  };
+
+  function openPanel(key, card){
+    cards.forEach(c => c.classList.toggle('is-active', c === card));
+    grid.classList.add('has-open');
+
+    const tpl = templates[key];
+    if(!tpl || !tpl.content) return;
+
+    panelContent.innerHTML = '';
+    panelContent.appendChild(tpl.content.cloneNode(true));
+
+    const closeRow = document.createElement('div');
+    closeRow.className = 'service-detail-close';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = '× Close';
+    closeBtn.addEventListener('click', () => closePanel(true));
+    closeRow.appendChild(closeBtn);
+    panelContent.appendChild(closeRow);
+
+    panel.classList.add('is-open');
+
+    const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+    requestAnimationFrame(()=>{
+      const panelTop = panel.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({ top: panelTop - headerHeight - 10, behavior: 'smooth' });
+    });
+  }
+
+  function closePanel(scrollBack = false){
+    const activeCard = grid.querySelector('.card.service.is-active');
+    cards.forEach(c => c.classList.remove('is-active'));
+    grid.classList.remove('has-open');
+    panel.classList.remove('is-open');
+    panelContent.innerHTML = '';
+    if (scrollBack && activeCard) {
+      const headerH = document.querySelector('#site-header')?.offsetHeight || 60;
+      window.scrollTo({ top: activeCard.getBoundingClientRect().top + window.scrollY - headerH - 16, behavior: 'smooth' });
+    }
+  }
+
+  cards.forEach(card=>{
+    card.addEventListener('click', (e)=>{
+      if((e.target.tagName || '').toLowerCase() === 'a') return;
+
+      const key = card.getAttribute('data-service');
+      if(card.classList.contains('is-active')) closePanel();
+      else openPanel(key, card);
+    });
+
+    card.setAttribute('tabindex','0');
+    card.setAttribute('role','button');
+    card.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape') closePanel();
+  });
+})();
+
+/* =========================
    Card image CSS var (safety)
 ========================= */
 (function(){

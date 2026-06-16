@@ -116,4 +116,53 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
   </url>
 
+
+  <!-- Service: Ekstrakcije medicinskih gob / Medicinal Mushroom Extraction -->
+  <url>
+    <loc>https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/medicinal-mushroom-extraction/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/services/medicinal-mushroom-extraction/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/medicinal-mushroom-extraction/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/"/>
+  </url>
+
+  <!-- Service: Gojenje Reishi / Reishi Cultivation -->
+  <url>
+    <loc>https://gomushroom.si/storitve/gojenje-reishi/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/gojenje-reishi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/reishi-cultivation/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/gojenje-reishi/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/services/reishi-cultivation/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/gojenje-reishi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/reishi-cultivation/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/gojenje-reishi/"/>
+  </url>
+
+  <!-- Service: Botanični ekstrakti / Botanical Extracts -->
+  <url>
+    <loc>https://gomushroom.si/storitve/botanicni-ekstrakti/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/botanicni-ekstrakti/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/botanical-extracts/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/botanicni-ekstrakti/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/services/botanical-extracts/</loc>
+    <lastmod>2026-06-15</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/storitve/botanicni-ekstrakti/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/services/botanical-extracts/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/storitve/botanicni-ekstrakti/"/>
+  </url>
+
 </urlset>

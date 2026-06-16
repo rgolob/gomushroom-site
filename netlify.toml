@@ -17,3 +17,4 @@
   from = "/znanje/beta-glukani-medicinske-gobe/"
   to = "/znanje/beta-glukani/"
   status = 301
+  force = true

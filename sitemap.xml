@@ -67,17 +67,33 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/"/>
   </url>
 
+  <!-- Article: Beta-glukani / Beta-glucans -->
+  <url>
+    <loc>https://gomushroom.si/znanje/beta-glukani/</loc>
+    <lastmod>2026-06-16</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/beta-glukani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/beta-glucans/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/beta-glukani/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/beta-glucans/</loc>
+    <lastmod>2026-06-16</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/beta-glukani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/beta-glucans/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/beta-glukani/"/>
+  </url>
+
   <!-- Article: Kaj je ekstrakcija / What is extraction -->
   <url>
     <loc>https://gomushroom.si/znanje/kaj-je-ekstrakcija/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-06-16</lastmod>
     <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/what-is-extraction/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
   </url>
   <url>
     <loc>https://gomushroom.si/en/learn/what-is-extraction/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-06-16</lastmod>
     <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/what-is-extraction/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>

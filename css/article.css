@@ -248,6 +248,23 @@
   z-index: 1;
 }
 
+a.article-card{
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+a.article-card strong{
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a.article-card p{
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: .93em;
+}
+
 /*zamegljene kartice*/
 .learn-card--locked {
   position: relative;

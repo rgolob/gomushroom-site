@@ -2276,6 +2276,7 @@ footer.site-footer{
   width:100%;
   aspect-ratio:16/9;
   overflow:hidden;
+  flex-shrink:0;
 }
 
 .learn-card-img img{
@@ -2283,6 +2284,18 @@ footer.site-footer{
   height:100%;
   object-fit:cover;
   display:block;
+}
+
+@media(min-width:640px){
+  .learn-card{
+    display:flex;
+    flex-direction:row;
+  }
+  .learn-card-img{
+    width:160px;
+    aspect-ratio:auto;
+    align-self:stretch;
+  }
 }
 
 .learn-card .body{

@@ -54,6 +54,9 @@ function gmAcceptAll() {
   gmSetConsent('all');
   gmGrantConsent();
   gmHideBanner();
+  const s = document.createElement('script');
+  s.src = '/js/meta-pixel.js';
+  document.body.appendChild(s);
 }
 
 function gmAcceptNecessary() {

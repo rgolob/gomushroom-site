@@ -125,27 +125,26 @@ function initProductPage(variants, product) {
   // Init z alkoholno varianto
   updateUI(activeVariant);
 
-  // GA4 - view_item
-  if (typeof gmViewItem === 'function' && product) {
-    gmViewItem(product, activeVariant);
-  }
+  // GA4 + Meta Pixel - view_item / ViewContent
+  if (typeof gmViewItem === 'function' && product) gmViewItem(product, activeVariant);
+  if (typeof gmFbViewContent === 'function' && product) gmFbViewContent(product, activeVariant);
 }
 
-// GA4 - add_to_cart na produktni strani
+// GA4 + Meta Pixel - add_to_cart na produktni strani
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-add-to-cart]');
   if (!btn) return;
-  if (typeof gmAddToCart === 'function') {
-    gmAddToCart({
-      sku: btn.dataset.sku,
-      slug: btn.dataset.slug,
-      name: btn.dataset.name,
-      variant: btn.dataset.variant,
-      variantLabel: btn.dataset.variantLabel,
-      price: btn.dataset.price,
-      quantity: 1,
-    });
-  }
+  const cartItem = {
+    sku: btn.dataset.sku,
+    slug: btn.dataset.slug,
+    name: btn.dataset.name,
+    variant: btn.dataset.variant,
+    variantLabel: btn.dataset.variantLabel,
+    price: btn.dataset.price,
+    quantity: 1,
+  };
+  if (typeof gmAddToCart === 'function') gmAddToCart(cartItem);
+  if (typeof gmFbAddToCart === 'function') gmFbAddToCart(cartItem);
 });
 
 async function loadRatingBadge(slug) {

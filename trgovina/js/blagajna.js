@@ -990,6 +990,8 @@ async function saveStripeOrder(paymentIntentId) {
 
   if (typeof gmPurchase === 'function')
     gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
+  if (typeof gmFbPurchase === 'function')
+    gmFbPurchase(cart, calc.skupaj);
   trackPurchaseServer(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
 
   localStorage.setItem('gomushroom_cart', '[]');
@@ -1255,9 +1257,10 @@ async function placeOrder() {
     const calcUpn = { ...calc, skupaj: skupajUpn, popustZnesek: calc.popustZnesek + upnDiscountAmt };
     await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calcUpn);
     showSuccess({ ...order, rf_reference: rf }, rf, calcUpn);
-    if (typeof gmPurchase === 'function') {
+    if (typeof gmPurchase === 'function')
       gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
-    }
+    if (typeof gmFbPurchase === 'function')
+      gmFbPurchase(cart, skupajUpn);
     trackPurchaseServer(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     sessionStorage.setItem('gm_cart_backup', JSON.stringify(cart));
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}

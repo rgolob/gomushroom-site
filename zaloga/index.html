@@ -8157,6 +8157,12 @@ async function naloziVariantnePopuste(){
           <span style="color:var(--muted);font-size:.68rem;margin-left:.3rem">${v.sku||''}</span>
         </div>
         <div style="display:flex;align-items:center;gap:.35rem;flex-shrink:0">
+          <input type="number" min="0" step="0.01" value="${v.price_malo||0}"
+            style="width:62px;padding:.3rem .4rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;text-align:center"
+            onchange="shtvariPriceMalo('${v.id}',this.value)">
+          <span style="font-size:.78rem;color:var(--muted)">€</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.35rem;flex-shrink:0">
           <input type="number" min="0" max="100" step="1" value="${v.discount_pct||0}"
             data-variant-id="${v.id}"
             style="width:52px;padding:.3rem .4rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.82rem;text-align:center"
@@ -8167,6 +8173,17 @@ async function naloziVariantnePopuste(){
   }catch(e){
     el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Napaka pri nalaganju.</div>';
   }
+}
+
+async function shtvariPriceMalo(variantId, value){
+  const price=parseFloat(String(value).replace(',','.'))||0;
+  try{
+    await fetch(`${SB_URL}/rest/v1/gm_product_variants?id=eq.${variantId}`,{
+      method:'PATCH',
+      headers:SB_HEADERS,
+      body:JSON.stringify({price_malo:price})
+    });
+  }catch(e){console.warn('shtvariPriceMalo failed:',e);}
 }
 
 async function shtvariDiscountPct(variantId, value){

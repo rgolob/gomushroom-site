@@ -234,11 +234,9 @@ document.addEventListener('click', e => {
     if (!cart.length) return;
     const kupon = document.getElementById('kupon-input')?.value?.trim() || '';
     sessionStorage.setItem('gm_kupon', kupon);
-    // GA4 - begin_checkout
-    if (typeof gmBeginCheckout === 'function') {
-      const total = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
-      gmBeginCheckout(cart, total, kupon);
-    }
+    const total = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+    if (typeof gmBeginCheckout === 'function') gmBeginCheckout(cart, total, kupon);
+    if (typeof gmFbInitiateCheckout === 'function') gmFbInitiateCheckout(cart, total);
     window.location.href = '/trgovina/blagajna/';
   }
 });

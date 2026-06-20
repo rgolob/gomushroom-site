@@ -105,8 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
   loadScriptOnce("/js/ga-dev-toggle.js", () => {
     loadScriptOnce("/js/cookie-consent.js");
   });
-  
+
+  if (localStorage.getItem('gm_cookie_consent') === 'all') {
+    loadScriptOnce("/js/meta-pixel.js");
+  }
+
   if (path === "/trgovina" || path.startsWith("/trgovina/")) {
-  loadScriptOnce("/js/analytics.js");
-}
+    loadScriptOnce("/js/analytics.js");
+  }
 });

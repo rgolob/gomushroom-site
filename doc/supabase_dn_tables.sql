@@ -97,6 +97,13 @@ ALTER TABLE gm_dn_work_orders
   ADD COLUMN IF NOT EXISTS kol_gly_prodaja integer,
   ADD COLUMN IF NOT EXISTS kol_gly_interno integer;
 
+-- gm_dn_work_orders: dodaj stolpce za glicerin, maso glicerina, etanol v gly in predviden zaključek
+ALTER TABLE gm_dn_work_orders
+  ADD COLUMN IF NOT EXISTS glicerin_alc        numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS masa_glicerina       numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS etanol_gly           numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS predviden_zakljucek  text    DEFAULT NULL;
+
 -- gm_dn_materiali: dodaj dobavitelj + sprosti NOT NULL na datum
 ALTER TABLE gm_dn_materiali
   ADD COLUMN IF NOT EXISTS dobavitelj text;

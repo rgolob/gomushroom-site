@@ -9373,15 +9373,11 @@ async function loadPublishedArticles() {
         <div style="display:flex;border-top:1px solid var(--border)">${slLink}${enLink}</div>
       </div>`;
     }).join('');
-    // Update status badges in the Osnutki section based on JSON data
+    // Hide published articles from Osnutki section (they appear in the published list above)
     for (const a of articles) {
       if (a.sl?.publishedAt || a.en?.publishedAt) {
         const container = document.getElementById(`article-${a.id}`);
-        if (!container) continue;
-        const statusEl = container.querySelector('[id$="-status"]');
-        const btn = container.querySelector('button');
-        if (statusEl) { statusEl.style.color = '#2d7a4f'; statusEl.textContent = '✅ Objavljeno'; }
-        if (btn) { btn.disabled = true; btn.textContent = '✅ Objavljeno'; btn.style.color = '#2d7a4f'; }
+        if (container) container.style.display = 'none';
       }
     }
     _publishedArticlesLoaded = true;
@@ -9404,9 +9400,8 @@ async function publishArticle(id, paths) {
     if (allOk) {
       const added = (data.relatedResults||[]).filter(x => x.status === 'added').map(x => x.url);
       _publishedArticlesLoaded = false;
-      const statusEl = document.getElementById(`article-${id}-status`);
-      const raNote = added.length ? ` + sorodni članki posodobljeni` : '';
-      if (statusEl) { statusEl.style.color = '#2d6a4f'; statusEl.textContent = `✅ Objavljeno${raNote} — deploy v teku (~1 min)`; }
+      const container = document.getElementById(`article-${id}`);
+      if (container) container.style.display = 'none';
       if (btn) { btn.textContent = '✅ Objavljeno'; }
     } else {
       throw new Error(JSON.stringify(data.results));

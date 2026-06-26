@@ -88,6 +88,25 @@ CREATE TABLE IF NOT EXISTS gm_dn_oprema (
   kolicina     numeric
 );
 
+CREATE TABLE IF NOT EXISTS gm_dn_rd (
+  id              text PRIMARY KEY,
+  datum           date,
+  naziv           text,
+  surovina        text,
+  serija_surovine text,
+  masa_surovine   numeric,
+  masa_etoh       numeric,
+  pct_etoh        numeric,
+  vol_etoh        numeric,
+  l_aae           numeric,
+  izgube          numeric,
+  opazanja        text,
+  status          text DEFAULT 'odprt',
+  datum_zakljucka date,
+  etanol_knjizen  boolean DEFAULT false,
+  ustvarjen       timestamptz DEFAULT now()
+);
+
 -- ── ALTER TABLE za posodobitve (zaženi če tabele že obstajajo) ──────────────
 
 -- gm_dn_work_orders: dodaj stolpce za prodaja/interno razdelitev

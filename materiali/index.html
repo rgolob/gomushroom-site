@@ -245,6 +245,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="pager" id="matPager"></div>
   </div>
 
+  <!-- R&D VIEW -->
+  <div class="view" id="view-rd">
+    <div class="view-hdr">
+      <div class="view-title">R&amp;D nalogi</div>
+      <button class="hbtn2" onclick="openRDSheet()">+ Nov R&amp;D</button>
+    </div>
+    <div id="rdList"></div>
+    <div class="pager" id="rdPager"></div>
+  </div>
+
   <!-- OPREMA VIEW -->
   <div class="view" id="view-oprema">
     <div class="view-hdr">
@@ -270,6 +280,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem" id="nav-etanol" onclick="switchTab('etanol',this)"><span class="nicon">🧪</span>Etanol</button>
   <button class="nitem" id="nav-materiali" onclick="switchTab('materiali',this)"><span class="nicon">📦</span>Materiali</button>
   <button class="nitem" id="nav-oprema" onclick="switchTab('oprema',this)"><span class="nicon">🔧</span>Oprema</button>
+  <button class="nitem" id="nav-rd" onclick="switchTab('rd',this)"><span class="nicon">🔬</span>R&amp;D</button>
 </nav>
 
 <!-- SHEET: NOV DN -->
@@ -576,6 +587,60 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 </div>
 
+<!-- SHEET: R&D NALOG -->
+<div class="overlay" id="rdOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="rdSheetTitle">Nov R&amp;D nalog</span>
+      <button class="shclose" onclick="closeSheet('rdOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="rdDatum" type="date"></div>
+        <div class="field"><label>Naziv eksperimenta</label><input id="rdNaziv" placeholder="npr. UZ ekstrakcija reishi"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Surovina</label><input id="rdSurovina" placeholder="npr. Reishi, smrekovi vrščki…"></div>
+        <div class="field"><label>Serija surovine</label><input id="rdSerijaS" placeholder="npr. R010131" autocapitalize="characters"></div>
+      </div>
+      <div class="field"><label>Masa surovine (g)</label><input id="rdMasaS" type="text" inputmode="decimal" placeholder="0,0"></div>
+      <div class="dn-block-alc">
+        <div class="slabel-alc">🥃 Etanol — poraba</div>
+        <div class="frow">
+          <div class="field"><label>Masa EtOH (kg)</label><input id="rdMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcRD()"></div>
+          <div class="field"><label>% EtOH vol.</label><input id="rdPctEtOH" type="text" placeholder="npr. 70,0" inputmode="decimal" oninput="calcRD()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Gostota (auto)</label><input id="rdGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+          <div class="field"><label>Volumen EtOH (L)</label><input id="rdVol" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>L AAE</label><input id="rdLAAE" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent)" placeholder="—"></div>
+        </div>
+      </div>
+      <div class="field"><label>Izgube med procesom (g)</label><input id="rdIzgube" type="text" inputmode="decimal" placeholder="0,0"></div>
+      <div class="field"><label>Opazanja</label><textarea id="rdOpazanja" style="min-height:90px" placeholder="Parametri, opažanja, rezultati…"></textarea></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('rdOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveRD()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: R&D DETAIL -->
+<div class="overlay" id="rdDetailOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="rdDetailTitle">R&amp;D nalog</span>
+      <button class="shclose" onclick="closeSheet('rdDetailOverlay')">✕</button>
+    </div>
+    <div class="shbody" id="rdDetailBody"></div>
+  </div>
+</div>
+
 <!-- SHEET: NASTAVITVE -->
 <div class="overlay" id="settingsOverlay">
   <div class="sheet">
@@ -659,6 +724,7 @@ let workOrders = JSON.parse(localStorage.getItem('gm_dn_workorders')||'[]');
 let etanolKnjiga = JSON.parse(localStorage.getItem('gm_dn_etanol')||'[]');
 let materiali = JSON.parse(localStorage.getItem('gm_dn_materiali')||'[]');
 let oprema = JSON.parse(localStorage.getItem('gm_dn_oprema')||'[]');
+let rdNalogi = JSON.parse(localStorage.getItem('gm_dn_rd')||'[]');
 let settings = JSON.parse(localStorage.getItem('gm_dn_settings')||'{"trosarinaEUR":1412.40,"cenaAlc":31.9,"cenaGly":33.9}');
 
 function saveSettings(){
@@ -708,6 +774,7 @@ function save(){
   localStorage.setItem('gm_dn_etanol',JSON.stringify(etanolKnjiga));
   localStorage.setItem('gm_dn_materiali',JSON.stringify(materiali));
   localStorage.setItem('gm_dn_oprema',JSON.stringify(oprema));
+  localStorage.setItem('gm_dn_rd',JSON.stringify(rdNalogi));
 }
 
 // ── TABELA GOSTOTE EtOH/H2O po volumskem % (20°C, g/mL) ──
@@ -1017,6 +1084,7 @@ function switchTab(id,btn){
   if(id==='etanol'){renderEtStats();renderEtanol();}
   if(id==='materiali'){renderMateriali();}
   if(id==='oprema'){renderOprema();}
+  if(id==='rd'){renderRD();}
 }
 
 // ── SHEET ──
@@ -1582,7 +1650,7 @@ function calcEtZaloga(){
   let aae=0;
   etanolKnjiga.forEach(e=>{
     if(e.tip==='nabava'||e.tip==='regeneracija') aae+=e.lAAE||0;
-    else if(e.tip==='izhod_dn') aae-=e.lAAE||0;
+    else aae-=e.lAAE||0;
   });
   return Math.max(0,round(aae,4));
 }
@@ -1626,7 +1694,7 @@ function renderEtanol(){
 
   el.innerHTML=page.map(e=>{
     const isIn=e.tip==='nabava'||e.tip==='regeneracija';
-    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':'Izhod';
+    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':e.tip==='poraba-rd'?'R&D':'Izhod';
     const tipCls=e.tip==='nabava'?'eth-nabava':e.tip==='regeneracija'?'eth-reg':'eth-izhod';
     const isDN=e.tip==='izhod_dn';
     // Za DN izhode poiščemo DN podatke
@@ -1745,13 +1813,14 @@ function saveEtanol(){
 
 function clearAll(){
   if(!confirm('Izbriši VSE podatke DN app?\n\nDelovni nalogi + etanol knjiga bosta izbrisana.'))return;
-  workOrders=[];etanolKnjiga=[];materiali=[];oprema=[];
+  workOrders=[];etanolKnjiga=[];materiali=[];oprema=[];rdNalogi=[];
   localStorage.removeItem('gm_dn_workorders');
   localStorage.removeItem('gm_dn_etanol');
   localStorage.removeItem('gm_dn_materiali');
   localStorage.removeItem('gm_dn_oprema');
+  localStorage.removeItem('gm_dn_rd');
   save();
-  renderDNStats();renderDN();renderEtStats();renderEtanol();
+  renderDNStats();renderDN();renderEtStats();renderEtanol();if(currentTab==='rd')renderRD();
   toast('Vsi podatki izbrisani');
 }
 
@@ -1806,7 +1875,7 @@ async function genEtanolPorocilo(){
     if(isIn) tekocaZaloga=round(tekocaZaloga+aae,4);
     else tekocaZaloga=round(tekocaZaloga-aae,4);
 
-    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':'Izhod';
+    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':e.tip==='poraba-rd'?'R&D':'Izhod';
     const dn=e.tip==='izhod_dn'?workOrders.find(x=>x.oznaka===e.dokument):null;
     const opis=dn?`${e.dokument} · ${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}`:e.dokument||'—';
 
@@ -2594,13 +2663,199 @@ async function retroaktivnoPoknjiziVseDN(){
   toast(`✓ ${ok} posodobljeno${toDel.length?' · '+toDel.length+' odstranjeno':''}${fail?' · ⚠ '+fail+' napak':''}`);}
 
 function backupDN(){
-  const data={version:1,exportedAt:new Date().toISOString(),workOrders,etanolKnjiga};
+  const data={version:1,exportedAt:new Date().toISOString(),workOrders,etanolKnjiga,rdNalogi};
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download=`gomushroom-dn-${todayISO().replace(/-/g,'')}.json`;
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
   toast('💾 Backup shranjen');
+}
+
+// ── R&D ──
+let rdPage=0;
+const RD_PER_PAGE=10;
+let editingRDId=null;
+
+function calcRD(){
+  const masaKg=parseNum(document.getElementById('rdMasaEtOH').value);
+  const volPct=parseNum(document.getElementById('rdPctEtOH').value);
+  if(!masaKg||!volPct){
+    ['rdGostota','rdVol','rdLAAE'].forEach(id=>document.getElementById(id).value='');
+    return;
+  }
+  const gostota=etohDensity(volPct);
+  const volL=round(masaKg/gostota,3);
+  const aae=calcAAE(volL,volPct);
+  document.getElementById('rdGostota').value=gostota.toFixed(5)+' g/mL';
+  document.getElementById('rdVol').value=volL.toFixed(3)+' L';
+  document.getElementById('rdLAAE').value=aae.toFixed(4)+' L';
+}
+
+function openRDSheet(id){
+  editingRDId=id||null;
+  const r=id?rdNalogi.find(x=>x.id===id):null;
+  document.getElementById('rdSheetTitle').textContent=r?'Uredi R&D nalog':'Nov R&D nalog';
+  document.getElementById('rdDatum').value=r?.datum||todayISO();
+  document.getElementById('rdNaziv').value=r?.naziv||'';
+  document.getElementById('rdSurovina').value=r?.surovina||'';
+  document.getElementById('rdSerijaS').value=r?.serijaS||'';
+  document.getElementById('rdMasaS').value=r?.masaS?String(r.masaS).replace('.',','):'';
+  document.getElementById('rdMasaEtOH').value=r?.masaEtOH?String(r.masaEtOH).replace('.',','):'';
+  document.getElementById('rdPctEtOH').value=r?.pctEtOH?String(r.pctEtOH).replace('.',','):'';
+  document.getElementById('rdIzgube').value=r?.izgube?String(r.izgube).replace('.',','):'';
+  document.getElementById('rdOpazanja').value=r?.opazanja||'';
+  document.getElementById('rdGostota').value='';
+  document.getElementById('rdVol').value='';
+  document.getElementById('rdLAAE').value='';
+  calcRD();
+  openSheet('rdOverlay');
+}
+
+function saveRD(){
+  const naziv=document.getElementById('rdNaziv').value.trim();
+  if(!naziv){toast('⚠ Vnesi naziv');return;}
+  const masaKg=parseNum(document.getElementById('rdMasaEtOH').value);
+  const volPct=parseNum(document.getElementById('rdPctEtOH').value);
+  if(!masaKg||!volPct){toast('⚠ Vnesi maso in % EtOH');return;}
+  const gostota=etohDensity(volPct);
+  const volL=round(masaKg/gostota,3);
+  const aae=calcAAE(volL,volPct);
+  const r={
+    id:editingRDId||uid(),
+    datum:document.getElementById('rdDatum').value,
+    naziv,
+    surovina:document.getElementById('rdSurovina').value.trim(),
+    serijaS:document.getElementById('rdSerijaS').value.trim(),
+    masaS:parseNum(document.getElementById('rdMasaS').value)||0,
+    masaEtOH:masaKg,pctEtOH:volPct,gostota,volEtOH:volL,lAAE:aae,
+    izgube:parseNum(document.getElementById('rdIzgube').value)||0,
+    opazanja:document.getElementById('rdOpazanja').value.trim(),
+    status:'odprt',
+    datumZakljucka:null,
+    etanolKnjizen:false,
+    ustvarjen:editingRDId?rdNalogi.find(x=>x.id===editingRDId)?.ustvarjen||new Date().toISOString():new Date().toISOString(),
+  };
+  if(editingRDId){
+    const existing=rdNalogi.find(x=>x.id===editingRDId);
+    if(existing){r.status=existing.status;r.datumZakljucka=existing.datumZakljucka;r.etanolKnjizen=existing.etanolKnjizen;}
+    const idx=rdNalogi.findIndex(x=>x.id===editingRDId);
+    if(idx>=0)rdNalogi[idx]=r;
+  } else {
+    rdNalogi.push(r);
+  }
+  save();
+  sbPushRD(r);
+  closeSheet('rdOverlay');
+  renderRD();
+  toast(editingRDId?'✓ R&D nalog posodobljen':'✓ R&D nalog shranjen');
+  editingRDId=null;
+}
+
+function zakljuciRD(id){
+  const r=rdNalogi.find(x=>x.id===id);if(!r)return;
+  if(r.etanolKnjizen){toast('⚠ Etanol je že knjižen');return;}
+  if(!confirm(`Zaključi R&D nalog "${r.naziv}"?\n\nKnjižilo se bo ${r.lAAE.toFixed(4)} L AAE od zaloge etanola.\nDejanje ni mogoče razveljaviti.`))return;
+  const e={
+    id:uid(),
+    datum:todayISO(),
+    tip:'poraba-rd',
+    dokument:r.naziv,
+    opomba:`R&D: ${r.surovina||''}${r.serijaS?' · '+r.serijaS:''} · ${r.masaEtOH} kg @ ${r.pctEtOH} vol%`,
+    masa:r.masaEtOH,pct:r.pctEtOH,gostota:r.gostota,
+    kolicina:r.volEtOH,lAAE:r.lAAE,
+    masPct:volToMas(r.pctEtOH),
+    trosarina:calcTrosarina(r.lAAE,r.volEtOH),
+    strosek:0,
+  };
+  etanolKnjiga.push(e);
+  r.status='zakljucen';
+  r.datumZakljucka=todayISO();
+  r.etanolKnjizen=true;
+  save();
+  sbPushEt(e);
+  sbPushRD(r);
+  renderRD();
+  renderEtStats();
+  if(currentTab==='etanol')renderEtanol();
+  toast(`✓ Zaključeno · −${r.lAAE.toFixed(4)} L AAE knjiženo`);
+}
+
+function renderRD(){
+  const rows=[...rdNalogi].sort((a,b)=>b.datum.localeCompare(a.datum));
+  const total=rows.length;
+  const pages=Math.ceil(total/RD_PER_PAGE)||1;
+  if(rdPage>=pages)rdPage=0;
+  const page=rows.slice(rdPage*RD_PER_PAGE,(rdPage+1)*RD_PER_PAGE);
+  const el=document.getElementById('rdList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">🔬</div><div class="et">Ni R&amp;D nalogov</div><div class="es">Dodaj prvi poskus</div></div>`;
+    document.getElementById('rdPager').innerHTML='';
+    return;
+  }
+  el.innerHTML=page.map(r=>{
+    const zakljucen=r.status==='zakljucen';
+    const badgeCls=zakljucen?'status-zakljucen':'status-odprt';
+    const badgeTxt=zakljucen?'Zaključen':'Odprt';
+    return`<div class="dn-card">
+      <div class="dn-header" onclick="openRDDetail('${r.id}')">
+        <div class="dn-info" style="flex:1">
+          <div class="dn-name">${r.naziv}</div>
+          <div class="dn-meta">${fmtDate(r.datum)}${r.surovina?' · '+r.surovina:''}${r.serijaS?' · '+r.serijaS:''}</div>
+        </div>
+        <div class="dn-right">
+          <span class="status-badge ${badgeCls}">${badgeTxt}</span>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;margin-top:.2rem;color:var(--danger)">${r.lAAE?'−'+r.lAAE.toFixed(4)+' L':''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const pager=document.getElementById('rdPager');
+  if(pages<=1){pager.innerHTML=`<span class="pager-info">${total} nalogov</span>`;return;}
+  let ph=`<span class="pager-info">${total} nalogov</span>`;
+  if(rdPage>0)ph+=`<button class="fpill" onclick="rdPage--;renderRD()">‹</button>`;
+  for(let i=0;i<pages;i++)ph+=`<button class="fpill${i===rdPage?' active':''}" onclick="rdPage=${i};renderRD()">${i+1}</button>`;
+  if(rdPage<pages-1)ph+=`<button class="fpill" onclick="rdPage++;renderRD()">›</button>`;
+  pager.innerHTML=ph;
+}
+
+function openRDDetail(id){
+  const r=rdNalogi.find(x=>x.id===id);if(!r)return;
+  const zakljucen=r.status==='zakljucen';
+  const body=`
+    <div style="padding:.25rem 0">
+      <table class="mini-table">
+        <tr><td>Datum</td><td>${fmtDate(r.datum)}</td></tr>
+        <tr><td>Surovina</td><td>${r.surovina||'—'}</td></tr>
+        <tr><td>Serija surovine</td><td>${r.serijaS||'—'}</td></tr>
+        <tr><td>Masa surovine</td><td>${r.masaS?r.masaS+' g':'—'}</td></tr>
+        <tr><td>Masa EtOH</td><td>${r.masaEtOH} kg @ ${r.pctEtOH} vol%</td></tr>
+        <tr><td>Volumen EtOH</td><td>${r.volEtOH?.toFixed(3)||'—'} L</td></tr>
+        <tr><td>L AAE</td><td style="font-weight:600;color:var(--danger)">${r.lAAE?.toFixed(4)||'—'} L</td></tr>
+        ${r.izgube?`<tr><td>Izgube</td><td>${r.izgube} g</td></tr>`:''}
+      </table>
+      ${r.opazanja?`<div class="slabel">Opazanja</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${r.opazanja}</div>`:''}
+      ${zakljucen?`<div style="font-size:.72rem;color:var(--success);padding:.4rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);margin-top:.75rem">✓ Zaključeno ${fmtDate(r.datumZakljucka)} · Etanol knjižen</div>`:''}
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+        ${!zakljucen?`<button class="bsave" onclick="openRDSheet('${r.id}');closeSheet('rdDetailOverlay')">✎ Uredi</button>`:''}
+        ${!zakljucen?`<button class="bsave green" onclick="closeSheet('rdDetailOverlay');zakljuciRD('${r.id}')">✓ Zaključi &amp; Knji&nbsp;etanol</button>`:''}
+        <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteRD('${r.id}')">Izbriši</button>
+      </div>
+    </div>`;
+  document.getElementById('rdDetailTitle').textContent=r.naziv;
+  document.getElementById('rdDetailBody').innerHTML=body;
+  openSheet('rdDetailOverlay');
+}
+
+async function deleteRD(id){
+  const r=rdNalogi.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`Izbriši R&D nalog "${r.naziv}"?\n\nEtanol se NE vrne na zalogo — ustrezno popravi ročno.`))return;
+  rdNalogi=rdNalogi.filter(x=>x.id!==id);
+  save();
+  closeSheet('rdDetailOverlay');
+  renderRD();
+  try{await sbDel('gm_dn_rd',id);toast('R&D nalog izbrisan');}
+  catch(e){console.error('deleteRD sb',e);toast('⚠ Napaka pri brisanju iz baze');}
 }
 
 // ── SUPABASE ──
@@ -2707,15 +2962,38 @@ function sbToOp(r){return{
   garancija:r.garancija||'',vzdrz:r.vzdrz||'',kolicina:r.kolicina||null
 };}
 
+// Converters R&D ↔ Supabase
+function rdToSb(r){return{
+  id:r.id,datum:r.datum||null,naziv:r.naziv||null,
+  surovina:r.surovina||null,serija_surovine:r.serijaS||null,
+  masa_surovine:r.masaS||null,masa_etoh:r.masaEtOH||null,
+  pct_etoh:r.pctEtOH||null,vol_etoh:r.volEtOH||null,l_aae:r.lAAE||null,
+  izgube:r.izgube||null,opazanja:r.opazanja||null,
+  status:r.status||'odprt',datum_zakljucka:r.datumZakljucka||null,
+  etanol_knjizen:r.etanolKnjizen||false,
+  ustvarjen:r.ustvarjen||null,
+};}
+function sbToRd(r){return{
+  id:r.id,datum:r.datum||'',naziv:r.naziv||'',
+  surovina:r.surovina||'',serijaS:r.serija_surovine||'',
+  masaS:r.masa_surovine||0,masaEtOH:r.masa_etoh||0,
+  pctEtOH:r.pct_etoh||0,volEtOH:r.vol_etoh||0,lAAE:r.l_aae||0,
+  izgube:r.izgube||0,opazanja:r.opazanja||'',
+  status:r.status||'odprt',datumZakljucka:r.datum_zakljucka||null,
+  etanolKnjizen:r.etanol_knjizen||false,
+  ustvarjen:r.ustvarjen||null,
+};}
+
 // Sync helpers
 function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
 async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushDN',e);}}
 async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
 async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);toast('⚠ '+e.message.slice(0,120));}}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+async function sbPushRD(r){try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushRD',e);}}
 
 async function migrirajVSupabase(){
-  if(!confirm(`Sinhroniziraj VSE lokalne podatke v Supabase?\n\nDN: ${workOrders.length}\nEtanol: ${etanolKnjiga.length}\nMateriali: ${materiali.length}\nOprema: ${oprema.length}\n\nObstoječi zapisi v Supabase bodo prepisani.`))return;
+  if(!confirm(`Sinhroniziraj VSE lokalne podatke v Supabase?\n\nDN: ${workOrders.length}\nEtanol: ${etanolKnjiga.length}\nMateriali: ${materiali.length}\nOprema: ${oprema.length}\nR&D: ${rdNalogi.length}\n\nObstoječi zapisi v Supabase bodo prepisani.`))return;
   closeSheet('settingsOverlay');
   setSyncStatus('↻');
   toast('⏳ Sinhronizacija…');
@@ -2728,8 +3006,9 @@ async function migrirajVSupabase(){
     await chunk('gm_dn_etanol',etanolKnjiga.map(etToSb));
     await chunk('gm_dn_materiali',materiali.map(matToSb));
     await chunk('gm_dn_oprema',oprema.map(opToSb));
+    if(rdNalogi.length)await chunk('gm_dn_rd',rdNalogi.map(rdToSb));
     setSyncStatus('✓');
-    toast(`✓ Sinhronizirano: ${workOrders.length} DN, ${etanolKnjiga.length} et, ${materiali.length} mat, ${oprema.length} op`);
+    toast(`✓ Sinhronizirano: ${workOrders.length} DN, ${etanolKnjiga.length} et, ${materiali.length} mat, ${oprema.length} op, ${rdNalogi.length} R&D`);
   }catch(e){
     setSyncStatus('⚠');
     toast('❌ Napaka: '+e.message);
@@ -2740,11 +3019,12 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops]=await Promise.all([
+    const [wos,ets,mats,ops,rds]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
       sbFetch('gm_dn_oprema','order=naziv.asc'),
+      sbFetch('gm_dn_rd','order=datum.desc').catch(()=>[]),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -2758,11 +3038,13 @@ async function loadFromSB(){
     etanolKnjiga=ets.map(sbToEt);
     materiali=mats.map(sbToMat);
     oprema=ops.map(sbToOp);
+    if(rds.length)rdNalogi=rds.map(sbToRd);
     // Ne kličemo save() — localStorage posodabljamo samo ob akcijah uporabnika
     renderDNStats();renderDN();renderEtStats();
     if(currentTab==='etanol')renderEtanol();
     if(currentTab==='materiali')renderMateriali();
     if(currentTab==='oprema')renderOprema();
+    if(currentTab==='rd')renderRD();
     setSyncStatus('✓');
   }catch(e){setSyncStatus('⚠ offline');console.error('loadFromSB',e);}
 }

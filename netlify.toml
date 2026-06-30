@@ -18,3 +18,8 @@
   to = "/znanje/beta-glukani/"
   status = 301
   force = true
+
+[[redirects]]
+  from = "/qc/tezke-kovine"
+  to = "/qc/tezke-kovine/"
+  status = 301

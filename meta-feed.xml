@@ -5,7 +5,7 @@
     <link>https://gomushroom.si/</link>
     <description>GoMushroom product feed</description>
     <item>
-      <g:id>REISHI-ALC-50</g:id>
+      <g:id>RE-ALC-50</g:id>
       <g:item_group_id>reishi-tinktura</g:item_group_id>
       <g:title>Reishi tinktura - Alkoholna 50 ml</g:title>
       <g:description>Reishi tinktura 50 ml iz lastno pridelane gobe Ganoderma lucidum. Trojna ekstrakcija, majhne serije, lastna formulacija in testiran končni izdelek.</g:description>
@@ -15,13 +15,13 @@
       <g:price>31.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>REISHI-ALC-50</g:mpn>
+      <g:mpn>RE-ALC-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>REISHI-GLY-50</g:id>
+      <g:id>RE-GLY-50</g:id>
       <g:item_group_id>reishi-tinktura</g:item_group_id>
       <g:title>Reishi tinktura - Brezalkoholna 50 ml</g:title>
       <g:description>Reishi tinktura 50 ml iz lastno pridelane gobe Ganoderma lucidum. Trojna ekstrakcija, majhne serije, lastna formulacija in testiran končni izdelek.</g:description>
@@ -31,13 +31,13 @@
       <g:price>33.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>REISHI-GLY-50</g:mpn>
+      <g:mpn>RE-GLY-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>BRADOVEC-ALC-50</g:id>
+      <g:id>LM-ALC-50</g:id>
       <g:item_group_id>resasti-bradovec-tinktura</g:item_group_id>
       <g:title>Resasti bradovec tinktura - Alkoholna 50 ml</g:title>
       <g:description>Resasti bradovec tinktura GoMushroom. Slovenska surovina iz Pohorske gobarne, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.</g:description>
@@ -47,13 +47,13 @@
       <g:price>31.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>BRADOVEC-ALC-50</g:mpn>
+      <g:mpn>LM-ALC-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>BRADOVEC-GLY-50</g:id>
+      <g:id>LM-GLY-50</g:id>
       <g:item_group_id>resasti-bradovec-tinktura</g:item_group_id>
       <g:title>Resasti bradovec tinktura - Brezalkoholna 50 ml</g:title>
       <g:description>Resasti bradovec tinktura GoMushroom. Slovenska surovina iz Pohorske gobarne, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.</g:description>
@@ -63,13 +63,13 @@
       <g:price>33.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>BRADOVEC-GLY-50</g:mpn>
+      <g:mpn>LM-GLY-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>CHAGA-ALC-50</g:id>
+      <g:id>CH-ALC-50</g:id>
       <g:item_group_id>chaga-tinktura</g:item_group_id>
       <g:title>Chaga tinktura - Alkoholna 50 ml</g:title>
       <g:description>Chaga tinktura GoMushroom. Surovina iz brezovih gozdov EU/izven EU, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.</g:description>
@@ -79,13 +79,13 @@
       <g:price>31.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>CHAGA-ALC-50</g:mpn>
+      <g:mpn>CH-ALC-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>CHAGA-GLY-50</g:id>
+      <g:id>CH-GLY-50</g:id>
       <g:item_group_id>chaga-tinktura</g:item_group_id>
       <g:title>Chaga tinktura - Brezalkoholna 50 ml</g:title>
       <g:description>Chaga tinktura GoMushroom. Surovina iz brezovih gozdov EU/izven EU, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.</g:description>
@@ -95,13 +95,13 @@
       <g:price>33.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>CHAGA-GLY-50</g:mpn>
+      <g:mpn>CH-GLY-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>VS-ALC-50</g:id>
+      <g:id>SV-ALC-50</g:id>
       <g:item_group_id>smrekovi-vrsicki-tinktura</g:item_group_id>
       <g:title>Smrekovi vršički tinktura - Alkoholna 50 ml</g:title>
       <g:description>Sezonski ekstrakt smrekovih vršičkov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna različica.</g:description>
@@ -111,13 +111,13 @@
       <g:price>31.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>VS-ALC-50</g:mpn>
+      <g:mpn>SV-ALC-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
-      <g:id>VS-GLY-50</g:id>
+      <g:id>SV-GLY-50</g:id>
       <g:item_group_id>smrekovi-vrsicki-tinktura</g:item_group_id>
       <g:title>Smrekovi vršički tinktura - Brezalkoholna 50 ml</g:title>
       <g:description>Sezonski ekstrakt smrekovih vršičkov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna različica.</g:description>
@@ -127,7 +127,7 @@
       <g:price>33.90 EUR</g:price>
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
-      <g:mpn>VS-GLY-50</g:mpn>
+      <g:mpn>SV-GLY-50</g:mpn>
       <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
       <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
       <g:identifier_exists>false</g:identifier_exists>

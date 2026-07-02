@@ -27,26 +27,37 @@ function gmFbTrack(event, params) {
 }
 
 // ── VIEW CONTENT (produktna stran) ────────────────────────
+// variant.sku mora biti enak g:id v XML feedu
 function gmFbViewContent(product, variant) {
   if (!product || !variant) return;
+  const id = variant.sku || product.slug;
+  const basePrice = Number(variant.price_malo) || 0;
+  const discPct = Number(variant.discount_pct) || 0;
+  const effectivePrice = discPct > 0 ? +(basePrice * (1 - discPct / 100)).toFixed(2) : basePrice;
   gmFbTrack('ViewContent', {
-    content_ids: [variant.sku || product.slug],
+    content_ids:  [id],
     content_name: product.name,
     content_type: 'product',
-    value: Number(variant.price_malo) || 0,
-    currency: 'EUR'
+    contents:     [{ id, quantity: 1, item_price: effectivePrice }],
+    value:        effectivePrice,
+    currency:     'EUR',
   });
 }
 
 // ── ADD TO CART ───────────────────────────────────────────
+// item.sku mora biti enak g:id v XML feedu
 function gmFbAddToCart(item) {
   if (!item) return;
+  const id  = item.sku || item.slug;
+  const qty = item.quantity || 1;
+  const price = Number(item.price) || 0;
   gmFbTrack('AddToCart', {
-    content_ids: [item.sku || item.slug],
+    content_ids:  [id],
     content_name: item.name,
     content_type: 'product',
-    value: Number(item.price) * (item.quantity || 1),
-    currency: 'EUR'
+    contents:     [{ id, quantity: qty, item_price: price }],
+    value:        +(price * qty).toFixed(2),
+    currency:     'EUR',
   });
 }
 
@@ -54,22 +65,35 @@ function gmFbAddToCart(item) {
 function gmFbInitiateCheckout(cart, total) {
   if (!cart?.length) return;
   gmFbTrack('InitiateCheckout', {
-    content_ids: cart.map(i => i.sku || i.slug),
+    content_ids:  cart.map(i => i.sku || i.slug),
     content_type: 'product',
-    num_items: cart.reduce((s, i) => s + (i.quantity || 1), 0),
-    value: Number(total) || 0,
-    currency: 'EUR'
+    contents:     cart.map(i => ({
+      id:         i.sku || i.slug,
+      quantity:   i.quantity || 1,
+      item_price: Number(i.price) || 0,
+    })),
+    num_items:    cart.reduce((s, i) => s + (i.quantity || 1), 0),
+    value:        Number(total) || 0,
+    currency:     'EUR',
   });
 }
 
 // ── PURCHASE ──────────────────────────────────────────────
-function gmFbPurchase(cart, total) {
+// orderId poveže Pixel Purchase z naročilom (deduplication)
+function gmFbPurchase(cart, total, orderId) {
   if (!cart?.length) return;
-  gmFbTrack('Purchase', {
-    content_ids: cart.map(i => i.sku || i.slug),
+  const params = {
+    content_ids:  cart.map(i => i.sku || i.slug),
     content_type: 'product',
-    num_items: cart.reduce((s, i) => s + (i.quantity || 1), 0),
-    value: Number(total) || 0,
-    currency: 'EUR'
-  });
+    contents:     cart.map(i => ({
+      id:         i.sku || i.slug,
+      quantity:   i.quantity || 1,
+      item_price: Number(i.price) || 0,
+    })),
+    num_items:    cart.reduce((s, i) => s + (i.quantity || 1), 0),
+    value:        Number(total) || 0,
+    currency:     'EUR',
+  };
+  if (orderId) params.order_id = orderId;
+  gmFbTrack('Purchase', params);
 }

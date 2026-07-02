@@ -24,7 +24,3 @@
   to = "/qc/tezke-kovine/"
   status = 301
 
-[[redirects]]
-  from = "/meta-feed.xml"
-  to = "/.netlify/functions/product-feed"
-  status = 200

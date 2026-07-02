@@ -1,8 +1,9 @@
-'use strict';
+// Netlify Functions v2 — samodejno servira na /meta-feed.xml
 
 // ── Product catalog ─────────────────────────────────────────────────────────
 // Posodobi ta seznam ob spremembi cen, razpoložljivosti ali novih izdelkih.
-// Za popust dodaj: salePrice, salePriceFrom, salePriceTo (ISO 8601+tz, npr. "2026-07-01T00:00+02:00")
+// Za popust dodaj varianti: salePrice, salePriceFrom, salePriceTo
+// (datum v formatu ISO 8601+tz, npr. "2026-07-01T00:00+02:00/2026-07-31T23:59+02:00")
 const PRODUCTS = [
   {
     id: 'reishi-tinktura',
@@ -48,8 +49,8 @@ const PRODUCTS = [
   },
   {
     id: 'smrekovi-vrsicki-tinktura',
-    title: 'Smrekovi vršički tinktura',
-    description: 'Sezonski ekstrakt smrekovih vršičkov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna različica.',
+    title: 'Smrekovi vrsicki tinktura',
+    description: 'Sezonski ekstrakt smrekovih vrsickov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna razlicica.',
     link: 'https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/',
     imageLink: 'https://gomushroom.si/assets/shop/smrekovi-vrsicki-tinktura-50ml-gomushroom.webp',
     additionalImageLinks: [],
@@ -62,7 +63,7 @@ const PRODUCTS = [
   },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── XML helpers ──────────────────────────────────────────────────────────────
 
 function esc(str) {
   return String(str)
@@ -73,7 +74,7 @@ function esc(str) {
 }
 
 function buildItem(product, variant) {
-  const title = `${product.title} – ${variant.variantTitle} 50 ml`;
+  const title = `${product.title} - ${variant.variantTitle} 50 ml`;
   const lines = [
     `    <item>`,
     `      <g:id>${esc(variant.sku)}</g:id>`,
@@ -114,20 +115,24 @@ function buildFeed() {
     `  <channel>`,
     `    <title>GoMushroom</title>`,
     `    <link>https://gomushroom.si/</link>`,
-    `    <description>GoMushroom – product feed za Google Merchant Center in Meta Commerce Manager</description>`,
+    `    <description>GoMushroom product feed</description>`,
     ...items,
     `  </channel>`,
     `</rss>`,
   ].join('\n');
 }
 
-// ── Handler ──────────────────────────────────────────────────────────────────
+// ── Handler (Netlify Functions v2) ───────────────────────────────────────────
 
-exports.handler = async () => ({
-  statusCode: 200,
-  headers: {
-    'Content-Type': 'application/xml; charset=utf-8',
-    'Cache-Control': 'public, max-age=3600',
-  },
-  body: buildFeed(),
-});
+export default async () =>
+  new Response(buildFeed(), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+
+export const config = {
+  path: '/meta-feed.xml',
+};

@@ -10,7 +10,7 @@ const PRODUCTS = [
     title: 'Reishi tinktura',
     description: 'Reishi tinktura 50 ml iz lastno pridelane gobe Ganoderma lucidum. Trojna ekstrakcija, majhne serije, lastna formulacija in testiran končni izdelek.',
     link: 'https://gomushroom.si/trgovina/reishi-tinktura/',
-    imageLink: 'https://gomushroom.si/assets/trgovina/reishi-tinktura-50ml-gomushroom-800.webp',
+    imageLink: 'https://gomushroom.si/assets/shop/reishi-tinktura-50ml-gomushroom.webp',
     additionalImageLinks: [],
     brand: 'GoMushroom',
     condition: 'new',

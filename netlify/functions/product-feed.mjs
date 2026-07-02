@@ -102,6 +102,9 @@ function buildItem(product, variant) {
   lines.push(`      <g:condition>${esc(product.condition)}</g:condition>`);
   lines.push(`      <g:brand>${esc(product.brand)}</g:brand>`);
   lines.push(`      <g:mpn>${esc(variant.sku)}</g:mpn>`);
+  lines.push(`      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>`);
+  lines.push(`      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>`);
+  lines.push(`      <g:identifier_exists>false</g:identifier_exists>`);
   lines.push(`    </item>`);
 
   return lines.join('\n');

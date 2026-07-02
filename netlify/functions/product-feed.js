@@ -1,0 +1,133 @@
+'use strict';
+
+// ── Product catalog ─────────────────────────────────────────────────────────
+// Posodobi ta seznam ob spremembi cen, razpoložljivosti ali novih izdelkih.
+// Za popust dodaj: salePrice, salePriceFrom, salePriceTo (ISO 8601+tz, npr. "2026-07-01T00:00+02:00")
+const PRODUCTS = [
+  {
+    id: 'reishi-tinktura',
+    title: 'Reishi tinktura',
+    description: 'Reishi tinktura 50 ml iz lastno pridelane gobe Ganoderma lucidum. Trojna ekstrakcija, majhne serije, lastna formulacija in testiran končni izdelek.',
+    link: 'https://gomushroom.si/trgovina/reishi-tinktura/',
+    imageLink: 'https://gomushroom.si/assets/trgovina/reishi-tinktura-50ml-gomushroom-800.webp',
+    additionalImageLinks: [],
+    brand: 'GoMushroom',
+    condition: 'new',
+    variants: [
+      { sku: 'REISHI-ALC-50',  variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'REISHI-GLY-50',  variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+    ],
+  },
+  {
+    id: 'resasti-bradovec-tinktura',
+    title: 'Resasti bradovec tinktura',
+    description: 'Resasti bradovec tinktura GoMushroom. Slovenska surovina iz Pohorske gobarne, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.',
+    link: 'https://gomushroom.si/trgovina/resasti-bradovec-tinktura/',
+    imageLink: 'https://gomushroom.si/assets/shop/resasti-bradovec-tinktura-50ml-gomushroom.webp',
+    additionalImageLinks: [],
+    brand: 'GoMushroom',
+    condition: 'new',
+    variants: [
+      { sku: 'BRADOVEC-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'BRADOVEC-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+    ],
+  },
+  {
+    id: 'chaga-tinktura',
+    title: 'Chaga tinktura',
+    description: 'Chaga tinktura GoMushroom. Surovina iz brezovih gozdov EU/izven EU, lasten ekstrakcijski proces, majhne serije in transparenten pristop do kakovosti.',
+    link: 'https://gomushroom.si/trgovina/chaga-tinktura/',
+    imageLink: 'https://gomushroom.si/assets/shop/chaga-tinktura-50ml-gomushroom.webp',
+    additionalImageLinks: [],
+    brand: 'GoMushroom',
+    condition: 'new',
+    variants: [
+      { sku: 'CHAGA-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'CHAGA-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+    ],
+  },
+  {
+    id: 'smrekovi-vrsicki-tinktura',
+    title: 'Smrekovi vršički tinktura',
+    description: 'Sezonski ekstrakt smrekovih vršičkov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna različica.',
+    link: 'https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/',
+    imageLink: 'https://gomushroom.si/assets/shop/smrekovi-vrsicki-tinktura-50ml-gomushroom.webp',
+    additionalImageLinks: [],
+    brand: 'GoMushroom',
+    condition: 'new',
+    variants: [
+      { sku: 'VS-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'VS-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+    ],
+  },
+];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function buildItem(product, variant) {
+  const title = `${product.title} – ${variant.variantTitle} 50 ml`;
+  const lines = [
+    `    <item>`,
+    `      <g:id>${esc(variant.sku)}</g:id>`,
+    `      <g:item_group_id>${esc(product.id)}</g:item_group_id>`,
+    `      <g:title>${esc(title)}</g:title>`,
+    `      <g:description>${esc(product.description)}</g:description>`,
+    `      <g:link>${esc(product.link)}</g:link>`,
+    `      <g:image_link>${esc(product.imageLink)}</g:image_link>`,
+  ];
+
+  for (const img of (product.additionalImageLinks || [])) {
+    lines.push(`      <g:additional_image_link>${esc(img)}</g:additional_image_link>`);
+  }
+
+  lines.push(`      <g:availability>${esc(variant.availability)}</g:availability>`);
+  lines.push(`      <g:price>${esc(variant.price)} EUR</g:price>`);
+
+  if (variant.salePrice) {
+    lines.push(`      <g:sale_price>${esc(variant.salePrice)} EUR</g:sale_price>`);
+    if (variant.salePriceFrom && variant.salePriceTo) {
+      lines.push(`      <g:sale_price_effective_date>${esc(variant.salePriceFrom)}/${esc(variant.salePriceTo)}</g:sale_price_effective_date>`);
+    }
+  }
+
+  lines.push(`      <g:condition>${esc(product.condition)}</g:condition>`);
+  lines.push(`      <g:brand>${esc(product.brand)}</g:brand>`);
+  lines.push(`      <g:mpn>${esc(variant.sku)}</g:mpn>`);
+  lines.push(`    </item>`);
+
+  return lines.join('\n');
+}
+
+function buildFeed() {
+  const items = PRODUCTS.flatMap(p => p.variants.map(v => buildItem(p, v)));
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">`,
+    `  <channel>`,
+    `    <title>GoMushroom</title>`,
+    `    <link>https://gomushroom.si/</link>`,
+    `    <description>GoMushroom – product feed za Google Merchant Center in Meta Commerce Manager</description>`,
+    ...items,
+    `  </channel>`,
+    `</rss>`,
+  ].join('\n');
+}
+
+// ── Handler ──────────────────────────────────────────────────────────────────
+
+exports.handler = async () => ({
+  statusCode: 200,
+  headers: {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=3600',
+  },
+  body: buildFeed(),
+});

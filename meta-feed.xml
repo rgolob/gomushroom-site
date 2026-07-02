@@ -16,6 +16,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>REISHI-ALC-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>REISHI-GLY-50</g:id>
@@ -29,6 +32,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>REISHI-GLY-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>BRADOVEC-ALC-50</g:id>
@@ -42,6 +48,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>BRADOVEC-ALC-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>BRADOVEC-GLY-50</g:id>
@@ -55,6 +64,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>BRADOVEC-GLY-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>CHAGA-ALC-50</g:id>
@@ -68,6 +80,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>CHAGA-ALC-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>CHAGA-GLY-50</g:id>
@@ -81,6 +96,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>CHAGA-GLY-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>VS-ALC-50</g:id>
@@ -94,6 +112,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>VS-ALC-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
     <item>
       <g:id>VS-GLY-50</g:id>
@@ -107,6 +128,9 @@
       <g:condition>new</g:condition>
       <g:brand>GoMushroom</g:brand>
       <g:mpn>VS-GLY-50</g:mpn>
+      <g:product_type>Medicinske gobe &gt; Tinkture</g:product_type>
+      <g:google_product_category>Health &amp; Beauty &gt; Health Care &gt; Nutrition &gt; Vitamins &amp; Supplements</g:google_product_category>
+      <g:identifier_exists>false</g:identifier_exists>
     </item>
   </channel>
 </rss>

@@ -49,8 +49,8 @@ const PRODUCTS = [
   },
   {
     id: 'smrekovi-vrsicki-tinktura',
-    title: 'Smrekovi vrsicki tinktura',
-    description: 'Sezonski ekstrakt smrekovih vrsickov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna razlicica.',
+    title: 'Smrekovi vršički tinktura',
+    description: 'Sezonski ekstrakt smrekovih vršičkov iz alkoholno-vodne ekstrakcije in vakuumskega koncentriranja. Naravni terpeni, fenolne spojine, vitamin C. Alkoholna ali brezalkoholna različica.',
     link: 'https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/',
     imageLink: 'https://gomushroom.si/assets/shop/smrekovi-vrsicki-tinktura-50ml-gomushroom.webp',
     additionalImageLinks: [],

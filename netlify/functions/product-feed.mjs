@@ -15,8 +15,8 @@ const PRODUCTS = [
     brand: 'GoMushroom',
     condition: 'new',
     variants: [
-      { sku: 'REISHI-ALC-50',  variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
-      { sku: 'REISHI-GLY-50',  variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+      { sku: 'RE-ALC-50',  variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'RE-GLY-50',  variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
     ],
   },
   {
@@ -29,8 +29,8 @@ const PRODUCTS = [
     brand: 'GoMushroom',
     condition: 'new',
     variants: [
-      { sku: 'BRADOVEC-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
-      { sku: 'BRADOVEC-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+      { sku: 'LM-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'LM-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
     ],
   },
   {
@@ -43,8 +43,8 @@ const PRODUCTS = [
     brand: 'GoMushroom',
     condition: 'new',
     variants: [
-      { sku: 'CHAGA-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
-      { sku: 'CHAGA-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+      { sku: 'CH-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'CH-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
     ],
   },
   {
@@ -57,8 +57,8 @@ const PRODUCTS = [
     brand: 'GoMushroom',
     condition: 'new',
     variants: [
-      { sku: 'VS-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
-      { sku: 'VS-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
+      { sku: 'SV-ALC-50', variantTitle: 'Alkoholna',     price: '31.90', availability: 'in stock' },
+      { sku: 'SV-GLY-50', variantTitle: 'Brezalkoholna', price: '33.90', availability: 'in stock' },
     ],
   },
 ];

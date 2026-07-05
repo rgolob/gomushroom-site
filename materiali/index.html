@@ -376,7 +376,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Etanol v gly (g)</label><input id="dnEtanolGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+          <div class="field"><label>Etanol v gly (g)</label><input id="dnEtanolGly" type="text" inputmode="decimal" placeholder="0,0" oninput="calcDNBilanca()"></div>
         </div>
       </div>
       <div class="frow">
@@ -932,12 +932,15 @@ function calcDNBilanca(){
   const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
   const aaeVhod=parseNum(document.getElementById('dnLAAE')?.value);
   const izgube=parseNum(document.getElementById('dnIzgube')?.value||'0');
+  const etanolGlyG=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
+  const volPct=parseNum(document.getElementById('dnPctEtOH')?.value)||96.25;
   const el=document.getElementById('dnBilanca');
   if(!aaeVhod){el.style.display='none';return;}
 
   const volT=kom*TINKTURA_VOL_KOM;
   const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
-  const razlika=round(aaeVhod-aaeT-izgube,4);
+  const aaeGly=etanolGlyG>0?round(calcAAE(etanolGlyG/etohDensity(volPct),volPct),4):0;
+  const razlika=round(aaeVhod-aaeT-aaeGly-izgube,4);
   const ok=Math.abs(razlika)<0.005;
 
   el.style.display='';
@@ -953,6 +956,8 @@ function calcDNBilanca(){
       <span style="text-align:right;font-weight:600">${aaeVhod.toFixed(4)} L</span>
       <span style="color:var(--muted)">AAE v tinktaurah (trošar.):</span>
       <span style="text-align:right;color:var(--accent);font-weight:600">− ${aaeT.toFixed(4)} L</span>
+      ${aaeGly>0?`<span style="color:var(--muted)">Etanol v GLY:</span>
+      <span style="text-align:right;color:var(--muted)">− ${aaeGly.toFixed(4)} L</span>`:''}
       <span style="color:var(--muted)">Izgube (za regeneracijo):</span>
       <span style="text-align:right;color:var(--muted)">− ${izgube.toFixed(4)} L</span>
       <span style="border-top:1px solid var(--border);padding-top:.25rem;font-weight:500">
@@ -963,8 +968,8 @@ function calcDNBilanca(){
       </span>
     </div>
     ${!ok?`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">
-      Bilanca se zapre ko: tinktura + izgube = vhodni AAE.<br>
-      Izgube so interna evidenca — na etanol bilanco vplivajo samo tinkture.
+      Bilanca se zapre ko: tinkture + etanol v GLY + izgube = vhodni AAE.<br>
+      Izgube se odštejejo od zaloge etanola — niso pa predmet trošarine (za trošarino štejejo samo tinkture).
     </div>`:''}`;
 }
 
@@ -1493,8 +1498,9 @@ function knjizEtanolIzhod(id){
   }
   const aaeTinkture=calcAAE((d.kolAlc||0)*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT);
   const aaeIzgube=d.izgube||0;
-  const aaeSkupaj=round(aaeTinkture+aaeIzgube,4);
   const volPct=d.volPct||d.pctEtOH||96.25;
+  const aaeEtanolGly=d.etanolGly>0?round(calcAAE(d.etanolGly/etohDensity(volPct),volPct),4):0;
+  const aaeSkupaj=round(aaeTinkture+aaeEtanolGly+aaeIzgube,4);
   const gostota=etohDensity(volPct);
   const volSkupaj=round(aaeSkupaj/(volPct/100),3);
   const newEt={
@@ -1502,16 +1508,16 @@ function knjizEtanolIzhod(id){
     datum:d.datumZakljucka||d.datum,
     tip:'izhod_dn',
     dokument:d.oznaka,
-    opomba:`Ekstrakcija ${d.vrstaGobe} · ${d.kolAlc||0} kom alc · izgube: ${aaeIzgube.toFixed(4)} L AAE`,
+    opomba:`Ekstrakcija ${d.vrstaGobe} · ${d.kolAlc||0} kom alc${aaeEtanolGly>0?' · etanol v GLY: '+aaeEtanolGly.toFixed(4)+' L AAE':''} · izgube: ${aaeIzgube.toFixed(4)} L AAE`,
     kolicina:volSkupaj,pct:volPct,gostota,
-    lAAE:aaeSkupaj,aaeTinkture,aaeIzgube,
+    lAAE:aaeSkupaj,aaeTinkture,aaeIzgube,aaeEtanolGly,
   };
   etanolKnjiga.push(newEt);
   save();
   sbPushEt(newEt);
   closeSheet('dnDetailOverlay');
   renderEtStats();renderEtanol();
-  toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)} + izgube: ${aaeIzgube.toFixed(4)})`);
+  toast(`✓ Knjiženo −${aaeSkupaj.toFixed(4)} L AAE (tinkture: ${aaeTinkture.toFixed(4)}${aaeEtanolGly>0?' + gly etanol: '+aaeEtanolGly.toFixed(4):''} + izgube: ${aaeIzgube.toFixed(4)})`);
 }
 
 async function knjizMaterialeIzhodRetro(id){
@@ -2352,7 +2358,7 @@ function knjizMaterjaleIzhod(d){
   if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
   if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
   if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
-  const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
+  const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
   if(volGlicerin>0&&bilNaZalogi('glicerin')&&!alreadyBooked('glicerin'))izhodi.push({tip:'glicerin',kolicina:volGlicerin});
 
   izhodi.forEach(iz=>{
@@ -2598,7 +2604,7 @@ async function retroaktivnoPoknjiziVseDN(){
     const vitc=round((d.vitCAlc||0)+(d.vitCGly||0),3);
     const lecitin=round((d.lecitinAlc||0)+(d.lecitinGly||0),3);
 
-    const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
+    const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
     const kandidati=[
       {tip:'steklenicka_bela',kolicina:skupajBela},
       {tip:'steklenicka_crna',kolicina:skupajCrna},

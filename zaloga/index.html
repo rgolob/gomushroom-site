@@ -3169,7 +3169,11 @@ function renderDobavnice(){
 // ── DN PRENOS UVOZ ──
 let _pendingDNImportIdx=null;
 function checkPendingDN(){
-  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  let pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  // Odstranjuj duplikate po DN id
+  const seen=new Set();
+  pending=pending.filter(p=>{const k=p.dn?.id||p.dn?.oznaka;if(!k||seen.has(k))return false;seen.add(k);return true;});
+  localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
   const banner=document.getElementById('pendingDNBanner');
   if(!banner)return;
   if(!pending.length){banner.innerHTML='';return;}
@@ -3178,12 +3182,15 @@ function checkPendingDN(){
     const serije=(dn.serije||[]).filter(r=>r.serija||r.masa);
     const serijaLabel=serije.length?serije.map(r=>r.serija||'?').join(', '):dn.serijaGobe||'—';
     return `<div style="background:rgba(58,107,74,.1);border:1px solid rgba(58,107,74,.3);border-radius:8px;padding:.6rem .8rem;margin:.5rem 0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.78rem">
-      <div>
+      <div style="flex:1;min-width:0">
         <span style="font-weight:600">📦 ${dn.oznaka||'DN'}</span>
         <span style="color:var(--muted);margin-left:.4rem">${dn.vrstaGobe||''} · alc: ${dn.kolAlc||0} · gly: ${dn.kolGly||0}</span><br>
-        <span style="color:var(--muted);font-size:.7rem">Serija: ${serijaLabel}</span>
+        <span style="color:var(--muted);font-size:.7rem">Serija surovine: ${serijaLabel}</span>
       </div>
-      <button onclick="uvozDNPredfill(${i})" style="padding:.4rem .75rem;border-radius:6px;border:none;background:var(--accent-dark);color:#fff;font-family:'Jost',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;flex-shrink:0">Uvozi →</button>
+      <div style="display:flex;gap:.35rem;flex-shrink:0">
+        <button onclick="uvozDNPredfill(${i})" style="padding:.4rem .75rem;border-radius:6px;border:none;background:var(--accent-dark);color:#fff;font-family:'Jost',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer">Uvozi →</button>
+        <button onclick="clearPendingDN(${i})" title="Zavrni" style="padding:.4rem .55rem;border-radius:6px;border:1px solid rgba(139,58,42,.3);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer">✕</button>
+      </div>
     </div>`;
   }).join('');
 }

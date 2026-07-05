@@ -1657,9 +1657,10 @@ function prenesDN(id){
       masaGlicerina:d.masaGlicerina||0,
     }
   };
-  // Shrani v localStorage pod ključem ki ga Zaloga app bere
+  // Shrani v localStorage pod ključem ki ga Zaloga app bere (dedupliciraj po DN id)
   const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
-  pending.push(prenos);
+  const alreadyPending=pending.some(p=>p.dn?.id===d.id);
+  if(!alreadyPending)pending.push(prenos);
   localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
 
   d.status='prenos';

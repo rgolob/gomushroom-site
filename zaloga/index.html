@@ -540,6 +540,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <button class="hbtn2" style="background:var(--ch-malo);color:white;border-color:var(--ch-malo)" onclick="openBatchSheet()">＋ Nova</button>
       </div>
     </div>
+    <div id="pendingDNBanner"></div>
     <div class="search-row">
       <div class="swrap"><span class="sicon">⌕</span><input type="text" id="batchSearch" placeholder="Batch #, produkt…" oninput="batchPage=0;renderBatches()"></div>
       <select class="fpill" id="batchFilterProd" onchange="batchPage=0;renderBatches()"><option value="">Vsi produkti</option></select>
@@ -3165,6 +3166,70 @@ function renderDobavnice(){
   ).join('');
 }
 
+// ── DN PRENOS UVOZ ──
+let _pendingDNImportIdx=null;
+function checkPendingDN(){
+  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  const banner=document.getElementById('pendingDNBanner');
+  if(!banner)return;
+  if(!pending.length){banner.innerHTML='';return;}
+  banner.innerHTML=pending.map((p,i)=>{
+    const dn=p.dn||{};
+    const serije=(dn.serije||[]).filter(r=>r.serija||r.masa);
+    const serijaLabel=serije.length?serije.map(r=>r.serija||'?').join(', '):dn.serijaGobe||'—';
+    return `<div style="background:rgba(58,107,74,.1);border:1px solid rgba(58,107,74,.3);border-radius:8px;padding:.6rem .8rem;margin:.5rem 0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.78rem">
+      <div>
+        <span style="font-weight:600">📦 ${dn.oznaka||'DN'}</span>
+        <span style="color:var(--muted);margin-left:.4rem">${dn.vrstaGobe||''} · alc: ${dn.kolAlc||0} · gly: ${dn.kolGly||0}</span><br>
+        <span style="color:var(--muted);font-size:.7rem">Serija: ${serijaLabel}</span>
+      </div>
+      <button onclick="uvozDNPredfill(${i})" style="padding:.4rem .75rem;border-radius:6px;border:none;background:var(--accent-dark);color:#fff;font-family:'Jost',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;flex-shrink:0">Uvozi →</button>
+    </div>`;
+  }).join('');
+}
+function uvozDNPredfill(idx){
+  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  const p=pending[idx];if(!p)return;
+  const dn=p.dn||{};
+  _pendingDNImportIdx=idx;
+  openBatchSheet();
+  // Pre-fill po kratkem zamiku (da se form odpre)
+  setTimeout(()=>{
+    const serije=(dn.serije||[]).filter(r=>r.serija||r.masa);
+    document.getElementById('bWorkOrder').value=dn.oznaka||'';
+    document.getElementById('bDate').value=dn.datum||todayISO();
+    // Serija gobe 1
+    const s0=serije[0]||{};
+    document.getElementById('bSerijaGobe').value=s0.serija||dn.serijaGobe||'';
+    document.getElementById('bMasaGobe').value=s0.masa||dn.masaGobe||'';
+    // Serija gobe 2
+    const s1=serije[1];
+    if(s1){
+      document.getElementById('bSerijaGobe2').value=s1.serija||'';
+      document.getElementById('bMasaGobe2').value=s1.masa||'';
+      document.getElementById('bSerijaGobe2Row').style.display='';
+    }
+    // Masa glicerina (dn hrani v gramih, Zaloga pričakuje kg)
+    if(dn.masaGlicerina>0)document.getElementById('bMasaGlicerina').value=Math.round(dn.masaGlicerina/1000*1000)/1000;
+    // Količine
+    if(dn.kolAlc>0)document.getElementById('bAlcQty').value=dn.kolAlc;
+    if(dn.kolGly>0)document.getElementById('bGlyQty').value=dn.kolGly;
+    // Poskusi poiskati produkt po imenu gobe
+    if(dn.vrstaGobe){
+      const gobaN=(dn.vrstaGobe||'').toLowerCase();
+      const match=products.find(pr=>(pr.name||'').toLowerCase().includes(gobaN.split(' ')[0]));
+      if(match){document.getElementById('bProductSel').value=match.id;updateSerijaGobeList();}
+    }
+    checkGobaStock();
+  },300);
+}
+function clearPendingDN(idx){
+  let pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  pending.splice(idx,1);
+  localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
+  _pendingDNImportIdx=null;
+  checkPendingDN();
+}
 function switchTab(id,el){
   currentTab=id;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -3191,7 +3256,7 @@ function switchTab(id,el){
   // Show/hide order action bar
   const oab=document.getElementById('orderActionBar');
   if(oab)oab.style.display='none';
-  if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();}
+  if(id==='serije'){populateBatchFilter();renderProductMgmt();renderBatches();checkPendingDN();}
   if(id==='prodaja'){renderSalesSummary();renderSales();}
   if(id==='dokumenti'){renderInvStats();renderInvoices();renderDobavnice();}
   if(id==='porocilo'){initPorocilo();loadExpenses();}
@@ -3534,6 +3599,7 @@ function saveBatch(){
   const savedBatch=editingBatchId?batches.find(x=>x.id===editingBatchId):batches[0];
   if(savedBatch)sbSaveBatch(savedBatch).catch(e=>console.warn('sbSaveBatch failed:',e));
   save();closeSheet('batchOverlay');renderStats();renderInventory();if(currentTab==='serije')renderBatches();if(currentTab==='prodaja')renderOrderRows();
+  if(_pendingDNImportIdx!==null)clearPendingDN(_pendingDNImportIdx);
   toast(editingBatchId?'Serija posodobljena':'Serija dodana');
 }
 

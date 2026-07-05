@@ -376,7 +376,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Etanol v gly (g)</label><input id="dnEtanolGly" type="text" inputmode="decimal" placeholder="0,0" oninput="calcDNBilanca()"></div>
+          <div class="field">
+            <label>Etanol v gly</label>
+            <div style="display:flex;gap:.35rem;align-items:center">
+              <input id="dnEtanolGly" type="text" inputmode="decimal" placeholder="0,0" oninput="calcDNBilanca()" style="flex:1;min-width:0">
+              <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
+                <button id="dnGlyBtnG" onclick="setEtanolGlyEnota('g')" type="button" style="padding:.38rem .55rem;font-size:.72rem;border:none;cursor:pointer;font-family:inherit;background:var(--accent);color:#fff;font-weight:600">g</button>
+                <button id="dnGlyBtnMl" onclick="setEtanolGlyEnota('mL')" type="button" style="padding:.38rem .55rem;font-size:.72rem;border:none;cursor:pointer;font-family:inherit;background:none;color:var(--muted)">mL</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="frow">
@@ -932,14 +941,15 @@ function calcDNBilanca(){
   const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
   const aaeVhod=parseNum(document.getElementById('dnLAAE')?.value);
   const izgube=parseNum(document.getElementById('dnIzgube')?.value||'0');
-  const etanolGlyG=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
+  const etanolGlyRaw=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
   const volPct=parseNum(document.getElementById('dnPctEtOH')?.value)||96.25;
   const el=document.getElementById('dnBilanca');
   if(!aaeVhod){el.style.display='none';return;}
 
   const volT=kom*TINKTURA_VOL_KOM;
   const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
-  const aaeGly=etanolGlyG>0?round(calcAAE(etanolGlyG/etohDensity(volPct),volPct),4):0;
+  const glyVolL=etanolGlyRaw>0?(_etanolGlyEnota==='mL'?etanolGlyRaw/1000:etanolGlyRaw/(etohDensity(volPct)*1000)):0;
+  const aaeGly=glyVolL>0?round(calcAAE(glyVolL,volPct),4):0;
   const razlika=round(aaeVhod-aaeT-aaeGly-izgube,4);
   const ok=Math.abs(razlika)<0.005;
 
@@ -1181,8 +1191,28 @@ function renderDN(){
 
 // ── OPEN DN SHEET ──
 let editingDNId=null;
+let _etanolGlyEnota='g';
+function setEtanolGlyEnota(enota){
+  if(enota===_etanolGlyEnota)return;
+  const inp=document.getElementById('dnEtanolGly');
+  const volPct=parseNum(document.getElementById('dnPctEtOH')?.value)||96.25;
+  const cur=parseNum(inp?.value||'0');
+  if(cur>0){
+    if(enota==='mL') inp.value=round(cur/etohDensity(volPct),1);
+    else             inp.value=round(cur*etohDensity(volPct),1);
+  }
+  _etanolGlyEnota=enota;
+  const isG=enota==='g';
+  const btnG=document.getElementById('dnGlyBtnG');
+  const btnMl=document.getElementById('dnGlyBtnMl');
+  if(btnG){btnG.style.background=isG?'var(--accent)':'none';btnG.style.color=isG?'#fff':'var(--muted)';}
+  if(btnMl){btnMl.style.background=isG?'none':'var(--accent)';btnMl.style.color=isG?'var(--muted)':'#fff';}
+  calcDNBilanca();
+}
 function openDNSheet(id){
   editingDNId=id||null;
+  _etanolGlyEnota='g';
+  setEtanolGlyEnota('g');
   const d=id?workOrders.find(x=>x.id===id):null;
   document.getElementById('dnSheetTitle').textContent=d?'Uredi DN':'Nov delovni nalog';
   document.getElementById('dnOznaka').value=d?.oznaka||nextDNNum();
@@ -1375,7 +1405,7 @@ function saveDN(){
     masaGlicerina:parseNum(document.getElementById('dnMasaGlicerina').value||'0'),
     vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
     lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
-    etanolGly:parseNum(document.getElementById('dnEtanolGly').value||'0'),
+    etanolGly:(()=>{const v=parseNum(document.getElementById('dnEtanolGly').value||'0');return _etanolGlyEnota==='mL'?round(v*etohDensity(volPct),1):v;})(),
     izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
     aaeTinkture:calcAAE(((parseInt(document.getElementById('dnKolAlc').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT),
     volTinkture:((parseInt(document.getElementById('dnKolAlc').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,

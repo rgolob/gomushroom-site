@@ -2358,7 +2358,7 @@ function knjizMaterjaleIzhod(d){
   if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
   if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
   if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
-  const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
+  const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
   if(volGlicerin>0&&bilNaZalogi('glicerin')&&!alreadyBooked('glicerin'))izhodi.push({tip:'glicerin',kolicina:volGlicerin});
 
   izhodi.forEach(iz=>{
@@ -2604,7 +2604,7 @@ async function retroaktivnoPoknjiziVseDN(){
     const vitc=round((d.vitCAlc||0)+(d.vitCGly||0),3);
     const lecitin=round((d.lecitinAlc||0)+(d.lecitinGly||0),3);
 
-    const volGlicerin=round((d.masaGlicerina||0)/(GLICERIN_GOSTOTA*1000),4);
+    const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
     const kandidati=[
       {tip:'steklenicka_bela',kolicina:skupajBela},
       {tip:'steklenicka_crna',kolicina:skupajCrna},

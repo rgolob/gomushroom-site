@@ -3218,9 +3218,32 @@ function uvozDNPredfill(idx){
     }
     // Masa glicerina (dn hrani v gramih, Zaloga pričakuje kg)
     if(dn.masaGlicerina>0)document.getElementById('bMasaGlicerina').value=Math.round(dn.masaGlicerina/1000*1000)/1000;
-    // Količine
+    // Količine alc + gly
     if(dn.kolAlc>0)document.getElementById('bAlcQty').value=dn.kolAlc;
     if(dn.kolGly>0)document.getElementById('bGlyQty').value=dn.kolGly;
+    // Razporeditev: prodaja = skupaj − interno
+    const alcInterno=dn.kolAlcInterno||0;
+    const glyInterno=dn.kolGlyInterno||0;
+    setAlloc('Alc',{prod:Math.max(0,(dn.kolAlc||0)-alcInterno),int:alcInterno});
+    setAlloc('Gly',{prod:Math.max(0,(dn.kolGly||0)-glyInterno),int:glyInterno});
+    // Cene
+    if(dn.cenaAlc>0)document.getElementById('bAlcPriceMalo').value=dn.cenaAlc;
+    if(dn.cenaGly>0)document.getElementById('bGlyPriceMalo').value=dn.cenaGly;
+    // Volumen stekleničke (vedno 50 mL)
+    document.getElementById('bAlcVol').value=50;
+    document.getElementById('bGlyVol').value=50;
+    // Etanol vol% v ALC
+    if(dn.volPct>0)document.getElementById('bAlcEtanol').value=dn.volPct;
+    // Glicerin v ALC (g)
+    if(dn.glicerinAlc>0)document.getElementById('bAlcGlicerin').value=dn.glicerinAlc;
+    // Glicerin v GLY (g) = masaGlicerina
+    if(dn.masaGlicerina>0)document.getElementById('bGlyGlicerin').value=dn.masaGlicerina;
+    // SKU iz vrstaGobe
+    if(dn.vrstaGobe){
+      const sku=suggestSKU(dn.vrstaGobe);
+      document.getElementById('bAlcSku').value=sku.alc;
+      document.getElementById('bGlySku').value=sku.gly;
+    }
     // Poskusi poiskati produkt po imenu gobe
     if(dn.vrstaGobe){
       const gobaN=(dn.vrstaGobe||'').toLowerCase();
@@ -3444,9 +3467,10 @@ function populateProductDropdown(){
 function suggestSKU(name){
   if(!name)return{alc:'',gly:''};
   const n=name.toLowerCase();
-  if(n.includes('reishi')||n.includes('reishi'))return{alc:'RE-ALC-50',gly:'RE-GLY-50'};
-  if(n.includes('rešasti')||n.includes('resasti')||n.includes('lion')||n.includes('griva'))return{alc:'LM-ALC-50',gly:'LM-GLY-50'};
+  if(n.includes('reishi'))return{alc:'RE-ALC-50',gly:'RE-GLY-50'};
+  if(n.includes('rešasti')||n.includes('resasti')||n.includes('bradovec')||n.includes('lion')||n.includes('griva'))return{alc:'LM-ALC-50',gly:'LM-GLY-50'};
   if(n.includes('chaga'))return{alc:'CH-ALC-50',gly:'CH-GLY-50'};
+  if(n.includes('smrek')||n.includes('vršič'))return{alc:'SV-ALC-50',gly:'SV-GLY-50'};
   if(n.includes('ostrigast')||n.includes('oyster'))return{alc:'OS-ALC-50',gly:'OS-GLY-50'};
   if(n.includes('kordiceps')||n.includes('cordyceps'))return{alc:'CO-ALC-50',gly:'CO-GLY-50'};
   // fallback: first 2 letters

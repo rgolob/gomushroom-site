@@ -24,3 +24,32 @@
   to = "/qc/tezke-kovine/"
   status = 301
 
+[[redirects]]
+  from = "/home"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/shop/lions-mane-tincture/"
+  to = "/trgovina/resasti-bradovec-tinktura/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/qc/heavy-metals/"
+  to = "/en/qc/heavy-metals/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/qc/tezke-kovine/PATH/*"
+  to = "/qc/tezke-kovine/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/showroom_*"
+  to = "/404.html"
+  status = 404
+  force = true

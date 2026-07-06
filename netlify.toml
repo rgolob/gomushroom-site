@@ -31,7 +31,7 @@
   force = true
 
 [[redirects]]
-  from = "/shop/lions-mane-tincture/"
+  from = "/en/shop/lions-mane-tincture/"
   to = "/trgovina/resasti-bradovec-tinktura/"
   status = 301
   force = true

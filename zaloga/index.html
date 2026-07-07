@@ -3221,7 +3221,14 @@ function uvozDNPredfill(idx){
     if(dn.vrstaGobe){
       const gobaN=(dn.vrstaGobe||'').toLowerCase();
       const match=products.find(pr=>(pr.name||'').toLowerCase().includes(gobaN.split(' ')[0]));
-      if(match){document.getElementById('bProductSel').value=match.id;updateSerijaGobeList();}
+      if(match){
+        document.getElementById('bProductSel').value=match.id;updateSerijaGobeList();
+        // SKU: iz zadnje serije tega produkta, sicer po fiksni tabeli tipa gobe
+        const lastB=batches.find(b=>b.productId===match.id);
+        const sku=lastB?{alc:lastB.alc?.sku||'',gly:lastB.gly?.sku||''}:suggestSKU(match.name);
+        document.getElementById('bAlcSku').value=sku.alc;
+        document.getElementById('bGlySku').value=sku.gly;
+      }
     }
     checkGobaStock();
   },300);

@@ -3034,13 +3034,13 @@ function productStock(productId){
     allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
     allocIntGly +=bGInt;
   });
-  // sold per purpose: malo+velo+dar+wp+kom = prodaja, int = interno
+  // sold per purpose: malo+velo+wp+kom = prodaja, int+dar = interno (dar se alocira skupaj z int)
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   let komAlc=0,komGly=0;
   saleGroups.forEach(g=>{
     if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
     if(g.channel==='kom'){komAlc+=(l.alc||0);komGly+=(l.gly||0);}
@@ -6381,8 +6381,8 @@ function genReport(type){
             const allocP=bd?.alc?.alloc?.prod||(bd?.alc?.alloc?.malo||0)+(bd?.alc?.alloc?.velo||0)||0;
             const allocPG=bd?.gly?.alloc?.prod||(bd?.gly?.alloc?.malo||0)+(bd?.gly?.alloc?.velo||0)||0;
             // sold prod from this batch
-            const soldP=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-            const soldPG=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+            const soldP=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+            const soldPG=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
             bAlcShow=Math.max(0,allocP-soldP); bGlyShow=Math.max(0,allocPG-soldPG);
           } else {
             const allocI=(bd?.alc?.alloc?.int||0)+(bd?.alc?.alloc?.dar||0);
@@ -6500,8 +6500,8 @@ function genReport(type){
       const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
       const soldAlc=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);

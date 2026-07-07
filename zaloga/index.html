@@ -3451,8 +3451,6 @@ function suggestSKU(name){
   if(n.includes('rešasti')||n.includes('resasti')||n.includes('bradovec')||n.includes('lion')||n.includes('griva'))return{alc:'LM-ALC-50',gly:'LM-GLY-50'};
   if(n.includes('chaga'))return{alc:'CH-ALC-50',gly:'CH-GLY-50'};
   if(n.includes('smrek')||n.includes('vršič'))return{alc:'SV-ALC-50',gly:'SV-GLY-50'};
-  if(n.includes('ostrigast')||n.includes('oyster'))return{alc:'OS-ALC-50',gly:'OS-GLY-50'};
-  if(n.includes('kordiceps')||n.includes('cordyceps'))return{alc:'CO-ALC-50',gly:'CO-GLY-50'};
   // fallback: first 2 letters
   const prefix=name.replace(/[^a-zA-ZčšžČŠŽ]/g,'').slice(0,2).toUpperCase();
   return{alc:prefix+'-ALC-50',gly:prefix+'-GLY-50'};

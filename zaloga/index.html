@@ -991,10 +991,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <div class="field"><label>Cena malo (€)</label><input type="text" id="bAlcPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
             <div class="field"><label>Volumen (ml)</label><input type="number" id="bAlcVol" placeholder="50" inputmode="numeric"></div>
           </div>
-          <div class="frow">
-            <div class="field"><label>Etanol v produktu (%)</label><input type="number" id="bAlcEtanol" min="0" max="100" step="0.1" placeholder="40" inputmode="decimal"></div>
-            <div class="field"><label>Glicerin dodan (g)</label><input type="number" id="bAlcGlicerin" min="0" step="1" placeholder="" inputmode="decimal"></div>
-          </div>
           <div class="field"><label>Razporeditev po namenu (kom.)</label>
             <div class="ch-alloc-grid">
               <div class="ch-alloc-row"><span class="ch-alloc-label malo">🛒 Prodaja</span><input type="number" id="bAlcProd" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Alc')"></div>
@@ -1016,10 +1012,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="frow">
             <div class="field"><label>Cena malo (€)</label><input type="text" id="bGlyPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
             <div class="field"><label>Volumen (ml)</label><input type="number" id="bGlyVol" placeholder="50" inputmode="numeric"></div>
-          </div>
-          <div class="frow">
-            <div class="field"><label>Etanol v produktu (%)</label><input type="number" id="bGlyEtanol" min="0" max="100" step="0.1" placeholder="10" inputmode="decimal"></div>
-            <div class="field"><label>Glicerin dodan (g)</label><input type="number" id="bGlyGlicerin" min="0" step="1" placeholder="" inputmode="decimal"></div>
           </div>
           <div class="field"><label>Razporeditev po namenu (kom.)</label>
             <div class="ch-alloc-grid">
@@ -1711,12 +1703,10 @@ function sbBatchToApp(b){
     safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
     alc:{
       sku:b.alc_sku, qty:b.alc_qty||0, priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
-      etanol:b.alc_etanol??null, glicerin:b.alc_glicerin??null,
       alloc:{prod:b.alc_alloc_prod||0, int:b.alc_alloc_int||0, malo:0, velo:0, dar:0}
     },
     gly:{
       sku:b.gly_sku, qty:b.gly_qty||0, priceMalo:b.gly_price_malo||0, vol:b.gly_vol,
-      etanol:b.gly_etanol??null, glicerin:b.gly_glicerin??null,
       alloc:{prod:b.gly_alloc_prod||0, int:b.gly_alloc_int||0, malo:0, velo:0, dar:0}
     },
   };
@@ -1731,10 +1721,10 @@ function appBatchToSb(b){
     serija_gobe2:b.serijaGobe2||null, masa_gobe2:b.masaGobe2||null,
     safety_alc:b.safetyAlc||0, safety_gly:b.safetyGly||0,
     alc_sku:b.alc?.sku||null, alc_qty:b.alc?.qty||0, alc_price_malo:b.alc?.priceMalo||0,
-    alc_vol:b.alc?.vol||null, alc_etanol:b.alc?.etanol??null, alc_glicerin:b.alc?.glicerin??null,
+    alc_vol:b.alc?.vol||null,
     alc_alloc_prod:b.alc?.alloc?.prod||0, alc_alloc_int:b.alc?.alloc?.int||0,
     gly_sku:b.gly?.sku||null, gly_qty:b.gly?.qty||0, gly_price_malo:b.gly?.priceMalo||0,
-    gly_vol:b.gly?.vol||null, gly_etanol:b.gly?.etanol??null, gly_glicerin:b.gly?.glicerin??null,
+    gly_vol:b.gly?.vol||null,
     gly_alloc_prod:b.gly?.alloc?.prod||0, gly_alloc_int:b.gly?.alloc?.int||0,
   };
 }
@@ -3564,13 +3554,11 @@ function openBatchSheet(id=null){
       lockWarn.style.display='none';
     }
     document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=b.alc?.qty||'';document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
-    document.getElementById('bAlcEtanol').value=b.alc?.etanol??'';document.getElementById('bAlcGlicerin').value=b.alc?.glicerin??'';
     document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=b.gly?.qty||'';document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
-    document.getElementById('bGlyEtanol').value=b.gly?.etanol??'';document.getElementById('bGlyGlicerin').value=b.gly?.glicerin??'';
     setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
-    ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bSerijaGobe2','bMasaGobe2','bMasaGlicerina','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bAlcEtanol','bAlcGlicerin','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bGlyEtanol','bGlyGlicerin','bNewProduct'].forEach(i=>document.getElementById(i).value='');
+    ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bSerijaGobe2','bMasaGobe2','bMasaGlicerina','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('bSerijaGobe2Row').style.display='none';
     document.getElementById('bGobaStockWarn').style.display='none';
     document.getElementById('bBatch').removeAttribute('readonly');
@@ -3605,8 +3593,8 @@ function saveBatch(){
     masaGobe2:parseFloat(document.getElementById('bMasaGobe2').value)||0,
     masaGlicerina:parseFloat(document.getElementById('bMasaGlicerina').value)||0,
     safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
-    alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,etanol:parseFloat(document.getElementById('bAlcEtanol').value)||null,glicerin:parseFloat(document.getElementById('bAlcGlicerin').value)||null,alloc:alcAlloc},
-    gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,etanol:parseFloat(document.getElementById('bGlyEtanol').value)||null,glicerin:parseFloat(document.getElementById('bGlyGlicerin').value)||null,alloc:glyAlloc},
+    alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
+    gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
   };
   if(editingBatchId){const i=batches.findIndex(x=>x.id===editingBatchId);if(i!==-1)batches[i]={...batches[i],...bData};}
   else batches.unshift({id:uid(),...bData});

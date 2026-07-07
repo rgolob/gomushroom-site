@@ -3217,9 +3217,16 @@ function uvozDNPredfill(idx){
       document.getElementById('bMasaGobe2').value=s1.masa||'';
       document.getElementById('bSerijaGobe2Row').style.display='';
     }
-    // Količine alc + gly
-    if(dn.kolAlc>0)document.getElementById('bAlcQty').value=dn.kolAlc;
-    if(dn.kolGly>0)document.getElementById('bGlyQty').value=dn.kolGly;
+    // Količine alc + gly (skupaj = prodaja + interno)
+    const alcInterno=dn.kolAlcInterno||0;
+    const glyInterno=dn.kolGlyInterno||0;
+    const alcSkupaj=(dn.kolAlc||0)+alcInterno;
+    const glySkupaj=(dn.kolGly||0)+glyInterno;
+    if(alcSkupaj>0)document.getElementById('bAlcQty').value=alcSkupaj;
+    if(glySkupaj>0)document.getElementById('bGlyQty').value=glySkupaj;
+    // Razporeditev prodaja/interno iz DN
+    if(alcSkupaj>0)setAlloc('Alc',{prod:dn.kolAlc||0,int:alcInterno});
+    if(glySkupaj>0)setAlloc('Gly',{prod:dn.kolGly||0,int:glyInterno});
     // Poskusi poiskati produkt po imenu gobe
     if(dn.vrstaGobe){
       const gobaN=(dn.vrstaGobe||'').toLowerCase();

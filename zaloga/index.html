@@ -3034,13 +3034,13 @@ function productStock(productId){
     allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
     allocIntGly +=bGInt;
   });
-  // sold per purpose: malo+velo+dar+wp+kom = prodaja, int = interno
+  // sold per purpose: malo+velo+wp+kom = prodaja, int+dar = interno (dar se alocira skupaj z int)
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   let komAlc=0,komGly=0;
   saleGroups.forEach(g=>{
     if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom';
+    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom';
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
     if(g.channel==='kom'){komAlc+=(l.alc||0);komGly+=(l.gly||0);}
@@ -3217,34 +3217,16 @@ function uvozDNPredfill(idx){
       document.getElementById('bMasaGobe2').value=s1.masa||'';
       document.getElementById('bSerijaGobe2Row').style.display='';
     }
-    // Masa glicerina (dn hrani v gramih, Zaloga pričakuje kg)
-    if(dn.masaGlicerina>0)document.getElementById('bMasaGlicerina').value=Math.round(dn.masaGlicerina/1000*1000)/1000;
-    // Količine alc + gly
-    if(dn.kolAlc>0)document.getElementById('bAlcQty').value=dn.kolAlc;
-    if(dn.kolGly>0)document.getElementById('bGlyQty').value=dn.kolGly;
-    // Razporeditev: prodaja = skupaj − interno
+    // Količine alc + gly (skupaj = prodaja + interno)
     const alcInterno=dn.kolAlcInterno||0;
     const glyInterno=dn.kolGlyInterno||0;
-    setAlloc('Alc',{prod:Math.max(0,(dn.kolAlc||0)-alcInterno),int:alcInterno});
-    setAlloc('Gly',{prod:Math.max(0,(dn.kolGly||0)-glyInterno),int:glyInterno});
-    // Cene
-    if(dn.cenaAlc>0)document.getElementById('bAlcPriceMalo').value=dn.cenaAlc;
-    if(dn.cenaGly>0)document.getElementById('bGlyPriceMalo').value=dn.cenaGly;
-    // Volumen stekleničke (vedno 50 mL)
-    document.getElementById('bAlcVol').value=50;
-    document.getElementById('bGlyVol').value=50;
-    // Etanol vol% v ALC
-    if(dn.volPct>0)document.getElementById('bAlcEtanol').value=dn.volPct;
-    // Glicerin v ALC (g)
-    if(dn.glicerinAlc>0)document.getElementById('bAlcGlicerin').value=dn.glicerinAlc;
-    // Glicerin v GLY (g) = masaGlicerina
-    if(dn.masaGlicerina>0)document.getElementById('bGlyGlicerin').value=dn.masaGlicerina;
-    // SKU iz vrstaGobe
-    if(dn.vrstaGobe){
-      const sku=suggestSKU(dn.vrstaGobe);
-      document.getElementById('bAlcSku').value=sku.alc;
-      document.getElementById('bGlySku').value=sku.gly;
-    }
+    const alcSkupaj=(dn.kolAlc||0)+alcInterno;
+    const glySkupaj=(dn.kolGly||0)+glyInterno;
+    if(alcSkupaj>0)document.getElementById('bAlcQty').value=alcSkupaj;
+    if(glySkupaj>0)document.getElementById('bGlyQty').value=glySkupaj;
+    // Razporeditev prodaja/interno iz DN
+    if(alcSkupaj>0)setAlloc('Alc',{prod:dn.kolAlc||0,int:alcInterno});
+    if(glySkupaj>0)setAlloc('Gly',{prod:dn.kolGly||0,int:glyInterno});
     // Poskusi poiskati produkt po imenu gobe
     if(dn.vrstaGobe){
       const gobaN=(dn.vrstaGobe||'').toLowerCase();
@@ -6399,8 +6381,8 @@ function genReport(type){
             const allocP=bd?.alc?.alloc?.prod||(bd?.alc?.alloc?.malo||0)+(bd?.alc?.alloc?.velo||0)||0;
             const allocPG=bd?.gly?.alloc?.prod||(bd?.gly?.alloc?.malo||0)+(bd?.gly?.alloc?.velo||0)||0;
             // sold prod from this batch
-            const soldP=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-            const soldPG=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+            const soldP=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+            const soldPG=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
             bAlcShow=Math.max(0,allocP-soldP); bGlyShow=Math.max(0,allocPG-soldPG);
           } else {
             const allocI=(bd?.alc?.alloc?.int||0)+(bd?.alc?.alloc?.dar||0);
@@ -6518,8 +6500,8 @@ function genReport(type){
       const activeSales=saleGroups.filter(g=>g.status!=='stornirano');
       const soldAlc=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
       const soldGly=activeSales.reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
-      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+      const soldProdAlc=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+      const soldProdGly=activeSales.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===b.productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const soldIntAlc=soldAlc-soldProdAlc;
       const soldIntGly=soldGly-soldProdGly;
       const remAlc=Math.max(0,(b.alc?.qty||0)-soldAlc);

@@ -5035,7 +5035,10 @@ async function deleteInvoice(id){
     const ni=_narocila.findIndex(n=>n.id===narocilo.id);
     if(ni>=0)_narocila[ni].invoice_id=null;
   }
-  if(inv?.groupId){const g=saleGroups.find(x=>x.id===inv.groupId);if(g){g.invoiceNum=null;g.invoiceId=null;}}
+  if(inv?.groupId){
+    const g=saleGroups.find(x=>x.id===inv.groupId);
+    if(g){g.invoiceNum=null;g.invoiceId=null;sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup (delete inv) failed:',e));}
+  }
   invoices=invoices.filter(x=>x.id!==id);
   save();renderInvStats();renderInvoices();renderSales();renderNarocila();toast('Račun izbrisan');
 }

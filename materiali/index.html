@@ -1514,6 +1514,7 @@ function openDNDetail(id){
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
       ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">${matKnjizen?'↻ Posodobi materiale izhod':'📦 Knjiži materiale izhod'}</button>`:''}
       ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
+      ${d.status==='prenos'?`<button class="bsave" style="background:#6b7a3a" onclick="posljiGobaPodatke('${d.id}')">🍄 Pošlji serijo gobe v Zalogo</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
 
@@ -1668,6 +1669,29 @@ function prenesDN(id){
   closeSheet('dnDetailOverlay');
   renderDNStats();renderDN();
   toast('→ DN prenesen v Zaloga app · odpri Zaloga za uvoz');
+}
+
+function posljiGobaPodatke(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  if(!confirm(`Pošlji podatke o seriji in masi gobe za DN ${d.oznaka} v Zaloga app?\n\nV Zalogi bosta posodobljeni samo polji "Serija gobe" in "Masa gobe" na ujemajoči seriji — ostali podatki ostanejo nespremenjeni.`))return;
+  const prenos={
+    type:'dn_goba_update',
+    version:1,
+    dn:{
+      id:d.id,
+      oznaka:d.oznaka,
+      serijaAlc:d.serijaAlc,
+      masaGobe:d.masaGobe,
+      serijaGobe:d.serijaGobe,
+      serije:d.serije||[],
+    }
+  };
+  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  const alreadyPending=pending.some(p=>p.dn?.id===d.id&&p.type==='dn_goba_update');
+  if(!alreadyPending)pending.push(prenos);
+  localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
+  closeSheet('dnDetailOverlay');
+  toast('🍄 Podatki o gobi poslani v Zaloga app · odpri Zaloga za posodobitev');
 }
 
 async function deleteDN(id){

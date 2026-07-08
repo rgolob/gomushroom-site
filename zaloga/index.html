@@ -8974,6 +8974,7 @@ Rok`;
     if(r.ok){
       inv.emailSent=new Date().toISOString();
       save();renderInvoices();
+      sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice (emailSent) failed:',e));
       if(btn){btn.textContent='📧 ✓';btn.disabled=false;}
       toast(`✓ Email poslan → ${email}`);
     } else {

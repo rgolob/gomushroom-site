@@ -3152,25 +3152,26 @@ function renderDobavnice(){
 let _pendingDNImportIdx=null;
 function checkPendingDN(){
   let pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
-  // Odstranjuj duplikate po DN id
+  // Odstranjuj duplikate po DN id + tipu (dn_prenos in dn_goba_update lahko soobstajata za isti DN)
   const seen=new Set();
-  pending=pending.filter(p=>{const k=p.dn?.id||p.dn?.oznaka;if(!k||seen.has(k))return false;seen.add(k);return true;});
+  pending=pending.filter(p=>{const k=(p.dn?.id||p.dn?.oznaka)+'|'+(p.type||'');if(!p.dn?.id&&!p.dn?.oznaka||seen.has(k))return false;seen.add(k);return true;});
   localStorage.setItem('gm_dn_pending_prenos',JSON.stringify(pending));
   const banner=document.getElementById('pendingDNBanner');
   if(!banner)return;
   if(!pending.length){banner.innerHTML='';return;}
   banner.innerHTML=pending.map((p,i)=>{
     const dn=p.dn||{};
+    const isGobaUpdate=p.type==='dn_goba_update';
     const serije=(dn.serije||[]).filter(r=>r.serija||r.masa);
     const serijaLabel=serije.length?serije.map(r=>r.serija||'?').join(', '):dn.serijaGobe||'—';
     return `<div style="background:rgba(58,107,74,.1);border:1px solid rgba(58,107,74,.3);border-radius:8px;padding:.6rem .8rem;margin:.5rem 0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.78rem">
       <div style="flex:1;min-width:0">
-        <span style="font-weight:600">📦 ${dn.oznaka||'DN'}</span>
-        <span style="color:var(--muted);margin-left:.4rem">${dn.vrstaGobe||''} · alc: ${dn.kolAlc||0} · gly: ${dn.kolGly||0}</span><br>
+        <span style="font-weight:600">${isGobaUpdate?'🍄':'📦'} ${dn.oznaka||'DN'}</span>
+        ${isGobaUpdate?'':`<span style="color:var(--muted);margin-left:.4rem">${dn.vrstaGobe||''} · alc: ${dn.kolAlc||0} · gly: ${dn.kolGly||0}</span>`}<br>
         <span style="color:var(--muted);font-size:.7rem">Serija surovine: ${serijaLabel}</span>
       </div>
       <div style="display:flex;gap:.35rem;flex-shrink:0">
-        <button onclick="uvozDNPredfill(${i})" style="padding:.4rem .75rem;border-radius:6px;border:none;background:var(--accent-dark);color:#fff;font-family:'Jost',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer">Uvozi →</button>
+        <button onclick="${isGobaUpdate?`uvozGobaUpdate(${i})`:`uvozDNPredfill(${i})`}" style="padding:.4rem .75rem;border-radius:6px;border:none;background:var(--accent-dark);color:#fff;font-family:'Jost',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer">${isGobaUpdate?'Posodobi serijo gobe':'Uvozi →'}</button>
         <button onclick="clearPendingDN(${i})" title="Zavrni" style="padding:.4rem .55rem;border-radius:6px;border:1px solid rgba(139,58,42,.3);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer">✕</button>
       </div>
     </div>`;
@@ -3214,6 +3215,22 @@ function uvozDNPredfill(idx){
         document.getElementById('bGlySku').value=sku.gly;
       }
     }
+  },300);
+}
+function uvozGobaUpdate(idx){
+  const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');
+  const p=pending[idx];if(!p)return;
+  const dn=p.dn||{};
+  // Poišči obstoječo serijo: najprej po batch številki, sicer po delovnem nalogu
+  let match=dn.serijaAlc?batches.find(b=>b.batchNum===dn.serijaAlc):null;
+  if(!match&&dn.oznaka)match=batches.find(b=>b.workOrder===dn.oznaka);
+  if(!match){toast(`⚠ Serija "${dn.serijaAlc||dn.oznaka||'?'}" ni najdena v Zalogi`);return;}
+  _pendingDNImportIdx=idx;
+  openBatchSheet(match.id);
+  setTimeout(()=>{
+    const serije=(dn.serije||[]).filter(r=>r.serija||r.masa);
+    document.getElementById('bSerijaGobe').value=serije.length?serije.map(r=>r.serija||'?').join(', '):dn.serijaGobe||'';
+    document.getElementById('bMasaGobe').value=serije.length?serije.reduce((s,r)=>s+(parseFloat(r.masa)||0),0):dn.masaGobe||'';
   },300);
 }
 function clearPendingDN(idx){

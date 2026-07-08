@@ -4827,8 +4827,12 @@ function saveEditGroup(){
   g.extDelivery=document.getElementById('egExtDelivery').value.trim();
   g.note=document.getElementById('egNote').value.trim();
   // sync to invoice
-  if(g.invoiceId){const inv=invoices.find(x=>x.id===g.invoiceId);if(inv){inv.buyer=g.buyer;inv.date=g.date;inv.extInvoice=g.extInvoice;inv.extDelivery=g.extDelivery;}}
-  save();closeSheet('editGroupOverlay');renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Zapis posodobljen');
+  let inv=null;
+  if(g.invoiceId){inv=invoices.find(x=>x.id===g.invoiceId);if(inv){inv.buyer=g.buyer;inv.date=g.date;inv.extInvoice=g.extInvoice;inv.extDelivery=g.extDelivery;inv.email=g.email;inv.phone=g.phone;inv.street=g.street;inv.post=g.post;inv.address=g.address;}}
+  save();
+  sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup (edit) failed:',e));
+  if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice (edit) failed:',e));
+  closeSheet('editGroupOverlay');renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Zapis posodobljen');
 }
 async function deleteSaleGroup(id){
   const ok=await showConfirm('Izbriši to prodajo?\nZaloga se ne bo samodejno vrnila.','Izbriši');if(!ok)return;

@@ -6602,9 +6602,8 @@ function genReport(type){
 
     const prodList=filterProd?products.filter(p=>p.id===filterProd):products;
 
-    // Prod kanali (vključno s komisijo) — podaritve (dar) se ne štejejo za trošarino, ker gre
-    // za interno alocirano zalogo, ne za promet s tretjimi osebami
-    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom')&&g.status!=='stornirano';
+    // Prod kanali (vključno s komisijo)
+    const isProdChannel=g=>(g.channel==='malo'||g.channel==='velo'||g.channel==='dar'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom')&&g.status!=='stornirano';
     const salesInPeriod=saleGroups.filter(g=>isProdChannel(g)&&g.date>=od&&g.date<=doVal);
     const salesUntilEnd=saleGroups.filter(g=>isProdChannel(g)&&g.date<=doVal);
 
@@ -6662,7 +6661,7 @@ function genReport(type){
       const izhodiRows=[];
       salesInPeriod.sort((a,b)=>a.date.localeCompare(b.date)).forEach(g=>{
         const l=g.lines?.find(l=>l.productId===p.id||l.productName===p.name);if(!l||!(l.alc||0))return;
-        if(g.channel==='malo'||g.channel==='wp')totalProdanoFO+=(l.alc||0);
+        if(g.channel==='malo'||g.channel==='wp'||g.channel==='dar')totalProdanoFO+=(l.alc||0);
         else totalProdanoPO+=(l.alc||0);
         grandProdano+=(l.alc||0);
         izhodiRows.push(`<tr>
@@ -6694,7 +6693,7 @@ function genReport(type){
       const karticaRows=[];
       let tekocaZaloga=0;
 
-      const RETAIL_CH=new Set(['malo','wp']);
+      const RETAIL_CH=new Set(['malo','wp','dar']);
       const B2B_CH=new Set(['velo','kom']);
       const events=[];
 

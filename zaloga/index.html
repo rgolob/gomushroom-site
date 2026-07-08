@@ -4786,12 +4786,20 @@ save();renderStats();renderInventory();renderSales();
 
 function issueInvoiceForGroup(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;
+  if(g.invoiceNum){toast('⚠ Račun že obstaja: '+g.invoiceNum);return;}
   const invoiceNum=nextInvNum(g.channel,g.date);
   const invoiceId=uid();
   g.invoiceNum=invoiceNum;g.invoiceId=invoiceId;
   const invStatus=(g.channel==='stripe')?'placano':(g.channel==='wp'||g.channel==='malo'||g.channel==='velo')?'caka':'placano';
-  invoices.unshift({id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,date:g.date,total:g.total,groupId:g.id,extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus});
-  save();renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
+  const inv={id:invoiceId,num:invoiceNum,channel:g.channel,buyer:g.buyer,email:g.email,phone:g.phone,
+    address:g.address,street:g.street,post:g.post,date:g.date,total:g.total,groupId:g.id,
+    extInvoice:g.extInvoice,extDelivery:g.extDelivery,invStatus};
+  invoices.unshift(inv);
+  save();
+  sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup (issue) failed:',e));
+  sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice (issue) failed:',e));
+  sbSaveCounters().catch(e=>console.warn('sbSaveCounters (issue) failed:',e));
+  renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
   printInvoice(g);toast('Račun izdan: '+invoiceNum);
 }
 

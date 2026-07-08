@@ -6808,11 +6808,14 @@ function genReport(type){
         </div>`;
     });
 
-    const grandLAAE=round(grandNarejeno*0.050*0.30,3);
+    const grandHLAAE=round(grandNarejeno*0.050*0.30/100,5);
+    const trosarinaRate=getZS('trosarinaEUR')||1412.40;
+    const grandTrosarina=round(grandHLAAE*trosarinaRate,2);
     html=`<div class="summary-box">
-      <div class="s-item"><div class="s-label">Mesec</div><div class="s-val">${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}</div></div>
+      <div class="s-item"><div class="s-label">Obdobje</div><div class="s-val">${od.split('-').reverse().join('.')} – ${doVal.split('-').reverse().join('.')}</div></div>
       <div class="s-item"><div class="s-label">Narejeno</div><div class="s-val" style="color:#1a4a2a">+${grandNarejeno} kom.</div></div>
-      <div class="s-item"><div class="s-label">Etanol v narejenem</div><div class="s-val" style="color:#5a7a6a">${grandLAAE} L AAE</div></div>
+      <div class="s-item"><div class="s-label">Etanol v narejenem</div><div class="s-val" style="color:#5a7a6a">${grandHLAAE} hL AAE</div></div>
+      <div class="s-item"><div class="s-label">Ocenjena trošarina</div><div class="s-val" style="color:#af8455">${grandTrosarina.toFixed(2)} €</div></div>
       <div class="s-item"><div class="s-label">Prodano</div><div class="s-val" style="color:#8b3a2a">−${grandProdano} kom.</div></div>
       <div class="s-item"><div class="s-label">Zaloga ${doVal.split('-').reverse().join('.')}</div><div class="s-val" style="color:#1a4a2a">${grandZaloga} kom.</div></div>
     </div>

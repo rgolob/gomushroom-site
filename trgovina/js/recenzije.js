@@ -77,15 +77,15 @@ function buildHTML(){
   </details>
 
   <!-- Instagram -->
-  <div class="gmr-card gmr-ig-card">
-    <div class="gmr-card-hdr">
+  <details class="gmr-card gmr-ig-card gmr-details">
+    <summary class="gmr-details-sum">
       <span class="gmr-card-icon">📸</span>
-      <div>
-        <h3 class="gmr-h3">Deli na Instagramu — zasluži dodaten popust</h3>
-        <p class="gmr-sub">Sodeluj z nami na @gomushroom.si in prejmi kupon.</p>
-      </div>
-    </div>
-    <div class="gmr-ig-actions">
+      <span>
+        <strong class="gmr-h3">Deli na Instagramu</strong>
+        <span class="gmr-sub"> — zasluži dodaten popust, sodeluj z nami na @gomushroom.si</span>
+      </span>
+    </summary>
+    <div class="gmr-ig-actions" style="margin-top:1.1rem">
       ${igActions().map(a=>`
       <div class="gmr-ig-row">
         <div class="gmr-ig-info">
@@ -111,7 +111,7 @@ function buildHTML(){
       </div>
       <div id="gmr-ig-msg" class="gmr-msg"></div>
     </form>
-  </div>
+  </details>
 </div>`;
 }
 
@@ -228,21 +228,7 @@ async function loadReviews(slug){
   }catch{}
 }
 
-function renderRatingBadge(rows){
-  const badge=document.getElementById('gm-rating-badge');
-  if(!badge)return;
-  if(!rows.length){badge.innerHTML='';return;}
-  const avg=(rows.reduce((s,r)=>s+(r.rating||0),0)/rows.length).toFixed(1);
-  const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
-  badge.innerHTML=`<a class="gmr-badge" href="#gm-recenzije">
-    <span class="gmr-badge-stars">${stars(avg)}</span>
-    <span class="gmr-badge-avg">${avg}</span>
-    <span class="gmr-badge-count">· ${rows.length} ${rows.length===1?'ocena':rows.length<5?'ocene':'ocen'}</span>
-  </a>`;
-}
-
 function renderReviews(rows){
-  renderRatingBadge(rows);
   const el=document.getElementById('gmr-list');
   if(!el)return;
   if(!rows.length){
@@ -316,11 +302,6 @@ function injectStyles(){
 .gmr-ig-btn:hover{opacity:.85}
 .gmr-ig-selected{font-size:.88rem;font-weight:600;color:var(--brand,#2b0a39);margin:0 0 .9rem;padding:.6rem .8rem;background:#f0e8d8;border-radius:7px}
 .gmr-ig-form{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--line,#e6e9e6)}
-.gmr-badge{display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;font-size:.85rem;margin:.35rem 0}
-.gmr-badge-stars{color:#b18556;letter-spacing:.03em}
-.gmr-badge-avg{font-weight:700;color:var(--brand,#2b0a39)}
-.gmr-badge-count{color:var(--muted,#6b726d)}
-.gmr-badge:hover .gmr-badge-count{text-decoration:underline}
 .gmr-summary{display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;background:var(--card,#fff);border:1px solid var(--line,#e6e9e6);border-radius:10px;margin-bottom:1rem}
 .gmr-avg{font-size:2.2rem;font-weight:700;color:var(--brand,#2b0a39);line-height:1}
 .gmr-avg-stars{font-size:1.2rem;color:#b18556;letter-spacing:.05em}

@@ -1,4 +1,4 @@
-// GoMushroom — Sorodni izdelki (naključni izdelki iz trgovine na dnu produktne strani)
+// GoMushroom — Sorodni izdelki: vrtiljak naključnih izdelkov na dnu produktne strani
 (function(){
 'use strict';
 
@@ -27,7 +27,19 @@ function injectStyles() {
   s.id = 'gmrp-styles';
   s.textContent = `
 .gmrp-wrap{width:100%;padding:1rem 0 2rem;box-sizing:border-box}
-.gmrp-h2{font-size:1.45rem;font-weight:700;color:var(--brand,#2b0a39);margin:0 0 1.5rem;letter-spacing:var(--ls-h2,-.022em)}
+.gmrp-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}
+.gmrp-h2{font-size:1.45rem;font-weight:700;color:var(--brand,#2b0a39);margin:0;letter-spacing:var(--ls-h2,-.022em)}
+.gmrp-nav{display:flex;gap:.5rem}
+.gmrp-nav-btn{width:2.4rem;height:2.4rem;border-radius:50%;border:1px solid rgba(43,11,57,.15);background:#fff;color:var(--brand,#2b0a39);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.gmrp-nav-btn:hover{background:rgba(43,11,57,.05)}
+.gmrp-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:.5rem;-webkit-overflow-scrolling:touch}
+.gmrp-track::-webkit-scrollbar{display:none}
+.gmrp-card{flex:0 0 auto;width:220px;scroll-snap-align:start;text-decoration:none;color:inherit;display:block}
+.gmrp-card-img{aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f5f0e8;margin-bottom:.7rem}
+.gmrp-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.gmrp-card-name{font-size:.95rem;font-weight:700;color:var(--brand,#2b0a39);margin:0 0 .3rem}
+.gmrp-card-price{font-size:.88rem}
+@media (max-width:640px){.gmrp-card{width:160px}}
 `;
   document.head.appendChild(s);
 }
@@ -47,12 +59,23 @@ async function init() {
     const variants = await varRes.json();
 
     const others = products.filter(p => p.slug !== currentSlug && !p.is_bundle);
-    const picked = shuffle(others).slice(0, 3);
+    const picked = shuffle(others);
     if (!picked.length) return;
 
     injectStyles();
     mount.innerHTML = buildHTML(picked, variants);
+    bindNav(mount);
   } catch (e) { console.warn('Sorodni izdelki napaka:', e); }
+}
+
+function bindNav(mount) {
+  const track = mount.querySelector('.gmrp-track');
+  const prev = mount.querySelector('[data-gmrp-prev]');
+  const next = mount.querySelector('[data-gmrp-next]');
+  if (!track || !prev || !next) return;
+  const step = () => (track.querySelector('.gmrp-card')?.offsetWidth || 220) + 20;
+  prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+  next.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
 }
 
 function buildHTML(picked, variants) {
@@ -68,40 +91,28 @@ function buildHTML(picked, variants) {
       ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
       : defaultVariant.price_malo;
     const priceHtml = defaultVariant.discount_pct > 0
-      ? `<s style="color:#9a8f82;font-size:.9rem;font-weight:400">${formatPrice(defaultVariant.price_malo)}</s> <strong style="color:#2b0b39">${formatPrice(discPrice)}</strong>`
+      ? `<s style="color:#9a8f82;font-weight:400">${formatPrice(defaultVariant.price_malo)}</s> <strong style="color:#2b0b39">${formatPrice(discPrice)}</strong>`
       : `<strong style="color:#2b0b39">${formatPrice(defaultVariant.price_malo)}</strong>`;
 
     return `
-      <article class="shop-product" data-product-card="${p.id}">
-        <a class="shop-product-img-link" href="${detailUrl}">
-          <div class="shop-product-image">
-            <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
-          </div>
-        </a>
-        <div class="shop-product-content">
-          <a class="shop-product-text-link" href="${detailUrl}">
-            ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
-            <h2>${p.name}</h2>
-          </a>
-          <div class="shop-product-foot">
-            <div class="shop-product-price-row">
-              <div>${priceHtml}</div>
-            </div>
-            <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
-              data-slug="${p.slug}" data-name="${p.name}"
-              data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
-              data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
-              data-image="${p.image || ''}">
-              + Dodaj
-            </button>
-          </div>
+      <a class="gmrp-card" href="${detailUrl}">
+        <div class="gmrp-card-img">
+          <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
         </div>
-      </article>`;
+        <p class="gmrp-card-name">${p.name}</p>
+        <div class="gmrp-card-price">${priceHtml}</div>
+      </a>`;
   }).join('');
 
   return `<div class="gmrp-wrap">
-    <h2 class="gmrp-h2">Morda vas zanima tudi</h2>
-    <div class="shop-grid">${cards}</div>
+    <div class="gmrp-head">
+      <h2 class="gmrp-h2">Morda vas zanima tudi</h2>
+      <div class="gmrp-nav">
+        <button class="gmrp-nav-btn" type="button" data-gmrp-prev aria-label="Prejšnji">‹</button>
+        <button class="gmrp-nav-btn" type="button" data-gmrp-next aria-label="Naslednji">›</button>
+      </div>
+    </div>
+    <div class="gmrp-track">${cards}</div>
   </div>`;
 }
 

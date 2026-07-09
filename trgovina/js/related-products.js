@@ -56,7 +56,7 @@ function injectStyles() {
 .gmrp-card-rating{font-size:.8rem;color:#b18556;margin:0 0 .3rem;display:flex;align-items:center;gap:.3rem}
 .gmrp-card-rating-avg{color:var(--muted,#6b726d);font-weight:600}
 .gmrp-card-price{font-size:.88rem}
-@media (max-width:640px){.gmrp-card{width:160px}}
+@media (max-width:640px){.gmrp-card{width:calc(50% - 10px)}}
 `;
   document.head.appendChild(s);
 }

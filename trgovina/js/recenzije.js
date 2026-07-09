@@ -77,15 +77,15 @@ function buildHTML(){
   </details>
 
   <!-- Instagram -->
-  <div class="gmr-card gmr-ig-card">
-    <div class="gmr-card-hdr">
+  <details class="gmr-card gmr-ig-card gmr-details">
+    <summary class="gmr-details-sum">
       <span class="gmr-card-icon">📸</span>
-      <div>
-        <h3 class="gmr-h3">Deli na Instagramu — zasluži dodaten popust</h3>
-        <p class="gmr-sub">Sodeluj z nami na @gomushroom.si in prejmi kupon.</p>
-      </div>
-    </div>
-    <div class="gmr-ig-actions">
+      <span>
+        <strong class="gmr-h3">Deli na Instagramu</strong>
+        <span class="gmr-sub"> — zasluži dodaten popust, sodeluj z nami na @gomushroom.si</span>
+      </span>
+    </summary>
+    <div class="gmr-ig-actions" style="margin-top:1.1rem">
       ${igActions().map(a=>`
       <div class="gmr-ig-row">
         <div class="gmr-ig-info">
@@ -111,7 +111,7 @@ function buildHTML(){
       </div>
       <div id="gmr-ig-msg" class="gmr-msg"></div>
     </form>
-  </div>
+  </details>
 </div>`;
 }
 

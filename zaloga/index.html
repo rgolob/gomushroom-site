@@ -7121,13 +7121,25 @@ async function potrdiNarocilo(orderId) {
 
   // Poštnina/lastni prevzem - vpliva na shippingFee v prodajni skupini in na
   // razporeditev cen po artiklih, zato vprašaj ob potrditvi namesto slepo
-  // prevzeti shranjeno vrednost iz naročila.
+  // prevzeti shranjeno vrednost iz naročila. Tri možnosti:
+  //  1) lastni prevzem - stranka je prišla po izdelek, poštnine ni bilo
+  //  2) dostava, stranka je plačala poštnino - dejanski prihodek od poštnine
+  //  3) dostava, poštnino sem plačal/castil sam - dostava se je zgodila,
+  //     a stranka zanjo ni plačala (ni prihodka od poštnine)
   const shranjenaPostnina = parseFloat(narocilo.shipping) || 0;
   const lastniPrevzem = confirm(`Poštnina na naročilu: ${shranjenaPostnina.toFixed(2)} €.\n\nJe šlo za lastni prevzem (brez poštnine)?`);
   let shippingFee = 0;
+  let dostavaNote = 'lastni prevzem';
   if (!lastniPrevzem) {
-    const vnos = prompt('Znesek poštnine (€):', shranjenaPostnina.toFixed(2));
-    shippingFee = vnos === null ? shranjenaPostnina : (parseFloat(vnos.replace(',', '.')) || 0);
+    const strankaPlacalaPostnino = confirm('Dostava. Je poštnino plačala stranka (si prejel plačilo zanjo)?\n\nV redu = da, stranka je plačala poštnino.\nPrekliči = ne, poštnino sem castil/plačal sam.');
+    if (strankaPlacalaPostnino) {
+      const vnos = prompt('Znesek poštnine (€):', shranjenaPostnina.toFixed(2));
+      shippingFee = vnos === null ? shranjenaPostnina : (parseFloat(vnos.replace(',', '.')) || 0);
+      dostavaNote = 'dostava';
+    } else {
+      shippingFee = 0;
+      dostavaNote = 'brezplačna dostava (poštnino castil prodajalec)';
+    }
   }
 
   try {
@@ -7180,7 +7192,7 @@ async function potrdiNarocilo(orderId) {
       street: narocilo.street || null,
       post: postFull || null,
       date: today,
-      note: ['Spletno naročilo', lastniPrevzem ? 'lastni prevzem' : null, narocilo.street, postFull].filter(Boolean).join(' · '),
+      note: ['Spletno naročilo', dostavaNote, narocilo.street, postFull].filter(Boolean).join(' · '),
       discount: parseFloat(narocilo.discount_pct) || 0,
       discount_amt: parseFloat(narocilo.discount_amt) || 0,
       full_total: fullTotal,

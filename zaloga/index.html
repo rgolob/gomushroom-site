@@ -7276,7 +7276,7 @@ async function potrdiNarocilo(orderId) {
     // Ustvari račun
     const invNum = nextInvNum(orderChannel, today);
     const invId = uid();
-    await fetch(`${SB_URL}/rest/v1/gm_invoices`, {
+    const invRes = await fetch(`${SB_URL}/rest/v1/gm_invoices`, {
       method: 'POST',
       headers: SB_HEADERS,
       body: JSON.stringify({
@@ -7295,6 +7295,10 @@ async function potrdiNarocilo(orderId) {
         email_sent: null,
       })
     });
+    if (!invRes.ok) {
+      const err = await invRes.text();
+      throw new Error(`Prodajna skupina in artikli SO bili ustvarjeni, račun ${invNum} pa NI (najverjetneje podvojena številka - preveri gm_inv_counters). Napaka: ${err}`);
+    }
 
     // Posodobi invoice_num v sale_group
     await fetch(`${SB_URL}/rest/v1/gm_sale_groups?id=eq.${group.id}`, {
@@ -7334,6 +7338,9 @@ async function potrdiNarocilo(orderId) {
   } catch(e) {
     console.error('potrdiNarocilo error:', e);
     toast('⚠ Napaka: ' + e.message);
+    // Osveži lokalne podatke (vključno s števci računov), da naslednji poskus
+    // ne uporabi iste (že zasedene) številke računa znova.
+    try { await sbLoadAll(); } catch(e2) { console.error('Osvežitev po napaki ni uspela:', e2); }
   }
 }
 

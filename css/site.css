@@ -469,6 +469,58 @@ h3{
   justify-content:center;
 }
 
+/* ----- Domača stran: nižji hero, močnejša slika (samo .hero--home, ne vpliva na ostale hero strani) ----- */
+.hero--home{
+  min-height:46vh;
+}
+
+.hero--home .slide img{
+  filter:saturate(105%) contrast(103%) brightness(.8);
+}
+
+.hero--home::after{
+  background:linear-gradient(90deg, rgba(18,7,26,.86) 0%, rgba(18,7,26,.58) 38%, rgba(18,7,26,.12) 68%, rgba(18,7,26,0) 100%);
+}
+
+.hero--home .inner{
+  text-align:left;
+}
+
+.hero--home .headline{
+  display:block;
+  max-width:520px;
+  padding:0;
+  border-radius:0;
+  background:none;
+  border:none;
+  backdrop-filter:none;
+  box-shadow:none;
+}
+
+.hero--home .headline::before,
+.hero--home .headline::after{
+  display:none;
+}
+
+.hero--home .kicker{color:rgba(255,255,255,.78);}
+.hero--home h1{color:#fff;}
+.hero--home .hero-species{color:rgba(255,255,255,.7);}
+.hero--home .lead,
+.hero--home p{color:rgba(255,255,255,.9);}
+
+.hero--home .hero-badge{
+  background:rgba(255,255,255,.14);
+  border-color:rgba(255,255,255,.24);
+  color:#fff;
+}
+
+.hero--home .hero-badge a{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);}
+
+@media (max-width:640px){
+  .hero--home{min-height:56vh;}
+  .hero--home .headline{max-width:100%;}
+}
+
 /* MOBILE HERO OPTIMIZATION */
 @media (max-width:640px){
   .hero{min-height:68vh;}

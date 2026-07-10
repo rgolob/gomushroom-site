@@ -585,6 +585,13 @@ function fmt(v) {
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
+// Doda dejansko plačano ceno na kos (po vseh popustih) v vsak artikel naročila,
+// da je v gm_orders.items shranjena resnica ob nakupu - namesto da bi jo kdo
+// kasneje poskušal ugibati/rekonstruirati iz skupnega zneska.
+function withPricePaid(cart, factor) {
+  return cart.map(i => ({ ...i, pricePaid: Math.round((Number(i.price) || 0) * factor * 100) / 100 }));
+}
+
 // ── Popusti ───────────────────────────────────────────────
 function izracunajPopust(skupaj, kolicina, koda) {
   const danes = todayStr();
@@ -968,7 +975,7 @@ async function saveStripeOrder(paymentIntentId) {
     city:     document.getElementById('c-city').value.trim(),
     country:  'Slovenija',
     note:     document.getElementById('c-note').value.trim() || null,
-    items:    cart,
+    items:    withPricePaid(cart, 1 - (calc.pct || 0) / 100),
     subtotal: calc.bruto,
     discount_pct: calc.pct,
     discount_amt: calc.popustZnesek,

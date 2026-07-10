@@ -539,6 +539,126 @@ section{padding:32px 0}
   .lead2{display:none !important;}
 }
 
+/* ----- Infografika: zakaj so tinkture drugačne (homepage) ----- */
+.diff-flow{
+  display:flex;
+  gap:0;
+  margin:8px 0 30px;
+}
+
+.diff-step{
+  flex:1 1 0;
+  min-width:0;
+  position:relative;
+  text-align:center;
+  padding:0 16px;
+}
+
+.diff-step:not(:last-child)::before{
+  content:'';
+  position:absolute;
+  top:29px;
+  left:calc(50% + 32px);
+  right:calc(-50% + 32px);
+  height:2px;
+  background:linear-gradient(90deg, var(--accent), var(--line));
+  z-index:0;
+}
+
+.diff-badge{
+  position:relative;
+  width:58px;
+  height:58px;
+  margin:0 auto 14px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 18px rgba(43,10,57,.20);
+  z-index:1;
+}
+
+.diff-icon{font-size:24px;line-height:1}
+
+.diff-num{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#fff;
+  color:var(--brand);
+  font-size:11px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line);
+}
+
+.diff-step h3{
+  font-size:15px;
+  margin:0 0 6px;
+  color:var(--brand);
+  letter-spacing:var(--ls-h3);
+}
+
+.diff-step p{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.5;
+  margin:0;
+}
+
+.diff-cta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:8px;
+  padding-top:22px;
+  border-top:1px solid var(--line);
+}
+
+.diff-b2b-note{
+  color:var(--muted);
+  font-size:.92rem;
+  max-width:46ch;
+}
+
+@media (max-width:900px){
+  .diff-flow{flex-direction:column;gap:24px;}
+
+  .diff-step{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    text-align:left;
+    padding:0;
+  }
+
+  .diff-step:not(:last-child)::before{display:none;}
+
+  .diff-step:not(:last-child) .diff-badge::after{
+    content:'';
+    position:absolute;
+    left:28px;
+    top:58px;
+    width:2px;
+    height:24px;
+    background:linear-gradient(180deg, var(--accent), var(--line));
+  }
+
+  .diff-badge{margin:0;flex:0 0 auto;}
+}
+
+@media (max-width:640px){
+  .diff-cta{flex-direction:column;align-items:flex-start;}
+}
+
 .grid{display:grid;gap:22px}
 @media (min-width:980px){
   .grid-3{grid-template-columns:repeat(3,1fr)}

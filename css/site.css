@@ -479,16 +479,17 @@ h3{
 }
 
 .hero--home::after{
-  background:linear-gradient(90deg, rgba(18,7,26,.86) 0%, rgba(18,7,26,.58) 38%, rgba(18,7,26,.12) 68%, rgba(18,7,26,0) 100%);
+  background:radial-gradient(60% 100% at 50% 45%, rgba(18,7,26,.74) 0%, rgba(18,7,26,.42) 55%, rgba(18,7,26,.16) 100%);
 }
 
 .hero--home .inner{
-  text-align:left;
+  text-align:center;
 }
 
 .hero--home .headline{
   display:block;
-  max-width:520px;
+  max-width:600px;
+  margin:0 auto;
   padding:0;
   border-radius:0;
   background:none;

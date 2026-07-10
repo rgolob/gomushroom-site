@@ -67,7 +67,7 @@
 </head>
 
 <body>
-<header id="shop-header"></header>
+<header id="site-header"></header>
  
 <main>
   <section class="product-page">
@@ -388,7 +388,7 @@
   <script src="/trgovina/js/product-page.js"></script>
   <script src="/trgovina/js/recenzije.js"></script>
   <script src="/trgovina/js/related-products.js"></script>
-  <script defer src="/js/shop-header.js"></script>
+  <script defer src="/js/site-header.js"></script>
   <script defer src="/js/site-footer.js"></script>
   
   <script> document.querySelectorAll(".acc-item").forEach(item => { const btn = item.querySelector(".acc-btn"); const content = item.querySelector(".acc-content"); function setHeight() { if (item.classList.contains("is-open")) { content.style.maxHeight = content.scrollHeight + "px"; } else { content.style.maxHeight = null; } } btn.addEventListener("click", () => { item.classList.toggle("is-open"); setHeight(); }); setHeight(); }); </script> <script> const year = document.getElementById("year"); if (year) year.textContent = new Date().getFullYear(); const navToggle = document.getElementById("nav-toggle"); const siteHeader = document.getElementById("site-header"); if (navToggle && siteHeader) { navToggle.addEventListener("click", () => { const expanded = navToggle.getAttribute("aria-expanded") === "true"; navToggle.setAttribute("aria-expanded", String(!expanded)); siteHeader.classList.toggle("nav-open"); }); } </script>

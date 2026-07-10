@@ -74,41 +74,7 @@
     </defs>
   </svg>
 
-<header id="site-header">
-  <div class="wrap nav">
-    <div class="brand">
-      <!-- logotip ostane nespremenjen -->
-      <a href="https://gomushroom.si/" lang="sl"><img src="/assets/gomushroom_logo_800px.webp" alt="GoMushroom"></a>
-    </div>
-
-      <nav id="primary-nav" aria-label="Glavna navigacija">
-      <a href="/">Domov</a>
-      <a href="/znanje/">Znanje</a>
-      <a href="#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
-      </nav>
-
-    <!-- desno: zastavici + hamburger -->
-    <div class="nav-actions" aria-label="Jezik in meni">
-      <div class="lang-switch" aria-label="Jezik">
-        <!-- povezava na slovensko različico -->
-        <a class="lang-flag" href="https://gomushroom.si/znanje/" aria-label="Slovenščina" lang="sl">
-          <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-        </a>
-        <!-- povezava na angleško različico -->
-        <a class="lang-flag" href="https://gomushroom.si/en/learn/" aria-label="English" lang="en">
-          <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-        </a>
-      </div>
-
-      <button class="nav-toggle" id="nav-toggle" type="button"
-              aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
+<header id="site-header"></header>
 
 <main>
 <section class="hero">
@@ -419,6 +385,7 @@
 
 <footer id="site-footer"></footer>
 
+<script defer src="/js/site-header.js"></script>
 <script defer src="/js/site-footer.js"></script>
 <script defer src="/js/site.js"></script>
 </body>

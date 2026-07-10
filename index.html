@@ -103,6 +103,34 @@
         <path fill="#b18556" d="M12 2l8 4v6c0 5.3-3.4 9.9-8 11-4.6-1.1-8-5.7-8-11V6l8-4z"/>
         <path fill="#fff" d="M11 7h2v6h-2zM11 15h2v2h-2z" opacity=".9"/>
       </symbol>
+      <symbol id="i-mushroom" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M12 3C7 3 3.2 6.6 3.2 9.9c0 1 .9 1.6 1.9 1.3 2-.6 4.6-1 6.9-1s4.9.4 6.9 1c1 .3 1.9-.3 1.9-1.3C20.8 6.6 17 3 12 3z"/>
+        <circle cx="8.3" cy="7.3" r="1" fill="#fff" opacity=".85"/>
+        <circle cx="14.6" cy="6.4" r=".8" fill="#fff" opacity=".85"/>
+        <circle cx="11.4" cy="8.7" r=".7" fill="#fff" opacity=".7"/>
+        <path fill="#b18556" d="M9 12h6l-.5 6.3a2.5 2.5 0 0 1-5 0L9 12z"/>
+      </symbol>
+      <symbol id="i-drop-wave" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M10.6 2c.6 2.2 5 6.4 5 10a5 5 0 1 1-10 0c0-3.6 4.4-7.8 5-10z"/>
+        <path fill="none" stroke="#b18556" stroke-width="1.4" stroke-linecap="round" d="M18 9.2c1 1 1 3.6 0 5"/>
+        <path fill="none" stroke="#b18556" stroke-width="1.4" stroke-linecap="round" d="M20.3 7.5c1.9 1.9 1.9 6.8 0 8.7"/>
+      </symbol>
+      <symbol id="i-snow" viewBox="0 0 24 24">
+        <g fill="#2b0a39">
+          <rect x="10.8" y="2" width="2.4" height="20" rx="1.2"/>
+          <rect x="10.8" y="2" width="2.4" height="20" rx="1.2" transform="rotate(60 12 12)"/>
+          <rect x="10.8" y="2" width="2.4" height="20" rx="1.2" transform="rotate(120 12 12)"/>
+        </g>
+      </symbol>
+      <symbol id="i-flask" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M9.5 2h5v1.2h-1v5.1l4.6 8.6a2 2 0 0 1-1.8 2.9H7.7a2 2 0 0 1-1.8-2.9l4.6-8.6V3.2h-1V2z"/>
+        <path fill="#fff" d="M8.4 14.8h7.2l1.2 2.2H7.2z" opacity=".9"/>
+      </symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24">
+        <path fill="#2b0a39" d="M6 2h9l3 3v17H6V2z"/>
+        <path fill="#fff" d="M15 2v4h4" opacity=".9"/>
+        <path fill="#b18556" d="M8.5 11.6h7V13h-7zM8.5 14.6h7V16h-7zM8.5 8.6h4V10h-4z"/>
+      </symbol>
     </defs>
   </svg>
 <main>
@@ -179,28 +207,28 @@
 
     <div class="gm-diff-features">
       <div class="gm-diff-feature">
-        <div class="gm-diff-feature-ico">🌱</div>
+        <div class="gm-diff-feature-ico"><svg class="ico" aria-hidden="true"><use href="#i-mushroom"/></svg></div>
         <div class="gm-diff-feature-body">
           <h3>Lastna surovina</h3>
           <p>Medicinske gobe pridelujemo sami na izbranih substratih. Poznamo izvor, starost in kakovost vsake serije.</p>
         </div>
       </div>
       <div class="gm-diff-feature">
-        <div class="gm-diff-feature-ico">💧</div>
+        <div class="gm-diff-feature-ico"><svg class="ico" aria-hidden="true"><use href="#i-drop-wave"/></svg></div>
         <div class="gm-diff-feature-body">
           <h3>Trojna ultrazvočna ekstrakcija</h3>
           <p>Več stopenj ekstrakcije zajame širši spekter aktivnih snovi kot enostavna maceracija.</p>
         </div>
       </div>
       <div class="gm-diff-feature">
-        <div class="gm-diff-feature-ico">❄️</div>
+        <div class="gm-diff-feature-ico"><svg class="ico" aria-hidden="true"><use href="#i-snow"/></svg></div>
         <div class="gm-diff-feature-body">
           <h3>Vakuumsko koncentriranje</h3>
           <p>Ekstrakte koncentriramo pod znižanim tlakom in pri nizkih temperaturah – brez pregrevanja občutljivih spojin.</p>
         </div>
       </div>
       <div class="gm-diff-feature">
-        <div class="gm-diff-feature-ico">🛡️</div>
+        <div class="gm-diff-feature-ico"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg></div>
         <div class="gm-diff-feature-body">
           <h3>Transparentnost</h3>
           <p>Postopek je sledljiv, serije so označene, kakovost pa temelji na analizah in CoA certifikatih.</p>
@@ -209,7 +237,7 @@
     </div>
 
     <div class="gm-diff-notice">
-      <span class="gm-diff-notice-ico">🌱</span>
+      <svg class="gm-diff-notice-ico" aria-hidden="true"><use href="#i-drop"/></svg>
       <p><strong>Naravna usedlina ni napaka.</strong> Pri visoko koncentriranih tinkturah se del raztopljenih snovi v končnem topilu ne raztaplja več popolnoma. To je znak nasičene raztopine, ne slabe filtracije.</p>
     </div>
 
@@ -248,11 +276,11 @@
 
     <div class="gm-diff-strip">
       <div class="gm-diff-strip-items">
-        <div class="gm-diff-strip-item"><span class="ico">🍄</span><span>Lastna pridelava in preverjen izvor</span></div>
-        <div class="gm-diff-strip-item"><span class="ico">🧪</span><span>Laboratorijski postopki in nadzor kakovosti</span></div>
-        <div class="gm-diff-strip-item"><span class="ico">🌿</span><span>Visoka koncentracija učinkovin</span></div>
-        <div class="gm-diff-strip-item"><span class="ico">🛡️</span><span>Brez nepotrebnih dodatkov</span></div>
-        <div class="gm-diff-strip-item"><span class="ico">📄</span><span>Objavljene analize težkih kovin</span></div>
+        <div class="gm-diff-strip-item"><svg class="ico" aria-hidden="true"><use href="#i-mushroom"/></svg><span>Lastna pridelava in preverjen izvor</span></div>
+        <div class="gm-diff-strip-item"><svg class="ico" aria-hidden="true"><use href="#i-flask"/></svg><span>Laboratorijski postopki in nadzor kakovosti</span></div>
+        <div class="gm-diff-strip-item"><svg class="ico" aria-hidden="true"><use href="#i-drop"/></svg><span>Visoka koncentracija učinkovin</span></div>
+        <div class="gm-diff-strip-item"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><span>Brez nepotrebnih dodatkov</span></div>
+        <div class="gm-diff-strip-item"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span>Objavljene analize težkih kovin</span></div>
       </div>
       <a class="gm-diff-strip-cta" href="/storitve/ekstrakcije-medicinskih-gob/" data-ga-click="storitve_ekstrakcija_diff" data-ga-location="sl_page">Poglej, kako nastane naš ekstrakt →</a>
     </div>

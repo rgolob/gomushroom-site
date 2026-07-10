@@ -2162,6 +2162,7 @@ const EXPENSE_CATS={
   prispevki_zpiz:'Prispevki ZPIZ',   // legacy
   prispevki_zzzs:'Prispevki ZZZS',  // legacy
   nabava:'Nabava',
+  postnina:'Poštnina',
   drugo:'Drugo'
 };
 
@@ -7130,6 +7131,7 @@ async function potrdiNarocilo(orderId) {
   const lastniPrevzem = confirm(`Poštnina na naročilu: ${shranjenaPostnina.toFixed(2)} €.\n\nJe šlo za lastni prevzem (brez poštnine)?`);
   let shippingFee = 0;
   let dostavaNote = 'lastni prevzem';
+  let castenaPostninaStrosek = 0;
   if (!lastniPrevzem) {
     const strankaPlacalaPostnino = confirm('Dostava. Je poštnino plačala stranka (si prejel plačilo zanjo)?\n\nV redu = da, stranka je plačala poštnino.\nPrekliči = ne, poštnino sem castil/plačal sam.');
     if (strankaPlacalaPostnino) {
@@ -7139,6 +7141,9 @@ async function potrdiNarocilo(orderId) {
     } else {
       shippingFee = 0;
       dostavaNote = 'brezplačna dostava (poštnino castil prodajalec)';
+      // Za pravilen obračun dobička evidentiraj dejanski strošek poštnine kot strošek
+      const strosekVnos = prompt('Koliko te je dostava dejansko stala (tvoj strošek, €)?\n\nPustiš prazno, če se ne beleži.', shranjenaPostnina > 0 ? shranjenaPostnina.toFixed(2) : '');
+      castenaPostninaStrosek = strosekVnos ? (parseFloat(strosekVnos.replace(',', '.')) || 0) : 0;
     }
   }
 
@@ -7213,6 +7218,17 @@ async function potrdiNarocilo(orderId) {
       throw new Error('sale_groups: ' + err);
     }
     const [group] = await gr.json();
+
+    // Če je poštnino castil prodajalec, evidentiraj dejanski strošek za obračun dobička
+    if (castenaPostninaStrosek > 0) {
+      await saveExpense({
+        date: today,
+        category: 'postnina',
+        amount: castenaPostninaStrosek,
+        description: `Poštnina - ${narocilo.name} (spletno naročilo)`,
+        source: 'auto'
+      });
+    }
 
     // Vstavi sale lines + batch alokacija
     for (const item of items) {

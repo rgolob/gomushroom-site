@@ -593,6 +593,11 @@ section{padding:32px 0}
   margin-bottom:14px;
 }
 
+.gm-diff-feature-ico--green{background:#e6f2e3}
+.gm-diff-feature-ico--blue{background:#e2eff8}
+.gm-diff-feature-ico--ice{background:#e5f5fa}
+.gm-diff-feature-ico--warm{background:#f5ece2}
+
 .gm-diff-feature-ico .ico{
   width:24px;
   height:24px;

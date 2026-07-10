@@ -7114,6 +7114,7 @@ function renderNarocila() {
 }
 
 async function potrdiNarocilo(orderId) {
+  try {
   const narocilo = _narocila.find(n => n.id === orderId);
   if (!narocilo) return;
   const isStripeOrder = narocilo.channel === 'stripe';
@@ -7150,7 +7151,6 @@ async function potrdiNarocilo(orderId) {
     }
   }
 
-  try {
     let items = narocilo.items || [];
 
     // Če so artikli prazni (košarica je bila prazna ob plačilu), poišči sorodno naročilo
@@ -7337,7 +7337,11 @@ async function potrdiNarocilo(orderId) {
     
   } catch(e) {
     console.error('potrdiNarocilo error:', e);
-    toast('⚠ Napaka: ' + e.message);
+    const msg = '⚠ Napaka pri potrditvi naročila: ' + (e && e.message ? e.message : String(e));
+    // toast lahko iz kakršnegakoli razloga ostane neviden (npr. prekrit,
+    // odstranjen iz DOM) - alert() je zagotovilo, da uporabnik napako VEDNO vidi.
+    try { toast(msg); } catch(e2) { console.error('toast() je spodletel:', e2); }
+    alert(msg);
     // Osveži lokalne podatke (vključno s števci računov), da naslednji poskus
     // ne uporabi iste (že zasedene) številke računa znova.
     try { await sbLoadAll(); } catch(e2) { console.error('Osvežitev po napaki ni uspela:', e2); }

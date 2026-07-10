@@ -649,6 +649,7 @@ section{padding:32px 0}
   .gm-diff-feature-ico{
     width:42px;
     height:42px;
+    flex:0 0 42px;
     font-size:18px;
     margin-bottom:0;
   }

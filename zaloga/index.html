@@ -2162,7 +2162,6 @@ const EXPENSE_CATS={
   prispevki_zpiz:'Prispevki ZPIZ',   // legacy
   prispevki_zzzs:'Prispevki ZZZS',  // legacy
   nabava:'Nabava',
-  postnina:'Poštnina',
   drugo:'Drugo'
 };
 
@@ -5184,7 +5183,10 @@ function renderPorocilo(){
 
   const postnina=getZS('postnina')||3.90;
   const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
+  // Lastni prevzem izloči iz izračuna - tam dostave (in s tem stroška poštnine) sploh ni bilo,
+  // za razliko od castene/brezplačne dostave, kjer je bil strošek dejansko narejen.
   const freeShipN=groups.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&
+    !(g.note||'').includes('lastni prevzem') &&
     (g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd)).length;
   const shippingCost=freeShipN*postnina;
   const neto=totalRev-shippingCost;
@@ -7127,11 +7129,15 @@ async function potrdiNarocilo(orderId) {
   //  2) dostava, stranka je plačala poštnino - dejanski prihodek od poštnine
   //  3) dostava, poštnino sem plačal/castil sam - dostava se je zgodila,
   //     a stranka zanjo ni plačala (ni prihodka od poštnine)
+  // Strošek castene poštnine se avtomatsko obračuna v poročilu dobička
+  // (renderPorocilo: freeShipN × cena poštnine iz nastavitev), zato tu ni
+  // treba ročno vnašati zneska - le pravilno označiti, ali je šlo za
+  // lastni prevzem (brez ikakršnega stroška) ali castena/brezplačna
+  // dostava (šteje v samodejni izračun stroška poštnine).
   const shranjenaPostnina = parseFloat(narocilo.shipping) || 0;
   const lastniPrevzem = confirm(`Poštnina na naročilu: ${shranjenaPostnina.toFixed(2)} €.\n\nJe šlo za lastni prevzem (brez poštnine)?`);
   let shippingFee = 0;
   let dostavaNote = 'lastni prevzem';
-  let castenaPostninaStrosek = 0;
   if (!lastniPrevzem) {
     const strankaPlacalaPostnino = confirm('Dostava. Je poštnino plačala stranka (si prejel plačilo zanjo)?\n\nV redu = da, stranka je plačala poštnino.\nPrekliči = ne, poštnino sem castil/plačal sam.');
     if (strankaPlacalaPostnino) {
@@ -7141,9 +7147,6 @@ async function potrdiNarocilo(orderId) {
     } else {
       shippingFee = 0;
       dostavaNote = 'brezplačna dostava (poštnino castil prodajalec)';
-      // Za pravilen obračun dobička evidentiraj dejanski strošek poštnine kot strošek
-      const strosekVnos = prompt('Koliko te je dostava dejansko stala (tvoj strošek, €)?\n\nPustiš prazno, če se ne beleži.', shranjenaPostnina > 0 ? shranjenaPostnina.toFixed(2) : '');
-      castenaPostninaStrosek = strosekVnos ? (parseFloat(strosekVnos.replace(',', '.')) || 0) : 0;
     }
   }
 
@@ -7218,17 +7221,6 @@ async function potrdiNarocilo(orderId) {
       throw new Error('sale_groups: ' + err);
     }
     const [group] = await gr.json();
-
-    // Če je poštnino castil prodajalec, evidentiraj dejanski strošek za obračun dobička
-    if (castenaPostninaStrosek > 0) {
-      await saveExpense({
-        date: today,
-        category: 'postnina',
-        amount: castenaPostninaStrosek,
-        description: `Poštnina - ${narocilo.name} (spletno naročilo)`,
-        source: 'auto'
-      });
-    }
 
     // Vstavi sale lines + batch alokacija
     for (const item of items) {

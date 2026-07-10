@@ -4514,8 +4514,18 @@ function renderSales(){
     const datum = n.created_at?.split('T')[0] || '';
     const dt = fmtDate(datum);
     const _items = n.items || [];
+    // Novejša naročila imajo shranjeno dejansko plačano ceno na kos (pricePaid) - uporabi jo,
+    // kjer je na voljo. Za starejša naročila brez tega polja jo rekonstruiraj sorazmerno
+    // na dejansko plačan znesek (enako kot pri že potrjenih prodajah spodaj).
+    const _hasPricePaid = _items.length && _items.every(i => i.pricePaid != null);
+    const _fullSum = _items.reduce((s,i)=>s+(parseFloat(i.price)||0)*(parseInt(i.quantity)||1),0);
+    const _actualItemsTotal = Math.max(0, (parseFloat(n.total)||0) - (parseFloat(n.shipping)||0));
+    const _wpPScale = (_fullSum>0 && _actualItemsTotal>0) ? _actualItemsTotal/_fullSum : 1;
     const artikli = _items.length
-      ? _items.map(i=>`<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(i.price*i.quantity).toFixed(2)} €</span></div>`).join('')
+      ? _items.map(i=>{
+          const unitPrice = _hasPricePaid ? (parseFloat(i.pricePaid)||0) : (parseFloat(i.price)||0)*_wpPScale;
+          return `<div class="sg-item"><span class="sg-item-label">${i.name} ${i.variantLabel||''}</span><span class="sg-item-val">${i.quantity}× · ${(unitPrice*i.quantity).toFixed(2)} €</span></div>`;
+        }).join('')
       : `<div style="font-size:.72rem;color:var(--muted);font-style:italic;padding:.2rem 0">Artikli niso shranjeni — košarica je bila prazna ob plačilu</div>`;
     const isPaid = n.status === 'paid';
     const isShipped = n.status === 'shipped';
@@ -5173,7 +5183,10 @@ function renderPorocilo(){
 
   const postnina=getZS('postnina')||3.90;
   const brezplacnaOd=getZS('brezplacnaPosninaOd')||60;
+  // Lastni prevzem izloči iz izračuna - tam dostave (in s tem stroška poštnine) sploh ni bilo,
+  // za razliko od castene/brezplačne dostave, kjer je bil strošek dejansko narejen.
   const freeShipN=groups.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&
+    !(g.note||'').includes('lastni prevzem') &&
     (g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd)).length;
   const shippingCost=freeShipN*postnina;
   const neto=totalRev-shippingCost;
@@ -7109,6 +7122,34 @@ async function potrdiNarocilo(orderId) {
     : `Potrdi plačilo od ${narocilo.name} (${(narocilo.total||0).toFixed(2)} €) in ustvari prodajno skupino?`;
   if (!confirm(confirmMsg)) return;
 
+  // Poštnina/lastni prevzem - vpliva na shippingFee v prodajni skupini in na
+  // razporeditev cen po artiklih, zato vprašaj ob potrditvi namesto slepo
+  // prevzeti shranjeno vrednost iz naročila. Tri možnosti:
+  //  1) lastni prevzem - stranka je prišla po izdelek, poštnine ni bilo
+  //  2) dostava, stranka je plačala poštnino - dejanski prihodek od poštnine
+  //  3) dostava, poštnino sem plačal/castil sam - dostava se je zgodila,
+  //     a stranka zanjo ni plačala (ni prihodka od poštnine)
+  // Strošek castene poštnine se avtomatsko obračuna v poročilu dobička
+  // (renderPorocilo: freeShipN × cena poštnine iz nastavitev), zato tu ni
+  // treba ročno vnašati zneska - le pravilno označiti, ali je šlo za
+  // lastni prevzem (brez ikakršnega stroška) ali castena/brezplačna
+  // dostava (šteje v samodejni izračun stroška poštnine).
+  const shranjenaPostnina = parseFloat(narocilo.shipping) || 0;
+  const lastniPrevzem = confirm(`Poštnina na naročilu: ${shranjenaPostnina.toFixed(2)} €.\n\nJe šlo za lastni prevzem (brez poštnine)?`);
+  let shippingFee = 0;
+  let dostavaNote = 'lastni prevzem';
+  if (!lastniPrevzem) {
+    const strankaPlacalaPostnino = confirm('Dostava. Je poštnino plačala stranka (si prejel plačilo zanjo)?\n\nV redu = da, stranka je plačala poštnino.\nPrekliči = ne, poštnino sem castil/plačal sam.');
+    if (strankaPlacalaPostnino) {
+      const vnos = prompt('Znesek poštnine (€):', shranjenaPostnina.toFixed(2));
+      shippingFee = vnos === null ? shranjenaPostnina : (parseFloat(vnos.replace(',', '.')) || 0);
+      dostavaNote = 'dostava';
+    } else {
+      shippingFee = 0;
+      dostavaNote = 'brezplačna dostava (poštnino castil prodajalec)';
+    }
+  }
+
   try {
     let items = narocilo.items || [];
 
@@ -7146,9 +7187,9 @@ async function potrdiNarocilo(orderId) {
     const groupId = 'wp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
     const postFull = [narocilo.post, narocilo.city].filter(Boolean).join(' ');
     const totalQty = items.reduce((s, i) => s + (i.quantity || 0), 0);
-    // fullTotal = vsota košarice pred kuponom; actualTotal = plačano za artikle (brez poštnine)
+    // fullTotal = vsota košarice pred kuponom; actualTotal = plačano za artikle (brez poštnine, po potrditvi zgoraj)
     const fullTotal = items.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
-    const actualTotal = Math.max(0, (parseFloat(narocilo.total) || 0) - (parseFloat(narocilo.shipping) || 0));
+    const actualTotal = Math.max(0, (parseFloat(narocilo.total) || 0) - shippingFee);
 
     const groupData = {
       id: groupId,
@@ -7159,12 +7200,12 @@ async function potrdiNarocilo(orderId) {
       street: narocilo.street || null,
       post: postFull || null,
       date: today,
-      note: ['Spletno naročilo', narocilo.street, postFull].filter(Boolean).join(' · '),
+      note: ['Spletno naročilo', dostavaNote, narocilo.street, postFull].filter(Boolean).join(' · '),
       discount: parseFloat(narocilo.discount_pct) || 0,
       discount_amt: parseFloat(narocilo.discount_amt) || 0,
       full_total: fullTotal,
       total: actualTotal,
-      shippingFee: parseFloat(narocilo.shipping) || 0,
+      shippingFee: shippingFee,
       qty: totalQty,
       status: 'active',
     };

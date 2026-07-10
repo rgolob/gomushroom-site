@@ -885,21 +885,25 @@ function showCardError(msg) {
 }
 
 async function payWithCard() {
+  const btn = document.getElementById('card-pay-btn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+
   if (!validate()) {
+    btn.disabled = false;
     document.querySelector('.checkout-field input.error')
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
   const stockCheck = await validateStock();
   if (!stockCheck.ok) {
+    btn.disabled = false;
     showStockWarning(stockCheck.adjustments);
     renderSummary();
     return;
   }
-  const btn = document.getElementById('card-pay-btn');
   const errEl = document.getElementById('card-error');
   errEl.style.display = 'none';
-  btn.disabled = true;
   btn.textContent = '⏳ Obdelujem...';
 
   try {
@@ -1178,12 +1182,18 @@ function showStripeSuccess(order) {
 
 // ── Submit (UPN bančno nakazilo) ──────────────────────────
 async function placeOrder() {
+  const btn = document.getElementById('upn-pay-btn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+
   if (!validate()) {
+    btn.disabled = false;
     document.querySelector('.checkout-field input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
   const stockCheck = await validateStock();
   if (!stockCheck.ok) {
+    btn.disabled = false;
     showStockWarning(stockCheck.adjustments);
     renderSummary();
     return;
@@ -1193,8 +1203,6 @@ async function placeOrder() {
     gmAddPaymentInfo(cart, window._orderCalc.skupaj, window._orderCalc.koda);
   }
 
-  const btn = document.getElementById('upn-pay-btn');
-  btn.disabled = true;
   btn.innerHTML = '⏳ Pošiljam...';
 
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');

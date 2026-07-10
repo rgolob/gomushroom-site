@@ -539,6 +539,182 @@ section{padding:32px 0}
   .lead2{display:none !important;}
 }
 
+/* ----- Primerjalna kartica: zakaj so tinkture drugačne (homepage) ----- */
+.compare-card{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  margin:8px 0 28px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(43,10,57,.08);
+  position:relative;
+}
+
+.compare-col{
+  flex:1 1 0;
+  min-width:0;
+  padding:28px 32px 32px;
+  position:relative;
+}
+
+.compare-col--against{
+  background:#efeaea;
+}
+
+.compare-col--for{
+  background:#ffffff;
+  border:1px solid var(--line);
+  border-left:none;
+}
+
+.compare-col-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.compare-col-head h3{
+  margin:0;
+  font-size:16px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-weight:800;
+}
+
+.compare-col--against h3{color:#6b4a4a}
+.compare-col--for h3{color:var(--brand)}
+
+.compare-mark{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:800;
+  flex:0 0 auto;
+}
+
+.compare-mark--x{background:#b45959;color:#fff}
+.compare-mark--check{background:#3f7a52;color:#fff}
+
+.compare-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.compare-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.compare-col--against .compare-list li{color:#6b5a5a}
+.compare-col--for .compare-list li{color:var(--fg)}
+
+.compare-ico{
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:800;
+  margin-top:2px;
+}
+
+.compare-ico--x{background:rgba(180,89,89,.14);color:#b45959}
+.compare-ico--check{background:rgba(63,122,82,.14);color:#3f7a52}
+
+.compare-vs{
+  flex:0 0 auto;
+  width:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2;
+}
+
+.compare-vs span{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  font-weight:800;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 16px rgba(177,133,86,.35);
+  border:3px solid var(--bg);
+  margin:0 -22px;
+}
+
+.compare-bottle{
+  display:none;
+}
+
+@media (min-width:980px){
+  .compare-col--for{padding-right:180px;}
+  .compare-bottle{
+    display:block;
+    position:absolute;
+    right:24px;
+    bottom:0;
+    width:150px;
+    height:auto;
+  }
+}
+
+@media (max-width:767px){
+  .compare-card{flex-direction:column;border-radius:14px;}
+  .compare-col--against{padding-bottom:44px;}
+  .compare-col--for{border-left:1px solid var(--line);border-top:none;padding-top:44px;}
+  .compare-vs{
+    width:100%;
+    height:0;
+    order:1;
+  }
+  .compare-col--against{order:0}
+  .compare-col--for{order:2}
+  .compare-vs span{
+    margin:-22px auto 0;
+    position:relative;
+    z-index:3;
+  }
+}
+
+.compare-cta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:8px;
+}
+
+.compare-b2b-note{
+  color:var(--muted);
+  font-size:.92rem;
+  max-width:46ch;
+}
+
+@media (max-width:640px){
+  .compare-cta{flex-direction:column;align-items:flex-start;}
+}
+
 .grid{display:grid;gap:22px}
 @media (min-width:980px){
   .grid-3{grid-template-columns:repeat(3,1fr)}

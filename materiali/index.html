@@ -519,15 +519,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
       </div>
       <div class="field"><label>Status</label>
-        <select id="bilStatus">
+        <select id="bilStatus" onchange="calcBil()">
           <option value="V">V — vhod (v rotavapor)</option>
           <option value="R">R — regenerat (destilat odvzet)</option>
           <option value="I">I — izguba</option>
-          <option value="Corr">Corr — ročna korekcija</option>
+          <option value="Corr">Corr — ročna korekcija (+/-)</option>
         </select>
       </div>
       <div class="frow">
-        <div class="field"><label>m (g)</label><input id="bilM" type="text" inputmode="decimal" placeholder="npr. 9391 ali -8102" oninput="calcBil()"></div>
+        <div class="field"><label>m (g) — velikost, predznak samodejno</label><input id="bilM" type="text" inputmode="decimal" placeholder="npr. 9391" oninput="calcBil()"></div>
         <div class="field"><label>Vol % (areometer)</label><input id="bilVol" type="text" inputmode="decimal" placeholder="84,8" oninput="calcBil()"></div>
       </div>
       <div class="frow">
@@ -3077,8 +3077,17 @@ function renderBilanca(){
   </table>`;
 }
 
+function bilSignedM(mRaw,status){
+  const abs=Math.abs(mRaw);
+  if(status==='V')return abs;
+  if(status==='R'||status==='I')return -abs;
+  return mRaw; // Corr: ohrani predznak, kot je vnesen (korekcija je lahko v obe smeri)
+}
+
 function calcBil(){
-  const m=parseNum(document.getElementById('bilM').value);
+  const mRaw=parseNum(document.getElementById('bilM').value);
+  const status=document.getElementById('bilStatus').value;
+  const m=bilSignedM(mRaw,status);
   const vol=parseNum(document.getElementById('bilVol').value);
   const mm=vol?volToMas(vol):0;
   const aae=round(m*mm/100,2);
@@ -3129,7 +3138,8 @@ function saveBilanca(){
   const ts=document.getElementById('bilTs').value;
   if(!tinktura||!batch){toast('⚠ Vnesi tinkturo in batch');return;}
   if(!ts){toast('⚠ Vnesi datum in uro');return;}
-  const m=parseNum(document.getElementById('bilM').value);
+  const status=document.getElementById('bilStatus').value;
+  const m=bilSignedM(parseNum(document.getElementById('bilM').value),status);
   const volPct=parseNum(document.getElementById('bilVol').value);
   const mmPct=volPct?volToMas(volPct):0;
   const mSsRaw=document.getElementById('bilMss').value;
@@ -3141,7 +3151,7 @@ function saveBilanca(){
     id:editingBilId||uid(),
     tinktura,batch,ts,
     faza:document.getElementById('bilFaza').value,
-    status:document.getElementById('bilStatus').value,
+    status,
     m,mmPct,volPct,mAae,mH2o,mSs,
     opomba:document.getElementById('bilOpomba').value.trim(),
     ustvarjen:editingBilId?(bilancaDogodki.find(x=>x.id===editingBilId)?.ustvarjen||new Date().toISOString()):new Date().toISOString(),

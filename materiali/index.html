@@ -512,18 +512,18 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Datum in ura</label><input id="bilTs" type="datetime-local"></div>
         <div class="field"><label>Faza</label>
           <select id="bilFaza">
-            <option value="OF">OF — organska faza</option>
-            <option value="VF">VF — vodna faza</option>
-            <option value="TE">TE — tlačna faza</option>
+            <option value="OF">OF</option>
+            <option value="VF">VF</option>
+            <option value="TE">TE</option>
           </select>
         </div>
       </div>
       <div class="field"><label>Status</label>
         <select id="bilStatus" onchange="calcBil()">
-          <option value="V">V — vhod (v rotavapor)</option>
-          <option value="R">R — regenerat (destilat odvzet)</option>
-          <option value="I">I — izguba</option>
-          <option value="Corr">Corr — ročna korekcija (+/-)</option>
+          <option value="V">V</option>
+          <option value="R">R</option>
+          <option value="I">I</option>
+          <option value="Corr">Corr</option>
         </select>
       </div>
       <div class="frow">
@@ -2998,8 +2998,8 @@ async function deleteRD(id){
 
 // ── MASNA BILANCA (rotavapor koncentriranje) ──
 function bilKey(tinktura,batch){return (tinktura||'').trim()+'|||'+(batch||'').trim();}
-function fazaLabel(f){return {OF:'OF · organska',VF:'VF · vodna',TE:'TE · tlačna'}[f]||f||'—';}
-function statusLabel(s){return {V:'V · vhod',R:'R · regenerat',I:'I · izguba',Corr:'Corr · korekcija'}[s]||s||'—';}
+function fazaLabel(f){return f||'—';}
+function statusLabel(s){return s||'—';}
 function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);return isNaN(d)?ts:d.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
 
 function renderBilancaSelect(){

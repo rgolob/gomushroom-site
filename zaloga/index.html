@@ -1737,6 +1737,7 @@ function sbGroupToApp(g, lines, lineBatches){
     address:g.address, street:g.street, post:g.post,
     date:g.date, channel:g.channel,
     discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
+    shippingFee:g.shipping_fee||0,
     extInvoice:g.ext_invoice, extDelivery:g.ext_delivery,
     note:g.note, invoiceNum:g.invoice_num, invoiceId:g.invoice_id,
     deliveryNum:g.delivery_num||null,
@@ -5187,7 +5188,7 @@ function renderPorocilo(){
   // za razliko od castene/brezplačne dostave, kjer je bil strošek dejansko narejen.
   const freeShipN=groups.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&
     !(g.note||'').includes('lastni prevzem') &&
-    (g.shipping_fee!==undefined?g.shipping_fee===0:g.total>=brezplacnaOd)).length;
+    (g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd)).length;
   const shippingCost=freeShipN*postnina;
   const neto=totalRev-shippingCost;
 
@@ -5760,6 +5761,15 @@ if(l.gly>0){
   const discountAmt = group.discountAmt>0 ? group.discountAmt : _dAmt>0 ? round(_dAmt,2) : (group.discount>0&&total>0) ? round(total*group.discount/(100-group.discount),2) : 0;
   const subtotalLine = (group.discount||0) > 0 ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Skupaj artikli</span><span style="color:#7a6f60">${(group.fullTotal||0).toFixed(2)} €</span></div>` : '';
   const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>Popust ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
+  const isWebOrder = group.channel==='wp'||group.channel==='stripe';
+  const isLastniPrevzem = (group.note||'').includes('lastni prevzem');
+  const shippingLine = isWebOrder
+    ? (isLastniPrevzem
+        ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Dostava</span><span style="color:#7a6f60">Osebni prevzem</span></div>`
+        : (group.shippingFee>0
+            ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Poštnina</span><span style="color:#7a6f60">${group.shippingFee.toFixed(2)} €</span></div>`
+            : `<div class="trow"><span style="color:#7a6f60;font-style:italic">Poštnina</span><span style="color:#7a6f60">Brezplačna</span></div>`))
+    : '';
   const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
 
@@ -5840,6 +5850,7 @@ ${extRefs}
 <div class="totals">
   ${subtotalLine}
   ${discountLine}
+  ${shippingLine}
   <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' \u20AC':'\u2013'}</span></div>
 </div>
 
@@ -7223,12 +7234,18 @@ async function potrdiNarocilo(orderId) {
     const [group] = await gr.json();
 
     // Vstavi sale lines + batch alokacija
+    // Cena na artikel: uporabi pricePaid (dejansko plačana cena po popustu), če obstaja.
+    // Za starejša naročila brez pricePaid (pred uvedbo tega polja) sorazmerno
+    // razporedi dejansko plačani znesek glede na polno ceno artiklov, da se
+    // popust vseeno pravilno prikaže po posameznem artiklu na računu.
+    const _hasPricePaid = items.length > 0 && items.every(i => i.pricePaid != null);
+    const _pScale = (!_hasPricePaid && fullTotal > 0 && actualTotal > 0) ? actualTotal / fullTotal : 1;
     for (const item of items) {
       const variant = skuMap[item.sku] || {};
       const productId = variant.product_id || null;
       const variantType = item.variant || variant.type || 'alc';
       const qty = parseInt(item.quantity) || 1;
-      const price = parseFloat(item.price) || 0;
+      const price = _hasPricePaid ? (parseFloat(item.pricePaid) || 0) : (parseFloat(item.price) || 0) * _pScale;
       const isAlc = variantType === 'alc';
 
       const lineRes = await fetch(`${SB_URL}/rest/v1/gm_sale_lines`, {

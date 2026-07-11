@@ -147,6 +147,46 @@ document.addEventListener('click', e => {
   if (typeof gmFbAddToCart === 'function') gmFbAddToCart(cartItem);
 });
 
+async function injectShippingReturnSchema() {
+  let rate = 3.90;
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.postnina&select=value`, { headers: SB_HEADERS });
+    if (r.ok) {
+      const rows = await r.json();
+      if (rows.length) {
+        const parsed = parseFloat(JSON.parse(rows[0].value));
+        if (!isNaN(parsed)) rate = parsed;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    const data = JSON.parse(script.textContent);
+    if (!Array.isArray(data.offers)) return;
+
+    const shippingDetails = {
+      '@type': 'OfferShippingDetails',
+      shippingRate: { '@type': 'MonetaryAmount', value: rate.toFixed(2), currency: 'EUR' },
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'SI' }
+    };
+    const returnPolicy = {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: 'SI',
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      merchantReturnDays: 14,
+      returnMethod: 'https://schema.org/ReturnByMail',
+      returnFees: 'https://schema.org/ReturnShippingFees'
+    };
+    data.offers.forEach(o => {
+      o.shippingDetails = shippingDetails;
+      o.hasMerchantReturnPolicy = returnPolicy;
+    });
+    script.textContent = JSON.stringify(data);
+  } catch(e) { console.warn('Shipping/return schema napaka:', e); }
+}
+
 function injectReviewSchema(rows) {
   try {
     const script = document.querySelector('script[type="application/ld+json"]');
@@ -244,6 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initProductPage(data.variants, data.product);
     loadRatingBadge(PRODUCT_SLUG);
     loadOpenDN(PRODUCT_SLUG);
+    injectShippingReturnSchema();
   } catch(e) {
     console.error('Product page error:', e);
   }

@@ -127,6 +127,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .mini-table th{text-align:left;padding:.2rem .4rem;color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
 .mini-table td{padding:.25rem .4rem;border-bottom:1px solid var(--parchment)}
 .mini-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.bil-summary{margin-bottom:.9rem}
+.bil-faza-row td{background:#a7ece0}
+.bil-total-row td{background:#d3c4ee;font-weight:600;border-top:1.5px solid var(--ink)}
 
 /* ── EMPTY ── */
 .empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
@@ -264,7 +267,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="field"><label>Tinktura / Batch</label>
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
-    <div class="stats-grid" id="bilStatsGrid"></div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
   </div>
@@ -526,10 +528,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="frow">
         <div class="field"><label>m (g)</label><input id="bilM" type="text" inputmode="decimal" placeholder="npr. 9391 ali -8102" oninput="calcBil()"></div>
-        <div class="field"><label>mm % (masni, tehtano)</label><input id="bilMm" type="text" inputmode="decimal" placeholder="79,1" oninput="calcBil()"></div>
-        <div class="field"><label>Vol % (areometer)</label><input id="bilVol" type="text" inputmode="decimal" placeholder="84,8"></div>
+        <div class="field"><label>Vol % (areometer)</label><input id="bilVol" type="text" inputmode="decimal" placeholder="84,8" oninput="calcBil()"></div>
       </div>
       <div class="frow">
+        <div class="field"><label>mm % (auto iz Vol%)</label><input id="bilMm" type="text" readonly style="background:var(--parchment)"></div>
         <div class="field"><label>m_AAE (auto)</label><input id="bilAAE" type="text" readonly style="background:var(--parchment)"></div>
         <div class="field"><label>M_H2O (auto)</label><input id="bilH2O" type="text" readonly style="background:var(--parchment)"></div>
       </div>
@@ -3026,25 +3028,14 @@ function onBilBatchChange(){
 }
 
 function renderBilanca(){
-  const grid=document.getElementById('bilStatsGrid');
   const fazaGrids=document.getElementById('bilFazaGrids');
   const list=document.getElementById('bilEventList');
   if(!bilSelectedKey){
-    grid.innerHTML='';fazaGrids.innerHTML='';
+    fazaGrids.innerHTML='';
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem 0">Ni dogodkov. Dodaj prvega z gumbom "+ Dogodek".</div>';
     return;
   }
   const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
-
-  const totM=round(events.reduce((s,d)=>s+(d.m||0),0),1);
-  const totAAE=round(events.reduce((s,d)=>s+(d.mAae||0),0),1);
-  const totH2O=round(events.reduce((s,d)=>s+(d.mH2o||0),0),1);
-
-  grid.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Skupna masa</div><div class="stat-value">${totM.toFixed(1)} g</div></div>
-    <div class="stat-card"><div class="stat-label">Etanol (m_AAE)</div><div class="stat-value ok">${totAAE.toFixed(1)} g</div></div>
-    <div class="stat-card"><div class="stat-label">Voda (M_H2O)</div><div class="stat-value">${totH2O.toFixed(1)} g</div></div>
-    <div class="stat-card"><div class="stat-label">Dogodkov</div><div class="stat-value">${events.length}</div></div>`;
 
   const fazaOrder=['OF','VF','TE'];
   const fazaSums={};
@@ -3054,9 +3045,19 @@ function renderBilanca(){
     fazaSums[f].m+=d.m||0;fazaSums[f].aae+=d.mAae||0;fazaSums[f].h2o+=d.mH2o||0;
   });
   const fazaKeys=Object.keys(fazaSums).sort((a,b)=>fazaOrder.indexOf(a)-fazaOrder.indexOf(b));
-  fazaGrids.innerHTML=fazaKeys.length?`<table class="mini-table">
-    <tr><th>Faza</th><th class="num">m (g)</th><th class="num">m_AAE (g)</th><th class="num">M_H2O (g)</th></tr>
-    ${fazaKeys.map(f=>`<tr><td>${fazaLabel(f)}</td><td class="num">${round(fazaSums[f].m,1)}</td><td class="num">${round(fazaSums[f].aae,1)}</td><td class="num">${round(fazaSums[f].h2o,1)}</td></tr>`).join('')}
+  const totM=round(fazaKeys.reduce((s,f)=>s+fazaSums[f].m,0),1);
+  const totAAE=round(fazaKeys.reduce((s,f)=>s+fazaSums[f].aae,0),1);
+  const totH2O=round(fazaKeys.reduce((s,f)=>s+fazaSums[f].h2o,0),1);
+  const totMm=totM?round(totAAE/totM*100,1):0;
+
+  fazaGrids.innerHTML=fazaKeys.length?`<table class="mini-table bil-summary">
+    <tr><th>Faza</th><th class="num">m (g)</th><th class="num">mm% (efekt.)</th><th class="num">m_AAE (g)</th><th class="num">M_H2O (g)</th></tr>
+    ${fazaKeys.map(f=>{
+      const s=fazaSums[f];
+      const mm=s.m?round(s.aae/s.m*100,1):0;
+      return `<tr class="bil-faza-row"><td>${fazaLabel(f)}</td><td class="num">${round(s.m,1)}</td><td class="num">${mm}</td><td class="num">${round(s.aae,1)}</td><td class="num">${round(s.h2o,1)}</td></tr>`;
+    }).join('')}
+    <tr class="bil-total-row"><td>Skupaj</td><td class="num">${totM}</td><td class="num">${totMm}</td><td class="num">${totAAE}</td><td class="num">${totH2O}</td></tr>
     </table>`:'';
 
   list.innerHTML=`<table class="mini-table">
@@ -3078,9 +3079,11 @@ function renderBilanca(){
 
 function calcBil(){
   const m=parseNum(document.getElementById('bilM').value);
-  const mm=parseNum(document.getElementById('bilMm').value);
+  const vol=parseNum(document.getElementById('bilVol').value);
+  const mm=vol?volToMas(vol):0;
   const aae=round(m*mm/100,2);
   const h2o=round(m-aae,2);
+  document.getElementById('bilMm').value=mm?mm.toFixed(3)+' %':'0 %';
   document.getElementById('bilAAE').value=aae.toFixed(2)+' g';
   document.getElementById('bilH2O').value=h2o.toFixed(2)+' g';
 }
@@ -3101,12 +3104,11 @@ function openBilancaSheet(id){
     document.getElementById('bilFaza').value=d.faza||'OF';
     document.getElementById('bilStatus').value=d.status||'V';
     document.getElementById('bilM').value=d.m??'';
-    document.getElementById('bilMm').value=d.mmPct??'';
     document.getElementById('bilVol').value=d.volPct??'';
     document.getElementById('bilMss').value=d.mSs??'';
     document.getElementById('bilOpomba').value=d.opomba||'';
   } else {
-    ['bilTinktura','bilBatch','bilM','bilMm','bilVol','bilMss','bilOpomba'].forEach(i=>document.getElementById(i).value='');
+    ['bilTinktura','bilBatch','bilM','bilVol','bilMss','bilOpomba'].forEach(i=>document.getElementById(i).value='');
     if(bilSelectedKey){
       const [t,b]=bilSelectedKey.split('|||');
       document.getElementById('bilTinktura').value=t||'';
@@ -3128,8 +3130,8 @@ function saveBilanca(){
   if(!tinktura||!batch){toast('⚠ Vnesi tinkturo in batch');return;}
   if(!ts){toast('⚠ Vnesi datum in uro');return;}
   const m=parseNum(document.getElementById('bilM').value);
-  const mmPct=parseNum(document.getElementById('bilMm').value);
   const volPct=parseNum(document.getElementById('bilVol').value);
+  const mmPct=volPct?volToMas(volPct):0;
   const mSsRaw=document.getElementById('bilMss').value;
   const mSs=mSsRaw?parseNum(mSsRaw):null;
   const mAae=round(m*mmPct/100,2);

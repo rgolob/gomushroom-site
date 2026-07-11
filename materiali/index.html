@@ -269,6 +269,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
+    <div id="bilStatusSums"></div>
   </div>
 
   <!-- OPREMA VIEW -->
@@ -512,18 +513,18 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Datum in ura</label><input id="bilTs" type="datetime-local"></div>
         <div class="field"><label>Faza</label>
           <select id="bilFaza">
-            <option value="OF">OF — organska faza</option>
-            <option value="VF">VF — vodna faza</option>
-            <option value="TE">TE — tlačna faza</option>
+            <option value="OF">OF</option>
+            <option value="VF">VF</option>
+            <option value="TE">TE</option>
           </select>
         </div>
       </div>
       <div class="field"><label>Status</label>
         <select id="bilStatus" onchange="calcBil()">
-          <option value="V">V — vhod (v rotavapor)</option>
-          <option value="R">R — regenerat (destilat odvzet)</option>
-          <option value="I">I — izguba</option>
-          <option value="Corr">Corr — ročna korekcija (+/-)</option>
+          <option value="V">V</option>
+          <option value="R">R</option>
+          <option value="I">I</option>
+          <option value="Corr">Corr</option>
         </select>
       </div>
       <div class="frow">
@@ -2998,9 +2999,18 @@ async function deleteRD(id){
 
 // ── MASNA BILANCA (rotavapor koncentriranje) ──
 function bilKey(tinktura,batch){return (tinktura||'').trim()+'|||'+(batch||'').trim();}
-function fazaLabel(f){return {OF:'OF · organska',VF:'VF · vodna',TE:'TE · tlačna'}[f]||f||'—';}
-function statusLabel(s){return {V:'V · vhod',R:'R · regenerat',I:'I · izguba',Corr:'Corr · korekcija'}[s]||s||'—';}
-function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);return isNaN(d)?ts:d.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function fazaLabel(f){return f||'—';}
+function statusLabel(s){return s||'—';}
+function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);if(isNaN(d))return ts;return d.getDate()+'.'+(d.getMonth()+1)+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function bilIncluded(d){return d.ukljucen!==false;}
+function toggleBilUkljucen(id){
+  const idx=bilancaDogodki.findIndex(x=>x.id===id);
+  if(idx<0)return;
+  bilancaDogodki[idx].ukljucen=!bilIncluded(bilancaDogodki[idx]);
+  save();
+  sbPushBilanca(bilancaDogodki[idx]);
+  renderBilanca();
+}
 
 function renderBilancaSelect(){
   const sel=document.getElementById('bilBatchSel');
@@ -3061,8 +3071,8 @@ function renderBilanca(){
     </table>`:'';
 
   list.innerHTML=`<table class="mini-table">
-    <tr><th>Datum/ura</th><th>Faza</th><th>Status</th><th class="num">m (g)</th><th class="num">mm%</th><th class="num">Vol%</th><th class="num">m_AAE</th><th class="num">M_H2O</th><th>Opomba</th><th></th></tr>
-    ${events.map(d=>`<tr>
+    <tr><th>Čas</th><th>Faza</th><th>Status</th><th class="num">m (g)</th><th class="num">mm%</th><th class="num">Vol%</th><th class="num">m_AAE</th><th class="num">M_H2O</th><th>Opomba</th><th></th><th>Šteje</th></tr>
+    ${events.map(d=>`<tr${bilIncluded(d)?'':' style="opacity:.45"'}>
       <td>${fmtTs(d.ts)}</td>
       <td>${fazaLabel(d.faza)}</td>
       <td>${statusLabel(d.status)}</td>
@@ -3073,8 +3083,22 @@ function renderBilanca(){
       <td class="num">${round(d.mH2o,1)}</td>
       <td>${d.mSs?('m_ss: '+round(d.mSs,1)+'g '):''}${d.opomba||''}</td>
       <td style="white-space:nowrap"><button onclick="openBilancaSheet('${d.id}')" style="border:none;background:none;cursor:pointer">✎</button><button onclick="delBilanca('${d.id}')" style="border:none;background:none;cursor:pointer;color:var(--danger)">✕</button></td>
+      <td style="text-align:center"><input type="checkbox" ${bilIncluded(d)?'checked':''} onchange="toggleBilUkljucen('${d.id}')"></td>
     </tr>`).join('')}
   </table>`;
+
+  const statusOrder=['V','R','I','Corr'];
+  const statusSums={};
+  events.filter(bilIncluded).forEach(d=>{
+    const st=d.status||'—';
+    if(!statusSums[st])statusSums[st]={m:0,aae:0,h2o:0};
+    statusSums[st].m+=d.m||0;statusSums[st].aae+=d.mAae||0;statusSums[st].h2o+=d.mH2o||0;
+  });
+  const statusKeys=Object.keys(statusSums).sort((a,b)=>statusOrder.indexOf(a)-statusOrder.indexOf(b));
+  document.getElementById('bilStatusSums').innerHTML=statusKeys.length?`<table class="mini-table">
+    <tr><th>Vsota po statusu</th><th class="num">m (g)</th><th class="num">m_AAE (g)</th><th class="num">M_H2O (g)</th></tr>
+    ${statusKeys.map(st=>`<tr><td>${statusLabel(st)}</td><td class="num">${round(statusSums[st].m,1)}</td><td class="num">${round(statusSums[st].aae,1)}</td><td class="num">${round(statusSums[st].h2o,1)}</td></tr>`).join('')}
+  </table>`:'';
 }
 
 function bilSignedM(mRaw,status){
@@ -3147,14 +3171,16 @@ function saveBilanca(){
   const mAae=round(m*mmPct/100,2);
   const mH2o=round(m-mAae,2);
 
+  const existing=editingBilId?bilancaDogodki.find(x=>x.id===editingBilId):null;
   const d={
     id:editingBilId||uid(),
     tinktura,batch,ts,
     faza:document.getElementById('bilFaza').value,
     status,
     m,mmPct,volPct,mAae,mH2o,mSs,
+    ukljucen:existing?bilIncluded(existing):true,
     opomba:document.getElementById('bilOpomba').value.trim(),
-    ustvarjen:editingBilId?(bilancaDogodki.find(x=>x.id===editingBilId)?.ustvarjen||new Date().toISOString()):new Date().toISOString(),
+    ustvarjen:existing?.ustvarjen||new Date().toISOString(),
   };
 
   if(editingBilId){
@@ -3313,6 +3339,7 @@ function bilToSb(d){return{
   faza:d.faza||null,status:d.status||null,
   m:d.m??0,mm_pct:d.mmPct??null,vol_pct:d.volPct??null,
   m_aae:d.mAae??0,m_h2o:d.mH2o??0,m_ss:d.mSs??null,
+  ukljucen:bilIncluded(d),
   opomba:d.opomba||null,ustvarjen:d.ustvarjen||new Date().toISOString()
 };}
 function sbToBil(r){return{
@@ -3320,6 +3347,7 @@ function sbToBil(r){return{
   faza:r.faza||'',status:r.status||'',
   m:r.m||0,mmPct:r.mm_pct||0,volPct:r.vol_pct||0,
   mAae:r.m_aae||0,mH2o:r.m_h2o||0,mSs:r.m_ss??null,
+  ukljucen:r.ukljucen!==false,
   opomba:r.opomba||'',ustvarjen:r.ustvarjen
 };}
 

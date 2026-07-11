@@ -5187,7 +5187,7 @@ function renderPorocilo(){
   // za razliko od castene/brezplačne dostave, kjer je bil strošek dejansko narejen.
   const freeShipN=groups.filter(g=>(g.channel==='wp'||g.channel==='stripe')&&
     !(g.note||'').includes('lastni prevzem') &&
-    (g.shippingFee!==undefined?g.shippingFee===0:g.total>=brezplacnaOd)).length;
+    (g.shipping_fee!==undefined?g.shipping_fee===0:g.total>=brezplacnaOd)).length;
   const shippingCost=freeShipN*postnina;
   const neto=totalRev-shippingCost;
 
@@ -7205,7 +7205,7 @@ async function potrdiNarocilo(orderId) {
       discount_amt: parseFloat(narocilo.discount_amt) || 0,
       full_total: fullTotal,
       total: actualTotal,
-      shippingFee: shippingFee,
+      shipping_fee: shippingFee,
       qty: totalQty,
       status: 'active',
     };

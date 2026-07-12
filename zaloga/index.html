@@ -3136,7 +3136,7 @@ function renderDobavnice(){
             ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
             :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
           }
-          ${g.signedAt&&g.email
+          ${g.email
             ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova':'Pošlji'}</button>`
             :''
           }

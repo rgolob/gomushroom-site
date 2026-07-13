@@ -4,16 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const path = window.location.pathname;
   const isEn = path.startsWith("/en/");
+  const showCart = path.startsWith("/trgovina/");
 
   const navItems = isEn
     ? `
       <a href="/en/learn/">Learn</a>
       <a href="/en/qc/heavy-metals/">Quality</a>
       <a href="/en/#services">Services</a>
-      <a href="/en/#approach">Approach</a>
-      <a href="/en/#gallery">Gallery</a>
       <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
-      <a href="/en/#references">References</a>
     `
     : `
       <a href="/znanje/">Znanje</a>
@@ -42,12 +40,58 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const pageMapSlToEn = {
-    "/qc/tezke-kovine/": "/en/qc/heavy-metals/"
+    "/qc/tezke-kovine/": "/en/qc/heavy-metals/",
+
+    "/storitve/botanicni-ekstrakti/": "/en/services/botanical-extracts/",
+    "/storitve/ekstrakcije-medicinskih-gob/": "/en/services/medicinal-mushroom-extraction/",
+    "/storitve/gojenje-reishi/": "/en/services/reishi-cultivation/",
+
+    "/znanje/trojna-ekstrakcija/": "/en/learn/triple-extraction/",
+    "/znanje/ultrazvocna-ekstrakcija/": "/en/learn/ultrasonic-extraction/",
+    "/znanje/vakuumsko-koncentriranje/": "/en/learn/vacuum-concentration/",
+    "/znanje/kaj-je-ekstrakcija/": "/en/learn/what-is-extraction/",
+    "/znanje/beta-glukani/": "/en/learn/beta-glucans/",
+    "/znanje/beta-glukani-medicinske-gobe/": "/en/learn/beta-glucans/",
+    "/znanje/ekstrakt-smrekovih-vrsickov/": "/en/learn/spruce-bud-extract/",
+    "/znanje/smrekovi-vrsicki-raziskave/": "/en/learn/spruce-bud-research/",
+    "/znanje/chaga-raziskave/": "/en/learn/chaga-research/",
+    "/znanje/reishi-raziskave/": "/en/learn/reishi-research/",
+    "/znanje/resasti-bradovec-raziskave/": "/en/learn/lions-mane-research/"
   };
 
   const pageMapEnToSl = {
-    "/en/qc/heavy-metals/": "/qc/tezke-kovine/"
+    "/en/qc/heavy-metals/": "/qc/tezke-kovine/",
+
+    "/en/services/botanical-extracts/": "/storitve/botanicni-ekstrakti/",
+    "/en/services/medicinal-mushroom-extraction/": "/storitve/ekstrakcije-medicinskih-gob/",
+    "/en/services/reishi-cultivation/": "/storitve/gojenje-reishi/",
+
+    "/en/learn/triple-extraction/": "/znanje/trojna-ekstrakcija/",
+    "/en/learn/ultrasonic-extraction/": "/znanje/ultrazvocna-ekstrakcija/",
+    "/en/learn/vacuum-concentration/": "/znanje/vakuumsko-koncentriranje/",
+    "/en/learn/what-is-extraction/": "/znanje/kaj-je-ekstrakcija/",
+    "/en/learn/beta-glucans/": "/znanje/beta-glukani/",
+    "/en/learn/spruce-bud-extract/": "/znanje/ekstrakt-smrekovih-vrsickov/",
+    "/en/learn/spruce-bud-research/": "/znanje/smrekovi-vrsicki-raziskave/",
+    "/en/learn/chaga-research/": "/znanje/chaga-raziskave/",
+    "/en/learn/reishi-research/": "/znanje/reishi-raziskave/",
+    "/en/learn/lions-mane-research/": "/znanje/resasti-bradovec-raziskave/"
   };
+
+  // Če za trenutno stran ni natančnega prevoda, uskoči na ustrezno rubriko v drugem jeziku.
+  function fallbackTranslatedUrl(currentPath, targetIsEn) {
+    if (targetIsEn) {
+      if (currentPath.startsWith("/znanje/")) return "/en/learn/";
+      if (currentPath.startsWith("/storitve/")) return "/en/services/";
+      if (currentPath.startsWith("/qc/")) return "/en/qc/heavy-metals/";
+      if (currentPath.startsWith("/trgovina/")) return "/en/";
+      return "/en/";
+    }
+    if (currentPath.startsWith("/en/learn/")) return "/znanje/";
+    if (currentPath.startsWith("/en/services/")) return "/storitve/";
+    if (currentPath.startsWith("/en/qc/")) return "/qc/tezke-kovine/";
+    return "/";
+  }
 
   function getLangUrls() {
     const currentPath = window.location.pathname;
@@ -58,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const translatedHash = hashMapEnToSl[currentHash];
 
       return {
-        slUrl: translatedPage || `/${translatedHash || ""}`,
+        slUrl: translatedPage || (translatedHash ? `/${translatedHash}` : fallbackTranslatedUrl(currentPath, false)),
         enUrl: currentPath + currentHash
       };
     }
@@ -68,11 +112,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       slUrl: currentPath + currentHash,
-      enUrl: translatedPage || `/en/${translatedHash || ""}`
+      enUrl: translatedPage || (translatedHash ? `/en/${translatedHash}` : fallbackTranslatedUrl(currentPath, true))
     };
   }
 
   const { slUrl, enUrl } = getLangUrls();
+
+  function getCartCount() {
+    const possibleKeys = ["cart", "gomushroom_cart", "gm_cart"];
+    for (const key of possibleKeys) {
+      const rawCart = localStorage.getItem(key);
+      if (!rawCart) continue;
+      try {
+        const cart = JSON.parse(rawCart);
+        if (Array.isArray(cart)) {
+          return cart.reduce((sum, item) => sum + Number(item.quantity || item.qty || 1), 0);
+        }
+        if (cart && Array.isArray(cart.items)) {
+          return cart.items.reduce((sum, item) => sum + Number(item.quantity || item.qty || 1), 0);
+        }
+      } catch (e) {}
+    }
+    return 0;
+  }
+
+  const cartHtml = showCart ? `
+        <a class="cart-link" href="/trgovina/kosarica/" aria-label="Košarica">
+          <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 7h15l-1.5 8.5H8L6 4H3"></path>
+            <circle cx="9" cy="20" r="1.5"></circle>
+            <circle cx="18" cy="20" r="1.5"></circle>
+          </svg>
+          <span id="cart-count" class="cart-count" aria-label="Število izdelkov v košarici">0</span>
+        </a>` : "";
 
   header.innerHTML = `
     <div class="wrap nav">
@@ -91,7 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
       </nav>
 
       <div class="nav-actions" aria-label="Jezik in meni">
-
+${cartHtml}
+${showCart ? "" : `
         <div class="lang-switch" aria-label="Jezik">
 
           <a id="lang-sl" class="lang-flag" href="${slUrl}" aria-label="Slovenščina" lang="sl">
@@ -102,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
           </a>
 
-        </div>
+        </div>`}
 
         <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -126,6 +199,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateLangLinks();
   window.addEventListener("hashchange", updateLangLinks);
+
+  if (showCart) {
+    const cartCountEl = document.getElementById("cart-count");
+    const updateCartCount = () => {
+      if (!cartCountEl) return;
+      const prev = Number(cartCountEl.textContent) || 0;
+      const count = getCartCount();
+      cartCountEl.textContent = count;
+      cartCountEl.classList.toggle("is-empty", count === 0);
+      cartCountEl.classList.toggle("has-items", count > 0);
+      if (count > prev) {
+        cartCountEl.classList.remove("cart-count--pulse");
+        void cartCountEl.offsetWidth;
+        cartCountEl.classList.add("cart-count--pulse");
+      }
+    };
+    updateCartCount();
+    window.addEventListener("storage", updateCartCount);
+    window.addEventListener("cart:updated", updateCartCount);
+  }
 
   const navToggle = document.getElementById("nav-toggle");
   const primaryNav = document.getElementById("primary-nav");

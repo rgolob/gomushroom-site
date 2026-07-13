@@ -147,15 +147,84 @@ document.addEventListener('click', e => {
   if (typeof gmFbAddToCart === 'function') gmFbAddToCart(cartItem);
 });
 
+async function injectShippingReturnSchema() {
+  let rate = 3.90;
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.postnina&select=value`, { headers: SB_HEADERS });
+    if (r.ok) {
+      const rows = await r.json();
+      if (rows.length) {
+        const parsed = parseFloat(JSON.parse(rows[0].value));
+        if (!isNaN(parsed)) rate = parsed;
+      }
+    }
+  } catch(e) {}
+
+  try {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    const data = JSON.parse(script.textContent);
+    if (!Array.isArray(data.offers)) return;
+
+    const shippingDetails = {
+      '@type': 'OfferShippingDetails',
+      shippingRate: { '@type': 'MonetaryAmount', value: rate.toFixed(2), currency: 'EUR' },
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'SI' }
+    };
+    const returnPolicy = {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: 'SI',
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      merchantReturnDays: 14,
+      returnMethod: 'https://schema.org/ReturnByMail',
+      returnFees: 'https://schema.org/ReturnShippingFees'
+    };
+    data.offers.forEach(o => {
+      o.shippingDetails = shippingDetails;
+      o.hasMerchantReturnPolicy = returnPolicy;
+    });
+    script.textContent = JSON.stringify(data);
+  } catch(e) { console.warn('Shipping/return schema napaka:', e); }
+}
+
+function injectReviewSchema(rows) {
+  try {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script || !rows.length) return;
+    const data = JSON.parse(script.textContent);
+
+    const avg = rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length;
+    data.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: avg.toFixed(1),
+      reviewCount: rows.length
+    };
+    data.review = rows.map(r => {
+      const rev = {
+        '@type': 'Review',
+        author: { '@type': 'Person', name: r.name || 'Kupec' },
+        reviewRating: { '@type': 'Rating', ratingValue: r.rating || 5, bestRating: 5, worstRating: 1 }
+      };
+      if (r.title) rev.name = r.title;
+      if (r.body) rev.reviewBody = r.body;
+      if (r.created_at) rev.datePublished = r.created_at.slice(0, 10);
+      return rev;
+    });
+    script.textContent = JSON.stringify(data);
+  } catch(e) { console.warn('Review schema napaka:', e); }
+}
+
 async function loadRatingBadge(slug) {
   try {
     const r = await fetch(
-      `${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating`,
+      `${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating,title,body,name,created_at&order=created_at.desc`,
       { headers: SB_HEADERS }
     );
     if (!r.ok) return;
     const rows = await r.json();
     if (!rows.length) return;
+
+    injectReviewSchema(rows);
 
     const avg = rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length;
     const avgStr = avg.toFixed(1);
@@ -215,6 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initProductPage(data.variants, data.product);
     loadRatingBadge(PRODUCT_SLUG);
     loadOpenDN(PRODUCT_SLUG);
+    injectShippingReturnSchema();
   } catch(e) {
     console.error('Product page error:', e);
   }

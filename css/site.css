@@ -469,6 +469,59 @@ h3{
   justify-content:center;
 }
 
+/* ----- Domača stran: nižji hero, močnejša slika (samo .hero--home, ne vpliva na ostale hero strani) ----- */
+.hero--home{
+  min-height:46vh;
+}
+
+.hero--home .slide img{
+  filter:saturate(105%) contrast(103%) brightness(.8);
+}
+
+.hero--home::after{
+  background:radial-gradient(75% 120% at 50% 45%, rgba(43,10,57,.80) 0%, rgba(43,10,57,.52) 45%, rgba(43,10,57,.18) 75%, rgba(43,10,57,0) 100%);
+}
+
+.hero--home .inner{
+  text-align:center;
+}
+
+.hero--home .headline{
+  display:block;
+  max-width:600px;
+  margin:0 auto;
+  padding:0;
+  border-radius:0;
+  background:none;
+  border:none;
+  backdrop-filter:none;
+  box-shadow:none;
+}
+
+.hero--home .headline::before,
+.hero--home .headline::after{
+  display:none;
+}
+
+.hero--home .kicker{color:rgba(255,255,255,.78);}
+.hero--home h1{color:#fff;}
+.hero--home .hero-species{color:rgba(255,255,255,.7);}
+.hero--home .lead,
+.hero--home p{color:rgba(255,255,255,.9);}
+
+.hero--home .hero-badge{
+  background:rgba(255,255,255,.14);
+  border-color:rgba(255,255,255,.24);
+  color:#fff;
+}
+
+.hero--home .hero-badge a{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);}
+
+@media (max-width:640px){
+  .hero--home{min-height:56vh;}
+  .hero--home .headline{max-width:100%;}
+}
+
 /* MOBILE HERO OPTIMIZATION */
 @media (max-width:640px){
   .hero{min-height:68vh;}
@@ -539,125 +592,362 @@ section{padding:32px 0}
   .lead2{display:none !important;}
 }
 
-/* ----- Infografika: zakaj so tinkture drugačne (homepage) ----- */
-.diff-flow{
-  display:flex;
-  gap:0;
-  margin:8px 0 30px;
-}
-
-.diff-step{
-  flex:1 1 0;
-  min-width:0;
-  position:relative;
+/* ----- Uvod v primerjavo: kicker, naslov, ikone lastnosti, opozorilo ----- */
+.gm-diff-intro{
+  max-width:720px;
+  margin:0 auto 36px;
   text-align:center;
-  padding:0 16px;
 }
 
-.diff-step:not(:last-child)::before{
-  content:'';
-  position:absolute;
-  top:29px;
-  left:calc(50% + 32px);
-  right:calc(-50% + 32px);
-  height:2px;
-  background:linear-gradient(90deg, var(--accent), var(--line));
-  z-index:0;
-}
-
-.diff-badge{
-  position:relative;
-  width:58px;
-  height:58px;
-  margin:0 auto 14px;
-  border-radius:50%;
-  background:linear-gradient(135deg,var(--brand),var(--accent));
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 8px 18px rgba(43,10,57,.20);
-  z-index:1;
-}
-
-.diff-icon{font-size:24px;line-height:1}
-
-.diff-num{
-  position:absolute;
-  top:-4px;
-  right:-4px;
-  width:20px;
-  height:20px;
-  border-radius:50%;
-  background:#fff;
-  color:var(--brand);
-  font-size:11px;
+.gm-diff-kicker{
+  margin:0 0 10px;
+  font-size:.78rem;
   font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+
+.gm-diff-headline{
+  margin:0 0 14px;
+  font-size:clamp(24px,3vw,34px);
+  font-weight:750;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  color:var(--brand);
+}
+
+.gm-diff-sub{
+  margin:0;
+  color:var(--muted);
+  font-size:.98rem;
+  line-height:1.6;
+}
+
+.gm-diff-features{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:24px;
+  margin:0 0 30px;
+}
+
+.gm-diff-feature{
+  text-align:left;
+}
+
+.gm-diff-feature-ico{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  background:#eef1e6;
   display:flex;
   align-items:center;
   justify-content:center;
-  border:1px solid var(--line);
+  margin-bottom:14px;
 }
 
-.diff-step h3{
+.gm-diff-feature-ico--green{background:#e6f2e3}
+.gm-diff-feature-ico--blue{background:#e2eff8}
+.gm-diff-feature-ico--ice{background:#e5f5fa}
+.gm-diff-feature-ico--warm{background:#f5ece2}
+
+.gm-diff-feature-ico .ico{
+  width:24px;
+  height:24px;
+}
+
+.gm-diff-feature h3{
   font-size:15px;
   margin:0 0 6px;
   color:var(--brand);
-  letter-spacing:var(--ls-h3);
 }
 
-.diff-step p{
+.gm-diff-feature p{
   font-size:13px;
   color:var(--muted);
-  line-height:1.5;
+  line-height:1.55;
   margin:0;
 }
 
-.diff-cta{
+.gm-diff-notice{
   display:flex;
+  align-items:flex-start;
+  gap:12px;
+  background:#f1f4ea;
+  border:1px solid #dfe6d1;
+  border-radius:12px;
+  padding:16px 20px;
+  margin:0 0 28px;
+}
+
+.gm-diff-notice-ico{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+  margin-top:2px;
+}
+
+.gm-diff-notice p{
+  margin:0;
+  font-size:13.5px;
+  line-height:1.6;
+  color:#4b5540;
+}
+
+.gm-diff-notice strong{color:#33401f}
+
+@media (max-width:900px){
+  .gm-diff-features{grid-template-columns:repeat(2,1fr);gap:26px 20px;}
+}
+
+@media (max-width:600px){
+  .gm-diff-features{grid-template-columns:1fr;gap:18px;}
+
+  .gm-diff-feature{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+  }
+
+  .gm-diff-feature-ico{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    margin-bottom:0;
+  }
+
+  .gm-diff-feature-ico .ico{
+    width:20px;
+    height:20px;
+  }
+
+  .gm-diff-notice{flex-direction:column;gap:8px;}
+}
+
+/* ----- Spodnji trak lastnosti + CTA (pod primerjalno kartico) ----- */
+.gm-diff-strip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  padding:20px 24px;
+  border-radius:14px;
+  background:#f7f4ee;
+  margin:0 0 28px;
+}
+
+.gm-diff-strip-items{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px 28px;
+}
+
+.gm-diff-strip-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--fg);
+  white-space:nowrap;
+}
+
+.gm-diff-strip-item .ico{width:16px;height:16px;flex:0 0 auto}
+
+.gm-diff-strip-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 18px;
+  border-radius:10px;
+  background:var(--brand);
+  color:#fff;
+  font-weight:650;
+  font-size:13.5px;
+  white-space:nowrap;
+}
+
+.gm-diff-strip-cta:hover{opacity:.92;text-decoration:none}
+
+@media (max-width:767px){
+  .gm-diff-strip{flex-direction:column;align-items:stretch;}
+  .gm-diff-strip-items{gap:12px 20px;}
+  .gm-diff-strip-cta{justify-content:center;}
+}
+
+/* ----- Primerjalna kartica: zakaj so tinkture drugačne (homepage) ----- */
+.compare-card{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  margin:8px 0 28px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(43,10,57,.08);
+  position:relative;
+}
+
+.compare-col{
+  flex:1 1 0;
+  min-width:0;
+  padding:28px 32px 32px;
+  position:relative;
+}
+
+.compare-col--against{
+  background:#efeaea;
+}
+
+.compare-col--for{
+  background:#ffffff;
+  border:1px solid var(--line);
+  border-left:none;
+}
+
+.compare-col-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.compare-col-head h3{
+  margin:0;
+  font-size:16px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-weight:800;
+}
+
+.compare-col--against h3{color:#6b4a4a}
+.compare-col--for h3{color:var(--brand)}
+
+.compare-mark{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:800;
+  flex:0 0 auto;
+}
+
+.compare-mark--x{background:#b45959;color:#fff}
+.compare-mark--check{background:#3f7a52;color:#fff}
+
+.compare-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.compare-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.compare-col--against .compare-list li{color:#6b5a5a}
+.compare-col--for .compare-list li{color:var(--fg)}
+
+.compare-ico{
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:800;
+  margin-top:2px;
+}
+
+.compare-ico--x{background:rgba(180,89,89,.14);color:#b45959}
+.compare-ico--check{background:rgba(63,122,82,.14);color:#3f7a52}
+
+.compare-vs{
+  flex:0 0 auto;
+  width:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2;
+}
+
+.compare-vs span{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  font-weight:800;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 16px rgba(177,133,86,.35);
+  border:3px solid var(--bg);
+  margin:0 -22px;
+}
+
+.compare-bottle{
+  display:none;
+}
+
+@media (min-width:980px){
+  .compare-col--for{padding-right:180px;}
+  .compare-bottle{
+    display:block;
+    position:absolute;
+    right:24px;
+    bottom:0;
+    width:150px;
+    height:auto;
+  }
+}
+
+@media (max-width:767px){
+  .compare-card{flex-direction:column;border-radius:14px;}
+  .compare-col--against{padding-bottom:44px;}
+  .compare-col--for{border-left:1px solid var(--line);border-top:none;padding-top:44px;}
+  .compare-vs{
+    width:100%;
+    height:0;
+    order:1;
+  }
+  .compare-col--against{order:0}
+  .compare-col--for{order:2}
+  .compare-vs span{
+    margin:-22px auto 0;
+    position:relative;
+    z-index:3;
+  }
+}
+
+.compare-cta{  display:flex;
   align-items:center;
   justify-content:space-between;
   flex-wrap:wrap;
   gap:14px;
   margin-top:8px;
-  padding-top:22px;
-  border-top:1px solid var(--line);
 }
 
-.diff-b2b-note{
-  color:var(--muted);
+.compare-b2b-note{  color:var(--muted);
   font-size:.92rem;
   max-width:46ch;
 }
 
-@media (max-width:900px){
-  .diff-flow{flex-direction:column;gap:24px;}
-
-  .diff-step{
-    display:flex;
-    align-items:flex-start;
-    gap:14px;
-    text-align:left;
-    padding:0;
-  }
-
-  .diff-step:not(:last-child)::before{display:none;}
-
-  .diff-step:not(:last-child) .diff-badge::after{
-    content:'';
-    position:absolute;
-    left:28px;
-    top:58px;
-    width:2px;
-    height:24px;
-    background:linear-gradient(180deg, var(--accent), var(--line));
-  }
-
-  .diff-badge{margin:0;flex:0 0 auto;}
-}
-
 @media (max-width:640px){
-  .diff-cta{flex-direction:column;align-items:flex-start;}
-}
+  .compare-cta{flex-direction:column;align-items:flex-start;}}
 
 .grid{display:grid;gap:22px}
 @media (min-width:980px){

@@ -754,3 +754,25 @@ document.addEventListener('click', function (e) {
     }
   } catch {}
 });
+
+// Agregatna ocena strank (GoMushroom tinkture) - samo stevilka, brez citatov
+(function () {
+  const mount = document.getElementById('gm-home-rating');
+  if (!mount) return;
+  const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+  const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+  fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&select=rating`, {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+  })
+    .then(r => r.ok ? r.json() : [])
+    .then(rows => {
+      if (!rows || !rows.length) return;
+      const avg = rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length;
+      const full = Math.round(avg);
+      const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+      const label = rows.length === 1 ? 'oceno' : rows.length < 5 ? 'ocene' : 'ocen';
+      mount.innerHTML = `<span class="stars">${stars}</span><span class="avg">${avg.toFixed(1)}</span><span class="count">${rows.length} ${label} strank</span>`;
+      mount.classList.add('is-visible');
+    })
+    .catch(() => {});
+})();

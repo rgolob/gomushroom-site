@@ -3134,7 +3134,8 @@ function renderDobavnice(){
           <button class="tbtn" onclick="downloadDobavnicaPDF('${g.id}')">📄 PDF</button>
           ${g.signedAt
             ?`<span style="font-size:.65rem;color:var(--success);padding:.2rem .5rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podpisano</span>`
-            :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`
+            :`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>
+              <button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="attachSignedScan('${g.id}')">📎 Pripni sken</button>`
           }
           ${g.email
             ?`<button class="tbtn" style="background:rgba(58,107,74,.1);border-color:rgba(58,107,74,.35);color:#2a5c3a" onclick="sendDobavnicaManual('${g.id}')">✉ ${g.dobavnicaSentAt?'Znova':'Pošlji'}</button>`
@@ -5671,7 +5672,9 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
       <div class="sig-name">${group.buyer||''}</div>
       ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
       ${sigImg
-        ? `<img src="${sigImg}" style="height:3rem;max-width:100%;display:block;margin-top:.4rem">`
+        ? (sigImg.startsWith('data:image/')||!sigImg.startsWith('data:')
+            ? `<img src="${sigImg}" style="height:3rem;max-width:100%;display:block;margin-top:.4rem">`
+            : `<a href="${sigImg}" download="podpisana-dobavnica.pdf" style="font-size:.72rem;color:#1a1209;margin-top:.4rem;display:block">📎 Priložen podpisan sken (PDF)</a>`)
         : `<div class="sig-line" style="margin-top:.4rem"></div>`}
     </div>
   </div>
@@ -9246,6 +9249,41 @@ function signReportPDF(){
   if(info)info.innerHTML=`<strong>${titles[_currentReportType]||'Poročilo'}</strong> · podpis odgovorne osebe`;
   document.getElementById('signOverlay').style.display='flex';
   _initSignCanvas();
+}
+
+function attachSignedScan(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g){toast('❌ Prodaja ni najdena');return;}
+  if(!g.deliveryNum){toast('⚠ Dobavnica nima številke');return;}
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*,.pdf';
+  input.onchange=()=>{
+    const file=input.files?.[0];
+    if(!file)return;
+    if(file.size>8*1024*1024){toast('⚠ Datoteka je prevelika (max 8MB)');return;}
+    const reader=new FileReader();
+    reader.onload=async ()=>{
+      const dataURL=reader.result;
+      const ok=await showConfirm(`📎 Pripni podpisan sken\n\n${g.deliveryNum} · ${g.buyer||'—'}\n\nDobavnica bo označena kot podpisana.`,'Pripni');
+      if(!ok)return;
+      try{
+        const now=new Date();
+        const signedAt=now.toLocaleString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        await sbUpdate('gm_sale_groups',{id:g.id},{signature_data:dataURL,signed_at:now.toISOString()});
+        g.signatureData=dataURL;
+        g.signedAt=signedAt;
+        renderSales();
+        renderDobavnice();
+        toast('✓ Podpisan sken pripet');
+      }catch(e){
+        toast('❌ Napaka: '+e.message);
+      }
+    };
+    reader.onerror=()=>toast('❌ Napaka pri branju datoteke');
+    reader.readAsDataURL(file);
+  };
+  input.click();
 }
 
 function showSignModal(groupId){

@@ -479,7 +479,7 @@ h3{
 }
 
 .hero--home::after{
-  background:radial-gradient(60% 100% at 50% 45%, rgba(18,7,26,.74) 0%, rgba(18,7,26,.42) 55%, rgba(18,7,26,.16) 100%);
+  background:radial-gradient(75% 120% at 50% 45%, rgba(43,10,57,.80) 0%, rgba(43,10,57,.52) 45%, rgba(43,10,57,.18) 75%, rgba(43,10,57,0) 100%);
 }
 
 .hero--home .inner{

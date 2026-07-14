@@ -109,28 +109,28 @@ function chipSvg(name) {
 
 const PRODUCT_CARD_META = {
   'reishi': {
-    desc: 'Za večerno rutino in obdobja napornega vsakdana.',
+    desc: 'Za večerno rutino in naporne dni.',
     chips: [
       { icon: 'moon', label: 'Večerna rutina' },
       { icon: 'flask', label: 'Triterpenske spojine' }
     ]
   },
   'bradovec': {
-    desc: 'Za vsakodnevno mentalno rutino in zahtevne dneve.',
+    desc: 'Za mentalno rutino in zahtevne dni.',
     chips: [
       { icon: 'brain', label: 'Mentalna rutina' },
       { icon: 'microscope', label: 'Značilne spojine' }
     ]
   },
   'chaga': {
-    desc: 'Za vsakodnevni ritual ljubiteljev funkcionalnih gob.',
+    desc: 'Za naporne dni in zahtevna obdobja.',
     chips: [
       { icon: 'leaf', label: 'Polifenolne spojine' },
       { icon: 'coffee', label: 'Dnevni ritual' }
     ]
   },
   'smrekovi-vrsicki': {
-    desc: 'Sodoben ekstrakt mladih vršičkov iz domače tradicije.',
+    desc: 'Iz domače tradicije v sodobnem ekstraktu.',
     chips: [
       { icon: 'tree-pine', label: 'Mladi vršički' },
       { icon: 'leaf', label: 'Tradicionalna uporaba' }

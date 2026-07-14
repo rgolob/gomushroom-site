@@ -115,7 +115,7 @@ const PRODUCT_CARD_META = {
       { icon: 'flask', label: 'Triterpenske spojine' }
     ]
   },
-  'resasti-bradovec': {
+  'bradovec': {
     desc: 'Za vsakodnevno mentalno rutino in zahtevne dneve.',
     chips: [
       { icon: 'brain', label: 'Mentalna rutina' },

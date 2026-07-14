@@ -18,6 +18,11 @@
       desc: 'Smrekovi vršički so več kot sirup. Zakaj je nadzorovan hidroetanolni ekstrakcijski proces bistveno drugačen od tradicionalnih pripravkov.',
     },
     {
+      url: '/znanje/smrekovi-vrsicki-raziskave/',
+      title: 'Kaj o smrekovih vršičkih pravijo raziskave?',
+      desc: 'Kdaj in zakaj so ljudje tradicionalno posegali po smrekovih vršičkih ter kaj o njihovi sestavi pokažejo raziskave.',
+    },
+    {
       url: '/znanje/trojna-ekstrakcija/',
       title: 'Trojna ekstrakcija medicinskih gob: alkohol, voda in tlak v enem postopku',
       desc: 'Trojna ekstrakcija medicinskih gob združuje alkoholno, vročevodno in tlačno vodno ekstrakcijo. Spoznajte, zakaj en sam postopek pogosto ni dovolj.',

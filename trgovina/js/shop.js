@@ -88,6 +88,10 @@ const VRSTA_TO_SLUG = {
   'Smrekovi vršički': 'smrekovi-vrsicki'
 };
 
+const INFO_ARTICLE_LINKS = {
+  'smrekovi-vrsicki': '/znanje/smrekovi-vrsicki-raziskave/'
+};
+
 async function loadProducts() {
   const [prodRes, varRes, stockRes, dnRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
@@ -178,6 +182,7 @@ function renderShopGrid(products) {
             <h2>${p.name}</h2>
             ${p.activeBatch ? `<div class="batch-production-bar"><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek)}</span>` : ''}</span></div>` : ''}
           </a>
+          ${INFO_ARTICLE_LINKS[p.slug] ? `<a class="shop-product-info-link" href="${INFO_ARTICLE_LINKS[p.slug]}">Čemu so namenjeni? →</a>` : ''}
 
           <div class="shop-product-foot">
 

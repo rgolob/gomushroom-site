@@ -109,7 +109,7 @@ function chipSvg(name) {
 
 const PRODUCT_CARD_META = {
   'reishi': {
-    desc: 'Za večerno rutino in naporne dni.',
+    desc: 'Za večerno rutino in mirnejši zaključek dneva.',
     chips: [
       { icon: 'moon', label: 'Večerna rutina' },
       { icon: 'flask', label: 'Triterpenske spojine' }

@@ -95,12 +95,12 @@ const INFO_ARTICLE_LINKS = {
 // ── Kartice izdelkov: kratek opis + oznake z ikonami ──────
 const CHIP_ICONS = {
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
-  flask: '<path d="M10 2v6.3a2 2 0 0 1-.3 1L4.2 18a2 2 0 0 0 1.7 3h12.2a2 2 0 0 0 1.7-3l-5.5-8.7a2 2 0 0 1-.3-1V2"/><path d="M8.5 2h7"/><path d="M6 14h12"/>',
-  brain: '<path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3.5 3.5 0 0 0 2 6 3 3 0 0 0 3 3c1 0 1-1 1-1V4s0-1-1-1Z"/><path d="M15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3.5 3.5 0 0 1-2 6 3 3 0 0 1-3 3c-1 0-1-1-1-1V4s0-1 1-1Z"/>',
-  microscope: '<path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9.5"/>',
   leaf: '<path d="M11 20A7 7 0 0 1 4 13c0-4.5 5-8 8-10 3 2 8 5.5 8 10a7 7 0 0 1-7 7 7 7 0 0 1-2 0Z"/><path d="M12 12c-2.5 2.5-4 5-4 8"/>',
-  coffee: '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
-  'tree-pine': '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14"/><path d="m17 8 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 8"/><path d="M12 2 9 6.3a1 1 0 0 0 .8 1.7h4.4a1 1 0 0 0 .8-1.7L12 2Z"/><path d="M12 17v5"/>'
+  'tree-pine': '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14"/><path d="m17 8 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 8"/><path d="M12 2 9 6.3a1 1 0 0 0 .8 1.7h4.4a1 1 0 0 0 .8-1.7L12 2Z"/><path d="M12 17v5"/>',
+  flower: '<circle cx="12" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="12" cy="12" r="3"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/>',
+  'book-open': '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3Z"/>',
+  sunrise: '<path d="M12 2v6"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="M16 18a4 4 0 0 0-8 0"/>'
 };
 
 function chipSvg(name) {
@@ -109,24 +109,24 @@ function chipSvg(name) {
 
 const PRODUCT_CARD_META = {
   'reishi': {
-    desc: 'Za večerno rutino in naporne dni.',
+    desc: 'Za večerno rutino in mirnejši zaključek dneva.',
     chips: [
-      { icon: 'moon', label: 'Večerna rutina' },
-      { icon: 'flask', label: 'Triterpenske spojine' }
+      { icon: 'moon', label: 'Večerni ritual' },
+      { icon: 'flower', label: 'Umiritev' }
     ]
   },
   'bradovec': {
     desc: 'Za mentalno rutino in zahtevne dni.',
     chips: [
-      { icon: 'brain', label: 'Mentalna rutina' },
-      { icon: 'microscope', label: 'Značilne spojine' }
+      { icon: 'target', label: 'Fokus' },
+      { icon: 'book-open', label: 'Mentalna rutina' }
     ]
   },
   'chaga': {
     desc: 'Za naporne dni in zahtevna obdobja.',
     chips: [
-      { icon: 'leaf', label: 'Polifenolne spojine' },
-      { icon: 'coffee', label: 'Dnevni ritual' }
+      { icon: 'sunrise', label: 'Vsakodnevna rutina' },
+      { icon: 'leaf', label: 'Tradicionalna uporaba' }
     ]
   },
   'smrekovi-vrsicki': {

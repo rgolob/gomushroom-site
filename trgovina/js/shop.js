@@ -92,6 +92,52 @@ const INFO_ARTICLE_LINKS = {
   'smrekovi-vrsicki': '/znanje/smrekovi-vrsicki-raziskave/'
 };
 
+// ── Kartice izdelkov: kratek opis + oznake z ikonami ──────
+const CHIP_ICONS = {
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  flask: '<path d="M10 2v6.3a2 2 0 0 1-.3 1L4.2 18a2 2 0 0 0 1.7 3h12.2a2 2 0 0 0 1.7-3l-5.5-8.7a2 2 0 0 1-.3-1V2"/><path d="M8.5 2h7"/><path d="M6 14h12"/>',
+  brain: '<path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3.5 3.5 0 0 0 2 6 3 3 0 0 0 3 3c1 0 1-1 1-1V4s0-1-1-1Z"/><path d="M15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3.5 3.5 0 0 1-2 6 3 3 0 0 1-3 3c-1 0-1-1-1-1V4s0-1 1-1Z"/>',
+  microscope: '<path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9.5"/>',
+  leaf: '<path d="M11 20A7 7 0 0 1 4 13c0-4.5 5-8 8-10 3 2 8 5.5 8 10a7 7 0 0 1-7 7 7 7 0 0 1-2 0Z"/><path d="M12 12c-2.5 2.5-4 5-4 8"/>',
+  coffee: '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
+  'tree-pine': '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14"/><path d="m17 8 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 8"/><path d="M12 2 9 6.3a1 1 0 0 0 .8 1.7h4.4a1 1 0 0 0 .8-1.7L12 2Z"/><path d="M12 17v5"/>'
+};
+
+function chipSvg(name) {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CHIP_ICONS[name] || ''}</svg>`;
+}
+
+const PRODUCT_CARD_META = {
+  'reishi': {
+    desc: 'Za večerno rutino in obdobja napornega vsakdana.',
+    chips: [
+      { icon: 'moon', label: 'Večerna rutina' },
+      { icon: 'flask', label: 'Triterpenske spojine' }
+    ]
+  },
+  'resasti-bradovec': {
+    desc: 'Za vsakodnevno mentalno rutino in zahtevne dneve.',
+    chips: [
+      { icon: 'brain', label: 'Mentalna rutina' },
+      { icon: 'microscope', label: 'Značilne spojine' }
+    ]
+  },
+  'chaga': {
+    desc: 'Za vsakodnevni ritual ljubiteljev funkcionalnih gob.',
+    chips: [
+      { icon: 'leaf', label: 'Polifenolne spojine' },
+      { icon: 'coffee', label: 'Dnevni ritual' }
+    ]
+  },
+  'smrekovi-vrsicki': {
+    desc: 'Sodoben ekstrakt mladih vršičkov iz domače tradicije.',
+    chips: [
+      { icon: 'tree-pine', label: 'Mladi vršički' },
+      { icon: 'leaf', label: 'Tradicionalna uporaba' }
+    ]
+  }
+};
+
 async function loadProducts() {
   const [prodRes, varRes, stockRes, dnRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
@@ -180,6 +226,11 @@ function renderShopGrid(products) {
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
+            ${PRODUCT_CARD_META[p.slug] ? `
+            <p class="shop-product-desc">${PRODUCT_CARD_META[p.slug].desc}</p>
+            <div class="shop-product-chips">
+              ${PRODUCT_CARD_META[p.slug].chips.map(c => `<span class="shop-product-chip">${chipSvg(c.icon)}${c.label}</span>`).join('')}
+            </div>` : ''}
             ${p.activeBatch ? `<div class="batch-production-bar"><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek)}</span>` : ''}</span></div>` : ''}
           </a>
           ${INFO_ARTICLE_LINKS[p.slug] ? `<a class="shop-product-info-link" href="${INFO_ARTICLE_LINKS[p.slug]}">Čemu so namenjeni? →</a>` : ''}

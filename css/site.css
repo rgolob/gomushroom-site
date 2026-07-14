@@ -754,6 +754,17 @@ section{padding:32px 0}
   .gm-diff-notice{flex-direction:column;gap:8px;}
 }
 
+.gm-diff-statement{
+  text-align:center;
+  max-width:640px;
+  margin:6px auto 26px;
+  font-size:.96rem;
+  font-weight:600;
+  color:var(--brand);
+  letter-spacing:.005em;
+  line-height:1.5;
+}
+
 /* ----- Spodnji trak lastnosti + CTA (pod primerjalno kartico) ----- */
 .gm-diff-strip{
   display:flex;

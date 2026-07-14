@@ -429,6 +429,39 @@ a.article-card p{
   background: rgba(43,11,57,.18);
 }
 
+.article-cta{
+  text-align: center;
+  padding: 28px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+}
+.article-cta p{
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2b0b39;
+}
+.article-cta-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: #2b0b39;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: .98rem;
+  border: 1px solid #2b0b39;
+  transition: .18s ease;
+}
+.article-cta-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(43,11,57,.14);
+}
+
 .article-block--author{
   padding-bottom: 28px;
 }

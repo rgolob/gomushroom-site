@@ -138,12 +138,35 @@ const PRODUCT_CARD_META = {
   }
 };
 
+async function loadProductRatings() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&select=product_id,rating`, { headers: SB_HEADERS });
+    if (!r.ok) return {};
+    const rows = await r.json();
+    const bySlug = {};
+    rows.forEach(row => {
+      if (!bySlug[row.product_id]) bySlug[row.product_id] = [];
+      bySlug[row.product_id].push(row.rating || 0);
+    });
+    const out = {};
+    Object.keys(bySlug).forEach(slug => {
+      const ratings = bySlug[slug];
+      out[slug] = {
+        avg: ratings.reduce((s, r) => s + r, 0) / ratings.length,
+        count: ratings.length
+      };
+    });
+    return out;
+  } catch(e) { return {}; }
+}
+
 async function loadProducts() {
-  const [prodRes, varRes, stockRes, dnRes] = await Promise.all([
+  const [prodRes, varRes, stockRes, dnRes, ratingsMap] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka,datum,predviden_zakljucek`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka,datum,predviden_zakljucek`, { headers: SB_HEADERS }),
+    loadProductRatings()
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');
   const products = await prodRes.json();
@@ -163,6 +186,7 @@ async function loadProducts() {
   return products.map(p => ({
     ...p,
     activeBatch: dnMap[p.slug] || null,
+    rating: ratingsMap[p.slug] || null,
     variants: variants
       .filter(v => v.product_id === p.id)
       .map(v => {
@@ -215,12 +239,18 @@ function renderShopGrid(products) {
     return `
       <article class="shop-product" data-product-card="${p.id}">
 
-        <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
-          <div class="shop-product-image">
-            <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
-            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
-          </div>
-        </a>
+        <div class="shop-product-img-wrap">
+          <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
+            <div class="shop-product-image">
+              <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+              ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
+            </div>
+          </a>
+          ${p.rating ? `<a class="shop-product-rating" href="${detailUrl ? detailUrl + '#gm-recenzije' : '/trgovina/'}">
+            <span class="shop-product-rating-stars">${'★'.repeat(Math.round(p.rating.avg))}${'☆'.repeat(5 - Math.round(p.rating.avg))}</span>
+            <span class="shop-product-rating-count">${p.rating.avg.toFixed(1)} (${p.rating.count})</span>
+          </a>` : ''}
+        </div>
 
         <div class="shop-product-content">
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">

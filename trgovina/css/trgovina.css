@@ -278,10 +278,18 @@ input, select, textarea {
   box-shadow:0 16px 40px rgba(0,0,0,.09);
 }
 
-.shop-product-img-link{
+.shop-product-img-wrap{
   width:38%;
   flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  border-radius:20px 0 0 20px;
+  overflow:hidden;
+}
+
+.shop-product-img-link{
   display:block;
+  flex:1;
   text-decoration:none;
 }
 
@@ -290,13 +298,38 @@ input, select, textarea {
   height:100%;
   min-height:150px;
   background:#fff;
-  border-radius:20px 0 0 20px;
-  overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
   padding:12px 8px;
   position:relative;
+}
+
+.shop-product-rating{
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  padding:0 8px 10px;
+  text-align:center;
+  text-decoration:none;
+}
+
+.shop-product-rating-stars{
+  color:#b18556;
+  font-size:.78rem;
+  letter-spacing:.03em;
+}
+
+.shop-product-rating-count{
+  font-size:.68rem;
+  color:rgba(43,11,57,.45);
+  font-weight:600;
+}
+
+.shop-product-rating:hover .shop-product-rating-count{
+  text-decoration:underline;
 }
 
 .shop-product-image img{

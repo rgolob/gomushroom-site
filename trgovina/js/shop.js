@@ -239,16 +239,18 @@ function renderShopGrid(products) {
     return `
       <article class="shop-product" data-product-card="${p.id}">
 
-        <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
-          <div class="shop-product-image">
-            <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
-            ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
-          </div>
-          ${p.rating ? `<div class="shop-product-rating">
+        <div class="shop-product-img-wrap">
+          <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
+            <div class="shop-product-image">
+              <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+              ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
+            </div>
+          </a>
+          ${p.rating ? `<a class="shop-product-rating" href="${detailUrl ? detailUrl + '#gm-recenzije' : '/trgovina/'}">
             <span class="shop-product-rating-stars">${'★'.repeat(Math.round(p.rating.avg))}${'☆'.repeat(5 - Math.round(p.rating.avg))}</span>
             <span class="shop-product-rating-count">${p.rating.avg.toFixed(1)} (${p.rating.count})</span>
-          </div>` : ''}
-        </a>
+          </a>` : ''}
+        </div>
 
         <div class="shop-product-content">
           <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">

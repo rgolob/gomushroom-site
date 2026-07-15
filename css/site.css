@@ -2600,6 +2600,12 @@ footer.site-footer{
   transition:opacity .4s ease, transform .3s ease;
 }
 
+/* Reishi bottle photos use a wider canvas than the other 3 products,
+   so at an equal width% the bottle renders visibly shorter — compensate. */
+.gm-product--reishi .gm-product-media img{
+  width:94%;
+}
+
 .gm-product-media .gm-product-img-gly{
   opacity:0;
 }
@@ -2771,6 +2777,9 @@ footer.site-footer{
   .gm-product-media img{
     width:45%;
   }
+  .gm-product--reishi .gm-product-media img{
+    width:48%;
+  }
 }
 
 @media (max-width:520px){
@@ -2782,6 +2791,9 @@ footer.site-footer{
   }
   .gm-product-media img{
     width:81%;
+  }
+  .gm-product--reishi .gm-product-media img{
+    width:87%;
   }
 }
 

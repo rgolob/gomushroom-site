@@ -776,3 +776,32 @@ document.addEventListener('click', function (e) {
     })
     .catch(() => {});
 })();
+
+// Ocene po posameznem izdelku (kartice "GoMushroom tinkture")
+(function () {
+  const mounts = document.querySelectorAll('[data-rating-slug]');
+  if (!mounts.length) return;
+  const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+  const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+  fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&select=product_id,rating`, {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+  })
+    .then(r => r.ok ? r.json() : [])
+    .then(rows => {
+      const bySlug = {};
+      (rows || []).forEach(row => {
+        if (!bySlug[row.product_id]) bySlug[row.product_id] = [];
+        bySlug[row.product_id].push(row.rating || 0);
+      });
+      mounts.forEach(mount => {
+        const ratings = bySlug[mount.dataset.ratingSlug];
+        if (!ratings || !ratings.length) return;
+        const avg = ratings.reduce((s, r) => s + r, 0) / ratings.length;
+        const full = Math.round(avg);
+        const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+        mount.innerHTML = `<span class="gm-product-rating-stars">${stars}</span><span class="gm-product-rating-count">${avg.toFixed(1)} (${ratings.length})</span>`;
+        mount.classList.add('is-visible');
+      });
+    })
+    .catch(() => {});
+})();

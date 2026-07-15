@@ -342,6 +342,18 @@ function bindVariantPickers(products) {
         badge.textContent = `−${v.discount_pct}%`;
         badge.style.display = v.discount_pct > 0 ? '' : 'none';
       }
+
+      // Zamenjaj sliko kartice glede na različico (ce obstaja -gly-shop verzija)
+      if (product.image) {
+        const imgEl = card.querySelector('.shop-product-image img');
+        if (imgEl) {
+          const base = product.image.replace(/\.webp$/, '');
+          const variantImg = type === 'gly' ? `${base}-gly-shop.webp` : `${base}-shop.webp`;
+          const fallbackImg = `${base}-shop.webp`;
+          imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = fallbackImg; };
+          imgEl.src = variantImg;
+        }
+      }
     }
 
     btns.forEach(b => b.addEventListener('click', () => setVariant(b.dataset.variantBtn)));

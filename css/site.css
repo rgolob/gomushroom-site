@@ -2576,24 +2576,35 @@ footer.site-footer{
   height:260px;
   overflow:hidden;
   background:#fff;
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
   flex-shrink:0;
   position:relative;
   padding-top:.75rem;
 }
 
 .gm-product-media img{
+  position:absolute;
+  left:50%;
+  top:.75rem;
   width:88%;
   height:auto;
   display:block;
-  transition:transform .3s ease;
+  transform:translateX(-50%);
+  transition:opacity .4s ease, transform .3s ease;
+}
+
+.gm-product-media .gm-product-img-gly{
+  opacity:0;
 }
 
 @media (hover:hover){
   .gm-product:hover .gm-product-media img{
-    transform:scale(1.04);
+    transform:translateX(-50%) scale(1.04);
+  }
+  .gm-product:hover .gm-product-media .gm-product-img-alc{
+    opacity:0;
+  }
+  .gm-product:hover .gm-product-media .gm-product-img-gly{
+    opacity:1;
   }
 }
 
@@ -2618,6 +2629,13 @@ footer.site-footer{
   font-size:1.05rem;
   line-height:1.2;
   letter-spacing:-0.015em;
+}
+
+.gm-product-body p.gm-product-purpose{
+  margin:0 0 .5rem;
+  font-size:.82rem;
+  font-weight:650;
+  color:var(--accent);
 }
 
 .gm-product-body p{

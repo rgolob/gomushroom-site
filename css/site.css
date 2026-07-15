@@ -2760,7 +2760,7 @@ footer.site-footer{
     grid-template-columns:repeat(2, minmax(0,1fr));
   }
   .gm-product-media img{
-    width:48%;
+    width:40%;
   }
 }
 
@@ -2768,8 +2768,11 @@ footer.site-footer{
   .gm-products{
     grid-template-columns:1fr;
   }
+  .gm-product-media{
+    height:400px;
+  }
   .gm-product-media img{
-    width:42%;
+    width:72%;
   }
 }
 

@@ -2638,6 +2638,30 @@ footer.site-footer{
   color:var(--accent);
 }
 
+.gm-product-rating{
+  display:none;
+  align-items:center;
+  gap:.35rem;
+  margin:0 0 .35rem;
+  text-decoration:none;
+}
+.gm-product-rating.is-visible{
+  display:inline-flex;
+}
+.gm-product-rating-stars{
+  color:#b18556;
+  font-size:.85rem;
+  letter-spacing:.03em;
+}
+.gm-product-rating-count{
+  font-size:.78rem;
+  font-weight:600;
+  color:rgba(43,11,57,.55);
+}
+.gm-product-rating:hover .gm-product-rating-count{
+  text-decoration:underline;
+}
+
 .gm-product-chips{
   display:flex;
   flex-wrap:wrap;

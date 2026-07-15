@@ -2638,6 +2638,32 @@ footer.site-footer{
   color:var(--accent);
 }
 
+.gm-product-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:.6rem 0 0;
+}
+
+.gm-product-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 9px;
+  border-radius:999px;
+  background:rgba(43,11,57,.06);
+  color:#2b0b39;
+  font-size:.72rem;
+  font-weight:600;
+  line-height:1.4;
+  white-space:nowrap;
+}
+
+.gm-product-chip svg{
+  flex:0 0 auto;
+  opacity:.75;
+}
+
 .gm-product-body p{
   margin:0;
   line-height:1.55;

@@ -94,6 +94,17 @@ function initProductPage(variants, product) {
         badge.textContent = `−${v.discount_pct}%`;
         badge.style.display = v.discount_pct > 0 ? '' : 'none';
       }
+
+      // Zamenjaj sliko izdelka glede na različico, če sta na voljo obe (data-image-alc/-gly)
+      const variantImg = v.type === 'gly' ? imgWrap.dataset.imageGly : imgWrap.dataset.imageAlc;
+      if (variantImg) {
+        const imgEl = imgWrap.querySelector('img');
+        const sourceEl = imgWrap.querySelector('source');
+        if (imgEl && imgEl.src !== location.origin + variantImg) {
+          imgEl.src = variantImg;
+          if (sourceEl) sourceEl.srcset = `${variantImg} 800w`;
+        }
+      }
     }
     if (variantNote) variantNote.textContent = v.type === 'alc' ? 'Alkoholna različica.' : 'Brezalkoholna različica z glicerinom.';
 

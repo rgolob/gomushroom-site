@@ -2639,11 +2639,20 @@ footer.site-footer{
   letter-spacing:-0.015em;
 }
 
+.gm-product-body p.gm-product-headline{
+  margin:0 0 .4rem;
+  font-size:1.3rem;
+  font-weight:800;
+  line-height:1.15;
+  letter-spacing:-0.01em;
+  color:var(--gm-accent-line);
+}
+
 .gm-product-body p.gm-product-purpose{
   margin:0 0 .7rem;
   font-size:.82rem;
-  font-weight:650;
-  color:var(--accent);
+  font-weight:500;
+  color:#5a605b;
 }
 
 .gm-product-rating{

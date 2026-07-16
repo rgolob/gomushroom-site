@@ -10,6 +10,42 @@ function trackPurchaseServer(orderId, items, total, shipping, discount, coupon) 
     body: JSON.stringify({ orderId, items, total, shipping, discount, coupon, clientId: getGaClientId() }),
   }).catch(() => {});
 }
+
+// blagajna.js se izvede takoj (brez defer), zato lahko na Stripe redirect
+// povratku (3D Secure, Revolut Pay) njegov DOMContentLoaded handler steče
+// PREJ kot site-footer.js, ki šele takrat dinamično naloži meta-pixel.js
+// in analytics.js. Brez tega gmFbPurchase/gmPurchase še ne obstajata in se
+// nakup tiho ne zabeleži. Ta funkcija poskrbi, da sta oba pripravljena
+// (naloži ju, če ju še ni, sicer počaka, da postaneta na voljo).
+function gmWaitFor(checkFn, timeoutMs = 3000, intervalMs = 100) {
+  return new Promise((resolve) => {
+    if (checkFn()) return resolve();
+    const start = Date.now();
+    const timer = setInterval(() => {
+      if (checkFn() || Date.now() - start > timeoutMs) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, intervalMs);
+  });
+}
+async function gmEnsureTracking() {
+  const consent = localStorage.getItem('gm_cookie_consent');
+  if (consent === 'all' && typeof gmFbPurchase !== 'function' && !document.querySelector('script[src="/js/meta-pixel.js"]')) {
+    const s = document.createElement('script');
+    s.src = '/js/meta-pixel.js';
+    document.body.appendChild(s);
+  }
+  if (typeof gmPurchase !== 'function' && !document.querySelector('script[src="/js/analytics.js"]')) {
+    const s = document.createElement('script');
+    s.src = '/js/analytics.js';
+    document.body.appendChild(s);
+  }
+  await Promise.all([
+    consent === 'all' ? gmWaitFor(() => typeof gmFbPurchase === 'function') : Promise.resolve(),
+    gmWaitFor(() => typeof gmPurchase === 'function'),
+  ]);
+}
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
 const STRIPE_PK = 'pk_live_51TYJWhLYTCFQNvWnrcdDl8I9BvW7uBLGLZuuV5XY1sV4Kwzho4Oo9lAsLZjcV9roh38ezVvFEq3uQ0PZcOouoGMg00sNtGFH54';
 const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
@@ -999,6 +1035,7 @@ async function saveStripeOrder(paymentIntentId) {
   await sendStripeConfirmationEmail(order, calc);
   showStripeSuccess(order);
 
+  await gmEnsureTracking();
   if (typeof gmPurchase === 'function')
     gmPurchase(order.id, cart, calc.skupaj, calc.postnina, calc.popustZnesek, calc.koda);
   if (typeof gmFbPurchase === 'function')
@@ -1272,6 +1309,7 @@ async function placeOrder() {
     const calcUpn = { ...calc, skupaj: skupajUpn, popustZnesek: calc.popustZnesek + upnDiscountAmt };
     await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calcUpn);
     showSuccess({ ...order, rf_reference: rf }, rf, calcUpn);
+    await gmEnsureTracking();
     if (typeof gmPurchase === 'function')
       gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     if (typeof gmFbPurchase === 'function')

@@ -255,11 +255,39 @@ async function loadOpenDN(slug) {
   } catch(e) {}
 }
 
+// Uskladi ceno/zalogo v JSON-LD z dejansko aktivnim popustom/zalogo variante.
+// Klice se sinhrono, takoj po initProductPage - torej PREDEN loadRatingBadge
+// sploh zacne svoj async fetch - da ne pride do iste tekme kot prej med
+// vec vzporednimi pisci istega <script> elementa (glej git zgodovino).
+function syncOfferSchema(variants) {
+  try {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    const data = JSON.parse(script.textContent);
+    if (!Array.isArray(data.offers)) return;
+    data.offers.forEach(offer => {
+      const v = variants.find(v => v.sku === offer.sku);
+      if (!v) return;
+      const effective = v.discount_pct > 0
+        ? +(v.price_malo * (1 - v.discount_pct / 100)).toFixed(2)
+        : v.price_malo;
+      offer.price = effective.toFixed(2);
+      offer.availability = !v.in_stock
+        ? 'https://schema.org/OutOfStock'
+        : v.low_stock
+        ? 'https://schema.org/LimitedAvailability'
+        : 'https://schema.org/InStock';
+    });
+    script.textContent = JSON.stringify(data);
+  } catch(e) { console.warn('Offer schema sync napaka:', e); }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const data = await loadProductVariants();
     if (!data) return;
     initProductPage(data.variants, data.product);
+    syncOfferSchema(data.variants);
     loadRatingBadge(PRODUCT_SLUG);
     loadOpenDN(PRODUCT_SLUG);
   } catch(e) {

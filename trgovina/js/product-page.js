@@ -158,45 +158,12 @@ document.addEventListener('click', e => {
   if (typeof gmFbAddToCart === 'function') gmFbAddToCart(cartItem);
 });
 
-async function injectShippingReturnSchema() {
-  let rate = 3.90;
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/gm_settings?key=eq.postnina&select=value`, { headers: SB_HEADERS });
-    if (r.ok) {
-      const rows = await r.json();
-      if (rows.length) {
-        const parsed = parseFloat(JSON.parse(rows[0].value));
-        if (!isNaN(parsed)) rate = parsed;
-      }
-    }
-  } catch(e) {}
-
-  try {
-    const script = document.querySelector('script[type="application/ld+json"]');
-    if (!script) return;
-    const data = JSON.parse(script.textContent);
-    if (!Array.isArray(data.offers)) return;
-
-    const shippingDetails = {
-      '@type': 'OfferShippingDetails',
-      shippingRate: { '@type': 'MonetaryAmount', value: rate.toFixed(2), currency: 'EUR' },
-      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'SI' }
-    };
-    const returnPolicy = {
-      '@type': 'MerchantReturnPolicy',
-      applicableCountry: 'SI',
-      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-      merchantReturnDays: 14,
-      returnMethod: 'https://schema.org/ReturnByMail',
-      returnFees: 'https://schema.org/ReturnShippingFees'
-    };
-    data.offers.forEach(o => {
-      o.shippingDetails = shippingDetails;
-      o.hasMerchantReturnPolicy = returnPolicy;
-    });
-    script.textContent = JSON.stringify(data);
-  } catch(e) { console.warn('Shipping/return schema napaka:', e); }
-}
+// shippingDetails/hasMerchantReturnPolicy sta zdaj staticno zapisana v
+// JSON-LD vsake produktne strani (redko se spremenita), namesto da bi ju
+// vsakic znova vbrizgali sem. Prej sta ta funkcija in injectReviewSchema()
+// obe hkrati (brez await) brale in prepisovale isti <script> element, kar
+// je povzrocalo tekmovalni pogoj - katerakoli je pisala kasneje, je tiho
+// izbrisala polja, ki jih je dodala druga (npr. aggregateRating).
 
 function injectReviewSchema(rows) {
   try {
@@ -288,14 +255,41 @@ async function loadOpenDN(slug) {
   } catch(e) {}
 }
 
+// Uskladi ceno/zalogo v JSON-LD z dejansko aktivnim popustom/zalogo variante.
+// Klice se sinhrono, takoj po initProductPage - torej PREDEN loadRatingBadge
+// sploh zacne svoj async fetch - da ne pride do iste tekme kot prej med
+// vec vzporednimi pisci istega <script> elementa (glej git zgodovino).
+function syncOfferSchema(variants) {
+  try {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    const data = JSON.parse(script.textContent);
+    if (!Array.isArray(data.offers)) return;
+    data.offers.forEach(offer => {
+      const v = variants.find(v => v.sku === offer.sku);
+      if (!v) return;
+      const effective = v.discount_pct > 0
+        ? +(v.price_malo * (1 - v.discount_pct / 100)).toFixed(2)
+        : v.price_malo;
+      offer.price = effective.toFixed(2);
+      offer.availability = !v.in_stock
+        ? 'https://schema.org/OutOfStock'
+        : v.low_stock
+        ? 'https://schema.org/LimitedAvailability'
+        : 'https://schema.org/InStock';
+    });
+    script.textContent = JSON.stringify(data);
+  } catch(e) { console.warn('Offer schema sync napaka:', e); }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const data = await loadProductVariants();
     if (!data) return;
     initProductPage(data.variants, data.product);
+    syncOfferSchema(data.variants);
     loadRatingBadge(PRODUCT_SLUG);
     loadOpenDN(PRODUCT_SLUG);
-    injectShippingReturnSchema();
   } catch(e) {
     console.error('Product page error:', e);
   }

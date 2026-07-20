@@ -99,6 +99,13 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
   </url>
 
+  <!-- Article: Ultrazvočna ekstrakcija -->
+  <url>
+    <loc>https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/</loc>
+    <lastmod>2026-07-20</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+  </url>
 
   <!-- Article: Trojna ekstrakcija / Triple extraction -->
   <url>

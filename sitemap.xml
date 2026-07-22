@@ -99,11 +99,19 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/kaj-je-ekstrakcija/"/>
   </url>
 
-  <!-- Article: Ultrazvočna ekstrakcija -->
+  <!-- Article: Ultrazvočna ekstrakcija / Ultrasonic extraction -->
   <url>
     <loc>https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/</loc>
-    <lastmod>2026-07-20</lastmod>
+    <lastmod>2026-07-21</lastmod>
     <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/ultrasonic-extraction/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/ultrasonic-extraction/</loc>
+    <lastmod>2026-07-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/ultrasonic-extraction/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
   </url>
 

@@ -17,6 +17,16 @@
       title: 'Triple Extraction of Medicinal Mushrooms: Alcohol, Water and Pressure in One Process',
       desc: 'Triple extraction of medicinal mushrooms combines alcohol, hot water and pressurised water extraction. Learn why a single method is often not enough.',
     },
+    {
+      url: '/en/learn/beta-glucans/',
+      title: 'Beta-Glucans in Mushrooms: Not Just a Number',
+      desc: 'What beta-glucans are in medicinal mushrooms, why their structure matters for extract quality, and why a single percentage on a certificate of analysis is not enough.',
+    },
+    {
+      url: '/en/learn/ultrasonic-extraction/',
+      title: 'Ultrasonic Extraction of Medicinal Mushrooms',
+      desc: 'How ultrasound-assisted extraction (UAE) improves mass transfer, opens the mushroom cell structure and increases the yield of bioactive compounds from Reishi, Chaga and Lion\'s Mane.',
+    },
   ];
 
   function render(){

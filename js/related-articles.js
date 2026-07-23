@@ -27,6 +27,16 @@
       title: 'Trojna ekstrakcija medicinskih gob: alkohol, voda in tlak v enem postopku',
       desc: 'Trojna ekstrakcija medicinskih gob združuje alkoholno, vročevodno in tlačno vodno ekstrakcijo. Spoznajte, zakaj en sam postopek pogosto ni dovolj.',
     },
+    {
+      url: '/znanje/beta-glukani/',
+      title: 'Beta-glukani v gobah: zakaj odstotek ni dovolj',
+      desc: 'Kaj so beta-glukani v medicinskih gobah, zakaj njihova struktura vpliva na kakovost ekstrakta in zakaj sam odstotek na analizi ni dovolj.',
+    },
+    {
+      url: '/znanje/ultrazvocna-ekstrakcija/',
+      title: 'Ultrazvočna ekstrakcija medicinskih gob',
+      desc: 'Kako ultrazvočna ekstrakcija pri medicinskih gobah izboljša masni prenos, razgradnjo matrice in izkoristek bioaktivnih spojin iz Reishija, Chage in resastega bradovca.',
+    },
   ];
 
   function render(){

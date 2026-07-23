@@ -7,16 +7,64 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_H={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
+const LANG=document.documentElement.lang==='en'?'en':'sl';
+const T={
+  sl:{
+    h2:'Ocene strank', loading:'Nalagam ocene…', writeReview:'Napiši recenzijo',
+    reviewSub:pct=>` — za vsako potrjeno oceno prejmete ${pct}% popust`,
+    ratingLabel:'Ocena', starLabel:(i)=>`${i} zvezd${i===1?'a':i<5?'e':''}`, starsHint:'Izberite oceno',
+    starsHintLevels:['','Slabo','Povprečno','Dobro','Zelo dobro','Odlično'],
+    namePh:'Vaše ime *', emailPh:'E-mail (za kupon) *', titlePh:'Naslov recenzije', bodyPh:'Vaša izkušnja z izdelkom *',
+    submitReview:'Pošlji recenzijo', sending:'Pošiljam…',
+    igShare:'Deli na Instagramu', igSub:'— zasluži dodaten popust, sodeluj z nami na @gomushroom.si',
+    igHandlePh:'@IG uporabniško ime *', igLinkPh:'Povezava do objave (neobvezno)',
+    igSubmit:'Pošlji zahtevo', igCancel:'Prekliči',
+    fillRequired:'Izpolnite vsa obvezna polja in izberite oceno.', fillRequiredIg:'Izpolnite vsa obvezna polja.',
+    reviewSuccess:pct=>`✅ Hvala za recenzijo! Po pregledu boste na e-mail prejeli ${pct}% kupon za naslednji nakup.`,
+    igSuccess:pct=>`✅ Zahteva poslana! Po preverjanju boste na e-mail prejeli ${pct}% kupon.`,
+    sendError:'Napaka pri pošiljanju. Poskusite znova.', genericError:'Napaka. Poskusite znova.',
+    noReviews:'Še ni ocen. Bodite prvi, ki delite izkušnjo!',
+    anonymous:'Anonimno', reviewWord:n=>n===1?'recenzija':n<5?'recenzije':'recenzij',
+    showMore:n=>`Prikaži vse recenzije (${n}) ↓`, dateLocale:'sl-SI',
+    ig:[
+      {id:'follow',  label:'Sledi profilu @gomushroom.si',       hint:'Sledi nam na Instagramu'},
+      {id:'story',   label:'Označi nas v Instagram zgodbi',       hint:'@gomushroom.si v story + pošlji screenshot'},
+      {id:'objavaLnk',label:'Ustvari objavo z linkom do profila',hint:'Objava z linkom na @gomushroom.si'},
+      {id:'objavaTag',label:'Označi nas v objavi z našim produktom',hint:'Označi @gomushroom.si + #gomushroom'},
+    ]
+  },
+  en:{
+    h2:'Customer reviews', loading:'Loading reviews…', writeReview:'Write a review',
+    reviewSub:pct=>` — get a ${pct}% discount for every approved review`,
+    ratingLabel:'Rating', starLabel:(i)=>`${i} star${i===1?'':'s'}`, starsHint:'Select a rating',
+    starsHintLevels:['','Poor','Average','Good','Very good','Excellent'],
+    namePh:'Your name *', emailPh:'Email (for the coupon) *', titlePh:'Review title', bodyPh:'Your experience with the product *',
+    submitReview:'Submit review', sending:'Sending…',
+    igShare:'Share on Instagram', igSub:'— earn an extra discount, engage with us on @gomushroom.si',
+    igHandlePh:'@IG username *', igLinkPh:'Link to the post (optional)',
+    igSubmit:'Send request', igCancel:'Cancel',
+    fillRequired:'Fill in all required fields and choose a rating.', fillRequiredIg:'Fill in all required fields.',
+    reviewSuccess:pct=>`✅ Thanks for your review! Once approved, you'll receive a ${pct}% coupon by email for your next purchase.`,
+    igSuccess:pct=>`✅ Request sent! Once verified, you'll receive a ${pct}% coupon by email.`,
+    sendError:'Error sending. Please try again.', genericError:'Error. Please try again.',
+    noReviews:'No reviews yet. Be the first to share your experience!',
+    anonymous:'Anonymous', reviewWord:n=>n===1?'review':'reviews',
+    showMore:n=>`Show all reviews (${n}) ↓`, dateLocale:'en-IE',
+    ig:[
+      {id:'follow',  label:'Follow @gomushroom.si',       hint:'Follow us on Instagram'},
+      {id:'story',   label:'Tag us in an Instagram story', hint:'@gomushroom.si in your story + send a screenshot'},
+      {id:'objavaLnk',label:'Create a post linking to our profile',hint:'Post with a link to @gomushroom.si'},
+      {id:'objavaTag',label:'Tag us in a post with our product',hint:'Tag @gomushroom.si + #gomushroom'},
+    ]
+  }
+}[LANG];
+
 const DEFAULTS={recenzijaPct:10,igFollowPct:5,igStoryPct:10,igObjavaLnk:15,igObjavaTag:20};
 let cfg=Object.assign({},DEFAULTS);
 
 function igActions(){
-  return[
-    {id:'follow',  label:'Sledi profilu @gomushroom.si',       hint:'Sledi nam na Instagramu',                     pct:cfg.igFollowPct},
-    {id:'story',   label:'Označi nas v Instagram zgodbi',       hint:'@gomushroom.si v story + pošlji screenshot',  pct:cfg.igStoryPct},
-    {id:'objavaLnk',label:'Ustvari objavo z linkom do profila',hint:'Objava z linkom na @gomushroom.si',            pct:cfg.igObjavaLnk},
-    {id:'objavaTag',label:'Označi nas v objavi z našim produktom',hint:'Označi @gomushroom.si + #gomushroom',       pct:cfg.igObjavaTag},
-  ];
+  const pctById={follow:cfg.igFollowPct,story:cfg.igStoryPct,objavaLnk:cfg.igObjavaLnk,objavaTag:cfg.igObjavaTag};
+  return T.ig.map(a=>Object.assign({},a,{pct:pctById[a.id]}));
 }
 
 async function loadSettings(){
@@ -46,32 +94,32 @@ async function init(){
 
 function buildHTML(){
   return`<div class="gmr-wrap">
-  <h2 class="gmr-h2">Ocene strank</h2>
+  <h2 class="gmr-h2">${T.h2}</h2>
 
-  <div id="gmr-list"><div class="gmr-loading">Nalagam ocene…</div></div>
+  <div id="gmr-list"><div class="gmr-loading">${T.loading}</div></div>
 
   <!-- Recenzija -->
   <details class="gmr-card gmr-details">
     <summary class="gmr-details-sum">
       <span class="gmr-card-icon">✍️</span>
       <span>
-        <strong class="gmr-h3">Napiši recenzijo</strong>
-        <span class="gmr-sub"> — za vsako potrjeno oceno prejmete <strong>${cfg.recenzijaPct}% popust</strong></span>
+        <strong class="gmr-h3">${T.writeReview}</strong>
+        <span class="gmr-sub">${T.reviewSub(cfg.recenzijaPct)}</span>
       </span>
     </summary>
     <form id="gmr-form" novalidate style="margin-top:1.1rem">
-      <div class="gmr-stars" role="group" aria-label="Ocena">
-        ${[1,2,3,4,5].map(i=>`<button type="button" class="gmr-star" data-v="${i}" aria-label="${i} zvezd${i===1?'a':i<5?'e':''}">★</button>`).join('')}
-        <span class="gmr-stars-hint">Izberite oceno</span>
+      <div class="gmr-stars" role="group" aria-label="${T.ratingLabel}">
+        ${[1,2,3,4,5].map(i=>`<button type="button" class="gmr-star" data-v="${i}" aria-label="${T.starLabel(i)}">★</button>`).join('')}
+        <span class="gmr-stars-hint">${T.starsHint}</span>
       </div>
       <input type="hidden" id="gmr-rating" value="0">
       <div class="gmr-fields">
-        <input class="gmr-input" type="text" id="gmr-name" placeholder="Vaše ime *" autocomplete="name">
-        <input class="gmr-input" type="email" id="gmr-email" placeholder="E-mail (za kupon) *" autocomplete="email">
-        <input class="gmr-input" type="text" id="gmr-title" placeholder="Naslov recenzije">
-        <textarea class="gmr-input gmr-ta" id="gmr-body" placeholder="Vaša izkušnja z izdelkom *" rows="4"></textarea>
+        <input class="gmr-input" type="text" id="gmr-name" placeholder="${T.namePh}" autocomplete="name">
+        <input class="gmr-input" type="email" id="gmr-email" placeholder="${T.emailPh}" autocomplete="email">
+        <input class="gmr-input" type="text" id="gmr-title" placeholder="${T.titlePh}">
+        <textarea class="gmr-input gmr-ta" id="gmr-body" placeholder="${T.bodyPh}" rows="4"></textarea>
       </div>
-      <button type="submit" class="gmr-btn-submit">Pošlji recenzijo</button>
+      <button type="submit" class="gmr-btn-submit">${T.submitReview}</button>
       <div id="gmr-msg" class="gmr-msg"></div>
     </form>
   </details>
@@ -81,8 +129,8 @@ function buildHTML(){
     <summary class="gmr-details-sum">
       <span class="gmr-card-icon">📸</span>
       <span>
-        <strong class="gmr-h3">Deli na Instagramu</strong>
-        <span class="gmr-sub"> — zasluži dodaten popust, sodeluj z nami na @gomushroom.si</span>
+        <strong class="gmr-h3">${T.igShare}</strong>
+        <span class="gmr-sub"> ${T.igSub}</span>
       </span>
     </summary>
     <div class="gmr-ig-actions" style="margin-top:1.1rem">
@@ -100,14 +148,14 @@ function buildHTML(){
       <input type="hidden" id="gmr-ig-id">
       <input type="hidden" id="gmr-ig-pct">
       <div class="gmr-fields">
-        <input class="gmr-input" type="text" id="gmr-ig-name" placeholder="Vaše ime *" autocomplete="name">
-        <input class="gmr-input" type="email" id="gmr-ig-email" placeholder="E-mail (za kupon) *" autocomplete="email">
-        <input class="gmr-input" type="text" id="gmr-ig-handle" placeholder="@IG uporabniško ime *">
-        <input class="gmr-input" type="url" id="gmr-ig-link" placeholder="Povezava do objave (neobvezno)">
+        <input class="gmr-input" type="text" id="gmr-ig-name" placeholder="${T.namePh}" autocomplete="name">
+        <input class="gmr-input" type="email" id="gmr-ig-email" placeholder="${T.emailPh}" autocomplete="email">
+        <input class="gmr-input" type="text" id="gmr-ig-handle" placeholder="${T.igHandlePh}">
+        <input class="gmr-input" type="url" id="gmr-ig-link" placeholder="${T.igLinkPh}">
       </div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-        <button type="submit" class="gmr-btn-submit">Pošlji zahtevo</button>
-        <button type="button" id="gmr-ig-cancel" class="gmr-btn-cancel">Prekliči</button>
+        <button type="submit" class="gmr-btn-submit">${T.igSubmit}</button>
+        <button type="button" id="gmr-ig-cancel" class="gmr-btn-cancel">${T.igCancel}</button>
       </div>
       <div id="gmr-ig-msg" class="gmr-msg"></div>
     </form>
@@ -125,7 +173,7 @@ function bindEvents(slug,productName){
       sel=+btn.dataset.v;
       document.getElementById('gmr-rating').value=sel;
       paintStars(sel);
-      document.querySelector('.gmr-stars-hint').textContent=['','Slabo','Povprečno','Dobro','Zelo dobro','Odlično'][sel]||'';
+      document.querySelector('.gmr-stars-hint').textContent=T.starsHintLevels[sel]||'';
     });
   });
 
@@ -139,10 +187,10 @@ function bindEvents(slug,productName){
     const body=document.getElementById('gmr-body').value.trim();
     const msg=document.getElementById('gmr-msg');
     if(!name||!email||!body||rating<1){
-      showMsg(msg,'Izpolnite vsa obvezna polja in izberite oceno.','err');return;
+      showMsg(msg,T.fillRequired,'err');return;
     }
     const btn=e.target.querySelector('.gmr-btn-submit');
-    btn.disabled=true;btn.textContent='Pošiljam…';
+    btn.disabled=true;btn.textContent=T.sending;
     try{
       const r=await fetch(`${SB_URL}/rest/v1/gm_reviews`,{
         method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},
@@ -153,11 +201,11 @@ function bindEvents(slug,productName){
       });
       if(r.ok||r.status===201){
         document.getElementById('gmr-form').innerHTML=
-          `<div class="gmr-success">✅ Hvala za recenzijo! Po pregledu boste na e-mail prejeli ${cfg.recenzijaPct}% kupon za naslednji nakup.</div>`;
+          `<div class="gmr-success">${T.reviewSuccess(cfg.recenzijaPct)}</div>`;
       } else throw new Error('HTTP '+r.status);
     }catch{
-      showMsg(msg,'Napaka pri pošiljanju. Poskusite znova.','err');
-      btn.disabled=false;btn.textContent='Pošlji recenzijo';
+      showMsg(msg,T.sendError,'err');
+      btn.disabled=false;btn.textContent=T.submitReview;
     }
   });
 
@@ -185,10 +233,10 @@ function bindEvents(slug,productName){
     const handle=document.getElementById('gmr-ig-handle').value.trim();
     const link=document.getElementById('gmr-ig-link').value.trim();
     const msg=document.getElementById('gmr-ig-msg');
-    if(!name||!email||!handle){showMsg(msg,'Izpolnite vsa obvezna polja.','err');return;}
+    if(!name||!email||!handle){showMsg(msg,T.fillRequiredIg,'err');return;}
     const a=igActions().find(x=>x.id===id);
     const btn=e.target.querySelector('.gmr-btn-submit');
-    btn.disabled=true;btn.textContent='Pošiljam…';
+    btn.disabled=true;btn.textContent=T.sending;
     try{
       const r=await fetch(`${SB_URL}/rest/v1/gm_reviews`,{
         method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},
@@ -204,11 +252,11 @@ function bindEvents(slug,productName){
       });
       if(r.ok||r.status===201){
         document.getElementById('gmr-ig-form').innerHTML=
-          `<div class="gmr-success">✅ Zahteva poslana! Po preverjanju boste na e-mail prejeli ${pct}% kupon.</div>`;
+          `<div class="gmr-success">${T.igSuccess(pct)}</div>`;
       } else throw new Error('HTTP '+r.status);
     }catch{
-      showMsg(msg,'Napaka. Poskusite znova.','err');
-      btn.disabled=false;btn.textContent='Pošlji zahtevo';
+      showMsg(msg,T.genericError,'err');
+      btn.disabled=false;btn.textContent=T.igSubmit;
     }
   });
 }
@@ -232,30 +280,34 @@ function renderReviews(rows){
   const el=document.getElementById('gmr-list');
   if(!el)return;
   if(!rows.length){
-    el.innerHTML=`<div class="gmr-empty">Še ni ocen. Bodite prvi, ki delite izkušnjo!</div>`;
+    el.innerHTML=`<div class="gmr-empty">${T.noReviews}</div>`;
     return;
   }
   const INITIAL=3;
   const avg=(rows.reduce((s,r)=>s+(r.rating||0),0)/rows.length).toFixed(1);
   const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
-  const fmt=iso=>new Date(iso).toLocaleDateString('sl-SI',{year:'numeric',month:'long',day:'numeric'});
-  const itemHtml=r=>`<div class="gmr-item">
+  const fmt=iso=>new Date(iso).toLocaleDateString(T.dateLocale,{year:'numeric',month:'long',day:'numeric'});
+  const itemHtml=r=>{
+    const title=LANG==='en'?(r.title_en||r.title):r.title;
+    const body=LANG==='en'?(r.body_en||r.body):r.body;
+    return `<div class="gmr-item">
       <div class="gmr-item-hdr">
         <span class="gmr-item-stars">${'★'.repeat(r.rating||0)}${'☆'.repeat(5-(r.rating||0))}</span>
-        <strong class="gmr-item-name">${esc(r.name||'Anonimno')}</strong>
+        <strong class="gmr-item-name">${esc(r.name||T.anonymous)}</strong>
         <span class="gmr-item-date">${fmt(r.created_at)}</span>
       </div>
-      ${r.title?`<div class="gmr-item-title">${esc(r.title)}</div>`:''}
-      <div class="gmr-item-body">${esc(r.body||'')}</div>
+      ${title?`<div class="gmr-item-title">${esc(title)}</div>`:''}
+      <div class="gmr-item-body">${esc(body||'')}</div>
     </div>`;
+  };
   el.innerHTML=`
     <div class="gmr-summary">
       <span class="gmr-avg">${avg}</span>
       <span class="gmr-avg-stars">${stars(avg)}</span>
-      <span class="gmr-avg-count">${rows.length} ${rows.length===1?'recenzija':rows.length<5?'recenzije':'recenzij'}</span>
+      <span class="gmr-avg-count">${rows.length} ${T.reviewWord(rows.length)}</span>
     </div>
     <div id="gmr-items">${rows.slice(0,INITIAL).map(itemHtml).join('')}</div>
-    ${rows.length>INITIAL?`<button class="gmr-show-more" id="gmr-show-more">Prikaži vse recenzije (${rows.length}) ↓</button>`:''}`;
+    ${rows.length>INITIAL?`<button class="gmr-show-more" id="gmr-show-more">${T.showMore(rows.length)}</button>`:''}`;
   if(rows.length>INITIAL){
     document.getElementById('gmr-show-more').addEventListener('click',()=>{
       document.getElementById('gmr-items').innerHTML+=rows.slice(INITIAL).map(itemHtml).join('');

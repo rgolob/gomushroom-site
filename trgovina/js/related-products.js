@@ -8,8 +8,21 @@ if (typeof SB_URL === 'undefined') {
   var SB_HEADERS = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
 }
 
+const LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const RP_STR = LANG === 'en'
+  ? { heading: 'You might also like', prev: 'Previous', next: 'Next', dateLocale: 'en-IE' }
+  : { heading: 'Morda vas zanima tudi', prev: 'Prejšnji', next: 'Naslednji', dateLocale: 'sl-SI' };
+
+// Angleške produktne strani
+const RP_EN_DETAIL_PATHS = {
+  'reishi': '/en/shop/reishi-tincture/',
+  'chaga': '/en/shop/chaga-tincture/',
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+};
+
 function formatPrice(v) {
-  return Number(v || 0).toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  return Number(v || 0).toLocaleString(RP_STR.dateLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
 function shuffle(arr) {
@@ -105,7 +118,9 @@ function buildHTML(picked, variants, ratingMap) {
     const defaultVariant = alcVariant || glyVariant;
     if (!defaultVariant) return '';
 
-    const detailUrl = p.detail_path || `/trgovina/${p.slug}-tinktura/`;
+    const detailUrl = LANG === 'en'
+      ? (RP_EN_DETAIL_PATHS[p.slug] || '/en/shop/')
+      : (p.detail_path || `/trgovina/${p.slug}-tinktura/`);
     const discPrice = defaultVariant.discount_pct > 0
       ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
       : defaultVariant.price_malo;
@@ -131,10 +146,10 @@ function buildHTML(picked, variants, ratingMap) {
 
   return `<div class="gmrp-wrap">
     <div class="gmrp-head">
-      <h2 class="gmrp-h2">Morda vas zanima tudi</h2>
+      <h2 class="gmrp-h2">${RP_STR.heading}</h2>
       <div class="gmrp-nav">
-        <button class="gmrp-nav-btn" type="button" data-gmrp-prev aria-label="Prejšnji">‹</button>
-        <button class="gmrp-nav-btn" type="button" data-gmrp-next aria-label="Naslednji">›</button>
+        <button class="gmrp-nav-btn" type="button" data-gmrp-prev aria-label="${RP_STR.prev}">‹</button>
+        <button class="gmrp-nav-btn" type="button" data-gmrp-next aria-label="${RP_STR.next}">›</button>
       </div>
     </div>
     <div class="gmrp-track">${cards}</div>

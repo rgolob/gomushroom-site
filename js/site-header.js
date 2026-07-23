@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const path = window.location.pathname;
   const isEn = path.startsWith("/en/");
-  const showCart = path.startsWith("/trgovina/");
+  const showCart = path.startsWith("/trgovina/") || path.startsWith("/en/shop/");
 
   const navItems = isEn
     ? `
@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a href="/en/qc/heavy-metals/">Quality</a>
       <a href="/en/#services">Services</a>
       <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
+      <a href="/en/shop/">Shop</a>
     `
     : `
       <a href="/znanje/">Znanje</a>
@@ -41,6 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const pageMapSlToEn = {
     "/qc/tezke-kovine/": "/en/qc/heavy-metals/",
+    "/trgovina/": "/en/shop/",
+    "/trgovina/reishi-tinktura/": "/en/shop/reishi-tincture/",
+    "/trgovina/chaga-tinktura/": "/en/shop/chaga-tincture/",
+    "/trgovina/resasti-bradovec-tinktura/": "/en/shop/lions-mane-tincture/",
+    "/trgovina/smrekovi-vrsicki-tinktura/": "/en/shop/spruce-bud-tincture/",
 
     "/storitve/botanicni-ekstrakti/": "/en/services/botanical-extracts/",
     "/storitve/ekstrakcije-medicinskih-gob/": "/en/services/medicinal-mushroom-extraction/",
@@ -61,6 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const pageMapEnToSl = {
     "/en/qc/heavy-metals/": "/qc/tezke-kovine/",
+    "/en/shop/": "/trgovina/",
+    "/en/shop/reishi-tincture/": "/trgovina/reishi-tinktura/",
+    "/en/shop/chaga-tincture/": "/trgovina/chaga-tinktura/",
+    "/en/shop/lions-mane-tincture/": "/trgovina/resasti-bradovec-tinktura/",
+    "/en/shop/spruce-bud-tincture/": "/trgovina/smrekovi-vrsicki-tinktura/",
 
     "/en/services/botanical-extracts/": "/storitve/botanicni-ekstrakti/",
     "/en/services/medicinal-mushroom-extraction/": "/storitve/ekstrakcije-medicinskih-gob/",
@@ -84,12 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentPath.startsWith("/znanje/")) return "/en/learn/";
       if (currentPath.startsWith("/storitve/")) return "/en/services/";
       if (currentPath.startsWith("/qc/")) return "/en/qc/heavy-metals/";
-      if (currentPath.startsWith("/trgovina/")) return "/en/";
+      if (currentPath.startsWith("/trgovina/")) return "/en/shop/";
       return "/en/";
     }
     if (currentPath.startsWith("/en/learn/")) return "/znanje/";
     if (currentPath.startsWith("/en/services/")) return "/storitve/";
     if (currentPath.startsWith("/en/qc/")) return "/qc/tezke-kovine/";
+    if (currentPath.startsWith("/en/shop/")) return "/trgovina/";
     return "/";
   }
 
@@ -137,13 +149,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const cartHtml = showCart ? `
-        <a class="cart-link" href="/trgovina/kosarica/" aria-label="Košarica">
+        <a class="cart-link" href="/trgovina/kosarica/" aria-label="${isEn ? 'Cart' : 'Košarica'}">
           <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M6 7h15l-1.5 8.5H8L6 4H3"></path>
             <circle cx="9" cy="20" r="1.5"></circle>
             <circle cx="18" cy="20" r="1.5"></circle>
           </svg>
-          <span id="cart-count" class="cart-count" aria-label="Število izdelkov v košarici">0</span>
+          <span id="cart-count" class="cart-count" aria-label="${isEn ? 'Number of items in cart' : 'Število izdelkov v košarici'}">0</span>
         </a>` : "";
 
   header.innerHTML = `

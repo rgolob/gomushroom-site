@@ -11,6 +11,17 @@ if (typeof SB_URL === 'undefined') {
 const MAX_CARDS = 8;
 const TRUNCATE_LEN = 110;
 
+const LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const SR_STR = LANG === 'en'
+  ? { heading: 'What our customers say', prev: 'Previous', next: 'Next', readMore: 'Read more' }
+  : { heading: 'Kaj pravijo naše stranke', prev: 'Prejšnji', next: 'Naslednji', readMore: 'Preberi več' };
+const SR_EN_DETAIL_PATHS = {
+  'reishi': '/en/shop/reishi-tincture/',
+  'chaga': '/en/shop/chaga-tincture/',
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+};
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -80,24 +91,26 @@ function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 function buildHTML(picked) {
   const cards = picked.map((rv, i) => {
+    const title = LANG === 'en' ? (rv.title_en || rv.title) : rv.title;
+    const body = LANG === 'en' ? (rv.body_en || rv.body) : rv.body;
     return `
       <div class="gmsr-card" data-idx="${i}" role="button" tabindex="0">
         <div class="gmsr-stars">${stars(rv)}</div>
-        ${rv.title ? `<p class="gmsr-title">${esc(rv.title)}</p>` : ''}
-        <p class="gmsr-body">${esc(truncate(rv.body))}</p>
+        ${title ? `<p class="gmsr-title">${esc(title)}</p>` : ''}
+        <p class="gmsr-body">${esc(truncate(body))}</p>
         <div class="gmsr-foot">
           <span class="gmsr-name">${esc(rv.name)}</span>
-          <span class="gmsr-hint">Preberi več</span>
+          <span class="gmsr-hint">${SR_STR.readMore}</span>
         </div>
       </div>`;
   }).join('');
 
   return `<div class="gmsr-wrap">
     <div class="gmsr-head">
-      <h2 class="gmsr-h2">Kaj pravijo naše stranke</h2>
+      <h2 class="gmsr-h2">${SR_STR.heading}</h2>
       <div class="gmsr-nav">
-        <button class="gmsr-nav-btn" type="button" data-gmsr-prev aria-label="Prejšnji">‹</button>
-        <button class="gmsr-nav-btn" type="button" data-gmsr-next aria-label="Naslednji">›</button>
+        <button class="gmsr-nav-btn" type="button" data-gmsr-prev aria-label="${SR_STR.prev}">‹</button>
+        <button class="gmsr-nav-btn" type="button" data-gmsr-next aria-label="${SR_STR.next}">›</button>
       </div>
     </div>
     <div class="gmsr-track">${cards}</div>
@@ -116,14 +129,14 @@ function bindInteraction(mount, picked) {
 
   mount.querySelectorAll('.gmsr-card').forEach(card => {
     const rv = picked[Number(card.dataset.idx)];
-    const url = `/trgovina/${rv.product_id}-tinktura/#gm-recenzije`;
+    const url = (LANG === 'en' ? (SR_EN_DETAIL_PATHS[rv.product_id] || '/en/shop/') : `/trgovina/${rv.product_id}-tinktura/`) + '#gm-recenzije';
     const activate = () => {
       if (card.dataset.expanded === 'true') {
         window.location.href = url;
         return;
       }
       card.dataset.expanded = 'true';
-      card.querySelector('.gmsr-body').textContent = rv.body || '';
+      card.querySelector('.gmsr-body').textContent = (LANG === 'en' ? (rv.body_en || rv.body) : rv.body) || '';
       const hint = card.querySelector('.gmsr-hint');
       if (hint) hint.textContent = `${rv.product_name} →`;
     };

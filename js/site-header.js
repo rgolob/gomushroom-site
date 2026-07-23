@@ -46,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "/trgovina/reishi-tinktura/": "/en/shop/reishi-tincture/",
     "/trgovina/chaga-tinktura/": "/en/shop/chaga-tincture/",
     "/trgovina/resasti-bradovec-tinktura/": "/en/shop/lions-mane-tincture/",
-    "/trgovina/smrekovi-vrsicki-tinktura/": "/en/shop/spruce-bud-tincture/",
 
     "/storitve/botanicni-ekstrakti/": "/en/services/botanical-extracts/",
     "/storitve/ekstrakcije-medicinskih-gob/": "/en/services/medicinal-mushroom-extraction/",
@@ -71,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "/en/shop/reishi-tincture/": "/trgovina/reishi-tinktura/",
     "/en/shop/chaga-tincture/": "/trgovina/chaga-tinktura/",
     "/en/shop/lions-mane-tincture/": "/trgovina/resasti-bradovec-tinktura/",
-    "/en/shop/spruce-bud-tincture/": "/trgovina/smrekovi-vrsicki-tinktura/",
 
     "/en/services/botanical-extracts/": "/storitve/botanicni-ekstrakti/",
     "/en/services/medicinal-mushroom-extraction/": "/storitve/ekstrakcije-medicinskih-gob/",

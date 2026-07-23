@@ -129,9 +129,17 @@ const INFO_ARTICLE_LINKS = {
 const EN_DETAIL_PATHS = {
   'reishi': '/en/shop/reishi-tincture/',
   'chaga': '/en/shop/chaga-tincture/',
-  'bradovec': '/en/shop/lions-mane-tincture/',
-  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+  'bradovec': '/en/shop/lions-mane-tincture/'
 };
+
+// Pravo angleško ime izdelka (gm_products.name je samo v slovenscini)
+const EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane" };
+function displayProductName(p) {
+  return LANG === 'en' ? (EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
+}
+
+// Izdelki, ki (za zdaj) niso na voljo v EN trgovini
+const EN_HIDDEN_PRODUCTS = ['smrekovi-vrsicki'];
 
 // ── Kartice izdelkov: kratek opis + oznake z ikonami ──────
 const CHIP_ICONS = {
@@ -256,25 +264,27 @@ async function loadProducts() {
     if (slug) dnMap[slug] = d;
   });
 
-  return products.map(p => ({
-    ...p,
-    activeBatch: dnMap[p.slug] || null,
-    rating: ratingsMap[p.slug] || null,
-    variants: variants
-      .filter(v => v.product_id === p.id)
-      .map(v => {
-        const stock = stockMap[v.id] || {};
-        const status = stock.stock_status || 'in_stock';
-        return {
-          ...v,
-          discount_pct: Number(v.discount_pct) || 0,
-          price_malo: Number(v.price_malo) || 0,
-          in_stock: status !== 'out_of_stock',
-          low_stock: status === 'low_stock',
-          qty_available: stock.qty_available || 0
-        };
-      })
-  }));
+  return products
+    .filter(p => LANG !== 'en' || !EN_HIDDEN_PRODUCTS.includes(p.slug))
+    .map(p => ({
+      ...p,
+      activeBatch: dnMap[p.slug] || null,
+      rating: ratingsMap[p.slug] || null,
+      variants: variants
+        .filter(v => v.product_id === p.id)
+        .map(v => {
+          const stock = stockMap[v.id] || {};
+          const status = stock.stock_status || 'in_stock';
+          return {
+            ...v,
+            discount_pct: Number(v.discount_pct) || 0,
+            price_malo: Number(v.price_malo) || 0,
+            in_stock: status !== 'out_of_stock',
+            low_stock: status === 'low_stock',
+            qty_available: stock.qty_available || 0
+          };
+        })
+    }));
 }
 
 // ── Pomočne funkcije ──────────────────────────────────────
@@ -323,7 +333,7 @@ function renderShopGrid(products) {
         <div class="shop-product-img-wrap">
           <a class="shop-product-img-link" href="${detailUrl || SHOP_HOME}">
             <div class="shop-product-image">
-              <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+              <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${displayProductName(p)}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
               ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
             </div>
           </a>
@@ -336,7 +346,7 @@ function renderShopGrid(products) {
         <div class="shop-product-content">
           <a class="shop-product-text-link" href="${detailUrl || SHOP_HOME}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
-            <h2>${p.name}</h2>
+            <h2>${displayProductName(p)}</h2>
             ${PRODUCT_CARD_META[p.slug] ? `
             <p class="shop-product-desc">${PRODUCT_CARD_META[p.slug].desc}</p>
             <div class="shop-product-chips">

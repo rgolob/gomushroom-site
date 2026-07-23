@@ -33,12 +33,33 @@
   <!-- Shop -->
   <url>
     <loc>https://gomushroom.si/trgovina/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/shop/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/"/>
   </url>
   <url>
     <loc>https://gomushroom.si/trgovina/reishi-tinktura/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-07-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/reishi-tinktura/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/reishi-tincture/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/reishi-tinktura/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/shop/reishi-tincture/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/reishi-tinktura/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/reishi-tincture/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/reishi-tinktura/"/>
   </url>
   <url>
     <loc>https://gomushroom.si/trgovina/resasti-bradovec-tinktura/</loc>

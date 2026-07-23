@@ -9,8 +9,27 @@ if (typeof SB_URL === 'undefined') {
   };
 }
 
+// Jezik strani — preklopi prikazane nize (cene/zaloga ostajajo isti podatki iz baze)
+const LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const SHOP_STR = {
+  sl: {
+    outOfStock: 'Ni na zalogi', lastPieces: '● Zadnji kosi', inStock: '● Na zalogi',
+    alc: 'Alkoholna', gly: 'Brezalk.', add: '+ Dodaj',
+    batchInProgress: (serija) => `Serija ${serija} &bull; v izdelavi`,
+    expectedFill: 'Predvideno polnjenje:', infoLink: 'Čemu so namenjeni? →',
+    dateLocale: 'sl-SI'
+  },
+  en: {
+    outOfStock: 'Out of stock', lastPieces: '● Low stock', inStock: '● In stock',
+    alc: 'Alcohol', gly: 'Alcohol-free', add: '+ Add',
+    batchInProgress: (serija) => `Batch ${serija} &bull; in production`,
+    expectedFill: 'Expected bottling:', infoLink: 'What are they for? →',
+    dateLocale: 'en-IE'
+  }
+}[LANG];
+
 function formatPrice(value) {
-  return Number(value || 0).toLocaleString('sl-SI', {
+  return Number(value || 0).toLocaleString(SHOP_STR.dateLocale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }) + ' €';
@@ -37,16 +56,16 @@ function getAktivniPopusti() {
   const aktivni = [];
   const c = _settings.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
-    aktivni.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
+    aktivni.push({ vrednost: c.vrednost, tip: 'time' });
   for (const p of (_settings.popusti || []).filter(p => p.aktiven)) {
     if (p.od && danes < p.od) continue;
     if (p.do && danes > p.do) continue;
     if (p.maxKolicina && (p.porabljeno || 0) >= p.maxKolicina) continue;
     if (p.prikaziVTrgovini === false) continue;
     if (p.tip === 'koda' && p.prikaziVTrgovini !== true) continue;
-    if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, opis: `Koda ${p.kod}` });
-    if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, opis: `${p.min}+ kosov` });
-    if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, opis: `Nad ${p.min} €` });
+    if (p.tip === 'koda') aktivni.push({ vrednost: p.vrednost, tip: 'code', kod: p.kod });
+    if (p.tip === 'kolicina') aktivni.push({ vrednost: p.vrednost, tip: 'qty', min: p.min });
+    if (p.tip === 'znesek') aktivni.push({ vrednost: p.vrednost, tip: 'amount', min: p.min });
   }
   return aktivni;
 }
@@ -58,12 +77,22 @@ function renderActiveDiscountBanner() {
   const brezplacnaOd = _settings?.brezplacnaPosninaOd;
   if (!aktivni.length && !brezplacnaOd) { banner.style.display = 'none'; return; }
   const vrstice = aktivni.map(p => {
-    if (p.opis.startsWith('Koda')) return `🏷 Koda <strong>${p.opis.replace('Koda ','')}</strong>: −${p.vrednost}%`;
-    if (p.opis.includes('+ kosov')) return `📦 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
-    if (p.opis.includes('Nad')) return `💰 Pri nakupu <strong>${p.opis}</strong>: −${p.vrednost}%`;
-    return `⏰ <strong>${p.opis}</strong>: −${p.vrednost}%`;
+    if (p.tip === 'code') return LANG === 'en'
+      ? `🏷 Code <strong>${p.kod}</strong>: −${p.vrednost}%`
+      : `🏷 Koda <strong>${p.kod}</strong>: −${p.vrednost}%`;
+    if (p.tip === 'qty') return LANG === 'en'
+      ? `📦 Buy <strong>${p.min}+ pcs</strong>: −${p.vrednost}%`
+      : `📦 Pri nakupu <strong>${p.min}+ kosov</strong>: −${p.vrednost}%`;
+    if (p.tip === 'amount') return LANG === 'en'
+      ? `💰 Spend over <strong>${p.min} €</strong>: −${p.vrednost}%`
+      : `💰 Pri nakupu <strong>Nad ${p.min} €</strong>: −${p.vrednost}%`;
+    return LANG === 'en'
+      ? `⏰ <strong>Time-limited discount</strong>: −${p.vrednost}%`
+      : `⏰ <strong>Časovni popust</strong>: −${p.vrednost}%`;
   });
-  if (brezplacnaOd) vrstice.push(`🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
+  if (brezplacnaOd) vrstice.push(LANG === 'en'
+    ? `🚚 Free shipping over <strong>${formatPrice(brezplacnaOd)}</strong>`
+    : `🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
   banner.innerHTML = `<div style="display:flex;flex-direction:column;gap:.15rem">
     ${vrstice.map(v=>`<span style="font-size:.75rem;color:rgba(43,11,57,.55);line-height:1.5;letter-spacing:.01em">${v}</span>`).join('')}
   </div>`;
@@ -71,14 +100,17 @@ function renderActiveDiscountBanner() {
 }
 
 // ── Produkti iz Supabase ──────────────────────────────────
-const SL_MESECI = ['januar','februar','marec','april','maj','junij','julij','avgust','september','oktober','november','december'];
+const MESECI = {
+  sl: ['januar','februar','marec','april','maj','junij','julij','avgust','september','oktober','november','december'],
+  en: ['January','February','March','April','May','June','July','August','September','October','November','December']
+}[LANG];
 
 function predvidenoDatum(datumStr, predvidenStr) {
   const src = predvidenStr || datumStr;
   if (!src) return null;
   const [y, m, d] = src.split('-').map(Number);
   const dt = predvidenStr ? new Date(y, m - 1, d) : new Date(y, m - 1, d + 18);
-  return `${dt.getDate()}. ${SL_MESECI[dt.getMonth()]}`;
+  return LANG === 'en' ? `${MESECI[dt.getMonth()]} ${dt.getDate()}` : `${dt.getDate()}. ${MESECI[dt.getMonth()]}`;
 }
 
 const VRSTA_TO_SLUG = {
@@ -89,7 +121,13 @@ const VRSTA_TO_SLUG = {
 };
 
 const INFO_ARTICLE_LINKS = {
-  'smrekovi-vrsicki': '/znanje/smrekovi-vrsicki-raziskave/'
+  sl: { 'smrekovi-vrsicki': '/znanje/smrekovi-vrsicki-raziskave/' },
+  en: {}
+}[LANG];
+
+// Angleške produktne strani (dodajamo postopoma) — ko manjka, kartica pelje na /en/shop/
+const EN_DETAIL_PATHS = {
+  'reishi': '/en/shop/reishi-tincture/'
 };
 
 // ── Kartice izdelkov: kratek opis + oznake z ikonami ──────
@@ -108,35 +146,67 @@ function chipSvg(name) {
 }
 
 const PRODUCT_CARD_META = {
-  'reishi': {
-    desc: 'Za večerno rutino in mirnejši zaključek dneva.',
-    chips: [
-      { icon: 'moon', label: 'Večerni ritual' },
-      { icon: 'flower', label: 'Umiritev' }
-    ]
+  sl: {
+    'reishi': {
+      desc: 'Za večerno rutino in mirnejši zaključek dneva.',
+      chips: [
+        { icon: 'moon', label: 'Večerni ritual' },
+        { icon: 'flower', label: 'Umiritev' }
+      ]
+    },
+    'bradovec': {
+      desc: 'Za mentalno rutino in zahtevne dni.',
+      chips: [
+        { icon: 'target', label: 'Fokus' },
+        { icon: 'book-open', label: 'Mentalna rutina' }
+      ]
+    },
+    'chaga': {
+      desc: 'Za naporne dni in zahtevna obdobja.',
+      chips: [
+        { icon: 'sunrise', label: 'Vsakodnevna rutina' },
+        { icon: 'leaf', label: 'Tradicionalna uporaba' }
+      ]
+    },
+    'smrekovi-vrsicki': {
+      desc: 'Iz domače tradicije v sodobnem ekstraktu.',
+      chips: [
+        { icon: 'tree-pine', label: 'Mladi vršički' },
+        { icon: 'leaf', label: 'Tradicionalna uporaba' }
+      ]
+    }
   },
-  'bradovec': {
-    desc: 'Za mentalno rutino in zahtevne dni.',
-    chips: [
-      { icon: 'target', label: 'Fokus' },
-      { icon: 'book-open', label: 'Mentalna rutina' }
-    ]
-  },
-  'chaga': {
-    desc: 'Za naporne dni in zahtevna obdobja.',
-    chips: [
-      { icon: 'sunrise', label: 'Vsakodnevna rutina' },
-      { icon: 'leaf', label: 'Tradicionalna uporaba' }
-    ]
-  },
-  'smrekovi-vrsicki': {
-    desc: 'Iz domače tradicije v sodobnem ekstraktu.',
-    chips: [
-      { icon: 'tree-pine', label: 'Mladi vršički' },
-      { icon: 'leaf', label: 'Tradicionalna uporaba' }
-    ]
+  en: {
+    'reishi': {
+      desc: 'For an evening ritual and a calmer end to the day.',
+      chips: [
+        { icon: 'moon', label: 'Evening ritual' },
+        { icon: 'flower', label: 'Calming' }
+      ]
+    },
+    'bradovec': {
+      desc: 'For mental routine and demanding days.',
+      chips: [
+        { icon: 'target', label: 'Focus' },
+        { icon: 'book-open', label: 'Mental routine' }
+      ]
+    },
+    'chaga': {
+      desc: 'For strenuous days and demanding periods.',
+      chips: [
+        { icon: 'sunrise', label: 'Daily routine' },
+        { icon: 'leaf', label: 'Traditional use' }
+      ]
+    },
+    'smrekovi-vrsicki': {
+      desc: 'From local tradition to a modern extract.',
+      chips: [
+        { icon: 'tree-pine', label: 'Young spruce buds' },
+        { icon: 'leaf', label: 'Traditional use' }
+      ]
+    }
   }
-};
+}[LANG];
 
 async function loadProductRatings() {
   try {
@@ -206,9 +276,17 @@ async function loadProducts() {
 
 // ── Pomočne funkcije ──────────────────────────────────────
 function stockBadge(v) {
-  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.75rem;letter-spacing:.04em">Ni na zalogi</span>`;
-  if (v.low_stock) return `<span style="color:#e67e22;font-size:.75rem;letter-spacing:.04em">● Zadnji kosi</span>`;
-  return `<span style="color:#3a6b4a;font-size:.75rem;letter-spacing:.04em">● Na zalogi</span>`;
+  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.75rem;letter-spacing:.04em">${SHOP_STR.outOfStock}</span>`;
+  if (v.low_stock) return `<span style="color:#e67e22;font-size:.75rem;letter-spacing:.04em">${SHOP_STR.lastPieces}</span>`;
+  return `<span style="color:#3a6b4a;font-size:.75rem;letter-spacing:.04em">${SHOP_STR.inStock}</span>`;
+}
+
+const SHOP_HOME = LANG === 'en' ? '/en/shop/' : '/trgovina/';
+
+function buildDetailUrl(p) {
+  if (p.is_bundle) return null;
+  if (LANG === 'en') return EN_DETAIL_PATHS[p.slug] || null;
+  return p.detail_path || `/trgovina/${p.slug}-tinktura/`;
 }
 
 function priceHtml(v) {
@@ -231,7 +309,7 @@ function renderShopGrid(products) {
     if (!defaultVariant) return '';
 
     const maxDiscount = Math.max(...p.variants.map(v => v.discount_pct || 0));
-    const detailUrl = p.is_bundle ? null : (p.detail_path || `/trgovina/${p.slug}-tinktura/`);
+    const detailUrl = buildDetailUrl(p);
     const discPrice = defaultVariant.discount_pct > 0
       ? defaultVariant.price_malo * (1 - defaultVariant.discount_pct / 100)
       : defaultVariant.price_malo;
@@ -240,20 +318,20 @@ function renderShopGrid(products) {
       <article class="shop-product" data-product-card="${p.id}">
 
         <div class="shop-product-img-wrap">
-          <a class="shop-product-img-link" href="${detailUrl || '/trgovina/'}">
+          <a class="shop-product-img-link" href="${detailUrl || SHOP_HOME}">
             <div class="shop-product-image">
               <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
               ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
             </div>
           </a>
-          ${p.rating ? `<a class="shop-product-rating" href="${detailUrl ? detailUrl + '#gm-recenzije' : '/trgovina/'}">
+          ${p.rating ? `<a class="shop-product-rating" href="${detailUrl ? detailUrl + '#gm-recenzije' : SHOP_HOME}">
             <span class="shop-product-rating-stars">${'★'.repeat(Math.round(p.rating.avg))}${'☆'.repeat(5 - Math.round(p.rating.avg))}</span>
             <span class="shop-product-rating-count">${p.rating.avg.toFixed(1)} (${p.rating.count})</span>
           </a>` : ''}
         </div>
 
         <div class="shop-product-content">
-          <a class="shop-product-text-link" href="${detailUrl || '/trgovina/'}">
+          <a class="shop-product-text-link" href="${detailUrl || SHOP_HOME}">
             ${p.latin ? `<p class="product-species">${p.latin}</p>` : ''}
             <h2>${p.name}</h2>
             ${PRODUCT_CARD_META[p.slug] ? `
@@ -261,16 +339,16 @@ function renderShopGrid(products) {
             <div class="shop-product-chips">
               ${PRODUCT_CARD_META[p.slug].chips.map(c => `<span class="shop-product-chip">${chipSvg(c.icon)}${c.label}</span>`).join('')}
             </div>` : ''}
-            ${p.activeBatch ? `<div class="batch-production-bar"><span><span style="display:block">Serija ${p.activeBatch.serija_alc} &bull; v izdelavi</span>${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">Predvideno polnjenje: ${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek)}</span>` : ''}</span></div>` : ''}
+            ${p.activeBatch ? `<div class="batch-production-bar"><span><span style="display:block">${SHOP_STR.batchInProgress(p.activeBatch.serija_alc)}</span>${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek) ? `<span style="display:block;font-weight:500;text-transform:none;letter-spacing:0;opacity:.7">${SHOP_STR.expectedFill} ${predvidenoDatum(p.activeBatch.datum, p.activeBatch.predviden_zakljucek)}</span>` : ''}</span></div>` : ''}
           </a>
-          ${INFO_ARTICLE_LINKS[p.slug] ? `<a class="shop-product-info-link" href="${INFO_ARTICLE_LINKS[p.slug]}">Čemu so namenjeni? →</a>` : ''}
+          ${INFO_ARTICLE_LINKS[p.slug] ? `<a class="shop-product-info-link" href="${INFO_ARTICLE_LINKS[p.slug]}">${SHOP_STR.infoLink}</a>` : ''}
 
           <div class="shop-product-foot">
 
             ${p.variants.length > 1 ? `
             <div class="shop-product-variants">
-              ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">Alkoholna</button>` : ''}
-              ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">Brezalk.</button>` : ''}
+              ${alcVariant ? `<button class="variant-btn is-active" data-variant-btn="alc" type="button">${SHOP_STR.alc}</button>` : ''}
+              ${glyVariant ? `<button class="variant-btn${!alcVariant ? ' is-active' : ''}" data-variant-btn="gly" type="button">${SHOP_STR.gly}</button>` : ''}
             </div>` : ''}
 
             <div class="shop-product-price-row">
@@ -284,7 +362,7 @@ function renderShopGrid(products) {
               data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
               data-image="${p.image || ''}"
               ${!defaultVariant.in_stock ? 'disabled' : ''}>
-              ${defaultVariant.in_stock ? '+ Dodaj' : 'Ni na zalogi'}
+              ${defaultVariant.in_stock ? SHOP_STR.add : SHOP_STR.outOfStock}
             </button>
 
           </div>
@@ -326,7 +404,7 @@ function bindVariantPickers(products) {
         addBtn.dataset.discountPct = v.discount_pct || 0;
         addBtn.dataset.sku = v.sku || '';
         addBtn.disabled = !v.in_stock;
-        addBtn.textContent = v.in_stock ? '+ Dodaj' : 'Ni na zalogi';
+        addBtn.textContent = v.in_stock ? SHOP_STR.add : SHOP_STR.outOfStock;
       }
 
       // Badge — poišči obstoječega (statičnega ali dinamičnega), ne ustvari duplikata
@@ -360,7 +438,7 @@ function bindVariantPickers(products) {
 
     // Celotna kartica klikabilna → produktna stran
     const detailUrl = card.querySelector('.shop-product-img-link')?.getAttribute('href');
-    if (detailUrl && detailUrl !== '/trgovina/') {
+    if (detailUrl && detailUrl !== SHOP_HOME) {
       card.style.cursor = 'pointer';
       card.addEventListener('click', e => {
         if (e.target.closest('button, a')) return;

@@ -12,17 +12,38 @@ const SB_HEADERS = {
 // Slug produkta — bere iz data-slug atributa gumba za košarico
 const PRODUCT_SLUG = document.getElementById('add-to-cart-btn')?.dataset.slug || 'reishi';
 
+// Jezik strani — preklopi prikazane nize (cene/zaloga/gumbi ostajajo isti podatki iz baze)
+const LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const PP_STR = {
+  sl: {
+    addToCart: 'Dodaj v košarico', outOfStock: 'Ni na zalogi', lastPieces: '● Zadnji kosi', inStock: '● Na zalogi',
+    alcNote: 'Alkoholna različica.', glyNote: 'Brezalkoholna različica z glicerinom.',
+    variantName: { alc: 'Alkoholna', gly: 'Brezalkoholna' },
+    reviewWord: n => n === 1 ? 'ocena' : n < 5 ? 'ocene' : 'ocen',
+    customer: 'Kupec', batchInPrep: d => `📋 Serija v pripravi · predviden zaključek: ${d}`,
+    dateLocale: 'sl-SI'
+  },
+  en: {
+    addToCart: 'Add to cart', outOfStock: 'Out of stock', lastPieces: '● Low stock', inStock: '● In stock',
+    alcNote: 'Alcohol-based version.', glyNote: 'Alcohol-free version with glycerin.',
+    variantName: { alc: 'Alcohol-based', gly: 'Alcohol-free' },
+    reviewWord: n => n === 1 ? 'review' : 'reviews',
+    customer: 'Customer', batchInPrep: d => `📋 New batch in progress · expected: ${d}`,
+    dateLocale: 'en-IE'
+  }
+}[LANG];
+
 function formatPrice(value) {
-  return Number(value || 0).toLocaleString('sl-SI', {
+  return Number(value || 0).toLocaleString(PP_STR.dateLocale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }) + ' €';
 }
 
 function stockLabel(v) {
-  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.8rem">Ni na zalogi</span>`;
-  if (v.low_stock) return `<span style="color:#e67e22;font-size:.8rem">● Zadnji kosi</span>`;
-  return `<span style="color:#3a6b4a;font-size:.8rem">● Na zalogi</span>`;
+  if (!v.in_stock) return `<span style="color:#9a8f85;font-size:.8rem">${PP_STR.outOfStock}</span>`;
+  if (v.low_stock) return `<span style="color:#e67e22;font-size:.8rem">${PP_STR.lastPieces}</span>`;
+  return `<span style="color:#3a6b4a;font-size:.8rem">${PP_STR.inStock}</span>`;
 }
 
 function priceHtml(v) {
@@ -80,7 +101,7 @@ function initProductPage(variants, product) {
 
     if (priceWrap) priceWrap.innerHTML = priceHtml(v);
     if (stockWrap) stockWrap.innerHTML = stockLabel(v);
-    if (variantLabel) variantLabel.textContent = v.name;
+    if (variantLabel) variantLabel.textContent = PP_STR.variantName[v.type] || v.name;
 
     const imgWrap = document.querySelector('.product-image-wrap');
     if (imgWrap) {
@@ -106,7 +127,7 @@ function initProductPage(variants, product) {
         }
       }
     }
-    if (variantNote) variantNote.textContent = v.type === 'alc' ? 'Alkoholna različica.' : 'Brezalkoholna različica z glicerinom.';
+    if (variantNote) variantNote.textContent = v.type === 'alc' ? PP_STR.alcNote : PP_STR.glyNote;
 
     if (addBtn) {
       addBtn.dataset.variant = v.type;
@@ -116,7 +137,7 @@ function initProductPage(variants, product) {
       addBtn.dataset.discountPct = v.discount_pct || 0;
       addBtn.dataset.sku = v.sku || '';
       addBtn.disabled = !v.in_stock;
-      addBtn.textContent = v.in_stock ? 'Dodaj v košarico' : 'Ni na zalogi';
+      addBtn.textContent = v.in_stock ? PP_STR.addToCart : PP_STR.outOfStock;
     }
 
     // Posodobi variant gumbe
@@ -180,7 +201,7 @@ function injectReviewSchema(rows) {
     data.review = rows.map(r => {
       const rev = {
         '@type': 'Review',
-        author: { '@type': 'Person', name: r.name || 'Kupec' },
+        author: { '@type': 'Person', name: r.name || PP_STR.customer },
         reviewRating: { '@type': 'Rating', ratingValue: r.rating || 5, bestRating: 5, worstRating: 1 }
       };
       if (r.title) rev.name = r.title;
@@ -208,7 +229,7 @@ async function loadRatingBadge(slug) {
     const avgStr = avg.toFixed(1);
     const full = Math.round(avg);
     const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-    const label = rows.length === 1 ? 'ocena' : rows.length < 5 ? 'ocene' : 'ocen';
+    const label = PP_STR.reviewWord(rows.length);
 
     const anchor = document.querySelector('.variant-picker') || document.querySelector('.product-title');
     if (!anchor) return;
@@ -244,13 +265,13 @@ async function loadOpenDN(slug) {
     if (!rows.length || !rows[0].predviden_zakljucek) return;
 
     const datum = new Date(rows[0].predviden_zakljucek);
-    const formatted = datum.toLocaleDateString('sl-SI', { day: 'numeric', month: 'long', year: 'numeric' });
+    const formatted = datum.toLocaleDateString(PP_STR.dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
 
     const highlights = document.querySelector('.product-highlights');
     if (!highlights) return;
     const badge = document.createElement('p');
     badge.style.cssText = 'margin-top:.5rem;font-size:.8rem;color:#7a4f2e;font-weight:500';
-    badge.textContent = `📋 Serija v pripravi · predviden zaključek: ${formatted}`;
+    badge.textContent = PP_STR.batchInPrep(formatted);
     highlights.insertAdjacentElement('afterend', badge);
   } catch(e) {}
 }

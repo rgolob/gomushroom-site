@@ -17,9 +17,17 @@ const RP_STR = LANG === 'en'
 const RP_EN_DETAIL_PATHS = {
   'reishi': '/en/shop/reishi-tincture/',
   'chaga': '/en/shop/chaga-tincture/',
-  'bradovec': '/en/shop/lions-mane-tincture/',
-  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+  'bradovec': '/en/shop/lions-mane-tincture/'
 };
+
+// Pravo angleško ime izdelka (gm_products.name je samo v slovenscini)
+const RP_EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane" };
+function rpDisplayName(p) {
+  return LANG === 'en' ? (RP_EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
+}
+
+// Izdelki, ki (za zdaj) niso na voljo v EN trgovini
+const RP_EN_HIDDEN_PRODUCTS = ['smrekovi-vrsicki'];
 
 function formatPrice(v) {
   return Number(v || 0).toLocaleString(RP_STR.dateLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -90,7 +98,7 @@ async function init() {
     const variants = await varRes.json();
     const ratingMap = buildRatingMap(revRes.ok ? await revRes.json() : []);
 
-    const others = products.filter(p => p.slug !== currentSlug && !p.is_bundle);
+    const others = products.filter(p => p.slug !== currentSlug && !p.is_bundle && (LANG !== 'en' || !RP_EN_HIDDEN_PRODUCTS.includes(p.slug)));
     const picked = shuffle(others);
     if (!picked.length) return;
 
@@ -136,9 +144,9 @@ function buildHTML(picked, variants, ratingMap) {
     return `
       <a class="gmrp-card" href="${detailUrl}">
         <div class="gmrp-card-img">
-          <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${p.name}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+          <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${rpDisplayName(p)}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
         </div>
-        <p class="gmrp-card-name">${p.name}</p>
+        <p class="gmrp-card-name">${rpDisplayName(p)}</p>
         ${ratingHtml}
         <div class="gmrp-card-price">${priceHtml}</div>
       </a>`;

@@ -18,8 +18,7 @@ const SR_STR = LANG === 'en'
 const SR_EN_DETAIL_PATHS = {
   'reishi': '/en/shop/reishi-tincture/',
   'chaga': '/en/shop/chaga-tincture/',
-  'bradovec': '/en/shop/lions-mane-tincture/',
-  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+  'bradovec': '/en/shop/lions-mane-tincture/'
 };
 
 function shuffle(arr) {

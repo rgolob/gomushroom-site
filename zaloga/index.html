@@ -7463,6 +7463,15 @@ function renderRecenzije() {
       ${!ig && r.title ? `<div style="font-weight:600;font-size:.85rem;color:var(--ink);margin:.5rem 0 .2rem">${r.title}</div>` : ''}
       ${!ig ? `<p style="font-size:.83rem;color:rgba(43,11,57,.7);margin:.35rem 0;line-height:1.6">${r.body||''}</p>` : ''}
       ${r.coupon_code ? `<div style="font-size:.72rem;color:#3a6b4a;margin-top:.3rem">🎁 Kupon poslan: <strong>${r.coupon_code}</strong></div>` : ''}
+      ${!ig ? `
+      <details style="margin-top:.6rem">
+        <summary style="font-size:.72rem;color:var(--muted);cursor:pointer">🇬🇧 Angleški prevod (za /en/shop/)${r.body_en?' — urejen':''}</summary>
+        <div style="margin-top:.4rem;display:flex;flex-direction:column;gap:.3rem">
+          <input type="text" id="rec-title-en-${r.id}" placeholder="Naslov (EN)" value="${(r.title_en||'').replace(/"/g,'&quot;')}" style="font-size:.8rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px">
+          <textarea id="rec-body-en-${r.id}" placeholder="Besedilo recenzije (EN)" rows="2" style="font-size:.8rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit">${r.body_en||''}</textarea>
+          <button class="tbtn" style="align-self:flex-start" onclick="shraniPrevodRecenzije('${r.id}')">💾 Shrani prevod</button>
+        </div>
+      </details>` : ''}
       ${r.status === 'pending' ? `
       <div style="display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap">
         <button class="tbtn sell" onclick="potrdiRecenzijo('${r.id}')">✅ Potrdi + kupon (${r.coupon_pct||10}%)</button>
@@ -7470,6 +7479,23 @@ function renderRecenzije() {
       </div>` : ''}
     </div>`;
   }).join('');
+}
+
+async function shraniPrevodRecenzije(id) {
+  const titleEl = document.getElementById(`rec-title-en-${id}`);
+  const bodyEl = document.getElementById(`rec-body-en-${id}`);
+  const title_en = (titleEl?.value || '').trim() || null;
+  const body_en = (bodyEl?.value || '').trim() || null;
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?id=eq.${id}`, {
+      method: 'PATCH', headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      body: JSON.stringify({ title_en, body_en })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const idx = (_recenzije||[]).findIndex(x => x.id === id);
+    if (idx >= 0) { _recenzije[idx].title_en = title_en; _recenzije[idx].body_en = body_en; }
+    toast('✅ Prevod shranjen');
+  } catch(e) { toast('⚠ Napaka pri shranjevanju prevoda: ' + e.message); }
 }
 
 function generateCouponCode() {

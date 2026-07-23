@@ -86,11 +86,13 @@ function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 function buildHTML(picked) {
   const cards = picked.map((rv, i) => {
+    const title = LANG === 'en' ? (rv.title_en || rv.title) : rv.title;
+    const body = LANG === 'en' ? (rv.body_en || rv.body) : rv.body;
     return `
       <div class="gmsr-card" data-idx="${i}" role="button" tabindex="0">
         <div class="gmsr-stars">${stars(rv)}</div>
-        ${rv.title ? `<p class="gmsr-title">${esc(rv.title)}</p>` : ''}
-        <p class="gmsr-body">${esc(truncate(rv.body))}</p>
+        ${title ? `<p class="gmsr-title">${esc(title)}</p>` : ''}
+        <p class="gmsr-body">${esc(truncate(body))}</p>
         <div class="gmsr-foot">
           <span class="gmsr-name">${esc(rv.name)}</span>
           <span class="gmsr-hint">${SR_STR.readMore}</span>
@@ -129,7 +131,7 @@ function bindInteraction(mount, picked) {
         return;
       }
       card.dataset.expanded = 'true';
-      card.querySelector('.gmsr-body').textContent = rv.body || '';
+      card.querySelector('.gmsr-body').textContent = (LANG === 'en' ? (rv.body_en || rv.body) : rv.body) || '';
       const hint = card.querySelector('.gmsr-hint');
       if (hint) hint.textContent = `${rv.product_name} →`;
     };

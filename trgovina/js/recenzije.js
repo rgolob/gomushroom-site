@@ -287,15 +287,19 @@ function renderReviews(rows){
   const avg=(rows.reduce((s,r)=>s+(r.rating||0),0)/rows.length).toFixed(1);
   const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
   const fmt=iso=>new Date(iso).toLocaleDateString(T.dateLocale,{year:'numeric',month:'long',day:'numeric'});
-  const itemHtml=r=>`<div class="gmr-item">
+  const itemHtml=r=>{
+    const title=LANG==='en'?(r.title_en||r.title):r.title;
+    const body=LANG==='en'?(r.body_en||r.body):r.body;
+    return `<div class="gmr-item">
       <div class="gmr-item-hdr">
         <span class="gmr-item-stars">${'★'.repeat(r.rating||0)}${'☆'.repeat(5-(r.rating||0))}</span>
         <strong class="gmr-item-name">${esc(r.name||T.anonymous)}</strong>
         <span class="gmr-item-date">${fmt(r.created_at)}</span>
       </div>
-      ${r.title?`<div class="gmr-item-title">${esc(r.title)}</div>`:''}
-      <div class="gmr-item-body">${esc(r.body||'')}</div>
+      ${title?`<div class="gmr-item-title">${esc(title)}</div>`:''}
+      <div class="gmr-item-body">${esc(body||'')}</div>
     </div>`;
+  };
   el.innerHTML=`
     <div class="gmr-summary">
       <span class="gmr-avg">${avg}</span>

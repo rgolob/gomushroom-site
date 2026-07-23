@@ -199,13 +199,15 @@ function injectReviewSchema(rows) {
       reviewCount: rows.length
     };
     data.review = rows.map(r => {
+      const title = LANG === 'en' ? (r.title_en || r.title) : r.title;
+      const body = LANG === 'en' ? (r.body_en || r.body) : r.body;
       const rev = {
         '@type': 'Review',
         author: { '@type': 'Person', name: r.name || PP_STR.customer },
         reviewRating: { '@type': 'Rating', ratingValue: r.rating || 5, bestRating: 5, worstRating: 1 }
       };
-      if (r.title) rev.name = r.title;
-      if (r.body) rev.reviewBody = r.body;
+      if (title) rev.name = title;
+      if (body) rev.reviewBody = body;
       if (r.created_at) rev.datePublished = r.created_at.slice(0, 10);
       return rev;
     });
@@ -216,7 +218,7 @@ function injectReviewSchema(rows) {
 async function loadRatingBadge(slug) {
   try {
     const r = await fetch(
-      `${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating,title,body,name,created_at&order=created_at.desc`,
+      `${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating,title,body,title_en,body_en,name,created_at&order=created_at.desc`,
       { headers: SB_HEADERS }
     );
     if (!r.ok) return;

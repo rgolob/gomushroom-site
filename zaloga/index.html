@@ -7991,6 +7991,7 @@ const ZS_DEFAULTS={
   autoEmailPlacano:false,
   autoEmailPredano:false,
   postnina:3.90,
+  postninaTujina:0,
   brezplacnaPosninaOd:60,
   upnPopust:{ aktiven:false, vrednost:1 },
   popusti:[], // [{kod, tip:'koda'|'kolicina'|'znesek', vrednost, min, aktiven}]
@@ -8129,10 +8130,16 @@ function openZalogaSettings(){
               style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
           </div>
           <div style="display:flex;gap:.5rem;align-items:center">
+            <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Poštnina tujina (€)</label>
+            <input id="zsPostninaTujina" type="text" inputmode="decimal" value="${getZS('postninaTujina')}"
+              style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
             <label style="font-size:.78rem;color:var(--muted);white-space:nowrap;min-width:120px">Brezplačna od (€)</label>
             <input id="zsBrezplacnaPosninaOd" type="text" inputmode="decimal" value="${getZS('brezplacnaPosninaOd')}"
               style="flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-family:'Jost',sans-serif;font-size:.85rem;box-sizing:border-box">
           </div>
+          <div style="font-size:.68rem;color:var(--muted);line-height:1.4">Poštnina tujina se za zdaj samo shrani kot referenčna vrednost — blagajna trenutno ne loči po državi dostave (prodaja je vezana na Slovenijo).</div>
         </div>
 
         <!-- UPN POPUST -->
@@ -8511,6 +8518,7 @@ function saveZalogaSettings(){
   saveZS({
     trosarinaEUR:parseFloat(document.getElementById('zsTrosarina').value.replace(',','.'))||1412.40,
     postnina:parseFloat(document.getElementById('zsPostnina').value.replace(',','.'))||3.90,
+    postninaTujina:parseFloat(document.getElementById('zsPostninaTujina').value.replace(',','.'))||0,
     brezplacnaPosninaOd:parseFloat(document.getElementById('zsBrezplacnaPosninaOd').value.replace(',','.'))||60,
     autoEmailPlacano:document.getElementById('zs_autoEmailPlacano').checked,
     autoEmailPredano:document.getElementById('zs_autoEmailPredano').checked,

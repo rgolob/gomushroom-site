@@ -537,9 +537,26 @@ function getKrajFromPost(post) {
   return SI_POST[post.trim()] || '';
 }
 
+// ── Dostava v tujino ──────────────────────────────────────
+function isTujina(country) {
+  return !!country && country !== 'Slovenija';
+}
+
+// ISO-2 koda (iz Stripe Express Checkout naslova) -> ime drzave v seznamu #c-country
+const ISO_TO_SL_COUNTRY = {
+  SI: 'Slovenija', AT: 'Avstrija', DE: 'Nemčija', IT: 'Italija', HR: 'Hrvaška',
+  CH: 'Švica', FR: 'Francija', ES: 'Španija', PT: 'Portugalska', NL: 'Nizozemska',
+  BE: 'Belgija', LU: 'Luksemburg', CZ: 'Češka', SK: 'Slovaška', HU: 'Madžarska',
+  PL: 'Poljska', DK: 'Danska', SE: 'Švedska', FI: 'Finska', IE: 'Irska',
+  GB: 'Združeno kraljestvo', NO: 'Norveška', GR: 'Grčija', RO: 'Romunija',
+  BG: 'Bolgarija', CY: 'Ciper', MT: 'Malta', EE: 'Estonija', LV: 'Latvija',
+  LT: 'Litva', US: 'ZDA'
+};
+
 // Nastavitve
 let settings = {
   postnina: 3.90,
+  postninaTujina: 0,
   brezplacnaPosninaOd: 60,
   sestevajPopuste: false,
   maxPopust: 50,
@@ -681,7 +698,10 @@ function renderSummary() {
   const { pct, ujemajoci } = izracunajPopust(bruto, kolicina, koda);
   const popustZnesek = bruto * pct / 100;
   const zneskPoPopustu = bruto - popustZnesek;
-  const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : (settings.postnina || 3.90);
+  const country = document.getElementById('c-country')?.value || 'Slovenija';
+  const tujina = isTujina(country);
+  const osnovnaPostnina = tujina ? (settings.postninaTujina || 0) : (settings.postnina || 3.90);
+  const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : osnovnaPostnina;
   const skupaj = zneskPoPopustu + postnina;
 
   itemsEl.innerHTML = cart.map(item => `
@@ -704,7 +724,7 @@ function renderSummary() {
     discRow.style.display = 'none';
   }
 
-  window._orderCalc = { bruto, pct, ujemajoci, popustZnesek, zneskPoPopustu, postnina, skupaj, kolicina, koda };
+  window._orderCalc = { bruto, pct, ujemajoci, popustZnesek, zneskPoPopustu, postnina, skupaj, kolicina, koda, country };
 }
 
 // ── Validacija zaloge ─────────────────────────────────────
@@ -847,6 +867,14 @@ async function initPaymentUI() {
     setVal('c-street', addr.line1);
     setVal('c-post',   addr.postal_code);
     setVal('c-city',   addr.city);
+    if (addr.country) {
+      const countryEl = document.getElementById('c-country');
+      if (countryEl) countryEl.value = ISO_TO_SL_COUNTRY[addr.country] || 'Drugo';
+    }
+    // Naslov iz denarnice (Apple/Google Pay) je lahko izven Slovenije, zato
+    // po nastavitvi drzave ponovno preracunamo postnino/skupaj znesek, preden
+    // ustvarimo PaymentIntent - sicer bi tuje narocilo zaracunali po domaci ceni.
+    renderSummary();
 
     if (!validate()) {
       event.paymentFailed({ reason: 'fail' });
@@ -875,6 +903,7 @@ async function initPaymentUI() {
         street: document.getElementById('c-street').value.trim(),
         post:   document.getElementById('c-post').value.trim(),
         city:   document.getElementById('c-city').value.trim(),
+        country: document.getElementById('c-country').value,
         note:   document.getElementById('c-note').value.trim(),
         calc,
         clientSecret: data.clientSecret,
@@ -970,6 +999,7 @@ async function payWithCard() {
       street: document.getElementById('c-street').value.trim(),
       post:   document.getElementById('c-post').value.trim(),
       city:   document.getElementById('c-city').value.trim(),
+      country: document.getElementById('c-country').value,
       note:   document.getElementById('c-note').value.trim(),
       calc,
       clientSecret: data.clientSecret,
@@ -1009,7 +1039,7 @@ async function saveStripeOrder(paymentIntentId) {
     street:   document.getElementById('c-street').value.trim(),
     post:     document.getElementById('c-post').value.trim(),
     city:     document.getElementById('c-city').value.trim(),
-    country:  'Slovenija',
+    country:  calc.country || 'Slovenija',
     note:     document.getElementById('c-note').value.trim() || null,
     items:    withPricePaid(cart, 1 - (calc.pct || 0) / 100),
     subtotal: calc.bruto,
@@ -1206,7 +1236,7 @@ async function sendStripeConfirmationEmail(order, calc) {
       body: JSON.stringify({ to: order.email, subject: 'Plačilo potrjeno — GoMushroom', html }),
     });
     // Obvestilo lastniku
-    const ownerHtml = `<b>Novo naročilo (Stripe)</b><br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
+    const ownerHtml = `<b>Novo naročilo (Stripe)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
     fetch('/.netlify/functions/send-email', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${Number(calc.skupaj).toFixed(2)} €`, html: ownerHtml })
@@ -1275,7 +1305,7 @@ async function placeOrder() {
     street: document.getElementById('c-street').value.trim(),
     post: document.getElementById('c-post').value.trim(),
     city: document.getElementById('c-city').value.trim(),
-    country: 'Slovenija',
+    country: calc.country || 'Slovenija',
     note: document.getElementById('c-note').value.trim() || null,
     items: cart,
     subtotal: calc.bruto,
@@ -1403,7 +1433,7 @@ async function sendConfirmationEmail(order, rf, calc) {
       body: JSON.stringify({ confirmation_sent_at: new Date().toISOString() })
     });
     // Obvestilo lastniku
-    const ownerHtml = `<b>Novo naročilo (bančno nakazilo)</b><br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${calc.skupaj.toFixed(2)} €<br>Referenca: ${order.rf_reference||'—'}<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
+    const ownerHtml = `<b>Novo naročilo (bančno nakazilo)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${calc.skupaj.toFixed(2)} €<br>Referenca: ${order.rf_reference||'—'}<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
     fetch('/.netlify/functions/send-email', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${calc.skupaj.toFixed(2)} €`, html: ownerHtml })
@@ -1450,6 +1480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('c-street').value = saved.street;
       document.getElementById('c-post').value   = saved.post;
       document.getElementById('c-city').value   = saved.city;
+      document.getElementById('c-country').value = saved.country || 'Slovenija';
       document.getElementById('c-note').value   = saved.note;
       window._orderCalc = saved.calc;
       sessionStorage.removeItem('gm_redirect_form');
@@ -1484,6 +1515,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   postInput?.addEventListener('blur', () => {
     const kraj = getKrajFromPost(postInput.value);
     if (kraj) cityInput.value = kraj;
+  });
+
+  // Ob spremembi drzave preracunaj postnino in uskladi znesek na placilnem UI
+  document.getElementById('c-country')?.addEventListener('change', () => {
+    renderSummary();
+    if (stripeElements && window._orderCalc) {
+      stripeElements.update({ amount: Math.round(window._orderCalc.skupaj * 100) });
+    }
   });
 
   // Clear errors

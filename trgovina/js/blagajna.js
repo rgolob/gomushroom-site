@@ -558,6 +558,7 @@ let settings = {
   postnina: 3.90,
   postninaTujina: 0,
   brezplacnaPosninaOd: 60,
+  brezplacnaPosninaOdTujina: 60,
   sestevajPopuste: false,
   maxPopust: 50,
   popusti: [],
@@ -701,7 +702,8 @@ function renderSummary() {
   const country = document.getElementById('c-country')?.value || 'Slovenija';
   const tujina = isTujina(country);
   const osnovnaPostnina = tujina ? (settings.postninaTujina || 0) : (settings.postnina || 3.90);
-  const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : osnovnaPostnina;
+  const brezplacnaOd = tujina ? (settings.brezplacnaPosninaOdTujina || settings.brezplacnaPosninaOd || 60) : (settings.brezplacnaPosninaOd || 60);
+  const postnina = zneskPoPopustu >= brezplacnaOd ? 0 : osnovnaPostnina;
   const skupaj = zneskPoPopustu + postnina;
 
   itemsEl.innerHTML = cart.map(item => `

@@ -13,8 +13,13 @@ const RP_STR = LANG === 'en'
   ? { heading: 'You might also like', prev: 'Previous', next: 'Next', dateLocale: 'en-IE' }
   : { heading: 'Morda vas zanima tudi', prev: 'Prejšnji', next: 'Naslednji', dateLocale: 'sl-SI' };
 
-// Angleške produktne strani (dodajamo postopoma)
-const RP_EN_DETAIL_PATHS = { 'reishi': '/en/shop/reishi-tincture/' };
+// Angleške produktne strani
+const RP_EN_DETAIL_PATHS = {
+  'reishi': '/en/shop/reishi-tincture/',
+  'chaga': '/en/shop/chaga-tincture/',
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+};
 
 function formatPrice(v) {
   return Number(v || 0).toLocaleString(RP_STR.dateLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';

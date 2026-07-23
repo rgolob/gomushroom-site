@@ -15,7 +15,12 @@ const LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
 const SR_STR = LANG === 'en'
   ? { heading: 'What our customers say', prev: 'Previous', next: 'Next', readMore: 'Read more' }
   : { heading: 'Kaj pravijo naše stranke', prev: 'Prejšnji', next: 'Naslednji', readMore: 'Preberi več' };
-const SR_EN_DETAIL_PATHS = { 'reishi': '/en/shop/reishi-tincture/' };
+const SR_EN_DETAIL_PATHS = {
+  'reishi': '/en/shop/reishi-tincture/',
+  'chaga': '/en/shop/chaga-tincture/',
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
+};
 
 function shuffle(arr) {
   const a = arr.slice();

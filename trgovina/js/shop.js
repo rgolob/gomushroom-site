@@ -125,9 +125,12 @@ const INFO_ARTICLE_LINKS = {
   en: {}
 }[LANG];
 
-// Angleške produktne strani (dodajamo postopoma) — ko manjka, kartica pelje na /en/shop/
+// Angleške produktne strani
 const EN_DETAIL_PATHS = {
-  'reishi': '/en/shop/reishi-tincture/'
+  'reishi': '/en/shop/reishi-tincture/',
+  'chaga': '/en/shop/chaga-tincture/',
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
 };
 
 // ── Kartice izdelkov: kratek opis + oznake z ikonami ──────

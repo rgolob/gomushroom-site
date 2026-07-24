@@ -543,14 +543,14 @@ function isTujina(country) {
 }
 
 // ISO-2 koda (iz Stripe Express Checkout naslova) -> ime drzave v seznamu #c-country
+// Samo drzave EU - narocila dostavljamo izkljucno znotraj EU.
 const ISO_TO_SL_COUNTRY = {
   SI: 'Slovenija', AT: 'Avstrija', DE: 'Nemčija', IT: 'Italija', HR: 'Hrvaška',
-  CH: 'Švica', FR: 'Francija', ES: 'Španija', PT: 'Portugalska', NL: 'Nizozemska',
+  FR: 'Francija', ES: 'Španija', PT: 'Portugalska', NL: 'Nizozemska',
   BE: 'Belgija', LU: 'Luksemburg', CZ: 'Češka', SK: 'Slovaška', HU: 'Madžarska',
   PL: 'Poljska', DK: 'Danska', SE: 'Švedska', FI: 'Finska', IE: 'Irska',
-  GB: 'Združeno kraljestvo', NO: 'Norveška', GR: 'Grčija', RO: 'Romunija',
-  BG: 'Bolgarija', CY: 'Ciper', MT: 'Malta', EE: 'Estonija', LV: 'Latvija',
-  LT: 'Litva', US: 'ZDA'
+  GR: 'Grčija', RO: 'Romunija', BG: 'Bolgarija', CY: 'Ciper', MT: 'Malta',
+  EE: 'Estonija', LV: 'Latvija', LT: 'Litva'
 };
 
 // Nastavitve
@@ -558,6 +558,7 @@ let settings = {
   postnina: 3.90,
   postninaTujina: 0,
   brezplacnaPosninaOd: 60,
+  brezplacnaPosninaOdTujina: 60,
   sestevajPopuste: false,
   maxPopust: 50,
   popusti: [],
@@ -701,7 +702,8 @@ function renderSummary() {
   const country = document.getElementById('c-country')?.value || 'Slovenija';
   const tujina = isTujina(country);
   const osnovnaPostnina = tujina ? (settings.postninaTujina || 0) : (settings.postnina || 3.90);
-  const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : osnovnaPostnina;
+  const brezplacnaOd = tujina ? (settings.brezplacnaPosninaOdTujina || settings.brezplacnaPosninaOd || 60) : (settings.brezplacnaPosninaOd || 60);
+  const postnina = zneskPoPopustu >= brezplacnaOd ? 0 : osnovnaPostnina;
   const skupaj = zneskPoPopustu + postnina;
 
   itemsEl.innerHTML = cart.map(item => `
@@ -867,13 +869,22 @@ async function initPaymentUI() {
     setVal('c-street', addr.line1);
     setVal('c-post',   addr.postal_code);
     setVal('c-city',   addr.city);
+
+    // Dostavljamo izkljucno v drzave EU. Naslov iz denarnice (Apple/Google Pay)
+    // gre mimo spustnega seznama #c-country, zato ga tu preverimo posebej -
+    // brez tega bi lahko nekdo narocil na naslov izven EU kar prek denarnice.
+    if (addr.country && !ISO_TO_SL_COUNTRY[addr.country]) {
+      event.paymentFailed({ reason: 'invalid_shipping_address' });
+      showCardError('Žal pošiljamo samo znotraj EU. Prosimo, izberite naslov dostave v EU.');
+      return;
+    }
     if (addr.country) {
       const countryEl = document.getElementById('c-country');
-      if (countryEl) countryEl.value = ISO_TO_SL_COUNTRY[addr.country] || 'Drugo';
+      if (countryEl) countryEl.value = ISO_TO_SL_COUNTRY[addr.country];
     }
-    // Naslov iz denarnice (Apple/Google Pay) je lahko izven Slovenije, zato
-    // po nastavitvi drzave ponovno preracunamo postnino/skupaj znesek, preden
-    // ustvarimo PaymentIntent - sicer bi tuje narocilo zaracunali po domaci ceni.
+    // Naslov iz denarnice je lahko izven Slovenije, zato po nastavitvi drzave
+    // ponovno preracunamo postnino/skupni znesek, preden ustvarimo PaymentIntent -
+    // sicer bi tuje narocilo zaracunali po domaci ceni.
     renderSummary();
 
     if (!validate()) {

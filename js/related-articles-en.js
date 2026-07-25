@@ -27,6 +27,11 @@
       title: 'Ultrasonic Extraction of Medicinal Mushrooms',
       desc: 'How ultrasound-assisted extraction (UAE) improves mass transfer, opens the mushroom cell structure and increases the yield of bioactive compounds from Reishi, Chaga and Lion\'s Mane.',
     },
+    {
+      url: '/en/learn/spruce-bud-research/',
+      title: 'What Does Research Say About Spruce Buds?',
+      desc: 'Why people have traditionally turned to spruce buds, and what research shows about phenolic compounds, terpenes and antioxidant potential.',
+    },
   ];
 
   function render(){

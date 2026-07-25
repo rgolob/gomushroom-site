@@ -17,17 +17,18 @@ const RP_STR = LANG === 'en'
 const RP_EN_DETAIL_PATHS = {
   'reishi': '/en/shop/reishi-tincture/',
   'chaga': '/en/shop/chaga-tincture/',
-  'bradovec': '/en/shop/lions-mane-tincture/'
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
 };
 
 // Pravo angleško ime izdelka (gm_products.name je samo v slovenscini)
-const RP_EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane" };
+const RP_EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane", 'smrekovi-vrsicki': 'Spruce Buds' };
 function rpDisplayName(p) {
   return LANG === 'en' ? (RP_EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
 }
 
 // Izdelki, ki (za zdaj) niso na voljo v EN trgovini
-const RP_EN_HIDDEN_PRODUCTS = ['smrekovi-vrsicki'];
+const RP_EN_HIDDEN_PRODUCTS = [];
 
 function formatPrice(v) {
   return Number(v || 0).toLocaleString(RP_STR.dateLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';

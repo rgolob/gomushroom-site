@@ -91,7 +91,17 @@
   </url>
   <url>
     <loc>https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/spruce-bud-tincture/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/shop/spruce-bud-tincture/</loc>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/shop/spruce-bud-tincture/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/"/>
   </url>
 
   <!-- Knowledge hub -->
@@ -186,6 +196,22 @@
     <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-extract/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
+  </url>
+
+  <!-- Article: Smrekovi vrščki raziskave / Spruce bud research -->
+  <url>
+    <loc>https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/</loc>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-research/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/spruce-bud-research/</loc>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-research/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
   </url>
 
 

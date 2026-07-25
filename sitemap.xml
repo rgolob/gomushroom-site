@@ -198,6 +198,22 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/"/>
   </url>
 
+  <!-- Article: Smrekovi vrščki raziskave / Spruce bud research -->
+  <url>
+    <loc>https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/</loc>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-research/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/spruce-bud-research/</loc>
+    <lastmod>2026-07-25</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/spruce-bud-research/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/"/>
+  </url>
+
 
   <!-- Service: Ekstrakcije medicinskih gob / Medicinal Mushroom Extraction -->
   <url>

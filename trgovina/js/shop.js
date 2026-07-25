@@ -129,17 +129,18 @@ const INFO_ARTICLE_LINKS = {
 const EN_DETAIL_PATHS = {
   'reishi': '/en/shop/reishi-tincture/',
   'chaga': '/en/shop/chaga-tincture/',
-  'bradovec': '/en/shop/lions-mane-tincture/'
+  'bradovec': '/en/shop/lions-mane-tincture/',
+  'smrekovi-vrsicki': '/en/shop/spruce-bud-tincture/'
 };
 
 // Pravo angleško ime izdelka (gm_products.name je samo v slovenscini)
-const EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane" };
+const EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane", 'smrekovi-vrsicki': 'Spruce Buds' };
 function displayProductName(p) {
   return LANG === 'en' ? (EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
 }
 
 // Izdelki, ki (za zdaj) niso na voljo v EN trgovini
-const EN_HIDDEN_PRODUCTS = ['smrekovi-vrsicki'];
+const EN_HIDDEN_PRODUCTS = [];
 
 // ── Kartice izdelkov: kratek opis + oznake z ikonami ──────
 const CHIP_ICONS = {

@@ -7,6 +7,26 @@ const SB_HEADERS = {
   'Authorization': 'Bearer ' + SB_KEY
 };
 
+const CP_LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const CP_HOME = CP_LANG === 'en' ? '/en/shop/' : '/trgovina/';
+const CP_CHECKOUT_URL = CP_LANG === 'en' ? '/en/shop/checkout/' : '/trgovina/blagajna/';
+const CP_STR = {
+  sl: {
+    empty: 'Košarica je prazna', back: '← Nazaj v trgovino', unit: '/ kom', remove: 'Odstrani',
+    itemsCount: (n) => `Skupaj (${n} kosov)`, discount: (pct) => `Popust ${pct}%`,
+    shipping: 'Poštnina', free: 'Brezplačno', addMore: (v) => `Dodaj še ${v} za brezplačno dostavo`,
+    total: 'Skupaj za plačilo', applyCoupon: 'Uveljavi', couponPartial: 'Delno',
+    dateLocale: 'sl-SI'
+  },
+  en: {
+    empty: 'Your cart is empty', back: '← Back to shop', unit: '/ each', remove: 'Remove',
+    itemsCount: (n) => `Total (${n} item${n === 1 ? '' : 's'})`, discount: (pct) => `Discount ${pct}%`,
+    shipping: 'Shipping', free: 'Free', addMore: (v) => `Add ${v} more for free shipping`,
+    total: 'Total to pay', applyCoupon: 'Apply', couponPartial: 'Partial',
+    dateLocale: 'en-IE'
+  }
+}[CP_LANG];
+
 let settings = {
   postnina: 3.90,
   brezplacnaPosninaOd: 60,
@@ -41,7 +61,7 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
   const ujemajoci = [];
   const c = settings.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
-    ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
+    ujemajoci.push({ vrednost: c.vrednost, opis: CP_LANG === 'en' ? 'Time-limited discount' : 'Časovni popust' });
   const vneseneKode = (kodaVnesena || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
     if (p.od && danes < p.od) continue;
@@ -56,11 +76,15 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
     }
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
-    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${matchedKod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
+    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda'
+      ? (CP_LANG === 'en' ? `Code ${matchedKod}` : `Koda ${matchedKod}`)
+      : p.tip === 'kolicina'
+      ? (CP_LANG === 'en' ? `${p.min}+ pcs` : `${p.min}+ kosov`)
+      : (CP_LANG === 'en' ? `Over ${p.min} €` : `Nad ${p.min} €`) });
   }
   for (const rc of reviewCoupons) {
     if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
-      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: `Koda ${rc.coupon_code}` });
+      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: CP_LANG === 'en' ? `Code ${rc.coupon_code}` : `Koda ${rc.coupon_code}` });
   }
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
@@ -70,7 +94,7 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
 }
 
 function fmt(v) {
-  return Number(v || 0).toLocaleString('sl-SI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  return Number(v || 0).toLocaleString(CP_STR.dateLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
 // ── Glavna re-render funkcija ────────────────────────────
@@ -83,8 +107,8 @@ function renderCart() {
     wrap.innerHTML = `
       <div style="text-align:center;padding:3rem 1rem;color:rgba(43,11,57,.4)">
         <div style="font-size:2.5rem;margin-bottom:.75rem">🛒</div>
-        <div style="font-size:1.4rem;font-weight:300">Košarica je prazna</div>
-        <a href="/trgovina/" style="display:inline-block;margin-top:1.25rem;padding:.55rem 1.25rem;background:#2b0b39;color:#f0ebe3;border-radius:999px;text-decoration:none;font-size:.85rem">← Nazaj v trgovino</a>
+        <div style="font-size:1.4rem;font-weight:300">${CP_STR.empty}</div>
+        <a href="${CP_HOME}" style="display:inline-block;margin-top:1.25rem;padding:.55rem 1.25rem;background:#2b0b39;color:#f0ebe3;border-radius:999px;text-decoration:none;font-size:.85rem">${CP_STR.back}</a>
       </div>`;
     updateSummary(0, 0, 0, 0, []);
     return;
@@ -102,7 +126,7 @@ function renderCart() {
           item.discountPct > 0
             ? `<span style="text-decoration:line-through;color:rgba(43,11,57,.4);font-weight:400">${fmt(item.originalPrice)}</span> ${fmt(item.price)} <span style="font-size:.72em;color:#3a6b4a;font-weight:600">−${item.discountPct}%</span>`
             : `${fmt(item.price)}`
-        } / kom</div>
+        } ${CP_STR.unit}</div>
       </div>
       <div class="gm-cart-item__controls">
         <div style="display:flex;align-items:center;gap:.4rem;background:rgba(43,11,57,.05);border-radius:999px;padding:.2rem .3rem">
@@ -111,7 +135,7 @@ function renderCart() {
           <button onclick="changeQty(${i}, 1)" style="width:28px;height:28px;border:none;background:white;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.1)">+</button>
         </div>
         <div style="font-weight:700;color:#2b0b39;font-size:.95rem;margin-top:.35rem">${fmt(item.price * item.quantity)}</div>
-        <button onclick="removeItem(${i})" style="background:none;border:none;color:rgba(43,11,57,.35);font-size:.72rem;cursor:pointer;padding:0;margin-top:.2rem;text-decoration:underline">Odstrani</button>
+        <button onclick="removeItem(${i})" style="background:none;border:none;color:rgba(43,11,57,.35);font-size:.72rem;cursor:pointer;padding:0;margin-top:.2rem;text-decoration:underline">${CP_STR.remove}</button>
       </div>
     </div>`).join('');
 
@@ -142,23 +166,23 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:.4rem">
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:rgba(43,11,57,.55);padding:.1rem 0">
-        <span>Skupaj (${cart.reduce((s,i)=>s+i.quantity,0)} kosov)</span>
+        <span>${CP_STR.itemsCount(cart.reduce((s,i)=>s+i.quantity,0))}</span>
         <span>${fmt(bruto)}</span>
       </div>
       ${pct > 0 ? `
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:#3a6b4a;padding:.1rem 0">
-          <span>Popust ${pct}%</span>
+          <span>${CP_STR.discount(pct)}</span>
           <span>−${fmt(popustZnesek)}</span>
         </div>
         ${ujemajoci.map(u => `<div style="font-size:.68rem;color:#3a6b4a;text-align:right;letter-spacing:.01em">✓ ${u.opis}</div>`).join('')}
       ` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:rgba(43,11,57,.55);padding:.1rem 0">
-        <span>Poštnina</span>
-        <span style="color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.55)'}">${postnina === 0 ? 'Brezplačno' : fmt(postnina)}</span>
+        <span>${CP_STR.shipping}</span>
+        <span style="color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.55)'}">${postnina === 0 ? CP_STR.free : fmt(postnina)}</span>
       </div>
-      ${doBrezplacne > 0 && postnina > 0 ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">Dodaj še ${fmt(doBrezplacne)} za brezplačno dostavo</div>` : ''}
+      ${doBrezplacne > 0 && postnina > 0 ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">${CP_STR.addMore(fmt(doBrezplacne))}</div>` : ''}
       <div style="border-top:1px solid rgba(43,11,57,.08);padding-top:.7rem;margin-top:.25rem;display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-size:.82rem;font-weight:600;color:#2b0b39">Skupaj za plačilo</span>
+        <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${CP_STR.total}</span>
         <span style="font-size:1.3rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>
       </div>
     </div>`;
@@ -191,7 +215,7 @@ function bindKupon() {
 
   const validate = () => {
     const raw = input.value.trim();
-    if (!raw) { input.style.borderColor = ''; btn.textContent = 'Uveljavi'; btn.style.cssText = ''; renderCart(); return; }
+    if (!raw) { input.style.borderColor = ''; btn.textContent = CP_STR.applyCoupon; btn.style.cssText = ''; renderCart(); return; }
     const kode = raw.split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
     const veljavne = kode.filter(k =>
       (settings.popusti || []).some(p => {
@@ -210,7 +234,7 @@ function bindKupon() {
     } else if (veljavne.length > 0) {
       // Some codes valid — amber ⚠
       input.style.borderColor = '#e67e22';
-      btn.textContent = 'Delno';
+      btn.textContent = CP_STR.couponPartial;
       btn.style.background = '#e67e22';
       btn.style.color = 'white';
       btn.style.borderColor = '';
@@ -237,7 +261,7 @@ document.addEventListener('click', e => {
     const total = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
     if (typeof gmBeginCheckout === 'function') gmBeginCheckout(cart, total, kupon);
     if (typeof gmFbInitiateCheckout === 'function') gmFbInitiateCheckout(cart, total);
-    window.location.href = '/trgovina/blagajna/';
+    window.location.href = CP_CHECKOUT_URL;
   }
 });
 

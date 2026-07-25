@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Cart | GoMushroom</title>
+  <meta name="robots" content="noindex,follow"/>
+  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png"/>
+  <link rel="apple-touch-icon" href="/assets/favicon-180.png"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <link rel="stylesheet" href="/trgovina/css/trgovina.css"/>
+  <style>
+    .gm-cart-item {
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(43,11,57,.08);
+      border-radius: 16px;
+      background: white;
+      align-items: center;
+    }
+    .gm-cart-item__image { width: 72px; height: 72px; flex-shrink: 0; background: #fff; border-radius: 10px; overflow: hidden; }
+    .gm-cart-item__controls { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
+    @media(max-width:480px) {
+      .gm-cart-item { grid-template-columns: 56px 1fr; }
+      .gm-cart-item__controls { grid-column: 1/-1; flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+    /* DISCOUNT BADGE */
+.gm-discount-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  background: #2b0b39;
+  color: #af8455;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: .25rem .65rem;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(43,11,57,.18);
+}
+
+/* Badge pozicija na kartici (ne na sliki) */
+.gm-shop-card {
+  position: relative;
+}
+  </style>
+</head>
+<body style="overflow-x:hidden">
+ <header id="site-header"></header>
+
+  <main>
+    <section class="shop-page">
+      <div class="wrap">
+        <div class="shop-head" style="text-align:left;margin:0 0 1rem">
+          <p class="shop-kicker">Shop • Cart</p>
+          <h1 class="shop-title" style="margin-bottom:.5rem">Cart</h1>
+        </div>
+
+        <div class="gm-cart-page">
+          <!-- Items -->
+          <div>
+            <div id="cart-items" class="gm-cart-items" aria-live="polite" style="display:flex;flex-direction:column;gap:.75rem"></div>
+            <a href="/en/shop/" style="display:block;margin-top:20px;color:rgba(43,11,57,.42);font-size:14px;font-weight:500;text-decoration:none;text-align:right">← Back to shop</a>
+          </div>
+
+          <!-- Summary -->
+          <aside class="gm-cart-summary">
+            <!-- Coupon -->
+            <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(43,11,57,.08)">
+              <div style="font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(43,11,57,.4);margin-bottom:.5rem">Coupon code</div>
+              <div style="display:flex;gap:.4rem">
+                <input id="kupon-input" type="text" placeholder="e.g. WELCOME10, REVIEW10"
+                  style="flex:1;padding:.5rem .75rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;font-family:inherit;font-size:16px;text-transform:uppercase;outline:none;transition:border-color .2s">
+                <button id="kupon-btn" type="button"
+                  style="padding:.5rem .85rem;border:1px solid rgba(43,11,57,.15);border-radius:10px;background:white;font-family:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:.2s">
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary -->
+            <div id="cart-summary-detail"></div>
+
+            <!-- Button -->
+            <button class="gm-btn gm-btn--primary" type="button" id="checkout-btn"
+              style="width:100%;margin-top:1rem;min-height:48px;font-size:.95rem">
+              Checkout →
+            </button>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="/trgovina/js/cart-page.js"></script>
+   <script src="/trgovina/js/cart.js"></script>
+  <script defer src="/js/site-header.js"></script>
+  <script defer src="/js/site-footer.js"></script>
+</body>
+</html>

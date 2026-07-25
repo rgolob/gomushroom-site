@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const cartHtml = showCart ? `
-        <a class="cart-link" href="/trgovina/kosarica/" aria-label="${isEn ? 'Cart' : 'Košarica'}">
+        <a class="cart-link" href="${isEn ? '/en/shop/cart/' : '/trgovina/kosarica/'}" aria-label="${isEn ? 'Cart' : 'Košarica'}">
           <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M6 7h15l-1.5 8.5H8L6 4H3"></path>
             <circle cx="9" cy="20" r="1.5"></circle>

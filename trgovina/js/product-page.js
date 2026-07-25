@@ -55,10 +55,11 @@ function priceHtml(v) {
 }
 
 async function loadProductVariants() {
-  const [prodRes, varRes, stockRes] = await Promise.all([
+  const [prodRes, varRes, stockRes, settingsRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?slug=eq.${PRODUCT_SLUG}&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS })
+    fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS })
   ]);
 
   const products = await prodRes.json();
@@ -67,6 +68,12 @@ async function loadProductVariants() {
 
   const allVariants = await varRes.json();
   const stockData = stockRes.ok ? await stockRes.json() : [];
+  const settingsRows = settingsRes.ok ? await settingsRes.json() : [];
+  const settings = {};
+  settingsRows.forEach(row => {
+    try { settings[row.key] = JSON.parse(row.value); }
+    catch { settings[row.key] = row.value; }
+  });
   const stockMap = Object.fromEntries(stockData.map(s => [s.variant_id, s]));
 
   const variants = allVariants
@@ -83,7 +90,7 @@ async function loadProductVariants() {
       };
     });
 
-  return { product, variants };
+  return { product, variants, settings };
 }
 
 function initProductPage(variants, product) {
@@ -282,12 +289,20 @@ async function loadOpenDN(slug) {
 // Klice se sinhrono, takoj po initProductPage - torej PREDEN loadRatingBadge
 // sploh zacne svoj async fetch - da ne pride do iste tekme kot prej med
 // vec vzporednimi pisci istega <script> elementa (glej git zgodovino).
-function syncOfferSchema(variants) {
+// Drzave EU razen Slovenije, za shippingDetails vnos "tujina" (ISO 3166-1 alpha-2).
+const EU_NON_SI_CODES = [
+  'AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU',
+  'IE','IT','LT','LU','LV','MT','NL','PL','PT','RO','SE','SK'
+];
+
+function syncOfferSchema(variants, settings) {
   try {
     const script = document.querySelector('script[type="application/ld+json"]');
     if (!script) return;
     const data = JSON.parse(script.textContent);
     if (!Array.isArray(data.offers)) return;
+    const postnina = Number(settings?.postnina ?? 3.90).toFixed(2);
+    const postninaTujina = Number(settings?.postninaTujina ?? 0).toFixed(2);
     data.offers.forEach(offer => {
       const v = variants.find(v => v.sku === offer.sku);
       if (!v) return;
@@ -300,6 +315,20 @@ function syncOfferSchema(variants) {
         : v.low_stock
         ? 'https://schema.org/LimitedAvailability'
         : 'https://schema.org/InStock';
+      // Ziva vrednost iz gm_settings (postnina/postninaTujina) namesto staticno
+      // zapisane cene, da se JSON-LD ne razide s stranjo, ko cene spremenis v adminu.
+      offer.shippingDetails = [
+        {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: postnina, currency: 'EUR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'SI' }
+        },
+        {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: postninaTujina, currency: 'EUR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: EU_NON_SI_CODES }
+        }
+      ];
     });
     script.textContent = JSON.stringify(data);
   } catch(e) { console.warn('Offer schema sync napaka:', e); }
@@ -310,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await loadProductVariants();
     if (!data) return;
     initProductPage(data.variants, data.product);
-    syncOfferSchema(data.variants);
+    syncOfferSchema(data.variants, data.settings);
     loadRatingBadge(PRODUCT_SLUG);
     loadOpenDN(PRODUCT_SLUG);
   } catch(e) {

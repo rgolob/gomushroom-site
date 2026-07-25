@@ -4,7 +4,7 @@
 import { buildFeed } from './_shared/feed-products.mjs';
 
 export default async () =>
-  new Response(buildFeed('en'), {
+  new Response(await buildFeed('en'), {
     status: 200,
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',

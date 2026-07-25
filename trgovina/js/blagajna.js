@@ -537,21 +537,99 @@ function getKrajFromPost(post) {
   return SI_POST[post.trim()] || '';
 }
 
+// ── Jezik strani ──────────────────────────────────────────
+const BJ_LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const HOME_COUNTRY = BJ_LANG === 'en' ? 'Slovenia' : 'Slovenija';
+
 // ── Dostava v tujino ──────────────────────────────────────
 function isTujina(country) {
-  return !!country && country !== 'Slovenija';
+  return !!country && country !== HOME_COUNTRY;
 }
 
-// ISO-2 koda (iz Stripe Express Checkout naslova) -> ime drzave v seznamu #c-country
+// ISO-2 koda (iz Stripe Express Checkout naslova) -> ime drzave v jeziku strani.
 // Samo drzave EU - narocila dostavljamo izkljucno znotraj EU.
-const ISO_TO_SL_COUNTRY = {
-  SI: 'Slovenija', AT: 'Avstrija', DE: 'Nemčija', IT: 'Italija', HR: 'Hrvaška',
-  FR: 'Francija', ES: 'Španija', PT: 'Portugalska', NL: 'Nizozemska',
-  BE: 'Belgija', LU: 'Luksemburg', CZ: 'Češka', SK: 'Slovaška', HU: 'Madžarska',
-  PL: 'Poljska', DK: 'Danska', SE: 'Švedska', FI: 'Finska', IE: 'Irska',
-  GR: 'Grčija', RO: 'Romunija', BG: 'Bolgarija', CY: 'Ciper', MT: 'Malta',
-  EE: 'Estonija', LV: 'Latvija', LT: 'Litva'
+const EU_COUNTRY_NAMES = {
+  sl: {
+    SI: 'Slovenija', AT: 'Avstrija', DE: 'Nemčija', IT: 'Italija', HR: 'Hrvaška',
+    FR: 'Francija', ES: 'Španija', PT: 'Portugalska', NL: 'Nizozemska',
+    BE: 'Belgija', LU: 'Luksemburg', CZ: 'Češka', SK: 'Slovaška', HU: 'Madžarska',
+    PL: 'Poljska', DK: 'Danska', SE: 'Švedska', FI: 'Finska', IE: 'Irska',
+    GR: 'Grčija', RO: 'Romunija', BG: 'Bolgarija', CY: 'Ciper', MT: 'Malta',
+    EE: 'Estonija', LV: 'Latvija', LT: 'Litva'
+  },
+  en: {
+    SI: 'Slovenia', AT: 'Austria', DE: 'Germany', IT: 'Italy', HR: 'Croatia',
+    FR: 'France', ES: 'Spain', PT: 'Portugal', NL: 'Netherlands',
+    BE: 'Belgium', LU: 'Luxembourg', CZ: 'Czechia', SK: 'Slovakia', HU: 'Hungary',
+    PL: 'Poland', DK: 'Denmark', SE: 'Sweden', FI: 'Finland', IE: 'Ireland',
+    GR: 'Greece', RO: 'Romania', BG: 'Bulgaria', CY: 'Cyprus', MT: 'Malta',
+    EE: 'Estonia', LV: 'Latvia', LT: 'Lithuania'
+  }
 };
+const ISO_TO_SL_COUNTRY = EU_COUNTRY_NAMES[BJ_LANG];
+
+const BJ_STR = {
+  sl: {
+    dateLocale: 'sl-SI', stripeLocale: 'sl',
+    free: 'Brezplačno', discountLabel: (pct) => `Popust (${pct}%)`,
+    timeDiscount: 'Časovni popust', codeDiscount: (k) => `Koda ${k}`,
+    qtyDiscount: (min) => `${min}+ kosov`, amountDiscount: (min) => `Nad ${min} €`,
+    stockChanged: 'Zaloga se je spremenila', stockRemoved: (n, v) => `${n} (${v}) — <strong>odstranjen</strong>, ni na zalogi`,
+    stockAdjusted: (n, v, a) => `${n} (${v}) — količina prilagojena na <strong>${a} kos</strong>`,
+    stockReview: 'Preverite povzetek in nadaljujte.',
+    euOnlyError: 'Žal pošiljamo samo znotraj EU. Prosimo, izberite naslov dostave v EU.',
+    processing: '⏳ Obdelujem...', payWithCard: 'Plačaj s kartico', paymentError: 'Napaka pri plačilu.', paymentFailed: 'Plačilo ni uspelo.',
+    sending: '⏳ Pošiljam...', bankTransfer: '🏦 Bančno nakazilo →', extraDiscount: (v) => `💰 Dodatnih −${v}% popusta`,
+    orderError: 'Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na info@gomushroom.si',
+    redirectFailed: 'Plačilo ni uspelo. Prosimo poskusite znova.',
+    stripeSuccessH2: 'Plačilo uspešno! ✅', stripeSuccessP: 'Vaše naročilo je potrjeno. Poslali smo potrdilo na vaš email.',
+    paymentDetailsLabel: 'Podatki za nakazilo', recipient: 'Prejemnik', reference: 'Referenca', amount: 'Znesek',
+    email: {
+      subjectPaymentConfirmed: 'Plačilo potrjeno — GoMushroom',
+      subjectOrderConfirmed: 'Potrditev naročila - GoMushroom',
+      headerTitle: 'Potrditev plačila',
+      greeting: (name) => `Spoštovani ${name},`,
+      thanksPaid: 'hvala za vaše naročilo. Plačilo je bilo uspešno potrjeno — naročilo bomo kmalu odpremili.',
+      orderLabel: 'Naročilo', colItem: 'Artikel', colQty: 'Kol.', colPricePer: 'Cena/kom', colTotal: 'Skupaj', shipping: 'Poštnina',
+      qtyDiscountLabel: (pct) => `Količinski popust (${pct}%)`, promoCodeLabel: (pct) => `Promocijska koda (${pct}%)`,
+      itemsSubtotal: 'Skupaj artikli', totalToPay: 'Skupaj za plačilo',
+      paymentConfirmedBanner: '✅ Plačilo potrjeno. Naročilo je v obdelavi.',
+      regards: 'Lep pozdrav,<br>Rok',
+      proforma: 'Predračun', thanksUpn: 'hvala za vaše naročilo. Spodaj najdete podatke za plačilo.',
+      afterPayment: 'Po prejemu plačila bomo naročilo nemudoma odpremili.',
+    },
+  },
+  en: {
+    dateLocale: 'en-IE', stripeLocale: 'en',
+    free: 'Free', discountLabel: (pct) => `Discount (${pct}%)`,
+    timeDiscount: 'Time-limited discount', codeDiscount: (k) => `Code ${k}`,
+    qtyDiscount: (min) => `${min}+ pcs`, amountDiscount: (min) => `Over ${min} €`,
+    stockChanged: 'Stock levels have changed', stockRemoved: (n, v) => `${n} (${v}) — <strong>removed</strong>, out of stock`,
+    stockAdjusted: (n, v, a) => `${n} (${v}) — quantity adjusted to <strong>${a} pcs</strong>`,
+    stockReview: 'Please review the summary and continue.',
+    euOnlyError: 'Sorry, we only ship within the EU. Please choose a delivery address in the EU.',
+    processing: '⏳ Processing...', payWithCard: 'Pay with card', paymentError: 'Payment error.', paymentFailed: 'Payment failed.',
+    sending: '⏳ Sending...', bankTransfer: '🏦 Bank transfer →', extraDiscount: (v) => `💰 Extra −${v}% off`,
+    orderError: 'Something went wrong. Please try again or contact us at info@gomushroom.si',
+    redirectFailed: 'Payment failed. Please try again.',
+    stripeSuccessH2: 'Payment successful! ✅', stripeSuccessP: 'Your order is confirmed. We\'ve sent a confirmation to your email.',
+    paymentDetailsLabel: 'Bank transfer details', recipient: 'Recipient', reference: 'Reference', amount: 'Amount',
+    email: {
+      subjectPaymentConfirmed: 'Payment confirmed — GoMushroom',
+      subjectOrderConfirmed: 'Order confirmation - GoMushroom',
+      headerTitle: 'Payment confirmation',
+      greeting: (name) => `Dear ${name},`,
+      thanksPaid: 'thank you for your order. Payment has been successfully confirmed — we will ship your order soon.',
+      orderLabel: 'Order', colItem: 'Item', colQty: 'Qty', colPricePer: 'Price/each', colTotal: 'Total', shipping: 'Shipping',
+      qtyDiscountLabel: (pct) => `Volume discount (${pct}%)`, promoCodeLabel: (pct) => `Promo code (${pct}%)`,
+      itemsSubtotal: 'Items subtotal', totalToPay: 'Total to pay',
+      paymentConfirmedBanner: '✅ Payment confirmed. Your order is being processed.',
+      regards: 'Kind regards,<br>Rok',
+      proforma: 'Proforma invoice', thanksUpn: 'thank you for your order. Please find the payment details below.',
+      afterPayment: 'Once we receive your payment, we will ship your order promptly.',
+    },
+  }
+}[BJ_LANG];
 
 // Nastavitve
 let settings = {
@@ -632,7 +710,7 @@ function qrUrl(amount, rf, purpose, size = 200) {
 }
 
 function fmt(v) {
-  return Number(v || 0).toLocaleString('sl-SI', {
+  return Number(v || 0).toLocaleString(BJ_STR.dateLocale, {
     minimumFractionDigits: 2, maximumFractionDigits: 2
   }) + ' €';
 }
@@ -652,7 +730,7 @@ function izracunajPopust(skupaj, kolicina, koda) {
   const ujemajoci = [];
   const c = settings.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
-    ujemajoci.push({ vrednost: c.vrednost, opis: 'Časovni popust' });
+    ujemajoci.push({ vrednost: c.vrednost, opis: BJ_STR.timeDiscount });
   const vneseneKode = (koda || '').split(',').map(k => k.trim().toUpperCase()).filter(Boolean);
   for (const p of (settings.popusti || []).filter(p => p.aktiven)) {
     let ok = false;
@@ -664,11 +742,11 @@ function izracunajPopust(skupaj, kolicina, koda) {
     }
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
-    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? `Koda ${matchedKod}` : p.tip === 'kolicina' ? `${p.min}+ kosov` : `Nad ${p.min} €` });
+    if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? BJ_STR.codeDiscount(matchedKod) : p.tip === 'kolicina' ? BJ_STR.qtyDiscount(p.min) : BJ_STR.amountDiscount(p.min) });
   }
   for (const rc of reviewCoupons) {
     if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
-      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: `Koda ${rc.coupon_code}` });
+      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: BJ_STR.codeDiscount(rc.coupon_code) });
   }
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
@@ -689,7 +767,7 @@ function renderSummary() {
   } catch(e) { cart = []; }
 
   if (!cart.length) {
-    window.location.href = '/trgovina/kosarica/';
+    window.location.href = BJ_LANG === 'en' ? '/en/shop/cart/' : '/trgovina/kosarica/';
     return;
   }
 
@@ -714,13 +792,13 @@ function renderSummary() {
     </div>`).join('');
 
   document.getElementById('order-subtotal').textContent = fmt(bruto);
-  document.getElementById('order-shipping').textContent = postnina === 0 ? '🎁 Brezplačno' : fmt(postnina);
+  document.getElementById('order-shipping').textContent = postnina === 0 ? `🎁 ${BJ_STR.free}` : fmt(postnina);
   document.getElementById('order-total').textContent = fmt(skupaj);
 
   const discRow = document.getElementById('order-discount-row');
   if (pct > 0) {
     discRow.style.display = 'flex';
-    document.getElementById('order-discount-label').textContent = `Popust (${pct}%)`;
+    document.getElementById('order-discount-label').textContent = BJ_STR.discountLabel(pct);
     document.getElementById('order-discount-amt').textContent = `−${fmt(popustZnesek)}`;
   } else {
     discRow.style.display = 'none';
@@ -790,10 +868,10 @@ function showStockWarning(adjustments) {
   }
   const rows = adjustments.map(a =>
     a.available === 0
-      ? `<li>${a.name} (${a.variantLabel || ''}) — <strong>odstranjen</strong>, ni na zalogi</li>`
-      : `<li>${a.name} (${a.variantLabel || ''}) — količina prilagojena na <strong>${a.available} kos</strong></li>`
+      ? `<li>${BJ_STR.stockRemoved(a.name, a.variantLabel || '')}</li>`
+      : `<li>${BJ_STR.stockAdjusted(a.name, a.variantLabel || '', a.available)}</li>`
   ).join('');
-  warn.innerHTML = `<strong style="display:block;margin-bottom:.35rem">Zaloga se je spremenila</strong><ul style="margin:.25rem 0 0 1.1rem;padding:0">${rows}</ul><p style="margin:.5rem 0 0;color:rgba(43,11,57,.5);font-size:.78rem">Preverite povzetek in nadaljujte.</p>`;
+  warn.innerHTML = `<strong style="display:block;margin-bottom:.35rem">${BJ_STR.stockChanged}</strong><ul style="margin:.25rem 0 0 1.1rem;padding:0">${rows}</ul><p style="margin:.5rem 0 0;color:rgba(43,11,57,.5);font-size:.78rem">${BJ_STR.stockReview}</p>`;
 }
 
 // ── Validacija ────────────────────────────────────────────
@@ -834,7 +912,7 @@ async function initPaymentUI() {
     mode: 'payment',
     amount: Math.round(calc.skupaj * 100),
     currency: 'eur',
-    locale: 'sl',
+    locale: BJ_STR.stripeLocale,
     appearance: {
       theme: 'stripe',
       variables: { colorPrimary: '#2b0b39', borderRadius: '10px', fontFamily: 'inherit' }
@@ -875,7 +953,7 @@ async function initPaymentUI() {
     // brez tega bi lahko nekdo narocil na naslov izven EU kar prek denarnice.
     if (addr.country && !ISO_TO_SL_COUNTRY[addr.country]) {
       event.paymentFailed({ reason: 'invalid_shipping_address' });
-      showCardError('Žal pošiljamo samo znotraj EU. Prosimo, izberite naslov dostave v EU.');
+      showCardError(BJ_STR.euOnlyError);
       return;
     }
     if (addr.country) {
@@ -933,7 +1011,7 @@ async function initPaymentUI() {
       }
     } catch(e) {
       event.paymentFailed({ reason: 'fail' });
-      showCardError(e.message || 'Napaka pri plačilu.');
+      showCardError(e.message || BJ_STR.paymentError);
     }
   });
 
@@ -952,10 +1030,10 @@ async function initPaymentUI() {
   if (upnBtn) {
     if (upnCfg?.aktiven && upnCfg.vrednost > 0) {
       upnBtn.innerHTML =
-        `<span>🏦 Bančno nakazilo →</span>` +
-        `<span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfg.vrednost}% popusta</span>`;
+        `<span>${BJ_STR.bankTransfer}</span>` +
+        `<span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">${BJ_STR.extraDiscount(upnCfg.vrednost)}</span>`;
     } else {
-      upnBtn.innerHTML = '🏦 Bančno nakazilo →';
+      upnBtn.innerHTML = BJ_STR.bankTransfer;
     }
   }
 }
@@ -987,7 +1065,7 @@ async function payWithCard() {
   }
   const errEl = document.getElementById('card-error');
   errEl.style.display = 'none';
-  btn.textContent = '⏳ Obdelujem...';
+  btn.textContent = BJ_STR.processing;
 
   try {
     const { error: submitErr } = await stripeElements.submit();
@@ -1028,9 +1106,9 @@ async function payWithCard() {
       await saveStripeOrder(paymentIntent.id);
     }
   } catch(e) {
-    showCardError(e.message || 'Plačilo ni uspelo.');
+    showCardError(e.message || BJ_STR.paymentFailed);
     btn.disabled = false;
-    btn.textContent = 'Plačaj s kartico';
+    btn.textContent = BJ_STR.payWithCard;
   }
 }
 
@@ -1091,11 +1169,12 @@ async function saveStripeOrder(paymentIntentId) {
 async function sendStripeConfirmationEmail(order, calc) {
   const pct = calc.pct || 0;
   const ujemajoci = calc.ujemajoci || [];
-  const dateStr = new Date().toLocaleDateString('sl-SI');
+  const dateStr = new Date().toLocaleDateString(BJ_STR.dateLocale);
+  const codePrefix = BJ_LANG === 'en' ? 'Code ' : 'Koda ';
 
   // Ločimo popuste na artikel-nivo (količina, znesek) in koda-nivo
-  const codeDiscounts = ujemajoci.filter(u => u.opis.startsWith('Koda '));
-  const itemDiscounts = ujemajoci.filter(u => !u.opis.startsWith('Koda '));
+  const codeDiscounts = ujemajoci.filter(u => u.opis.startsWith(codePrefix));
+  const itemDiscounts = ujemajoci.filter(u => !u.opis.startsWith(codePrefix));
   const hasItemDiscount = itemDiscounts.length > 0 && pct > 0;
   const hasCodeDiscount = codeDiscounts.length > 0 && pct > 0;
 
@@ -1129,9 +1208,7 @@ async function sendStripeConfirmationEmail(order, calc) {
   }).join('');
 
   // Vrstica za količinski popust (če obstaja)
-  const itemDiscLabel = itemDiscounts.length === 1
-    ? `Količinski popust (${itemDiscounts[0].vrednost}%)`
-    : `Količinski popust (${itemDisplayPct}%)`;
+  const itemDiscLabel = BJ_STR.email.qtyDiscountLabel(itemDiscounts.length === 1 ? itemDiscounts[0].vrednost : itemDisplayPct);
   const itemDiscRow = hasItemDiscount && itemAmt > 0 ? `<tr>
     <td colspan="3" style="${tdBase};color:#3a6b4a">${itemDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${itemAmt.toFixed(2)} €</td>
@@ -1140,7 +1217,7 @@ async function sendStripeConfirmationEmail(order, calc) {
   // Vrstica za kodo
   const codeDiscLabel = codeDiscounts.length === 1
     ? `${codeDiscounts[0].opis} (${codeDiscounts[0].vrednost}%)`
-    : `Promocijska koda (${rawCodePct}%)`;
+    : BJ_STR.email.promoCodeLabel(rawCodePct);
   const codeDiscRow = hasCodeDiscount ? `<tr>
     <td colspan="3" style="${tdBase};color:#3a6b4a">${codeDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${codeAmt.toFixed(2)} €</td>
@@ -1148,29 +1225,29 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   // Če ni ločenih tipov, pokaži skupno vrstico
   const simpleDiscRow = pct > 0 && !hasItemDiscount && !hasCodeDiscount ? `<tr>
-    <td colspan="3" style="${tdBase};color:#3a6b4a">Popust (${pct}%)</td>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${BJ_STR.discountLabel(pct)}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${Number(calc.popustZnesek).toFixed(2)} €</td>
   </tr>` : '';
 
   // Vmesna vsota (po individualnih popustih, pred skupinskimi) — samo če obstajajo skupinski popusti
   const hasOrderDiscount = Number(calc.popustZnesek) > 0;
   const subtotalRow = hasOrderDiscount ? `<tr>
-    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.55);font-style:italic">Skupaj artikli</td>
+    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.55);font-style:italic">${BJ_STR.email.itemsSubtotal}</td>
     <td style="${tdBase};text-align:right;color:rgba(26,18,9,.55)">${Number(calc.bruto).toFixed(2)} €</td>
   </tr>` : '';
 
   const shippingRow = `<tr>
-    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">Poštnina</td>
-    <td style="${tdBase};text-align:right;color:rgba(26,18,9,.6)">${calc.postnina === 0 ? 'Brezplačno' : Number(calc.postnina).toFixed(2) + ' €'}</td>
+    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">${BJ_STR.email.shipping}</td>
+    <td style="${tdBase};text-align:right;color:rgba(26,18,9,.6)">${calc.postnina === 0 ? BJ_STR.free : Number(calc.postnina).toFixed(2) + ' €'}</td>
   </tr>`;
 
   const totalRow = `<tr>
-    <td colspan="3" style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;font-weight:700;font-size:.9rem">Skupaj za plačilo</td>
+    <td colspan="3" style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;font-weight:700;font-size:.9rem">${BJ_STR.email.totalToPay}</td>
     <td style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;text-align:right;font-weight:700;font-size:1rem;color:#af8455">${Number(calc.skupaj).toFixed(2)} €</td>
   </tr>`;
 
   const html = `<!DOCTYPE html>
-<html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="${BJ_LANG}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
 <style>
@@ -1190,7 +1267,7 @@ async function sendStripeConfirmationEmail(order, calc) {
               <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
             </td>
             <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
-              <div style="font-size:.95rem;font-weight:500;color:#1a1209">Potrditev plačila</div>
+              <div style="font-size:.95rem;font-weight:500;color:#1a1209">${BJ_STR.email.headerTitle}</div>
               <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
               <div style="font-size:.68rem;color:#9a8f82;margin-top:.1rem">Rok Golob s.p. · gomushroom.si</div>
             </td>
@@ -1202,17 +1279,17 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   <div style="padding:1.5rem">
     <div style="font-size:.88rem;line-height:1.8;color:#1a1209;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #ede6d6">
-      Spoštovani ${order.name},<br><br>
-      hvala za vaše naročilo. Plačilo je bilo uspešno potrjeno — naročilo bomo kmalu odpremili.
+      ${BJ_STR.email.greeting(order.name)}<br><br>
+      ${BJ_STR.email.thanksPaid}
     </div>
 
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.6rem">Naročilo</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.6rem">${BJ_STR.email.orderLabel}</div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
       <thead><tr>
-        <th style="${thBase};text-align:left">Artikel</th>
-        <th style="${thBase};text-align:right">Kol.</th>
-        <th style="${thBase};text-align:right">Cena/kom</th>
-        <th style="${thBase};text-align:right">Skupaj</th>
+        <th style="${thBase};text-align:left">${BJ_STR.email.colItem}</th>
+        <th style="${thBase};text-align:right">${BJ_STR.email.colQty}</th>
+        <th style="${thBase};text-align:right">${BJ_STR.email.colPricePer}</th>
+        <th style="${thBase};text-align:right">${BJ_STR.email.colTotal}</th>
       </tr></thead>
       <tbody>
         ${itemRows}
@@ -1226,10 +1303,10 @@ async function sendStripeConfirmationEmail(order, calc) {
     </table>
 
     <div style="background:#f0f7f0;border-left:3px solid #3a6b4a;padding:.85rem 1rem;border-radius:0 6px 6px 0;font-size:.85rem;line-height:1.6">
-      ✅ Plačilo potrjeno. Naročilo je v obdelavi.
+      ${BJ_STR.email.paymentConfirmedBanner}
     </div>
 
-    <p style="margin:2.5rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+    <p style="margin:2.5rem 0 0;font-size:.88rem">${BJ_STR.email.regards}</p>
   </div>
 
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82;line-height:1.7">
@@ -1244,7 +1321,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: 'Plačilo potrjeno — GoMushroom', html }),
+      body: JSON.stringify({ to: order.email, subject: BJ_STR.email.subjectPaymentConfirmed, html }),
     });
     // Obvestilo lastniku
     const ownerHtml = `<b>Novo naročilo (Stripe)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
@@ -1260,8 +1337,8 @@ function showStripeSuccess(order) {
   const successEl = document.getElementById('order-success');
   successEl.classList.add('visible');
   document.getElementById('qr-section').style.display = 'none';
-  successEl.querySelector('h2').textContent = 'Plačilo uspešno! ✅';
-  successEl.querySelector('p').textContent = 'Vaše naročilo je potrjeno. Poslali smo potrdilo na vaš email.';
+  successEl.querySelector('h2').textContent = BJ_STR.stripeSuccessH2;
+  successEl.querySelector('p').textContent = BJ_STR.stripeSuccessP;
   successEl.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -1288,7 +1365,7 @@ async function placeOrder() {
     gmAddPaymentInfo(cart, window._orderCalc.skupaj, window._orderCalc.koda);
   }
 
-  btn.innerHTML = '⏳ Pošiljam...';
+  btn.innerHTML = BJ_STR.sending;
 
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
   const calc = window._orderCalc;
@@ -1365,9 +1442,9 @@ async function placeOrder() {
     btn.disabled = false;
     const upnCfgErr = settings.upnPopust;
     btn.innerHTML = upnCfgErr?.aktiven && upnCfgErr.vrednost > 0
-      ? `<span>🏦 Bančno nakazilo →</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">💰 Dodatnih −${upnCfgErr.vrednost}% popusta</span>`
-      : '🏦 Bančno nakazilo →';
-    alert('Prišlo je do napake. Prosimo, poskusite znova ali nas kontaktirajte na info@gomushroom.si');
+      ? `<span>${BJ_STR.bankTransfer}</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">${BJ_STR.extraDiscount(upnCfgErr.vrednost)}</span>`
+      : BJ_STR.bankTransfer;
+    alert(BJ_STR.orderError);
   }
 }
 
@@ -1379,8 +1456,9 @@ async function sendConfirmationEmail(order, rf, calc) {
   ).join('');
 
   const qr = qrUrl(calc.skupaj, rf, `Placilo narocila GoMushroom`, 160);
+  const discountLabelPlain = BJ_LANG === 'en' ? 'Discount' : 'Popust';
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  const html = `<!DOCTYPE html><html lang="${BJ_LANG}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
   <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
   <div style="max-width:600px;margin:0 auto;background:#fff">
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
@@ -1390,40 +1468,40 @@ async function sendConfirmationEmail(order, rf, calc) {
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:.9rem;font-weight:500">Predračun</div>
-          <div style="font-size:.72rem;color:#9a8f82">${new Date().toLocaleDateString('sl-SI')}</div>
+          <div style="font-size:.9rem;font-weight:500">${BJ_STR.email.proforma}</div>
+          <div style="font-size:.72rem;color:#9a8f82">${new Date().toLocaleDateString(BJ_STR.dateLocale)}</div>
         </div>
       </div>
     </div>
     <div style="padding:1.5rem">
-      <p style="margin:0 0 1rem">Spoštovani ${order.name},</p>
-      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">hvala za vaše naročilo. Spodaj najdete podatke za plačilo.</p>
+      <p style="margin:0 0 1rem">${BJ_STR.email.greeting(order.name)}</p>
+      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">${BJ_STR.email.thanksUpn}</p>
       <table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem">
         <thead><tr style="background:#f7f3ee">
-          <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Artikel</th>
-          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Kol.</th>
-          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">Skupaj</th>
+          <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colItem}</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colQty}</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colTotal}</th>
         </tr></thead>
         <tbody>${itemsList}</tbody>
       </table>
-      ${Number(calc.popustZnesek) > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">Popust${calc.pct > 0 ? ` (${calc.pct}%)` : ''}: −${Number(calc.popustZnesek).toFixed(2)} €</div>` : ''}
-      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">Poštnina: ${calc.postnina === 0 ? 'Brezplačno' : Number(calc.postnina).toFixed(2) + ' €'}</div>
-      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">Skupaj: ${Number(calc.skupaj).toFixed(2)} €</div>
+      ${Number(calc.popustZnesek) > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">${discountLabelPlain}${calc.pct > 0 ? ` (${calc.pct}%)` : ''}: −${Number(calc.popustZnesek).toFixed(2)} €</div>` : ''}
+      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">${BJ_STR.email.shipping}: ${calc.postnina === 0 ? BJ_STR.free : Number(calc.postnina).toFixed(2) + ' €'}</div>
+      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">${BJ_STR.email.colTotal}: ${Number(calc.skupaj).toFixed(2)} €</div>
 
       <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
         <div style="flex:1;min-width:160px;font-size:.82rem;line-height:1.8">
-          <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;margin-bottom:.25rem">Podatki za nakazilo</div>
-          Prejemnik: ${GM_NAME}<br>
+          <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;margin-bottom:.25rem">${BJ_STR.paymentDetailsLabel}</div>
+          ${BJ_STR.recipient}: ${GM_NAME}<br>
           IBAN: ${ibanFormatted}<br>
           BIC: HDELSI22<br>
-          Referenca: <strong>${rf}</strong><br>
-          Znesek: <strong>${calc.skupaj.toFixed(2)} €</strong>
+          ${BJ_STR.reference}: <strong>${rf}</strong><br>
+          ${BJ_STR.amount}: <strong>${calc.skupaj.toFixed(2)} €</strong>
         </div>
         <img src="${qr}" width="120" height="120" alt="UPN QR" style="border-radius:8px;flex-shrink:0">
       </div>
 
-      <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">Po prejemu plačila bomo naročilo nemudoma odpremili.</p>
-      <p style="margin:2.5rem 0 0">Lep pozdrav,<br>Rok</p>
+      <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">${BJ_STR.email.afterPayment}</p>
+      <p style="margin:2.5rem 0 0">${BJ_STR.email.regards}</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
@@ -1437,7 +1515,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: 'Potrditev naročila - GoMushroom', html })
+      body: JSON.stringify({ to: order.email, subject: BJ_STR.email.subjectOrderConfirmed, html })
     });
     await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
       method: 'PATCH', headers: SB_HEADERS,
@@ -1463,12 +1541,12 @@ function showSuccess(order, rf, calc) {
 
   const ibanFormatted = GM_IBAN.replace(/(.{4})/g,'$1 ').trim();
   document.getElementById('payment-details').innerHTML = `
-    <strong>Podatki za nakazilo</strong>
-    Prejemnik: ${GM_NAME}<br>
+    <strong>${BJ_STR.paymentDetailsLabel}</strong>
+    ${BJ_STR.recipient}: ${GM_NAME}<br>
     IBAN: ${ibanFormatted}<br>
     BIC: HDELSI22<br>
-    Referenca: <strong>${rf}</strong><br>
-    Znesek: <strong>${calc.skupaj.toFixed(2)} €</strong>
+    ${BJ_STR.reference}: <strong>${rf}</strong><br>
+    ${BJ_STR.amount}: <strong>${calc.skupaj.toFixed(2)} €</strong>
   `;
 
   successEl.scrollIntoView({ behavior: 'smooth' });
@@ -1501,7 +1579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       renderSummary();
       const errEl = document.getElementById('card-error');
-      if (errEl) { errEl.textContent = 'Plačilo ni uspelo. Prosimo poskusite znova.'; errEl.style.display = 'block'; }
+      if (errEl) { errEl.textContent = BJ_STR.redirectFailed; errEl.style.display = 'block'; }
     }
     history.replaceState(null, '', window.location.pathname);
     return;

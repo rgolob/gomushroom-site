@@ -1,5 +1,11 @@
 const CART_KEY = "gomushroom_cart";
 
+const CART_LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
+const CART_HOME = CART_LANG === 'en' ? '/en/shop/cart/' : '/trgovina/kosarica/';
+const CART_STR = CART_LANG === 'en'
+  ? { added: (name) => `✓ ${name} added`, addedShort: '✓ Added to cart', cartLink: 'Cart →' }
+  : { added: (name) => `✓ ${name} dodano`, addedShort: '✓ Dodano v košarico', cartLink: 'Košarica →' };
+
 function getCart() {
   try {
     return JSON.parse(localStorage.getItem(CART_KEY)) || [];
@@ -16,7 +22,7 @@ function saveCart(cart) {
 }
 
 function formatPrice(value) {
-  return Number(value || 0).toLocaleString("sl-SI", {
+  return Number(value || 0).toLocaleString(CART_LANG === 'en' ? 'en-IE' : 'sl-SI', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }) + " €";
@@ -92,7 +98,7 @@ function handleAddToCartClick(button) {
   addToCart(item);
 
   const originalText = button.textContent;
-  button.textContent = "✓ Dodano v košarico";
+  button.textContent = CART_STR.addedShort;
   button.disabled = true;
 
   setTimeout(() => {
@@ -108,10 +114,10 @@ function showCartToast(name) {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'gm-cart-toast';
-    toast.innerHTML = `<span class="gm-toast-msg"></span><a href="/trgovina/kosarica/" class="gm-toast-btn">Košarica →</a>`;
+    toast.innerHTML = `<span class="gm-toast-msg"></span><a href="${CART_HOME}" class="gm-toast-btn">${CART_STR.cartLink}</a>`;
     document.body.appendChild(toast);
   }
-  toast.querySelector('.gm-toast-msg').textContent = `✓ ${name} dodano`;
+  toast.querySelector('.gm-toast-msg').textContent = CART_STR.added(name);
   toast.classList.remove('gm-toast-show');
   void toast.offsetWidth;
   toast.classList.add('gm-toast-show');

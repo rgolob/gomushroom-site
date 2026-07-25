@@ -266,9 +266,12 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadSettings();
+  // Izdelke izriši takoj iz localStorage (ne čakaj na omrežje) -
+  // šele nato dopolni s poštnino/popusti, ki potrebujejo gm_settings.
   renderCart();
   bindKupon();
+  await loadSettings();
+  renderCart();
   // GA4 - view_cart
   if (typeof gmInitCartPage === 'function') gmInitCartPage();
 });

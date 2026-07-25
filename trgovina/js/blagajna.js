@@ -1554,6 +1554,9 @@ function showSuccess(order, rf, calc) {
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  // Povzetek izriši takoj iz localStorage (privzete nastavitve), ne čakaj
+  // na omrežje - loadSettings() spodaj ga nato dopolni z živo poštnino/popusti.
+  renderSummary();
   await loadSettings();
 
   // Obravnava Stripe redirect (npr. Revolut Pay)

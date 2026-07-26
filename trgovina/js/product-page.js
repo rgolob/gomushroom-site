@@ -138,7 +138,7 @@ function initProductPage(variants, product) {
 
     if (addBtn) {
       addBtn.dataset.variant = v.type;
-      addBtn.dataset.variantLabel = v.name;
+      addBtn.dataset.variantLabel = PP_STR.variantName[v.type] || v.name;
       addBtn.dataset.price = discPrice.toFixed(2);
       addBtn.dataset.originalPrice = v.price_malo.toFixed(2);
       addBtn.dataset.discountPct = v.discount_pct || 0;

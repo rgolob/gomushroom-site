@@ -15,6 +15,7 @@ const SHOP_STR = {
   sl: {
     outOfStock: 'Ni na zalogi', lastPieces: '● Zadnji kosi', inStock: '● Na zalogi',
     alc: 'Alkoholna', gly: 'Brezalk.', add: '+ Dodaj',
+    variantName: { alc: 'Alkoholna', gly: 'Brezalkoholna' },
     batchInProgress: (serija) => `Serija ${serija} &bull; v izdelavi`,
     expectedFill: 'Predvideno polnjenje:', infoLink: 'Čemu so namenjeni? →',
     dateLocale: 'sl-SI'
@@ -22,6 +23,7 @@ const SHOP_STR = {
   en: {
     outOfStock: 'Out of stock', lastPieces: '● Low stock', inStock: '● In stock',
     alc: 'Alcohol', gly: 'Alcohol-free', add: '+ Add',
+    variantName: { alc: 'Alcohol-based', gly: 'Alcohol-free' },
     batchInProgress: (serija) => `Batch ${serija} &bull; in production`,
     expectedFill: 'Expected bottling:', infoLink: 'What are they for? →',
     dateLocale: 'en-IE'
@@ -372,7 +374,7 @@ function renderShopGrid(products) {
 
             <button class="gm-btn gm-btn--primary shop-add-btn" type="button" data-add-to-cart
               data-slug="${p.slug}" data-name="${p.name}"
-              data-variant="${defaultVariant.type}" data-variant-label="${defaultVariant.name}"
+              data-variant="${defaultVariant.type}" data-variant-label="${SHOP_STR.variantName[defaultVariant.type] || defaultVariant.name}"
               data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
               data-image="${p.image || ''}"
               ${!defaultVariant.in_stock ? 'disabled' : ''}>
@@ -412,7 +414,7 @@ function bindVariantPickers(products) {
       const addBtn = card.querySelector('[data-add-to-cart]');
       if (addBtn) {
         addBtn.dataset.variant = type;
-        addBtn.dataset.variantLabel = v.name;
+        addBtn.dataset.variantLabel = SHOP_STR.variantName[v.type] || v.name;
         addBtn.dataset.price = discPrice.toFixed(2);
         addBtn.dataset.originalPrice = v.price_malo.toFixed(2);
         addBtn.dataset.discountPct = v.discount_pct || 0;

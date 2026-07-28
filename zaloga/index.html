@@ -3028,10 +3028,16 @@ function productStock(productId){
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
     if(g.channel==='kom'){komAlc+=(l.alc||0);komGly+=(l.gly||0);}
   });
-  const remProdAlc=Math.max(0,allocProdAlc-soldProdAlc);
+  const totalAlc=Math.max(0,bAlc-soldAlc);
+  const totalGly=Math.max(0,bGly-soldGly);
   const remIntAlc =Math.max(0,allocIntAlc-soldIntAlc);
-  const remProdGly=Math.max(0,allocProdGly-soldProdGly);
   const remIntGly =Math.max(0,allocIntGly-soldIntGly);
+  // "Za prodajo" izračunamo neodvisno, a če napačna kanalna klasifikacija prodaje
+  // povzroči, da "za prodajo" + "interno" preseže dejansko preostalo zalogo
+  // (npr. prodaja/darilo je porabilo več interne rezervacije, kot je bilo dodeljene),
+  // najprej znižamo "za prodajo" - "interno" rezervacija ima prednost.
+  const remProdAlc=Math.min(Math.max(0,allocProdAlc-soldProdAlc),Math.max(0,totalAlc-remIntAlc));
+  const remProdGly=Math.min(Math.max(0,allocProdGly-soldProdGly),Math.max(0,totalGly-remIntGly));
   // per batch remaining
   const batchStock=pb.map(b=>({
     id:b.id,batchNum:b.batchNum,date:b.date,
@@ -3043,7 +3049,7 @@ function productStock(productId){
   const safetyAlc=latestBatch?.safetyAlc??10;
   const safetyGly=latestBatch?.safetyGly??10;
   return{
-    alc:Math.max(0,bAlc-soldAlc),gly:Math.max(0,bGly-soldGly),
+    alc:totalAlc,gly:totalGly,
     prodAlc:remProdAlc,intAlc:remIntAlc,
     prodGly:remProdGly,intGly:remIntGly,
     komAlc,komGly,

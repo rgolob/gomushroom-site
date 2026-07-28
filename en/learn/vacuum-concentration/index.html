@@ -173,7 +173,7 @@ In practice, this can mean using <strong>10× to 30× the weight of the mushroom
 </p>
 
 <p>
-This is not simply inefficiency. A higher solvent-to-material ratio supports better mass transfer, improves solvent contact with the material, and helps extraction proceed more completely.
+This is not simply inefficiency. A higher solvent-to-material ratio supports better mass transfer, improves solvent contact with the material, and helps extraction proceed more completely. <sup><a href="#ref-2">[2]</a></sup>
 </p>
 
 <p>
@@ -191,7 +191,7 @@ Vacuum concentration is a process where a liquid extract is evaporated under red
 </p>
 
 <p>
-Ethanol normally boils at around 78&nbsp;°C. Under vacuum, it can evaporate at much lower temperatures, often in the range of 30–50&nbsp;°C, depending on pressure and process conditions.
+Ethanol normally boils at around 78&nbsp;°C. Under vacuum, it can evaporate at much lower temperatures, often in the range of 30–50&nbsp;°C, depending on pressure and process conditions. <sup><a href="#ref-5">[5]</a></sup>
 </p>
 
 <p>
@@ -209,7 +209,7 @@ At first glance, removing solvent may seem simple: apply heat and let it evapora
 </p>
 
 <p>
-High temperatures may increase degradation, remove volatile components, accelerate oxidation and shift the chemical profile of the extract.
+High temperatures may increase degradation, remove volatile components, accelerate oxidation and shift the chemical profile of the extract. <sup><a href="#ref-3">[3]</a></sup>
 </p>
 
 <p>
@@ -239,7 +239,7 @@ A rotavapor combines several process elements:
 </ul>
 
 <p>
-As the flask rotates, the extract forms a thin film on the inner glass surface. This increases surface area and allows solvent to evaporate more efficiently.
+As the flask rotates, the extract forms a thin film on the inner glass surface. This increases surface area and allows solvent to evaporate more efficiently. <sup><a href="#ref-4">[4]</a></sup>
 </p>
 
 <p>
@@ -277,6 +277,33 @@ The consequence matters: as ethanol concentration falls, the boiling point of th
 <p>
 The answer is not to raise the temperature, since that would defeat the very advantage vacuum concentration exists to provide. Instead, the vacuum controller <strong>progressively lowers the pressure</strong>, keeping the mixture's boiling point below the set bath temperature throughout. The mixture therefore keeps evaporating from start to finish, without thermal spikes.
 </p>
+
+<p>
+How strong this effect is becomes clear from the boiling points of both solvents at different pressures: <sup><a href="#ref-5">[5]</a></sup><sup><a href="#ref-6">[6]</a></sup>
+</p>
+
+<div style="overflow-x:auto">
+<table class="article-table">
+  <thead>
+    <tr>
+      <th>Pressure</th>
+      <th>Boiling point of ethanol</th>
+      <th>Boiling point of water</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1013 mbar (atmospheric)</td><td>78 °C</td><td>100 °C</td></tr>
+    <tr><td>200 mbar</td><td>42 °C</td><td>60 °C</td></tr>
+    <tr><td>100 mbar</td><td>29 °C</td><td>46 °C</td></tr>
+    <tr><td>70 mbar</td><td>23 °C</td><td>39 °C</td></tr>
+    <tr><td>50 mbar</td><td>≈17 °C</td><td>33 °C</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+The table explains why a single fixed pressure setting is not enough. With the bath set to 35&nbsp;°C, ethanol already boils at around 100 mbar, while water at that pressure does not come close — for water the pressure has to be pushed down towards 50 mbar. In the photograph above the controller sits at 58 mbar, where water boils at roughly 35&nbsp;°C: exactly the range the process reaches in its final, largely aqueous phase.
+</p>
 </section>
 
 <section class="article-block">
@@ -289,11 +316,11 @@ Because ethanol evaporates preferentially, the process splits in practice into t
 </p>
 
 <p>
-The first reason is the physics of the solvents themselves. Evaporating one kilogram of water requires roughly 2.3&nbsp;MJ of energy, while one kilogram of ethanol requires around 0.85&nbsp;MJ — almost three times less. That same heat also has to be removed at the other end of the system, since all vapour must condense back to liquid. Concentrating the aqueous phase therefore demands considerably more cooling capacity, and considerably more time, than removing ethanol.
+The first reason is the physics of the solvents themselves. At their atmospheric-pressure boiling points, evaporating one kilogram of water requires roughly 2.26&nbsp;MJ of energy, while one kilogram of ethanol requires around 0.84&nbsp;MJ — almost three times less. <sup><a href="#ref-5">[5]</a></sup><sup><a href="#ref-6">[6]</a></sup> That same heat also has to be removed at the other end of the system, since all vapour must condense back to liquid. Concentrating the aqueous phase therefore demands considerably more cooling capacity, and considerably more time, than removing ethanol.
 </p>
 
 <p>
-The second reason is the extract itself. The aqueous phase now holds all the extracted compounds — polysaccharides, beta-glucans, sugars, salts and other soluble components. These thicken the mixture and raise its viscosity, which makes it harder to form the thin film that evaporation depends on. They also bind part of the water, leaving it less available for evaporation.
+The second reason is the extract itself. The aqueous phase now holds all the extracted compounds — polysaccharides, beta-glucans, sugars, salts and other soluble components. These thicken the mixture and raise its viscosity, which makes it harder to form the thin film that evaporation depends on. They also raise the mixture's boiling point and bind part of the water, leaving it less available for evaporation. <sup><a href="#ref-4">[4]</a></sup>
 </p>
 
 <p>
@@ -417,7 +444,7 @@ Vacuum concentration is not only about removing solvent. It also allows part of 
 </p>
 
 <p>
-Ethanol is an effective extraction solvent, but it is also expensive. By condensing evaporated ethanol back into liquid form, it can be collected and reused in future extraction cycles where appropriate process controls are in place.
+Ethanol is an effective extraction solvent, but it is also expensive. By condensing evaporated ethanol back into liquid form, it can be collected and reused in future extraction cycles where appropriate process controls are in place. <sup><a href="#ref-1">[1]</a></sup>
 </p>
 
 <p>
@@ -517,10 +544,12 @@ For concentrated liquid extracts, vacuum concentration is an important process s
 </div>
 
 <ol>
-  <li>Chemat, F. et al. <em><a href="https://doi.org/10.3390/ijms13078615" target="_blank" rel="noopener">Green extraction of natural products.</a></em> International Journal of Molecular Sciences.</li>
-  <li>Azmir, J. et al. <em><a href="https://doi.org/10.1016/j.jfoodeng.2013.01.014" target="_blank" rel="noopener">Techniques for extraction of bioactive compounds from plant materials: A review.</a></em> Journal of Food Engineering.</li>
-  <li>Ratti, C. (2001). <em><a href="https://doi.org/10.1016/S0260-8774(00)00228-4" target="_blank" rel="noopener">Hot air and freeze-drying of high-value foods: a review.</a></em> Journal of Food Engineering.</li>
-  <li>General principles of rotary evaporation, reduced pressure evaporation and solvent recovery in laboratory extraction processes.</li>
+  <li id="ref-1">Chemat, F. et al. <em><a href="https://doi.org/10.3390/ijms13078615" target="_blank" rel="noopener">Green extraction of natural products.</a></em> International Journal of Molecular Sciences.</li>
+  <li id="ref-2">Azmir, J. et al. <em><a href="https://doi.org/10.1016/j.jfoodeng.2013.01.014" target="_blank" rel="noopener">Techniques for extraction of bioactive compounds from plant materials: A review.</a></em> Journal of Food Engineering.</li>
+  <li id="ref-3">Ratti, C. (2001). <em><a href="https://doi.org/10.1016/S0260-8774(00)00228-4" target="_blank" rel="noopener">Hot air and freeze-drying of high-value foods: a review.</a></em> Journal of Food Engineering.</li>
+  <li id="ref-4">Berk, Z. <em><a href="https://doi.org/10.1016/B978-0-12-801101-4.00008-0" target="_blank" rel="noopener">Evaporation.</a></em> In: Food Process Engineering and Technology. Academic Press, 2018.</li>
+  <li id="ref-5">NIST Chemistry WebBook — <em><a href="https://webbook.nist.gov/cgi/cbook.cgi?ID=C64175" target="_blank" rel="noopener">Ethanol: vapour pressure and enthalpy of vaporisation.</a></em> National Institute of Standards and Technology.</li>
+  <li id="ref-6">NIST Chemistry WebBook — <em><a href="https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185" target="_blank" rel="noopener">Water: vapour pressure and enthalpy of vaporisation.</a></em> National Institute of Standards and Technology.</li>
 </ol>
 </section>
 </article>

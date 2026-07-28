@@ -18,14 +18,14 @@
   <meta property="og:title" content="Vacuum Concentration of Mushroom Extracts | GoMushroom" />
   <meta property="og:description" content="Extraction creates a diluted extract by design. Vacuum concentration is the step that turns it into a concentrated final product." />
   <meta property="og:url" content="https://gomushroom.si/en/learn/vacuum-concentration/" />
-  <meta property="og:image" content="https://gomushroom.si/assets/articles/vacuum-concentration/vacuum-concentration-hero.webp" />
+  <meta property="og:image" content="https://gomushroom.si/assets/articles/rotavapor-koncentriranje-ekstrakta-medicinskih-gob.webp" />
   <meta property="og:site_name" content="GoMushroom" />
   <meta property="og:locale" content="en_GB" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Vacuum Concentration of Mushroom Extracts | GoMushroom" />
   <meta name="twitter:description" content="Why removing solvent is just as important as extraction." />
-  <meta name="twitter:image" content="https://gomushroom.si/assets/articles/vacuum-concentration/vacuum-concentration-hero.webp" />
+  <meta name="twitter:image" content="https://gomushroom.si/assets/articles/rotavapor-koncentriranje-ekstrakta-medicinskih-gob.webp" />
 
   <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
   <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
@@ -42,7 +42,7 @@
     "@id": "https://gomushroom.si/en/learn/vacuum-concentration/#article",
     "headline": "Vacuum Concentration of Mushroom Extracts",
     "description": "Vacuum concentration is a critical step in medicinal mushroom extraction. Learn why large solvent volumes require careful concentration under reduced pressure.",
-    "image": "https://gomushroom.si/assets/articles/vacuum-concentration/vacuum-concentration-hero.webp",
+    "image": "https://gomushroom.si/assets/articles/rotavapor-koncentriranje-ekstrakta-medicinskih-gob.webp",
     "author": {
       "@type": "Person",
       "name": "Rok Golob"
@@ -140,10 +140,10 @@
 
 <figure class="article-media">
   <img
-    src="/assets/articles/vacuum-concentration/vacuum-concentration-hero.webp"
-    alt="Vacuum concentration of medicinal mushroom extract in a laboratory setting"
-    width="1200"
-    height="800"
+    src="/assets/articles/rotavapor-koncentriranje-ekstrakta-medicinskih-gob.webp"
+    alt="Vacuum concentration of medicinal mushroom extract using a rotary evaporator"
+    width="480"
+    height="640"
     loading="eager"
   />
   <figcaption class="article-caption">
@@ -268,6 +268,20 @@ Refractive index is sensitive to the extract's colour — pigments and other dis
 Density-based measurement fails for a similar reason: the extract's density depends not only on the ethanol:water ratio, but also on the concentration of dissolved solids, which raise density independently of ethanol content. Two batches with identical density can have very different ethanol content if they differ in extracted-solids content.
 </p>
 
+<figure class="article-figure article-figure--left">
+  <img
+    src="/assets/articles/merjenje-koncentracije-etanola-v-destilatu.webp"
+    alt="Measuring ethanol concentration in the distillate using an alcoholmeter and a digital refractometer, alongside weighing of the collected distillate"
+    width="800"
+    height="935"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption class="article-caption">
+    Determining ethanol concentration in the distillate — an alcoholmeter (density) and a digital refractometer (refractive index). Together with the weighed mass of collected distillate, these are the readings that close the mass balance.
+  </figcaption>
+</figure>
+
 <p>
 This is why at GoMushroom we rely on <strong>mass balance</strong> instead. We know precisely the composition (ethanol:water ratio) of the solvent used in extraction, and therefore the exact mass of ethanol that entered the process. The distillate produced during vacuum concentration (the condensate collected in the receiving flask), however, is — unlike the extract — actually a clean binary mixture of ethanol and water, since extracted compounds don't carry over into it during evaporation. This means the distillate's ethanol concentration can be measured simply and reliably using density or refractive index. With the known mass of the distillate and its measured ethanol concentration, mass balance lets us calculate how much ethanol has actually left the system — and, by extension, how much remains in the concentrated extract.
 </p>
@@ -277,18 +291,37 @@ This approach doesn't require a direct measurement of the extract itself, where 
 </p>
 </section>
 
-<figure class="article-media">
+<section class="article-block">
+<div class="article-block-head">
+<h2>Why Pressure Doesn't Stay Constant During the Process</h2>
+</div>
+
+<figure class="article-figure article-figure--left">
   <img
-    src="/assets/articles/vacuum-concentration/rotavapor-diagram.webp"
-    alt="Simple diagram of rotary evaporation under vacuum"
-    width="1200"
-    height="800"
+    src="/assets/articles/rotavapor-vakuumski-kontroler-koncentriranje-ekstrakta.webp"
+    alt="Vacuum controller on a rotary evaporator during concentration of medicinal mushroom extract, showing set and actual pressure"
+    width="675"
+    height="1200"
     loading="lazy"
+    decoding="async"
   />
   <figcaption class="article-caption">
-    A rotary evaporator removes solvent under vacuum, condenses the vapour, and collects recovered solvent separately from the concentrated extract.
+    The vacuum controller during concentration. Because the composition of the mixture changes as the process runs, pressure has to be lowered progressively — shown here at 58 mbar, with a bath temperature of 35&nbsp;°C.
   </figcaption>
 </figure>
+
+<p>
+Ethanol is more volatile than water, so it evaporates preferentially during concentration. This means the mixture remaining in the flask becomes progressively more aqueous — its composition changes as the process runs.
+</p>
+
+<p>
+The consequence matters: as ethanol concentration falls, the boiling point of the remaining mixture rises. If pressure were left unchanged, evaporation would gradually slow and eventually almost stop, leaving a diluted aqueous mixture in the flask.
+</p>
+
+<p>
+The answer is not to raise the temperature, since that would defeat the very advantage vacuum concentration exists to provide. Instead, the vacuum controller <strong>progressively lowers the pressure</strong>, keeping the mixture's boiling point below the set bath temperature throughout. The mixture therefore keeps evaporating from start to finish, without thermal spikes.
+</p>
+</section>
 
 <section class="article-block">
 <div class="article-block-head">

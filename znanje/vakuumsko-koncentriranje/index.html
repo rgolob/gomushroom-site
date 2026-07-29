@@ -201,14 +201,15 @@
           </figure>
           <p>Rotavapor združuje več komponent v enem sistemu:</p>
           <ul>
-            <li>vrteča steklenica z ekstraktom,</li>
+            <li>evaporacijska buča z ekstraktom, ki se med procesom vrti,</li>
             <li>ogrevana vodna kopel,</li>
-            <li>vakuumska črpalka,</li>
+            <li>vakuumska črpalka s krmilnikom tlaka,</li>
             <li>hlajen kondenzor,</li>
-            <li>zbirna steklenica za rekuperirano topilo.</li>
+            <li>hladilni agregat (chiller), ki hladi hladilno tekočino v kondenzorju,</li>
+            <li>zbirna buča za rekuperirano topilo.</li>
           </ul>
           <p>
-            Ko se steklenica vrti, ekstrakt tvori tanek film na notranji površini — to poveča kontaktno površino in pospeši uparjevanje. <sup><a href="#ref-4">[4]</a></sup> Pare potujejo v kondenzor (pri ~−5 °C) in se skondenzirajo nazaj v tekoče topilo.
+            Ko se evaporacijska buča vrti, ekstrakt tvori tanek film na notranji površini — to poveča kontaktno površino in pospeši uparjevanje. <sup><a href="#ref-4">[4]</a></sup> Pare nato potujejo v kondenzor, skozi katerega kroži ohlajena tekočina (pri nas pri približno −5 °C), se tam utekočinijo in stečejo v zbirno bučo.
           </p>
         </section>
 
@@ -271,6 +272,12 @@
             Prvi razlog je fizika samih topil. Za uparjanje kilograma vode je pri vrelišču pri atmosferskem tlaku potrebnih približno 2,26 MJ energije, za kilogram etanola pa okoli 0,84 MJ — torej skoraj trikrat manj. <sup><a href="#ref-5">[5]</a></sup><sup><a href="#ref-6">[6]</a></sup> Enako toploto je treba na drugi strani sistema tudi odvzeti, saj se morajo vse pare v kondenzorju znova utekočiniti. Koncentriranje vodne faze zato terja bistveno več hladilne energije in bistveno več časa kot odstranjevanje etanola.
           </p>
           <p>
+            V praksi to pomeni, da hladilna kapaciteta agregata postane omejitev celotnega procesa. Uparjanje lahko poteka le tako hitro, kolikor hitro je nastale pare mogoče v kondenzorju spet utekočiniti. Če agregat sproščene toplote ne zmore odvesti, se pare ne skondenzirajo v celoti — del jih preide mimo kondenzorja proti vakuumski črpalki, kjer so za proces izgubljene.
+          </p>
+          <p>
+            Poleg izgube topila to prizadene tudi masno bilanco. Ta temelji na masi zbranega destilata: če del par uide neskondenziran, zbrana masa ne ustreza dejansko uparjeni količini in izračun koncentracije etanola v koncentratu je napačen. Zadostna hladilna kapaciteta torej ni le vprašanje hitrosti procesa, ampak tudi pogoj za veljavnost meritve.
+          </p>
+          <p>
             Drugi razlog pa je sam ekstrakt. V vodni fazi so zdaj zbrane vse ekstrahirane snovi — polisaharidi, beta-glukani, sladkorji, soli in druge topne komponente. Te zmes zgostijo in povečajo njeno viskoznost, kar oteži nastanek tankega filma, na katerem uparjanje sploh temelji. Hkrati zvišujejo vrelišče zmesi in del vode vežejo nase, tako da je ta težje dostopna za uparjanje. <sup><a href="#ref-4">[4]</a></sup>
           </p>
           <p>
@@ -304,7 +311,7 @@
             </figcaption>
           </figure>
           <p>
-            Zato si pri GoMushroom pomagamo z <strong>masno bilanco</strong>. Natančno poznamo sestavo (razmerje etanol:voda) topila, ki smo ga uporabili pri ekstrakciji, in torej tudi natančno maso etanola, ki je vstopila v proces. Destilat, ki nastane med vakuumskim koncentriranjem (kondenzirana para v zbirni steklenici), pa je — za razliko od ekstrakta — dejansko čista binarna zmes etanola in vode, saj vanj ekstrahirane snovi med uparjevanjem ne prehajajo. To pomeni, da lahko koncentracijo etanola v destilatu preprosto in zanesljivo izmerimo z gostoto ali lomnim količnikom. Z znano maso destilata in izmerjeno koncentracijo etanola v njem lahko z masno bilanco izračunamo, koliko etanola je iz sistema dejansko izginilo — in posledično, koliko ga še ostaja v koncentriranem ekstraktu.
+            Zato si pri GoMushroom pomagamo z <strong>masno bilanco</strong>. Natančno poznamo sestavo (razmerje etanol:voda) topila, ki smo ga uporabili pri ekstrakciji, in torej tudi natančno maso etanola, ki je vstopila v proces. Destilat, ki nastane med vakuumskim koncentriranjem (kondenzirana para v zbirni buči), pa je — za razliko od ekstrakta — dejansko čista binarna zmes etanola in vode, saj vanj ekstrahirane snovi med uparjevanjem ne prehajajo. To pomeni, da lahko koncentracijo etanola v destilatu preprosto in zanesljivo izmerimo z gostoto ali lomnim količnikom. Z znano maso destilata in izmerjeno koncentracijo etanola v njem lahko z masno bilanco izračunamo, koliko etanola je iz sistema dejansko izginilo — in posledično, koliko ga še ostaja v koncentriranem ekstraktu.
           </p>
           <p>
             Ta pristop ne zahteva neposredne meritve na samem ekstraktu, kjer bi obarvanost in raztopljene snovi meritev popačile. Namesto tega izkoristimo dejstvo, da je destilat preprosta binarna zmes, ki jo je mogoče točno izmeriti, ta podatek pa povežemo z bilanco mase celotnega sistema: kar vstopi, kar izstopi kot destilat, ostanek pa je tisto, kar ostane v ekstraktu.

@@ -33,6 +33,11 @@
       desc: 'Kaj so beta-glukani v medicinskih gobah, zakaj njihova struktura vpliva na kakovost ekstrakta in zakaj sam odstotek na analizi ni dovolj.',
     },
     {
+      url: '/znanje/vakuumsko-koncentriranje/',
+      title: 'Vakuumsko koncentriranje ekstraktov medicinskih gob',
+      desc: 'Zakaj je odstranjevanje topila ključen korak po ekstrakciji, kako vakuumski kontroler vodi proces in kako z masno bilanco določimo koncentracijo etanola v koncentratu.',
+    },
+    {
       url: '/znanje/ultrazvocna-ekstrakcija/',
       title: 'Ultrazvočna ekstrakcija medicinskih gob',
       desc: 'Kako ultrazvočna ekstrakcija pri medicinskih gobah izboljša masni prenos, razgradnjo matrice in izkoristek bioaktivnih spojin iz Reishija, Chage in resastega bradovca.',

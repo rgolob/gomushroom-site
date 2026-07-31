@@ -6682,7 +6682,7 @@ function genReport(type){
 
     const filtered=invoices.filter(inv=>
       chFilter.includes(inv.channel)&&
-      stFilter.includes(inv.invStatus||'placano')&&
+      stFilter.includes(inv.invStatus||'caka')&&
       (!od||inv.date>=od)&&(!doVal||inv.date<=doVal)
     ).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||String(a.num||'').localeCompare(String(b.num||'')));
 
@@ -6701,14 +6701,17 @@ function genReport(type){
       </div>`).join('');
 
     const totalSum=filtered.reduce((a,inv)=>a+(inv.total||0),0);
-    const unpaid=filtered.filter(inv=>(inv.invStatus||'placano')!=='placano');
+    // Statusi gredo: caka -> placano -> predano. 'placano' in 'predano' torej
+    // oba pomenita, da je racun placan (enako kot isPaid drugod v aplikaciji),
+    // kot cakajoc na placilo steje samo status 'caka'.
+    const unpaid=filtered.filter(inv=>(inv.invStatus||'caka')==='caka');
     const unpaidSum=unpaid.reduce((a,inv)=>a+(inv.total||0),0);
 
     const ST={placano:{l:'Plačano',i:'🟢'},caka:{l:'Čaka',i:'🟡'},predano:{l:'Predano',i:'📦'}};
     let rows='';
     filtered.forEach(inv=>{
       const ch=CH[inv.channel]||CH.malo;
-      const st=ST[inv.invStatus||'placano']||ST.placano;
+      const st=ST[inv.invStatus||'caka']||ST.caka;
       let itemsHtml='';
       if(showItems){
         const g=saleGroups.find(x=>x.id===inv.groupId);
@@ -6734,7 +6737,7 @@ function genReport(type){
       ${summaryHtml}
       <div class="s-item"><div class="s-label">Št. računov</div><div class="s-val">${filtered.length}</div></div>
       <div class="s-item"><div class="s-label">Skupaj</div><div class="s-val" style="color:#3a6b4a">${totalSum.toFixed(2)} €</div></div>
-      ${unpaid.length?`<div class="s-item"><div class="s-label">Neplačano</div><div class="s-val" style="color:#c0392b">${unpaidSum.toFixed(2)} €</div><div style="font-size:.7rem;color:#7a6f60">${unpaid.length} rač.</div></div>`:''}
+      ${unpaid.length?`<div class="s-item"><div class="s-label">Čaka na plačilo</div><div class="s-val" style="color:#c0392b">${unpaidSum.toFixed(2)} €</div><div style="font-size:.7rem;color:#7a6f60">${unpaid.length} rač.</div></div>`:''}
     </div>
     <table>
       <tr><th>Št. računa</th><th>Datum</th><th>Kupec</th><th>Vrsta prodaje</th><th>Status</th><th style="text-align:right">Znesek</th></tr>

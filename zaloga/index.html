@@ -6602,13 +6602,17 @@ function genReport(type){
     if(document.getElementById('rp-int').checked)chFilter.push('int');
     if(document.getElementById('rp-wp').checked)chFilter.push('wp');
     if(document.getElementById('rp-kom').checked)chFilter.push('kom');
+    // 'stripe' ni loceni kanal, ampak nacin placila pri spletni prodaji -
+    // spletne prodaje so v bazi zapisane kot 'wp' ali 'stripe', zato ju za
+    // namen filtriranja in povzetka obravnavamo enotno kot 'wp'.
+    const normCh=ch=>ch==='stripe'?'wp':ch;
     const od=document.getElementById('rp-od').value;
     const doVal=document.getElementById('rp-do').value;
     const filterProd=document.getElementById('rp-prod').value;
 
     const filtered=saleGroups.filter(g=>
       g.status!=='stornirano'&&
-      chFilter.includes(g.channel)&&
+      chFilter.includes(normCh(g.channel))&&
       (!od||g.date>=od)&&(!doVal||g.date<=doVal)&&
       (!filterProd||g.lines?.some(l=>l.productId===filterProd))
     );
@@ -6616,7 +6620,7 @@ function genReport(type){
     // Summary per channel
     const chSummary={};
     chFilter.forEach(ch=>{
-      const cg=filtered.filter(g=>g.channel===ch);
+      const cg=filtered.filter(g=>normCh(g.channel)===ch);
       const alcQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.alc||0),0),0);
       const glyQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.gly||0),0),0);
       const rev=cg.reduce((s,g)=>s+(g.total||0),0);

@@ -596,6 +596,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div id="subdok-racuni">
       <div class="view-header">
         <div class="view-title">🧾 Računi</div>
+        <button class="hbtn2" onclick="openReportSheet('racuni')">📊 Poročilo</button>
       </div>
       <div class="stats-grid" id="invStatsGrid"></div>
       <div class="filter-row" style="display:flex;gap:.4rem;margin-bottom:.85rem;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap">
@@ -1191,6 +1192,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
 
     <div class="shfoot">
+    <!-- RAČUNI filters -->
+    <div id="rrFilters" class="shbody" style="display:none">
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Pregled izdanih računov za izbrano obdobje. Izberi, katere vrste prodaje naj se vključijo.</div>
+      <div class="slabel">Vrsta prodaje</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-malo" checked> 🛒 Maloprodaja</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-velo" checked> 🏪 Veleprodaja</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-wp" checked> 🌐 Splet</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-dar" checked> 🎁 Podaritev</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-int" checked> 🔬 Interni</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-kom" checked> 🤝 Komisija</label>
+      </div>
+      <div class="slabel">Obdobje</div>
+      <div class="frow">
+        <div class="field"><label>Od</label><input type="date" id="rr-od"></div>
+        <div class="field"><label>Do</label><input type="date" id="rr-do"></div>
+      </div>
+      <div class="slabel">Status računa</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-st-placano" checked> 🟢 Plačano</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-st-caka" checked> 🟡 Čaka</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-st-predano" checked> 📦 Predano</label>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:.5rem">
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rr-izdelki"> Prikaži izdelke po postavkah</label>
+      </div>
+    </div>
+
     <!-- TROŠARINE filters -->
     <div id="rtFilters" class="shbody" style="display:none">
       <div style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">Poročilo prikazuje alkoholne tinkture — serije narejene v izbranem mesecu, prodane količine v istem mesecu po kupcih in stanje zaloge na zadnji dan meseca.</div>
@@ -6220,10 +6249,10 @@ function openReportSheet(type){
   try{
   populateReportDropdowns();
   _currentReportType=type;
-  ['rzFilters','rsFilters','rpFilters','rtFilters','reFilters'].forEach(id=>{
+  ['rzFilters','rsFilters','rpFilters','rtFilters','reFilters','rrFilters'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
-  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin',evidenca:'Evidenca delovnih nalogov'};
+  const titles={zaloga:'Poročilo zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin',evidenca:'Evidenca delovnih nalogov',racuni:'Izpis izdanih računov'};
   document.getElementById('reportSheetTitle').textContent=titles[type]||'Poročilo';
   if(type==='zaloga'){
     document.getElementById('rzFilters').style.display='';
@@ -6241,6 +6270,11 @@ function openReportSheet(type){
     const d=new Date();
     document.getElementById('rp-do').value=todayISO();
     document.getElementById('rp-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
+  } else if(type==='racuni'){
+    document.getElementById('rrFilters').style.display='';
+    const d=new Date();
+    document.getElementById('rr-do').value=todayISO();
+    document.getElementById('rr-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
   } else if(type==='evidenca'){
     document.getElementById('reFilters').style.display='';
     const d=new Date();
@@ -6627,6 +6661,84 @@ function genReport(type){
     </table>`;
   }
 
+  else if(type==='racuni'){
+    const chFilter=[];
+    ['malo','velo','wp','dar','int','kom'].forEach(c=>{
+      if(document.getElementById('rr-'+c).checked)chFilter.push(c);
+    });
+    // spletne prodaje so v bazi lahko 'wp' ali 'stripe'
+    if(chFilter.includes('wp'))chFilter.push('stripe');
+    const stFilter=[];
+    ['placano','caka','predano'].forEach(st=>{
+      if(document.getElementById('rr-st-'+st).checked)stFilter.push(st);
+    });
+    const od=document.getElementById('rr-od').value;
+    const doVal=document.getElementById('rr-do').value;
+    const showItems=document.getElementById('rr-izdelki').checked;
+
+    const filtered=invoices.filter(inv=>
+      chFilter.includes(inv.channel)&&
+      stFilter.includes(inv.invStatus||'placano')&&
+      (!od||inv.date>=od)&&(!doVal||inv.date<=doVal)
+    ).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||String(a.num||'').localeCompare(String(b.num||'')));
+
+    // povzetek po vrsti prodaje
+    const chSummary={};
+    filtered.forEach(inv=>{
+      const key=inv.channel==='stripe'?'wp':inv.channel;
+      if(!chSummary[key])chSummary[key]={n:0,sum:0};
+      chSummary[key].n++; chSummary[key].sum+=(inv.total||0);
+    });
+    const summaryHtml=Object.entries(chSummary).map(([ch,v])=>`
+      <div class="s-item">
+        <div class="s-label">${(CH[ch]||CH.malo).icon} ${(CH[ch]||CH.malo).label}</div>
+        <div class="s-val">${v.n} ${v.n===1?'račun':'rač.'}</div>
+        <div style="font-size:.75rem;color:#3a6b4a">${v.sum.toFixed(2)} €</div>
+      </div>`).join('');
+
+    const totalSum=filtered.reduce((a,inv)=>a+(inv.total||0),0);
+    const unpaid=filtered.filter(inv=>(inv.invStatus||'placano')!=='placano');
+    const unpaidSum=unpaid.reduce((a,inv)=>a+(inv.total||0),0);
+
+    const ST={placano:{l:'Plačano',i:'🟢'},caka:{l:'Čaka',i:'🟡'},predano:{l:'Predano',i:'📦'}};
+    let rows='';
+    filtered.forEach(inv=>{
+      const ch=CH[inv.channel]||CH.malo;
+      const st=ST[inv.invStatus||'placano']||ST.placano;
+      let itemsHtml='';
+      if(showItems){
+        const g=saleGroups.find(x=>x.id===inv.groupId);
+        const li=(g&&g.lines||[]).map(l=>{
+          const q=[(l.alc?`🥃${l.alc}`:''),(l.gly?`🌿${l.gly}`:'')].filter(Boolean).join(' ');
+          return `${l.productName} ${q}`;
+        }).join(' · ');
+        if(li)itemsHtml=`<div style="font-size:.65rem;color:#7a6f60">${li}</div>`;
+      }
+      rows+=`<tr>
+        <td><strong>${inv.num||'—'}</strong></td>
+        <td>${inv.date?inv.date.split('-').reverse().join('.'):'—'}</td>
+        <td>${inv.buyer||'—'}${itemsHtml}</td>
+        <td><span class="badge b-${inv.channel}">${ch.icon}</span> ${ch.label}</td>
+        <td>${st.i} ${st.l}</td>
+        <td class="num">${(inv.total||0).toFixed(2)} €</td>
+      </tr>`;
+    });
+
+    const obdobje=(od||doVal)?`${od?od.split('-').reverse().join('.'):'…'} – ${doVal?doVal.split('-').reverse().join('.'):'…'}`:'vsa obdobja';
+    html=`<div style="font-size:.8rem;color:#7a6f60;margin-bottom:.5rem">Obdobje: <strong>${obdobje}</strong></div>
+    <div class="summary-box">
+      ${summaryHtml}
+      <div class="s-item"><div class="s-label">Št. računov</div><div class="s-val">${filtered.length}</div></div>
+      <div class="s-item"><div class="s-label">Skupaj</div><div class="s-val" style="color:#3a6b4a">${totalSum.toFixed(2)} €</div></div>
+      ${unpaid.length?`<div class="s-item"><div class="s-label">Neplačano</div><div class="s-val" style="color:#c0392b">${unpaidSum.toFixed(2)} €</div><div style="font-size:.7rem;color:#7a6f60">${unpaid.length} rač.</div></div>`:''}
+    </div>
+    <table>
+      <tr><th>Št. računa</th><th>Datum</th><th>Kupec</th><th>Vrsta prodaje</th><th>Status</th><th style="text-align:right">Znesek</th></tr>
+      ${rows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni računov za izbrane filtre</td></tr>'}
+      ${filtered.length?`<tr><td colspan="5" style="text-align:right;font-weight:600">Skupaj</td><td class="num" style="font-weight:600">${totalSum.toFixed(2)} €</td></tr>`:''}
+    </table>`;
+  }
+
   else if(type==='trosarine'){
     const od=document.getElementById('rt-od').value;
     const doVal=document.getElementById('rt-do').value;
@@ -6906,7 +7018,7 @@ function genReport(type){
 }
 
 function showReport(type,html){
-  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin — alkoholne tinkture',evidenca:'Evidenca delovnih nalogov in serij končnih izdelkov'};
+  const titles={zaloga:'Stanje zaloge',serije:'Poročilo serij',prodaja:'Poročilo prodaje',trosarine:'Poročilo trošarin — alkoholne tinkture',evidenca:'Evidenca delovnih nalogov in serij končnih izdelkov',racuni:'Izpis izdanih računov'};
   const subtitles={
     zaloga:'Trenutno stanje po produktih',
     serije:'Proizvedene serije z ostanki',

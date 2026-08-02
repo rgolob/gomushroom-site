@@ -265,7 +265,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="view" id="view-bilanca">
     <div class="view-hdr">
       <div class="view-title">Masna bilanca</div>
-      <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
+      <div style="display:flex;gap:.4rem">
+        <button class="hbtn2" onclick="openZdruziSheet()">⊕ Združi</button>
+        <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
+      </div>
     </div>
     <div class="field"><label>Tinktura / Batch</label>
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
@@ -500,6 +503,37 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: BILANCA DOGODEK -->
+<!-- SHEET: ZDRUZI VRSTICE (npr. zdruzen regenerat) -->
+<div class="overlay" id="zdruziOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">⊕ Združi v eno vrstico</span>
+      <button class="shclose" onclick="closeSheet('zdruziOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5">
+        Izberi vrstice, ki si jih fizično združil. Nastane nova vrstica z eno samo meritvijo,
+        izvorne pa se odznačijo iz seštevka (možnost „Šteje“ ostane, zato je poteza povrnljiva).
+      </div>
+      <div id="zdrList"></div>
+      <div id="zdrSum" style="margin:.75rem 0"></div>
+      <div class="frow">
+        <div class="field"><label>m združenega (g) — stehtano</label><input id="zdrM" type="text" inputmode="decimal" oninput="this.dataset.touched='1';renderZdruziSum()"></div>
+        <div class="field"><label>Vol % združenega (areometer)</label><input id="zdrVol" type="text" inputmode="decimal" placeholder="npr. 79,3" oninput="renderZdruziSum()"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Datum in ura</label><input id="zdrTs" type="datetime-local"></div>
+        <div class="field"><label>Opomba</label><input id="zdrOpomba" placeholder="npr. združen regenerat"></div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
+        <button onclick="closeSheet('zdruziOverlay')" style="flex:1;padding:.7rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:inherit;font-size:.88rem;cursor:pointer;color:var(--muted)">Prekliči</button>
+        <button onclick="saveZdruzi()" id="zdrSaveBtn" style="flex:2;padding:.7rem;border:none;border-radius:8px;background:var(--brand,#2b0b39);color:#fff;font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer">Ustvari združeno vrstico</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="bilancaOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -3066,7 +3100,9 @@ function renderBilanca(){
 
   const fazaOrder=['OF','VF','TE'];
   const fazaSums={};
-  events.forEach(d=>{
+  // Upostevamo samo vrstice, ki stejejo (isto kot spodnji sestevek po statusih);
+  // sicer bi odznacene vrstice se vedno vplivale na sestevek po fazah.
+  events.filter(bilIncluded).forEach(d=>{
     const f=d.faza||'—';
     if(!fazaSums[f])fazaSums[f]={m:0,aae:0,h2o:0};
     fazaSums[f].m+=d.m||0;fazaSums[f].aae+=d.mAae||0;fazaSums[f].h2o+=d.mH2o||0;
@@ -3142,6 +3178,130 @@ function calcBil(){
   document.getElementById('bilMm').value=mm?mm.toFixed(3)+' %':'0 %';
   document.getElementById('bilAAE').value=aae.toFixed(2)+' g';
   document.getElementById('bilH2O').value=h2o.toFixed(2)+' g';
+}
+
+// ── ZDRUZEVANJE VRSTIC (npr. zdruzen regenerat) ──────────────────────────
+// Vec locenih meritev nadomestimo z eno meritvijo zdruzene kolicine. Vsaka
+// meritev nosi svojo napako, zato je ena meritev na zdruzenem vzorcu
+// natancnejsa od sestevka posameznih.
+let _zdrSel={};
+
+function zdruziKandidati(){
+  if(!bilSelectedKey)return[];
+  return bilancaDogodki
+    .filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey&&bilIncluded(d))
+    .sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
+}
+
+function openZdruziSheet(){
+  if(!bilSelectedKey){toast('⚠ Najprej izberi tinkturo / batch');return;}
+  const kand=zdruziKandidati();
+  if(kand.length<2){toast('⚠ Za združitev potrebuješ vsaj dve vrstici, ki štejeta');return;}
+  _zdrSel={};
+  delete document.getElementById('zdrM').dataset.touched;
+  document.getElementById('zdrTs').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('zdrVol').value='';
+  document.getElementById('zdrM').value='';
+  document.getElementById('zdrOpomba').value='združen regenerat';
+  document.getElementById('zdrList').innerHTML=`<table class="mini-table">
+    <tr><th></th><th>Čas</th><th>Faza</th><th>Status</th><th class="num">m</th><th class="num">Vol%</th><th class="num">AAE</th></tr>
+    ${kand.map(d=>`<tr>
+      <td style="text-align:center"><input type="checkbox" data-zdr="${d.id}" onchange="toggleZdr('${d.id}')"></td>
+      <td>${fmtTs(d.ts)}</td>
+      <td>${fazaLabel(d.faza)}</td>
+      <td>${statusLabel(d.status)}</td>
+      <td class="num">${round(d.m,1)}</td>
+      <td class="num">${d.volPct?round(d.volPct,1):'—'}</td>
+      <td class="num">${round(d.mAae,1)}</td>
+    </tr>`).join('')}
+  </table>`;
+  renderZdruziSum();
+  openSheet('zdruziOverlay');
+}
+
+function toggleZdr(id){
+  _zdrSel[id]=!_zdrSel[id];
+  const sel=zdruziIzbrani();
+  // maso predlagamo iz sestevka, dokler je uporabnik ne popravi rocno
+  const mEl=document.getElementById('zdrM');
+  if(!mEl.dataset.touched){
+    mEl.value=sel.length?String(round(Math.abs(sel.reduce((a,d)=>a+(d.m||0),0)),1)).replace('.',','):'';
+  }
+  renderZdruziSum();
+}
+
+function zdruziIzbrani(){
+  return zdruziKandidati().filter(d=>_zdrSel[d.id]);
+}
+
+function renderZdruziSum(){
+  const sel=zdruziIzbrani();
+  const el=document.getElementById('zdrSum');
+  const btn=document.getElementById('zdrSaveBtn');
+  if(!sel.length){
+    el.innerHTML='<div style="font-size:.78rem;color:var(--muted)">Nobena vrstica ni izbrana.</div>';
+    if(btn)btn.disabled=true;
+    return;
+  }
+  const sumM=sel.reduce((a,d)=>a+(d.m||0),0);
+  const sumAae=sel.reduce((a,d)=>a+(d.mAae||0),0);
+  const sumMm=sumM?round(sumAae/sumM*100,2):0;
+  const mRaw=parseNum(document.getElementById('zdrM').value);
+  const vol=parseNum(document.getElementById('zdrVol').value);
+  const mm=vol?volToMas(vol):0;
+  const status=sel[0].status;
+  const mixed=sel.some(d=>d.status!==status)||sel.some(d=>d.faza!==sel[0].faza);
+  const mSigned=mRaw?bilSignedM(mRaw,status):0;
+  const aaeNew=round(mSigned*mm/100,2);
+  const dAae=(mRaw&&vol)?round(aaeNew-sumAae,2):null;
+  el.innerHTML=`
+    <div style="background:var(--parchment,#f7f3ee);border-radius:8px;padding:.6rem .75rem;font-size:.78rem;line-height:1.7">
+      <div><strong>Izbranih vrstic:</strong> ${sel.length}</div>
+      <div>Seštevek posameznih meritev: <strong>${round(sumM,1)} g</strong> · mm% ${sumMm} · AAE <strong>${round(sumAae,1)} g</strong></div>
+      ${(mRaw&&vol)?`<div style="margin-top:.3rem">Ena meritev združenega: <strong>${round(mSigned,1)} g</strong> · mm% ${round(mm,2)} · AAE <strong>${aaeNew} g</strong></div>
+        <div style="color:${Math.abs(dAae)>0.05?'var(--danger,#c0392b)':'var(--success,#2d6a4f)'}">Razlika proti seštevku: ${dAae>0?'+':''}${dAae} g AAE</div>`:''}
+      ${mixed?`<div style="color:var(--danger,#c0392b);margin-top:.3rem">⚠ Izbrane vrstice nimajo enakega statusa/faze — združena vrstica bo uporabila <strong>${statusLabel(status)} / ${fazaLabel(sel[0].faza)}</strong>.</div>`:''}
+    </div>`;
+  if(btn)btn.disabled=false;
+}
+
+function saveZdruzi(){
+  const sel=zdruziIzbrani();
+  if(sel.length<2){toast('⚠ Izberi vsaj dve vrstici');return;}
+  const mRaw=parseNum(document.getElementById('zdrM').value);
+  const vol=parseNum(document.getElementById('zdrVol').value);
+  const ts=document.getElementById('zdrTs').value;
+  if(!mRaw){toast('⚠ Vnesi maso združenega');return;}
+  if(!vol){toast('⚠ Vnesi izmerjen Vol %');return;}
+  if(!ts){toast('⚠ Vnesi datum in uro');return;}
+  const src=sel[0];
+  const status=src.status;
+  const m=bilSignedM(mRaw,status);
+  const mmPct=volToMas(vol);
+  const mAae=round(m*mmPct/100,2);
+  const mH2o=round(m-mAae,2);
+  const opombaUser=document.getElementById('zdrOpomba').value.trim();
+  const casi=sel.map(d=>fmtTs(d.ts)).join(', ');
+  const d={
+    id:uid(),
+    tinktura:src.tinktura,batch:src.batch,ts,
+    faza:src.faza,status,
+    m,mmPct,volPct:vol,mAae,mH2o,mSs:null,
+    ukljucen:true,
+    opomba:(opombaUser?opombaUser+' — ':'')+`združeno iz ${sel.length} vrstic (${casi})`,
+    ustvarjen:new Date().toISOString(),
+  };
+  bilancaDogodki.push(d);
+  // izvorne vrstice odznacimo, da se masa ne steje dvakrat
+  sel.forEach(x=>{
+    const i=bilancaDogodki.findIndex(y=>y.id===x.id);
+    if(i>=0){bilancaDogodki[i].ukljucen=false;sbPushBilanca(bilancaDogodki[i]);}
+  });
+  save();
+  sbPushBilanca(d);
+  closeSheet('zdruziOverlay');
+  renderBilanca();
+  toast('✓ Združena vrstica ustvarjena');
 }
 
 function openBilancaSheet(id){

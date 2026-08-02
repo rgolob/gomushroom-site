@@ -914,8 +914,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <div class="overlay" id="expenseOverlay">
   <div class="sheet">
     <div class="shandle"></div>
-    <div class="shdr"><span class="shtitle">Nov strošek</span><button class="shclose" onclick="closeSheet('expenseOverlay')">✕</button></div>
+    <div class="shdr"><span class="shtitle" id="expSheetTitle">Nov strošek</span><button class="shclose" onclick="closeSheet('expenseOverlay')">✕</button></div>
     <div class="shbody">
+      <div class="field"><label>Vrsta vnosa</label>
+        <select id="expKind" onchange="onExpKindChange()">
+          <option value="strosek">− Strošek</option>
+          <option value="prihodek">+ Prihodek (npr. povračilo trošarine)</option>
+        </select>
+      </div>
       <div class="frow">
         <div class="field"><label>Datum</label><input id="expDate" type="date"></div>
         <div class="field">
@@ -925,14 +931,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
       </div>
       <div class="field"><label>Kategorija</label>
-        <select id="expCategory" onchange="onExpCategoryChange()">
-          <option value="akontacija">Akontacija dohodnine</option>
-          <option value="prispevki_sp">Prispevki SP (ZPIZ + ZZZS)</option>
-          <option value="nabava">Nabava</option>
-          <option value="drugo">Drugo…</option>
-        </select>
+        <select id="expCategory" onchange="onExpCategoryChange()"></select>
       </div>
-      <div class="field" id="expCustomRow" style="display:none"><label>Ime kategorije</label><input id="expCustomCat" placeholder="npr. Računovodstvo…"></div>
+      <div class="field" id="expCustomRow" style="display:none"><label>Ime nove kategorije</label><input id="expCustomCat" placeholder="npr. Trošarine…"></div>
       <div class="field"><label>Opis</label><input id="expDesc" placeholder="npr. akontacija Q1 2026…"></div>
       <div style="display:flex;gap:.75rem;margin-top:1rem">
         <button onclick="closeSheet('expenseOverlay')" style="flex:1;padding:.7rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:'Jost',sans-serif;font-size:.88rem;cursor:pointer;color:var(--muted)">Prekliči</button>
@@ -2249,17 +2250,55 @@ function expPrefillAmount(category){
 
 function onExpCategoryChange(){
   const v=document.getElementById('expCategory').value;
-  document.getElementById('expCustomRow').style.display=v==='drugo'?'':'none';
-  expPrefillAmount(v);
+  document.getElementById('expCustomRow').style.display=v==='__nova__'?'':'none';
+  if(v!=='__nova__')expPrefillAmount(v);
+}
+
+function onExpKindChange(){
+  const isIncome=document.getElementById('expKind').value==='prihodek';
+  const t=document.getElementById('expSheetTitle');
+  if(t)t.textContent=isIncome?'Nov prihodek':'Nov strošek';
+}
+
+function expEscAttr(v){
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Spustni seznam sestavimo iz privzetih kategorij IN vseh, ki so ze bile
+// uporabljene - tako se rocno vnesena kategorija (npr. Trosarine) naslednjic
+// pojavi na seznamu in je ni treba znova tipkati.
+function populateExpenseCats(preselect){
+  const el=document.getElementById('expCategory');
+  if(!el)return;
+  const base={
+    akontacija:'Akontacija dohodnine',
+    prispevki_sp:'Prispevki SP (ZPIZ + ZZZS)',
+    nabava:'Nabava'
+  };
+  const all={...base};
+  (_expenses||[]).forEach(e=>{
+    const c=e&&e.category;
+    if(!c||c==='drugo')return;
+    if(!all[c])all[c]=EXPENSE_CATS[c]||c;
+  });
+  const opts=Object.entries(all)
+    .sort((a,b)=>String(a[1]).localeCompare(String(b[1]),'sl'))
+    .map(([k,v])=>`<option value="${expEscAttr(k)}">${expEscAttr(v)}</option>`)
+    .join('');
+  el.innerHTML=opts+'<option value="__nova__">+ Nova kategorija…</option>';
+  if(preselect&&all[preselect])el.value=preselect;
 }
 
 function openExpenseSheet(){
   document.getElementById('expDate').value=todayISO();
-  document.getElementById('expCategory').value='akontacija';
+  document.getElementById('expKind').value='strosek';
+  onExpKindChange();
+  populateExpenseCats('akontacija');
   document.getElementById('expCustomRow').style.display='none';
   document.getElementById('expCustomCat').value='';
   document.getElementById('expDesc').value='';
-  expPrefillAmount('akontacija');
+  document.getElementById('expAmount').value='';
+  expPrefillAmount(document.getElementById('expCategory').value);
   document.getElementById('expenseOverlay').classList.add('open');
 }
 
@@ -2268,16 +2307,20 @@ async function submitExpense(){
   const amountRaw=document.getElementById('expAmount').value.replace(',','.');
   const amount=parseFloat(amountRaw);
   let category=document.getElementById('expCategory').value;
-  if(category==='drugo'){
+  if(category==='__nova__'){
     const custom=document.getElementById('expCustomCat').value.trim();
-    if(!custom){alert('Vnesi ime kategorije.');return;}
+    if(!custom){alert('Vnesi ime nove kategorije.');return;}
     category=custom;
   }
   const description=document.getElementById('expDesc').value.trim();
-  if(!date||!amount||amount<=0){alert('Vnesi datum in znesek.');return;}
+  if(!date||!amount||amount<=0){alert('Vnesi datum in znesek (večji od 0).');return;}
+  // Prihodek (npr. povracilo trosarine) se shrani kot negativen znesek v isti
+  // kategoriji - tako kategorija pokaze neto stanje, dobicek pa se pravilno poveca.
+  const isIncome=document.getElementById('expKind').value==='prihodek';
+  const signed=isIncome?-amount:amount;
   const btn=document.querySelector('#expenseOverlay .btn-exp-save');
   btn.textContent='Shranjujem…';btn.disabled=true;
-  const ok=await saveExpense({date,category,amount,description,source:'manual'});
+  const ok=await saveExpense({date,category,amount:signed,description,source:'manual'});
   btn.textContent='Shrani';btn.disabled=false;
   if(ok)closeSheet('expenseOverlay');
 }
@@ -5310,7 +5353,7 @@ function renderPorocilo(){
         <div style="font-size:.78rem;font-weight:500;color:var(--ink)">${mesLabel(e.date)}</div>
         ${e.description?`<div style="font-size:.63rem;color:var(--muted)">${e.description}</div>`:''}
       </div>
-      <div style="font-size:.82rem;font-weight:500;color:var(--ink);white-space:nowrap">${parseFloat(e.amount).toFixed(2)} €</div>
+      <div style="font-size:.82rem;font-weight:500;color:${(parseFloat(e.amount)||0)<0?'#2d6a4f':'var(--ink)'};white-space:nowrap">${(parseFloat(e.amount)||0)<0?'+':''}${Math.abs(parseFloat(e.amount)||0).toFixed(2)} €</div>
       <button onclick="deleteExpense('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:.82rem;color:var(--muted);padding:.1rem .25rem;line-height:1">🗑</button>
     </div>`;
 
@@ -5321,13 +5364,14 @@ function renderPorocilo(){
     const catEntries=expFiltered.filter(e=>e.category===cat).sort((a,b)=>b.date.localeCompare(a.date));
     const label=EXPENSE_CATS[cat]||cat;
     const n=catEntries.length;
-    const hint=n===1?'1 vnos':`${n} vnosov`;
+    const nInc=catEntries.filter(x=>(parseFloat(x.amount)||0)<0).length;
+    const hint=(n===1?'1 vnos':`${n} vnosov`)+(nInc?` · ${nInc} povračil`:'');
     costRows+=`<div onclick="toggleExpCat('${cat}')" style="display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none">
       <div>
         <div style="font-size:.82rem;color:var(--ink)">${label} <span style="font-size:.65rem;color:var(--muted)">${isOpen?'▲':'▼'}</span></div>
         <div style="font-size:.63rem;color:var(--muted)">${hint}</div>
       </div>
-      <div style="font-size:.88rem;color:#c0392b">−${amt.toFixed(2)} €</div>
+      <div style="font-size:.88rem;color:${amt<0?'#2d6a4f':'#c0392b'}">${amt<0?'+':'−'}${Math.abs(amt).toFixed(2)} €</div>
     </div>`;
     if(isOpen) costRows+=catEntries.map(expEntryRow).join('');
   });

@@ -3050,6 +3050,16 @@ async function deleteRD(id){
 
 // ── MASNA BILANCA (rotavapor koncentriranje) ──
 function bilKey(tinktura,batch){return (tinktura||'').trim()+'|||'+(batch||'').trim();}
+// ts je lahko lokalni zapis iz datetime-local ("2026-07-31T20:56") ali UTC ISO
+// iz Supabase ("2026-07-31T18:56:00.000Z"). Za razvrscanje in za polnjenje
+// datetime-local polja moramo oba primera obravnavati enako.
+function bilTsMs(ts){const d=ts?new Date(ts):null;return d&&!isNaN(d)?d.getTime():0;}
+function bilTsLocalInput(ts){
+  if(!ts)return'';
+  const d=new Date(ts);
+  if(isNaN(d))return String(ts).slice(0,16);
+  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+}
 function fazaLabel(f){return f||'—';}
 function statusLabel(s){return s||'—';}
 function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);if(isNaN(d))return ts;return d.getDate()+'.'+(d.getMonth()+1)+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
@@ -3096,7 +3106,7 @@ function renderBilanca(){
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem 0">Ni dogodkov. Dodaj prvega z gumbom "+ Dogodek".</div>';
     return;
   }
-  const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
+  const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
 
   const fazaOrder=['OF','VF','TE'];
   const fazaSums={};
@@ -3190,7 +3200,7 @@ function zdruziKandidati(){
   if(!bilSelectedKey)return[];
   return bilancaDogodki
     .filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey&&bilIncluded(d))
-    .sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
+    .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
 }
 
 function openZdruziSheet(){
@@ -3316,7 +3326,7 @@ function openBilancaSheet(id){
     const d=bilancaDogodki.find(x=>x.id===id);if(!d)return;
     document.getElementById('bilTinktura').value=d.tinktura||'';
     document.getElementById('bilBatch').value=d.batch||'';
-    document.getElementById('bilTs').value=d.ts?d.ts.slice(0,16):'';
+    document.getElementById('bilTs').value=bilTsLocalInput(d.ts);
     document.getElementById('bilFaza').value=d.faza||'OF';
     document.getElementById('bilStatus').value=d.status||'V';
     document.getElementById('bilM').value=d.m??'';

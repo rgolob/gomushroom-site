@@ -1175,10 +1175,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Do</label><input type="date" id="rp-do"></div>
       </div>
       <div class="field"><label>Produkt</label>
-        <select id="rp-prod" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none"><option value="">Vsi produkti</option></select>
+        <select id="rp-prod" onchange="updateRpBatchList()" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none"><option value="">Vsi produkti</option></select>
       </div>
-      <div style="display:flex;gap:.75rem">
+      <div class="field"><label>Serija</label>
+        <select id="rp-serija" style="width:100%;padding:.75rem .9rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:1rem;background:white;color:var(--ink);outline:none"><option value="">Vse serije</option></select>
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-cene" checked> Prikaži cene</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-obdobja" checked> Razčlenitev po mesecih</label>
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer"><input type="checkbox" id="rp-vrstice" checked> Seznam posameznih prodaj</label>
       </div>
     </div>
 
@@ -6240,6 +6245,16 @@ function populateReportDropdowns(){
   const opts='<option value="">Vsi produkti</option>'+products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   ['rs-prod','rp-prod'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
   updateRsBatchList();
+  updateRpBatchList();
+}
+
+// Seznam serij za porocilo prodaje - ce je izbran produkt, ponudi samo njegove serije.
+function updateRpBatchList(){
+  const el=document.getElementById('rp-serija');
+  if(!el)return;
+  const prod=document.getElementById('rp-prod')?.value||'';
+  const nums=[...new Set(batches.filter(b=>!prod||b.productId===prod).map(b=>b.batchNum).filter(Boolean))].sort();
+  el.innerHTML='<option value="">Vse serije</option>'+nums.map(n=>`<option value="${n}">${n}</option>`).join('');
 }
 
 
@@ -6653,21 +6668,52 @@ function genReport(type){
     const od=document.getElementById('rp-od').value;
     const doVal=document.getElementById('rp-do').value;
     const filterProd=document.getElementById('rp-prod').value;
+    const filterBatch=document.getElementById('rp-serija')?.value||'';
+    const showObdobja=document.getElementById('rp-obdobja')?.checked!==false;
+    const showVrstice=document.getElementById('rp-vrstice')?.checked!==false;
+
+    // Ali vrstica ustreza izbranemu produktu / seriji
+    const lineMatch=l=>
+      (!filterProd||l.productId===filterProd)&&
+      (!filterBatch||(l.batchBreakdown||[]).some(bb=>bb.batchNum===filterBatch));
+
+    // Kolicina in prihodek SAMO za ustrezen del vrstice. Pri filtru po seriji
+    // vzamemo delez te serije, prihodek pa sorazmerno kolicini.
+    const linePart=l=>{
+      let alc=l.alc||0, gly=l.gly||0;
+      if(filterBatch){
+        alc=0;gly=0;
+        (l.batchBreakdown||[]).forEach(bb=>{if(bb.batchNum===filterBatch){alc+=bb.alc||0;gly+=bb.gly||0;}});
+      }
+      const cel=(l.alc||0)+(l.gly||0);
+      const del=alc+gly;
+      const rev=cel?round((l.lineTotal||0)*del/cel,2):0;
+      return {alc,gly,rev};
+    };
 
     const filtered=saleGroups.filter(g=>
       g.status!=='stornirano'&&
       chFilter.includes(normCh(g.channel))&&
       (!od||g.date>=od)&&(!doVal||g.date<=doVal)&&
-      (!filterProd||g.lines?.some(l=>l.productId===filterProd))
+      (g.lines||[]).some(lineMatch)
     );
 
-    // Summary per channel
+    // Ali je aktiven filter po produktu/seriji - takrat sestevamo po vrsticah,
+    // sicer ohranimo skupne zneske naroCila (poStnina, popusti).
+    const filtriran=!!(filterProd||filterBatch);
+
+    // Povzetek po kanalih - steje samo ustrezne vrstice, ne celotnih narocil.
     const chSummary={};
     chFilter.forEach(ch=>{
       const cg=filtered.filter(g=>normCh(g.channel)===ch);
-      const alcQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.alc||0),0),0);
-      const glyQ=cg.reduce((s,g)=>s+(g.lines||[]).reduce((a,l)=>a+(l.gly||0),0),0);
-      const rev=cg.reduce((s,g)=>s+(g.total||0),0);
+      let alcQ=0,glyQ=0,rev=0;
+      cg.forEach(g=>{
+        (g.lines||[]).filter(lineMatch).forEach(l=>{
+          const q=linePart(l);alcQ+=q.alc;glyQ+=q.gly;rev+=q.rev;
+        });
+      });
+      // Brez filtra ohranimo skupni znesek narocila (vkljucno s postnino in popusti).
+      if(!filtriran)rev=cg.reduce((a,g)=>a+(g.total||0),0);
       if(alcQ||glyQ)chSummary[ch]={alcQ,glyQ,rev,n:cg.length};
     });
 
@@ -6675,38 +6721,87 @@ function genReport(type){
       <div class="s-item">
         <div class="s-label">${CH[ch].icon} ${CH[ch].label}</div>
         <div class="s-val">${v.alcQ+v.glyQ} kom.</div>
+        <div style="font-size:.7rem;color:#7a6f60">🥃${v.alcQ} 🌿${v.glyQ}</div>
         ${showPrices&&ch!=='int'&&ch!=='dar'?`<div style="font-size:.75rem;color:#3a6b4a">${v.rev.toFixed(2)} €</div>`:''}
       </div>`).join('');
 
-    const totalRev=filtered.reduce((s,g)=>s+(g.total||0),0);
-    const totalQty=filtered.reduce((s,g)=>s+(g.qty||0),0);
+    const totalAlc=Object.values(chSummary).reduce((a,v)=>a+v.alcQ,0);
+    const totalGly=Object.values(chSummary).reduce((a,v)=>a+v.glyQ,0);
+    const totalQty=totalAlc+totalGly;
+    const totalRev=filtriran
+      ? Object.values(chSummary).reduce((a,v)=>a+v.rev,0)
+      : filtered.reduce((s,g)=>s+(g.total||0),0);
+
+    // Razclenitev po mesecih
+    const MES=['','jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
+    let obdobjaHtml='';
+    if(showObdobja){
+      const byM={};
+      filtered.forEach(g=>{
+        const k=(g.date||'').slice(0,7);
+        if(!k)return;
+        if(!byM[k])byM[k]={alc:0,gly:0,rev:0,n:0};
+        let had=false;
+        (g.lines||[]).filter(lineMatch).forEach(l=>{
+          const q=linePart(l);byM[k].alc+=q.alc;byM[k].gly+=q.gly;
+          if(filtriran)byM[k].rev+=q.rev;
+          had=true;
+        });
+        if(had){byM[k].n++;if(!filtriran)byM[k].rev+=(g.total||0);}
+      });
+      const keys=Object.keys(byM).sort();
+      if(keys.length){
+        obdobjaHtml=`<h3 style="font-size:.9rem;margin:1.2rem 0 .4rem">Po mesecih</h3>
+        <div style="overflow-x:auto"><table class="article-table">
+          <thead><tr><th>Mesec</th><th style="text-align:right">🥃 Alc</th><th style="text-align:right">🌿 Gly</th><th style="text-align:right">Skupaj kom.</th><th style="text-align:right">Prodaj</th>${showPrices?'<th style="text-align:right">Znesek</th>':''}</tr></thead>
+          <tbody>
+          ${keys.map(k=>{
+            const v=byM[k];const[y,m]=k.split('-');
+            return `<tr><td>${MES[parseInt(m)]} ${y}</td><td class="num">${v.alc}</td><td class="num">${v.gly}</td><td class="num"><strong>${v.alc+v.gly}</strong></td><td class="num">${v.n}</td>${showPrices?`<td class="num">${v.rev.toFixed(2)} €</td>`:''}</tr>`;
+          }).join('')}
+          <tr><td style="font-weight:600">Skupaj</td><td class="num" style="font-weight:600">${totalAlc}</td><td class="num" style="font-weight:600">${totalGly}</td><td class="num" style="font-weight:600">${totalQty}</td><td class="num" style="font-weight:600">${filtered.length}</td>${showPrices?`<td class="num" style="font-weight:600">${totalRev.toFixed(2)} €</td>`:''}</tr>
+          </tbody>
+        </table></div>`;
+      }
+    }
 
     let rows='';
     filtered.forEach(g=>{
       const ch=CH[g.channel]||CH.malo;
-      (g.lines||[]).filter(l=>!filterProd||l.productId===filterProd).forEach(l=>{
-        const batchStr=(l.batchBreakdown||[]).map(bb=>`${bb.batchNum}`).join(', ');
+      (g.lines||[]).filter(lineMatch).forEach(l=>{
+        const q=linePart(l);
+        const batchStr=(l.batchBreakdown||[])
+          .filter(bb=>!filterBatch||bb.batchNum===filterBatch)
+          .map(bb=>`${bb.batchNum}`).join(', ');
         rows+=`<tr>
           <td>${g.date?g.date.split('-').reverse().join('.'):'—'}</td>
           <td>${g.buyer||'—'}</td>
           <td>${moji(l.productName)} ${l.productName}${batchStr?`<div style="font-size:.65rem;color:#7a6f60">🏷 ${batchStr}</div>`:''}</td>
           <td><span class="badge b-${g.channel}">${ch.icon}</span></td>
-          <td class="num">${l.alc||0}</td>
-          <td class="num">${l.gly||0}</td>
-          ${showPrices?`<td class="num">${l.lineTotal&&g.channel!=='int'&&g.channel!=='dar'?l.lineTotal.toFixed(2)+' €':'—'}</td>`:''}
+          <td class="num">${q.alc}</td>
+          <td class="num">${q.gly}</td>
+          ${showPrices?`<td class="num">${q.rev&&g.channel!=='int'&&g.channel!=='dar'?q.rev.toFixed(2)+' €':'—'}</td>`:''}
         </tr>`;
       });
     });
 
-    html=`<div class="summary-box">
+    const filtriOpis=[
+      filterProd?(products.find(p=>p.id===filterProd)?.name||''):'',
+      filterBatch?('serija '+filterBatch):''
+    ].filter(Boolean).join(' · ');
+
+    html=`${filtriOpis?`<div style="font-size:.8rem;color:#7a6f60;margin-bottom:.5rem">Filter: <strong>${filtriOpis}</strong></div>`:''}
+    <div class="summary-box">
       ${summaryHtml}
-      <div class="s-item"><div class="s-label">Skupaj kom.</div><div class="s-val">${totalQty}</div></div>
+      <div class="s-item"><div class="s-label">Skupaj kom.</div><div class="s-val">${totalQty}</div><div style="font-size:.7rem;color:#7a6f60">🥃${totalAlc} 🌿${totalGly}</div></div>
       ${showPrices?`<div class="s-item"><div class="s-label">Skupaj €</div><div class="s-val" style="color:#3a6b4a">${totalRev.toFixed(2)} €</div></div>`:''}
     </div>
+    ${obdobjaHtml}
+    ${showVrstice?`<h3 style="font-size:.9rem;margin:1.2rem 0 .4rem">Posamezne prodaje</h3>
     <table>
       <tr><th>Datum</th><th>Kupec</th><th>Produkt</th><th>Kanal</th><th style="text-align:right">Alc</th><th style="text-align:right">Gly</th>${showPrices?'<th style="text-align:right">Znesek</th>':''}</tr>
       ${rows||'<tr><td colspan="7" style="text-align:center;color:#7a6f60;padding:1rem">Ni prodaj za izbrane filtre</td></tr>'}
-    </table>`;
+    </table>`:''}`;
   }
 
   else if(type==='racuni'){

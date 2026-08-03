@@ -4313,7 +4313,11 @@ async function confirmOrder(withInvoice){
   // stock check per channel
   const byProduct={};
   lines.forEach(l=>{byProduct[l.p.id]={p:l.p,alc:l.alc,gly:l.gly};});
-  const isProdCh=ch==='malo'||ch==='velo'||ch==='kom';
+  // Iz interne zaloge crpa samo kanal 'int' - enako kot razporeditev nize
+  // (purpose = orderChannel==='int' ? 'int' : 'prod'). Promo in komisija gresta
+  // iz prodajne zaloge, sicer bi preverba blokirala vnos, ki bi ga razporeditev
+  // sicer brez tezav izvedla.
+  const isProdCh=ch!=='int';
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
     const avAlc=isProdCh?st.prodAlc:st.intAlc;
@@ -4341,10 +4345,10 @@ if(!Object.keys(pendingBatchAlloc).length){
   });
     if(unfulfilled){
       // Not enough stock for this channel - block and offer alternatives
-      const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
+      const isProd=orderChannel!=='int';
       const altMsg=isProd
         ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
-        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Prodaj prek maloprodaje namesto interno';
+        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Poveča interno razporeditev v seriji';
       await showConfirm(`⛔ Ni dovolj zalog:\n\n${warnings.join('\n')}${altMsg}`,'Zapri');
       pendingBatchAlloc={};
       return;
@@ -4841,7 +4845,7 @@ function aaAddArticle(){
   const glyP=parseNum(document.getElementById('aaAddGlyPrice').value)||0;
   const lineTotal=(alc*alcP)+(gly*glyP);
   const st=productStock(pid);
-  const isProd=g.channel==='malo'||g.channel==='velo';
+  const isProd=g.channel!=='int';
   const avAlc=isProd?st.prodAlc:st.intAlc;
   const avGly=isProd?st.prodGly:st.intGly;
   if(alc>avAlc){toast(`⛔ Ni dovolj 🥃 na zalogi (na voljo: ${avAlc})`);return;}

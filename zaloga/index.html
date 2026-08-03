@@ -3043,6 +3043,12 @@ async function appInit(){
 }
 
 
+// Ena sama definicija za obracun zaloge: iz INTERNE zaloge crpa samo kanal 'int'.
+// Promo (dar) je odhod blaga in gre iz prodajne zaloge - ce zelis podariti interno
+// razporejeno kolicino, se to vnese kot obicajna prodaja s 100% popustom.
+function stockIsProdCh(ch){return ch!=='int';}
+const STOCK_INT_CHANNELS=g=>g.channel==='int';
+
 function productStock(productId){
   const pb=batches.filter(b=>b.productId===productId);
   const bAlc=pb.reduce((s,b)=>s+(b.alc?.qty||0),0);
@@ -3086,21 +3092,21 @@ function productStock(productId){
   let allocProdAlc=0,allocIntAlc=0,allocProdGly=0,allocIntGly=0;
   pb.forEach(b=>{
     const bAProd=(b.alc?.alloc?.prod||(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0))||0;
-    const bAInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
+    const bAInt=(b.alc?.alloc?.int||0);
     const bGProd=(b.gly?.alloc?.prod||(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0))||0;
-    const bGInt=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+    const bGInt=(b.gly?.alloc?.int||0);
     allocProdAlc+=bAProd>0||bAInt>0 ? bAProd : (b.alc?.qty||0);
     allocIntAlc +=bAInt;
     allocProdGly+=bGProd>0||bGInt>0 ? bGProd : (b.gly?.qty||0);
     allocIntGly +=bGInt;
   });
-  // sold per purpose: malo+velo+wp+kom = prodaja, int+dar = interno (dar se alocira skupaj z int)
+  // prodano po namenu: interno je samo kanal 'int', vse ostalo (vkljucno s promo) je prodaja
   let soldProdAlc=0,soldIntAlc=0,soldProdGly=0,soldIntGly=0;
   let komAlc=0,komGly=0;
   saleGroups.forEach(g=>{
     if(g.status==='stornirano')return; // ignore stornated sales
     const l=g.lines?.find(x=>x.productId===productId);if(!l)return;
-    const isProd=g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom';
+    const isProd=stockIsProdCh(g.channel);
     if(isProd){soldProdAlc+=(l.alc||0);soldProdGly+=(l.gly||0);}
     else{soldIntAlc+=(l.alc||0);soldIntGly+=(l.gly||0);}
     if(g.channel==='kom'){komAlc+=(l.alc||0);komGly+=(l.gly||0);}
@@ -4110,12 +4116,12 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
     // For internal purpose - only take from internally allocated qty
     let avAlc,avGly;
     if(purpose==='int'){
-      const allocInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
+      const allocInt=(b.alc?.alloc?.int||0);
+      const allocIntGly=(b.gly?.alloc?.int||0);
       // internally available = allocated for internal - already sold internally
-      const soldInt=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+      const soldInt=saleGroups.filter(STOCK_INT_CHANNELS)
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldIntGly=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+      const soldIntGly=saleGroups.filter(STOCK_INT_CHANNELS)
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       avAlc=Math.max(0,Math.min(allocInt-soldInt, totalAvAlc));
       avGly=Math.max(0,Math.min(allocIntGly-soldIntGly, totalAvGly));
@@ -4123,16 +4129,16 @@ function fifoAllocate(productId, reqAlc, reqGly, purpose='prod'){
       // For prod - only take from prod-allocated qty, never from internal allocation
       const allocProd=b.alc?.alloc?.prod!=null?b.alc.alloc.prod:(b.alc?.alloc?.malo||0)+(b.alc?.alloc?.velo||0);
       const allocProdGly=b.gly?.alloc?.prod!=null?b.gly.alloc.prod:(b.gly?.alloc?.malo||0)+(b.gly?.alloc?.velo||0);
-      const soldProd=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom')
+      const soldProd=saleGroups.filter(g=>stockIsProdCh(g.channel))
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldProdGly=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom')
+      const soldProdGly=saleGroups.filter(g=>stockIsProdCh(g.channel))
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       // Internal reservation that still hasn't been consumed by int sales
-      const allocInt=(b.alc?.alloc?.int||0)+(b.alc?.alloc?.dar||0);
-      const allocIntGly=(b.gly?.alloc?.int||0)+(b.gly?.alloc?.dar||0);
-      const soldIntB=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+      const allocInt=(b.alc?.alloc?.int||0);
+      const allocIntGly=(b.gly?.alloc?.int||0);
+      const soldIntB=saleGroups.filter(STOCK_INT_CHANNELS)
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-      const soldIntBGly=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar')
+      const soldIntBGly=saleGroups.filter(STOCK_INT_CHANNELS)
         .reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===productId);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
       const netIntReserved=Math.max(0,allocInt-soldIntB);
       const netIntReservedGly=Math.max(0,allocIntGly-soldIntBGly);
@@ -4313,7 +4319,11 @@ async function confirmOrder(withInvoice){
   // stock check per channel
   const byProduct={};
   lines.forEach(l=>{byProduct[l.p.id]={p:l.p,alc:l.alc,gly:l.gly};});
-  const isProdCh=ch==='malo'||ch==='velo'||ch==='kom';
+  // Iz interne zaloge crpa samo kanal 'int' - enako kot razporeditev nize
+  // (purpose = orderChannel==='int' ? 'int' : 'prod'). Promo in komisija gresta
+  // iz prodajne zaloge, sicer bi preverba blokirala vnos, ki bi ga razporeditev
+  // sicer brez tezav izvedla.
+  const isProdCh=ch!=='int';
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
     const avAlc=isProdCh?st.prodAlc:st.intAlc;
@@ -4341,10 +4351,10 @@ if(!Object.keys(pendingBatchAlloc).length){
   });
     if(unfulfilled){
       // Not enough stock for this channel - block and offer alternatives
-      const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
+      const isProd=orderChannel!=='int';
       const altMsg=isProd
         ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
-        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Prodaj prek maloprodaje namesto interno';
+        : '\n\nMožnosti:\n• Zmanjšaj količino\n• Poveča interno razporeditev v seriji';
       await showConfirm(`⛔ Ni dovolj zalog:\n\n${warnings.join('\n')}${altMsg}`,'Zapri');
       pendingBatchAlloc={};
       return;
@@ -4841,7 +4851,7 @@ function aaAddArticle(){
   const glyP=parseNum(document.getElementById('aaAddGlyPrice').value)||0;
   const lineTotal=(alc*alcP)+(gly*glyP);
   const st=productStock(pid);
-  const isProd=g.channel==='malo'||g.channel==='velo';
+  const isProd=g.channel!=='int';
   const avAlc=isProd?st.prodAlc:st.intAlc;
   const avGly=isProd?st.prodGly:st.intGly;
   if(alc>avAlc){toast(`⛔ Ni dovolj 🥃 na zalogi (na voljo: ${avAlc})`);return;}

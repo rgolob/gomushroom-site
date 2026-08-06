@@ -72,6 +72,15 @@ const PRODUCT_META = {
 
 // ── Živi podatki iz Supabase (cena, popust, zaloga) ──────────────────────────
 
+// Varnostna zaloga pomeni "nizka zaloga", ne "ni na zalogi": dokler je na voljo
+// vsaj en kos, izdelek v feedu ostane razpolozljiv. Status iz baze upostevamo le,
+// kadar kolicine ni.
+function gmInStock(stock) {
+  const qty = Number(stock && stock.qty_available);
+  if (Number.isFinite(qty)) return qty > 0;
+  return ((stock && stock.stock_status) || 'in_stock') !== 'out_of_stock';
+}
+
 async function fetchLiveProducts() {
   const [prodRes, varRes, stockRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
@@ -97,7 +106,7 @@ async function fetchLiveProducts() {
             sku: v.sku || '',
             price_malo: Number(v.price_malo) || 0,
             discount_pct: Number(v.discount_pct) || 0,
-            in_stock: (stock.stock_status || 'in_stock') !== 'out_of_stock',
+            in_stock: gmInStock(stock),
           };
         }),
     }));

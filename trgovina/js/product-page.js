@@ -54,6 +54,19 @@ function priceHtml(v) {
   return `<span class="price">${formatPrice(v.price_malo)}</span>`;
 }
 
+
+// Varnostna zaloga pomeni "nizka zaloga", ne "ni na zalogi": dokler je na voljo
+// vsaj en kos, izdelka ne smemo prikazati kot razprodanega. Zato se zanesemo na
+// qty_available in status iz baze uporabimo le, kadar kolicine ni oz. je 0.
+function gmStockFlags(stock) {
+  const raw = (stock && stock.stock_status) || 'in_stock';
+  const qty = Number(stock && stock.qty_available);
+  const hasQty = Number.isFinite(qty);
+  const outOfStock = hasQty ? qty <= 0 : raw === 'out_of_stock';
+  const lowStock = !outOfStock && (raw === 'low_stock' || raw === 'out_of_stock');
+  return { in_stock: !outOfStock, low_stock: lowStock, qty_available: hasQty ? qty : 0 };
+}
+
 async function loadProductVariants() {
   const [prodRes, varRes, stockRes, settingsRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/gm_products?slug=eq.${PRODUCT_SLUG}&select=*`, { headers: SB_HEADERS }),
@@ -80,13 +93,13 @@ async function loadProductVariants() {
     .filter(v => v.product_id === product.id)
     .map(v => {
       const stock = stockMap[v.id] || {};
-      const status = stock.stock_status || 'in_stock';
+      const flags = gmStockFlags(stock);
       return {
         ...v,
         discount_pct: Number(v.discount_pct) || 0,
         price_malo: Number(v.price_malo) || 0,
-        in_stock: status !== 'out_of_stock',
-        low_stock: status === 'low_stock'
+        in_stock: flags.in_stock,
+        low_stock: flags.low_stock
       };
     });
 

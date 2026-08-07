@@ -2201,13 +2201,28 @@ const EXPENSE_CATS={
   drugo:'Drugo'
 };
 
+let _expensesLoaded=false;
+
 async function loadExpenses(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/gm_expenses?select=*&order=date.desc`,{headers:SB_HEADERS});
     if(!r.ok)return;
     _expenses=await r.json();
+    _expensesLoaded=true;
     renderPorocilo();
   }catch(e){console.error('loadExpenses',e);}
+}
+
+// Stroske potrebuje tudi porocilo prodaje (neto prihodek), ki pa ne sme
+// sprozati renderPorocilo() - zavihek Dobicek takrat ni nujno odprt.
+async function ensureExpenses(){
+  if(_expensesLoaded)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/gm_expenses?select=*&order=date.desc`,{headers:SB_HEADERS});
+    if(!r.ok)return;
+    _expenses=await r.json();
+    _expensesLoaded=true;
+  }catch(e){console.error('ensureExpenses',e);}
 }
 
 async function saveExpense(data){
@@ -6336,6 +6351,7 @@ function openReportSheet(type){
     document.getElementById('rs-od').value=d.toISOString().slice(0,10);
   } else if(type==='prodaja'){
     document.getElementById('rpFilters').style.display='';
+    ensureExpenses();   // za izracun neto prihodka po mesecih
     const d=new Date();
     document.getElementById('rp-do').value=todayISO();
     document.getElementById('rp-od').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
@@ -6693,6 +6709,14 @@ function genReport(type){
     const showObdobja=document.getElementById('rp-obdobja')?.checked!==false;
     const showVrstice=document.getElementById('rp-vrstice')?.checked!==false;
 
+    // Stroski so potrebni za neto prihodek. Ce jih se nimamo, jih naloziva in
+    // porocilo prerisemo - le ce je takrat se odprto.
+    if(showObdobja&&!_expensesLoaded){
+      ensureExpenses().then(()=>{
+        if(_expensesLoaded&&_currentReportType==='prodaja'&&document.getElementById('reportViewOverlay'))genReport('prodaja');
+      });
+    }
+
     // Ali vrstica ustreza izbranemu produktu / seriji
     const lineMatch=l=>
       (!filterProd||l.productId===filterProd)&&
@@ -6770,19 +6794,100 @@ function genReport(type){
         });
         if(had){byM[k].n++;if(!filtriran)byM[k].rev+=(g.total||0);}
       });
-      const keys=Object.keys(byM).sort();
-      if(keys.length){
+
+      // Prikazemo VSE mesece obdobja, tudi tiste brez prodaje - sicer je
+      // povprecje na mesec napihnjeno (deli se le z meseci, ki so imeli promet).
+      const sold=Object.keys(byM).sort();
+      const monthKeys=(()=>{
+        let start=od?od.slice(0,7):sold[0];
+        let end=doVal?doVal.slice(0,7):sold[sold.length-1];
+        if(!start||!end)return sold;
+        // Ce je kaksna prodaja izven izbranega obdobja, razsirimo razpon.
+        sold.forEach(k=>{if(k<start)start=k;if(k>end)end=k;});
+        const out=[];
+        let[y,m]=start.split('-').map(Number);
+        const[ey,em]=end.split('-').map(Number);
+        let guard=0;
+        while((y<ey||(y===ey&&m<=em))&&guard++<600){
+          out.push(`${y}-${String(m).padStart(2,'0')}`);
+          if(++m>12){m=1;y++;}
+        }
+        return out;
+      })();
+
+      // Stroski s.p. za isto obdobje. Negativen znesek = prihodek (npr. povracilo
+      // trosarine), zato se sesteva z isto formulo in neto ustrezno zvisa.
+      const expByM={};
+      let totalExp=0;
+      (_expenses||[]).forEach(e=>{
+        if(!e.date)return;
+        if(od&&e.date<od)return;
+        if(doVal&&e.date>doVal)return;
+        const k=e.date.slice(0,7);
+        if(!monthKeys.includes(k))return;
+        const amt=parseFloat(e.amount)||0;
+        expByM[k]=(expByM[k]||0)+amt;
+        totalExp+=amt;
+      });
+
+      // Neto ima smisel samo, ce je prikazan celoten promet. Ob filtru po
+      // produktu ali seriji bi celotne stroske s.p. odsteli od delnega prihodka.
+      const showNeto=showPrices&&!filtriran;
+      const nM=monthKeys.length;
+      const totalNeto=totalRev-totalExp;
+
+      if(monthKeys.length){
+        const eur=v=>`${v.toFixed(2)} €`;
+        const dim='color:#a9a094';
+
+        // Kolicine in bruto. Stroskov namenoma ne dodajava sem - na telefonu
+        // bi tabela zrasla na 8 stolpcev in zadnji dva bi padla iz zaslona.
         obdobjaHtml=`<h3 style="font-size:.9rem;margin:1.2rem 0 .4rem">Po mesecih</h3>
         <div style="overflow-x:auto"><table>
-          <thead><tr><th>Mesec</th><th style="text-align:right">🥃 Alc</th><th style="text-align:right">🌿 Gly</th><th style="text-align:right">Skupaj kom.</th><th style="text-align:right">Prodaj</th>${showPrices?'<th style="text-align:right">Znesek</th>':''}</tr></thead>
+          <thead><tr><th>Mesec</th><th style="text-align:right">🥃 Alc</th><th style="text-align:right">🌿 Gly</th><th style="text-align:right">Skupaj kom.</th><th style="text-align:right">Prodaj</th>${showPrices?'<th style="text-align:right">Bruto</th>':''}</tr></thead>
           <tbody>
-          ${keys.map(k=>{
-            const v=byM[k];const[y,m]=k.split('-');
-            return `<tr><td style="white-space:nowrap">${MES[parseInt(m)]} ${y}</td><td class="num">${v.alc}</td><td class="num">${v.gly}</td><td class="num"><strong>${v.alc+v.gly}</strong></td><td class="num">${v.n}</td>${showPrices?`<td class="num">${v.rev.toFixed(2)} €</td>`:''}</tr>`;
+          ${monthKeys.map(k=>{
+            const v=byM[k]||{alc:0,gly:0,rev:0,n:0};
+            const[y,m]=k.split('-');
+            const prazen=!v.n;
+            const st=prazen?` style="${dim}"`:'';
+            return `<tr${prazen?' style="background:rgba(0,0,0,.015)"':''}><td style="white-space:nowrap${prazen?';'+dim:''}">${MES[parseInt(m)]} ${y}</td><td class="num"${st}>${v.alc}</td><td class="num"${st}>${v.gly}</td><td class="num"${st}><strong>${v.alc+v.gly}</strong></td><td class="num"${st}>${v.n}</td>${showPrices?`<td class="num"${st}>${eur(v.rev)}</td>`:''}</tr>`;
           }).join('')}
-          <tr><td style="font-weight:600">Skupaj</td><td class="num" style="font-weight:600">${totalAlc}</td><td class="num" style="font-weight:600">${totalGly}</td><td class="num" style="font-weight:600">${totalQty}</td><td class="num" style="font-weight:600">${filtered.length}</td>${showPrices?`<td class="num" style="font-weight:600">${totalRev.toFixed(2)} €</td>`:''}</tr>
+          <tr style="border-top:2px solid rgba(26,18,9,.25)"><td style="font-weight:600">Skupaj</td><td class="num" style="font-weight:600">${totalAlc}</td><td class="num" style="font-weight:600">${totalGly}</td><td class="num" style="font-weight:600">${totalQty}</td><td class="num" style="font-weight:600">${filtered.length}</td>${showPrices?`<td class="num" style="font-weight:600">${eur(totalRev)}</td>`:''}</tr>
+          ${nM?`<tr><td style="white-space:nowrap;color:#7a6f60">ø na mesec</td><td class="num" style="color:#7a6f60">${(totalAlc/nM).toFixed(1)}</td><td class="num" style="color:#7a6f60">${(totalGly/nM).toFixed(1)}</td><td class="num" style="color:#7a6f60">${(totalQty/nM).toFixed(1)}</td><td class="num" style="color:#7a6f60">${(filtered.length/nM).toFixed(1)}</td>${showPrices?`<td class="num" style="color:#7a6f60">${eur(totalRev/nM)}</td>`:''}</tr>`:''}
           </tbody>
         </table></div>`;
+
+        // Locena, ozja tabela za denar - ostane berljiva tudi na telefonu.
+        if(showNeto){
+          obdobjaHtml+=`<h3 style="font-size:.9rem;margin:1.2rem 0 .4rem">Prihodek in stroški po mesecih</h3>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Mesec</th><th style="text-align:right">Bruto</th><th style="text-align:right">Stroški</th><th style="text-align:right">Neto</th></tr></thead>
+            <tbody>
+            ${monthKeys.map(k=>{
+              const v=byM[k]||{alc:0,gly:0,rev:0,n:0};
+              const[y,m]=k.split('-');
+              const ex=expByM[k]||0;
+              const net=v.rev-ex;
+              const prazen=!v.n;
+              return `<tr${prazen?' style="background:rgba(0,0,0,.015)"':''}><td style="white-space:nowrap${prazen?';'+dim:''}">${MES[parseInt(m)]} ${y}</td><td class="num"${prazen?` style="${dim}"`:''}>${eur(v.rev)}</td><td class="num" style="color:${ex>0?'#c0392b':ex<0?'#2d6a4f':'#a9a094'}">${ex?eur(-ex):'—'}</td><td class="num" style="font-weight:600;color:${net<0?'#c0392b':'#2d6a4f'}">${eur(net)}</td></tr>`;
+            }).join('')}
+            <tr style="border-top:2px solid rgba(26,18,9,.25)"><td style="font-weight:600">Skupaj</td><td class="num" style="font-weight:600">${eur(totalRev)}</td><td class="num" style="font-weight:600;color:${totalExp>0?'#c0392b':'#2d6a4f'}">${totalExp?eur(-totalExp):'—'}</td><td class="num" style="font-weight:600;color:${totalNeto<0?'#c0392b':'#2d6a4f'}">${eur(totalNeto)}</td></tr>
+            ${nM?`<tr><td style="white-space:nowrap;color:#7a6f60">ø na mesec</td><td class="num" style="color:#7a6f60">${eur(totalRev/nM)}</td><td class="num" style="color:#7a6f60">${totalExp?eur(-totalExp/nM):'—'}</td><td class="num" style="color:#7a6f60;font-weight:600">${eur(totalNeto/nM)}</td></tr>`:''}
+            </tbody>
+          </table></div>`;
+        }
+
+        if(showPrices){
+          obdobjaHtml+=`<div class="summary-box" style="margin-top:.6rem">
+            <div class="s-item"><div class="s-label">Mesecev v obdobju</div><div class="s-val">${nM}</div><div class="s-sub">${nM-sold.length} brez prodaje</div></div>
+            <div class="s-item"><div class="s-label">ø bruto / mesec</div><div class="s-val" style="color:#3a6b4a">${eur(totalRev/nM)}</div></div>
+            ${showNeto?`<div class="s-item"><div class="s-label">ø stroški / mesec</div><div class="s-val" style="color:#c0392b">${eur(-totalExp/nM)}</div></div>
+            <div class="s-item"><div class="s-label">ø neto / mesec</div><div class="s-val" style="color:${totalNeto<0?'#c0392b':'#3a6b4a'}">${eur(totalNeto/nM)}</div></div>`:''}
+          </div>
+          ${showNeto?`<div style="font-size:.68rem;color:#7a6f60;margin:-.6rem 0 1rem">Neto = bruto prihodek − stroški s.p. iz Poročila dobička za isto obdobje (akontacija, prispevki, nabava, drugo; povračila štejejo v plus). Poštnina in stroški materiala serij niso vključeni.</div>`
+          :filtriran?`<div style="font-size:.68rem;color:#7a6f60;margin:-.6rem 0 1rem">Neto ni prikazan, ker je vklopljen filter po produktu ali seriji — stroški s.p. se ne dajo razdeliti na posamezen produkt.</div>`:''}`;
+        }
       }
     }
 

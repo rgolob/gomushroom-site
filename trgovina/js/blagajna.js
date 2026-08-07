@@ -41,9 +41,13 @@ async function gmEnsureTracking() {
     s.src = '/js/analytics.js';
     document.body.appendChild(s);
   }
+  // Cakamo tudi na gtag: definira ga cookie-consent.js, ki ga site-footer.js
+  // nalozi sele prek verige ga-dev-toggle.js -> onload -> cookie-consent.js.
+  // analytics.js gre v DOM takoj, zato to tekmo pogosto dobi in gmTrack() vidi
+  // gtag kot undefined ter event tiho zavrze.
   await Promise.all([
     consent === 'all' ? gmWaitFor(() => typeof gmFbPurchase === 'function') : Promise.resolve(),
-    gmWaitFor(() => typeof gmPurchase === 'function'),
+    gmWaitFor(() => typeof gmPurchase === 'function' && typeof window.gtag === 'function'),
   ]);
 }
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
@@ -1589,7 +1593,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   renderSummary();
-  // GA4 - begin_checkout (prihod na blagajno)
+  // GA4 - begin_checkout (prihod na blagajno). Enak razlog za cakanje kot pri
+  // purchase: analytics.js naloži site-footer.js sele dinamicno, zato se je
+  // begin_checkout brez tega tiho izgubil, kadar je bil prenos pocasnejsi od
+  // odgovora Supabase.
+  await gmEnsureTracking();
   if (typeof gmInitCheckoutPage === 'function') gmInitCheckoutPage();
   try { updateCartBadge && updateCartBadge(); } catch(e) {}
 

@@ -177,8 +177,13 @@ function initProductPage(variants, product) {
   // Init z alkoholno varianto
   updateUI(activeVariant);
 
-  // GA4 + Meta Pixel - view_item / ViewContent
-  if (typeof gmViewItem === 'function' && product) gmViewItem(product, activeVariant);
+  // GA4 + Meta Pixel - view_item / ViewContent. Počakamo, da sta analytics.js
+  // in gtag na voljo, sicer se event izgubi (glej gmWhenTracking v cart.js).
+  if (product && typeof gmWhenTracking === 'function') {
+    gmWhenTracking('gmViewItem').then(ok => { if (ok) gmViewItem(product, activeVariant); });
+  } else if (typeof gmViewItem === 'function' && product) {
+    gmViewItem(product, activeVariant);
+  }
   if (typeof gmFbViewContent === 'function' && product) gmFbViewContent(product, activeVariant);
 }
 

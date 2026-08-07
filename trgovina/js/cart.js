@@ -1,5 +1,29 @@
 const CART_KEY = "gomushroom_cart";
 
+// ── GA4: počakaj, da je sledenje res pripravljeno ─────────
+// site-footer.js analytics.js (gm* funkcije) doda v DOM takoj, gtag pa nastane
+// šele prek verige ga-dev-toggle.js → onload → cookie-consent.js. Klicatelji,
+// ki event sprožijo takoj po odgovoru Supabase (view_item_list, view_item,
+// view_cart), zato pogosto zadenejo trenutek, ko eno od obojega še ne obstaja -
+// gmTrack() event tiho zavrže in v GA4 ga sploh ni.
+// cart.js je naložen na vseh straneh trgovine (SL in EN), zato pomočnik živi tu.
+function gmTrackingReady(fnName) {
+  return typeof window[fnName] === 'function' && typeof window.gtag === 'function';
+}
+function gmWhenTracking(fnName, timeoutMs = 3000, intervalMs = 100) {
+  return new Promise(resolve => {
+    if (gmTrackingReady(fnName)) return resolve(true);
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const ready = gmTrackingReady(fnName);
+      if (ready || Date.now() - start > timeoutMs) {
+        clearInterval(timer);
+        resolve(ready);
+      }
+    }, intervalMs);
+  });
+}
+
 const CART_LANG = document.documentElement.lang === 'en' ? 'en' : 'sl';
 const CART_HOME = CART_LANG === 'en' ? '/en/shop/cart/' : '/trgovina/kosarica/';
 const CART_STR = CART_LANG === 'en'

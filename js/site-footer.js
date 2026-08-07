@@ -110,7 +110,12 @@ document.addEventListener("DOMContentLoaded", () => {
     loadScriptOnce("/js/meta-pixel.js");
   }
 
-  if (path === "/trgovina" || path.startsWith("/trgovina/")) {
+  // GA4 ecommerce. Angleska trgovina zivi na /en/shop/ in uporablja iste
+  // skripte (shop.js, product-page.js, cart-page.js, blagajna.js), ki evente
+  // posiljajo prek `typeof gmAddToCart === 'function'` - brez analytics.js ta
+  // pogoj tiho odpove in celotna EN trgovina ostane brez sledenja.
+  if (path === "/trgovina" || path.startsWith("/trgovina/") ||
+      path === "/en/shop"  || path.startsWith("/en/shop/")) {
     loadScriptOnce("/js/analytics.js");
   }
 });

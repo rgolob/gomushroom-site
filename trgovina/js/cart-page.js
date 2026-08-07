@@ -259,12 +259,18 @@ document.addEventListener('click', e => {
     const kupon = document.getElementById('kupon-input')?.value?.trim() || '';
     sessionStorage.setItem('gm_kupon', kupon);
     const total = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
-    if (typeof gmBeginCheckout === 'function') gmBeginCheckout(cart, total, kupon);
+    // GA4 begin_checkout tukaj NE pošiljamo - pošlje ga blagajna ob prihodu
+    // (gmInitCheckoutPage). Prej sta se sprožila oba in je bil begin_checkout
+    // v GA4 štet dvakrat na eno sejo.
     if (typeof gmFbInitiateCheckout === 'function') gmFbInitiateCheckout(cart, total);
     window.location.href = CP_CHECKOUT_URL;
   }
 });
 
+// analytics.js naloži site-footer.js dinamično (defer), zato ob DOMContentLoaded
+// še ni nujno tu. Prej se je view_cart v takem primeru tiho izgubil - ali je
+// event odšel ali ne, je bilo odvisno samo od tega, kdo je bil hitrejši:
+// prenos analytics.js ali odgovor Supabase. Zato ga počakamo.
 document.addEventListener('DOMContentLoaded', async () => {
   // Izdelke izriši takoj iz localStorage (ne čakaj na omrežje) -
   // šele nato dopolni s poštnino/popusti, ki potrebujejo gm_settings.
@@ -272,6 +278,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindKupon();
   await loadSettings();
   renderCart();
-  // GA4 - view_cart
-  if (typeof gmInitCartPage === 'function') gmInitCartPage();
+  // GA4 - view_cart. Počakamo, da sta analytics.js in gtag na voljo, sicer se
+  // event izgubi (glej gmWhenTracking v cart.js).
+  if (typeof gmWhenTracking === 'function') {
+    if (await gmWhenTracking('gmInitCartPage')) gmInitCartPage();
+  } else if (typeof gmInitCartPage === 'function') {
+    gmInitCartPage();
+  }
 });

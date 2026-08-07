@@ -401,8 +401,13 @@ function renderShopGrid(products) {
   }).join('');
 
   bindVariantPickers(products);
-  // GA4 - view_item_list
-  if (typeof gmViewItemList === 'function') gmViewItemList(products);
+  // GA4 - view_item_list. Ne blokira izrisa; počaka le, da analytics.js in gtag
+  // obstajata, sicer se event izgubi (glej gmWhenTracking v cart.js).
+  if (typeof gmWhenTracking === 'function') {
+    gmWhenTracking('gmViewItemList').then(ok => { if (ok) gmViewItemList(products); });
+  } else if (typeof gmViewItemList === 'function') {
+    gmViewItemList(products);
+  }
 }
 
 // ── Variant picker ────────────────────────────────────────

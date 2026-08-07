@@ -41,6 +41,7 @@ function gmProductToItem(product, variant, index = 0) {
 function gmViewItemList(products) {
   if (!products?.length) return;
   gmTrack('view_item_list', {
+    currency: 'EUR',   // brez tega GA4 cen iz items ne uposteva
     item_list_id: 'shop_grid',
     item_list_name: 'Trgovina',
     items: products.flatMap((p, pi) =>

@@ -267,6 +267,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="view-title">Masna bilanca</div>
       <div style="display:flex;gap:.4rem">
         <button class="hbtn2" onclick="openMeSheet()">🧮 ME</button>
+        <button class="hbtn2" onclick="openGlySheet()">🧴 GLY</button>
         <button class="hbtn2" onclick="openZdruziSheet()">⊕ Združi</button>
         <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
       </div>
@@ -742,6 +743,78 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('rdOverlay')">Prekliči</button>
       <button class="bsave" onclick="saveRD()">Shrani</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: PRERACUN GLICERINSKE TINKTURE -->
+<div class="overlay" id="glyOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">🧴 Glicerinska tinktura — priprava</span>
+      <button class="shclose" onclick="closeSheet('glyOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Serija</label><input id="glySerija" placeholder="npr. R25" autocapitalize="characters" oninput="calcGly()"></div>
+        <div class="field"><label>Ciljni delež glicerina (%)</label><input id="glyCilj" type="text" inputmode="decimal" placeholder="75" oninput="calcGly()"></div>
+      </div>
+      <div class="field"><label>Delež se nanaša na</label>
+        <select id="glyOsnova" onchange="calcGly()">
+          <option value="celota">celotno tinkturo — s suho snovjo</option>
+          <option value="topilo">topilo — brez suhe snovi (glicerin + voda)</option>
+        </select>
+      </div>
+
+      <div class="dn-block-alc">
+        <div class="slabel-alc">📏 Meritve začetne tinkture</div>
+        <div class="frow">
+          <div class="field"><label>m₀ — masa (g)</label><input id="glyM0" type="text" inputmode="decimal" placeholder="npr. 2765" oninput="calcGly()"></div>
+          <div class="field"><label>ρ₀ — gostota (g/mL)</label><input id="glyRho0" type="text" inputmode="decimal" placeholder="npr. 0,9787" oninput="calcGly()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Lod — suha snov (%)</label><input id="glyLod" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="calcGly()"></div>
+          <div class="field"><label>Voda že prisotna (g)</label><input id="glyVodaZe" type="text" inputmode="decimal" placeholder="npr. 104,6" oninput="calcGly()"></div>
+        </div>
+      </div>
+
+      <div class="dn-block-alc" style="border-left-color:#3a6b4a">
+        <div class="slabel-alc" style="color:#3a6b4a">🧴 Dodatki</div>
+        <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:0 0 .4rem">
+          Levo: skupni delež v <strong>končni</strong> glicerinski tinkturi. Desno: delež, ki je
+          že v <strong>alkoholni osnovi</strong>. Doda se razlika.
+        </div>
+        <div class="frow">
+          <div class="field"><label>C vitamin — skupaj (%)</label><input id="glyCVitPct" type="text" inputmode="decimal" placeholder="0,7" oninput="calcGly()"></div>
+          <div class="field"><label>C vitamin — že v alk. (%)</label><input id="glyCVitZePct" type="text" inputmode="decimal" placeholder="0,2" oninput="calcGly()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Lecitin — skupaj (%)</label><input id="glyLecPct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
+          <div class="field"><label>Lecitin — že v alk. (%)</label><input id="glyLecZePct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
+        </div>
+      </div>
+
+      <details style="margin:.2rem 0 .6rem">
+        <summary style="font-size:.72rem;color:var(--muted);cursor:pointer;padding:.3rem 0">Konstante (ρ glicerina, ρ vode, skrček, ρ ekstrakta)</summary>
+        <div class="frow" style="margin-top:.4rem">
+          <div class="field"><label>ρ glicerin (g/mL)</label><input id="glyRhoGly" type="text" inputmode="decimal" placeholder="1,261" oninput="calcGly()"></div>
+          <div class="field"><label>ρ voda (g/mL)</label><input id="glyRhoW" type="text" inputmode="decimal" placeholder="0,998" oninput="calcGly()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>K — skrček (%)</label><input id="glyK" type="text" inputmode="decimal" placeholder="0,8" oninput="calcGly()"></div>
+          <div class="field"><label>ρ ekstrakt (g/mL)</label><input id="glyRhoExt" type="text" inputmode="decimal" placeholder="1,2" oninput="calcGly()"></div>
+        </div>
+      </details>
+
+      <div id="glyIzpis"></div>
+      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:.5rem">
+        Končna količina je določena tako, da tinktura zavzame <strong>enak volumen kot začetna</strong>
+        (V₀ = m₀/ρ₀), pri čemer je upoštevan skrček pri mešanju glicerina z vodo.
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('glyOverlay')">Zapri</button>
     </div>
   </div>
 </div>
@@ -1238,6 +1311,135 @@ function renderMeBilChips(){
         style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">
         ${v.oznaka} <strong>${v.volPct.toLocaleString('sl-SI',{maximumFractionDigits:2})}</strong> vol%</button>`).join('')}
     </div></div>`;
+}
+
+// ── PRERACUN GLICERINSKE TINKTURE ─────────────────────────
+// Alkoholni tinkturi odvzamemo topilo in ga nadomestimo z glicerinom in vodo
+// tako, da tinktura zavzame enak volumen kot prej (V0 = m0/ro0). Pri mesanju
+// glicerina z vodo se volumen skrci (K), zato je skrcek upostevan pri iskanju
+// koncne mase - sicer bi dobili prevelik volumen.
+//
+// osnova='celota': ciljni delez velja za celotno tinkturo, torej tudi suha snov
+//   steje v imenovalec:  gly / (gly + voda + suha snov) = w
+// osnova='topilo':  ciljni delez velja samo za topilo:  gly / (gly + voda) = w
+const GLY_PRIVZETO={ciljPct:75,rhoGly:1.261,rhoW:0.998,kPct:0.8,rhoExt:1.2,
+  cVitPct:0.7,cVitZePct:0.2,lecPct:0.3,lecZePct:0.3};
+
+function glyRacun(o){
+  const mExt=o.m0*o.lodPct/100;
+  const v0=o.rho0>0?o.m0/o.rho0:0;
+  const vExt=o.rhoExt>0?mExt/o.rhoExt:0;
+  const c=1-o.kPct/100;               // faktor skrcka
+  const w=o.ciljPct/100;
+  const specV=w/o.rhoGly+(1-w)/o.rhoW; // volumen topila na gram topila
+  let mTot,gly,voda;
+  if(o.osnova==='topilo'){
+    // V0 = vExt + (gly/roGly + voda/roW)*c,  gly=w*S, voda=(1-w)*S
+    const S=specV*c>0?(v0-vExt)/(specV*c):0;
+    gly=w*S; voda=S-gly; mTot=S+mExt;
+  } else {
+    // V0 = vExt + (w*M/roGly + (M - w*M - mExt)/roW)*c
+    const imenovalec=specV;
+    mTot=imenovalec>0?((v0-vExt)/c+mExt/o.rhoW)/imenovalec:0;
+    gly=w*mTot; voda=mTot-gly-mExt;
+  }
+  const vodaDodati=voda-o.vodaZe;
+  // Dodatka se dozirata na koncno maso glicerinske tinkture, del pa je ze v
+  // alkoholni osnovi (odstotek od njene mase m0), zato se doda samo razlika.
+  // C vitamin: skupaj 0,7 %, v alkoholni 0,2 %.
+  // Lecitin: skupaj 0,3 %, v alkoholni prav tako 0,3 % - ker je glicerinska
+  // tinktura tezja, se doda razlika v masi krat 0,3 %.
+  return {
+    mExt,v0,vExt,mTot,gly,voda,vodaDodati,
+    cVit:mTot*o.cVitPct/100-o.m0*o.cVitZePct/100,
+    cVitSkupaj:mTot*o.cVitPct/100,
+    cVitZe:o.m0*o.cVitZePct/100,
+    lecitin:mTot*o.lecPct/100-o.m0*o.lecZePct/100,
+    lecitinSkupaj:mTot*o.lecPct/100,
+    lecitinZe:o.m0*o.lecZePct/100,
+    kosov50:v0/50,
+    // Kontrola: dejanski delez po izbrani osnovi in dosezeni volumen.
+    delezDejanski:o.osnova==='topilo'?(gly+voda>0?gly/(gly+voda)*100:0)
+                                     :(mTot>0?gly/mTot*100:0),
+    vKoncni:vExt+(gly/o.rhoGly+voda/o.rhoW)*c,
+  };
+}
+
+function openGlySheet(){
+  const s=JSON.parse(localStorage.getItem('gm_dn_gly_zadnji')||'null')||{};
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
+  set('glySerija',s.serija??'');
+  set('glyCilj',s.ciljPct??GLY_PRIVZETO.ciljPct);
+  document.getElementById('glyOsnova').value=s.osnova||'celota';
+  set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
+  set('glyVodaZe',s.vodaZe??'');
+  set('glyCVitPct',s.cVitPct??GLY_PRIVZETO.cVitPct);set('glyCVitZePct',s.cVitZePct??GLY_PRIVZETO.cVitZePct);
+  set('glyLecPct',s.lecPct??GLY_PRIVZETO.lecPct);set('glyLecZePct',s.lecZePct??GLY_PRIVZETO.lecZePct);
+  set('glyRhoGly',s.rhoGly??GLY_PRIVZETO.rhoGly);set('glyRhoW',s.rhoW??GLY_PRIVZETO.rhoW);
+  set('glyK',s.kPct??GLY_PRIVZETO.kPct);set('glyRhoExt',s.rhoExt??GLY_PRIVZETO.rhoExt);
+  calcGly();
+  openSheet('glyOverlay');
+}
+
+function calcGly(){
+  const num=(id,priv)=>{const v=document.getElementById(id).value;return v===''?(priv??0):parseNum(v);};
+  const o={
+    serija:document.getElementById('glySerija').value.trim(),
+    osnova:document.getElementById('glyOsnova').value,
+    ciljPct:num('glyCilj',GLY_PRIVZETO.ciljPct),
+    m0:num('glyM0'),rho0:num('glyRho0'),lodPct:num('glyLod'),vodaZe:num('glyVodaZe'),
+    cVitPct:num('glyCVitPct',GLY_PRIVZETO.cVitPct),cVitZePct:num('glyCVitZePct',GLY_PRIVZETO.cVitZePct),
+    lecPct:num('glyLecPct',GLY_PRIVZETO.lecPct),lecZePct:num('glyLecZePct',GLY_PRIVZETO.lecZePct),
+    rhoGly:num('glyRhoGly',GLY_PRIVZETO.rhoGly),rhoW:num('glyRhoW',GLY_PRIVZETO.rhoW),
+    kPct:num('glyK',GLY_PRIVZETO.kPct),rhoExt:num('glyRhoExt',GLY_PRIVZETO.rhoExt),
+  };
+  const izpis=document.getElementById('glyIzpis');
+  if(!o.m0||!o.rho0){
+    izpis.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso in gostoto začetne tinkture.</div>';
+    return;
+  }
+  const r=glyRacun(o);
+  const n=(v,d=1)=>v.toLocaleString('sl-SI',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const pct=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:3});
+  const vrstica=(oznaka,vrednost,enota,poudari)=>`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:.32rem 0;border-bottom:1px solid var(--border)${poudari?';font-weight:700':''}">
+      <span style="font-size:.78rem;color:${poudari?'var(--ink)':'var(--muted)'}">${oznaka}</span>
+      <span style="font-size:.85rem;font-variant-numeric:tabular-nums">${vrednost} <span style="font-size:.7rem;color:var(--muted)">${enota}</span></span>
+    </div>`;
+
+  izpis.innerHTML=`
+    <div style="margin-top:.7rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Iz meritev</div>
+      ${vrstica('m_ext — masa suhega ekstrakta',n(r.mExt,2),'g')}
+      ${vrstica('V₀ — začetni volumen tinkture',n(r.v0),'mL')}
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Sestava — stehtaj</div>
+      ${vrstica('m_tot — končna masa tinkture',n(r.mTot),'g')}
+      ${vrstica('Glicerin',n(r.gly),'g',true)}
+      ${vrstica('Voda skupaj',n(r.voda),'g')}
+      ${vrstica('Vode za dodajanje',n(r.vodaDodati),'g',true)}
+      ${r.vodaDodati<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Vode je že več, kot je potrebno — presežek ${n(-r.vodaDodati)} g. Serija bo redkejša od cilja.</div>`:''}
+      ${r.voda<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Pri tem deležu glicerina in tej količini suhe snovi za vodo ne ostane prostora. Zniža ciljni delež.</div>`:''}
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Dodatki</div>
+      ${vrstica(`C vitamin — skupaj ${pct(o.cVitPct)} %`,n(r.cVitSkupaj,2),'g')}
+      ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.cVitZePct)} % od m₀)`,n(r.cVitZe,2),'g')}
+      ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.cVit,2),'g',true)}
+      ${vrstica(`Lecitin — skupaj ${pct(o.lecPct)} %`,n(r.lecitinSkupaj,2),'g')}
+      ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.lecZePct)} % od m₀)`,n(r.lecitinZe,2),'g')}
+      ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.lecitin,2),'g',true)}
+      ${r.cVit<0||r.lecitin<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Negativna vrednost pomeni, da je dodatka v alkoholni osnovi že več, kot ga sme biti v končni tinkturi.</div>`:''}
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Kontrola</div>
+      ${vrstica(o.osnova==='topilo'?'Delež glicerina v topilu':'Delež glicerina v tinkturi',n(r.delezDejanski,2),'%')}
+      ${vrstica('Volumen končne tinkture',n(r.vKoncni),'mL')}
+      ${vrstica('Steklenic po 50 mL',n(r.kosov50),'kos')}
+    </div>`;
+
+  localStorage.setItem('gm_dn_gly_zadnji',JSON.stringify(o));
 }
 
 function openMeSheet(){

@@ -3372,6 +3372,17 @@ function fazaLabel(f){return f||'—';}
 function statusLabel(s){return s||'—';}
 function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);if(isNaN(d))return ts;return d.getDate()+'.'+(d.getMonth()+1)+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function bilIncluded(d){return d.ukljucen!==false;}
+// Opomba se odpre/zapre v svoji vrstici pod dogodkom. Brez ponovnega izrisa,
+// da odprte opombe ne izginejo ob vsakem osvezevanju tabele.
+function bilToggleOpomba(btn){
+  const vr=btn.closest('tr')?.nextElementSibling;
+  if(!vr||!vr.classList.contains('bil-opomba-row'))return;
+  const odpri=vr.hidden;
+  vr.hidden=!odpri;
+  btn.setAttribute('aria-expanded',String(odpri));
+  btn.title=odpri?'Skrij opombo':'Prikaži opombo';
+  btn.style.opacity=odpri?'1':'';
+}
 function toggleBilUkljucen(id){
   const idx=bilancaDogodki.findIndex(x=>x.id===id);
   if(idx<0)return;
@@ -3443,8 +3454,16 @@ function renderBilanca(){
     </table>`:'';
 
   list.innerHTML=`<table class="mini-table">
-    <tr><th>Čas</th><th>Faza</th><th>Status</th><th class="num">m</th><th class="num">mm%</th><th class="num">Vol%</th><th class="num">AAE</th><th class="num">H2O</th><th>Opomba</th><th></th><th>Šteje</th></tr>
-    ${events.map(d=>`<tr${bilIncluded(d)?'':' style="opacity:.45"'}>
+    <tr><th>Čas</th><th>Faza</th><th>Status</th><th class="num">m</th><th class="num">mm%</th><th class="num">Vol%</th><th class="num">AAE</th><th class="num">H2O</th><th></th><th></th><th>Šteje</th></tr>
+    ${events.map(d=>{
+      // Opomba je prosto besedilo in je vrstico raztegnila cez vec vrstic.
+      // Zato je v tabeli samo ikona; besedilo se odpre v svoji vrstici cez
+      // celotno sirino, kjer je tudi lazje berljivo.
+      const opombaHtml=[
+        d.mSs?`<strong>m_ss:</strong> ${round(d.mSs,1)} g`:'',
+        d.opomba||''
+      ].filter(Boolean).join(' · ');
+      return `<tr${bilIncluded(d)?'':' style="opacity:.45"'}>
       <td>${fmtTs(d.ts)}</td>
       <td>${fazaLabel(d.faza)}</td>
       <td>${statusLabel(d.status)}</td>
@@ -3453,10 +3472,13 @@ function renderBilanca(){
       <td class="num">${d.volPct?round(d.volPct,1):'—'}</td>
       <td class="num">${round(d.mAae,1)}</td>
       <td class="num">${round(d.mH2o,1)}</td>
-      <td>${d.mSs?('m_ss: '+round(d.mSs,1)+'g '):''}${d.opomba||''}</td>
+      <td style="text-align:center;padding-left:0;padding-right:0">${opombaHtml
+        ?`<button type="button" onclick="bilToggleOpomba(this)" aria-expanded="false" title="Prikaži opombo" style="border:none;background:none;cursor:pointer;font-size:.85rem;line-height:1;padding:.15rem .2rem">💬</button>`
+        :''}</td>
       <td style="white-space:nowrap"><button onclick="openBilancaSheet('${d.id}')" style="border:none;background:none;cursor:pointer">✎</button><button onclick="delBilanca('${d.id}')" style="border:none;background:none;cursor:pointer;color:var(--danger)">✕</button></td>
       <td style="text-align:center"><input type="checkbox" ${bilIncluded(d)?'checked':''} onchange="toggleBilUkljucen('${d.id}')"></td>
-    </tr>`).join('')}
+    </tr>${opombaHtml?`<tr class="bil-opomba-row" hidden><td colspan="11" style="background:rgba(175,132,85,.07);font-size:.72rem;line-height:1.45;color:var(--muted);white-space:normal">${opombaHtml}</td></tr>`:''}`;
+    }).join('')}
   </table>`;
 
   const statusOrder=['V','R','I','Corr'];

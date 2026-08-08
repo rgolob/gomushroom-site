@@ -2963,11 +2963,8 @@ async function genEtanolPorocilo(){
   if(od){
     vsiChronological.forEach(e=>{
       if(e.datum>=od) return;
-      // Vsak zapis, ki ni vhod, je poraba - tudi 'poraba-rd' in morebitni
-      // prihodnji tipi. Prej se je odstevalo samo 'izhod_dn', zato je bilo
-      // zacetno stanje previsoko za ves etanol, porabljen v R&D pred obdobjem.
       if(e.tip==='nabava'||e.tip==='regeneracija') zalogaPred+=e.lAAE||0;
-      else zalogaPred-=e.lAAE||0;
+      else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
     });
   }
   if(od) vsi=vsi.filter(e=>e.datum>=od);

@@ -755,10 +755,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="shclose" onclick="closeSheet('meOverlay')">✕</button>
     </div>
     <div class="shbody">
+      <div class="field"><label>Delovni nalog / serija</label>
+        <select id="meDnSel" onchange="onMeDnChange()"></select>
+      </div>
+      <div id="meDnInfo"></div>
       <div class="frow">
         <div class="field"><label>Masa gobe (g)</label><input id="meMasaGobe" type="text" inputmode="decimal" placeholder="npr. 250" oninput="calcMe()"></div>
         <div class="field"><label>% EtOH v ME (vol %)</label><input id="mePctEtOH" type="text" inputmode="decimal" placeholder="npr. 79,2" oninput="calcMe()"></div>
       </div>
+      <div id="meBilChips"></div>
       <div class="frow">
         <div class="field"><label>Toleranca — povečanje V (%)</label><input id="meToleranca" type="text" inputmode="decimal" placeholder="34" oninput="calcMe()"></div>
         <div class="field"><label>Razmerje 1 : N (mL/g)</label><input id="meRazmerje" type="text" inputmode="decimal" placeholder="3" oninput="calcMe()"></div>
@@ -1142,6 +1147,99 @@ function meRacun(masaGobe,razmerje,tolPct,volKoncni,pctEtOHme,lecitinPct,cVitPct
   };
 }
 
+// ── Povezava ME preracuna z DN in bilanco ─────────────────
+// DN da maso gobe in identiteto serije (vrsta gobe + serija alk. tinkture),
+// bilanca pa za isto serijo ze zna izracunati vol% po fazah in skupaj.
+// Katera faza je matični ekstrakt, se razlikuje od serije do serije, zato
+// vrednosti iz bilance samo ponudimo - izbere jih uporabnik z dotikom.
+function meDnKljuc(dn){
+  return ((dn.vrstaGobe||'').trim()+'|||'+(dn.serijaAlc||'').trim());
+}
+function meBilancaVolPct(kljuc){
+  const ev=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d));
+  if(!ev.length)return [];
+  const po={};
+  ev.forEach(d=>{
+    const f=d.faza||'—';
+    if(!po[f])po[f]={m:0,aae:0};
+    po[f].m+=d.m||0;po[f].aae+=d.mAae||0;
+  });
+  const vrstice=[];
+  const red=['OF','VF','TE'];
+  Object.keys(po).sort((a,b)=>red.indexOf(a)-red.indexOf(b)).forEach(f=>{
+    const s=po[f];
+    if(s.m>0)vrstice.push({oznaka:f,volPct:masToVol(round(s.aae/s.m*100,1))});
+  });
+  const totM=ev.reduce((a,d)=>a+(d.m||0),0);
+  const totAae=ev.reduce((a,d)=>a+(d.mAae||0),0);
+  if(totM>0)vrstice.push({oznaka:'Skupaj',volPct:masToVol(round(totAae/totM*100,1))});
+  return vrstice.filter(v=>v.volPct>0);
+}
+
+function renderMeDnSel(){
+  const sel=document.getElementById('meDnSel');
+  if(!sel)return;
+  const odprti=workOrders.filter(d=>d.serijaAlc||d.vrstaGobe)
+    .sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  sel.innerHTML='<option value="">— brez povezave (prosti preračun) —</option>'+
+    odprti.map(d=>`<option value="${d.id}">${d.oznaka||'DN'} · ${d.vrstaGobe||''} ${d.serijaAlc||''}</option>`).join('');
+}
+
+function onMeDnChange(){
+  const dn=workOrders.find(d=>d.id===document.getElementById('meDnSel').value);
+  const info=document.getElementById('meDnInfo');
+  if(!dn){
+    info.innerHTML='';
+    document.getElementById('meBilChips').innerHTML='';
+    calcMe();
+    return;
+  }
+  // Masa gobe pride iz DN - tam je ze sesteta cez vse serije surovine.
+  if(dn.masaGobe>0)document.getElementById('meMasaGobe').value=String(dn.masaGobe).replace('.',',');
+  // Ce za to serijo ze obstaja shranjen preracun, ga povrnemo.
+  const shr=(JSON.parse(localStorage.getItem('gm_dn_me_serije')||'{}'))[dn.id];
+  if(shr){
+    const set=(id,v)=>{if(v!=null&&v!=='')document.getElementById(id).value=String(v).replace('.',',');};
+    set('meRazmerje',shr.razmerje);set('meToleranca',shr.toleranca);
+    set('meVolKoncni',shr.volKoncni);set('mePctEtOH',shr.pctEtOH);
+    set('meLecitinPct',shr.lecitinPct);set('meCVitPct',shr.cVitPct);
+    set('meHvePct',shr.hvePct);
+    document.getElementById('meMhveDej').value=shr.mHveDej?String(shr.mHveDej).replace('.',','):'';
+    document.getElementById('meMasaTinkture').value=shr.masaTinkture?String(shr.masaTinkture).replace('.',','):'';
+  }
+  info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
+    ${dn.masaGobe>0?`Masa gobe iz DN: <strong>${dn.masaGobe} g</strong> · `:''}
+    ${dn.serijaAlc?`serija <strong>${dn.serijaAlc}</strong>`:'brez serije'}
+    ${shr?' · <span style="color:#3a6b4a">shranjen preračun povrnjen</span>':''}
+  </div>`;
+  calcMe();
+}
+
+function meUporabiVolPct(v){
+  document.getElementById('mePctEtOH').value=String(v).replace('.',',');
+  calcMe();
+}
+
+function renderMeBilChips(){
+  const box=document.getElementById('meBilChips');
+  if(!box)return;
+  const dn=workOrders.find(d=>d.id===document.getElementById('meDnSel').value);
+  if(!dn){box.innerHTML='';return;}
+  const vrstice=meBilancaVolPct(meDnKljuc(dn));
+  if(!vrstice.length){
+    box.innerHTML=`<div style="font-size:.68rem;color:var(--muted);padding:0 0 .5rem">
+      Za to serijo v bilanci še ni dogodkov, iz katerih bi se dal izračunati vol %.</div>`;
+    return;
+  }
+  box.innerHTML=`<div style="padding:0 0 .6rem">
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Iz bilance — klikni za prenos v % EtOH v ME</div>
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+      ${vrstice.map(v=>`<button type="button" onclick="meUporabiVolPct(${v.volPct})"
+        style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">
+        ${v.oznaka} <strong>${v.volPct.toLocaleString('sl-SI',{maximumFractionDigits:2})}</strong> vol%</button>`).join('')}
+    </div></div>`;
+}
+
 function openMeSheet(){
   const s=JSON.parse(localStorage.getItem('gm_dn_me_zadnji')||'null')||{};
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
@@ -1155,7 +1253,11 @@ function openMeSheet(){
   set('meHvePct',s.hvePct??ME_PRIVZETO.hvePct);
   set('meMasaTinkture','');   // stehtani masi sta vedno vezani na konkretno serijo
   set('meMhveDej','');
-  calcMe();
+  renderMeDnSel();
+  // Ce je v Bilanci ze izbrana serija, jo prevzamemo tudi tu.
+  const dn=workOrders.find(d=>bilSelectedKey&&meDnKljuc(d)===bilSelectedKey);
+  document.getElementById('meDnSel').value=dn?dn.id:'';
+  if(dn)onMeDnChange(); else {document.getElementById('meDnInfo').innerHTML='';calcMe();}
   openSheet('meOverlay');
 }
 
@@ -1177,6 +1279,9 @@ function calcMe(){
     document.getElementById('meIzpis').innerHTML=
       '<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso gobe in % EtOH v matičnem ekstraktu.</div>';
   };
+  // Ponudbo iz bilance izrisemo vedno - prav takrat, ko % EtOH se ni vnesen,
+  // je najbolj potrebna.
+  renderMeBilChips();
   if(!masaGobe||!pctEtOH){prazno();return;}
 
   const r=meRacun(masaGobe,razmerje,toleranca,volKoncni,pctEtOH,lecitinPct,cVitPct,masaTinkture,hvePct,mHveDej);
@@ -1220,8 +1325,17 @@ function calcMe(){
       ${vrstica(`C vitamin (${pct(cVitPct)} %)`,n(r.cVitamin,3),'g',true)}
     </div>`;
 
-  localStorage.setItem('gm_dn_me_zadnji',JSON.stringify(
-    {masaGobe,razmerje,toleranca,volKoncni,pctEtOH,lecitinPct,cVitPct,hvePct}));
+  const vnos={masaGobe,razmerje,toleranca,volKoncni,pctEtOH,lecitinPct,cVitPct,hvePct};
+  localStorage.setItem('gm_dn_me_zadnji',JSON.stringify(vnos));
+
+  // Ce je preracun vezan na DN, ga shranimo se pod tisto serijo - vkljucno s
+  // stehtanima masama, ki sta smiselni samo za konkretno serijo.
+  const dnId=document.getElementById('meDnSel')?.value;
+  if(dnId){
+    const po=JSON.parse(localStorage.getItem('gm_dn_me_serije')||'{}');
+    po[dnId]={...vnos,mHveDej,masaTinkture,posodobljen:new Date().toISOString()};
+    localStorage.setItem('gm_dn_me_serije',JSON.stringify(po));
+  }
 }
 function calcTrosarina(aae,volL){if(!volL)return 0;return round(aae/(volL/100),6);}
 

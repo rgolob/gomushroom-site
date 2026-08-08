@@ -275,6 +275,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="field"><label>Tinktura / Batch</label>
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
+    <div id="bilNalogInfo"></div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
     <div id="bilStatusSums"></div>
@@ -756,6 +757,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="shclose" onclick="closeSheet('glyOverlay')">✕</button>
     </div>
     <div class="shbody">
+      <div class="field"><label>Delovni nalog / serija</label>
+        <select id="glyNalogSel" onchange="onGlyNalogChange()"></select>
+      </div>
+      <div id="glyNalogInfo"></div>
       <div class="frow">
         <div class="field"><label>Serija</label><input id="glySerija" placeholder="npr. R25" autocapitalize="characters" oninput="calcGly()"></div>
         <div class="field"><label>Ciljni delež glicerina (%)</label><input id="glyCilj" type="text" inputmode="decimal" placeholder="75" oninput="calcGly()"></div>
@@ -806,6 +811,23 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lecitin — skupaj (%)</label><input id="glyLecPct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
           <div class="field"><label>Lecitin — že v alk. (%)</label><input id="glyLecZePct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
         </div>
+      </div>
+
+      <div class="dn-block-alc" style="border-left-color:#5a3a6b">
+        <div class="slabel-alc" style="color:#5a3a6b">✍️ Dejansko dodano</div>
+        <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:0 0 .4rem">
+          Kar si res stehtal. Pusti prazno, dokler ne veš. Iz teh vrednosti se
+          izračuna dosežena koncentracija — načrt se s tem ne spremeni.
+        </div>
+        <div class="frow">
+          <div class="field"><label>Glicerin (g)</label><input id="glyDejGly" type="text" inputmode="decimal" placeholder="npr. 2815" oninput="calcGly()"></div>
+          <div class="field"><label>Voda (g)</label><input id="glyDejVoda" type="text" inputmode="decimal" placeholder="npr. 814" oninput="calcGly()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>C vitamin (g)</label><input id="glyDejCVit" type="text" inputmode="decimal" placeholder="" oninput="calcGly()"></div>
+          <div class="field"><label>Lecitin (g)</label><input id="glyDejLec" type="text" inputmode="decimal" placeholder="" oninput="calcGly()"></div>
+        </div>
+        <div class="field"><label>Opomba k seriji</label><textarea id="glyOpomba" style="min-height:60px" placeholder="npr. Filtracija čez 400 µm, slabo raztapljanje…" oninput="calcGly()"></textarea></div>
       </div>
 
       <details style="margin:.2rem 0 .6rem">
@@ -1337,6 +1359,15 @@ function renderMeBilChips(){
 // osnova='topilo':  ciljni delez velja samo za topilo:  gly / (gly + voda) = w
 const GLY_PRIVZETO={ciljPct:75,rhoGly:1.261,rhoW:0.998,kPct:0.8,rhoExt:1.2,
   cVitPct:0.7,cVitZePct:0.2,lecPct:0.3,lecZePct:0.3};
+// Ena sama preslikava polje -> kljuc; uporabljajo jo branje, shranjevanje in
+// povrnitev zapisa, da se seznam polj ne podvaja na treh mestih.
+const GLY_POLJA={
+  glySerija:'serija',glyCilj:'ciljPct',glyM0:'m0',glyRho0:'rho0',glyLod:'lodPct',
+  glyVodaZe:'vodaZe',glyOdstranjeno:'odstranjeno',glyDestVol:'destVolPct',
+  glyCVitPct:'cVitPct',glyCVitZePct:'cVitZePct',glyLecPct:'lecPct',glyLecZePct:'lecZePct',
+  glyRhoGly:'rhoGly',glyRhoW:'rhoW',glyK:'kPct',glyRhoExt:'rhoExt',
+  glyDejGly:'dejGly',glyDejVoda:'dejVoda',glyDejCVit:'dejCVit',glyDejLec:'dejLec',
+};
 
 function glyRacun(o){
   const mExt=o.m0*o.lodPct/100;
@@ -1377,13 +1408,28 @@ function glyRacun(o){
     };
   })():null;
 
+  // ── Doseženo iz dejansko dodanega ──
+  // m konc. = dodan glicerin + dodana voda + voda, ki je ostala po uparjanju.
+  // Suha snov v m konc. ni steta - v imenovalec pride sele pri delezu "s suho
+  // snovjo", enako kot pri nacrtu.
+  const dej=(o.dejGly>0||o.dejVoda>0)?(()=>{
+    const mKonc=o.dejGly+o.dejVoda+o.vodaZe;
+    return {
+      mKonc,
+      pctTopilo:mKonc>0?o.dejGly/mKonc*100:0,
+      pctCelota:(mKonc+mExt)>0?o.dejGly/(mKonc+mExt)*100:0,
+      razlikaGly:o.dejGly-gly,
+      razlikaVoda:o.dejVoda-vodaDodati,
+    };
+  })():null;
+
   // Dodatka se dozirata na koncno maso glicerinske tinkture, del pa je ze v
   // alkoholni osnovi (odstotek od njene mase m0), zato se doda samo razlika.
   // C vitamin: skupaj 0,7 %, v alkoholni 0,2 %.
   // Lecitin: skupaj 0,3 %, v alkoholni prav tako 0,3 % - ker je glicerinska
   // tinktura tezja, se doda razlika v masi krat 0,3 %.
   return {
-    mExt,v0,vExt,mTot,gly,voda,vodaDodati,odstr,
+    mExt,v0,vExt,mTot,gly,voda,vodaDodati,odstr,dej,
     cVit:mTot*o.cVitPct/100-o.m0*o.cVitZePct/100,
     cVitSkupaj:mTot*o.cVitPct/100,
     cVitZe:o.m0*o.cVitZePct/100,
@@ -1407,12 +1453,75 @@ function openGlySheet(){
   set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
   set('glyVodaZe',s.vodaZe??'');
   set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
+  // Dejansko dodano in opomba sta vezana na konkretno serijo, zato ju ne
+  // prenasamo iz zadnjega preracuna - napolnita se sele ob izbiri naloga.
+  ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>set(id,''));
+  document.getElementById('glyOpomba').value='';
+  renderGlyNalogSel();
+  const bilN=bilSelectedKey?[...workOrders].find(d=>meDnKljuc(d)===bilSelectedKey):null;
+  document.getElementById('glyNalogSel').value=bilN?'dn:'+bilN.id:(bilSelectedKey?'bil:'+bilSelectedKey:'');
+  if(document.getElementById('glyNalogSel').value){onGlyNalogChange();return openSheet('glyOverlay');}
+  document.getElementById('glyNalogInfo').innerHTML='';
   set('glyCVitPct',s.cVitPct??GLY_PRIVZETO.cVitPct);set('glyCVitZePct',s.cVitZePct??GLY_PRIVZETO.cVitZePct);
   set('glyLecPct',s.lecPct??GLY_PRIVZETO.lecPct);set('glyLecZePct',s.lecZePct??GLY_PRIVZETO.lecZePct);
   set('glyRhoGly',s.rhoGly??GLY_PRIVZETO.rhoGly);set('glyRhoW',s.rhoW??GLY_PRIVZETO.rhoW);
   set('glyK',s.kPct??GLY_PRIVZETO.kPct);set('glyRhoExt',s.rhoExt??GLY_PRIVZETO.rhoExt);
   calcGly();
   openSheet('glyOverlay');
+}
+
+// ── Povezava zapisa na nalog oz. serijo v bilanci ─────────
+// Zapis dejansko dodanega mora imeti identiteto serije, sicer iz njega ni
+// mogoce delati porocil. Kljuc je ali delovni nalog ali kombinacija
+// tinktura|batch iz bilance - isti kljuc kot ga uporablja masna bilanca,
+// da se poznejsa porocila cez alkoholno in glicerinsko bilanco ujamejo.
+function glyKljucNaloga(v){
+  if(!v)return null;
+  if(v.startsWith('dn:')){
+    const d=workOrders.find(x=>x.id===v.slice(3));
+    if(!d)return null;
+    return {vir:'dn',id:v,dnId:d.id,oznaka:d.oznaka||'DN',
+      tinktura:d.vrstaGobe||'',batch:d.serijaAlc||'',bilKljuc:meDnKljuc(d)};
+  }
+  const k=v.slice(4);
+  const [tinktura,batch]=k.split('|||');
+  return {vir:'bil',id:v,dnId:null,oznaka:batch||k,tinktura,batch,bilKljuc:k};
+}
+
+function renderGlyNalogSel(){
+  const sel=document.getElementById('glyNalogSel');
+  if(!sel)return;
+  const dnji=workOrders.filter(d=>d.serijaAlc||d.vrstaGobe)
+    .sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  const pokriti=new Set(dnji.map(d=>meDnKljuc(d)));
+  const serije=[...new Set(bilancaDogodki.map(d=>bilKey(d.tinktura,d.batch)))]
+    .filter(k=>k&&k!=='|||'&&!pokriti.has(k)).sort();
+  sel.innerHTML='<option value="">— brez povezave —</option>'+
+    (dnji.length?`<optgroup label="Delovni nalogi">${dnji.map(d=>
+      `<option value="dn:${d.id}">${d.oznaka||'DN'} · ${d.vrstaGobe||''} ${d.serijaAlc||''}</option>`).join('')}</optgroup>`:'')+
+    (serije.length?`<optgroup label="Serije v bilanci">${serije.map(k=>
+      `<option value="bil:${k}">${k.split('|||').filter(Boolean).join(' · ')}</option>`).join('')}</optgroup>`:'');
+}
+
+function glyZapisi(){return JSON.parse(localStorage.getItem('gm_dn_gly_zapisi')||'{}');}
+
+function onGlyNalogChange(){
+  const n=glyKljucNaloga(document.getElementById('glyNalogSel').value);
+  const info=document.getElementById('glyNalogInfo');
+  if(!n){info.innerHTML='';calcGly();return;}
+  if(n.batch)document.getElementById('glySerija').value=n.batch;
+  const z=glyZapisi()[n.id];
+  if(z&&z.vnos){
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
+    Object.entries(GLY_POLJA).forEach(([id,k])=>set(id,z.vnos[k]));
+    document.getElementById('glyOsnova').value=z.vnos.osnova||'celota';
+    document.getElementById('glyOpomba').value=z.vnos.opomba||'';
+  }
+  info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
+    ${n.tinktura?n.tinktura+' · ':''}${n.batch||'brez serije'}
+    ${z?` · <span style="color:#3a6b4a">zapis povrnjen (${z.shranjen?new Date(z.shranjen).toLocaleDateString('sl-SI'):''})</span>`:''}
+  </div>`;
+  calcGly();
 }
 
 function glyUporabiVodo(g){
@@ -1428,6 +1537,9 @@ function calcGly(){
     ciljPct:num('glyCilj',GLY_PRIVZETO.ciljPct),
     m0:num('glyM0'),rho0:num('glyRho0'),lodPct:num('glyLod'),vodaZe:num('glyVodaZe'),
     odstranjeno:num('glyOdstranjeno'),destVolPct:num('glyDestVol'),
+    dejGly:num('glyDejGly'),dejVoda:num('glyDejVoda'),
+    dejCVit:num('glyDejCVit'),dejLec:num('glyDejLec'),
+    opomba:document.getElementById('glyOpomba').value.trim(),
     cVitPct:num('glyCVitPct',GLY_PRIVZETO.cVitPct),cVitZePct:num('glyCVitZePct',GLY_PRIVZETO.cVitZePct),
     lecPct:num('glyLecPct',GLY_PRIVZETO.lecPct),lecZePct:num('glyLecZePct',GLY_PRIVZETO.lecZePct),
     rhoGly:num('glyRhoGly',GLY_PRIVZETO.rhoGly),rhoW:num('glyRhoW',GLY_PRIVZETO.rhoW),
@@ -1499,7 +1611,37 @@ function calcGly(){
       ${vrstica('Steklenic po 50 mL',n(r.kosov50),'kos')}
     </div>`;
 
+  if(r.dej){
+    const odst=(v)=>`<span style="color:${Math.abs(v)<0.05?'var(--muted)':v>0?'#8b5a2a':'#2a5a8b'}">${v>0?'+':''}${n(v,1)} g</span>`;
+    izpis.innerHTML+=`
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Doseženo iz dejansko dodanega</div>
+      ${vrstica('m konc. — masa brez suhe snovi',n(r.dej.mKonc),'g')}
+      ${vrstica('Delež glicerina v topilu',n(r.dej.pctTopilo,1),'%',true)}
+      ${vrstica('Delež glicerina v tinkturi',n(r.dej.pctCelota,1),'%',true)}
+      ${vrstica('Odstopanje — glicerin',odst(r.dej.razlikaGly),'')}
+      ${vrstica('Odstopanje — voda',odst(r.dej.razlikaVoda),'')}
+    </div>`;
+  }
+
   localStorage.setItem('gm_dn_gly_zadnji',JSON.stringify(o));
+
+  // Zapis se hrani pod nalogom oz. serijo iz bilance, da bo iz njega mogoce
+  // sestaviti porocilo cez alkoholno in glicerinsko bilanco.
+  const nalog=glyKljucNaloga(document.getElementById('glyNalogSel')?.value);
+  if(nalog){
+    const zapisi=glyZapisi();
+    zapisi[nalog.id]={
+      id:nalog.id,vir:nalog.vir,dnId:nalog.dnId,
+      tinktura:nalog.tinktura,batch:nalog.batch,bilKljuc:nalog.bilKljuc,
+      vnos:o,
+      izracun:{mTot:r.mTot,gly:r.gly,voda:r.voda,vodaDodati:r.vodaDodati,
+               cVit:r.cVit,lecitin:r.lecitin,mExt:r.mExt,v0:r.v0},
+      doseceno:r.dej||null,
+      shranjen:new Date().toISOString(),
+    };
+    localStorage.setItem('gm_dn_gly_zapisi',JSON.stringify(zapisi));
+  }
 }
 
 function openMeSheet(){
@@ -3670,9 +3812,21 @@ function renderBilancaSelect(){
     return;
   }
   const keep=list.some(([k])=>k===bilSelectedKey)?bilSelectedKey:list[0][0];
-  sel.innerHTML=list.map(([k,v])=>`<option value="${k}"${k===keep?' selected':''}>${v.tinktura} — ${v.batch}</option>`).join('');
+  // Ce za serijo obstaja delovni nalog, ga pripisemo v ime moznosti - serija
+  // v bilanci in serija alkoholne tinkture v DN sta ista stvar, le zapisani
+  // na dveh mestih.
+  sel.innerHTML=list.map(([k,v])=>{
+    const dn=workOrders.find(d=>meDnKljuc(d)===k);
+    return `<option value="${k}"${k===keep?' selected':''}>${v.tinktura} — ${v.batch}${dn?' · '+(dn.oznaka||'DN'):''}</option>`;
+  }).join('');
   bilSelectedKey=keep;
   renderBilanca();
+}
+
+// Delovni nalog, ki pripada trenutno izbrani seriji v bilanci (ce obstaja).
+function bilNalog(){
+  if(!bilSelectedKey)return null;
+  return workOrders.find(d=>meDnKljuc(d)===bilSelectedKey)||null;
 }
 function onBilBatchChange(){
   bilSelectedKey=document.getElementById('bilBatchSel').value;
@@ -3682,12 +3836,27 @@ function onBilBatchChange(){
 function renderBilanca(){
   const fazaGrids=document.getElementById('bilFazaGrids');
   const list=document.getElementById('bilEventList');
+  const nalogBox=document.getElementById('bilNalogInfo');
   if(!bilSelectedKey){
+    if(nalogBox)nalogBox.innerHTML='';
     fazaGrids.innerHTML='';
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem 0">Ni dogodkov. Dodaj prvega z gumbom "+ Dogodek".</div>';
     return;
   }
   const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
+
+  // Povezava na delovni nalog in na zapis glicerinske tinkture za isto serijo.
+  if(nalogBox){
+    const dn=bilNalog();
+    const gz=glyZapisi();
+    const zapis=gz['bil:'+bilSelectedKey]||(dn?gz['dn:'+dn.id]:null);
+    const kosi=[];
+    if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} g gobe`:''}`);
+    if(zapis)kosi.push(`<span style="color:#5a3a6b">🧴 zapis GLY</span>${zapis.doseceno?` · doseženo ${round(zapis.doseceno.pctTopilo,1)} % v topilu`:' · brez dejanskih količin'}`);
+    nalogBox.innerHTML=kosi.length
+      ?`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem;display:flex;gap:.8rem;flex-wrap:wrap">${kosi.join('')}</div>`
+      :`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">Za to serijo ni delovnega naloga.</div>`;
+  }
 
   const fazaOrder=['OF','VF','TE'];
   const fazaSums={};

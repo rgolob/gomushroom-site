@@ -266,6 +266,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="view-hdr">
       <div class="view-title">Masna bilanca</div>
       <div style="display:flex;gap:.4rem">
+        <button class="hbtn2" onclick="openMeSheet()">🧮 ME</button>
         <button class="hbtn2" onclick="openZdruziSheet()">⊕ Združi</button>
         <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
       </div>
@@ -745,6 +746,61 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 </div>
 
+<!-- SHEET: PRERACUN MATICNEGA EKSTRAKTA -->
+<div class="overlay" id="meOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">🧮 Matični ekstrakt — koliko dati na stran</span>
+      <button class="shclose" onclick="closeSheet('meOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div class="frow">
+        <div class="field"><label>Masa gobe (g)</label><input id="meMasaGobe" type="text" inputmode="decimal" placeholder="npr. 250" oninput="calcMe()"></div>
+        <div class="field"><label>% EtOH v ME (vol %)</label><input id="mePctEtOH" type="text" inputmode="decimal" placeholder="npr. 79,2" oninput="calcMe()"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Toleranca — povečanje V (%)</label><input id="meToleranca" type="text" inputmode="decimal" placeholder="34" oninput="calcMe()"></div>
+        <div class="field"><label>Razmerje 1 : N (mL/g)</label><input id="meRazmerje" type="text" inputmode="decimal" placeholder="3" oninput="calcMe()"></div>
+      </div>
+      <div class="field"><label>Vol % končne tinkture</label><input id="meVolKoncni" type="text" inputmode="decimal" placeholder="30" oninput="calcMe()"></div>
+      <div class="dn-block-alc">
+        <div class="slabel-alc">🥃 Matični ekstrakt — dati na stran</div>
+        <div class="frow">
+          <div class="field"><label>V matičnega ekstrakta (mL)</label><input id="meVme" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent);font-weight:700" placeholder="—"></div>
+          <div class="field"><label>m matičnega ekstrakta (g)</label><input id="meMme" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent);font-weight:700" placeholder="—"></div>
+        </div>
+        <div class="field"><label>Gostota pri vnesenem % EtOH (auto)</label><input id="meGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+      </div>
+      <div class="dn-block-alc" style="border-left-color:#2a5a8b">
+        <div class="slabel-alc" style="color:#2a5a8b">💧 Vodni ekstrakciji</div>
+        <div class="frow">
+          <div class="field"><label>Načrtovan delež HVE (%)</label><input id="meHvePct" type="text" inputmode="decimal" placeholder="50" oninput="calcMe()"></div>
+          <div class="field"><label>Stehtan HVE (g) — po 1. ekstrakciji</label><input id="meMhveDej" type="text" inputmode="decimal" placeholder="npr. 400" oninput="calcMe()"></div>
+        </div>
+      </div>
+      <div class="dn-block-alc" style="border-left-color:#3a6b4a">
+        <div class="slabel-alc" style="color:#3a6b4a">🧴 Dodatki — % od končne mase tinkture</div>
+        <div class="frow">
+          <div class="field"><label>Lecitin (%)</label><input id="meLecitinPct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcMe()"></div>
+          <div class="field"><label>C vitamin (%)</label><input id="meCVitPct" type="text" inputmode="decimal" placeholder="0,2" oninput="calcMe()"></div>
+        </div>
+        <div class="field"><label>Stehtana končna masa (g) — neobvezno</label><input id="meMasaTinkture" type="text" inputmode="decimal" placeholder="brez vnosa: 1 mL ≈ 1 g" oninput="calcMe()"></div>
+      </div>
+      <div id="meIzpis"></div>
+      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:.5rem">
+        Gostota se bere iz iste alkoholometrične tabele kot povsod v aplikaciji.
+        Ker je matični ekstrakt obarvan in vsebuje raztopljene snovi, se
+        <strong>% EtOH v ME</strong> ne da meriti z gostoto ali lomnim količnikom —
+        vnesi vrednost, dobljeno iz masne bilance oz. meritve destilata.
+      </div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('meOverlay')">Zapri</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET: R&D DETAIL -->
 <div class="overlay" id="rdDetailOverlay">
   <div class="sheet">
@@ -1029,6 +1085,144 @@ function masToVol(masPct){
   return 100;
 }
 function calcAAE(volL,volPct){return round(volL*volPct/100,4);}
+
+// ── PRERACUN MATICNEGA EKSTRAKTA ──────────────────────────
+// Koliko matičnega alkoholnega ekstrakta je treba dati na stran za tinkturo.
+// Veriga (preverjeno na primeru 250 g gobe, 1:3, 34 % tol., ME 79,2 vol%):
+//   V osnovni    = masa gobe × N                       750 mL
+//   V končni     = V osnovni × (1 + toleranca/100)    1005 mL
+//   V AAE        = V končni × vol% končni / 100        302 mL
+//   V ME         = V AAE / (% EtOH v ME / 100)         381 mL
+//   m ME         = V ME × ρ(% EtOH v ME)               328 g
+//   m AAE        = V AAE × 0,78927                     238 g
+//   V vodne faze = V končni − V AAE                    704 mL
+// volKoncni namerno ni sklic na TINKTURA_VOL_PCT: ta const je deklariran nizje
+// v datoteki, zato bi sklic tu padel v temporal dead zone.
+const ME_PRIVZETO={razmerje:3,toleranca:34,volKoncni:30,lecitinPct:0.3,cVitPct:0.2,hvePct:50};
+const ETOH_ABS_GOSTOTA=0.78927;   // g/mL, absolutni etanol pri 20 °C
+
+// masaTinkture: izmerjena koncna masa tinkture v g. Ce ni podana, vzamemo
+// koncni volumen (1 mL ~ 1 g): pri 1:3 s toleranco iz 250 g gobe nastane
+// cca 1 L oz. cca 1 kg tinkture. Za konkretno serijo je natancneje vpisati
+// dejansko stehtano maso.
+// Vodna faza se deli na dva vodna ekstrakta - hladnega (HVE) in tlacnega (TE).
+// Pred prvo ekstrakcijo velja nacrtovani delez hvePct, ko pa je HVE stehtan,
+// se vpise mHveDejanska in za tlacno ekstrakcijo ostane razlika do skupne mase.
+function meRacun(masaGobe,razmerje,tolPct,volKoncni,pctEtOHme,lecitinPct,cVitPct,masaTinkture,hvePct,mHveDejanska){
+  const vOsnovni=masaGobe*razmerje;
+  const vKoncni=vOsnovni*(1+tolPct/100);
+  const vAae=vKoncni*volKoncni/100;
+  const gostota=etohDensity(pctEtOHme);
+  const vMe=pctEtOHme>0?vAae/(pctEtOHme/100):0;
+  const mMe=vMe*gostota;
+  const mTinkture=masaTinkture>0?masaTinkture:vKoncni;
+  // Vodna faza po VOLUMNU je voda v koncni tinkturi (koncni V minus absolutni
+  // alkohol) - tako kot v preglednici. Po MASI pa je razlika do ciljne mase
+  // tinkture. Vrednosti se ne ujemata prek gostote, ker volumni pri mesanju
+  // etanola z vodo niso aditivni; merodajna je masa, po njej se tehta.
+  const vVodneFaze=vKoncni-vAae;
+  const mVodneFaze=mTinkture-mMe;
+  const hveIzmerjen=mHveDejanska>0;
+  const mHve=hveIzmerjen?mHveDejanska:mVodneFaze*hvePct/100;
+  const mTe=mVodneFaze-mHve;
+  // Volumna razdelimo v istem razmerju kot masi, da ostaneta skladna.
+  const delezHve=mVodneFaze>0?mHve/mVodneFaze:0;
+  return {
+    vOsnovni, vKoncni, vAae, gostota, vMe, mMe,
+    mAae:vAae*ETOH_ABS_GOSTOTA,
+    vVodneFaze, mVodneFaze,
+    hveIzmerjen, delezHve,
+    vHve:vVodneFaze*delezHve, mHve,
+    vTe:vVodneFaze*(1-delezHve), mTe,
+    kosov50:vKoncni/50,
+    mTinkture,
+    mTinktureOcenjena:!(masaTinkture>0),
+    lecitin:mTinkture*lecitinPct/100,
+    cVitamin:mTinkture*cVitPct/100
+  };
+}
+
+function openMeSheet(){
+  const s=JSON.parse(localStorage.getItem('gm_dn_me_zadnji')||'null')||{};
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
+  set('meMasaGobe',s.masaGobe??'');
+  set('meRazmerje',s.razmerje??ME_PRIVZETO.razmerje);
+  set('meToleranca',s.toleranca??ME_PRIVZETO.toleranca);
+  set('meVolKoncni',s.volKoncni??ME_PRIVZETO.volKoncni);
+  set('mePctEtOH',s.pctEtOH??'');
+  set('meLecitinPct',s.lecitinPct??ME_PRIVZETO.lecitinPct);
+  set('meCVitPct',s.cVitPct??ME_PRIVZETO.cVitPct);
+  set('meHvePct',s.hvePct??ME_PRIVZETO.hvePct);
+  set('meMasaTinkture','');   // stehtani masi sta vedno vezani na konkretno serijo
+  set('meMhveDej','');
+  calcMe();
+  openSheet('meOverlay');
+}
+
+function calcMe(){
+  const masaGobe=parseNum(document.getElementById('meMasaGobe').value);
+  const razmerje=parseNum(document.getElementById('meRazmerje').value)||ME_PRIVZETO.razmerje;
+  const toleranca=parseNum(document.getElementById('meToleranca').value);
+  const volKoncni=parseNum(document.getElementById('meVolKoncni').value)||ME_PRIVZETO.volKoncni;
+  const pctEtOH=parseNum(document.getElementById('mePctEtOH').value);
+  const lecitinPct=parseNum(document.getElementById('meLecitinPct').value);
+  const cVitPct=parseNum(document.getElementById('meCVitPct').value);
+  const masaTinkture=parseNum(document.getElementById('meMasaTinkture').value);
+  const hvePctRaw=document.getElementById('meHvePct').value;
+  const hvePct=hvePctRaw===''?ME_PRIVZETO.hvePct:parseNum(hvePctRaw);
+  const mHveDej=parseNum(document.getElementById('meMhveDej').value);
+
+  const prazno=()=>{
+    ['meGostota','meVme','meMme'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('meIzpis').innerHTML=
+      '<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso gobe in % EtOH v matičnem ekstraktu.</div>';
+  };
+  if(!masaGobe||!pctEtOH){prazno();return;}
+
+  const r=meRacun(masaGobe,razmerje,toleranca,volKoncni,pctEtOH,lecitinPct,cVitPct,masaTinkture,hvePct,mHveDej);
+  const n=(v,d=1)=>v.toLocaleString('sl-SI',{minimumFractionDigits:d,maximumFractionDigits:d});
+  // Odstotek izpisemo tako, kot je vnesen (npr. 0,25 % ne sme postati 0,3 %).
+  const pct=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:3});
+
+  document.getElementById('meGostota').value=r.gostota.toFixed(5)+' g/mL';
+  document.getElementById('meVme').value=n(r.vMe)+' mL';
+  document.getElementById('meMme').value=n(r.mMe)+' g';
+
+  const vrstica=(oznaka,vrednost,enota,poudari)=>`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:.32rem 0;border-bottom:1px solid var(--border)${poudari?';font-weight:700':''}">
+      <span style="font-size:.78rem;color:${poudari?'var(--ink)':'var(--muted)'}">${oznaka}</span>
+      <span style="font-size:.85rem;font-variant-numeric:tabular-nums">${vrednost} <span style="font-size:.7rem;color:var(--muted)">${enota}</span></span>
+    </div>`;
+
+  document.getElementById('meIzpis').innerHTML=`
+    <div style="margin-top:.7rem">
+      ${vrstica(`Osnovni volumen (1 : ${pct(razmerje)})`,n(r.vOsnovni),'mL')}
+      ${vrstica(`Končni volumen s toleranco ${pct(toleranca)} %`,n(r.vKoncni),'mL')}
+      ${vrstica('V AAE (absolutni alkohol)',n(r.vAae),'mL')}
+      ${vrstica('m AAE',n(r.mAae),'g')}
+      ${vrstica('V matičnega ekstrakta',n(r.vMe),'mL',true)}
+      ${vrstica('m matičnega ekstrakta',n(r.mMe),'g',true)}
+      ${vrstica('Steklenic po 50 mL',n(r.kosov50),'kos')}
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Vodni ekstrakciji — dodati k matičnemu ekstraktu</div>
+      ${vrstica('Vodna ekstrakta skupaj',n(r.mVodneFaze),'g',true)}
+      ${vrstica(`Hladni vodni ekstrakt${r.hveIzmerjen?' (stehtan)':` (načrt ${pct(hvePct)} %)`}`,n(r.mHve),'g',true)}
+      ${vrstica(`Tlačni ekstrakt${r.hveIzmerjen?' — še potrebno':` (načrt ${pct(100-hvePct)} %)`}`,n(r.mTe),'g',true)}
+      ${r.mTe<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Stehtani HVE presega skupno maso vodnih ekstraktov za ${n(-r.mTe)} g — tlačna ekstrakcija ni več potrebna, serija bo večja od načrtovane.</div>`:''}
+      ${vrstica('— orientacijsko po volumnu: HVE',n(r.vHve),'mL')}
+      ${vrstica('— orientacijsko po volumnu: TE',n(r.vTe),'mL')}
+    </div>
+    <div style="margin-top:.9rem">
+      <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Dodatki</div>
+      ${vrstica(`Končna masa tinkture${r.mTinktureOcenjena?' (ocena, 1 mL ≈ 1 g)':' (stehtana)'}`,n(r.mTinkture),'g')}
+      ${vrstica(`Lecitin (${pct(lecitinPct)} %)`,n(r.lecitin,3),'g',true)}
+      ${vrstica(`C vitamin (${pct(cVitPct)} %)`,n(r.cVitamin,3),'g',true)}
+    </div>`;
+
+  localStorage.setItem('gm_dn_me_zadnji',JSON.stringify(
+    {masaGobe,razmerje,toleranca,volKoncni,pctEtOH,lecitinPct,cVitPct,hvePct}));
+}
 function calcTrosarina(aae,volL){if(!volL)return 0;return round(aae/(volL/100),6);}
 
 // AAE tinkture — vedno 30 vol% EtOH, 50 mL/kom

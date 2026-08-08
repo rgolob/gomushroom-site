@@ -779,6 +779,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
       </div>
 
+      <div class="dn-block-alc" style="border-left-color:#8b5a2a">
+        <div class="slabel-alc" style="color:#8b5a2a">💨 Odstranjevanje topila — neobvezno</div>
+        <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:0 0 .4rem">
+          Korak pred pripravo: alkoholni tinkturi uparimo topilo. Vnesi, koliko si ga
+          odstranil in kolikšna je bila koncentracija destilata.
+        </div>
+        <div class="frow">
+          <div class="field"><label>Odstranjeno topilo (g)</label><input id="glyOdstranjeno" type="text" inputmode="decimal" placeholder="npr. 2806" oninput="calcGly()"></div>
+          <div class="field"><label>Vol % EtOH v destilatu</label><input id="glyDestVol" type="text" inputmode="decimal" placeholder="npr. 29" oninput="calcGly()"></div>
+        </div>
+        <div id="glyOdstrIzpis"></div>
+      </div>
+
       <div class="dn-block-alc" style="border-left-color:#3a6b4a">
         <div class="slabel-alc" style="color:#3a6b4a">🧴 Dodatki</div>
         <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:0 0 .4rem">
@@ -1344,13 +1357,33 @@ function glyRacun(o){
     gly=w*mTot; voda=mTot-gly-mExt;
   }
   const vodaDodati=voda-o.vodaZe;
+
+  // ── Korak pred pripravo: odstranjevanje topila ──
+  // Suha snov se pri uparjanju ne spremeni, zato je voda, ki ostane, razlika
+  // med ostankom in suho snovjo. Iz mase destilata in njegove koncentracije
+  // dobimo m AAE, iz tega pa kontrolno moc zacetne tinkture BREZ suhe snovi -
+  // suha snov namrec ni topilo in ne sme v imenovalec.
+  const odstr=o.odstranjeno>0?(()=>{
+    const mOst=o.m0-o.odstranjeno;
+    const mVode=mOst-mExt;
+    const masPct=o.destVolPct>0?volToMas(o.destVolPct):0;
+    const mAae=o.odstranjeno*masPct/100;
+    const topilo=o.m0-mExt;
+    const mmKont=topilo>0?mAae/topilo*100:0;
+    return {
+      pctOdstr:o.m0>0?o.odstranjeno/o.m0*100:0,
+      mOst,mVode,mSs:mExt,mAae,mmKont,
+      volKont:mmKont>0?masToVol(round(mmKont,3)):0,
+    };
+  })():null;
+
   // Dodatka se dozirata na koncno maso glicerinske tinkture, del pa je ze v
   // alkoholni osnovi (odstotek od njene mase m0), zato se doda samo razlika.
   // C vitamin: skupaj 0,7 %, v alkoholni 0,2 %.
   // Lecitin: skupaj 0,3 %, v alkoholni prav tako 0,3 % - ker je glicerinska
   // tinktura tezja, se doda razlika v masi krat 0,3 %.
   return {
-    mExt,v0,vExt,mTot,gly,voda,vodaDodati,
+    mExt,v0,vExt,mTot,gly,voda,vodaDodati,odstr,
     cVit:mTot*o.cVitPct/100-o.m0*o.cVitZePct/100,
     cVitSkupaj:mTot*o.cVitPct/100,
     cVitZe:o.m0*o.cVitZePct/100,
@@ -1373,12 +1406,18 @@ function openGlySheet(){
   document.getElementById('glyOsnova').value=s.osnova||'celota';
   set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
   set('glyVodaZe',s.vodaZe??'');
+  set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
   set('glyCVitPct',s.cVitPct??GLY_PRIVZETO.cVitPct);set('glyCVitZePct',s.cVitZePct??GLY_PRIVZETO.cVitZePct);
   set('glyLecPct',s.lecPct??GLY_PRIVZETO.lecPct);set('glyLecZePct',s.lecZePct??GLY_PRIVZETO.lecZePct);
   set('glyRhoGly',s.rhoGly??GLY_PRIVZETO.rhoGly);set('glyRhoW',s.rhoW??GLY_PRIVZETO.rhoW);
   set('glyK',s.kPct??GLY_PRIVZETO.kPct);set('glyRhoExt',s.rhoExt??GLY_PRIVZETO.rhoExt);
   calcGly();
   openSheet('glyOverlay');
+}
+
+function glyUporabiVodo(g){
+  document.getElementById('glyVodaZe').value=String(g).replace('.',',');
+  calcGly();
 }
 
 function calcGly(){
@@ -1388,13 +1427,16 @@ function calcGly(){
     osnova:document.getElementById('glyOsnova').value,
     ciljPct:num('glyCilj',GLY_PRIVZETO.ciljPct),
     m0:num('glyM0'),rho0:num('glyRho0'),lodPct:num('glyLod'),vodaZe:num('glyVodaZe'),
+    odstranjeno:num('glyOdstranjeno'),destVolPct:num('glyDestVol'),
     cVitPct:num('glyCVitPct',GLY_PRIVZETO.cVitPct),cVitZePct:num('glyCVitZePct',GLY_PRIVZETO.cVitZePct),
     lecPct:num('glyLecPct',GLY_PRIVZETO.lecPct),lecZePct:num('glyLecZePct',GLY_PRIVZETO.lecZePct),
     rhoGly:num('glyRhoGly',GLY_PRIVZETO.rhoGly),rhoW:num('glyRhoW',GLY_PRIVZETO.rhoW),
     kPct:num('glyK',GLY_PRIVZETO.kPct),rhoExt:num('glyRhoExt',GLY_PRIVZETO.rhoExt),
   };
+  const odstrBox=document.getElementById('glyOdstrIzpis');
   const izpis=document.getElementById('glyIzpis');
   if(!o.m0||!o.rho0){
+    if(odstrBox)odstrBox.innerHTML='';
     izpis.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso in gostoto začetne tinkture.</div>';
     return;
   }
@@ -1406,6 +1448,24 @@ function calcGly(){
       <span style="font-size:.78rem;color:${poudari?'var(--ink)':'var(--muted)'}">${oznaka}</span>
       <span style="font-size:.85rem;font-variant-numeric:tabular-nums">${vrednost} <span style="font-size:.7rem;color:var(--muted)">${enota}</span></span>
     </div>`;
+
+  // Izpis koraka odstranjevanja topila
+  if(!r.odstr){
+    odstrBox.innerHTML='';
+  } else if(r.odstr.mOst<0){
+    odstrBox.innerHTML=`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Odstranjenega topila je več kot začetne mase tinkture.</div>`;
+  } else {
+    const o2=r.odstr;
+    odstrBox.innerHTML=`<div style="margin-top:.5rem">
+      ${vrstica('Odstranjeno',n(o2.pctOdstr,1),'%')}
+      ${vrstica('m ost. — ostanek po uparjanju',n(o2.mOst),'g')}
+      ${vrstica('m ss — suha snov',n(o2.mSs,1),'g')}
+      ${vrstica('m vode — voda v ostanku',n(o2.mVode,1),'g',true)}
+      ${o2.mVode<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Suhe snovi je več kot ostanka — preveri Lod oz. maso odstranjenega topila.</div>`:`<div style="padding:.35rem 0"><button type="button" onclick="glyUporabiVodo(${round(o2.mVode,2)})" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">↓ uporabi kot „voda že prisotna"</button></div>`}
+      ${vrstica('m AAE — absolutni alkohol v destilatu',n(o2.mAae,1),'g')}
+      ${vrstica('Kontrola — moč začetne tinkture',n(o2.mmKont,2)+' m% / '+n(o2.volKont,1),'vol %')}
+    </div>`;
+  }
 
   izpis.innerHTML=`
     <div style="margin-top:.7rem">

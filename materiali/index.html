@@ -782,6 +782,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lod — suha snov (%)</label><input id="glyLod" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="calcGly()"></div>
           <div class="field"><label>Voda že prisotna (g)</label><input id="glyVodaZe" type="text" inputmode="decimal" placeholder="npr. 104,6" oninput="calcGly()"></div>
         </div>
+        <div id="glyBilChips"></div>
       </div>
 
       <div class="dn-block-alc" style="border-left-color:#8b5a2a">
@@ -1503,6 +1504,47 @@ function renderGlyNalogSel(){
       `<option value="bil:${k}">${k.split('|||').filter(Boolean).join(' · ')}</option>`).join('')}</optgroup>`:'');
 }
 
+// Enako kot pri ME preracunu: vrednosti iz bilance samo ponudimo, izbere jih
+// uporabnik. Katera faza je alkoholna tinktura, ki gre v glicerinsko, se
+// razlikuje od serije do serije, zato tega ne prevzemamo samodejno.
+function glyBilancaMase(kljuc){
+  const ev=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d));
+  if(!ev.length)return [];
+  const po={};
+  ev.forEach(d=>{const f=d.faza||'—';po[f]=(po[f]||0)+(d.m||0);});
+  const red=['OF','VF','TE'];
+  const vrstice=Object.keys(po).sort((a,b)=>red.indexOf(a)-red.indexOf(b))
+    .filter(f=>po[f]>0).map(f=>({oznaka:f,m:po[f]}));
+  const skupaj=ev.reduce((a,d)=>a+(d.m||0),0);
+  if(skupaj>0)vrstice.push({oznaka:'Skupaj',m:skupaj});
+  return vrstice;
+}
+
+function glyUporabiMaso(m){
+  document.getElementById('glyM0').value=String(round(m,1)).replace('.',',');
+  calcGly();
+}
+
+function renderGlyBilChips(){
+  const box=document.getElementById('glyBilChips');
+  if(!box)return;
+  const n=glyKljucNaloga(document.getElementById('glyNalogSel')?.value);
+  if(!n){box.innerHTML='';return;}
+  const vrstice=glyBilancaMase(n.bilKljuc);
+  if(!vrstice.length){
+    box.innerHTML=`<div style="font-size:.68rem;color:var(--muted);padding:.3rem 0 0">
+      Za to serijo v bilanci ni dogodkov z maso.</div>`;
+    return;
+  }
+  box.innerHTML=`<div style="padding:.4rem 0 0">
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Iz bilance — klikni za prenos v m₀</div>
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+      ${vrstice.map(v=>`<button type="button" onclick="glyUporabiMaso(${v.m})"
+        style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">
+        ${v.oznaka} <strong>${v.m.toLocaleString('sl-SI',{maximumFractionDigits:1})}</strong> g</button>`).join('')}
+    </div></div>`;
+}
+
 function glyZapisi(){return JSON.parse(localStorage.getItem('gm_dn_gly_zapisi')||'{}');}
 
 // calcGly() se sprozi ob vsakem pritisnjenem znaku; brez zamika bi vsak znak
@@ -1556,6 +1598,9 @@ function calcGly(){
   };
   const odstrBox=document.getElementById('glyOdstrIzpis');
   const izpis=document.getElementById('glyIzpis');
+  // Ponudba iz bilance mora biti vidna tudi, ko m0 se ni vnesen - prav takrat
+  // je najbolj potrebna.
+  renderGlyBilChips();
   if(!o.m0||!o.rho0){
     if(odstrBox)odstrBox.innerHTML='';
     izpis.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso in gostoto začetne tinkture.</div>';
@@ -3862,10 +3907,16 @@ function renderBilanca(){
     const zapis=gz['bil:'+bilSelectedKey]||(dn?gz['dn:'+dn.id]:null);
     const kosi=[];
     if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} g gobe`:''}`);
+    else kosi.push('<span>Za to serijo ni delovnega naloga.</span>');
     if(zapis)kosi.push(`<span style="color:#5a3a6b">🧴 zapis GLY</span>${zapis.doseceno?` · doseženo ${round(zapis.doseceno.pctTopilo,1)} % v topilu`:' · brez dejanskih količin'}`);
-    nalogBox.innerHTML=kosi.length
-      ?`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem;display:flex;gap:.8rem;flex-wrap:wrap">${kosi.join('')}</div>`
-      :`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">Za to serijo ni delovnega naloga.</div>`;
+    // Preracuna se odpreta za trenutno izbrano serijo - povezava deluje v obe
+    // smeri, ne le iz preracuna v bilanco.
+    nalogBox.innerHTML=`
+      <div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .35rem;display:flex;gap:.8rem;flex-wrap:wrap">${kosi.join('')}</div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;padding:0 0 .55rem">
+        <button type="button" onclick="openMeSheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧮 ME za to serijo</button>
+        <button type="button" onclick="openGlySheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧴 GLY za to serijo</button>
+      </div>`;
   }
 
   const fazaOrder=['OF','VF','TE'];

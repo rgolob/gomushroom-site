@@ -217,6 +217,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="fpill" id="f-odprt" onclick="setDNFilter('odprt',this)">Odprti</button>
       <button class="fpill" id="f-zakljucen" onclick="setDNFilter('zakljucen',this)">Zaključeni</button>
       <button class="fpill" id="f-prenos" onclick="setDNFilter('prenos',this)">Preneseni</button>
+      <button class="fpill" id="f-rd" onclick="setDNFilter('rd',this)">🔬 R&amp;D</button>
     </div>
     <div id="dnList"></div>
     <div class="pager" id="dnPager"></div>
@@ -369,8 +370,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="shclose" onclick="closeSheet('dnOverlay')">✕</button>
     </div>
     <div class="shbody">
+      <div class="field"><label>Vrsta naloga</label>
+        <select id="dnVrsta" onchange="onDnVrstaChange()">
+          <option value="dn">Redni delovni nalog — nastane produkt</option>
+          <option value="rd">R&amp;D nalog — uradno ne nastane produkt</option>
+        </select>
+      </div>
       <div class="frow">
-        <div class="field"><label>Oznaka DN</label><input id="dnOznaka" placeholder="DN-26-001" autocapitalize="characters"></div>
+        <div class="field"><label>Oznaka</label><input id="dnOznaka" placeholder="DN-26-001" autocapitalize="characters"></div>
         <div class="field"><label>Datum odprtja</label><input id="dnDatum" type="date"></div>
       </div>
       <div class="frow">
@@ -766,9 +773,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div class="shbody">
       <div class="frow">
+        <div class="field"><label>Oznaka R&amp;D naloga</label><input id="rdOznaka" placeholder="RD-26-001" autocapitalize="characters"></div>
         <div class="field"><label>Datum</label><input id="rdDatum" type="date"></div>
-        <div class="field"><label>Naziv eksperimenta</label><input id="rdNaziv" placeholder="npr. UZ ekstrakcija reishi"></div>
       </div>
+      <div class="field"><label>Naziv eksperimenta</label><input id="rdNaziv" placeholder="npr. UZ ekstrakcija reishi"></div>
       <div class="frow">
         <div class="field"><label>Surovina</label><input id="rdSurovina" placeholder="npr. Reishi, smrekovi vrščki…"></div>
         <div class="field"><label>Serija surovine</label><input id="rdSerijaS" placeholder="npr. R010131" autocapitalize="characters"></div>
@@ -1311,9 +1319,6 @@ function meRacun(masaGobe,razmerje,tolPct,volKoncni,pctEtOHme,lecitinPct,cVitPct
 // bilanca pa za isto serijo ze zna izracunati vol% po fazah in skupaj.
 // Katera faza je matični ekstrakt, se razlikuje od serije do serije, zato
 // vrednosti iz bilance samo ponudimo - izbere jih uporabnik z dotikom.
-function meDnKljuc(dn){
-  return ((dn.vrstaGobe||'').trim()+'|||'+(dn.serijaAlc||'').trim());
-}
 function meBilancaVolPct(kljuc){
   const ev=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d));
   if(!ev.length)return [];
@@ -1335,17 +1340,41 @@ function meBilancaVolPct(kljuc){
   return vrstice.filter(v=>v.volPct>0);
 }
 
+// Preracun lahko tece brez naloga (prosti preracun), vezan na proizvodni DN
+// ali na R&D nalog. Pri R&D uradno ne nastane produkt, porabljeni etanol pa se
+// vseeno knjizi, zato ima R&D lastno stevilcenje in je tu izbirljiv enakovredno.
+function meNalog(id){
+  if(!id)return null;
+  const dn=workOrders.find(d=>d.id===id);
+  if(dn)return {vir:'dn',id:dn.id,oznaka:dn.oznaka||'DN',
+    tinktura:dn.vrstaGobe||'',serija:dn.serijaAlc||'',masaGobe:dn.masaGobe||0};
+  const rd=rdNalogi.find(r=>r.id===id);
+  if(rd)return {vir:'rd',id:rd.id,oznaka:rd.oznaka||'R&D',
+    tinktura:rd.surovina||'',serija:rd.serijaS||'',masaGobe:rd.masaS||0};
+  return null;
+}
+function meDnKljucNalog(n){return (n.tinktura||'').trim()+'|||'+(n.serija||'').trim();}
+// Kljuc serije iz delovnega naloga. Ista oblika kot bilKey(tinktura,batch) -
+// serija v bilanci in serija alkoholne tinkture v DN sta ista stvar.
+function meDnKljuc(dn){
+  return ((dn.vrstaGobe||'').trim()+'|||'+(dn.serijaAlc||'').trim());
+}
+
 function renderMeDnSel(){
   const sel=document.getElementById('meDnSel');
   if(!sel)return;
-  const odprti=workOrders.filter(d=>d.serijaAlc||d.vrstaGobe)
+  const dnji=workOrders.filter(d=>d.serijaAlc||d.vrstaGobe)
     .sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
-  sel.innerHTML='<option value="">— brez povezave (prosti preračun) —</option>'+
-    odprti.map(d=>`<option value="${d.id}">${d.oznaka||'DN'} · ${d.vrstaGobe||''} ${d.serijaAlc||''}</option>`).join('');
+  const rdji=[...rdNalogi].sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  sel.innerHTML='<option value="">— brez naloga (prosti preračun) —</option>'+
+    (dnji.length?`<optgroup label="Delovni nalogi">${dnji.map(d=>
+      `<option value="${d.id}">${d.oznaka||'DN'} · ${d.vrstaGobe||''} ${d.serijaAlc||''}</option>`).join('')}</optgroup>`:'')+
+    (rdji.length?`<optgroup label="R&amp;D nalogi (brez produkta)">${rdji.map(r=>
+      `<option value="${r.id}">${r.oznaka||'R&D'} · ${r.naziv||''}</option>`).join('')}</optgroup>`:'');
 }
 
 function onMeDnChange(){
-  const dn=workOrders.find(d=>d.id===document.getElementById('meDnSel').value);
+  const dn=meNalog(document.getElementById('meDnSel').value);
   const info=document.getElementById('meDnInfo');
   if(!dn){
     info.innerHTML='';
@@ -1367,8 +1396,9 @@ function onMeDnChange(){
     document.getElementById('meMasaTinkture').value=shr.masaTinkture?String(shr.masaTinkture).replace('.',','):'';
   }
   info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
-    ${dn.masaGobe>0?`Masa gobe iz DN: <strong>${dn.masaGobe} g</strong> · `:''}
-    ${dn.serijaAlc?`serija <strong>${dn.serijaAlc}</strong>`:'brez serije'}
+    ${dn.vir==='rd'?'<strong style="color:#5a3a6b">R&amp;D — uradno brez produkta</strong> · ':''}
+    ${dn.masaGobe>0?`masa surovine iz naloga: <strong>${dn.masaGobe} g</strong> · `:''}
+    ${dn.serija?`serija <strong>${dn.serija}</strong>`:'brez serije'}
     ${shr?' · <span style="color:#3a6b4a">shranjen preračun povrnjen</span>':''}
   </div>`;
   calcMe();
@@ -1382,9 +1412,9 @@ function meUporabiVolPct(v){
 function renderMeBilChips(){
   const box=document.getElementById('meBilChips');
   if(!box)return;
-  const dn=workOrders.find(d=>d.id===document.getElementById('meDnSel').value);
+  const dn=meNalog(document.getElementById('meDnSel').value);
   if(!dn){box.innerHTML='';return;}
-  const vrstice=meBilancaVolPct(meDnKljuc(dn));
+  const vrstice=meBilancaVolPct(meDnKljucNalog(dn));
   if(!vrstice.length){
     box.innerHTML=`<div style="font-size:.68rem;color:var(--muted);padding:0 0 .5rem">
       Za to serijo v bilanci še ni dogodkov, iz katerih bi se dal izračunati vol %.</div>`;
@@ -1764,7 +1794,9 @@ function openMeSheet(){
   set('meMhveDej','');
   renderMeDnSel();
   // Ce je v Bilanci ze izbrana serija, jo prevzamemo tudi tu.
-  const dn=workOrders.find(d=>bilSelectedKey&&meDnKljuc(d)===bilSelectedKey);
+  const dn=bilSelectedKey
+    ?[...workOrders,...rdNalogi].map(x=>meNalog(x.id)).find(n=>n&&meDnKljucNalog(n)===bilSelectedKey)
+    :null;
   document.getElementById('meDnSel').value=dn?dn.id:'';
   if(dn)onMeDnChange(); else {document.getElementById('meDnInfo').innerHTML='';calcMe();}
   openSheet('meOverlay');
@@ -2113,10 +2145,12 @@ function setDNFilter(f,btn){
 
 // ── RENDER DN STATS ──
 function renderDNStats(){
-  const odprti=workOrders.filter(d=>d.status==='odprt').length;
-  const zakljuceni=workOrders.filter(d=>d.status==='zakljucen').length;
-  const preneseni=workOrders.filter(d=>d.status==='prenos').length;
-  const letosniAAE=workOrders
+  // Statistika proizvodnje; R&D nalogi se stejejo posebej.
+  const proiz=workOrders.filter(d=>!d.jeRd);
+  const odprti=proiz.filter(d=>d.status==='odprt').length;
+  const zakljuceni=proiz.filter(d=>d.status==='zakljucen').length;
+  const preneseni=proiz.filter(d=>d.status==='prenos').length;
+  const letosniAAE=proiz
     .filter(d=>d.datum&&d.datum.startsWith(new Date().getFullYear().toString()))
     .reduce((s,d)=>s+(d.lAAE||0),0);
   document.getElementById('dnStatsGrid').innerHTML=`
@@ -2128,7 +2162,10 @@ function renderDNStats(){
 
 // ── RENDER DN LIST ──
 function renderDN(){
-  let rows=workOrders;
+  // R&D nalogi so v seznamu proizvodnih nalogov skriti - iz njih uradno ne
+  // nastane produkt in bi kvarili statistiko. Vidni so pod filtrom "R&D" in
+  // v zavihku R&D.
+  let rows=dnFilter==='rd'?workOrders.filter(d=>d.jeRd):workOrders.filter(d=>!d.jeRd);
   if(dnFilter==='odprt')rows=rows.filter(d=>d.status==='odprt');
   if(dnFilter==='zakljucen')rows=rows.filter(d=>d.status==='zakljucen');
   if(dnFilter==='prenos')rows=rows.filter(d=>d.status==='prenos');
@@ -2212,6 +2249,7 @@ function openDNSheet(id){
   setEtanolGlyEnota('g');
   const d=id?workOrders.find(x=>x.id===id):null;
   document.getElementById('dnSheetTitle').textContent=d?'Uredi DN':'Nov delovni nalog';
+  document.getElementById('dnVrsta').value=d?(d.jeRd?'rd':'dn'):'dn';
   document.getElementById('dnOznaka').value=d?.oznaka||nextDNNum();
   document.getElementById('dnDatum').value=d?.datum||todayISO();
   document.getElementById('dnNamen').value=d?.namen||'Ekstrakcija Reishi';
@@ -2261,6 +2299,31 @@ function openDNSheet(id){
     indEl.style.color='var(--success)';
   }
   openSheet('dnOverlay');
+}
+
+// R&D nalogi imajo svoje stevilcenje, loceno od DN. Uradno iz njih ne nastane
+// produkt, porabljeni etanol pa se mora knjiziti - zato potrebujejo lastno
+// oznako, na katero se sklicuje zapis v knjigi etanola.
+// R&D stevilcenje je skupno za oba tipa: preprost poskus (rdNalogi) in
+// R&D delovni nalog (workOrders z jeRd), sicer bi se oznake podvajale.
+function nextRDNum(){
+  const y=new Date().getFullYear().toString().slice(2);
+  const obstojece=[...rdNalogi,...workOrders.filter(d=>d.jeRd)]
+    .map(r=>r.oznaka)
+    .filter(o=>o&&o.startsWith('RD-'+y+'-'))
+    .map(o=>parseInt(o.split('-')[2])||0);
+  const next=(obstojece.length?Math.max(...obstojece):0)+1;
+  return`RD-${y}-${String(next).padStart(3,'0')}`;
+}
+
+// Ob preklopu vrste zamenjamo predlagano oznako, a le ce je uporabnik se ni
+// popravil rocno - sicer bi mu izbris njegove oznake prisel kot presenecenje.
+function onDnVrstaChange(){
+  const el=document.getElementById('dnOznaka');
+  const rd=document.getElementById('dnVrsta').value==='rd';
+  const samodejna=el.value===''||/^(DN|RD)-\d{2}-\d{3}$/.test(el.value.trim().toUpperCase());
+  if(samodejna)el.value=rd?nextRDNum():nextDNNum();
+  el.placeholder=rd?'RD-26-001':'DN-26-001';
 }
 
 function nextDNNum(){
@@ -2382,6 +2445,7 @@ function saveDN(){
   const d={
     id:editingDNId||uid(),
     oznaka:document.getElementById('dnOznaka').value.trim().toUpperCase(),
+    jeRd:document.getElementById('dnVrsta').value==='rd',
     datum:document.getElementById('dnDatum').value,
     namen:document.getElementById('dnNamen').value,
     vrstaGobe:document.getElementById('dnVrstaGobe').value,
@@ -2518,7 +2582,8 @@ function openDNDetail(id){
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
       ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">${matKnjizen?'↻ Posodobi materiale izhod':'📦 Knjiži materiale izhod'}</button>`:''}
-      ${canTransfer?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
+      ${canTransfer&&!d.jeRd?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
+      ${d.jeRd?`<div style="font-size:.7rem;color:var(--muted);text-align:center;padding:.3rem">🔬 R&amp;D nalog — uradno ne nastane produkt, zato se ne prenaša v Zalogo</div>`:''}
       ${d.status==='prenos'?`<button class="bsave" style="background:#6b7a3a" onclick="posljiGobaPodatke('${d.id}')">🍄 Pošlji serijo gobe v Zalogo</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
@@ -3765,6 +3830,7 @@ function openRDSheet(id){
   editingRDId=id||null;
   const r=id?rdNalogi.find(x=>x.id===id):null;
   document.getElementById('rdSheetTitle').textContent=r?'Uredi R&D nalog':'Nov R&D nalog';
+  document.getElementById('rdOznaka').value=r?.oznaka||nextRDNum();
   document.getElementById('rdDatum').value=r?.datum||todayISO();
   document.getElementById('rdNaziv').value=r?.naziv||'';
   document.getElementById('rdSurovina').value=r?.surovina||'';
@@ -3792,6 +3858,7 @@ function saveRD(){
   const aae=calcAAE(volL,volPct);
   const r={
     id:editingRDId||uid(),
+    oznaka:document.getElementById('rdOznaka').value.trim().toUpperCase()||nextRDNum(),
     datum:document.getElementById('rdDatum').value,
     naziv,
     surovina:document.getElementById('rdSurovina').value.trim(),
@@ -3829,8 +3896,8 @@ function zakljuciRD(id){
     id:uid(),
     datum:todayISO(),
     tip:'poraba-rd',
-    dokument:r.naziv,
-    opomba:`R&D: ${r.surovina||''}${r.serijaS?' · '+r.serijaS:''} · ${r.masaEtOH} kg @ ${r.pctEtOH} vol%`,
+    dokument:r.oznaka||r.naziv,
+    opomba:`R&D ${r.oznaka?r.oznaka+' · ':''}${r.naziv} · ${r.surovina||''}${r.serijaS?' · '+r.serijaS:''} · ${r.masaEtOH} kg @ ${r.pctEtOH} vol%`,
     masa:r.masaEtOH,pct:r.pctEtOH,gostota:r.gostota,
     kolicina:r.volEtOH,lAAE:r.lAAE,
     masPct:volToMas(r.pctEtOH),
@@ -3851,7 +3918,13 @@ function zakljuciRD(id){
 }
 
 function renderRD(){
-  const rows=[...rdNalogi].sort((a,b)=>b.datum.localeCompare(a.datum));
+  // Zavihek zdruzi oba tipa: preprost poskus in R&D delovni nalog. Klik na
+  // nalog odpre obicajne podrobnosti DN, ker gre za isti zapis.
+  const rows=[...rdNalogi.map(r=>({...r,_tip:'poskus'})),
+              ...workOrders.filter(d=>d.jeRd).map(d=>({
+                ...d,_tip:'nalog',naziv:d.namen||d.vrstaGobe||'Delovni nalog',
+                surovina:d.vrstaGobe||'',serijaS:d.serijaAlc||''}))]
+    .sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||'')));
   const total=rows.length;
   const pages=Math.ceil(total/RD_PER_PAGE)||1;
   if(rdPage>=pages)rdPage=0;
@@ -3867,9 +3940,9 @@ function renderRD(){
     const badgeCls=zakljucen?'status-zakljucen':'status-odprt';
     const badgeTxt=zakljucen?'Zaključen':'Odprt';
     return`<div class="dn-card">
-      <div class="dn-header" onclick="openRDDetail('${r.id}')">
+      <div class="dn-header" onclick="${r._tip==='nalog'?`openDNDetail('${r.id}')`:`openRDDetail('${r.id}')`}">
         <div class="dn-info" style="flex:1">
-          <div class="dn-name">${r.naziv}</div>
+          <div class="dn-name">${r.oznaka?`<span style="color:var(--accent)">${r.oznaka}</span> · `:''}${r.naziv}${r._tip==='nalog'?' <span style="font-size:.62rem;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:.05rem .3rem">delovni nalog</span>':''}</div>
           <div class="dn-meta">${fmtDate(r.datum)}${r.surovina?' · '+r.surovina:''}${r.serijaS?' · '+r.serijaS:''}</div>
         </div>
         <div class="dn-right">
@@ -3911,7 +3984,7 @@ function openRDDetail(id){
         <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteRD('${r.id}')">Izbriši</button>
       </div>
     </div>`;
-  document.getElementById('rdDetailTitle').textContent=r.naziv;
+  document.getElementById('rdDetailTitle').textContent=(r.oznaka?r.oznaka+' · ':'')+r.naziv;
   document.getElementById('rdDetailBody').innerHTML=body;
   openSheet('rdDetailOverlay');
 }
@@ -4361,7 +4434,7 @@ async function sbDel(tbl,id){
 
 // Converters DN ↔ Supabase
 function dnToSb(d){return{
-  id:d.id,oznaka:d.oznaka,datum:d.datum||null,namen:d.namen||null,
+  id:d.id,oznaka:d.oznaka,je_rd:!!d.jeRd,datum:d.datum||null,namen:d.namen||null,
   vrsta_gobe:d.vrstaGobe||null,serija_gobe:d.serijaGobe||null,masa_gobe:d.masaGobe||null,
   serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
   kol_alc_interno:d.kolAlcInterno??null,
@@ -4379,7 +4452,7 @@ function dnToSb(d){return{
   ustvarjen:d.ustvarjen||new Date().toISOString()
 };}
 function sbToDn(r){return{
-  id:r.id,oznaka:r.oznaka,datum:r.datum,namen:r.namen,
+  id:r.id,oznaka:r.oznaka,jeRd:!!r.je_rd,datum:r.datum,namen:r.namen,
   vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
   serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
   kolAlcInterno:r.kol_alc_interno??null,
@@ -4445,7 +4518,7 @@ function sbToOp(r){return{
 
 // Converters R&D ↔ Supabase
 function rdToSb(r){return{
-  id:r.id,datum:r.datum||null,naziv:r.naziv||null,
+  id:r.id,oznaka:r.oznaka||null,datum:r.datum||null,naziv:r.naziv||null,
   surovina:r.surovina||null,serija_surovine:r.serijaS||null,
   masa_surovine:r.masaS||null,masa_etoh:r.masaEtOH||null,
   pct_etoh:r.pctEtOH||null,vol_etoh:r.volEtOH||null,l_aae:r.lAAE||null,
@@ -4455,7 +4528,7 @@ function rdToSb(r){return{
   ustvarjen:r.ustvarjen||null,
 };}
 function sbToRd(r){return{
-  id:r.id,datum:r.datum||'',naziv:r.naziv||'',
+  id:r.id,oznaka:r.oznaka||'',datum:r.datum||'',naziv:r.naziv||'',
   surovina:r.surovina||'',serijaS:r.serija_surovine||'',
   masaS:r.masa_surovine||0,masaEtOH:r.masa_etoh||0,
   pctEtOH:r.pct_etoh||0,volEtOH:r.vol_etoh||0,lAAE:r.l_aae||0,
@@ -4486,7 +4559,26 @@ function sbToBil(r){return{
 
 // Sync helpers
 function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
-async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushDN',e);}}
+async function sbPushDN(d){
+  try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');return;}
+  catch(e){
+    // 'je_rd' je nov stolpec. Ce ga v bazi se ni, nalog vseeno sinhroniziramo
+    // brez njega - sicer bi tiho odpovedala sinhronizacija celotnega naloga.
+    if(/je_rd/i.test(e.message||'')){
+      try{
+        const {je_rd,...brez}=dnToSb(d);
+        await sbUpsert('gm_dn_work_orders',brez);
+        setSyncStatus('⚠');
+        if(!window._dnJeRdOpozorilo){
+          window._dnJeRdOpozorilo=true;
+          toast('⚠ V Supabase manjka stolpec gm_dn_work_orders.je_rd — vrsta naloga se ne sinhronizira');
+        }
+        return;
+      }catch(e2){console.error('sbPushDN (brez je_rd)',e2);}
+    }
+    setSyncStatus('⚠');console.error('sbPushDN',e);
+  }
+}
 async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
 async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);toast('⚠ '+e.message.slice(0,120));}}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
@@ -4510,7 +4602,26 @@ async function sbPushGly(z){
   catch(e){setSyncStatus('⚠');console.error('sbPushGly',e);toast('⚠ Zapis GLY ni sinhroniziran: '+String(e.message).slice(0,90));}
 }
 
-async function sbPushRD(r){try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushRD',e);}}
+async function sbPushRD(r){
+  try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');return;}
+  catch(e){
+    // 'oznaka' je nov stolpec. Ce ga v bazi se ni, zapis vseeno sinhroniziramo
+    // brez njega - sicer bi tiho odpovedala sinhronizacija celega R&D naloga.
+    if(/oznaka/i.test(e.message||'')){
+      try{
+        const {oznaka,...brezOznake}=rdToSb(r);
+        await sbUpsert('gm_dn_rd',brezOznake);
+        setSyncStatus('⚠');
+        if(!window._rdOznakaOpozorilo){
+          window._rdOznakaOpozorilo=true;
+          toast('⚠ V Supabase manjka stolpec gm_dn_rd.oznaka — oznake se ne sinhronizirajo');
+        }
+        return;
+      }catch(e2){console.error('sbPushRD (brez oznake)',e2);}
+    }
+    setSyncStatus('⚠');console.error('sbPushRD',e);
+  }
+}
 async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
 
 async function migrirajVSupabase(){

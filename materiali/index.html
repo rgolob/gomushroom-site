@@ -38,6 +38,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .nitem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem .25rem;color:rgba(255,255,255,.4);font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;border:none;background:none;cursor:pointer;gap:.2rem;transition:color .15s}
 .nitem.active{color:var(--accent)}
 .nicon{font-size:1.1rem;line-height:1}
+.vec-item{display:flex;align-items:center;gap:.85rem;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);padding:.85rem .2rem;cursor:pointer;font-family:'Jost',sans-serif;color:var(--ink)}
+.vec-item:last-child{border-bottom:none}
+.vec-ico{font-size:1.35rem;line-height:1;width:1.6rem;text-align:center}
+.vec-item strong{display:block;font-size:.92rem;font-weight:500}
+.vec-item small{display:block;font-size:.68rem;color:var(--muted);margin-top:.1rem}
+.calc-card{display:flex;align-items:center;gap:.85rem;width:100%;text-align:left;background:var(--parchment);border:1px solid var(--border);border-radius:12px;padding:.9rem .95rem;margin-bottom:.6rem;cursor:pointer;font-family:'Jost',sans-serif;color:var(--ink)}
+.calc-ico{font-size:1.5rem;line-height:1}
+.calc-txt{flex:1;min-width:0}
+.calc-txt strong{display:block;font-size:.95rem;font-weight:500}
+.calc-txt small{display:block;font-size:.7rem;color:var(--muted);margin-top:.15rem;line-height:1.4}
+.calc-arrow{font-size:1.3rem;color:var(--muted)}
 
 /* ── VIEWS ── */
 .view{display:none}.view.active{display:block}
@@ -266,8 +277,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="view-hdr">
       <div class="view-title">Masna bilanca</div>
       <div style="display:flex;gap:.4rem">
-        <button class="hbtn2" onclick="openMeSheet()">🧮 ME</button>
-        <button class="hbtn2" onclick="openGlySheet()">🧴 GLY</button>
         <button class="hbtn2" onclick="openZdruziSheet()">⊕ Združi</button>
         <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
       </div>
@@ -279,6 +288,30 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
     <div id="bilStatusSums"></div>
+  </div>
+
+  <!-- PRERACUNI VIEW -->
+  <div class="view" id="view-preracuni">
+    <div class="view-hdr">
+      <div class="view-title">Preračuni</div>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);line-height:1.5;margin:0 0 .9rem">
+      Oba preračuna se lahko vežeta na delovni nalog ali serijo iz bilance.
+      Vnesene vrednosti se shranijo pod izbrano serijo.
+    </div>
+    <button class="calc-card" onclick="openMeSheet()">
+      <span class="calc-ico">🧮</span>
+      <span class="calc-txt"><strong>Matični ekstrakt</strong>
+        <small>Koliko alkoholnega ekstrakta dati na stran; vodni fazi in dodatka</small></span>
+      <span class="calc-arrow">›</span>
+    </button>
+    <button class="calc-card" onclick="openGlySheet()">
+      <span class="calc-ico">🧴</span>
+      <span class="calc-txt"><strong>Glicerinska tinktura</strong>
+        <small>Odstranjevanje topila, glicerin in voda, zapis dejansko dodanega</small></span>
+      <span class="calc-arrow">›</span>
+    </button>
+    <div id="preracuniZapisi"></div>
   </div>
 
   <!-- OPREMA VIEW -->
@@ -302,13 +335,29 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nitem active" id="nav-dn" onclick="switchTab('dn',this)"><span class="nicon">📋</span>DN</button>
-  <button class="nitem" id="nav-etanol" onclick="switchTab('etanol',this)"><span class="nicon">🧪</span>Etanol</button>
-  <button class="nitem" id="nav-materiali" onclick="switchTab('materiali',this)"><span class="nicon">📦</span>Materiali</button>
-  <button class="nitem" id="nav-oprema" onclick="switchTab('oprema',this)"><span class="nicon">🔧</span>Oprema</button>
-  <button class="nitem" id="nav-rd" onclick="switchTab('rd',this)"><span class="nicon">🔬</span>R&amp;D</button>
+  <button class="nitem active" id="nav-dn" onclick="switchTab('dn',this)"><span class="nicon">📋</span>Nalogi</button>
   <button class="nitem" id="nav-bilanca" onclick="switchTab('bilanca',this)"><span class="nicon">⚖️</span>Bilanca</button>
+  <button class="nitem" id="nav-preracuni" onclick="switchTab('preracuni',this)"><span class="nicon">🧮</span>Preračuni</button>
+  <button class="nitem" id="nav-etanol" onclick="switchTab('etanol',this)"><span class="nicon">🧪</span>Etanol</button>
+  <button class="nitem" id="nav-vec" onclick="openVecMenu()"><span class="nicon">⋯</span>Več</button>
 </nav>
+
+<!-- SHEET: VEC -->
+<div class="overlay" id="vecOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Več</span>
+      <button class="shclose" onclick="closeSheet('vecOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <button class="vec-item" onclick="vecOdpri('materiali')"><span class="vec-ico">📦</span><span><strong>Materiali</strong><small>Zaloga steklenic, etiket, gob, glicerina</small></span></button>
+      <button class="vec-item" onclick="vecOdpri('oprema')"><span class="vec-ico">🔧</span><span><strong>Oprema</strong><small>Oprema, inventar, vzdrževanje</small></span></button>
+      <button class="vec-item" onclick="vecOdpri('rd')"><span class="vec-ico">🔬</span><span><strong>R&amp;D</strong><small>Razvojni nalogi</small></span></button>
+      <button class="vec-item" onclick="closeSheet('vecOverlay');openSettings()"><span class="vec-ico">⚙️</span><span><strong>Nastavitve</strong><small>Sinhronizacija, cene, trošarina</small></span></button>
+    </div>
+  </div>
+</div>
 
 <!-- SHEET: NOV DN -->
 <div class="overlay" id="dnOverlay">
@@ -1980,11 +2029,16 @@ function onEtTipChange(){
 }
 
 // ── TAB ──
+// Zasloni pod gumbom "Vec" nimajo svojega gumba v spodnji vrstici, zato ostane
+// oznacen gumb "Vec" - sicer med njimi ni oznacen noben zavihek.
+const NAV_VEC=['materiali','oprema','rd'];
+
 function switchTab(id,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+id).classList.add('active');
-  if(btn)btn.classList.add('active');
+  if(NAV_VEC.includes(id)) document.getElementById('nav-vec')?.classList.add('active');
+  else if(btn)btn.classList.add('active');
   else document.getElementById('nav-'+id)?.classList.add('active');
   currentTab=id;
   if(id==='dn'){renderDNStats();renderDN();}
@@ -1993,6 +2047,30 @@ function switchTab(id,btn){
   if(id==='oprema'){renderOprema();}
   if(id==='rd'){renderRD();}
   if(id==='bilanca'){renderBilancaSelect();}
+  if(id==='preracuni'){renderPreracuni();}
+}
+
+function openVecMenu(){openSheet('vecOverlay');}
+function vecOdpri(id){closeSheet('vecOverlay');switchTab(id);}
+
+// Seznam ze shranjenih zapisov GLY, da zavihek ni le dva gumba - iz njega je
+// razvidno, za katere serije preracun ze obstaja in kaj je bilo doseceno.
+function renderPreracuni(){
+  const box=document.getElementById('preracuniZapisi');
+  if(!box)return;
+  const z=Object.values(glyZapisi())
+    .sort((a,b)=>String(b.shranjen||'').localeCompare(String(a.shranjen||'')));
+  if(!z.length){box.innerHTML='';return;}
+  box.innerHTML=`<div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:1.2rem 0 .3rem">Zapisi glicerinske tinkture</div>
+    <table class="mini-table">
+      <tr><th>Serija</th><th>Nalog</th><th class="num">Doseženo</th><th class="num">Glicerin</th></tr>
+      ${z.map(r=>{
+        const dn=r.dnId?workOrders.find(d=>d.id===r.dnId):null;
+        const dos=r.doseceno?round(r.doseceno.pctTopilo,1)+' %':'—';
+        const gly=r.vnos&&r.vnos.dejGly?round(r.vnos.dejGly,0)+' g':'—';
+        return `<tr><td>${r.tinktura||''} ${r.batch||''}</td><td style="font-size:.72rem">${dn?(dn.oznaka||'DN'):'—'}</td><td class="num">${dos}</td><td class="num">${gly}</td></tr>`;
+      }).join('')}
+    </table>`;
 }
 
 // ── SHEET ──

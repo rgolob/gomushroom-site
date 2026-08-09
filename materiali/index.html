@@ -1505,6 +1505,15 @@ function renderGlyNalogSel(){
 
 function glyZapisi(){return JSON.parse(localStorage.getItem('gm_dn_gly_zapisi')||'{}');}
 
+// calcGly() se sprozi ob vsakem pritisnjenem znaku; brez zamika bi vsak znak
+// pomenil svoj zahtevek proti Supabase.
+let _glySyncTimer=null;
+function glyOznaciSpremembo(z){
+  if(!z)return;
+  clearTimeout(_glySyncTimer);
+  _glySyncTimer=setTimeout(()=>sbPushGly(z),1500);
+}
+
 function onGlyNalogChange(){
   const n=glyKljucNaloga(document.getElementById('glyNalogSel').value);
   const info=document.getElementById('glyNalogInfo');
@@ -1641,6 +1650,7 @@ function calcGly(){
       shranjen:new Date().toISOString(),
     };
     localStorage.setItem('gm_dn_gly_zapisi',JSON.stringify(zapisi));
+    glyOznaciSpremembo(zapisi[nalog.id]);
   }
 }
 
@@ -4311,6 +4321,26 @@ async function sbPushDN(d){try{await sbUpsert('gm_dn_work_orders',dnToSb(d));set
 async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
 async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);toast('⚠ '+e.message.slice(0,120));}}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+// Converters zapis GLY <-> Supabase (tabela gm_dn_gly_zapisi)
+function glyToSb(z){return{
+  id:z.id,dn_id:z.dnId||null,vir:z.vir||null,
+  tinktura:z.tinktura||null,batch:z.batch||null,bil_kljuc:z.bilKljuc||null,
+  vnos:z.vnos||null,izracun:z.izracun||null,doseceno:z.doseceno||null,
+  shranjen:z.shranjen||null,
+};}
+function sbToGly(r){return{
+  id:r.id,dnId:r.dn_id||null,vir:r.vir||'',
+  tinktura:r.tinktura||'',batch:r.batch||'',bilKljuc:r.bil_kljuc||'',
+  vnos:r.vnos||{},izracun:r.izracun||{},doseceno:r.doseceno||null,
+  shranjen:r.shranjen||null,
+};}
+// Napake tu izpisemo tudi kot toast: zapis serije je dokument o sarzi in tiha
+// odpoved sinhronizacije je hujsa od kratkega opozorila.
+async function sbPushGly(z){
+  try{await sbUpsert('gm_dn_gly_zapisi',glyToSb(z));setSyncStatus('✓');}
+  catch(e){setSyncStatus('⚠');console.error('sbPushGly',e);toast('⚠ Zapis GLY ni sinhroniziran: '+String(e.message).slice(0,90));}
+}
+
 async function sbPushRD(r){try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushRD',e);}}
 async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
 
@@ -4342,13 +4372,14 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops,rds,bils]=await Promise.all([
+    const [wos,ets,mats,ops,rds,bils,glys]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
       sbFetch('gm_dn_oprema','order=naziv.asc'),
       sbFetch('gm_dn_rd','order=datum.desc').catch(()=>[]),
       sbFetch('gm_dn_bilanca','order=ts.asc').catch(()=>[]),
+      sbFetch('gm_dn_gly_zapisi','order=shranjen.desc').catch(()=>[]),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -4364,6 +4395,11 @@ async function loadFromSB(){
     oprema=ops.map(sbToOp);
     if(rds.length)rdNalogi=rds.map(sbToRd);
     if(bils.length)bilancaDogodki=bils.map(sbToBil);
+    if(glys.length){
+      const zapisi={};
+      glys.map(sbToGly).forEach(z=>{zapisi[z.id]=z;});
+      localStorage.setItem('gm_dn_gly_zapisi',JSON.stringify(zapisi));
+    }
     // Ne kličemo save() — localStorage posodabljamo samo ob akcijah uporabnika
     renderDNStats();renderDN();renderEtStats();
     if(currentTab==='etanol')renderEtanol();

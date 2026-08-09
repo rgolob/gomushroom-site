@@ -49,6 +49,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .calc-txt strong{display:block;font-size:.95rem;font-weight:500}
 .calc-txt small{display:block;font-size:.7rem;color:var(--muted);margin-top:.15rem;line-height:1.4}
 .calc-arrow{font-size:1.3rem;color:var(--muted)}
+.dn-goto{border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.34rem .8rem;font-family:'Jost',sans-serif;font-size:.75rem;cursor:pointer;color:var(--ink)}
 
 /* ── VIEWS ── */
 .view{display:none}.view.active{display:block}
@@ -281,7 +282,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <button class="hbtn2" onclick="openBilancaSheet()">+ Dogodek</button>
       </div>
     </div>
-    <div class="field"><label>Tinktura / Batch</label>
+    <div class="field"><label>Delovni nalog / serija</label>
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
     <div id="bilNalogInfo"></div>
@@ -2051,6 +2052,31 @@ function switchTab(id,btn){
 }
 
 function openVecMenu(){openSheet('vecOverlay');}
+
+// Prehod iz delovnega naloga v bilanco oz. preracun za isto serijo.
+// bilSelectedKey nastavimo, preden odpremo cilj - iz njega oba preracuna
+// prevzameta serijo, bilanca pa nanjo preklopi izbirnik.
+function dnPojdiNa(dnId,kam){
+  const d=workOrders.find(x=>x.id===dnId);
+  if(!d)return;
+  const kljuc=meDnKljuc(d);
+  closeSheet('dnDetailOverlay');
+  if(kam==='bilanca'){
+    switchTab('bilanca');
+    // Ce za serijo se ni dogodkov, je v izbirniku ni; povemo, namesto da bi
+    // uporabnik gledal tujo serijo.
+    const obstaja=bilancaDogodki.some(x=>bilKey(x.tinktura,x.batch)===kljuc);
+    if(!obstaja){toast('Za to serijo v bilanci še ni dogodkov');return;}
+    bilSelectedKey=kljuc;
+    const sel=document.getElementById('bilBatchSel');
+    if(sel)sel.value=kljuc;
+    renderBilanca();
+    return;
+  }
+  bilSelectedKey=kljuc;
+  switchTab('preracuni');
+  if(kam==='me')openMeSheet(); else openGlySheet();
+}
 function vecOdpri(id){closeSheet('vecOverlay');switchTab(id);}
 
 // Seznam ze shranjenih zapisov GLY, da zavihek ni le dva gumba - iz njega je
@@ -2477,6 +2503,14 @@ function openDNDetail(id){
     </table>
 
     ${d.opomba?`<div class="slabel">Opomba</div><div style="font-size:.8rem;color:var(--muted)">${d.opomba}</div>`:''}
+
+    ${(d.vrstaGobe||d.serijaAlc)?`
+    <div class="slabel">Za to serijo</div>
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.6rem">
+      <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','bilanca')">⚖️ Bilanca</button>
+      <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','me')">🧮 Matični ekstrakt</button>
+      <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','gly')">🧴 Glicerinska</button>
+    </div>`:''}
 
     <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
       <button class="bsave" onclick="openDNSheet('${d.id}');closeSheet('dnDetailOverlay')">✎ Uredi</button>
@@ -3945,13 +3979,19 @@ function renderBilancaSelect(){
     return;
   }
   const keep=list.some(([k])=>k===bilSelectedKey)?bilSelectedKey:list[0][0];
-  // Ce za serijo obstaja delovni nalog, ga pripisemo v ime moznosti - serija
-  // v bilanci in serija alkoholne tinkture v DN sta ista stvar, le zapisani
-  // na dveh mestih.
-  sel.innerHTML=list.map(([k,v])=>{
+  // Serije z delovnim nalogom in brez njega locimo v skupini, enako kot pri
+  // preracunih - serija v bilanci in serija alkoholne tinkture v DN sta ista
+  // stvar, le zapisani na dveh mestih.
+  const opt=([k,v])=>{
     const dn=workOrders.find(d=>meDnKljuc(d)===k);
-    return `<option value="${k}"${k===keep?' selected':''}>${v.tinktura} — ${v.batch}${dn?' · '+(dn.oznaka||'DN'):''}</option>`;
-  }).join('');
+    const oznaka=dn?`${dn.oznaka||'DN'} · ${v.tinktura} ${v.batch}`:`${v.tinktura} — ${v.batch}`;
+    return `<option value="${k}"${k===keep?' selected':''}>${oznaka}</option>`;
+  };
+  const zNalogom=list.filter(([k])=>workOrders.some(d=>meDnKljuc(d)===k));
+  const brez=list.filter(([k])=>!workOrders.some(d=>meDnKljuc(d)===k));
+  sel.innerHTML=
+    (zNalogom.length?`<optgroup label="Delovni nalogi">${zNalogom.map(opt).join('')}</optgroup>`:'')+
+    (brez.length?`<optgroup label="Serije brez naloga">${brez.map(opt).join('')}</optgroup>`:'');
   bilSelectedKey=keep;
   renderBilanca();
 }

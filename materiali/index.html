@@ -838,7 +838,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
         <div class="frow">
           <div class="field"><label>Lod — suha snov (%)</label><input id="glyLod" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="calcGly()"></div>
-          <div class="field"><label>Voda že prisotna (g)</label><input id="glyVodaZe" type="text" inputmode="decimal" placeholder="npr. 104,6" oninput="calcGly()"></div>
+          <div class="field"><label>Voda že prisotna (g)</label><input id="glyVodaZe" type="text" inputmode="decimal" placeholder="iz odstranjevanja topila" oninput="_glyVodaRocna=true;calcGly()"></div>
         </div>
         <div id="glyBilChips"></div>
       </div>
@@ -1450,6 +1450,17 @@ const GLY_POLJA={
   glyDejGly:'dejGly',glyDejVoda:'dejVoda',glyDejCVit:'dejCVit',glyDejLec:'dejLec',
 };
 
+// Voda, ki ostane ob suhi snovi po uparjanju. Te vrednosti ni mogoce vedeti
+// vnaprej - dobis jo sele iz mase odstranjenega topila: kar ostane, je suha
+// snov in voda. Zato je tudi ni smiselno vnasati rocno, dokler uparjanja ni.
+function glyVodaOstanek(o){
+  if(!(o.odstranjeno>0)||!(o.m0>0))return null;
+  const mExt=o.m0*o.lodPct/100;
+  const mOst=o.m0-o.odstranjeno;
+  const mVode=mOst-mExt;
+  return mVode>=0?round(mVode,2):null;
+}
+
 function glyRacun(o){
   const mExt=o.m0*o.lodPct/100;
   const v0=o.rho0>0?o.m0/o.rho0:0;
@@ -1536,6 +1547,7 @@ function openGlySheet(){
   set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
   // Dejansko dodano in opomba sta vezana na konkretno serijo, zato ju ne
   // prenasamo iz zadnjega preracuna - napolnita se sele ob izbiri naloga.
+  _glyVodaRocna=false;
   ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>set(id,''));
   document.getElementById('glyOpomba').value='';
   renderGlyNalogSel();
@@ -1655,7 +1667,10 @@ function onGlyNalogChange(){
   calcGly();
 }
 
+// Ce uporabnik vrednost vpise sam, je ne povozimo; sicer sledi uparjanju.
+let _glyVodaRocna=false;
 function glyUporabiVodo(g){
+  _glyVodaRocna=false;
   document.getElementById('glyVodaZe').value=String(g).replace('.',',');
   calcGly();
 }
@@ -1676,6 +1691,17 @@ function calcGly(){
     rhoGly:num('glyRhoGly',GLY_PRIVZETO.rhoGly),rhoW:num('glyRhoW',GLY_PRIVZETO.rhoW),
     kPct:num('glyK',GLY_PRIVZETO.kPct),rhoExt:num('glyRhoExt',GLY_PRIVZETO.rhoExt),
   };
+  // Vodo, ki ostane po uparjanju, izpolnimo sami - dokler je uporabnik ne
+  // vpise rocno. Prej je polje ostalo na nic in se je za toliko dodalo prevec
+  // vode, ne da bi se to kje poznalo.
+  const vodaIzUparjanja=glyVodaOstanek(o);
+  if(vodaIzUparjanja!=null&&!_glyVodaRocna){
+    o.vodaZe=vodaIzUparjanja;
+    const el=document.getElementById('glyVodaZe');
+    const zapis=String(vodaIzUparjanja).replace('.',',');
+    if(el.value!==zapis)el.value=zapis;
+  }
+
   const odstrBox=document.getElementById('glyOdstrIzpis');
   const izpis=document.getElementById('glyIzpis');
   // Ponudba iz bilance mora biti vidna tudi, ko m0 se ni vnesen - prav takrat
@@ -1707,7 +1733,7 @@ function calcGly(){
       ${vrstica('m ost. — ostanek po uparjanju',n(o2.mOst),'g')}
       ${vrstica('m ss — suha snov',n(o2.mSs,1),'g')}
       ${vrstica('m vode — voda v ostanku',n(o2.mVode,1),'g',true)}
-      ${o2.mVode<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Suhe snovi je več kot ostanka — preveri Lod oz. maso odstranjenega topila.</div>`:`<div style="padding:.35rem 0"><button type="button" onclick="glyUporabiVodo(${round(o2.mVode,2)})" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">↓ uporabi kot „voda že prisotna"</button></div>`}
+      ${o2.mVode<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Suhe snovi je več kot ostanka — preveri Lod oz. maso odstranjenega topila.</div>`:`${Math.abs(o.vodaZe-o2.mVode)<0.01?`<div style="font-size:.68rem;color:#3a6b4a;padding:.3rem 0">✓ prevzeto kot „voda že prisotna"</div>`:`<div style="padding:.35rem 0"><button type="button" onclick="glyUporabiVodo(${round(o2.mVode,2)})" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">↓ uporabi kot „voda že prisotna" (zdaj ${n(o.vodaZe)} g)</button></div>`}`}
       ${vrstica('m AAE — absolutni alkohol v destilatu',n(o2.mAae,1),'g')}
       ${vrstica('Kontrola — moč začetne tinkture',n(o2.mmKont,2)+' m% / '+n(o2.volKont,1),'vol %')}
     </div>`;

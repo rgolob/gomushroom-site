@@ -1957,29 +1957,12 @@ function calcDNBilanca(){
     </div>`:''}`;
 }
 
-function knjizVrnjen(){
-  const aae=window._dnVrnjenAAE||0;
-  if(!aae){toast('Ni kaj knjižiti');return;}
-  const oznaka=document.getElementById('dnOznaka')?.value||'DN';
-  const datum=document.getElementById('dnDatum')?.value||todayISO();
-  // Vrnjen iz procesa je ~30 vol% (isto kot tinktura)
-  const volPct=TINKTURA_VOL_PCT;
-  const volL=round(aae/(volPct/100),3);
-  const e={
-    id:uid(),datum,
-    tip:'vrnjen',
-    dokument:oznaka,
-    opomba:`Vrnjen iz procesa ekstrakcije · ${oznaka}`,
-    kolicina:volL,pct:volPct,lAAE:aae,
-    trosarina:calcTrosarina(aae,volL),cena:0,
-  };
-  etanolKnjiga.push(e);
-  save();
-  renderEtStats();
-  toast(`✓ Knjiženo: +${volL.toFixed(3)} L @ ${volPct}vol% (${aae.toFixed(4)} L AAE) → zaloga`);
-  window._dnVrnjenAAE=0;
-  calcDNBilanca();
-}
+// Etanol se porablja samo v proizvodnji, vhod pa je izkljucno rocni vnos
+// nabave ali regeneracije. Tretjega vhodnega tipa ni, zato je bila funkcija
+// knjizVrnjen() (tip 'vrnjen') odstranjena - nikoli ni bila dosegljiva
+// (nihce ni nastavil _dnVrnjenAAE, nobenega gumba ni bilo), ce pa bi jo kdo
+// prikljucil, bi ustvarila zapis, ki ga pravilo isIn=nabava||regeneracija ne
+// pozna in bi se od zaloge odstel namesto pristel.
 
 // ── DN CALC ──
 function calcDN(){

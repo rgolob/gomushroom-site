@@ -32,16 +32,16 @@ strežniška ne.
 
 ## Obračun etanola
 
-### `vrnjen` se šteje kot izhod
-V `materiali/index.html` je vhod v knjigo etanola definiran kot
-`nabava || regeneracija` na **petih** mestih. Tip `vrnjen` (`knjizVrnjen`,
-etanol, vrnjen iz procesa ekstrakcije) ni v nobeni od njih, zato se od zaloge
-**odšteje namesto prišteje** — napaka je dvakratnik vrnjene količine.
+### ~~`vrnjen` se šteje kot izhod~~ — rešeno
 
-Popravek naj najprej definira vhodne tipe **enkrat samkrat**, nato pa to
-uporabi povsod. Isti vzorec (eno pravilo, prepisano na več mest) je bil vzrok
-več napak: štiri definicije prodajnega kanala v `zaloga/`, dve definiciji
-prikaza zaloge v trgovini.
+Vhod v knjigo etanola je izključno ročni vnos nabave ali regeneracije;
+tretjega vhodnega tipa ni. Pravilo `isIn = nabava || regeneracija` je torej
+popolno, ne pomanjkljivo.
+
+Funkcija `knjizVrnjen()` je ustvarjala zapis tipa `vrnjen`, ki ga to pravilo
+ne pozna. Nikoli ni bila dosegljiva (nihče ni nastavil `_dnVrnjenAAE`, nanjo
+ni kazal noben gumb), zato takih zapisov v knjigi ni in zaloga zaradi tega
+ni bila napačna. Odstranjena je, da ne more nastati pozneje.
 
 ### R&D poraba etanola se ne knjiži
 `zakljuciRD()` obstaja in dela pravilno, a ni bil še nikoli sprožen. Etanol,

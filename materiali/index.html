@@ -870,6 +870,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lecitin — skupaj (%)</label><input id="glyLecPct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
           <div class="field"><label>Lecitin — že v alk. (%)</label><input id="glyLecZePct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
         </div>
+        <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:.6rem 0 .4rem;padding-top:.5rem;border-top:1px solid var(--border)">
+          <strong>Raztapljanje — neobvezno.</strong> Koliko topila vzameš vnaprej, da v njem
+          raztopiš dodatek. To ni dodatna količina — <strong>odšteje se</strong> od načrtovane
+          vode oz. glicerina, zato se sestava ne spremeni.
+        </div>
+        <div class="frow">
+          <div class="field"><label>C vitamin — voda (g)</label><input id="glyCVitVoda" type="text" inputmode="decimal" placeholder="npr. 40" oninput="calcGly()"></div>
+          <div class="field"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Lecitin — voda (g)</label><input id="glyLecVoda" type="text" inputmode="decimal" placeholder="npr. 20" oninput="calcGly()"></div>
+          <div class="field"><label>Lecitin — glicerin (g)</label><input id="glyLecGly" type="text" inputmode="decimal" placeholder="npr. 60" oninput="calcGly()"></div>
+        </div>
       </div>
 
       <div class="dn-block-alc" style="border-left-color:#5a3a6b">
@@ -1446,6 +1459,7 @@ const GLY_POLJA={
   glySerija:'serija',glyCilj:'ciljPct',glyM0:'m0',glyRho0:'rho0',glyLod:'lodPct',
   glyVodaZe:'vodaZe',glyOdstranjeno:'odstranjeno',glyDestVol:'destVolPct',
   glyCVitPct:'cVitPct',glyCVitZePct:'cVitZePct',glyLecPct:'lecPct',glyLecZePct:'lecZePct',
+  glyCVitVoda:'cVitVoda',glyLecVoda:'lecVoda',glyLecGly:'lecGly',
   glyRhoGly:'rhoGly',glyRhoW:'rhoW',glyK:'kPct',glyRhoExt:'rhoExt',
   glyDejGly:'dejGly',glyDejVoda:'dejVoda',glyDejCVit:'dejCVit',glyDejLec:'dejLec',
 };
@@ -1520,8 +1534,17 @@ function glyRacun(o){
   // C vitamin: skupaj 0,7 %, v alkoholni 0,2 %.
   // Lecitin: skupaj 0,3 %, v alkoholni prav tako 0,3 % - ker je glicerinska
   // tinktura tezja, se doda razlika v masi krat 0,3 %.
+  // Topilo, v katerem se dodatka raztopita, ni nova snov - vzame se iz ze
+  // nacrtovane vode oz. glicerina. Zato se samo razdeli na "za raztapljanje" in
+  // "preostalo"; vsota in s tem delez glicerina ostaneta nespremenjena.
+  // C vitamin gre samo v vodo, lecitin v mesanico vode in glicerina.
+  const razVoda=o.cVitVoda+o.lecVoda, razGly=o.lecGly;
+
   return {
     mExt,v0,vExt,mTot,gly,voda,vodaDodati,odstr,dej,
+    razVoda,razGly,
+    vodaPreostala:vodaDodati-razVoda,
+    glyPreostali:gly-razGly,
     cVit:mTot*o.cVitPct/100-o.m0*o.cVitZePct/100,
     cVitSkupaj:mTot*o.cVitPct/100,
     cVitZe:o.m0*o.cVitZePct/100,
@@ -1557,6 +1580,7 @@ function openGlySheet(){
   document.getElementById('glyNalogInfo').innerHTML='';
   set('glyCVitPct',s.cVitPct??GLY_PRIVZETO.cVitPct);set('glyCVitZePct',s.cVitZePct??GLY_PRIVZETO.cVitZePct);
   set('glyLecPct',s.lecPct??GLY_PRIVZETO.lecPct);set('glyLecZePct',s.lecZePct??GLY_PRIVZETO.lecZePct);
+  set('glyCVitVoda',s.cVitVoda??'');set('glyLecVoda',s.lecVoda??'');set('glyLecGly',s.lecGly??'');
   set('glyRhoGly',s.rhoGly??GLY_PRIVZETO.rhoGly);set('glyRhoW',s.rhoW??GLY_PRIVZETO.rhoW);
   set('glyK',s.kPct??GLY_PRIVZETO.kPct);set('glyRhoExt',s.rhoExt??GLY_PRIVZETO.rhoExt);
   calcGly();
@@ -1688,6 +1712,7 @@ function calcGly(){
     opomba:document.getElementById('glyOpomba').value.trim(),
     cVitPct:num('glyCVitPct',GLY_PRIVZETO.cVitPct),cVitZePct:num('glyCVitZePct',GLY_PRIVZETO.cVitZePct),
     lecPct:num('glyLecPct',GLY_PRIVZETO.lecPct),lecZePct:num('glyLecZePct',GLY_PRIVZETO.lecZePct),
+    cVitVoda:num('glyCVitVoda'),lecVoda:num('glyLecVoda'),lecGly:num('glyLecGly'),
     rhoGly:num('glyRhoGly',GLY_PRIVZETO.rhoGly),rhoW:num('glyRhoW',GLY_PRIVZETO.rhoW),
     kPct:num('glyK',GLY_PRIVZETO.kPct),rhoExt:num('glyRhoExt',GLY_PRIVZETO.rhoExt),
   };
@@ -1748,9 +1773,18 @@ function calcGly(){
     <div style="margin-top:.9rem">
       <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Sestava — stehtaj</div>
       ${vrstica('m_tot — končna masa tinkture',n(r.mTot),'g')}
-      ${vrstica('Glicerin',n(r.gly),'g',true)}
+      ${vrstica('Glicerin',n(r.gly),'g',!r.razGly)}
+      ${r.razGly>0?`
+        ${vrstica('&nbsp;&nbsp;└ za raztapljanje lecitina',n(r.razGly),'g')}
+        ${vrstica('&nbsp;&nbsp;└ <strong>preostali glicerin</strong>',n(r.glyPreostali),'g',true)}
+        ${r.glyPreostali<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več glicerina, kot ga gre v serijo.</div>`:''}`:''}
       ${vrstica('Voda skupaj',n(r.voda),'g')}
-      ${vrstica('Vode za dodajanje',n(r.vodaDodati),'g',true)}
+      ${vrstica('Vode za dodajanje',n(r.vodaDodati),'g',!r.razVoda)}
+      ${r.razVoda>0?`
+        ${o.cVitVoda>0?vrstica('&nbsp;&nbsp;└ za raztapljanje C vitamina',n(o.cVitVoda),'g'):''}
+        ${o.lecVoda>0?vrstica('&nbsp;&nbsp;└ za raztapljanje lecitina',n(o.lecVoda),'g'):''}
+        ${vrstica('&nbsp;&nbsp;└ <strong>preostala voda</strong>',n(r.vodaPreostala),'g',true)}
+        ${r.vodaPreostala<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več vode, kot je je za dodajanje.</div>`:''}`:''}
       ${r.vodaDodati<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Vode je že več, kot je potrebno — presežek ${n(-r.vodaDodati)} g. Serija bo redkejša od cilja.</div>`:''}
       ${r.voda<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Pri tem deležu glicerina in tej količini suhe snovi za vodo ne ostane prostora. Zniža ciljni delež.</div>`:''}
     </div>
@@ -1759,9 +1793,11 @@ function calcGly(){
       ${vrstica(`C vitamin — skupaj ${pct(o.cVitPct)} %`,n(r.cVitSkupaj,2),'g')}
       ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.cVitZePct)} % od m₀)`,n(r.cVitZe,2),'g')}
       ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.cVit,2),'g',true)}
+      ${o.cVitVoda>0?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${n(o.cVitVoda)} g vode, vzete iz načrtovane</div>`:''}
       ${vrstica(`Lecitin — skupaj ${pct(o.lecPct)} %`,n(r.lecitinSkupaj,2),'g')}
       ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.lecZePct)} % od m₀)`,n(r.lecitinZe,2),'g')}
       ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.lecitin,2),'g',true)}
+      ${(o.lecVoda>0||o.lecGly>0)?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${[o.lecVoda>0?n(o.lecVoda)+' g vode':'',o.lecGly>0?n(o.lecGly)+' g glicerina':''].filter(Boolean).join(' + ')}, vzetih iz načrtovanih</div>`:''}
       ${r.cVit<0||r.lecitin<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Negativna vrednost pomeni, da je dodatka v alkoholni osnovi že več, kot ga sme biti v končni tinkturi.</div>`:''}
     </div>
     <div style="margin-top:.9rem">

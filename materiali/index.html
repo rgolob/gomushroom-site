@@ -4143,7 +4143,7 @@ function renderBilanca(){
         :''}</td>
       <td style="white-space:nowrap"><button onclick="openBilancaSheet('${d.id}')" style="border:none;background:none;cursor:pointer">✎</button><button onclick="delBilanca('${d.id}')" style="border:none;background:none;cursor:pointer;color:var(--danger)">✕</button></td>
       <td style="text-align:center"><input type="checkbox" ${bilIncluded(d)?'checked':''} onchange="toggleBilUkljucen('${d.id}')"></td>
-    </tr>${opombaHtml?`<tr class="bil-opomba-row" hidden><td colspan="11" style="background:rgba(175,132,85,.07);font-size:.72rem;line-height:1.45;color:var(--muted);white-space:normal">${opombaHtml}</td></tr>`:''}`;
+    </tr>${opombaHtml?`<tr class="bil-opomba-row" hidden><td colspan="11" style="background:rgba(175,132,85,.07);font-size:.62rem;line-height:1.4;padding:.3rem .4rem;color:var(--muted);white-space:normal">${opombaHtml}</td></tr>`:''}`;
     }).join('')}
   </table>`;
 

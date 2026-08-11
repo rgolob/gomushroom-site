@@ -1706,6 +1706,10 @@ function onGlyNalogChange(){
   if(z&&z.vnos){
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
     Object.entries(GLY_POLJA).forEach(([id,k])=>set(id,z.vnos[k]));
+    // Prazna polja se v zapis shranijo kot 0. Ob povrnitvi naj ostanejo
+    // prazna - "se nisem stehtal" ne sme izgledati kot "stehtal sem 0 g".
+    ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec','glyCVitVoda','glyLecVoda','glyLecGly']
+      .forEach(id=>{const el=document.getElementById(id);if(el&&!Number(el.value.replace(',','.')))el.value='';});
     document.getElementById('glyOsnova').value=z.vnos.osnova||'celota';
     document.getElementById('glyRazNacin').value=z.vnos.razNacin||'dodaj';
     document.getElementById('glyOpomba').value=z.vnos.opomba||'';

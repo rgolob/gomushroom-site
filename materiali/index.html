@@ -820,7 +820,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div id="glyNalogInfo"></div>
       <div class="frow">
-        <div class="field"><label>Serija</label><input id="glySerija" placeholder="npr. R25" autocapitalize="characters" oninput="calcGly()"></div>
+        <div class="field"><label>Serija</label><input id="glySerija" placeholder="npr. R25" autocapitalize="characters" oninput="calcGly()" onchange="onGlySerijaChange()"></div>
         <div class="field"><label>Ciljni delež glicerina (%)</label><input id="glyCilj" type="text" inputmode="decimal" placeholder="75" oninput="calcGly()"></div>
       </div>
       <div class="field"><label>Delež se nanaša na</label>
@@ -1593,11 +1593,13 @@ function openGlySheet(){
   set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
   set('glyVodaZe',s.vodaZe??'');
   set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
-  // Dejansko dodano in opomba sta vezana na konkretno serijo, zato ju ne
-  // prenasamo iz zadnjega preracuna - napolnita se sele ob izbiri naloga.
+  // Dejansko dodano in opomba sta vezana na konkretno serijo. Med delom na
+  // isti seriji ostaneta, da se preracun lahko zapre in spet odpre; pobriseta
+  // se sele, ko se vpise druga serija (onGlySerijaChange).
   _glyVodaRocna=false;
-  ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>set(id,''));
-  document.getElementById('glyOpomba').value='';
+  document.getElementById('glyOpomba').value=s.opomba??'';
+  _glySerijaPrej=(s.serija??'').trim().toUpperCase();
+  glyPobrisiNicle();
   renderGlyNalogSel();
   const bilN=bilSelectedKey?[...workOrders].find(d=>meDnKljuc(d)===bilSelectedKey):null;
   document.getElementById('glyNalogSel').value=bilN?'dn:'+bilN.id:(bilSelectedKey?'bil:'+bilSelectedKey:'');
@@ -1617,6 +1619,25 @@ function openGlySheet(){
 // mogoce delati porocil. Kljuc je ali delovni nalog ali kombinacija
 // tinktura|batch iz bilance - isti kljuc kot ga uporablja masna bilanca,
 // da se poznejsa porocila cez alkoholno in glicerinsko bilanco ujamejo.
+// Prazna polja se v zapis shranijo kot 0. Ob povrnitvi naj ostanejo prazna -
+// "se nisem stehtal" ne sme izgledati kot "stehtal sem 0 g".
+const GLY_NICLE=['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec','glyCVitVoda','glyLecVoda','glyLecGly'];
+function glyPobrisiNicle(){
+  GLY_NICLE.forEach(id=>{const el=document.getElementById(id);if(el&&!Number(String(el.value).replace(',','.')))el.value='';});
+}
+
+// Stehtane kolicine pripadajo eni seriji. Ko se vpise druga, jih pobrisemo,
+// da ne odnesemo tez prejsnje serije v naslednjo.
+let _glySerijaPrej='';
+function onGlySerijaChange(){
+  const zdaj=document.getElementById('glySerija').value.trim().toUpperCase();
+  if(zdaj===_glySerijaPrej)return;
+  _glySerijaPrej=zdaj;
+  ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('glyOpomba').value='';
+  calcGly();
+}
+
 function glyKljucNaloga(v){
   if(!v)return null;
   if(v.startsWith('dn:')){
@@ -1706,14 +1727,12 @@ function onGlyNalogChange(){
   if(z&&z.vnos){
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
     Object.entries(GLY_POLJA).forEach(([id,k])=>set(id,z.vnos[k]));
-    // Prazna polja se v zapis shranijo kot 0. Ob povrnitvi naj ostanejo
-    // prazna - "se nisem stehtal" ne sme izgledati kot "stehtal sem 0 g".
-    ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec','glyCVitVoda','glyLecVoda','glyLecGly']
-      .forEach(id=>{const el=document.getElementById(id);if(el&&!Number(el.value.replace(',','.')))el.value='';});
+    glyPobrisiNicle();
     document.getElementById('glyOsnova').value=z.vnos.osnova||'celota';
     document.getElementById('glyRazNacin').value=z.vnos.razNacin||'dodaj';
     document.getElementById('glyOpomba').value=z.vnos.opomba||'';
   }
+  _glySerijaPrej=document.getElementById('glySerija').value.trim().toUpperCase();
   info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
     ${n.tinktura?n.tinktura+' · ':''}${n.batch||'brez serije'}
     ${z?` · <span style="color:#3a6b4a">zapis povrnjen (${z.shranjen?new Date(z.shranjen).toLocaleDateString('sl-SI'):''})</span>`:''}

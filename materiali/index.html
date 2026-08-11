@@ -871,9 +871,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Lecitin — že v alk. (%)</label><input id="glyLecZePct" type="text" inputmode="decimal" placeholder="0,3" oninput="calcGly()"></div>
         </div>
         <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:.6rem 0 .4rem;padding-top:.5rem;border-top:1px solid var(--border)">
-          <strong>Raztapljanje — neobvezno.</strong> Koliko topila vzameš vnaprej, da v njem
-          raztopiš dodatek. To ni dodatna količina — <strong>odšteje se</strong> od načrtovane
-          vode oz. glicerina, zato se sestava ne spremeni.
+          <strong>Raztapljanje — neobvezno.</strong> Koliko topila porabiš, da v njem
+          raztopiš dodatek. C vitamin gre v vodo, lecitin v mešanico vode in glicerina.
+        </div>
+        <div class="field">
+          <label>To topilo</label>
+          <select id="glyRazNacin" onchange="calcGly()">
+            <option value="dodaj">dodam povrh — končna masa je za toliko večja</option>
+            <option value="odstej">vzamem iz načrtovane vode oz. glicerina</option>
+          </select>
         </div>
         <div class="frow">
           <div class="field"><label>C vitamin — voda (g)</label><input id="glyCVitVoda" type="text" inputmode="decimal" placeholder="npr. 40" oninput="calcGly()"></div>
@@ -1517,6 +1523,20 @@ function glyRacun(o){
     };
   })():null;
 
+  // Topilo, v katerem se dodatka raztopita. C vitamin gre samo v vodo, lecitin
+  // v mesanico vode in glicerina. Dve praksi, dva izracuna:
+  //  - "dodaj": nacrt stehtas do konca, topilo za raztapljanje pride povrh.
+  //    Koncna masa je za toliko vecja, delez glicerina se premakne.
+  //  - "odstej": topilo vzames iz nacrtovane kolicine. Vsota in delez ostaneta
+  //    nespremenjena, spremeni se samo vrstni red dela.
+  const razVoda=o.cVitVoda+o.lecVoda, razGly=o.lecGly;
+  const razDodaj=o.razNacin!=='odstej';
+  const razSkupajVoda=razDodaj?vodaDodati+razVoda:vodaDodati;
+  const razSkupajGly=razDodaj?gly+razGly:gly;
+  // Delez po dodanem topilu - po isti osnovi kot nacrt.
+  const razGlyPo=gly+(razDodaj?razGly:0), razVodaPo=voda+(razDodaj?razVoda:0);
+  const razMTotPo=mTot+(razDodaj?razVoda+razGly:0);
+
   // ── Doseženo iz dejansko dodanega ──
   // m konc. = dodan glicerin + dodana voda + voda, ki je ostala po uparjanju.
   // Suha snov v m konc. ni steta - v imenovalec pride sele pri delezu "s suho
@@ -1527,8 +1547,8 @@ function glyRacun(o){
       mKonc,
       pctTopilo:mKonc>0?o.dejGly/mKonc*100:0,
       pctCelota:(mKonc+mExt)>0?o.dejGly/(mKonc+mExt)*100:0,
-      razlikaGly:o.dejGly-gly,
-      razlikaVoda:o.dejVoda-vodaDodati,
+      razlikaGly:o.dejGly-razSkupajGly,
+      razlikaVoda:o.dejVoda-razSkupajVoda,
     };
   })():null;
 
@@ -1537,15 +1557,12 @@ function glyRacun(o){
   // C vitamin: skupaj 0,7 %, v alkoholni 0,2 %.
   // Lecitin: skupaj 0,3 %, v alkoholni prav tako 0,3 % - ker je glicerinska
   // tinktura tezja, se doda razlika v masi krat 0,3 %.
-  // Topilo, v katerem se dodatka raztopita, ni nova snov - vzame se iz ze
-  // nacrtovane vode oz. glicerina. Zato se samo razdeli na "za raztapljanje" in
-  // "preostalo"; vsota in s tem delez glicerina ostaneta nespremenjena.
-  // C vitamin gre samo v vodo, lecitin v mesanico vode in glicerina.
-  const razVoda=o.cVitVoda+o.lecVoda, razGly=o.lecGly;
-
   return {
     mExt,v0,vExt,mTot,gly,voda,vodaDodati,odstr,dej,
-    razVoda,razGly,
+    razVoda,razGly,razDodaj,razSkupajVoda,razSkupajGly,
+    razDelezPo:o.osnova==='topilo'?(razGlyPo+razVodaPo>0?razGlyPo/(razGlyPo+razVodaPo)*100:0)
+                                  :(razMTotPo>0?razGlyPo/razMTotPo*100:0),
+    razMTotPo,
     vodaPreostala:vodaDodati-razVoda,
     glyPreostali:gly-razGly,
     cVit:mTot*o.cVitPct/100-o.m0*o.cVitZePct/100,
@@ -1568,6 +1585,7 @@ function openGlySheet(){
   set('glySerija',s.serija??'');
   set('glyCilj',s.ciljPct??GLY_PRIVZETO.ciljPct);
   document.getElementById('glyOsnova').value=s.osnova||'celota';
+  document.getElementById('glyRazNacin').value=s.razNacin||'dodaj';
   set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
   set('glyVodaZe',s.vodaZe??'');
   set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
@@ -1685,6 +1703,7 @@ function onGlyNalogChange(){
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v===''||v==null?'':String(v).replace('.',',');};
     Object.entries(GLY_POLJA).forEach(([id,k])=>set(id,z.vnos[k]));
     document.getElementById('glyOsnova').value=z.vnos.osnova||'celota';
+    document.getElementById('glyRazNacin').value=z.vnos.razNacin||'dodaj';
     document.getElementById('glyOpomba').value=z.vnos.opomba||'';
   }
   info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
@@ -1707,6 +1726,7 @@ function calcGly(){
   const o={
     serija:document.getElementById('glySerija').value.trim(),
     osnova:document.getElementById('glyOsnova').value,
+    razNacin:document.getElementById('glyRazNacin').value,
     ciljPct:num('glyCilj',GLY_PRIVZETO.ciljPct),
     m0:num('glyM0'),rho0:num('glyRho0'),lodPct:num('glyLod'),vodaZe:num('glyVodaZe'),
     odstranjeno:num('glyOdstranjeno'),destVolPct:num('glyDestVol'),
@@ -1774,8 +1794,8 @@ function calcGly(){
   if(dejNamig){
     dejNamig.innerHTML=(r.razVoda>0||r.razGly>0)?`<div style="font-size:.68rem;color:var(--muted);line-height:1.5;background:rgba(90,58,107,.07);border-radius:8px;padding:.4rem .55rem;margin:0 0 .5rem">
       Po načrtu skupaj:
-      ${r.razVoda>0?`<br>· voda ${n(r.razVoda)} (raztapljanje) + ${n(r.vodaPreostala)} (na koncu) = <strong>${n(r.vodaDodati)} g</strong>`:''}
-      ${r.razGly>0?`<br>· glicerin ${n(r.razGly)} (raztapljanje) + ${n(r.glyPreostali)} (na koncu) = <strong>${n(r.gly)} g</strong>`:''}
+      ${r.razVoda>0?`<br>· voda ${r.razDodaj?`${n(r.vodaDodati)} (načrt) + ${n(r.razVoda)} (raztapljanje)`:`${n(r.razVoda)} (raztapljanje) + ${n(r.vodaPreostala)} (na koncu)`} = <strong>${n(r.razSkupajVoda)} g</strong>`:''}
+      ${r.razGly>0?`<br>· glicerin ${r.razDodaj?`${n(r.gly)} (načrt) + ${n(r.razGly)} (raztapljanje)`:`${n(r.razGly)} (raztapljanje) + ${n(r.glyPreostali)} (na koncu)`} = <strong>${n(r.razSkupajGly)} g</strong>`:''}
     </div>`:'';
   }
 
@@ -1789,17 +1809,27 @@ function calcGly(){
       <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Sestava — stehtaj</div>
       ${vrstica('m_tot — končna masa tinkture',n(r.mTot),'g')}
       ${vrstica('Glicerin',n(r.gly),'g',!r.razGly)}
-      ${r.razGly>0?`
+      ${r.razGly>0?(r.razDodaj?`
+        ${vrstica('&nbsp;&nbsp;+ za raztapljanje lecitina',n(r.razGly),'g')}
+        ${vrstica('&nbsp;&nbsp;= <strong>glicerina skupaj</strong>',n(r.razSkupajGly),'g',true)}`:`
         ${vrstica('&nbsp;&nbsp;└ za raztapljanje lecitina',n(r.razGly),'g')}
         ${vrstica('&nbsp;&nbsp;└ <strong>preostali glicerin</strong>',n(r.glyPreostali),'g',true)}
-        ${r.glyPreostali<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več glicerina, kot ga gre v serijo.</div>`:''}`:''}
+        ${r.glyPreostali<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več glicerina, kot ga gre v serijo.</div>`:''}`):''}
       ${vrstica('Voda skupaj',n(r.voda),'g')}
       ${vrstica('Vode za dodajanje',n(r.vodaDodati),'g',!r.razVoda)}
       ${r.razVoda>0?`
-        ${o.cVitVoda>0?vrstica('&nbsp;&nbsp;└ za raztapljanje C vitamina',n(o.cVitVoda),'g'):''}
-        ${o.lecVoda>0?vrstica('&nbsp;&nbsp;└ za raztapljanje lecitina',n(o.lecVoda),'g'):''}
-        ${vrstica('&nbsp;&nbsp;└ <strong>preostala voda</strong>',n(r.vodaPreostala),'g',true)}
-        ${r.vodaPreostala<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več vode, kot je je za dodajanje.</div>`:''}`:''}
+        ${o.cVitVoda>0?vrstica(`&nbsp;&nbsp;${r.razDodaj?'+':'└'} za raztapljanje C vitamina`,n(o.cVitVoda),'g'):''}
+        ${o.lecVoda>0?vrstica(`&nbsp;&nbsp;${r.razDodaj?'+':'└'} za raztapljanje lecitina`,n(o.lecVoda),'g'):''}
+        ${r.razDodaj?vrstica('&nbsp;&nbsp;= <strong>vode skupaj</strong>',n(r.razSkupajVoda),'g',true)
+                   :`${vrstica('&nbsp;&nbsp;└ <strong>preostala voda</strong>',n(r.vodaPreostala),'g',true)}
+                     ${r.vodaPreostala<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več vode, kot je je za dodajanje.</div>`:''}`}`:''}
+      ${r.razDodaj&&(r.razVoda>0||r.razGly>0)?`
+        ${vrstica('Končna masa s topilom za raztapljanje',n(r.razMTotPo),'g')}
+        ${vrstica(o.osnova==='topilo'?'Delež glicerina v topilu — po dodatku':'Delež glicerina v tinkturi — po dodatku',n(r.razDelezPo,2),'%',true)}
+        <div style="font-size:.68rem;color:${Math.abs(r.razDelezPo-o.ciljPct)>0.5?'#8b5a2a':'var(--muted)'};padding:.3rem 0;line-height:1.4">
+          Cilj je ${pct(o.ciljPct)} %. Topilo za raztapljanje ga premakne za ${n(r.razDelezPo-o.ciljPct,2)} odstotne točke.
+          Če hočeš cilj zadeti točno, preklopi zgoraj na „vzamem iz načrtovane".
+        </div>`:''}
       ${r.vodaDodati<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Vode je že več, kot je potrebno — presežek ${n(-r.vodaDodati)} g. Serija bo redkejša od cilja.</div>`:''}
       ${r.voda<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Pri tem deležu glicerina in tej količini suhe snovi za vodo ne ostane prostora. Zniža ciljni delež.</div>`:''}
     </div>
@@ -1808,11 +1838,11 @@ function calcGly(){
       ${vrstica(`C vitamin — skupaj ${pct(o.cVitPct)} %`,n(r.cVitSkupaj,2),'g')}
       ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.cVitZePct)} % od m₀)`,n(r.cVitZe,2),'g')}
       ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.cVit,2),'g',true)}
-      ${o.cVitVoda>0?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${n(o.cVitVoda)} g vode, vzete iz načrtovane</div>`:''}
+      ${o.cVitVoda>0?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${n(o.cVitVoda)} g vode ${r.razDodaj?'povrh načrta':'iz načrtovane'}</div>`:''}
       ${vrstica(`Lecitin — skupaj ${pct(o.lecPct)} %`,n(r.lecitinSkupaj,2),'g')}
       ${vrstica(`&nbsp;&nbsp;že v alkoholni (${pct(o.lecZePct)} % od m₀)`,n(r.lecitinZe,2),'g')}
       ${vrstica('&nbsp;&nbsp;<strong>dodati</strong>',n(r.lecitin,2),'g',true)}
-      ${(o.lecVoda>0||o.lecGly>0)?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${[o.lecVoda>0?n(o.lecVoda)+' g vode':'',o.lecGly>0?n(o.lecGly)+' g glicerina':''].filter(Boolean).join(' + ')}, vzetih iz načrtovanih</div>`:''}
+      ${(o.lecVoda>0||o.lecGly>0)?`<div style="font-size:.68rem;color:var(--muted);padding:.25rem 0 .45rem">↳ raztopi v ${[o.lecVoda>0?n(o.lecVoda)+' g vode':'',o.lecGly>0?n(o.lecGly)+' g glicerina':''].filter(Boolean).join(' + ')} ${r.razDodaj?'povrh načrta':'iz načrtovanih'}</div>`:''}
       ${r.cVit<0||r.lecitin<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Negativna vrednost pomeni, da je dodatka v alkoholni osnovi že več, kot ga sme biti v končni tinkturi.</div>`:''}
     </div>
     <div style="margin-top:.9rem">

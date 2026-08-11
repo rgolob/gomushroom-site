@@ -890,7 +890,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:0 0 .4rem">
           Kar si res stehtal. Pusti prazno, dokler ne veš. Iz teh vrednosti se
           izračuna dosežena koncentracija — načrt se s tem ne spremeni.
+          <strong>Vštej tudi tisto, kar si porabil za raztapljanje dodatkov</strong> —
+          gre za skupno količino, ne le za tisto, ki si jo dodal na koncu.
         </div>
+        <div id="glyDejNamig"></div>
         <div class="frow">
           <div class="field"><label>Glicerin (g)</label><input id="glyDejGly" type="text" inputmode="decimal" placeholder="npr. 2815" oninput="calcGly()"></div>
           <div class="field"><label>Voda (g)</label><input id="glyDejVoda" type="text" inputmode="decimal" placeholder="npr. 814" oninput="calcGly()"></div>
@@ -1732,8 +1735,10 @@ function calcGly(){
   // Ponudba iz bilance mora biti vidna tudi, ko m0 se ni vnesen - prav takrat
   // je najbolj potrebna.
   renderGlyBilChips();
+  const dejNamig=document.getElementById('glyDejNamig');
   if(!o.m0||!o.rho0){
     if(odstrBox)odstrBox.innerHTML='';
+    if(dejNamig)dejNamig.innerHTML='';
     izpis.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:.6rem 0">Vnesi maso in gostoto začetne tinkture.</div>';
     return;
   }
@@ -1762,6 +1767,16 @@ function calcGly(){
       ${vrstica('m AAE — absolutni alkohol v destilatu',n(o2.mAae,1),'g')}
       ${vrstica('Kontrola — moč začetne tinkture',n(o2.mmKont,2)+' m% / '+n(o2.volKont,1),'vol %')}
     </div>`;
+  }
+
+  // Opomnik ob "dejansko dodano": kdor je del vode ze porabil za raztapljanje,
+  // mora sesteti oba dela, sicer odstopanje pokaze manjko, ki ga ni bilo.
+  if(dejNamig){
+    dejNamig.innerHTML=(r.razVoda>0||r.razGly>0)?`<div style="font-size:.68rem;color:var(--muted);line-height:1.5;background:rgba(90,58,107,.07);border-radius:8px;padding:.4rem .55rem;margin:0 0 .5rem">
+      Po načrtu skupaj:
+      ${r.razVoda>0?`<br>· voda ${n(r.razVoda)} (raztapljanje) + ${n(r.vodaPreostala)} (na koncu) = <strong>${n(r.vodaDodati)} g</strong>`:''}
+      ${r.razGly>0?`<br>· glicerin ${n(r.razGly)} (raztapljanje) + ${n(r.glyPreostali)} (na koncu) = <strong>${n(r.gly)} g</strong>`:''}
+    </div>`:'';
   }
 
   izpis.innerHTML=`

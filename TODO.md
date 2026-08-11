@@ -73,3 +73,31 @@ variante v trgovini ali odstrani.
 ### Hitri račun vsote regeneratov po fazah
 Spodnja tabela v preglednici Bilance (OF / VF / TE, pogače, izgube, AAE po
 fazah). Odloženo — »zaenkrat ne«.
+
+### Revizijska sled — kdaj je bilo kaj vneseno
+Danes se hrani samo zadnje stanje. Vsak zapis ima polje `shranjen`, a se ob
+vsakem shranjevanju prepiše, in `sbPush*` pošilja `upsert` — prejšnja
+vrednost izgine brez sledi. Vidi se torej, *kdaj je bil zapis nazadnje
+spremenjen*, ne pa *kaj je bilo prej* in ne *koliko popravkov je bilo*.
+
+Za trošarinsko evidenco in zapise šarž je to premalo: nadzornika ne zanima
+le trenutna številka, ampak ali je bila naknadno popravljena.
+
+Kar bi bilo treba:
+
+1. **Ločena tabela, samo za dodajanje** — `gm_dn_dnevnik`:
+   `cas`, `tabela`, `zapis_id`, `akcija` (insert/update/delete), `staro` jsonb,
+   `novo` jsonb, `uporabnik`. RLS naj dovoli `insert`, ne pa `update` ali
+   `delete` — dnevnik, ki ga aplikacija lahko popravi, ni revizijska sled.
+
+2. **Sprožilec v Postgresu, ne v aplikaciji.** `AFTER INSERT OR UPDATE OR
+   DELETE` na `gm_dn_*` tabelah. Če bi pisala aplikacija, bi se sled izgubila
+   ob spremembi neposredno v Supabase UI ali ob napaki v brskalniku.
+
+3. **Kdo** je odvisen od Supabase Auth (glej prvo točko v Varnosti). Dokler se
+   vse tri aplikacije prijavljajo z istim publishable ključem, sta zapisljiva
+   samo *kdaj* in *kaj* — `auth.uid()` je prazen.
+
+Prikaz v aplikaciji je majhen del: pri vsakem preračunu oz. nalogu gumb
+»zgodovina sprememb«, ki pokaže seznam `cas → polje: staro ⟶ novo`.
+Vredno narediti hkrati s Supabase Auth, ker si točki delita isto rešitev.

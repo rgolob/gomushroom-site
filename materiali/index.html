@@ -1576,6 +1576,10 @@ function glyRacun(o){
     delezDejanski:o.osnova==='topilo'?(gly+voda>0?gly/(gly+voda)*100:0)
                                      :(mTot>0?gly/mTot*100:0),
     vKoncni:vExt+(gly/o.rhoGly+voda/o.rhoW)*c,
+    // Topilo za raztapljanje, dodano povrh, poveca tudi volumen - in s tem
+    // stevilo steklenic. Brez tega bi nacrt obljubljal manj, kot res nastane.
+    vKoncniPo:razVodaPo>=0?vExt+(razGlyPo/o.rhoGly+razVodaPo/o.rhoW)*c:0,
+    kosov50Po:(vExt+(razGlyPo/o.rhoGly+razVodaPo/o.rhoW)*c)/50,
   };
 }
 
@@ -1823,13 +1827,7 @@ function calcGly(){
         ${r.razDodaj?vrstica('&nbsp;&nbsp;= <strong>vode skupaj</strong>',n(r.razSkupajVoda),'g',true)
                    :`${vrstica('&nbsp;&nbsp;└ <strong>preostala voda</strong>',n(r.vodaPreostala),'g',true)}
                      ${r.vodaPreostala<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Za raztapljanje si vzel več vode, kot je je za dodajanje.</div>`:''}`}`:''}
-      ${r.razDodaj&&(r.razVoda>0||r.razGly>0)?`
-        ${vrstica('Končna masa s topilom za raztapljanje',n(r.razMTotPo),'g')}
-        ${vrstica(o.osnova==='topilo'?'Delež glicerina v topilu — po dodatku':'Delež glicerina v tinkturi — po dodatku',n(r.razDelezPo,2),'%',true)}
-        <div style="font-size:.68rem;color:${Math.abs(r.razDelezPo-o.ciljPct)>0.5?'#8b5a2a':'var(--muted)'};padding:.3rem 0;line-height:1.4">
-          Cilj je ${pct(o.ciljPct)} %. Topilo za raztapljanje ga premakne za ${n(r.razDelezPo-o.ciljPct,2)} odstotne točke.
-          Če hočeš cilj zadeti točno, preklopi zgoraj na „vzamem iz načrtovane".
-        </div>`:''}
+      ${r.razDodaj&&(r.razVoda>0||r.razGly>0)?vrstica('Končna masa s topilom za raztapljanje',n(r.razMTotPo),'g'):''}
       ${r.vodaDodati<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Vode je že več, kot je potrebno — presežek ${n(-r.vodaDodati)} g. Serija bo redkejša od cilja.</div>`:''}
       ${r.voda<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Pri tem deležu glicerina in tej količini suhe snovi za vodo ne ostane prostora. Zniža ciljni delež.</div>`:''}
     </div>
@@ -1847,9 +1845,16 @@ function calcGly(){
     </div>
     <div style="margin-top:.9rem">
       <div style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem">Kontrola</div>
-      ${vrstica(o.osnova==='topilo'?'Delež glicerina v topilu':'Delež glicerina v tinkturi',n(r.delezDejanski,2),'%')}
-      ${vrstica('Volumen končne tinkture',n(r.vKoncni),'mL')}
-      ${vrstica('Steklenic po 50 mL',n(r.kosov50),'kos')}
+      ${vrstica(o.osnova==='topilo'?'Delež glicerina v topilu':'Delež glicerina v tinkturi',n(r.razDelezPo,2),'%')}
+      ${r.razDodaj&&(r.razVoda>0||r.razGly>0)?`<div style="font-size:.68rem;color:${Math.abs(r.razDelezPo-o.ciljPct)>0.5?'#8b5a2a':'var(--muted)'};padding:.3rem 0;line-height:1.4">
+        Cilj je ${pct(o.ciljPct)} %. Topilo za raztapljanje ga premakne za ${n(r.razDelezPo-o.ciljPct,2)} odstotne točke.
+        Če hočeš cilj zadeti točno, preklopi zgoraj na „vzamem iz načrtovane".
+      </div>`:''}
+      ${vrstica('Volumen končne tinkture',n(r.vKoncniPo),'mL')}
+      ${vrstica('Steklenic po 50 mL',n(r.kosov50Po),'kos',true)}
+      ${r.razDodaj&&(r.razVoda>0||r.razGly>0)?`<div style="font-size:.68rem;color:var(--muted);padding:.3rem 0;line-height:1.4">
+        Topilo za raztapljanje doda ${n(r.vKoncniPo-r.vKoncni)} mL — brez njega bi bilo ${n(r.vKoncni)} mL oz. ${n(r.kosov50)} stekleničk.
+      </div>`:''}
     </div>`;
 
   if(r.dej){

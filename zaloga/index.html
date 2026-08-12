@@ -1723,6 +1723,38 @@ const DRZAVE=[
   {k:'US',sl:'Združene države',en:'United States'},
 ];
 function drzavaIme(k,lang){const d=DRZAVE.find(x=>x.k===(k||'SI'));return d?(lang==='en'?d.en:d.sl):(k||'');}
+
+// Trgovina v gm_orders shranjuje ime drzave v jeziku, v katerem je kupec
+// naročal - iz slovenske "Nemčija", iz angleške "Germany". Zato razrešujemo po
+// obeh imenih hkrati, brez sumnikov in velikih crk. Tako se pravilno preberejo
+// tudi naročila, ki so nastala, preden je to polje obstajalo tu.
+const _DRZAVE_PO_IMENU=(()=>{
+  const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const m={};
+  DRZAVE.forEach(d=>{m[norm(d.sl)]=d.k;m[norm(d.en)]=d.k;m[norm(d.k)]=d.k;});
+  return {m,norm};
+})();
+function drzavaKoda(ime){
+  if(!ime)return 'SI';
+  const k=_DRZAVE_PO_IMENU.m[_DRZAVE_PO_IMENU.norm(ime)];
+  // Tiho privzeti Slovenijo bi tujemu kupcu poslalo slovenski racun, zato
+  // neznano ime vsaj zabelezimo - opozorilo pove, da je treba drzavo dodati v
+  // DRZAVE, ko se v trgovini pojavi nova.
+  if(!k)console.warn('Neznano ime države:',ime,'— privzeta Slovenija');
+  return k||'SI';
+}
+
+// Uvoz spletnih narocil pise neposredno s fetch, ker rabi Prefer in vrnjen
+// zapis. Isto varovalo kot sbInsertBrezCountry: ce stolpca country se ni, gre
+// zapis brez njega, da uvoz narocila ne pade na pol poti.
+async function sbPostBrezCountry(url,headers,data){
+  const r=await fetch(url,{method:'POST',headers,body:JSON.stringify(data)});
+  if(r.ok)return r;
+  const besedilo=await r.text();
+  if(!/country/i.test(besedilo))return {ok:false,text:async()=>besedilo};
+  const {country,...brez}=data;
+  return fetch(url,{method:'POST',headers,body:JSON.stringify(brez)});
+}
 // Ena sama definicija: tujina je vse, kar ni Slovenija. Prazna vrednost so
 // stari zapisi, ki so nastali pred tem poljem - ti so bili vsi domaci.
 function jeTujina(k){return !!k&&k!=='SI';}
@@ -7759,6 +7791,7 @@ async function potrdiNarocilo(orderId) {
       phone: narocilo.phone || null,
       street: narocilo.street || null,
       post: postFull || null,
+      country: drzavaKoda(narocilo.country),
       date: today,
       note: ['Spletno naročilo', dostavaNote, narocilo.street, postFull].filter(Boolean).join(' · '),
       discount: parseFloat(narocilo.discount_pct) || 0,
@@ -7771,11 +7804,8 @@ async function potrdiNarocilo(orderId) {
     };
 
     // Vstavi sale group
-    const gr = await fetch(`${SB_URL}/rest/v1/gm_sale_groups`, {
-      method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
-      body: JSON.stringify(groupData)
-    });
+    const gr = await sbPostBrezCountry(`${SB_URL}/rest/v1/gm_sale_groups`,
+      { ...SB_HEADERS, 'Prefer': 'return=representation' }, groupData);
     if (!gr.ok) {
       const err = await gr.text();
       throw new Error('sale_groups: ' + err);
@@ -7842,10 +7872,7 @@ async function potrdiNarocilo(orderId) {
     // Ustvari račun
     const invNum = nextInvNum(orderChannel, today);
     const invId = uid();
-    const invRes = await fetch(`${SB_URL}/rest/v1/gm_invoices`, {
-      method: 'POST',
-      headers: SB_HEADERS,
-      body: JSON.stringify({
+    const invRes = await sbPostBrezCountry(`${SB_URL}/rest/v1/gm_invoices`, SB_HEADERS, {
         id: invId,
         num: invNum,
         channel: orderChannel,
@@ -7854,12 +7881,12 @@ async function potrdiNarocilo(orderId) {
         phone: narocilo.phone || null,
         street: narocilo.street || null,
         post: postFull || null,
+        country: drzavaKoda(narocilo.country),
         date: today,
         total: actualTotal,
         group_id: group.id,
         inv_status: 'placano',
         email_sent: null,
-      })
     });
     if (!invRes.ok) {
       const err = await invRes.text();
@@ -9357,7 +9384,7 @@ async function sendInvoiceEmail(invId){
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovani','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
       ${L('prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili. O odpošiljanju vas bomo obvestili z novim sporočilom.','we have received your payment — thank you. Your order is being prepared and will be dispatched shortly. We will let you know as soon as it is on its way.')}
     </p>
@@ -9427,7 +9454,7 @@ async function sendInvoiceEmail(invId){
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovani','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
       ${L('vaše naročilo je bilo danes odposlano prek Pošte Slovenije. Pričakujte dostavo v 1–2 delovnih dneh.','your order was dispatched today via Pošta Slovenije. Delivery abroad usually takes a few working days.')}
     </p>

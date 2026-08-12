@@ -474,6 +474,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
             <input id="orderPost" placeholder="8351 Straža" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="postal-code" oninput="postInputHandler(event)">
           </div>
+          <div style="min-width:150px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Država</div>
+            <select id="orderCountry" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="country" onchange="onOrderCountryChange();renderOrderSummary()"></select>
+            <div id="orderCountryHint" style="display:none;font-size:.7rem;color:#8b5a2a;margin-top:.2rem">Račun bo izpisan v angleščini</div>
+          </div>
           <div>
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
             <input type="date" id="orderDate" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" oninput="renderOrderSummary()">
@@ -1677,6 +1682,63 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
+// ── DRZAVE ─────────────────────────────────────────
+// Slovenija je privzeta. Ob tuji drzavi se racun izpise v anglescini, namesto
+// UPN QR (velja samo v Sloveniji) pa se izpisejo podatki za nakazilo z BIC.
+const DRZAVE=[
+  {k:'SI',sl:'Slovenija',en:'Slovenia'},
+  {k:'AT',sl:'Avstrija',en:'Austria'},
+  {k:'BE',sl:'Belgija',en:'Belgium'},
+  {k:'BG',sl:'Bolgarija',en:'Bulgaria'},
+  {k:'HR',sl:'Hrvaška',en:'Croatia'},
+  {k:'CY',sl:'Ciper',en:'Cyprus'},
+  {k:'CZ',sl:'Češka',en:'Czechia'},
+  {k:'DK',sl:'Danska',en:'Denmark'},
+  {k:'EE',sl:'Estonija',en:'Estonia'},
+  {k:'FI',sl:'Finska',en:'Finland'},
+  {k:'FR',sl:'Francija',en:'France'},
+  {k:'GR',sl:'Grčija',en:'Greece'},
+  {k:'IE',sl:'Irska',en:'Ireland'},
+  {k:'IT',sl:'Italija',en:'Italy'},
+  {k:'LV',sl:'Latvija',en:'Latvia'},
+  {k:'LT',sl:'Litva',en:'Lithuania'},
+  {k:'LU',sl:'Luksemburg',en:'Luxembourg'},
+  {k:'HU',sl:'Madžarska',en:'Hungary'},
+  {k:'MT',sl:'Malta',en:'Malta'},
+  {k:'DE',sl:'Nemčija',en:'Germany'},
+  {k:'NL',sl:'Nizozemska',en:'Netherlands'},
+  {k:'PL',sl:'Poljska',en:'Poland'},
+  {k:'PT',sl:'Portugalska',en:'Portugal'},
+  {k:'RO',sl:'Romunija',en:'Romania'},
+  {k:'SK',sl:'Slovaška',en:'Slovakia'},
+  {k:'ES',sl:'Španija',en:'Spain'},
+  {k:'SE',sl:'Švedska',en:'Sweden'},
+  {k:'BA',sl:'Bosna in Hercegovina',en:'Bosnia and Herzegovina'},
+  {k:'ME',sl:'Črna gora',en:'Montenegro'},
+  {k:'MK',sl:'Severna Makedonija',en:'North Macedonia'},
+  {k:'NO',sl:'Norveška',en:'Norway'},
+  {k:'RS',sl:'Srbija',en:'Serbia'},
+  {k:'CH',sl:'Švica',en:'Switzerland'},
+  {k:'GB',sl:'Združeno kraljestvo',en:'United Kingdom'},
+  {k:'US',sl:'Združene države',en:'United States'},
+];
+function drzavaIme(k,lang){const d=DRZAVE.find(x=>x.k===(k||'SI'));return d?(lang==='en'?d.en:d.sl):(k||'');}
+// Ena sama definicija: tujina je vse, kar ni Slovenija. Prazna vrednost so
+// stari zapisi, ki so nastali pred tem poljem - ti so bili vsi domaci.
+function jeTujina(k){return !!k&&k!=='SI';}
+function racunJezik(k){return jeTujina(k)?'en':'sl';}
+function polniDrzaveSel(){
+  const sel=document.getElementById('orderCountry');
+  if(!sel||sel.options.length)return;
+  sel.innerHTML=DRZAVE.map(d=>`<option value="${d.k}">${d.sl}</option>`).join('');
+  sel.value='SI';
+}
+function onOrderCountryChange(){
+  const sel=document.getElementById('orderCountry');
+  const hint=document.getElementById('orderCountryHint');
+  if(hint)hint.style.display=jeTujina(sel&&sel.value)?'':'none';
+}
+
 const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
@@ -1773,7 +1835,7 @@ function sbGroupToApp(g, lines, lineBatches){
     date:g.date, channel:g.channel,
     discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
     shippingFee:g.shipping_fee||0,
-    extInvoice:g.ext_invoice, extDelivery:g.ext_delivery,
+    extInvoice:g.ext_invoice, extDelivery:g.ext_delivery, country:g.country||'SI',
     note:g.note, invoiceNum:g.invoice_num, invoiceId:g.invoice_id,
     deliveryNum:g.delivery_num||null,
     total:g.total||0, qty:g.qty||0,
@@ -1790,7 +1852,7 @@ function sbInvoiceToApp(i){
   return {
     id:i.id, num:i.num, channel:i.channel,
     buyer:i.buyer, email:i.email, phone:i.phone,
-    address:i.address, street:i.street, post:i.post,
+    address:i.address, street:i.street, post:i.post, country:i.country||'SI',
     date:i.date, total:i.total||0,
     groupId:i.group_id, extInvoice:i.ext_invoice, extDelivery:i.ext_delivery,
     invStatus:i.inv_status||'placano',
@@ -1992,11 +2054,29 @@ async function sbSaveBatch(b){
 }
 
 // Shrani prodajno skupino + vrstice
+// Stolpec `country` je nov. Dokler ga v Supabase ni, naj prodaja vseeno gre
+// skozi - zapisemo brez njega in enkrat opozorimo, namesto da bi shranjevanje
+// padlo in bi se prodaja izgubila.
+let _countryOpozorilo=false;
+async function sbInsertBrezCountry(table,data,upsert){
+  try{
+    return await sbInsert(table,data,upsert);
+  }catch(e){
+    if(!/country/i.test(String(e.message||e)))throw e;
+    const {country,...brez}=data;
+    if(!_countryOpozorilo){
+      _countryOpozorilo=true;
+      toast('⚠ Država se ne shranjuje — v Supabase manjka stolpec country');
+    }
+    return sbInsert(table,brez,upsert);
+  }
+}
+
 async function sbSaveGroup(g){
   // Upsert group
-  await sbInsert('gm_sale_groups',{
+  await sbInsertBrezCountry('gm_sale_groups',{
     id:g.id, buyer:g.buyer||null, email:g.email||null, phone:g.phone||null, vat:g.vat||null,
-    address:g.address||null, street:g.street||null, post:g.post||null,
+    address:g.address||null, street:g.street||null, post:g.post||null, country:g.country||'SI',
     date:g.date||null, channel:g.channel||null,
     discount:g.discount||0, discount_amt:g.discountAmt||0, full_total:g.fullTotal||0,
     ext_invoice:g.extInvoice||null, ext_delivery:g.extDelivery||null,
@@ -2165,10 +2245,10 @@ window.listBatches=function(productName){
 
 // Shrani račun
 async function sbSaveInvoice(inv){
-  await sbInsert('gm_invoices',{
+  await sbInsertBrezCountry('gm_invoices',{
     id:inv.id, num:inv.num, channel:inv.channel,
     buyer:inv.buyer||null, email:inv.email||null, phone:inv.phone||null,
-    address:inv.address||null, street:inv.street||null, post:inv.post||null,
+    address:inv.address||null, street:inv.street||null, post:inv.post||null, country:inv.country||'SI',
     date:inv.date||null, total:inv.total||0,
     group_id:inv.groupId||null, ext_invoice:inv.extInvoice||null, ext_delivery:inv.extDelivery||null,
     inv_status:inv.invStatus||'placano',
@@ -3015,6 +3095,7 @@ async function appInit(){
   migrateInvoiceNums();
   seed();
   renderStats();renderInventory();
+  polniDrzaveSel();
   document.getElementById('orderDate').value=todayISO();
   const _initRange=getSalesDateRange('year');
   document.getElementById('dateFrom').value=_initRange.from;
@@ -4097,6 +4178,7 @@ function clearOrder(){
   });
   document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
+  const _dr=document.getElementById('orderCountry');if(_dr)_dr.value='SI';onOrderCountryChange();
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
   document.getElementById('orderNote').value='';
   const hint=document.getElementById('orderPartnerHint');if(hint)hint.style.display='none';
@@ -4326,6 +4408,7 @@ async function confirmOrder(withInvoice){
   const address=document.getElementById('orderAddress')?.value.trim()||'';
   const street=document.getElementById('orderStreet')?.value.trim()||'';
   const post=document.getElementById('orderPost')?.value.trim()||'';
+  const country=document.getElementById('orderCountry')?.value||'SI';
   const fullAddress=street&&post?street+', '+post:street||post||address;
   const date=document.getElementById('orderDate').value||todayISO();
   const extInvoice=document.getElementById('orderExtInvoice').value.trim();
@@ -4395,10 +4478,10 @@ if(!Object.keys(pendingBatchAlloc).length){
     invoiceNum=nextInvNum(ch,date);
     invoiceId=uid();
     const invStatus=(ch==='wp'||ch==='malo'||ch==='velo'||ch==='kom')?'caka':'placano';
-    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
+    invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,country,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
   const deliveryNum=(ch==='kom'||ch==='velo')?nextDobNum(date):null;
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,country,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -5799,17 +5882,75 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 </body></html>`;
 }
 
+// ── BESEDILA RACUNA ────────────────────────────────
+// Racun za tujo drzavo gre v anglescini. Ena sama tabela za oba jezika, da se
+// prevod ne razide od izpisa - ko se doda vrstica, se doda na obeh straneh.
+const RACUN_T={
+  sl:{
+    dobavnica:'Dobavnica / Izdaja', dobavnicaKratko:'Dobavnica',
+    popust:'Popust', izdajatelj:'Izdajatelj', kupec:'Kupec / Prejemnik',
+    opis:'Opis', kom:'Kom.', cenaKom:'Cena/kom.', znesek:'Znesek',
+    alkohol:'Alkohol', brezalkoholna:'Brezalkoholna', serija:'serija',
+    brezplacno:'Brezplačno 🎁',
+    skupajArtikli:'Skupaj artikli', dostava:'Dostava', osebniPrevzem:'Osebni prevzem',
+    postnina:'Poštnina', brezplacnaPostnina:'Brezplačna', skupaj:'Skupaj',
+    zunanjiRacun:'Zunanji račun', dobavnicaRef:'Dobavnica',
+    trosarina:'Trošarina za etanol v izdelku je bila že poravnana. Kupec nima dodatnih obveznosti glede trošarine. Podlaga: Zakon o trošarinah (ZTro-1).',
+    ddv:'Nisem zavezanec za DDV po 1. odstavku 94. člena ZDDV-1.',
+    upnQr:'UPN QR', podatkiPlacilo:'Podatki za plačilo', prejemnik:'Prejemnik',
+    znesekPl:'Znesek', referenca:'Referenca', namen:'Namen', namenPlacilo:'Plačilo',
+    footerBold:'Ekstrakcije po meri — naravno, strokovno, učinkovito.',
+    footerTag:'GoMushroom ni produkt. Je proces.',
+    natisni:'🖨 Natisni', shraniPdf:'📄 Shrani PDF', poslji:'✉ Pošlji po e-pošti', zapri:'✕ Zapri',
+    mailNaslov:'Račun', mailPozdrav:'Spoštovani', mailTelo:'v prilogi vam pošiljamo račun',
+    mailZnesek:'za znesek', mailKonec:'Lepo pozdravljeni,',
+  },
+  en:{
+    dobavnica:'Delivery note', dobavnicaKratko:'Delivery note',
+    popust:'Discount', izdajatelj:'Issuer', kupec:'Buyer / Recipient',
+    opis:'Description', kom:'Qty', cenaKom:'Unit price', znesek:'Amount',
+    alkohol:'Alcohol', brezalkoholna:'Alcohol-free', serija:'batch',
+    brezplacno:'Free 🎁',
+    skupajArtikli:'Items subtotal', dostava:'Delivery', osebniPrevzem:'Personal pickup',
+    postnina:'Shipping', brezplacnaPostnina:'Free', skupaj:'Total',
+    zunanjiRacun:'External invoice', dobavnicaRef:'Delivery note',
+    trosarina:'Excise duty on the ethanol contained in the product has already been paid. The buyer has no further excise obligations. Legal basis: Slovenian Excise Duty Act (ZTro-1).',
+    ddv:'Not liable for VAT under Article 94(1) of the Slovenian VAT Act (ZDDV-1).',
+    upnQr:'UPN QR', podatkiPlacilo:'Payment details', prejemnik:'Beneficiary',
+    znesekPl:'Amount', referenca:'Reference', namen:'Purpose', namenPlacilo:'Payment for',
+    footerBold:'Tailored extractions — natural, expert, effective.',
+    footerTag:'GoMushroom is not a product. It is a process.',
+    natisni:'🖨 Print', shraniPdf:'📄 Save PDF', poslji:'✉ Send by e-mail', zapri:'✕ Close',
+    mailNaslov:'Invoice', mailPozdrav:'Dear', mailTelo:'please find attached invoice',
+    mailZnesek:'for the amount of', mailKonec:'Kind regards,',
+  },
+};
+// V e-postnih sporocilih je besedila malo, a je razpredeno po dolgem HTML.
+// Tam je par (slovensko, angleško) tik ob mestu izpisa bolj berljiv kot tabela
+// s kljuci - zato ta pripomocek namesto RACUN_T.
+function jezikL(lang){return (sl,en)=>lang==='en'?en:sl;}
+
+const CH_EN={malo:'Retail',velo:'Wholesale',dar:'Gift',int:'Internal',wp:'Online',stripe:'Online',kom:'Consignment'};
+const MESECI_EN=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtDateEn(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${Number(d)} ${MESECI_EN[Number(m)]} ${y}`;}
+
 function buildInvoiceHTML(group, qrDataURL){
   const ch=CH[group.channel]||CH.malo;
+  const lang=racunJezik(group.country);
+  const T=RACUN_T[lang];
+  const chLabel=lang==='en'?(CH_EN[group.channel]||CH_EN.malo):ch.label;
+  const fmtD=lang==='en'?fmtDateEn:fmtDateSl;
+  const tujina=jeTujina(group.country);
   const isRevenue=true;
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?generateRF(invNum):'';
 
-  // QR: vedno prikaži za maloprodajo/veleprodajo
-  const hasPayment=group.channel==='malo'||group.channel==='velo';
+  // QR: UPN je slovenski standard in ga tuja banka ne prebere. Za tujino
+  // izpisemo IBAN in BIC, s katerima gre nakazilo od kjerkoli.
+  const hasPayment=(group.channel==='malo'||group.channel==='velo')&&total>0;
   let qrImgTag='';
-  if(hasPayment&&total>0){
+  if(hasPayment&&!tujina){
     const upnString=buildUpnString(total,upnRef,'Placilo '+(invNum||'racuna'));
     if(qrDataURL&&qrDataURL.length>100){
       qrImgTag=`<img src="${qrDataURL}" width="140" height="140" style="display:block;image-rendering:pixelated">`;
@@ -5834,13 +5975,13 @@ function buildInvoiceHTML(group, qrDataURL){
   const descAlc=`
     <div style="font-weight:500">${l.productName}</div>
     ${alcSku?`<div style="font-size:.65rem;color:#7a6f60">${alcSku}</div>`:''}
-    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">${T.serija}: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Alkohol</span></div>${descAlc}</td>
+    <td><div style="display:flex;align-items:baseline;gap:.4rem"><span style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">${T.alkohol}</span></div>${descAlc}</td>
     <td>${l.alc}</td>
     <td>
       ${alcDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${alcPriceFull.toFixed(2)} €</div>`:''}
-      ${isFreeAlc?`<span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`:`${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €`}
+      ${isFreeAlc?`<span style="color:#3a6b4a;font-weight:500">${T.brezplacno}</span>`:`${l.alcPrice!=null?l.alcPrice.toFixed(2):'–'} €`}
       ${alcDiscPct>0&&!isFreeAlc?`<div style="font-size:.7rem;color:#3a6b4a">–${alcDiscPct}%</div>`:''}
     </td>
     <td>${isFreeAlc?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td>
@@ -5854,13 +5995,13 @@ if(l.gly>0){
   const descGly=`
     <div style="font-weight:500">${l.productName}</div>
     ${glySku?`<div style="font-size:.65rem;color:#7a6f60">${glySku}</div>`:''}
-    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">serija: ${batchStr}</div>`:''}`;
+    ${batchStr?`<div style="font-size:.65rem;color:#7a6f60">${T.serija}: ${batchStr}</div>`:''}`;
   rows.push(`<tr>
-    <td><div style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">Brezalkoholna</div>${descGly}</td>
+    <td><div style="font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a6f60">${T.brezalkoholna}</div>${descGly}</td>
     <td>${l.gly}</td>
     <td>
       ${glyDiscPct>0?`<div style="text-decoration:line-through;color:#9a8f82;font-size:.75rem">${glyPriceFull.toFixed(2)} €</div>`:''}
-      ${isFreeGly?`<span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`:`${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €`}
+      ${isFreeGly?`<span style="color:#3a6b4a;font-weight:500">${T.brezplacno}</span>`:`${l.glyPrice!=null?l.glyPrice.toFixed(2):'–'} €`}
       ${glyDiscPct>0&&!isFreeGly?`<div style="font-size:.7rem;color:#3a6b4a">–${glyDiscPct}%</div>`:''}
     </td>
     <td>${isFreeGly?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td>
@@ -5871,24 +6012,29 @@ if(l.gly>0){
 
   const _dAmt=(group.fullTotal||0)-(group.total||0);
   const discountAmt = group.discountAmt>0 ? group.discountAmt : _dAmt>0 ? round(_dAmt,2) : (group.discount>0&&total>0) ? round(total*group.discount/(100-group.discount),2) : 0;
-  const subtotalLine = (group.discount||0) > 0 ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Skupaj artikli</span><span style="color:#7a6f60">${(group.fullTotal||0).toFixed(2)} €</span></div>` : '';
-  const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>Popust ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
+  const subtotalLine = (group.discount||0) > 0 ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.skupajArtikli}</span><span style="color:#7a6f60">${(group.fullTotal||0).toFixed(2)} €</span></div>` : '';
+  const discountLine = (group.discount||0) > 0 ? `<div class="trow"><span>${T.popust} ${group.discount}% (–${discountAmt.toFixed(2)} €)</span><span style="color:#3a6b4a">–${discountAmt.toFixed(2)} €</span></div>` : '';
   const isWebOrder = group.channel==='wp'||group.channel==='stripe';
   const isLastniPrevzem = (group.note||'').includes('lastni prevzem');
   const shippingLine = isWebOrder
     ? (isLastniPrevzem
-        ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Dostava</span><span style="color:#7a6f60">Osebni prevzem</span></div>`
+        ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.dostava}</span><span style="color:#7a6f60">${T.osebniPrevzem}</span></div>`
         : (group.shippingFee>0
-            ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">Poštnina</span><span style="color:#7a6f60">${group.shippingFee.toFixed(2)} €</span></div>`
-            : `<div class="trow"><span style="color:#7a6f60;font-style:italic">Poštnina</span><span style="color:#7a6f60">Brezplačna</span></div>`))
+            ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.postnina}</span><span style="color:#7a6f60">${group.shippingFee.toFixed(2)} €</span></div>`
+            : `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.postnina}</span><span style="color:#7a6f60">${T.brezplacnaPostnina}</span></div>`))
     : '';
-  const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>Zunanji ra\u010dun: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>Dobavnica: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
-  const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=Ra\u010dun ${invNum} \u2014 GoMushroom&body=Spo\u0161tovani ${group.buyer||''},\n\nv prilogi vam po\u0161iljamo ra\u010dun ${invNum} za znesek ${total.toFixed(2)} \u20AC.\n\nLepo pozdravljeni,\nGoMushroom">\u2709 Po\u0161lji po e-po\u0161ti</a>`:'';
+  const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>${T.zunanjiRacun}: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>${T.dobavnicaRef}: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
+  const mailSubject=`${T.mailNaslov} ${invNum} — GoMushroom`;
+  const mailBody=`${T.mailPozdrav} ${group.buyer||''},\n\n${T.mailTelo} ${invNum} ${T.mailZnesek} ${total.toFixed(2)} €.\n\n${T.mailKonec}\nGoMushroom`;
+  const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}">${T.poslji}</a>`:'';
+  // Naslov kupca: drzava se izpise samo pri tujini - pri domacem racunu je
+  // "Slovenija" odvecna vrstica.
+  const kupecVrstice=[group.address,tujina?drzavaIme(group.country,lang):'',group.email,group.phone].filter(Boolean);
 
   return`<!DOCTYPE html>
-<html><head>
+<html lang="${lang}"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${invNum||'Dobavnica'}</title>
+<title>${invNum||T.dobavnicaKratko}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -5932,30 +6078,30 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
 <div class="hdr">
   <div><img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block"><div style="font-size:.7rem;color:#7a6f60;margin-top:.25rem">gomushroom.si</div></div>
   <div class="meta">
-    <div><strong>${invNum||'Dobavnica / Izdaja'}</strong></div>
-    <div>${fmtDateSl(group.date)}</div>
-    <div>${ch.label}</div>
-    ${group.discount?`<div>Popust: ${group.discount}%</div>`:''}
+    <div><strong>${invNum||T.dobavnica}</strong></div>
+    <div>${fmtD(group.date)}</div>
+    <div>${chLabel}</div>
+    ${group.discount?`<div>${T.popust}: ${group.discount}%</div>`:''}
   </div>
 </div>
 
 <div class="parties">
   <div>
-    <div class="plabel">Izdajatelj</div>
+    <div class="plabel">${T.izdajatelj}</div>
     <div class="pname">${UPN_NAME}</div>
-    <div class="pdetail">${UPN_ADDRESS_DISPLAY}<br>${UPN_CITY_DISPLAY}<br>gomushroom.si</div>
+    <div class="pdetail">${UPN_ADDRESS_DISPLAY}<br>${UPN_CITY_DISPLAY}${tujina?'<br>'+drzavaIme('SI',lang):''}<br>gomushroom.si</div>
   </div>
   <div>
-    <div class="plabel">Kupec / Prejemnik</div>
-    <div class="pname">${group.buyer||'\u2014'}</div>
-    <div class="pdetail">${[group.address,group.email,group.phone].filter(Boolean).join('<br>')}</div>
+    <div class="plabel">${T.kupec}</div>
+    <div class="pname">${group.buyer||'—'}</div>
+    <div class="pdetail">${kupecVrstice.join('<br>')}</div>
   </div>
 </div>
 
 ${extRefs}
 
 <table>
-  <tr><th>Opis</th><th>Kom.</th><th>Cena/kom.</th><th>Znesek</th></tr>
+  <tr><th>${T.opis}</th><th>${T.kom}</th><th>${T.cenaKom}</th><th>${T.znesek}</th></tr>
   ${tableRows}
 </table>
 
@@ -5963,43 +6109,52 @@ ${extRefs}
   ${subtotalLine}
   ${discountLine}
   ${shippingLine}
-  <div class="trow grand"><span>Skupaj</span><span>${isRevenue?total.toFixed(2)+' \u20AC':'\u2013'}</span></div>
+  <div class="trow grand"><span>${T.skupaj}</span><span>${isRevenue?total.toFixed(2)+' €':'–'}</span></div>
 </div>
 
-${(group.lines||[]).some(l=>(l.alc||0)>0)?`<div style="margin-top:1rem;padding:.6rem .85rem;border:1px solid rgba(175,132,85,.35);border-radius:6px;background:rgba(175,132,85,.05);font-size:.72rem;color:#5a3a1a;line-height:1.65">Tro\u0161arina za etanol v izdelku je bila \u017Ee poravnana. Kupec nima dodatnih obveznosti glede tro\u0161arine. Podlaga: Zakon o tro\u0161arinah (ZTro-1).</div>`:''}
+${(group.lines||[]).some(l=>(l.alc||0)>0)?`<div style="margin-top:1rem;padding:.6rem .85rem;border:1px solid rgba(175,132,85,.35);border-radius:6px;background:rgba(175,132,85,.05);font-size:.72rem;color:#5a3a1a;line-height:1.65">${T.trosarina}</div>`:''}
 
-<div style="margin-top:.75rem;font-size:.72rem;color:#7a6f60;font-style:italic">Nisem zavezanec za DDV po 1. odstavku 94. \u010Dlena ZDDV-1.</div>
+<div style="margin-top:.75rem;font-size:.72rem;color:#7a6f60;font-style:italic">${T.ddv}</div>
 ${qrImgTag?`<div class="qr-section">
   <div class="qr-wrap">
-    <div class="qr-label">UPN QR</div>
+    <div class="qr-label">${T.upnQr}</div>
     ${qrImgTag}
   </div>
   <div class="qr-info">
-    <strong>Podatki za plačilo</strong>
-    Prejemnik: ${UPN_NAME}<br>
+    <strong>${T.podatkiPlacilo}</strong>
+    ${T.prejemnik}: ${UPN_NAME}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
-    Znesek: <strong>${total.toFixed(2)} €</strong><br>
-    Referenca: ${invNum?generateRF(invNum):''}<br>
-    Namen: Plačilo ${invNum}
+    ${T.znesekPl}: <b style="color:#1a1209;font-size:.78rem">${total.toFixed(2)} €</b><br>
+    ${T.referenca}: ${invNum?generateRF(invNum):''}<br>
+    ${T.namen}: ${T.namenPlacilo} ${invNum}
   </div>
-</div>`:''}
+</div>`:(hasPayment&&tujina?`<div class="qr-section">
+  <div class="qr-info">
+    <strong>${T.podatkiPlacilo}</strong>
+    ${T.prejemnik}: ${UPN_NAME}, ${UPN_ADDRESS_DISPLAY}, ${UPN_CITY_DISPLAY}, ${drzavaIme('SI',lang)}<br>
+    IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
+    BIC / SWIFT: ${UPN_BIC}<br>
+    ${T.znesekPl}: <b style="color:#1a1209;font-size:.78rem">${total.toFixed(2)} €</b><br>
+    ${T.referenca}: ${invNum?generateRF(invNum):''}<br>
+    ${T.namen}: ${T.namenPlacilo} ${invNum}
+  </div>
+</div>`:'')}
 
 <div class="footer-section">
   <hr class="footer-line">
-  <div class="footer-bold">Ekstrakcije po meri \u2014 naravno, strokovno, u\u010dinkovito.</div>
-  <div class="footer-tagline">GoMushroom ni produkt. Je proces.</div>
+  <div class="footer-bold">${T.footerBold}</div>
+  <div class="footer-tagline">${T.footerTag}</div>
 </div>
 
 <div class="actions">
-  <button class="btn btn-print" onclick="window.print()">\u{1F5A8} Natisni</button>
-  <button class="btn btn-pdf" data-title="${invNum||'Racun'}" onclick="document.title=this.getAttribute('data-title');window.print()">\u{1F4C4} Shrani PDF</button>
+  <button class="btn btn-print" onclick="window.print()">${T.natisni}</button>
+  <button class="btn btn-pdf" data-title="${invNum||'Racun'}" onclick="document.title=this.getAttribute('data-title');window.print()">${T.shraniPdf}</button>
   ${emailBtn}
-  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
+  <button class="btn btn-close" onclick="window.close()">${T.zapri}</button>
 </div>
 
 </body></html>`;
 }
-
 // Load QR library — use kjua which reliably returns canvas
 let _qrLibLoaded=false;
 let _qrLibLoading=null;
@@ -6078,7 +6233,8 @@ async function printInvoice(group){
   const total=group.total||0;
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?generateRF(invNum):'';
-  const hasPayment=group.channel==='malo'||group.channel==='velo';
+  // UPN QR je slovenski standard - za tuj racun ga sploh ne generiramo.
+  const hasPayment=(group.channel==='malo'||group.channel==='velo')&&!jeTujina(group.country);
   const upnString=hasPayment&&total>0?buildUpnString(total,upnRef,'Placilo '+invNum):'';
 
   let qrDataURL='';
@@ -9170,15 +9326,22 @@ async function sendInvoiceEmail(invId){
   const st=inv.invStatus||'caka';
   const isPaid=st==='placano'||st==='predano';
   const isWP=g?.channel==='wp';
+  // Tuj kupec dobi sporocilo v anglescini - enako pravilo kot za racun.
+  const drz=inv.country||g?.country;
+  const lang=racunJezik(drz);
+  const L=jezikL(lang);
+  const tujina=jeTujina(drz);
+  const datumStr=lang==='en'?fmtDateEn(inv.date):dateStr;
+  const telefon=L('031 373 836','+386 31 373 836');
 
   // WP kanal ima posebna emaila za Plačano in Predano
   if(isWP && st==='placano'){
     const artikli=(g?.lines||[]).map(l=>`
-      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
-      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('alkoholna','alcohol')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('glicerinska','alcohol-free')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
     `).join('');
 
-    const wpPlacanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    const wpPlacanoHtml=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
 <div style="max-width:600px;margin:0 auto;background:#fff">
   <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
@@ -9190,34 +9353,33 @@ async function sendInvoiceEmail(invId){
       </div>
     </div>
     <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
-      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">✅ Plačilo prejeto — naročilo se pripravlja</div>
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">${L('✅ Plačilo prejeto — naročilo se pripravlja','✅ Payment received — your order is being prepared')}</div>
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
-      prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili.
-      O odpošiljanju vas bomo obvestili z novim sporočilom.
+      ${L('prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili. O odpošiljanju vas bomo obvestili z novim sporočilom.','we have received your payment — thank you. Your order is being prepared and will be dispatched shortly. We will let you know as soon as it is on its way.')}
     </p>
     <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
       <thead><tr style="background:#f7f3ee">
-        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Skupaj</th>
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Artikel','Item')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Kol.','Qty')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Skupaj','Total')}</th>
       </tr></thead>
       <tbody>${artikli}</tbody>
     </table>
     <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;font-size:.82rem;line-height:1.8">
-      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava</strong>
-      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">${L('Dostava','Delivery')}</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}${tujina?', '+drzavaIme(drz,lang):''}
     </div>
     <p style="margin:1.25rem 0 0;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
-      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+      ${L('Za vprašanja smo dosegljivi na','If you have any questions, reach us at')} <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ${L('ali','or')} ${telefon}.
     </p>
-    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+    <p style="margin:1rem 0 0;font-size:.88rem">${L('Lep pozdrav,','Kind regards,')}<br>Rok</p>
   </div>
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
-    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''} ·
     <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
   </div>
 </div></body></html>`;
@@ -9228,7 +9390,7 @@ async function sendInvoiceEmail(invId){
     try{
       const r=await fetch('/.netlify/functions/send-email',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({to:email,subject:`Naročilo se pripravlja — GoMushroom`,html:wpPlacanoHtml})
+        body:JSON.stringify({to:email,subject:L('Naročilo se pripravlja — GoMushroom','Your order is being prepared — GoMushroom'),html:wpPlacanoHtml})
       });
       if(!r.ok)throw new Error();
       inv.emailSent=new Date().toISOString();
@@ -9245,11 +9407,11 @@ async function sendInvoiceEmail(invId){
 
   if(isWP && st==='predano'){
     const artikli=(g?.lines||[]).map(l=>`
-      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td></tr>`:''}
-      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td></tr>`:''}
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('alkoholna','alcohol')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('glicerinska','alcohol-free')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td></tr>`:''}
     `).join('');
 
-    const wpPredanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    const wpPredanoHtml=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
 <div style="max-width:600px;margin:0 auto;background:#fff">
   <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
@@ -9261,36 +9423,35 @@ async function sendInvoiceEmail(invId){
       </div>
     </div>
     <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
-      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">📦 Vaše naročilo je na poti</div>
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">${L('📦 Vaše naročilo je na poti','📦 Your order is on its way')}</div>
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
-      vaše naročilo je bilo danes odposlano prek Pošte Slovenije.
-      Pričakujte dostavo v 1–2 delovnih dneh.
+      ${L('vaše naročilo je bilo danes odposlano prek Pošte Slovenije. Pričakujte dostavo v 1–2 delovnih dneh.','your order was dispatched today via Pošta Slovenije. Delivery abroad usually takes a few working days.')}
     </p>
     <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;margin-bottom:1.25rem;font-size:.82rem;line-height:1.8">
-      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava na naslov</strong>
-      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">${L('Dostava na naslov','Delivery address')}</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}${tujina?', '+drzavaIme(drz,lang):''}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
       <thead><tr style="background:#f7f3ee">
-        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Artikel','Item')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Kol.','Qty')}</th>
       </tr></thead>
       <tbody>${artikli}</tbody>
     </table>
     <p style="margin:0 0 .5rem;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
-      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+      ${L('Za vprašanja smo dosegljivi na','If you have any questions, reach us at')} <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ${L('ali','or')} ${telefon}.
     </p>
     <p style="margin:.75rem 0 0;font-size:.82rem;color:rgba(26,18,9,.5);font-style:italic">
-      Veseli nas, če nam zaupate recenzijo na <a href="https://gomushroom.si/trgovina/" style="color:#af8455">gomushroom.si</a> — za oddano recenzijo prejmete 10% popust pri naslednjem naročilu.
+      ${L('Veseli nas, če nam zaupate recenzijo na','We would love to hear from you — leave a review at')} <a href="${L('https://gomushroom.si/trgovina/','https://gomushroom.si/en/shop/')}" style="color:#af8455">gomushroom.si</a> ${L('— za oddano recenzijo prejmete 10% popust pri naslednjem naročilu.','— you will receive a 10% discount on your next order.')}
     </p>
-    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+    <p style="margin:1rem 0 0;font-size:.88rem">${L('Lep pozdrav,','Kind regards,')}<br>Rok</p>
   </div>
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
-    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''} ·
     <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
   </div>
 </div></body></html>`;
@@ -9301,7 +9462,7 @@ async function sendInvoiceEmail(invId){
     try{
       const r=await fetch('/.netlify/functions/send-email',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({to:email,subject:`Vaše naročilo je na poti — GoMushroom`,html:wpPredanoHtml})
+        body:JSON.stringify({to:email,subject:L('Vaše naročilo je na poti — GoMushroom','Your order is on its way — GoMushroom'),html:wpPredanoHtml})
       });
       if(!r.ok)throw new Error();
       inv.emailSent=new Date().toISOString();
@@ -9317,18 +9478,30 @@ async function sendInvoiceEmail(invId){
   }
 
   const isMaloVelo=g?.channel==='malo'||g?.channel==='velo';
-  const subject=`Račun ${inv.num} — GoMushroom`;
+  const subject=L(`Račun ${inv.num} — GoMushroom`,`Invoice ${inv.num} — GoMushroom`);
+
+  // Navodilo za placilo: doma QR koda, v tujini nakazilo po IBAN in BIC.
+  const navodiloPlacilo=L(
+    tujina?'\n\nZnesek nakažite na bančne podatke spodaj.':'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.',
+    tujina?'\n\nPlease transfer the amount using the bank details below.':'\n\nPlease pay using the QR code below.');
 
   const bodyText=(isPaid||isMaloVelo)
-    ?`Spoštovani ${inv.buyer||''},
+    ?L(`Spoštovani ${inv.buyer||''},
 
-hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}${isMaloVelo&&!isPaid?'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.':''}.
+hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
 
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-Rok`
-    :`Spoštovani ${inv.buyer||''},
+Rok`,`Dear ${inv.buyer||''},
+
+thank you for your purchase at GoMushroom. Please find your invoice ${inv.num} below.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
+
+If you have any questions, reach us at info@gomushroom.si.
+
+Kind regards,
+Rok`)
+    :L(`Spoštovani ${inv.buyer||''},
 
 hvala za vaše naročilo. V nadaljevanju najdete predračun ${inv.num}.
 
@@ -9337,17 +9510,27 @@ Plačilo izvedite na spodnje bančne podatke. Po prejemu plačila bomo naročilo
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-Rok`;
+Rok`,`Dear ${inv.buyer||''},
+
+thank you for your order. Please find proforma invoice ${inv.num} below.
+
+Please transfer the amount to the bank details below. We will dispatch your order as soon as the payment arrives.
+
+If you have any questions, reach us at info@gomushroom.si.
+
+Kind regards,
+Rok`);
 
   // HTML verzija emaila
   // Generiraj QR kodo URL za email
   const upnRef=inv.num?generateRF(inv.num):'';
   const upnString=buildUpnString(inv.total||0,upnRef,'Placilo '+(inv.num||'racuna'));
-  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
+  // UPN QR je slovenski standard - tuji banki ne pomaga, zato ga ne posiljamo.
+  const qrUrl=tujina?'':`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
 
   const htmlBody=`<!DOCTYPE html>
-<html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Račun ${inv.num}</title>
+<html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${L('Račun','Invoice')} ${inv.num}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased;margin:0;padding:0}
@@ -9394,8 +9577,8 @@ Rok`;
         <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block">
       </div>
       <div class="inv-info">
-        <div class="inv-num">Račun ${inv.num}</div>
-        <div class="inv-date">${dateStr}</div>
+        <div class="inv-num">${L('Račun','Invoice')} ${inv.num}</div>
+        <div class="inv-date">${datumStr}</div>
       </div>
     </div>
   </div>
@@ -9403,17 +9586,17 @@ Rok`;
   <div class="body">
     <div class="greeting">${bodyText.replace(/\n/g,'<br>')}</div>
 
-    <div class="section-title">Podatki</div>
+    <div class="section-title">${L('Podatki','Details')}</div>
     <div class="info-grid">
-      <div class="info-item"><label>Kupec</label><span>${inv.buyer||'—'}</span></div>
-      <div class="info-item"><label>Datum</label><span>${dateStr}</span></div>
-      ${inv.address?`<div class="info-item"><label>Naslov</label><span>${inv.address}</span></div>`:''}
+      <div class="info-item"><label>${L('Kupec','Buyer')}</label><span>${inv.buyer||'—'}</span></div>
+      <div class="info-item"><label>${L('Datum','Date')}</label><span>${datumStr}</span></div>
+      ${inv.address?`<div class="info-item"><label>${L('Naslov','Address')}</label><span>${inv.address}${tujina?', '+drzavaIme(drz,lang):''}</span></div>`:''}
     </div>
 
-    <div class="section-title">Postavke</div>
+    <div class="section-title">${L('Postavke','Items')}</div>
     <table>
       <thead><tr>
-        <th>Artikel</th><th>Kol.</th><th>Cena/kom</th><th>Skupaj</th>
+        <th>${L('Artikel','Item')}</th><th>${L('Kol.','Qty')}</th><th>${L('Cena/kom','Unit price')}</th><th>${L('Skupaj','Total')}</th>
       </tr></thead>
       <tbody>
         ${(g?.lines||[]).map(l=>{
@@ -9424,44 +9607,44 @@ Rok`;
             const isFree=(l.alcPrice||0)===0&&fullP>0;
             const discPct=isFree?100:fullP>0&&(l.alcPrice||0)<fullP?Math.round(((fullP-(l.alcPrice||0))/fullP)*100):0;
             const priceCell=isFree
-              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">${L('Brezplačno 🎁','Free 🎁')}</span>`
               :discPct>0
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.alcPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.alcPrice||0).toFixed(2)} €`;
-            rows.push(`<tr><td>${l.productName} — alkoholna${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.alc} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td></tr>`);
+            rows.push(`<tr><td>${l.productName} — ${L('alkoholna','alcohol')}${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.alc} ${L('kom','pcs')}</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           if(l.gly){
             const fullP=latestPrice(l.productId,'gly');
             const isFree=(l.glyPrice||0)===0&&fullP>0;
             const discPct=isFree?100:fullP>0&&(l.glyPrice||0)<fullP?Math.round(((fullP-(l.glyPrice||0))/fullP)*100):0;
             const priceCell=isFree
-              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">${L('Brezplačno 🎁','Free 🎁')}</span>`
               :discPct>0
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.glyPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.glyPrice||0).toFixed(2)} €`;
-            rows.push(`<tr><td>${l.productName} — glicerinska${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.gly} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td></tr>`);
+            rows.push(`<tr><td>${l.productName} — ${L('glicerinska','alcohol-free')}${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.gly} ${L('kom','pcs')}</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           return rows.join('');
         }).join('')}
         ${(()=>{
           const _dAmt=(g?.fullTotal||0)-(inv.total||0);
           const discAmt=g?.discountAmt>0?g.discountAmt:_dAmt>0?round(_dAmt,2):0;
-          return discAmt>0?`<tr class="discount-row"><td colspan="3">Popust${g?.discount?` (${g.discount}%)`:''}</td><td>−${discAmt.toFixed(2)} €</td></tr>`:'';
+          return discAmt>0?`<tr class="discount-row"><td colspan="3">${L('Popust','Discount')}${g?.discount?` (${g.discount}%)`:''}</td><td>−${discAmt.toFixed(2)} €</td></tr>`:'';
         })()}
-        <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
+        <tr class="total-row"><td colspan="3">${L('Skupaj za plačilo','Total due')}</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
       </tbody>
     </table>
 
     ${(g?.channel==='malo'||g?.channel==='velo')&&(inv.total||0)>0?`<div class="payment-box">
       <div class="payment-details">
-        <strong>Podatki za plačilo</strong>
-        Prejemnik: ${UPN_NAME}<br>
+        <strong>${L('Podatki za plačilo','Payment details')}</strong>
+        ${L('Prejemnik','Beneficiary')}: ${UPN_NAME}${tujina?', '+UPN_ADDRESS_DISPLAY+', '+UPN_CITY_DISPLAY+', '+drzavaIme('SI',lang):''}<br>
         IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
-        BIC: HDELSI22<br>
-        Referenca: ${upnRef||inv.num}<br>
-        Znesek: ${(inv.total||0).toFixed(2)} €
+        BIC / SWIFT: ${UPN_BIC}<br>
+        ${L('Referenca','Reference')}: ${upnRef||inv.num}<br>
+        ${L('Znesek','Amount')}: ${(inv.total||0).toFixed(2)} €
       </div>
-      <img src="${qrUrl}" width="100" height="100" alt="UPN QR" style="flex-shrink:0;border-radius:4px">
+      ${qrUrl?`<img src="${qrUrl}" width="100" height="100" alt="UPN QR" style="flex-shrink:0;border-radius:4px">`:''}
     </div>`:''}
   </div>
 
@@ -9470,7 +9653,7 @@ Rok`;
       <div>
         <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:36px;display:block;margin-bottom:.3rem">
         <div class="footer-info">
-          Prapreče pri Straži 22, 8351 Straža<br>
+          Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''}<br>
           <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
         </div>
       </div>
@@ -9582,6 +9765,13 @@ function openEditInvoice(invId){
           value="${inv.num||''}"
           style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
       </div>
+      <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.75rem">
+        <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Država</label>
+        <select id="editInvCountry" style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+          ${DRZAVE.map(d=>`<option value="${d.k}"${(inv.country||g?.country||'SI')===d.k?' selected':''}>${d.sl}</option>`).join('')}
+        </select>
+        <div style="font-size:.7rem;color:var(--muted)">Ob tuji državi se račun izpiše v angleščini.</div>
+      </div>
       <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem">
         <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Nov znesek (€)</label>
         <input id="editInvZnesek" type="text" inputmode="decimal"
@@ -9618,12 +9808,14 @@ function saveEditInvoice(invId){
   const noviZnesek=parseFloat(raw.replace(',','.'));
   if(isNaN(noviZnesek)||noviZnesek<0){toast('⚠ Vnesi veljaven znesek');return;}
   const novaStvilka=(document.getElementById('editInvNum')?.value||'').trim();
+  const novaDrzava=document.getElementById('editInvCountry')?.value||'SI';
 
   const stariZnesek=inv.total||0;
   const razlika=noviZnesek-stariZnesek;
 
   // Posodobi račun
   inv.total=noviZnesek;
+  inv.country=novaDrzava;
   if(novaStvilka&&novaStvilka!==inv.num)inv.num=novaStvilka;
 
   // Posodobi prodajno skupino in izračunaj popust
@@ -9634,6 +9826,7 @@ function saveEditInvoice(invId){
     const noviPopustZnesek=bruto>0?Math.max(0,bruto-noviZnesek):0;
     const noviPopustPct=bruto>0?Math.round((noviPopustZnesek/bruto)*1000)/10:0;
     g.total=noviZnesek;
+    g.country=novaDrzava;
     g.discount=noviPopustPct;
     g.discountAmt=noviPopustZnesek;
     if(novaStvilka&&novaStvilka!==g.invoiceNum)g.invoiceNum=novaStvilka;

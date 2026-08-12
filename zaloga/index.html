@@ -5925,6 +5925,11 @@ const RACUN_T={
     mailZnesek:'for the amount of', mailKonec:'Kind regards,',
   },
 };
+// V e-postnih sporocilih je besedila malo, a je razpredeno po dolgem HTML.
+// Tam je par (slovensko, angleško) tik ob mestu izpisa bolj berljiv kot tabela
+// s kljuci - zato ta pripomocek namesto RACUN_T.
+function jezikL(lang){return (sl,en)=>lang==='en'?en:sl;}
+
 const CH_EN={malo:'Retail',velo:'Wholesale',dar:'Gift',int:'Internal',wp:'Online',stripe:'Online',kom:'Consignment'};
 const MESECI_EN=['','January','February','March','April','May','June','July','August','September','October','November','December'];
 function fmtDateEn(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${Number(d)} ${MESECI_EN[Number(m)]} ${y}`;}
@@ -9321,15 +9326,22 @@ async function sendInvoiceEmail(invId){
   const st=inv.invStatus||'caka';
   const isPaid=st==='placano'||st==='predano';
   const isWP=g?.channel==='wp';
+  // Tuj kupec dobi sporocilo v anglescini - enako pravilo kot za racun.
+  const drz=inv.country||g?.country;
+  const lang=racunJezik(drz);
+  const L=jezikL(lang);
+  const tujina=jeTujina(drz);
+  const datumStr=lang==='en'?fmtDateEn(inv.date):dateStr;
+  const telefon=L('031 373 836','+386 31 373 836');
 
   // WP kanal ima posebna emaila za Plačano in Predano
   if(isWP && st==='placano'){
     const artikli=(g?.lines||[]).map(l=>`
-      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
-      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('alkoholna','alcohol')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.alc*(l.alcPrice||0)).toFixed(2)} €</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('glicerinska','alcohol-free')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(l.gly*(l.glyPrice||0)).toFixed(2)} €</td></tr>`:''}
     `).join('');
 
-    const wpPlacanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    const wpPlacanoHtml=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
 <div style="max-width:600px;margin:0 auto;background:#fff">
   <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
@@ -9341,34 +9353,33 @@ async function sendInvoiceEmail(invId){
       </div>
     </div>
     <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
-      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">✅ Plačilo prejeto — naročilo se pripravlja</div>
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">${L('✅ Plačilo prejeto — naročilo se pripravlja','✅ Payment received — your order is being prepared')}</div>
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
-      prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili.
-      O odpošiljanju vas bomo obvestili z novim sporočilom.
+      ${L('prejeli smo vaše plačilo — hvala! Vaše naročilo pripravljamo in ga bomo kmalu odpremili. O odpošiljanju vas bomo obvestili z novim sporočilom.','we have received your payment — thank you. Your order is being prepared and will be dispatched shortly. We will let you know as soon as it is on its way.')}
     </p>
     <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
       <thead><tr style="background:#f7f3ee">
-        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Skupaj</th>
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Artikel','Item')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Kol.','Qty')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Skupaj','Total')}</th>
       </tr></thead>
       <tbody>${artikli}</tbody>
     </table>
     <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;font-size:.82rem;line-height:1.8">
-      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava</strong>
-      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">${L('Dostava','Delivery')}</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}${tujina?', '+drzavaIme(drz,lang):''}
     </div>
     <p style="margin:1.25rem 0 0;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
-      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+      ${L('Za vprašanja smo dosegljivi na','If you have any questions, reach us at')} <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ${L('ali','or')} ${telefon}.
     </p>
-    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+    <p style="margin:1rem 0 0;font-size:.88rem">${L('Lep pozdrav,','Kind regards,')}<br>Rok</p>
   </div>
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
-    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''} ·
     <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
   </div>
 </div></body></html>`;
@@ -9379,7 +9390,7 @@ async function sendInvoiceEmail(invId){
     try{
       const r=await fetch('/.netlify/functions/send-email',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({to:email,subject:`Naročilo se pripravlja — GoMushroom`,html:wpPlacanoHtml})
+        body:JSON.stringify({to:email,subject:L('Naročilo se pripravlja — GoMushroom','Your order is being prepared — GoMushroom'),html:wpPlacanoHtml})
       });
       if(!r.ok)throw new Error();
       inv.emailSent=new Date().toISOString();
@@ -9396,11 +9407,11 @@ async function sendInvoiceEmail(invId){
 
   if(isWP && st==='predano'){
     const artikli=(g?.lines||[]).map(l=>`
-      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — alkoholna</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td></tr>`:''}
-      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — glicerinska</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td></tr>`:''}
+      ${l.alc?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('alkoholna','alcohol')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.alc}×</td></tr>`:''}
+      ${l.gly?`<tr><td style="padding:.5rem .6rem;border-bottom:1px solid #f5f0e8">${l.productName} — ${L('glicerinska','alcohol-free')}</td><td style="padding:.5rem .6rem;text-align:right;border-bottom:1px solid #f5f0e8">${l.gly}×</td></tr>`:''}
     `).join('');
 
-    const wpPredanoHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    const wpPredanoHtml=`<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
 <div style="max-width:600px;margin:0 auto;background:#fff">
   <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
@@ -9412,36 +9423,35 @@ async function sendInvoiceEmail(invId){
       </div>
     </div>
     <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(43,11,57,.08)">
-      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">📦 Vaše naročilo je na poti</div>
+      <div style="font-size:1.1rem;font-weight:500;color:#2b0b39">${L('📦 Vaše naročilo je na poti','📦 Your order is on its way')}</div>
     </div>
   </div>
   <div style="padding:1.5rem">
-    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">Spoštovana ${inv.buyer?.split(' ')[0]||''},</p>
+    <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem">${L('Spoštovana','Dear')} ${inv.buyer?.split(' ')[0]||''},</p>
     <p style="margin:0 0 1.25rem;line-height:1.75;font-size:.9rem;color:rgba(26,18,9,.75)">
-      vaše naročilo je bilo danes odposlano prek Pošte Slovenije.
-      Pričakujte dostavo v 1–2 delovnih dneh.
+      ${L('vaše naročilo je bilo danes odposlano prek Pošte Slovenije. Pričakujte dostavo v 1–2 delovnih dneh.','your order was dispatched today via Pošta Slovenije. Delivery abroad usually takes a few working days.')}
     </p>
     <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:.85rem 1rem;border-radius:0 6px 6px 0;margin-bottom:1.25rem;font-size:.82rem;line-height:1.8">
-      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">Dostava na naslov</strong>
-      ${g?.street||''}, ${g?.post||''} ${g?.city||''}
+      <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">${L('Dostava na naslov','Delivery address')}</strong>
+      ${g?.street||''}, ${g?.post||''} ${g?.city||''}${tujina?', '+drzavaIme(drz,lang):''}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
       <thead><tr style="background:#f7f3ee">
-        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Artikel</th>
-        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">Kol.</th>
+        <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Artikel','Item')}</th>
+        <th style="padding:.45rem .6rem;text-align:right;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Kol.','Qty')}</th>
       </tr></thead>
       <tbody>${artikli}</tbody>
     </table>
     <p style="margin:0 0 .5rem;font-size:.85rem;color:rgba(26,18,9,.6);line-height:1.7">
-      Za vprašanja smo dosegljivi na <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ali 031 373 836.
+      ${L('Za vprašanja smo dosegljivi na','If you have any questions, reach us at')} <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a> ${L('ali','or')} ${telefon}.
     </p>
     <p style="margin:.75rem 0 0;font-size:.82rem;color:rgba(26,18,9,.5);font-style:italic">
-      Veseli nas, če nam zaupate recenzijo na <a href="https://gomushroom.si/trgovina/" style="color:#af8455">gomushroom.si</a> — za oddano recenzijo prejmete 10% popust pri naslednjem naročilu.
+      ${L('Veseli nas, če nam zaupate recenzijo na','We would love to hear from you — leave a review at')} <a href="${L('https://gomushroom.si/trgovina/','https://gomushroom.si/en/shop/')}" style="color:#af8455">gomushroom.si</a> ${L('— za oddano recenzijo prejmete 10% popust pri naslednjem naročilu.','— you will receive a 10% discount on your next order.')}
     </p>
-    <p style="margin:1rem 0 0;font-size:.88rem">Lep pozdrav,<br>Rok</p>
+    <p style="margin:1rem 0 0;font-size:.88rem">${L('Lep pozdrav,','Kind regards,')}<br>Rok</p>
   </div>
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82">
-    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
+    GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''} ·
     <a href="mailto:info@gomushroom.si" style="color:#af8455">info@gomushroom.si</a>
   </div>
 </div></body></html>`;
@@ -9452,7 +9462,7 @@ async function sendInvoiceEmail(invId){
     try{
       const r=await fetch('/.netlify/functions/send-email',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({to:email,subject:`Vaše naročilo je na poti — GoMushroom`,html:wpPredanoHtml})
+        body:JSON.stringify({to:email,subject:L('Vaše naročilo je na poti — GoMushroom','Your order is on its way — GoMushroom'),html:wpPredanoHtml})
       });
       if(!r.ok)throw new Error();
       inv.emailSent=new Date().toISOString();
@@ -9468,18 +9478,30 @@ async function sendInvoiceEmail(invId){
   }
 
   const isMaloVelo=g?.channel==='malo'||g?.channel==='velo';
-  const subject=`Račun ${inv.num} — GoMushroom`;
+  const subject=L(`Račun ${inv.num} — GoMushroom`,`Invoice ${inv.num} — GoMushroom`);
+
+  // Navodilo za placilo: doma QR koda, v tujini nakazilo po IBAN in BIC.
+  const navodiloPlacilo=L(
+    tujina?'\n\nZnesek nakažite na bančne podatke spodaj.':'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.',
+    tujina?'\n\nPlease transfer the amount using the bank details below.':'\n\nPlease pay using the QR code below.');
 
   const bodyText=(isPaid||isMaloVelo)
-    ?`Spoštovani ${inv.buyer||''},
+    ?L(`Spoštovani ${inv.buyer||''},
 
-hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}${isMaloVelo&&!isPaid?'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.':''}.
+hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
 
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-Rok`
-    :`Spoštovani ${inv.buyer||''},
+Rok`,`Dear ${inv.buyer||''},
+
+thank you for your purchase at GoMushroom. Please find your invoice ${inv.num} below.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
+
+If you have any questions, reach us at info@gomushroom.si.
+
+Kind regards,
+Rok`)
+    :L(`Spoštovani ${inv.buyer||''},
 
 hvala za vaše naročilo. V nadaljevanju najdete predračun ${inv.num}.
 
@@ -9488,17 +9510,27 @@ Plačilo izvedite na spodnje bančne podatke. Po prejemu plačila bomo naročilo
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
-Rok`;
+Rok`,`Dear ${inv.buyer||''},
+
+thank you for your order. Please find proforma invoice ${inv.num} below.
+
+Please transfer the amount to the bank details below. We will dispatch your order as soon as the payment arrives.
+
+If you have any questions, reach us at info@gomushroom.si.
+
+Kind regards,
+Rok`);
 
   // HTML verzija emaila
   // Generiraj QR kodo URL za email
   const upnRef=inv.num?generateRF(inv.num):'';
   const upnString=buildUpnString(inv.total||0,upnRef,'Placilo '+(inv.num||'racuna'));
-  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
+  // UPN QR je slovenski standard - tuji banki ne pomaga, zato ga ne posiljamo.
+  const qrUrl=tujina?'':`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upnString)}`;
 
   const htmlBody=`<!DOCTYPE html>
-<html lang="sl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Račun ${inv.num}</title>
+<html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${L('Račun','Invoice')} ${inv.num}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased;margin:0;padding:0}
@@ -9545,8 +9577,8 @@ Rok`;
         <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:52px;display:block">
       </div>
       <div class="inv-info">
-        <div class="inv-num">Račun ${inv.num}</div>
-        <div class="inv-date">${dateStr}</div>
+        <div class="inv-num">${L('Račun','Invoice')} ${inv.num}</div>
+        <div class="inv-date">${datumStr}</div>
       </div>
     </div>
   </div>
@@ -9554,17 +9586,17 @@ Rok`;
   <div class="body">
     <div class="greeting">${bodyText.replace(/\n/g,'<br>')}</div>
 
-    <div class="section-title">Podatki</div>
+    <div class="section-title">${L('Podatki','Details')}</div>
     <div class="info-grid">
-      <div class="info-item"><label>Kupec</label><span>${inv.buyer||'—'}</span></div>
-      <div class="info-item"><label>Datum</label><span>${dateStr}</span></div>
-      ${inv.address?`<div class="info-item"><label>Naslov</label><span>${inv.address}</span></div>`:''}
+      <div class="info-item"><label>${L('Kupec','Buyer')}</label><span>${inv.buyer||'—'}</span></div>
+      <div class="info-item"><label>${L('Datum','Date')}</label><span>${datumStr}</span></div>
+      ${inv.address?`<div class="info-item"><label>${L('Naslov','Address')}</label><span>${inv.address}${tujina?', '+drzavaIme(drz,lang):''}</span></div>`:''}
     </div>
 
-    <div class="section-title">Postavke</div>
+    <div class="section-title">${L('Postavke','Items')}</div>
     <table>
       <thead><tr>
-        <th>Artikel</th><th>Kol.</th><th>Cena/kom</th><th>Skupaj</th>
+        <th>${L('Artikel','Item')}</th><th>${L('Kol.','Qty')}</th><th>${L('Cena/kom','Unit price')}</th><th>${L('Skupaj','Total')}</th>
       </tr></thead>
       <tbody>
         ${(g?.lines||[]).map(l=>{
@@ -9575,44 +9607,44 @@ Rok`;
             const isFree=(l.alcPrice||0)===0&&fullP>0;
             const discPct=isFree?100:fullP>0&&(l.alcPrice||0)<fullP?Math.round(((fullP-(l.alcPrice||0))/fullP)*100):0;
             const priceCell=isFree
-              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">${L('Brezplačno 🎁','Free 🎁')}</span>`
               :discPct>0
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.alcPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.alcPrice||0).toFixed(2)} €`;
-            rows.push(`<tr><td>${l.productName} — alkoholna${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.alc} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td></tr>`);
+            rows.push(`<tr><td>${l.productName} — ${L('alkoholna','alcohol')}${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.alc} ${L('kom','pcs')}</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.alc*(l.alcPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           if(l.gly){
             const fullP=latestPrice(l.productId,'gly');
             const isFree=(l.glyPrice||0)===0&&fullP>0;
             const discPct=isFree?100:fullP>0&&(l.glyPrice||0)<fullP?Math.round(((fullP-(l.glyPrice||0))/fullP)*100):0;
             const priceCell=isFree
-              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">Brezplačno 🎁</span>`
+              ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br><span style="color:#3a6b4a;font-weight:500">${L('Brezplačno 🎁','Free 🎁')}</span>`
               :discPct>0
               ?`<span style="text-decoration:line-through;color:#9a8f82;font-size:.8em">${fullP.toFixed(2)} €</span><br>${(l.glyPrice||0).toFixed(2)} €<span style="font-size:.75em;color:#3a6b4a;margin-left:.25em">–${discPct}%</span>`
               :`${(l.glyPrice||0).toFixed(2)} €`;
-            rows.push(`<tr><td>${l.productName} — glicerinska${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.gly} kom</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td></tr>`);
+            rows.push(`<tr><td>${l.productName} — ${L('glicerinska','alcohol-free')}${batchStr?`<br><small style="color:#9a8f82">${batchStr}</small>`:''}</td><td>${l.gly} ${L('kom','pcs')}</td><td>${priceCell}</td><td>${isFree?'0.00 €':(l.gly*(l.glyPrice||0)).toFixed(2)+' €'}</td></tr>`);
           }
           return rows.join('');
         }).join('')}
         ${(()=>{
           const _dAmt=(g?.fullTotal||0)-(inv.total||0);
           const discAmt=g?.discountAmt>0?g.discountAmt:_dAmt>0?round(_dAmt,2):0;
-          return discAmt>0?`<tr class="discount-row"><td colspan="3">Popust${g?.discount?` (${g.discount}%)`:''}</td><td>−${discAmt.toFixed(2)} €</td></tr>`:'';
+          return discAmt>0?`<tr class="discount-row"><td colspan="3">${L('Popust','Discount')}${g?.discount?` (${g.discount}%)`:''}</td><td>−${discAmt.toFixed(2)} €</td></tr>`:'';
         })()}
-        <tr class="total-row"><td colspan="3">Skupaj za plačilo</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
+        <tr class="total-row"><td colspan="3">${L('Skupaj za plačilo','Total due')}</td><td>${(inv.total||0).toFixed(2)} €</td></tr>
       </tbody>
     </table>
 
     ${(g?.channel==='malo'||g?.channel==='velo')&&(inv.total||0)>0?`<div class="payment-box">
       <div class="payment-details">
-        <strong>Podatki za plačilo</strong>
-        Prejemnik: ${UPN_NAME}<br>
+        <strong>${L('Podatki za plačilo','Payment details')}</strong>
+        ${L('Prejemnik','Beneficiary')}: ${UPN_NAME}${tujina?', '+UPN_ADDRESS_DISPLAY+', '+UPN_CITY_DISPLAY+', '+drzavaIme('SI',lang):''}<br>
         IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
-        BIC: HDELSI22<br>
-        Referenca: ${upnRef||inv.num}<br>
-        Znesek: ${(inv.total||0).toFixed(2)} €
+        BIC / SWIFT: ${UPN_BIC}<br>
+        ${L('Referenca','Reference')}: ${upnRef||inv.num}<br>
+        ${L('Znesek','Amount')}: ${(inv.total||0).toFixed(2)} €
       </div>
-      <img src="${qrUrl}" width="100" height="100" alt="UPN QR" style="flex-shrink:0;border-radius:4px">
+      ${qrUrl?`<img src="${qrUrl}" width="100" height="100" alt="UPN QR" style="flex-shrink:0;border-radius:4px">`:''}
     </div>`:''}
   </div>
 
@@ -9621,7 +9653,7 @@ Rok`;
       <div>
         <img src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom" style="height:36px;display:block;margin-bottom:.3rem">
         <div class="footer-info">
-          Prapreče pri Straži 22, 8351 Straža<br>
+          Prapreče pri Straži 22, 8351 Straža${tujina?', '+drzavaIme('SI',lang):''}<br>
           <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> · <a href="https://gomushroom.si">gomushroom.si</a>
         </div>
       </div>

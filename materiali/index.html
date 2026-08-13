@@ -673,6 +673,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
         <div class="field"><label>Material</label>
           <select id="matTip" onchange="onMatTipChange()"></select>
+          <button type="button" onclick="openNovTipSheet()" style="margin-top:.35rem;border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">＋ nov material</button>
         </div>
       </div>
       <div class="frow">
@@ -1008,6 +1009,45 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: NASTAVITVE -->
+<div class="overlay" id="novTipOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Nov material</span>
+      <button class="shclose" onclick="closeSheet('novTipOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem">
+        Za stvari, ki jih ni na seznamu — kartonske škatle, lesna slama, lepilni trak.
+        Ko je tip dodan, je na voljo pri vnosu in v pregledu zaloge.
+      </div>
+      <div class="field"><label>Ime</label><input id="ntIme" placeholder="npr. 📦 Škatla 20×15×10" autocomplete="off"></div>
+      <div class="frow">
+        <div class="field"><label>Enota</label>
+          <select id="ntEnota">
+            <option value="kom">kom</option>
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="L">L</option>
+            <option value="m">m</option>
+          </select>
+        </div>
+        <div class="field"><label>Kategorija</label>
+          <select id="ntKat">
+            <option value="embalaza">📦 Embalaža</option>
+            <option value="surovina">🌿 Surovina</option>
+          </select>
+        </div>
+      </div>
+      <div id="ntSeznam"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('novTipOverlay')">Prekliči</button>
+      <button class="bsave" onclick="saveNovTip()">Dodaj</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="settingsOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -3223,7 +3263,28 @@ const MAT_KAT={
   goba_reishi:'surovina',goba_bradovec:'surovina',goba_chaga:'surovina',goba_smrekovi:'surovina',
   vitc:'surovina',lecitin:'surovina',glicerin:'surovina'
 };
-function matKat(tip){return MAT_KAT[tip]||'surovina';}
+// Lastni tipi materiala. Vgrajeni ostanejo v MAT_*, uporabnikovi se hranijo
+// posebej, iskanje pa gre skozi te funkcije - tako je pravilo o imenu, enoti
+// in kategoriji na enem mestu in ga ni treba dodajati na stiri.
+let matTipi=JSON.parse(localStorage.getItem('gm_dn_mat_tipi')||'[]');
+function matTipUpo(tip){return matTipi.find(t=>t.tip===tip)||null;}
+function matIme(tip){const u=matTipUpo(tip);return MAT_IME[tip]||(u&&u.ime)||tip;}
+function matEnota(tip){const u=matTipUpo(tip);return MAT_ENOTA[tip]||(u&&u.enota)||'kom';}
+function matKat(tip){const u=matTipUpo(tip);return MAT_KAT[tip]||(u&&u.kat)||'surovina';}
+function matVsiTipi(){return [...Object.keys(MAT_IME),...matTipi.map(t=>t.tip)];}
+function matOpcije(kat){
+  return [...(MAT_OPCIJE[kat]||[]),
+    ...matTipi.filter(t=>t.kat===kat).map(t=>({value:t.tip,label:`${t.ime} (${t.enota})`}))];
+}
+// Iz imena naredimo obstojen kljuc; ce se ponovi, dodamo stevilko.
+function matNovKljuc(ime){
+  const osnova=('lasten_'+String(ime).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')).slice(0,40)||'lasten_material';
+  const zasedeni=new Set(matVsiTipi());
+  if(!zasedeni.has(osnova))return osnova;
+  for(let i=2;i<999;i++)if(!zasedeni.has(osnova+'_'+i))return osnova+'_'+i;
+  return osnova+'_'+Date.now();
+}
 
 // Izračun zaloge po tipu
 function calcMatZaloga(tip){
@@ -3294,16 +3355,16 @@ function setMatFilter(f,btn){
 }
 
 function renderMatZaloga(){
-  const tipi=Object.keys(MAT_IME).filter(tipMatchesFilter);
+  const tipi=matVsiTipi().filter(tipMatchesFilter);
   const grid=document.getElementById('matZalogaGrid');
   if(!grid)return;
   const zalogeHtml=tipi.map(tip=>{
     const z=calcMatZaloga(tip);
     if(z===0&&!materiali.some(m=>m.tip===tip))return'';
-    const enota=MAT_ENOTA[tip]||'';
+    const enota=matEnota(tip);
     const isActive=matTipFilter===tip;
     return`<div class="stat-card" style="padding:.4rem .6rem;cursor:pointer;${isActive?'border:2px solid var(--accent);background:rgba(175,132,85,.08)':''}" onclick="setMatTip('${tip}')">
-      <div class="stat-label" style="font-size:.58rem">${MAT_IME[tip]}</div>
+      <div class="stat-label" style="font-size:.58rem">${matIme(tip)}</div>
       <div class="stat-value ${z<0?'warn':''}" style="font-size:1rem">${z} <span style="font-size:.65rem;color:var(--muted)">${enota}</span></div>
     </div>`;
   }).filter(Boolean).join('');
@@ -3337,14 +3398,14 @@ function renderMateriali(){
   el.innerHTML=page.map(m=>{
     const isIn=m.smer==='vhod';
     const isUsk=m.smer==='izhod'&&(m.opomba||'').startsWith('Uskladitev');
-    const enota=MAT_ENOTA[m.tip]||'';
+    const enota=matEnota(m.tip);
     const typeLabel=isIn?'Nabava':isUsk?'Uskladitev':'Izhod';
     const typeCls=isIn?'eth-nabava':isUsk?'eth-reg':'eth-izhod';
     return`<div class="eth-card" style="flex-wrap:wrap;gap:.3rem">
       <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
         <div class="eth-type ${typeCls}" style="min-width:4rem;font-size:.6rem">${typeLabel}</div>
         <div class="eth-info">
-          <div class="eth-doc">${MAT_IME[m.tip]||m.tip}</div>
+          <div class="eth-doc">${matIme(m.tip)}</div>
           <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${m.opomba?' · '+m.opomba:''}</div>
         </div>
         <div class="eth-qty">
@@ -3382,6 +3443,68 @@ function onMatSmerChange(){
   if(isUsk&&!opEl.value){opEl.value='Uskladitev zaloge — inventura';}
   else if(!isUsk&&opEl.value==='Uskladitev zaloge — inventura'){opEl.value='';}
 }
+// ── LASTNI TIPI MATERIALA ──
+function shraniMatTipe(){
+  localStorage.setItem('gm_dn_mat_tipi',JSON.stringify(matTipi));
+  sbPushMatTipi();
+}
+
+function openNovTipSheet(){
+  document.getElementById('ntIme').value='';
+  document.getElementById('ntEnota').value='kom';
+  document.getElementById('ntKat').value=document.getElementById('matKatSel')?.value||'embalaza';
+  renderNovTipSeznam();
+  openSheet('novTipOverlay');
+}
+
+function renderNovTipSeznam(){
+  const el=document.getElementById('ntSeznam');
+  if(!el)return;
+  if(!matTipi.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="slabel" style="margin-top:.8rem">Tvoji materiali</div>`+matTipi.map(t=>{
+    const vnosov=materiali.filter(m=>m.tip===t.tip).length;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.35rem 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:.8rem">${t.ime} <span style="color:var(--muted);font-size:.7rem">· ${t.enota} · ${t.kat==='embalaza'?'embalaža':'surovina'}</span></div>
+      ${vnosov?`<span style="font-size:.68rem;color:var(--muted);white-space:nowrap">${vnosov} vnosov</span>`
+              :`<button type="button" onclick="izbrisiMatTip('${t.tip}')" style="border:1px solid rgba(139,58,42,.3);background:none;color:var(--danger);border-radius:6px;padding:.2rem .5rem;font-family:inherit;font-size:.72rem;cursor:pointer">✕</button>`}
+    </div>`;
+  }).join('');
+}
+
+function saveNovTip(){
+  const ime=document.getElementById('ntIme').value.trim();
+  if(!ime){toast('⚠ Vnesi ime materiala');return;}
+  const kat=document.getElementById('ntKat').value;
+  const enota=document.getElementById('ntEnota').value;
+  // Isto ime v isti kategoriji bi bilo v spustnem seznamu nelocljivo.
+  if(matTipi.some(t=>t.ime.toLowerCase()===ime.toLowerCase()&&t.kat===kat)){
+    toast('⚠ Material s tem imenom že obstaja');return;
+  }
+  const tip=matNovKljuc(ime);
+  matTipi.push({tip,ime,enota,kat});
+  shraniMatTipe();
+  // Osvezi izbirnike in izberi novega, da ga ni treba iskati.
+  const katSel=document.getElementById('matKatSel');
+  if(katSel){katSel.value=kat;onMatKatSelChange();document.getElementById('matTip').value=tip;onMatTipChange();}
+  renderMateriali();
+  closeSheet('novTipOverlay');
+  toast(`✓ Dodan material: ${ime}`);
+}
+
+function izbrisiMatTip(tip){
+  if(materiali.some(m=>m.tip===tip)){toast('⚠ Material ima vnose in ga ni mogoče izbrisati');return;}
+  const t=matTipUpo(tip);
+  if(!confirm(`Izbriši material "${t?t.ime:tip}"?`))return;
+  matTipi=matTipi.filter(x=>x.tip!==tip);
+  shraniMatTipe();
+  sbDel('gm_dn_mat_tipi',tip).catch(()=>{});
+  renderNovTipSeznam();
+  const katSel=document.getElementById('matKatSel');
+  if(katSel)onMatKatSelChange();
+  renderMateriali();
+  toast('✓ Izbrisano');
+}
+
 function openMaterijalSheet(id){
   editingMatId=id||null;
   const m=id?materiali.find(x=>x.id===id):null;
@@ -3391,7 +3514,7 @@ function openMaterijalSheet(id){
   document.getElementById('matSmer').value=smer==='uskladitev'?'uskladitev':smer==='izhod'&&m?.opomba?.startsWith('Uskladitev')?'uskladitev':smer;
   onMatSmerChange();
   // Nastavi kategorijo in zapolni dropdown
-  const kat=m?MAT_KAT[m.tip]||'surovina':'surovina';
+  const kat=m?matKat(m.tip):'surovina';
   document.getElementById('matKatSel').value=kat;
   onMatKatSelChange();
   // Nastavi specifičen tip
@@ -3441,13 +3564,13 @@ const MAT_OPCIJE={
 function onMatKatSelChange(){
   const kat=document.getElementById('matKatSel').value;
   const sel=document.getElementById('matTip');
-  sel.innerHTML=MAT_OPCIJE[kat].map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.innerHTML=matOpcije(kat).map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
   onMatTipChange();
 }
 
 function onMatTipChange(){
   const tip=document.getElementById('matTip').value;
-  const enota=MAT_ENOTA[tip]||'kom';
+  const enota=matEnota(tip);
   document.getElementById('matKolLabel').textContent=`Količina (${enota})`;
   const isGoba=tip.startsWith('goba');
   document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
@@ -3521,13 +3644,13 @@ function saveMaterjal(){
   closeSheet('materialiOverlay');
   renderMateriali();
   const smerLabel=smerSel==='uskladitev'?'⚖ Uskladitev':smer==='izhod'?'↓ Izhod':'↑ Vhod';
-  toast(`✓ ${smerLabel} · ${MAT_IME[tip]||tip}: ${kolicina} ${MAT_ENOTA[tip]||''}`);
+  toast(`✓ ${smerLabel} · ${matIme(tip)}: ${kolicina} ${matEnota(tip)}`);
   editingMatId=null;
 }
 
 async function deleteMaterjal(id){
   const m=materiali.find(x=>x.id===id);if(!m)return;
-  if(!confirm(`Izbriši vnos?\n${MAT_IME[m.tip]} · ${m.kolicina} ${MAT_ENOTA[m.tip]||''}`))return;
+  if(!confirm(`Izbriši vnos?\n${matIme(m.tip)} · ${m.kolicina} ${matEnota(m.tip)}`))return;
   materiali=materiali.filter(x=>x.id!==id);
   save();renderMateriali();
   try{
@@ -3851,7 +3974,7 @@ async function retroaktivnoPoknjiziVseDN(){
   const toDel=retro.filter(m=>!book.some(p=>p.dok===m.dokument&&p.tip===m.tip));
 
   const skipInfo=skip.length
-    ?'\n\nPreskočeno (ni vhoda ≤ datum DN):\n'+[...new Set(skip.map(p=>`  ${p.dok}: ${MAT_IME[p.tip]||p.tip}`))].join('\n')
+    ?'\n\nPreskočeno (ni vhoda ≤ datum DN):\n'+[...new Set(skip.map(p=>`  ${p.dok}: ${matIme(p.tip)}`))].join('\n')
     :'';
 
   if(!toAdd.length&&!toDel.length){toast('Vsi retro vnosi so že usklajeni');return;}
@@ -4712,6 +4835,24 @@ async function sbPushRD(r){
     setSyncStatus('⚠');console.error('sbPushRD',e);
   }
 }
+// Tabela gm_dn_mat_tipi je nova. Ce je se ni, lastni tipi ostanejo lokalni -
+// vnosi se vseeno shranijo, le ime in enota se na drugi napravi ne pokazeta.
+let _matTipiOpozorilo=false;
+async function sbPushMatTipi(){
+  if(!matTipi.length)return;
+  try{
+    await sbUpsert('gm_dn_mat_tipi',matTipi.map(t=>({id:t.tip,ime:t.ime,enota:t.enota,kat:t.kat})));
+    setSyncStatus('✓');
+  }catch(e){
+    setSyncStatus('⚠');
+    console.error('sbPushMatTipi',e);
+    if(!_matTipiOpozorilo){
+      _matTipiOpozorilo=true;
+      toast('⚠ Lastni materiali ostajajo lokalni — v Supabase manjka tabela gm_dn_mat_tipi');
+    }
+  }
+}
+
 async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
 
 async function migrirajVSupabase(){
@@ -4730,6 +4871,7 @@ async function migrirajVSupabase(){
     await chunk('gm_dn_oprema',oprema.map(opToSb));
     if(rdNalogi.length)await chunk('gm_dn_rd',rdNalogi.map(rdToSb));
     if(bilancaDogodki.length)await chunk('gm_dn_bilanca',bilancaDogodki.map(bilToSb));
+    await sbPushMatTipi();
     setSyncStatus('✓');
     toast(`✓ Sinhronizirano: ${workOrders.length} DN, ${etanolKnjiga.length} et, ${materiali.length} mat, ${oprema.length} op, ${rdNalogi.length} R&D, ${bilancaDogodki.length} bilanca`);
   }catch(e){
@@ -4742,7 +4884,7 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops,rds,bils,glys]=await Promise.all([
+    const [wos,ets,mats,ops,rds,bils,glys,mtipi]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
@@ -4750,6 +4892,7 @@ async function loadFromSB(){
       sbFetch('gm_dn_rd','order=datum.desc').catch(()=>[]),
       sbFetch('gm_dn_bilanca','order=ts.asc').catch(()=>[]),
       sbFetch('gm_dn_gly_zapisi','order=shranjen.desc').catch(()=>[]),
+      sbFetch('gm_dn_mat_tipi','order=ime.asc').catch(()=>null),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -4758,6 +4901,11 @@ async function loadFromSB(){
       setSyncStatus('⚠ SB prazno');
       console.warn('loadFromSB: Supabase vrnil prazne tabele, lokalni podatki ohranjeni');
       return;
+    }
+    // null pomeni, da tabele ni; prazna tabela pomeni, da lastnih tipov ni.
+    if(mtipi){
+      matTipi=mtipi.map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kat:t.kat||'surovina'}));
+      localStorage.setItem('gm_dn_mat_tipi',JSON.stringify(matTipi));
     }
     workOrders=wos.map(sbToDn);
     etanolKnjiga=ets.map(sbToEt);

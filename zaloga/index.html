@@ -5646,7 +5646,7 @@ body.a4 .label{width:148.5mm;height:105mm;page-break-after:avoid;break-after:avo
 body.a4 .sheet::before,body.a4 .sheet::after{content:'';position:absolute;border:0;border-top:.3mm dashed #bbb;left:0;right:0;top:105mm}
 body.a4 .sheet::after{border-top:0;border-left:.3mm dashed #bbb;top:0;bottom:0;left:148.5mm;right:auto}
 
-.toolbar{display:none}
+.toolbar,.namig{display:none}
 @media screen{
   body{padding:1rem;background:#eee}
   .sheet{background:transparent}
@@ -5660,8 +5660,15 @@ body.a4 .sheet::after{border-top:0;border-left:.3mm dashed #bbb;top:0;bottom:0;l
   .toolbar button.on{background:#111;color:#fff;border-color:#111}
   .toolbar .print{background:#111;color:#fff;border-color:#111;font-weight:700}
   .count{position:fixed;top:.75rem;left:.75rem;font-size:.78rem;color:#555;font-family:Arial,sans-serif;background:#fff;padding:.4rem .8rem;border-radius:8px;border:1px solid #ddd}
+  .namig{display:block;max-width:297mm;margin:0 auto .9rem;font-family:Arial,sans-serif;font-size:.75rem;line-height:1.5;color:#6a5a50;background:#fff8e6;border:1px solid #e8d9b0;border-radius:8px;padding:.55rem .8rem}
 }`;
 
+// Okno z nalepkami je about:blank, zato se na njegov localStorage ni mogoce
+// zanesti. Izbiro hrani maticna aplikacija: ob odprtju jo vpisemo v stran,
+// ob preklopu pa jo okno zapise nazaj prek window.opener.
+function nalepkaFormatShranjen(){
+  try{return localStorage.getItem('gm_nalepka_format')||'a4';}catch(e){return 'a4';}
+}
 const NALEPKA_SKRIPTA=`
 function nalepkaFormat(f){
   document.body.classList.toggle('a4',f==='a4');
@@ -5670,31 +5677,30 @@ function nalepkaFormat(f){
     : '@page{size:148mm 105mm landscape;margin:0!important}';
   document.getElementById('bA6').classList.toggle('on',f!=='a4');
   document.getElementById('bA4').classList.toggle('on',f==='a4');
-  try{localStorage.setItem('gm_nalepka_format',f);}catch(e){}
+  try{(window.opener&&window.opener.localStorage||localStorage).setItem('gm_nalepka_format',f);}catch(e){}
 }
-(function(){
-  var f='a6';
-  try{f=localStorage.getItem('gm_nalepka_format')||'a6';}catch(e){}
-  nalepkaFormat(f);
-})();`;
+nalepkaFormat(window.__nalepkaFormat||'a4');`;
 
 // Nalepke zlozimo po stiri, da jih A4 pola pobere v mrezo 2x2. V A6 nacinu
 // ovoj nic ne spremeni - vsaka nalepka gre na svoj list.
 function nalepkeStran(nalepke,naslov,stevec){
+  const zacetni=nalepkaFormatShranjen();
   const pole=[];
   for(let i=0;i<nalepke.length;i+=4)pole.push(`<div class="sheet">${nalepke.slice(i,i+4).join('')}</div>`);
   return `<!DOCTYPE html><html lang="sl"><head><meta charset="utf-8">
 <title>${NALEPKA_ESC(naslov)}</title>
-<style id="pageCss">@page{size:148mm 105mm landscape;margin:0!important}</style>
+<style id="pageCss">@page{size:${zacetni==='a4'?'A4 landscape':'148mm 105mm landscape'};margin:0!important}</style>
 <style>${NALEPKA_CSS}</style></head><body>
 <div class="toolbar">
-  <button id="bA6" onclick="nalepkaFormat('a6')">A6 — ena na list</button>
   <button id="bA4" onclick="nalepkaFormat('a4')">A4 — štiri na list</button>
+  <button id="bA6" onclick="nalepkaFormat('a6')">A6 — ena na list</button>
   <button class="print" onclick="window.print()">🖨 Natisni / PDF</button>
 </div>
+<div class="namig">V oknu za tisk nastavi <strong>Merilo 100 %</strong> in <strong>Robovi: brez</strong>.
+Prilagajanje velikosti („Fit to page&#34;) natis pomanjša za nekaj milimetrov in nalepke se ne poravnajo z izsekom.</div>
 ${stevec?`<div class="count">${stevec}</div>`:''}
 ${pole.join('')}
-<script>${NALEPKA_SKRIPTA}<\/script>
+<script>window.__nalepkaFormat=${JSON.stringify(zacetni)};${NALEPKA_SKRIPTA}<\/script>
 </body></html>`;
 }
 

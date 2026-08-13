@@ -1024,7 +1024,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="field"><label>Ime</label><input id="ntIme" placeholder="npr. 📦 Škatla 20×15×10" autocomplete="off"></div>
       <div class="frow">
         <div class="field"><label>Enota</label>
-          <select id="ntEnota">
+          <select id="ntEnota" onchange="onNovTipKatChange()">
             <option value="kom">kom</option>
             <option value="g">g</option>
             <option value="kg">kg</option>
@@ -1033,10 +1033,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           </select>
         </div>
         <div class="field"><label>Kategorija</label>
-          <select id="ntKat">
+          <select id="ntKat" onchange="onNovTipKatChange()">
             <option value="embalaza">📦 Embalaža</option>
             <option value="surovina">🌿 Surovina</option>
           </select>
+        </div>
+      </div>
+      <div class="field" id="ntKapField">
+        <label>Kapaciteta — koliko tinktur gre v škatlo (neobvezno)</label>
+        <input id="ntKap" type="text" inputmode="numeric" placeholder="npr. 5 za spletno, 50 ali 100 za veleprodajo">
+        <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin-top:.25rem">
+          Ko je vpisana, bo app ob odpremi sam predlagal pravo škatlo glede na število kosov v naročilu.
         </div>
       </div>
       <div id="ntSeznam"></div>
@@ -3452,9 +3459,20 @@ function shraniMatTipe(){
 function openNovTipSheet(){
   document.getElementById('ntIme').value='';
   document.getElementById('ntEnota').value='kom';
+  document.getElementById('ntKap').value='';
   document.getElementById('ntKat').value=document.getElementById('matKatSel')?.value||'embalaza';
+  onNovTipKatChange();
   renderNovTipSeznam();
   openSheet('novTipOverlay');
+}
+
+// Kapaciteta ima smisel samo pri embalazi, ki se steje na kose - pri slami ali
+// traku ni kaj sesteti.
+function onNovTipKatChange(){
+  const kat=document.getElementById('ntKat').value;
+  const enota=document.getElementById('ntEnota').value;
+  const el=document.getElementById('ntKapField');
+  if(el)el.style.display=(kat==='embalaza'&&enota==='kom')?'':'none';
 }
 
 function renderNovTipSeznam(){
@@ -3464,7 +3482,7 @@ function renderNovTipSeznam(){
   el.innerHTML=`<div class="slabel" style="margin-top:.8rem">Tvoji materiali</div>`+matTipi.map(t=>{
     const vnosov=materiali.filter(m=>m.tip===t.tip).length;
     return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.35rem 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:.8rem">${t.ime} <span style="color:var(--muted);font-size:.7rem">· ${t.enota} · ${t.kat==='embalaza'?'embalaža':'surovina'}</span></div>
+      <div style="font-size:.8rem">${t.ime} <span style="color:var(--muted);font-size:.7rem">· ${t.enota} · ${t.kat==='embalaza'?'embalaža':'surovina'}${t.kapaciteta?' · do '+t.kapaciteta+' kom':''}</span></div>
       ${vnosov?`<span style="font-size:.68rem;color:var(--muted);white-space:nowrap">${vnosov} vnosov</span>`
               :`<button type="button" onclick="izbrisiMatTip('${t.tip}')" style="border:1px solid rgba(139,58,42,.3);background:none;color:var(--danger);border-radius:6px;padding:.2rem .5rem;font-family:inherit;font-size:.72rem;cursor:pointer">✕</button>`}
     </div>`;
@@ -3481,7 +3499,8 @@ function saveNovTip(){
     toast('⚠ Material s tem imenom že obstaja');return;
   }
   const tip=matNovKljuc(ime);
-  matTipi.push({tip,ime,enota,kat});
+  const kap=Math.round(parseNum(document.getElementById('ntKap').value))||0;
+  matTipi.push(kap>0?{tip,ime,enota,kat,kapaciteta:kap}:{tip,ime,enota,kat});
   shraniMatTipe();
   // Osvezi izbirnike in izberi novega, da ga ni treba iskati.
   const katSel=document.getElementById('matKatSel');
@@ -4841,7 +4860,7 @@ let _matTipiOpozorilo=false;
 async function sbPushMatTipi(){
   if(!matTipi.length)return;
   try{
-    await sbUpsert('gm_dn_mat_tipi',matTipi.map(t=>({id:t.tip,ime:t.ime,enota:t.enota,kat:t.kat})));
+    await sbUpsert('gm_dn_mat_tipi',matTipi.map(t=>({id:t.tip,ime:t.ime,enota:t.enota,kat:t.kat,kapaciteta:t.kapaciteta||null})));
     setSyncStatus('✓');
   }catch(e){
     setSyncStatus('⚠');
@@ -4904,7 +4923,7 @@ async function loadFromSB(){
     }
     // null pomeni, da tabele ni; prazna tabela pomeni, da lastnih tipov ni.
     if(mtipi){
-      matTipi=mtipi.map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kat:t.kat||'surovina'}));
+      matTipi=mtipi.map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kat:t.kat||'surovina',...(t.kapaciteta?{kapaciteta:t.kapaciteta}:{})}));
       localStorage.setItem('gm_dn_mat_tipi',JSON.stringify(matTipi));
     }
     workOrders=wos.map(sbToDn);

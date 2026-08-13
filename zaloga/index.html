@@ -5598,8 +5598,8 @@ function nalepkaMarkup(o){
           <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
           <div class="sender-data">
             <div class="section-label">${napisPosiljatelj}</div>
-            <div class="sender-name">GoMushroom, Rok Golob s.p.</div>
-            <div class="sender-addr">Prapreče pri Straži 22<br>8351 Straža${posiljateljDrzava}</div>
+            <div class="sender-name">GoMushroom</div>
+            <div class="sender-addr">Rok Golob s.p.<br>Prapreče pri Straži 22<br>8351 Straža${posiljateljDrzava}</div>
             <div class="sender-phone">${drz?'+386 31 373 836':'031 373 836'}</div>
           </div>
           <div class="sender-qr">
@@ -5625,23 +5625,23 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff}
 .label{width:148mm;height:105mm;padding:5mm;page-break-after:always;break-after:page}
 .sheet:last-child .label:last-child{page-break-after:avoid;break-after:avoid}
 .frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
-.sender-col{width:46mm;flex-shrink:0;border-right:1.5px solid #111;padding:4mm;display:flex;flex-direction:column}
+.sender-col{width:50mm;flex-shrink:0;border-right:1.5px solid #111;padding:4mm;display:flex;flex-direction:column}
 .logo-img{width:28mm;display:block;margin-bottom:3mm}
 .sender-data{flex:1}
-.section-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:1.5mm}
-.sender-name{font-size:8pt;font-weight:700;color:#111;line-height:1.4}
-.sender-addr{font-size:7pt;color:#555;line-height:1.55;margin-top:1mm}
-.sender-phone{font-size:7pt;color:#555;margin-top:1mm}
+.section-label{font-size:6pt;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#555;margin-bottom:1.5mm}
+.sender-name{font-size:9pt;font-weight:700;color:#000;line-height:1.35}
+.sender-addr{font-size:8.5pt;color:#111;line-height:1.5;margin-top:1.2mm}
+.sender-phone{font-size:8.5pt;color:#111;margin-top:1.2mm}
 .sender-qr{margin-top:2mm;text-align:center}
 .qr-img{width:22mm;height:22mm;display:block;margin:0 auto 1.5mm}
-.website{font-size:6pt;color:#888;text-align:center}
+.website{font-size:6.5pt;color:#555;text-align:center}
 .recipient-col{flex:1;padding:6mm 7mm;display:flex;flex-direction:column;justify-content:center}
-.rec-label{font-size:5.5pt;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:4mm}
+.rec-label{font-size:6pt;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#555;margin-bottom:4mm}
 .rname{font-size:15pt;font-weight:900;color:#111;line-height:1.15;letter-spacing:-.01em;margin-bottom:3mm}
-.raddr{font-size:12pt;color:#333;line-height:1.55;font-weight:500}
+.raddr{font-size:12pt;color:#111;line-height:1.55;font-weight:500}
 .rcountry{font-weight:900;font-size:13pt;letter-spacing:.03em;color:#111}
-.rphone{font-size:9pt;color:#555;margin-top:2mm}
-.ref{font-size:6pt;color:#ccc;margin-top:auto;padding-top:2mm}
+.rphone{font-size:10pt;color:#111;margin-top:2mm}
+.ref{font-size:6.5pt;color:#aaa;margin-top:auto;padding-top:2mm}
 
 /* A4: stiri nalepke na pokoncni poli, kot so standardne pole z izsekanimi
    nalepkami 105 x 148,5 mm. Pola je pokoncna, ker jo tako vlozis v tiskalnik -

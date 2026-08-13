@@ -3974,7 +3974,7 @@ function checkOrderChannelStock(productId){
   const st=productStock(productId);
   const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
   const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
-  const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
+  const isProd=stockIsProdCh(orderChannel);
   const remAlc=isProd?st.prodAlc:st.intAlc;
   const remGly=isProd?st.prodGly:st.intGly;
   const purpose=isProd?'Prodaja':'Interno';
@@ -4023,7 +4023,7 @@ function renderOrderRows(){
   if(!products.length){el.innerHTML=`<div class="empty"><div class="ei">🍄</div><div class="et">Ni produktov</div></div>`;return;}
   el.innerHTML=products.map(p=>{
     const st=productStock(p.id);
-    const isProd=orderChannel==='malo'||orderChannel==='velo'||orderChannel==='kom';
+    const isProd=stockIsProdCh(orderChannel);
     const remAlc=isProd?st.prodAlc:st.intAlc;
     const remGly=isProd?st.prodGly:st.intGly;
     const purpose=orderChannel==='kom'?'🤝 Komisija':isProd?'🛒 Prodaja':'🔬 Interno';
@@ -4297,7 +4297,7 @@ let editingBatchAllocProductId=null;
 function computePendingAlloc(){
   pendingBatchAlloc={};
   const lines=collectOrderLines();
-  const purpose=(orderChannel==='int')?'int':'prod';
+  const purpose=stockIsProdCh(orderChannel)?'prod':'int';
   const allWarnings=[];
   let hasUnfulfilled=false;
   lines.forEach(l=>{
@@ -4453,7 +4453,7 @@ async function confirmOrder(withInvoice){
   // (purpose = orderChannel==='int' ? 'int' : 'prod'). Promo in komisija gresta
   // iz prodajne zaloge, sicer bi preverba blokirala vnos, ki bi ga razporeditev
   // sicer brez tezav izvedla.
-  const isProdCh=ch!=='int';
+  const isProdCh=stockIsProdCh(ch);
   for(const [pid,v] of Object.entries(byProduct)){
     const st=productStock(pid);
     const avAlc=isProdCh?st.prodAlc:st.intAlc;
@@ -4474,14 +4474,14 @@ if(!Object.keys(pendingBatchAlloc).length){
   // Varnostna mreža — dopolni manjkajoče alokacije
   lines.forEach(l=>{
     if(!(pendingBatchAlloc[l.p.id]||[]).some(x=>x.alc||x.gly)){
-      const purpose=(orderChannel==='int')?'int':'prod';
+      const purpose=stockIsProdCh(orderChannel)?'prod':'int';
       const result=fifoAllocate(l.p.id,l.alc,l.gly,purpose);
       if(result.alloc.length)pendingBatchAlloc[l.p.id]=result.alloc;
     }
   });
     if(unfulfilled){
       // Not enough stock for this channel - block and offer alternatives
-      const isProd=orderChannel!=='int';
+      const isProd=stockIsProdCh(orderChannel);
       const altMsg=isProd
         ? '\n\nMožnosti:\n• Zmanjšaj količino\n• Preveri razporeditev v serijah'
         : '\n\nMožnosti:\n• Zmanjšaj količino\n• Poveča interno razporeditev v seriji';
@@ -4981,7 +4981,7 @@ function aaAddArticle(){
   const glyP=parseNum(document.getElementById('aaAddGlyPrice').value)||0;
   const lineTotal=(alc*alcP)+(gly*glyP);
   const st=productStock(pid);
-  const isProd=g.channel!=='int';
+  const isProd=stockIsProdCh(g.channel);
   const avAlc=isProd?st.prodAlc:st.intAlc;
   const avGly=isProd?st.prodGly:st.intGly;
   if(alc>avAlc){toast(`⛔ Ni dovolj 🥃 na zalogi (na voljo: ${avAlc})`);return;}
@@ -6683,14 +6683,14 @@ function genReport(type){
             const allocP=bd?.alc?.alloc?.prod||(bd?.alc?.alloc?.malo||0)+(bd?.alc?.alloc?.velo||0)||0;
             const allocPG=bd?.gly?.alloc?.prod||(bd?.gly?.alloc?.malo||0)+(bd?.gly?.alloc?.velo||0)||0;
             // sold prod from this batch
-            const soldP=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-            const soldPG=saleGroups.filter(g=>g.channel==='malo'||g.channel==='velo'||g.channel==='wp'||g.channel==='stripe'||g.channel==='kom').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+            const soldP=saleGroups.filter(g=>stockIsProdCh(g.channel)).reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+            const soldPG=saleGroups.filter(g=>stockIsProdCh(g.channel)).reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
             bAlcShow=Math.max(0,allocP-soldP); bGlyShow=Math.max(0,allocPG-soldPG);
           } else {
             const allocI=(bd?.alc?.alloc?.int||0)+(bd?.alc?.alloc?.dar||0);
             const allocIG=(bd?.gly?.alloc?.int||0)+(bd?.gly?.alloc?.dar||0);
-            const soldI=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
-            const soldIG=saleGroups.filter(g=>g.channel==='int'||g.channel==='dar').reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
+            const soldI=saleGroups.filter(g=>STOCK_INT_CHANNELS(g)).reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.alc||0);},0);
+            const soldIG=saleGroups.filter(g=>STOCK_INT_CHANNELS(g)).reduce((s,g)=>{const l=g.lines?.find(l=>l.productId===p.id);if(!l)return s;return s+((l.batchBreakdown||[]).find(bb=>bb.batchId===b.id)?.gly||0);},0);
             bAlcShow=Math.max(0,allocI-soldI); bGlyShow=Math.max(0,allocIG-soldIG);
           }
           if(!showAlc) bAlcShow=0;

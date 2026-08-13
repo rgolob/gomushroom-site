@@ -4031,21 +4031,21 @@ function onPerUnitPriceChange(productId){
   const glyEl=document.getElementById('okpg-'+productId);
   const warn=document.getElementById('owarn-'+productId);
   if(!warn)return;
-  const alcP=parseNum(alcEl?.value||'');
-  const glyP=parseNum(glyEl?.value||'');
-  if(!alcP&&!glyP){warn.style.display='none';return;}
+  const alcP=cenaPolje('okpa-'+productId);
+  const glyP=cenaPolje('okpg-'+productId);
+  if(alcP==null&&glyP==null){warn.style.display='none';return;}
   const alc=parseInt(document.getElementById('oalc-'+productId)?.value)||0;
   const gly=parseInt(document.getElementById('ogly-'+productId)?.value)||0;
   if(!alc&&!gly){warn.style.display='none';return;}
   const baseAlcP=latestPrice(productId,'alc');
   const baseGlyP=latestPrice(productId,'gly');
   const fullTotal=alc*baseAlcP+gly*baseGlyP;
-  const lineTotal=alc*(alcP||baseAlcP)+gly*(glyP||baseGlyP);
+  const lineTotal=alc*(alcP!=null?alcP:baseAlcP)+gly*(glyP!=null?glyP:baseGlyP);
   const disc=fullTotal>0?((1-lineTotal/fullTotal)*100):0;
   if(disc>0.01){
     const parts=[];
-    if(alcP>0&&baseAlcP>0&&alcP<baseAlcP)parts.push(`🥃 –${Math.round((1-alcP/baseAlcP)*100)}% (${baseAlcP.toFixed(2)}→${alcP.toFixed(2)} €)`);
-    if(glyP>0&&baseGlyP>0&&glyP<baseGlyP)parts.push(`🌿 –${Math.round((1-glyP/baseGlyP)*100)}% (${baseGlyP.toFixed(2)}→${glyP.toFixed(2)} €)`);
+    if(alcP!=null&&baseAlcP>0&&alcP<baseAlcP)parts.push(`🥃 –${Math.round((1-alcP/baseAlcP)*100)}% (${baseAlcP.toFixed(2)}→${alcP.toFixed(2)} €)`);
+    if(glyP!=null&&baseGlyP>0&&glyP<baseGlyP)parts.push(`🌿 –${Math.round((1-glyP/baseGlyP)*100)}% (${baseGlyP.toFixed(2)}→${glyP.toFixed(2)} €)`);
     warn.textContent=parts.join(' · ')||`Popust: ${disc.toFixed(1)}%`;
     warn.style.color='var(--ch-velo)';warn.style.display='';
   } else {
@@ -4108,6 +4108,15 @@ function onFinalPriceChange(productId){
   renderOrderSummary();
 }
 
+// Polje €/kos je bilo prazno ali stevilka; vnesena 0 se je stela kot prazno
+// in tiho padla nazaj na polno ceno. Zato locimo prazno (null) od nicle.
+function cenaPolje(id){
+  const raw=(document.getElementById(id)?.value||'').trim();
+  if(!/\d/.test(raw))return null;
+  const v=parseNum(raw);
+  return v>=0?v:null;
+}
+
 function collectOrderLines(){
   const discount=parseNum(document.getElementById('orderDiscount').value);
   const discMult=1-discount/100;
@@ -4119,15 +4128,17 @@ function collectOrderLines(){
     const gly=parseInt(document.getElementById('ogly-'+p.id)?.value)||0;
     if(!alc&&!gly)return null;
     let alcP,glyP,lineTotal;
-    const customAlcP=parseNum(document.getElementById('okpa-'+p.id)?.value||'');
-    const customGlyP=parseNum(document.getElementById('okpg-'+p.id)?.value||'');
+    const customAlcP=cenaPolje('okpa-'+p.id);
+    const customGlyP=cenaPolje('okpg-'+p.id);
     const baseAlcP=isVelo&&tier?tier.alc:latestPrice(p.id,'alc');
     const baseGlyP=isVelo&&tier?tier.gly:latestPrice(p.id,'gly');
     // Per-unit price: custom if entered, else global discount, else base
-    alcP=customAlcP>0?customAlcP:baseAlcP*discMult;
-    glyP=customGlyP>0?customGlyP:baseGlyP*discMult;
+    alcP=customAlcP!=null?customAlcP:baseAlcP*discMult;
+    glyP=customGlyP!=null?customGlyP:baseGlyP*discMult;
     lineTotal=alc*alcP+gly*glyP;
-    return{p,alc,gly,alcP,glyP,lineTotal};
+    // Polna cena gre naprej, da se bruto znesek in popust lahko izracunata iz
+    // nje - iz ze popustenih cen bi bil bruto enak netu in popust vedno nic.
+    return{p,alc,gly,alcP,glyP,lineTotal,baseAlcP,baseGlyP};
   }).filter(Boolean);
 }
 
@@ -4177,6 +4188,10 @@ function clearOrder(){
     const w=document.getElementById('owarn-'+p.id);if(w)w.style.display='none';
   });
   document.getElementById('orderBuyer').value='';document.getElementById('orderEmail').value='';document.getElementById('orderPhone').value='';document.getElementById('orderDiscount').value='';
+  // Koncna cena se je ohranila iz prejsnje prodaje. Ker se iz nje izpelje
+  // popust, kadar odstotek ni vpisan, je ostanek tiho popustil naslednjo
+  // prodajo.
+  const _fp=document.getElementById('orderFinalPrice');if(_fp)_fp.value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
   const _dr=document.getElementById('orderCountry');if(_dr)_dr.value='SI';onOrderCountryChange();
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
@@ -4464,13 +4479,13 @@ if(!Object.keys(pendingBatchAlloc).length){
   const grandTotal=lines.reduce((a,l)=>a+l.lineTotal,0);
   const totalQty=lines.reduce((a,l)=>a+l.alc+l.gly,0);
   // Izračunaj popust — ali iz % polja ali iz finalPrice
-  const fullTotal=lines.reduce((a,l)=>a+(l.alc*(l.alcP||0)+l.gly*(l.glyP||0)),0);
+  const fullTotal=lines.reduce((a,l)=>a+(l.alc*(l.baseAlcP||0)+l.gly*(l.baseGlyP||0)),0);
   let discount=parseNum(document.getElementById('orderDiscount').value)||0;
   const finalPriceVal=parseNum(document.getElementById('orderFinalPrice')?.value||'');
   if(!discount&&finalPriceVal&&fullTotal&&finalPriceVal<fullTotal){
     discount=Math.round(((1-finalPriceVal/fullTotal)*100)*10)/10;
   }
-  const discountAmt=fullTotal>0&&discount>0?round(fullTotal-grandTotal,2):0;
+  const discountAmt=fullTotal>grandTotal?round(fullTotal-grandTotal,2):0;
   // create sale group
   const groupId=uid();
   let invoiceNum=null,invoiceId=null;

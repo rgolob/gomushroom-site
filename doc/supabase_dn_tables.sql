@@ -122,6 +122,10 @@ ALTER TABLE gm_dn_materiali
 ALTER TABLE gm_dn_materiali
   ALTER COLUMN datum DROP NOT NULL;
 
+-- gm_dn_work_orders: razbitje porabljene gobe po serijah ([{serija,masa},...])
+ALTER TABLE gm_dn_work_orders
+  ADD COLUMN IF NOT EXISTS serije jsonb;
+
 -- ── Dovoli dostop z anon ključem ────────────────────────────────────────────
 -- Najlažje: v Supabase -> Authentication -> Policies -> onemogoči RLS za te tabele
 -- ALI dodaj politiko:

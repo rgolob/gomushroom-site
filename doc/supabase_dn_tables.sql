@@ -116,6 +116,10 @@ ALTER TABLE gm_dn_work_orders
   ADD COLUMN IF NOT EXISTS kol_gly_prodaja integer,
   ADD COLUMN IF NOT EXISTS kol_gly_interno integer;
 
+-- gm_dn_work_orders: suha snov (Lod, %) — meritev tinkture, ki jo naredi nalog
+ALTER TABLE gm_dn_work_orders
+  ADD COLUMN IF NOT EXISTS suha_snov numeric;
+
 -- gm_dn_materiali: dodaj dobavitelj + sprosti NOT NULL na datum
 ALTER TABLE gm_dn_materiali
   ADD COLUMN IF NOT EXISTS dobavitelj text;

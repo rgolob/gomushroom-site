@@ -440,7 +440,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
         <div class="frow">
           <div class="field"><label>Glicerin v alc (g)</label><input id="dnGlicerinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+          <div class="field"><label>Suha snov — Lod (%)</label><input id="dnSuhaSnov" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="onDnSuhaSnovInput()"></div>
         </div>
+        <div id="dnSuhaSnovNamig" style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:-.15rem 0 .1rem"></div>
       </div>
       <div class="dn-block-gly">
         <div class="slabel-gly">🌿 Glicerin — vhod</div>
@@ -847,9 +849,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>ρ₀ — gostota (g/mL)</label><input id="glyRho0" type="text" inputmode="decimal" placeholder="npr. 0,9787" oninput="calcGly()"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Lod — suha snov (%)</label><input id="glyLod" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="calcGly()"></div>
+          <div class="field"><label>Lod — suha snov (%)</label><input id="glyLod" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="_glyLodRocna=true;calcGly()"></div>
           <div class="field"><label>Voda že prisotna (g)</label><input id="glyVodaZe" type="text" inputmode="decimal" placeholder="iz odstranjevanja topila" oninput="_glyVodaRocna=true;calcGly()"></div>
         </div>
+        <div id="glyLodNamig" style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:-.1rem 0 .1rem"></div>
         <div id="glyBilChips"></div>
       </div>
 
@@ -1648,6 +1651,7 @@ function openGlySheet(){
   // Dejansko dodano in opomba sta vezana na konkretno serijo, zato ju ne
   // prenasamo iz zadnjega preracuna - napolnita se sele ob izbiri naloga.
   _glyVodaRocna=false;
+  _glyLodRocna=false;
   ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>set(id,''));
   document.getElementById('glyOpomba').value='';
   renderGlyNalogSel();
@@ -1762,11 +1766,50 @@ function onGlyNalogChange(){
     document.getElementById('glyRazNacin').value=z.vnos.razNacin||'dodaj';
     document.getElementById('glyOpomba').value=z.vnos.opomba||'';
   }
+  // Suha snov je ista meritev tu in na nalogu, zato jo prevzamemo z naloga -
+  // a le, ce je preracun se nima svoje, da uporabniku ne povozimo vnosa.
+  _glyLodRocna=false;
+  const lodEl=document.getElementById('glyLod');
+  if(n.dnId&&!parseNum(lodEl.value)){
+    const ss=suhaSnovNaloga(workOrders.find(x=>x.id===n.dnId));
+    if(ss!=null)lodEl.value=String(ss).replace('.',',');
+  }
   info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
     ${n.tinktura?n.tinktura+' · ':''}${n.batch||'brez serije'}
     ${z?` · <span style="color:#3a6b4a">zapis povrnjen (${z.shranjen?new Date(z.shranjen).toLocaleDateString('sl-SI'):''})</span>`:''}
   </div>`;
   calcGly();
+}
+
+// Suha snov ni rezultat preracuna, ampak lastnost tinkture, ki jo je naredil
+// nalog. Kar je vpisano tu, mora obveljati tudi na nalogu - sicer meritev
+// obtici v tem obrazcu in statistika cez serije ostane prazna.
+// Zapisemo samo tisto, kar je uporabnik res vtipkal. Ce bi zapisovali ob
+// vsakem preracunu, bi ze samo odpiranje starega zapisa povozilo meritev,
+// popravljeno pozneje na nalogu.
+let _glyLodRocna=false;
+let _ssSyncTimer=null;
+function glyZapisiSuhoSnov(dnId,lodPct){
+  if(!dnId||!(lodPct>0))return;
+  const d=workOrders.find(x=>x.id===dnId);
+  if(!d||d.suhaSnov===lodPct)return;
+  d.suhaSnov=lodPct;
+  save();
+  clearTimeout(_ssSyncTimer);
+  _ssSyncTimer=setTimeout(()=>sbPushDN(d),1500);
+}
+
+function renderGlyLodNamig(n,lodPct){
+  const el=document.getElementById('glyLodNamig');
+  if(!el)return;
+  const d=n?.dnId?workOrders.find(x=>x.id===n.dnId):null;
+  const naNalogu=d?suhaSnovNaloga(d):null;
+  const razlika=d&&naNalogu!=null&&lodPct>0&&Math.abs(naNalogu-lodPct)>0.001;
+  el.innerHTML=[
+    d?`Suha snov se zapiše tudi na nalog <strong>${d.oznaka}</strong>.`:'',
+    razlika?`<span style="color:var(--accent)">Na nalogu je zapisano ${naNalogu.toLocaleString('sl-SI',{maximumFractionDigits:2})} % — popravek tu ga prepiše.</span>`:'',
+    d?suhaSnovStatBesedilo(d.vrstaGobe,d.id):'',
+  ].filter(Boolean).join(' ');
 }
 
 // Ce uporabnik vrednost vpise sam, je ne povozimo; sicer sledi uparjanju.
@@ -1811,6 +1854,9 @@ function calcGly(){
   // Ponudba iz bilance mora biti vidna tudi, ko m0 se ni vnesen - prav takrat
   // je najbolj potrebna.
   renderGlyBilChips();
+  const nalogLod=glyKljucNaloga(document.getElementById('glyNalogSel')?.value);
+  renderGlyLodNamig(nalogLod,o.lodPct);
+  if(nalogLod?.dnId&&_glyLodRocna)glyZapisiSuhoSnov(nalogLod.dnId,o.lodPct);
   const dejNamig=document.getElementById('glyDejNamig');
   if(!o.m0||!o.rho0){
     if(odstrBox)odstrBox.innerHTML='';
@@ -2420,6 +2466,8 @@ function openDNSheet(id){
   document.getElementById('dnVitCAlc').value=d?.vitCAlc||'';
   document.getElementById('dnLecitinAlc').value=d?.lecitinAlc||'';
   document.getElementById('dnGlicerinAlc').value=d?.glicerinAlc||'';
+  const ss=suhaSnovNaloga(d);
+  document.getElementById('dnSuhaSnov').value=ss==null?'':String(ss).replace('.',',');
   document.getElementById('dnKolGly').value=d?.kolGly||'';
   document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno||'';
   document.getElementById('dnKolGlySkupaj').value=((d?.kolGly||0)+(d?.kolGlyInterno||0))||'';
@@ -2437,6 +2485,7 @@ function openDNSheet(id){
   document.getElementById('dnPredvidenZakljucek').value=d?.predvidenZakljucek||'';
   document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
   calcDN();
+  onDnSuhaSnovInput();
   const aaeProsto=round(calcEtZaloga()-calcEtRezervirano(),4);
   const indEl=document.getElementById('etZaloгаDN');
   if(indEl){
@@ -2511,6 +2560,46 @@ function dnSerije(d){
 function dnSerijeOznaka(d){
   const s=[...new Set(dnSerije(d).map(r=>r.serija).filter(Boolean))];
   return s.length?s.join(', '):'—';
+}
+
+// ── SUHA SNOV (Lod) ──
+// Meritev tinkture, ki jo naredi nalog. Nujna je za glicerinsko formulacijo,
+// zato se je marsikatera doslej znasla samo v glicerinskem preracunu - od tam
+// jo preberemo, sicer bi statistika za vse dosedanje serije ostala prazna.
+function suhaSnovNaloga(d){
+  if(d?.suhaSnov!=null&&d.suhaSnov!=='')return Number(d.suhaSnov)||null;
+  const v=d?.id?glyZapisi()['dn:'+d.id]?.vnos?.lodPct:null;
+  return v>0?Number(v):null;
+}
+
+// Primerjava z ostalimi nalogi iste gobe. Nalog, ki ga urejamo, izpustimo -
+// sicer bi se povprecje premikalo sproti med tipkanjem in nic ne povedalo.
+function suhaSnovStat(vrstaGobe,izpustiId){
+  const v=workOrders
+    .filter(d=>d.vrstaGobe===vrstaGobe&&d.id!==izpustiId)
+    .map(suhaSnovNaloga).filter(x=>x>0);
+  if(!v.length)return null;
+  return {n:v.length,povp:round(v.reduce((a,b)=>a+b,0)/v.length,2),
+          min:Math.min(...v),max:Math.max(...v)};
+}
+
+function suhaSnovStatBesedilo(vrstaGobe,izpustiId){
+  const s=suhaSnovStat(vrstaGobe,izpustiId);
+  if(!s)return'';
+  const n=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:2});
+  return `${vrstaGobe}: povprečje ${n(s.povp)} %`
+    +(s.n>1?` (razpon ${n(s.min)}–${n(s.max)} %, n=${s.n})`:` (n=1)`);
+}
+
+function onDnSuhaSnovInput(){
+  const el=document.getElementById('dnSuhaSnovNamig');
+  if(!el)return;
+  const vrsta=document.getElementById('dnVrstaGobe').value;
+  const stat=suhaSnovStatBesedilo(vrsta,editingDNId);
+  const v=parseNum(document.getElementById('dnSuhaSnov').value);
+  el.innerHTML=stat
+    ?`${stat}${v>0?' · ta nalog '+v.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':''}`
+    :'Prva izmerjena suha snov za to gobo — naslednje se bodo primerjale s to.';
 }
 
 // Serije z zalogo 0 so za nov nalog neuporabne, zato jih spisek praviloma
@@ -2613,6 +2702,7 @@ function onDNMasaChange(idx,val){
 
 function updateDNNamen(){
   const g=document.getElementById('dnVrstaGobe').value;
+  onDnSuhaSnovInput();
   document.getElementById('dnNamen').value='Ekstrakcija '+g;
   renderDNSerijeRows();
 }
@@ -2643,6 +2733,9 @@ function saveDN(){
     vitCAlc:parseNum(document.getElementById('dnVitCAlc').value||'0'),
     lecitinAlc:parseNum(document.getElementById('dnLecitinAlc').value||'0'),
     glicerinAlc:parseNum(document.getElementById('dnGlicerinAlc').value||'0'),
+    // Prazno polje pomeni "se ni izmerjeno" in ne nic - sicer bi neizmerjeni
+    // nalogi vlekli povprecje suhe snovi proti nic.
+    suhaSnov:(()=>{const v=document.getElementById('dnSuhaSnov').value.trim();return v===''?null:parseNum(v)||null;})(),
     kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
     kolGlyInterno:parseInt(document.getElementById('dnKolGlyInterno').value)||0,
     stekGly:document.getElementById('dnStekGly').value,
@@ -2759,6 +2852,8 @@ function openDNDetail(id){
       <tr><td>Serija gobe</td><td>${dnSerijeOznaka(d)}</td></tr>
       <tr><td>Masa gobe</td><td>${d.masaGobe} kg</td></tr>
       <tr><td>Masa EtOH</td><td>${d.masaEtOH} kg</td></tr>
+      ${(()=>{const ss=suhaSnovNaloga(d);const stat=suhaSnovStatBesedilo(d.vrstaGobe,d.id);
+        return`<tr><td>Suha snov (Lod)</td><td>${ss!=null?ss.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':'—'}${stat?`<div style="font-size:.68rem;color:var(--muted)">${stat}</div>`:''}</td></tr>`;})()}
     </table>
 
     <div class="slabel">Alkoholna tinktura</div>
@@ -5026,6 +5121,7 @@ function dnToSb(d){return{
   serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
   kol_alc_interno:d.kolAlcInterno??null,
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,glicerin_alc:d.glicerinAlc||0,
+  suha_snov:d.suhaSnov??null,
   kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
   kol_gly_interno:d.kolGlyInterno??null,
   masa_glicerina:d.masaGlicerina||0,
@@ -5045,6 +5141,7 @@ function sbToDn(r){return{
   serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
   kolAlcInterno:r.kol_alc_interno??null,
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,glicerinAlc:r.glicerin_alc||0,
+  suhaSnov:r.suha_snov??null,
   kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
   kolGlyInterno:r.kol_gly_interno??null,
   masaGlicerina:r.masa_glicerina||0,

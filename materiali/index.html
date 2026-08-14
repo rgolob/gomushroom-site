@@ -2712,6 +2712,21 @@ function openDNDetail(id){
       <tr><td>Cena gly</td><td>${d.cenaGly?d.cenaGly.toFixed(2)+' €':'—'}</td></tr>
     </table>
 
+    ${(()=>{
+      const st=dnStrosek(d);
+      if(!st.postavke.length&&!st.trosarina)return '';
+      const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
+      return `<div class="slabel">Strošek serije</div>
+      <table class="mini-table">
+        ${st.postavke.map(p=>`<tr><td>${p.ime} <span style="color:var(--muted)">${p.kolicina} ${p.enota}</span></td><td>${p.znanaCena?eur(p.znesek)+' €':'<span style="color:var(--muted)">— ni nabavne cene</span>'}</td></tr>`).join('')}
+        ${st.trosarina?`<tr><td style="color:var(--accent)">Trošarina</td><td style="color:var(--accent)">${eur(st.trosarina)} €</td></tr>`:''}
+        <tr><td style="font-weight:600">Skupaj</td><td style="font-weight:600">${eur(st.skupaj)} €</td></tr>
+        ${st.kosov>0?`<tr><td style="font-weight:600">Na kos (${st.kosov} kom)</td><td style="font-weight:600">${eur(st.skupaj/st.kosov)} €</td></tr>`:''}
+      </table>
+      ${st.manjkaCena?`<div style="font-size:.68rem;color:#8b5a2a;line-height:1.4;margin-bottom:.4rem">⚠ Pri nekaterih postavkah nabavna cena ni znana — vpiši strošek pri nabavi, da bo vsota popolna.</div>`:''}
+      <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin-bottom:.5rem">Izračunano iz knjiženih izhodov po povprečni nabavni ceni. Ni všteto delo in režija.</div>`;
+    })()}
+
     ${d.opomba?`<div class="slabel">Opomba</div><div style="font-size:.8rem;color:var(--muted)">${d.opomba}</div>`:''}
 
     ${(d.vrstaGobe||d.serijaAlc)?`
@@ -3350,6 +3365,39 @@ function matVrednostPorabe(tip,od,doo){
     .reduce((s,m)=>s+(m.kolicina||0),0)*c;
 }
 
+// Povprecna cena etanola na liter AAE - iz nabav, po istem nacelu kot pri
+// materialih. Regeneriran etanol nima nabavne cene, zato v povprecje ne gre.
+function etCenaAAE(){
+  let l=0,eur=0;
+  etanolKnjiga.forEach(e=>{
+    if(e.tip!=='nabava')return;
+    if(!(e.lAAE>0)||!(e.strosek>0))return;
+    l+=e.lAAE;eur+=e.strosek;
+  });
+  return l>0?eur/l:0;
+}
+
+// Strosek serije: materiali, knjizeni na ta DN, etanol po povprecni nabavni
+// ceni in trosarina. Vse izracunano, nic shranjenega - shranjena stevilka bi
+// se scasoma razisla z nabavami, izracunana pa se popravi sama.
+function dnStrosek(d){
+  const postavke=[];
+  materiali.filter(m=>matJePoraba(m)&&!matJeUskladitev(m)&&m.dokument===d.oznaka).forEach(m=>{
+    const cena=matCenaEnote(m.tip);
+    postavke.push({ime:matIme(m.tip),kolicina:m.kolicina||0,enota:matEnota(m.tip),
+      cena,znesek:(m.kolicina||0)*cena,znanaCena:cena>0});
+  });
+  const et=etanolKnjiga.find(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
+  const cAAE=etCenaAAE();
+  if(et&&et.lAAE>0)postavke.push({ime:'🧪 Etanol',kolicina:round(et.lAAE,4),enota:'L AAE',
+    cena:cAAE,znesek:et.lAAE*cAAE,znanaCena:cAAE>0});
+  const trosarina=d.trosarinaEUR||0;
+  const material=postavke.reduce((s,p)=>s+p.znesek,0);
+  const kosov=(d.kolAlc||0)+(d.kolGly||0)+(d.kolAlcInterno||0)+(d.kolGlyInterno||0);
+  return {postavke,trosarina,material,skupaj:material+trosarina,kosov,
+    manjkaCena:postavke.some(p=>!p.znanaCena)};
+}
+
 // Izračun zaloge po tipu
 function calcMatZaloga(tip){
   const vhodi=materiali.filter(m=>m.tip===tip&&matJeNabava(m)).reduce((s,m)=>s+(m.kolicina||0),0);
@@ -3507,7 +3555,8 @@ function renderMateriali(){
         </div>
         <div class="eth-qty">
           <div class="eth-L" style="color:${isIn?'var(--success)':isUsk?'#2a5a8b':isDob?'#8b5a2a':'var(--danger)'}">${isIn?'+':isUsk?'⚖':isDob?'↩ -':'-'}${m.kolicina} ${enota}</div>
-          ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${isDob?'−':''}${m.strosek.toFixed(2)} €</div>`:''}
+          ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${isDob?'−':''}${m.strosek.toFixed(2)} €</div>`
+            :(matJePoraba(m)&&!isUsk&&matCenaEnote(m.tip)>0)?`<div class="eth-aae" style="color:var(--muted)">≈ ${((m.kolicina||0)*matCenaEnote(m.tip)).toFixed(2)} €</div>`:''}
         </div>
       </div>
       <div style="display:flex;gap:.3rem;width:100%;justify-content:flex-end">

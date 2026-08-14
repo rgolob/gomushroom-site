@@ -254,6 +254,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="hbtn2" onclick="openMaterijalSheet()">+ Vnos</button>
     </div>
     <div id="matZalogaGrid" style="margin-bottom:.75rem"></div>
+    <div id="matUskladitevOpozorilo"></div>
     <div class="filter-row">
       <button class="fpill active" id="mk-vsi" onclick="setMatKat('vsi',this)">Vse</button>
       <button class="fpill" id="mk-surovina" onclick="setMatKat('surovina',this)">🌿 Surovine</button>
@@ -518,6 +519,18 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="shclose" onclick="closeSheet('dnDetailOverlay')">✕</button>
     </div>
     <div class="shbody" id="dnDetailBody"></div>
+  </div>
+</div>
+
+<!-- SHEET: USKLADITEV SUROVINE -->
+<div class="overlay" id="uskladitevOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="uskladitevTitle">Uskladitev</span>
+      <button class="shclose" onclick="closeSheet('uskladitevOverlay')">✕</button>
+    </div>
+    <div class="shbody" id="uskladitevBody"></div>
   </div>
 </div>
 
@@ -3781,8 +3794,122 @@ function renderMatZaloga(){
   grid.innerHTML=vseKartice?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${vseKartice}</div>${povzetek}`:'';
 }
 
+// ── USKLADITEV SUROVINE: nabava proti porabi ──
+// Nabavljena in porabljena kolicina se morata izidi. Ko se ne, je vzrok skoraj
+// vedno eden od treh: nalog, ki gobo porabi, a je izhod nikoli ni bil knjizen;
+// izhod brez serije, ki ga ni mogoce pripisati nobeni dobavi; ali nalog, ki je
+// datiran pred dobavo, iz katere je dejansko delal. Vse troje najdemo tako, da
+// knjigo prehodimo po datumih.
+function uskladitevSurovine(tip){
+  const zapisi=materiali.filter(m=>m.tip===tip&&(m.smer==='vhod'||m.smer==='izhod'||m.smer==='dobropis'))
+    .map(m=>({...m,znak:m.smer==='vhod'?1:-1}))
+    .sort((a,b)=>(a.datum||'').localeCompare(b.datum||'')||(a.znak===1?-1:1));
+
+  const serije={};
+  const dodaj=(s,polje,kol)=>{if(!serije[s])serije[s]={serija:s,vhod:0,izhod:0,prvi:'',dokumenti:new Set()};serije[s][polje]+=kol;};
+  let tek=0;const podnicle=[];
+  zapisi.forEach(m=>{
+    const s=m.serijaGobe||'—';
+    if(m.znak===1){dodaj(s,'vhod',m.kolicina||0);if(!serije[s].prvi)serije[s].prvi=m.datum||'';}
+    else{dodaj(s,'izhod',m.kolicina||0);if(m.dokument)serije[s].dokumenti.add(m.dokument);}
+    tek=round(tek+m.znak*(m.kolicina||0),4);
+    if(m.znak===-1&&tek<-0.0005)podnicle.push({datum:m.datum||'',dokument:m.dokument||'',kolicina:m.kolicina||0,saldo:tek});
+  });
+
+  // Nalogi, ki po lastnem zapisu porabijo to gobo, izhoda pa nimajo knjizenega.
+  const neknjizeni=workOrders.filter(d=>(d.masaGobe||0)>0
+    &&getGobaTip((d.vrstaGobe||'').toLowerCase())===tip
+    &&!materiali.some(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&m.tip.startsWith('goba_')))
+    .map(d=>({oznaka:d.oznaka,datum:d.datum||'',masa:d.masaGobe||0,status:d.status}))
+    .sort((a,b)=>a.datum.localeCompare(b.datum));
+
+  const brezSerije=zapisi.filter(m=>m.znak===-1&&!m.serijaGobe)
+    .map(m=>({datum:m.datum||'',dokument:m.dokument||'',kolicina:m.kolicina||0}));
+
+  return {
+    tip,
+    vhod:round(zapisi.filter(m=>m.znak===1).reduce((a,m)=>a+(m.kolicina||0),0),4),
+    izhod:round(zapisi.filter(m=>m.znak===-1).reduce((a,m)=>a+(m.kolicina||0),0),4),
+    saldo:tek,
+    serije:Object.values(serije).map(s=>({...s,dokumenti:[...s.dokumenti],saldo:round(s.vhod-s.izhod,4)}))
+      .sort((a,b)=>(a.prvi||'￿').localeCompare(b.prvi||'￿')),
+    podnicle,neknjizeni,brezSerije,
+    neknjizenaMasa:round(neknjizeni.reduce((a,d)=>a+d.masa,0),4),
+  };
+}
+
+function uskladitevGobe(){
+  return matVsiTipi().filter(t=>t.startsWith('goba_')&&materiali.some(m=>m.tip===t))
+    .map(uskladitevSurovine);
+}
+
+// Opozorilo nad seznamom materialov: samo ce je kaj narobe, in samo toliko, da
+// se ve, kam pogledati.
+function renderMatUskladitevOpozorilo(){
+  const el=document.getElementById('matUskladitevOpozorilo');
+  if(!el)return;
+  const slabe=uskladitevGobe().filter(u=>u.neknjizeni.length||u.podnicle.length||u.saldo<-0.0005);
+  if(!slabe.length){el.innerHTML='';return;}
+  const kosov=slabe.reduce((a,u)=>a+u.neknjizeni.length,0);
+  const podnic=slabe.reduce((a,u)=>a+u.podnicle.length,0);
+  const deli=[];
+  if(kosov)deli.push(`${kosov} ${kosov===1?'nalog nima':'nalogov nima'} knjižene porabe gobe`);
+  if(podnic)deli.push(`${podnic}× poraba pred dobavo`);
+  el.innerHTML=`<div style="font-size:.7rem;line-height:1.45;background:rgba(139,90,42,.1);border:1px solid rgba(139,90,42,.3);border-radius:var(--rs);padding:.5rem .6rem;margin-bottom:.6rem">
+    <strong style="color:#8b5a2a">⚠ Nabava in poraba gobe se ne izideta</strong> — ${deli.join(' · ')}.
+    <button type="button" onclick="odpriUskladitev()" style="margin-left:.35rem;border:1px solid rgba(139,90,42,.5);background:none;border-radius:999px;padding:.15rem .6rem;font-family:inherit;font-size:.68rem;cursor:pointer;color:#8b5a2a">Poglej razliko</button>
+  </div>`;
+}
+
+function odpriUskladitev(){
+  const st=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:3});
+  const usklad=uskladitevGobe();
+  document.getElementById('uskladitevTitle').textContent='Nabava proti porabi — gobe';
+  document.getElementById('uskladitevBody').innerHTML=usklad.map(u=>{
+    const e=matEnota(u.tip);
+    const serijeVrstice=u.serije.map(s=>{
+      const opomba=s.saldo<-0.0005?'<span style="color:var(--danger)">porabljeno več, kot je bilo dobavljeno</span>'
+        :s.serija==='—'?'<span style="color:#8b5a2a">brez serije</span>'
+        :s.dokumenti.length?s.dokumenti.join(', '):'';
+      return`<tr><td>${s.serija}</td><td style="text-align:right">${st(s.vhod)}</td><td style="text-align:right">${st(s.izhod)}</td>
+        <td style="text-align:right;${Math.abs(s.saldo)>0.0005?'font-weight:600':''}">${st(s.saldo)}</td></tr>
+        ${opomba?`<tr><td colspan="4" style="font-size:.65rem;color:var(--muted);padding-top:0">${opomba}</td></tr>`:''}`;
+    }).join('');
+    return`<div style="margin-bottom:1rem">
+      <div class="slabel">${matIme(u.tip)}</div>
+      <table class="mini-table">
+        <tr><td>Nabavljeno</td><td style="text-align:right"><strong>${st(u.vhod)}</strong> ${e}</td></tr>
+        <tr><td>Porabljeno</td><td style="text-align:right"><strong>${st(u.izhod)}</strong> ${e}</td></tr>
+        <tr><td>Saldo</td><td style="text-align:right;${u.saldo<-0.0005?'color:var(--danger);':''}"><strong>${st(u.saldo)}</strong> ${e}</td></tr>
+      </table>
+      ${u.serije.length?`<table class="mini-table" style="margin-top:.4rem">
+        <tr><td style="font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Serija</td>
+            <td style="text-align:right;font-size:.62rem;text-transform:uppercase;color:var(--muted)">Nabava</td>
+            <td style="text-align:right;font-size:.62rem;text-transform:uppercase;color:var(--muted)">Poraba</td>
+            <td style="text-align:right;font-size:.62rem;text-transform:uppercase;color:var(--muted)">Ostanek</td></tr>
+        ${serijeVrstice}</table>`:''}
+      ${u.neknjizeni.length?`<div style="margin-top:.5rem;font-size:.7rem;line-height:1.5">
+        <div style="color:#8b5a2a;font-weight:600">Nalogi brez knjižene porabe — skupaj ${st(u.neknjizenaMasa)} ${e}</div>
+        <div style="color:var(--muted);font-size:.66rem;margin-bottom:.2rem">Nalog gobo porabi po svojem zapisu, izhoda iz zaloge pa ni. Odpri nalog in poženi „Materiali izhod".</div>
+        ${u.neknjizeni.map(d=>`<div>• <strong>${d.oznaka}</strong> · ${fmtDate(d.datum)} · ${st(d.masa)} ${e}${d.status==='odprt'?' · odprt':''}</div>`).join('')}
+      </div>`:''}
+      ${u.podnicle.length?`<div style="margin-top:.5rem;font-size:.7rem;line-height:1.5">
+        <div style="color:#8b5a2a;font-weight:600">Poraba pred dobavo</div>
+        <div style="color:var(--muted);font-size:.66rem;margin-bottom:.2rem">Na ta dan zaloge ni bilo dovolj — dobava, iz katere je nalog delal, je vpisana s poznejšim datumom. Popravi datum dobave ali naloga.</div>
+        ${u.podnicle.map(p=>`<div>• ${fmtDate(p.datum)} · ${p.dokument||'brez dokumenta'} · −${st(p.kolicina)} ${e} → saldo ${st(p.saldo)} ${e}</div>`).join('')}
+      </div>`:''}
+      ${u.brezSerije.length?`<div style="margin-top:.5rem;font-size:.7rem;line-height:1.5">
+        <div style="color:#8b5a2a;font-weight:600">Izhodi brez serije</div>
+        ${u.brezSerije.map(p=>`<div>• ${fmtDate(p.datum)} · ${p.dokument||'brez dokumenta'} · ${st(p.kolicina)} ${e}</div>`).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('')||'<div style="font-size:.75rem;color:var(--muted)">Ni nabav gob.</div>';
+  openSheet('uskladitevOverlay');
+}
+
 function renderMateriali(){
   renderMatZaloga();
+  renderMatUskladitevOpozorilo();
   // Etanol je surovina, zato ga pri filtru "Embalaža" ni.
   const zEtanolom=matKatFilter!=='embalaza';
   let rows=[...materiali,...(zEtanolom?etanolKnjiga.map(etKotMaterial):[])]

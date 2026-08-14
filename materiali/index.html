@@ -2862,14 +2862,34 @@ function knjizEtanolIzhod(id){
 
 async function knjizMaterialeIzhodRetro(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
-  const obstojeciRetro=materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&(m.opomba==='DN izhod retro'||m.opomba==='DN izhod'));
-  const jePonoviKnjiz=obstojeciRetro.length>0;
-  const msg=jePonoviKnjiz
-    ?`Posodobi materiale izhod za ${d.oznaka}?\n\nObstoječi retro vnosi bodo zamenjani z aktualnimi količinami.`
-    :`Retroaktivno knjiži materiale izhod za ${d.oznaka}?\n\nStekleničke, etikete in surovine bodo odštete iz zaloge.`;
+  const obstojeci=dnIzhodiMaterialov(d.oznaka);
+  const bilo={};
+  obstojeci.forEach(m=>{bilo[m.tip]=round((bilo[m.tip]||0)+(m.kolicina||0),4);});
+  const bo={};
+  dnNacrtIzhodov(d).filter(iz=>!iz.tip.startsWith('goba_')).forEach(iz=>{bo[iz.tip]=iz.kolicina;});
+
+  // Uporabnik mora videti, kaj se bo spremenilo. Doslej je posodobitev, ki ni
+  // spremenila nicesar, izgledala enako kot uspesna - zato so razlike ostale
+  // neopazene.
+  const st=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:4});
+  const vrstice=[];
+  let spremembe=0,nedosegljivi=0;
+  [...new Set([...Object.keys(bilo),...Object.keys(bo)])]
+    .sort((a,b)=>matIme(a).localeCompare(matIme(b),'sl'))
+    .forEach(tip=>{
+      const a=bilo[tip]||0,b=bo[tip]||0,e=matEnota(tip),ime=matIme(tip);
+      if(b>0&&!dnBilNaZalogi(d,tip)){nedosegljivi++;vrstice.push(`• ${ime}: ni nabave do ${fmtDate(d.datumZakljucka||d.datum)} — ostane neknjižen`);return;}
+      if(Math.abs(a-b)<0.00005){vrstice.push(`• ${ime}: ${st(a)} ${e} (nespremenjeno)`);return;}
+      spremembe++;
+      vrstice.push(`• ${ime}: ${a>0?st(a)+' '+e:'—'} → ${b>0?st(b)+' '+e:'brez izhoda'}`);
+    });
+
+  if(!vrstice.length){toast('Ta nalog nima materialov za knjiženje');return;}
+  const msg=`Posodobi materiale izhod za ${d.oznaka}?\n\n${vrstice.join('\n')}\n\n`
+    +`Vsi izhodi z oznako tega naloga (razen gobe) bodo zamenjani z zgornjimi količinami.`;
   if(!confirm(msg))return;
-  // Izbriši obstoječe retro vnose za ta DN
-  const delIds=obstojeciRetro.map(m=>m.id);
+
+  const delIds=obstojeci.map(m=>m.id);
   materiali=materiali.filter(m=>!delIds.includes(m.id));
   const matsBefore=materiali.length;
   const stMatov=knjizMaterjaleIzhod(d);
@@ -2878,7 +2898,9 @@ async function knjizMaterialeIzhodRetro(id){
   materiali.slice(matsBefore).forEach(m=>sbPushMat(m));
   closeSheet('dnDetailOverlay');
   renderMateriali();
-  toast(`✓ ${stMatov} materialov knjiženih za ${d.oznaka}${jePonoviKnjiz?' (posodobljeno)':''}`);
+  toast(spremembe
+    ?`✓ ${d.oznaka}: ${stMatov} izhodov knjiženih, ${spremembe} spremenjenih${nedosegljivi?` · ${nedosegljivi} brez nabave`:''}`
+    :`✓ ${d.oznaka}: ${stMatov} izhodov knjiženih — brez sprememb`);
 }
 
 function syncGobaIzhod(d,oldOznaka){
@@ -4003,44 +4025,54 @@ async function deleteMaterjal(id){
 }
 
 // Odštevanje materialov ob zaključku DN
-function knjizMaterjaleIzhod(d){
-  const datum=d.datumZakljucka||d.datum;
-  const dok=d.oznaka;
+// Kaj bi po trenutnem stanju naloga moralo biti knjizeno kot izhod materiala.
+// Loceno od samega knjizenja, da lahko isto listo pokazemo uporabniku, preden
+// karkoli spremenimo.
+function dnNacrtIzhodov(d){
   const vrsta=d.vrstaGobe?.toLowerCase()||'';
-
-  // Stekleničke — prodaja + interno, alc + gly skupaj po tipu
   const stekAlcTip='steklenicka_'+(d.stekAlc||'bela');
   const stekGlyTip='steklenicka_'+(d.stekGly||'bela');
   const totAlc=(d.kolAlc||0)+(d.kolAlcInterno||0);
   const totGly=(d.kolGly||0)+(d.kolGlyInterno||0);
   const skupajBela=(stekAlcTip==='steklenicka_bela'?totAlc:0)+(stekGlyTip==='steklenicka_bela'?totGly:0);
   const skupajCrna=(stekAlcTip==='steklenicka_crna'?totAlc:0)+(stekGlyTip==='steklenicka_crna'?totGly:0);
-
-  // Etikete
   const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
-  const skupajEtikete=totAlc+totGly;
-
-  // Goba / surovina
-  const gobaTip=getGobaTip(vrsta);
-
-  // Datumski filter: odštej samo materiale ki so bili na zalogi na/pred datumom DN
-  const dnDate=datum||'';
-  const bilNaZalogi=tip=>materiali.some(m=>m.smer==='vhod'&&m.tip===tip&&(m.datum||'')<=dnDate);
-
-  // Idempotency: preskoči tipe ki so za ta DN že knjiženi
-  const alreadyBooked=tip=>materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip===tip);
-  const gobaAlreadyBooked=materiali.some(m=>m.smer==='izhod'&&m.dokument===dok&&m.tip.startsWith('goba_'));
-
-  const izhodi=[];
-  if(skupajBela>0&&bilNaZalogi('steklenicka_bela')&&!alreadyBooked('steklenicka_bela'))izhodi.push({tip:'steklenicka_bela',kolicina:skupajBela});
-  if(skupajCrna>0&&bilNaZalogi('steklenicka_crna')&&!alreadyBooked('steklenicka_crna'))izhodi.push({tip:'steklenicka_crna',kolicina:skupajCrna});
-  if(skupajEtikete>0&&bilNaZalogi(etiketaTip)&&!alreadyBooked(etiketaTip))izhodi.push({tip:etiketaTip,kolicina:skupajEtikete});
-  if(d.masaGobe>0&&bilNaZalogi(gobaTip)&&!gobaAlreadyBooked)izhodi.push({tip:gobaTip,kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
-  if((d.vitCAlc||0)+(d.vitCGly||0)>0&&bilNaZalogi('vitc')&&!alreadyBooked('vitc'))izhodi.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
-  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0&&bilNaZalogi('lecitin')&&!alreadyBooked('lecitin'))izhodi.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
   const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
-  if(volGlicerin>0&&bilNaZalogi('glicerin')&&!alreadyBooked('glicerin'))izhodi.push({tip:'glicerin',kolicina:volGlicerin});
 
+  const n=[];
+  if(skupajBela>0)n.push({tip:'steklenicka_bela',kolicina:skupajBela});
+  if(skupajCrna>0)n.push({tip:'steklenicka_crna',kolicina:skupajCrna});
+  if(totAlc+totGly>0)n.push({tip:etiketaTip,kolicina:totAlc+totGly});
+  if(d.masaGobe>0)n.push({tip:getGobaTip(vrsta),kolicina:d.masaGobe,serijaGobe:d.serijaGobe||''});
+  if((d.vitCAlc||0)+(d.vitCGly||0)>0)n.push({tip:'vitc',kolicina:round((d.vitCAlc||0)+(d.vitCGly||0),3)});
+  if((d.lecitinAlc||0)+(d.lecitinGly||0)>0)n.push({tip:'lecitin',kolicina:round((d.lecitinAlc||0)+(d.lecitinGly||0),3)});
+  if(volGlicerin>0)n.push({tip:'glicerin',kolicina:volGlicerin});
+  return n;
+}
+
+// Izhod materiala pripada nalogu, ce nosi njegovo oznako - ne glede na to, kaj
+// pise v opombi. Doslej se je lastnistvo dolocalo po besedilu opombe, zato je
+// rocno vnesen izhod hkrati ostal nedotaknjen IN preprecil ponovno knjizenje.
+// Goba je izvzeta: njene izhode po serijah vzdrzuje syncGobaIzhod.
+function dnIzhodiMaterialov(oznaka){
+  return materiali.filter(m=>m.smer==='izhod'&&m.dokument===oznaka&&!m.tip.startsWith('goba_'));
+}
+
+// Materiale odstejemo samo, ce so bili na zalogi na dan naloga - nabave, ki je
+// takrat se ni bilo, nalog ni mogel porabiti.
+function dnBilNaZalogi(d,tip){
+  const dnDate=d.datumZakljucka||d.datum||'';
+  return materiali.some(m=>m.smer==='vhod'&&m.tip===tip&&(m.datum||'')<=dnDate);
+}
+
+function knjizMaterjaleIzhod(d){
+  const datum=d.datumZakljucka||d.datum;
+  const dok=d.oznaka;
+  // Idempotency: preskoci tipe, ki so za ta DN ze knjizeni
+  const zeKnjizen=tip=>materiali.some(m=>m.smer==='izhod'&&m.dokument===dok
+    &&(tip.startsWith('goba_')?m.tip.startsWith('goba_'):m.tip===tip));
+
+  const izhodi=dnNacrtIzhodov(d).filter(iz=>dnBilNaZalogi(d,iz.tip)&&!zeKnjizen(iz.tip));
   izhodi.forEach(iz=>{
     materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',
       dokument:dok,serijaGobe:iz.serijaGobe||'',kolicina:iz.kolicina,opomba:'DN izhod retro'});
@@ -4988,6 +5020,9 @@ async function sbDel(tbl,id){
 function dnToSb(d){return{
   id:d.id,oznaka:d.oznaka,je_rd:!!d.jeRd,datum:d.datum||null,namen:d.namen||null,
   vrsta_gobe:d.vrstaGobe||null,serija_gobe:d.serijaGobe||null,masa_gobe:d.masaGobe||null,
+  // Nalog lahko porabi vec serij gobe. Brez tega stolpca je v bazi ostala samo
+  // prva serija in razbitje se je ob branju iz Supabase izgubilo.
+  serije:d.serije?.length?d.serije:null,
   serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
   kol_alc_interno:d.kolAlcInterno??null,
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,glicerin_alc:d.glicerinAlc||0,
@@ -5006,6 +5041,7 @@ function dnToSb(d){return{
 function sbToDn(r){return{
   id:r.id,oznaka:r.oznaka,jeRd:!!r.je_rd,datum:r.datum,namen:r.namen,
   vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
+  serije:Array.isArray(r.serije)?r.serije:[],
   serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
   kolAlcInterno:r.kol_alc_interno??null,
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,glicerinAlc:r.glicerin_alc||0,
@@ -5114,19 +5150,26 @@ function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el
 async function sbPushDN(d){
   try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');return;}
   catch(e){
-    // 'je_rd' je nov stolpec. Ce ga v bazi se ni, nalog vseeno sinhroniziramo
-    // brez njega - sicer bi tiho odpovedala sinhronizacija celotnega naloga.
-    if(/je_rd/i.test(e.message||'')){
+    // Ce v bazi manjka kaksen novejsi stolpec, nalog vseeno sinhroniziramo brez
+    // njega - sicer bi tiho odpovedala sinhronizacija celotnega naloga. Ime
+    // stolpca preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem
+    // novem polju.
+    const sporocilo=String(e.message||'');
+    const brez=dnToSb(d);
+    const manjka=/PGRST204|Could not find the/i.test(sporocilo)
+      ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in brez)
+      :[];
+    if(manjka.length){
       try{
-        const {je_rd,...brez}=dnToSb(d);
+        manjka.forEach(k=>delete brez[k]);
         await sbUpsert('gm_dn_work_orders',brez);
         setSyncStatus('⚠');
-        if(!window._dnJeRdOpozorilo){
-          window._dnJeRdOpozorilo=true;
-          toast('⚠ V Supabase manjka stolpec gm_dn_work_orders.je_rd — vrsta naloga se ne sinhronizira');
+        if(!window._dnStolpciOpozorilo){
+          window._dnStolpciOpozorilo=true;
+          toast('⚠ V Supabase manjka stolpec gm_dn_work_orders.'+manjka.join(' / ')+' — ta podatek se ne sinhronizira');
         }
         return;
-      }catch(e2){console.error('sbPushDN (brez je_rd)',e2);}
+      }catch(e2){console.error('sbPushDN (brez '+manjka.join(',')+')',e2);}
     }
     setSyncStatus('⚠');console.error('sbPushDN',e);
   }

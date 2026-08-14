@@ -2348,7 +2348,7 @@ function renderDN(){
         </div>
         <div class="dn-info">
           <div class="dn-name">${d.namen}</div>
-          <div class="dn-meta">${d.serijaGobe||'—'} · ${d.masaGobe||'?'} kg · ${d.serijaAlc||'?'}</div>
+          <div class="dn-meta">${dnSerijeOznaka(d)} · ${d.masaGobe||'?'} kg · ${d.serijaAlc||'?'}</div>
         </div>
         <div class="dn-right">
           <div class="status-badge ${statusCls}">${statusLabel}</div>
@@ -2403,10 +2403,10 @@ function openDNSheet(id){
   updateDNNamen();
   if(d?.namen)document.getElementById('dnNamen').value=d.namen;
   if(id){
-    const izhodi=materiali.filter(m=>m.smer==='izhod'&&m.dokument===(d?.oznaka||'')&&m.tip.startsWith('goba_')).sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
-    dnSerijeRows=izhodi.length>0
-      ?izhodi.map(m=>({serija:m.serijaGobe||'',masa:String(m.kolicina||'')}))
-      :(d?.serijaGobe||d?.masaGobe>0?[{serija:d.serijaGobe||'',masa:String(d.masaGobe||'')}]:[{serija:'',masa:''}]);
+    const serije=dnSerije(d);
+    dnSerijeRows=serije.length
+      ?serije.map(r=>({serija:r.serija||'',masa:String(r.masa||'')}))
+      :[{serija:'',masa:''}];
   } else {
     dnSerijeRows=[{serija:'',masa:''}];
   }
@@ -2489,7 +2489,34 @@ function getGobaTip(vrsta){
   return vrsta.includes('reishi')?'goba_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'goba_bradovec':vrsta.includes('chaga')?'goba_chaga':vrsta.includes('smrek')?'goba_smrekovi':'goba_chaga';
 }
 
-function getAvailableSeries(gobaTip){
+// Katere serije gobe je nalog dejansko porabil. Knjizeni izhodi materiala so
+// prvi vir - to je knjiga, ki drzi tudi takrat, ko je zapis na nalogu prazen
+// (stari nalogi, zaprti se pred vpeljavo polja "serija"). Sele ce izhodov ni
+// (nalog se ni knjizen), beremo, kar je vpisano na nalogu.
+function dnIzhodiGobe(d){
+  if(!d?.oznaka)return[];
+  return materiali
+    .filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka&&m.tip.startsWith('goba_'))
+    .sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
+}
+
+function dnSerije(d){
+  const iz=dnIzhodiGobe(d);
+  if(iz.length)return iz.map(m=>({serija:m.serijaGobe||'',masa:m.kolicina||0}));
+  if(d?.serije?.length)return d.serije;
+  if(d?.serijaGobe||d?.masaGobe>0)return[{serija:d?.serijaGobe||'',masa:d?.masaGobe||0}];
+  return[];
+}
+
+function dnSerijeOznaka(d){
+  const s=[...new Set(dnSerije(d).map(r=>r.serija).filter(Boolean))];
+  return s.length?s.join(', '):'—';
+}
+
+// Serije z zalogo 0 so za nov nalog neuporabne, zato jih spisek praviloma
+// izpusti. Ce pa je taka serija ze porabljena prav na nalogu, ki ga urejamo,
+// mora ostati na spisku - sicer bi jo shranjevanje tiho pobrisalo z naloga.
+function getAvailableSeries(gobaTip,vkljuci){
   const sm={};
   materiali.filter(m=>m.tip===gobaTip&&m.serijaGobe).forEach(m=>{
     const s=m.serijaGobe;
@@ -2498,27 +2525,37 @@ function getAvailableSeries(gobaTip){
     if(m.smer==='vhod')sm[s].vhod+=m.kolicina||0;
     else sm[s].izhod+=m.kolicina||0;
   });
+  const nujne=new Set((vkljuci||[]).filter(Boolean));
+  nujne.forEach(s=>{if(!sm[s])sm[s]={serija:s,vhod:0,izhod:0,datum:''};});
   return Object.values(sm)
     .map(s=>({...s,zaloga:round(s.vhod-s.izhod,3)}))
-    .filter(s=>s.zaloga>0.001)
-    .sort((a,b)=>a.datum.localeCompare(b.datum));
+    .filter(s=>s.zaloga>0.001||nujne.has(s.serija))
+    .sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
+}
+
+// Pri ze porabljeni seriji je zaloga 0 povsem pricakovana - nalog jo je pravkar
+// porabil - zato tam ne opozarjamo, ampak samo povemo, zakaj je se na spisku.
+function dnSerijaHint(serija,zaloga,masa){
+  if(!serija)return'';
+  if(zaloga>0.001)return masa>zaloga+0.001?`⚠ Na zalogi le ${zaloga.toFixed(3)} kg`:`Na zalogi: ${zaloga.toFixed(3)} kg`;
+  return'Serija je porabljena — ostaja zaradi zgodovine naloga';
 }
 
 function renderDNSerijeRows(){
   const vrstaGobe=document.getElementById('dnVrstaGobe')?.value||'Reishi';
   const gobaTip=getGobaTip(vrstaGobe.toLowerCase());
-  const available=getAvailableSeries(gobaTip);
+  const available=getAvailableSeries(gobaTip,dnSerijeRows.map(r=>r.serija));
   const container=document.getElementById('dnSerijeContainer');
   if(!container)return;
   const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
   const totalEl=document.getElementById('dnMasaGobeTotal');
   if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
   container.innerHTML=dnSerijeRows.map((row,idx)=>{
-    const opts=available.map(s=>`<option value="${s.serija}"${s.serija===row.serija?' selected':''}>${s.serija} (${s.zaloga.toFixed(3)} kg)</option>`).join('');
+    const opts=available.map(s=>`<option value="${s.serija}"${s.serija===row.serija?' selected':''}>${s.serija} (${s.zaloga>0.001?s.zaloga.toFixed(3)+' kg':'porabljena'})</option>`).join('');
     const rowZaloga=available.find(s=>s.serija===row.serija)?.zaloga||0;
     const masaNum=parseNum(row.masa);
     const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
-    const hintTxt=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(row.serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+    const hintTxt=dnSerijaHint(row.serija,rowZaloga,masaNum);
     return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.15rem">
       <div class="field" style="flex:2;margin-bottom:0">
         <label style="font-size:.7rem">${idx===0?'Serija gobe (FIFO)':'Dodatna serija'}</label>
@@ -2551,7 +2588,7 @@ function onDNSerijaChange(idx,val){
   if(!parseNum(dnSerijeRows[idx].masa)&&val){
     const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
     const s=getAvailableSeries(gobaTip).find(x=>x.serija===val);
-    if(s)dnSerijeRows[idx].masa=String(s.zaloga);
+    if(s&&s.zaloga>0.001)dnSerijeRows[idx].masa=String(s.zaloga);
   }
   renderDNSerijeRows();
 }
@@ -2559,13 +2596,13 @@ function onDNSerijaChange(idx,val){
 function onDNMasaChange(idx,val){
   dnSerijeRows[idx].masa=val;
   const gobaTip=getGobaTip((document.getElementById('dnVrstaGobe').value||'').toLowerCase());
-  const rowZaloga=getAvailableSeries(gobaTip).find(s=>s.serija===dnSerijeRows[idx].serija)?.zaloga||0;
+  const rowZaloga=getAvailableSeries(gobaTip,dnSerijeRows.map(r=>r.serija)).find(s=>s.serija===dnSerijeRows[idx].serija)?.zaloga||0;
   const masaNum=parseNum(val);
   const prevec=rowZaloga>0&&masaNum>rowZaloga+0.001;
   const hintEl=document.getElementById(`dnSerijeHint-${idx}`);
   if(hintEl){
     hintEl.style.color=prevec?'var(--danger)':'var(--muted)';
-    hintEl.textContent=prevec?`⚠ Na zalogi le ${rowZaloga.toFixed(3)} kg`:(dnSerijeRows[idx].serija&&rowZaloga>0?`Na zalogi: ${rowZaloga.toFixed(3)} kg`:'');
+    hintEl.textContent=dnSerijaHint(dnSerijeRows[idx].serija,rowZaloga,masaNum);
   }
   const inputEl=document.getElementById(`dnMasaGobe-${idx}`);
   if(inputEl)inputEl.style.borderColor=prevec?'var(--danger)':'';
@@ -2719,7 +2756,7 @@ function openDNDetail(id){
     <div class="slabel">Surovine</div>
     <table class="mini-table">
       <tr><td>Namen</td><td>${d.namen}</td></tr>
-      <tr><td>Serija gobe</td><td>${d.serijaGobe||'—'}</td></tr>
+      <tr><td>Serija gobe</td><td>${dnSerijeOznaka(d)}</td></tr>
       <tr><td>Masa gobe</td><td>${d.masaGobe} kg</td></tr>
       <tr><td>Masa EtOH</td><td>${d.masaEtOH} kg</td></tr>
     </table>
@@ -2908,6 +2945,7 @@ function prenesDN(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
   if(!confirm(`Prenesi DN ${d.oznaka} v Zaloga app?\n\nStatus se bo spremenil v "prenos".\nDejanje ni mogoče razveljaviti.`))return;
   // Ustvari JSON paket za prenos v Zaloga app
+  const serijeZaPrenos=dnSerije(d);
   const prenos={
     type:'dn_prenos',
     version:1,
@@ -2926,8 +2964,8 @@ function prenesDN(id){
       lAAE:d.lAAE,
       volPct:d.volPct,
       masaGobe:d.masaGobe,
-      serijaGobe:d.serijaGobe,
-      serije:d.serije||[],
+      serijaGobe:serijeZaPrenos[0]?.serija||d.serijaGobe||'',
+      serije:serijeZaPrenos,
     }
   };
   // Shrani v localStorage pod ključem ki ga Zaloga app bere (dedupliciraj po DN id)
@@ -2946,6 +2984,7 @@ function prenesDN(id){
 function posljiGobaPodatke(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
   if(!confirm(`Pošlji podatke o seriji in masi gobe za DN ${d.oznaka} v Zaloga app?\n\nV Zalogi bosta posodobljeni samo polji "Serija gobe" in "Masa gobe" na ujemajoči seriji — ostali podatki ostanejo nespremenjeni.`))return;
+  const serijeZaPrenos=dnSerije(d);
   const prenos={
     type:'dn_goba_update',
     version:1,
@@ -2954,8 +2993,8 @@ function posljiGobaPodatke(id){
       oznaka:d.oznaka,
       serijaAlc:d.serijaAlc,
       masaGobe:d.masaGobe,
-      serijaGobe:d.serijaGobe,
-      serije:d.serije||[],
+      serijaGobe:serijeZaPrenos[0]?.serija||d.serijaGobe||'',
+      serije:serijeZaPrenos,
     }
   };
   const pending=JSON.parse(localStorage.getItem('gm_dn_pending_prenos')||'[]');

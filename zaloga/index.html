@@ -1682,6 +1682,31 @@ let currentTab='zaloga';
 
 const EMOJI={'Rešasti':'🦁','Reishi':'🌿','Chaga':'🛡️','Ostrigasta':'🌊','Kordiceps':'⚡','Griva':'🦁','Smrekovi':'🌲','Vršički':'🌲'};
 function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))return v;return'🍄';}
+// ── EMBALAZA ZA ODPREMO ────────────────────────────
+// Tipe embalaze si vodis v aplikaciji materiali; tu jih samo beremo, da lahko
+// ob odpremi knjizimo porabo skatle. Zapis gre v isto tabelo kot rocni vnosi,
+// zato ga je pozneje mogoce urediti ali izbrisati kot vsak drug vnos.
+let matTipiEmb=[];
+async function loadMatTipi(){
+  try{
+    const r=await sbFetch('gm_dn_mat_tipi','kat=eq.embalaza&order=kapaciteta.asc');
+    matTipiEmb=(r||[]).map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kapaciteta:t.kapaciteta||0}));
+  }catch(e){matTipiEmb=[];console.warn('loadMatTipi',e);}
+}
+
+// Najmanjsa skatla, ki narocilo se sprejme; ce ga nobena ne, vec najvecjih.
+// Predlog je samo predizpolnjeno polje - odlocitev je vedno tvoja.
+function predlagajSkatlo(kosov){
+  const s=matTipiEmb.filter(t=>t.enota==='kom'&&t.kapaciteta>0).sort((a,b)=>a.kapaciteta-b.kapaciteta);
+  if(!s.length||!(kosov>0))return null;
+  const ustrezna=s.find(x=>x.kapaciteta>=kosov);
+  if(ustrezna)return{tip:ustrezna.tip,kolicina:1};
+  const naj=s[s.length-1];
+  return{tip:naj.tip,kolicina:Math.ceil(kosov/naj.kapaciteta)};
+}
+
+function skatlaZapisId(invId){return 'pkg_'+invId;}
+
 // ── DRZAVE ─────────────────────────────────────────
 // Slovenija je privzeta. Ob tuji drzavi se racun izpise v anglescini, namesto
 // UPN QR (velja samo v Sloveniji) pa se izpisejo podatki za nakazilo z BIC.
@@ -3136,6 +3161,7 @@ async function appInit(){
   document.getElementById('invDateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
+  loadMatTipi().then(loadSkatlaZapisi).then(()=>{if(currentTab==='dokumenti')renderInvoices();}).catch(()=>{});
   try{
     // Zapomni si lokalne vrstice pred Supabase prepisom
     const _localLines={};
@@ -5254,6 +5280,7 @@ function renderInvoices(){
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨</button>
           ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
           ${(i.street||i.address)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
+          ${matTipiEmb.length?`<button class="tbtn" title="Embalaža za to odpremo" onclick="openSkatlaSheet('${i.id}')">📦${_skatlaZapisi[skatlaZapisId(i.id)]?' ✓':''}</button>`:''}
           <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
@@ -9772,6 +9799,115 @@ Rok`);
   }
 }
 
+// ── SKATLA OB ODPREMI ──
+let _skatlaInvId=null;
+
+function openSkatlaSheet(invId){
+  const i=invoices.find(x=>x.id===invId);
+  if(!i){toast('Račun ni najden');return;}
+  if(!matTipiEmb.length){
+    toast('Ni vpisane embalaže — dodaj jo v aplikaciji materiali');
+    return;
+  }
+  _skatlaInvId=invId;
+  const g=saleGroups.find(x=>x.id===i.groupId);
+  const kosov=g?.qty||0;
+  const lastniPrevzem=(g?.note||'').includes('lastni prevzem');
+  const obstojec=_skatlaZapisi[skatlaZapisId(invId)]||null;
+  const predlog=obstojec?{tip:obstojec.tip,kolicina:obstojec.kolicina}:predlagajSkatlo(kosov);
+  // Osebni prevzem privzeto brez skatle - zaloga to ze ve iz opombe narocila.
+  const brez=obstojec?false:lastniPrevzem;
+
+  const el=document.getElementById('skatlaOverlay')||(()=>{
+    const d=document.createElement('div');d.id='skatlaOverlay';document.body.appendChild(d);return d;})();
+  el.style.cssText='position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  el.innerHTML=`
+    <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem 1.25rem calc(var(--sab)+1.25rem);width:100%;max-width:520px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin-bottom:.2rem">📦 Embalaža za ${i.num}</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem">${i.buyer||'—'} · ${kosov} kos${lastniPrevzem?' · osebni prevzem':''}</div>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin-bottom:.75rem;cursor:pointer">
+        <input type="checkbox" id="skBrez" ${brez?'checked':''} onchange="onSkatlaBrezChange()" style="width:18px;height:18px">
+        Brez škatle — osebni prevzem
+      </label>
+      <div id="skPolja" style="display:${brez?'none':''}">
+        <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">
+          <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Škatla</label>
+          <select id="skTip" style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+            ${matTipiEmb.map(t=>`<option value="${t.tip}"${predlog&&predlog.tip===t.tip?' selected':''}>${t.ime}${t.kapaciteta?` — do ${t.kapaciteta} kom`:''}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.4rem">
+          <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Količina</label>
+          <input id="skKol" type="text" inputmode="decimal" value="${predlog?predlog.kolicina:1}"
+            style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);line-height:1.45;margin-bottom:.6rem">
+          ${predlog&&!obstojec?'Predlog iz števila kosov — spremeni ga, če si pakiral drugače.':''}
+          ${obstojec?'Za to odpremo je knjižba že zapisana; shranjevanje jo popravi.':''}
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button onclick="zapriSkatlaSheet()" style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+        <button onclick="shraniSkatlo()" style="flex:2;padding:.65rem;border:none;border-radius:8px;background:var(--ink);color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Shrani</button>
+      </div>
+    </div>`;
+}
+
+function onSkatlaBrezChange(){
+  const brez=document.getElementById('skBrez').checked;
+  document.getElementById('skPolja').style.display=brez?'none':'';
+}
+
+function zapriSkatlaSheet(){
+  const el=document.getElementById('skatlaOverlay');
+  if(el)el.remove();
+  _skatlaInvId=null;
+}
+
+async function shraniSkatlo(){
+  const invId=_skatlaInvId;
+  const i=invoices.find(x=>x.id===invId);
+  if(!i){zapriSkatlaSheet();return;}
+  const zapisId=skatlaZapisId(invId);
+  const brez=document.getElementById('skBrez').checked;
+  if(brez){
+    // Brez skatle ne pustimo starega zapisa - sicer bi ostal odpis, ki ga ni.
+    if(_skatlaZapisi[zapisId]){
+      delete _skatlaZapisi[zapisId];
+      try{await sbDelete('gm_dn_materiali',{id:zapisId});}catch(e){console.warn('skatla del',e);}
+      toast('✓ Knjižba škatle odstranjena');
+    } else toast('Brez škatle — nič ni knjiženo');
+    zapriSkatlaSheet();renderInvoices();
+    return;
+  }
+  const tip=document.getElementById('skTip').value;
+  const kolicina=parseNum(document.getElementById('skKol').value);
+  if(!(kolicina>0)){toast('⚠ Vnesi količino');return;}
+  const zapis={id:zapisId,datum:i.date||todayISO(),tip,smer:'izhod',
+    dokument:i.num||null,serija_gobe:null,dobavitelj:null,
+    kolicina,strosek:0,opomba:'Odprema '+(i.num||'')};
+  try{
+    await sbInsert('gm_dn_materiali',zapis,true);
+    _skatlaZapisi[zapisId]={tip,kolicina};
+    const t=matTipiEmb.find(x=>x.tip===tip);
+    toast(`📦 Knjiženo: ${kolicina} × ${t?t.ime:tip}`);
+    zapriSkatlaSheet();renderInvoices();
+  }catch(e){
+    toast('⚠ Knjižba ni shranjena: '+e.message.slice(0,80));
+    console.error('shraniSkatlo',e);
+  }
+}
+
+// Ze knjizene odpreme, da vprasanje ob ponovnem odprtju pokaze, kaj je zapisano.
+let _skatlaZapisi={};
+async function loadSkatlaZapisi(){
+  try{
+    const r=await sbFetch('gm_dn_materiali','id=like.pkg_*&select=id,tip,kolicina');
+    _skatlaZapisi={};
+    (r||[]).forEach(z=>{_skatlaZapisi[z.id]={tip:z.tip,kolicina:z.kolicina};});
+  }catch(e){_skatlaZapisi={};console.warn('loadSkatlaZapisi',e);}
+}
+
 async function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
   const cur=i.invStatus||'caka';
@@ -9788,6 +9924,10 @@ async function cycleInvStatus(invId){
   save();renderInvoices();renderInvStats();
   sbSaveInvoice(i).catch(e=>console.warn('sbSaveInvoice failed:',e));
   toast(labels[i.invStatus]);
+
+  // Ob odpremi vprasamo za skatlo. Nic se ne knjizi brez potrditve, zato
+  // vprasanje samo odpremo - zapreti ga je mogoce brez posledic.
+  if(i.invStatus==='predano'&&matTipiEmb.length)openSkatlaSheet(invId);
 
   // Posodobi gm_orders status če je WP naročilo
   if(i.invStatus==='predano' || i.invStatus==='placano'){

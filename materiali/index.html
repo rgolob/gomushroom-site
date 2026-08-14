@@ -130,8 +130,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .swrap input{padding:.4rem .6rem .4rem 1.8rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:16px;background:white;width:100%;outline:none}
 
 /* ── FILTER PILLS ── */
-.filter-row{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap}
-.fpill{padding:.3rem .7rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:.7rem;background:white;color:var(--ink);cursor:pointer}
+/* Filtri ostanejo v eni vrsti in se vodoravno pomikajo. Prelom v vec vrstic je
+   na telefonu pojedel pol zaslona, sirine pa tako ali tako ni mogoce zagotoviti
+   - tipe materialov si uporabnik dodaja sam. */
+.filter-row{display:flex;gap:.3rem;margin-bottom:.75rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+.filter-row::-webkit-scrollbar{display:none}
+.fpill{flex:0 0 auto;white-space:nowrap;padding:.3rem .6rem;border:1px solid var(--border);border-radius:20px;font-family:'Jost',sans-serif;font-size:.7rem;background:white;color:var(--ink);cursor:pointer}
 .fpill.active{background:var(--accent);border-color:var(--accent);color:white;font-weight:500}
 
 /* ── TABLE ── */
@@ -2327,11 +2331,22 @@ function renderPreracuni(){
 function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
 function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 
+// Vrstica filtrov se vodoravno pomika, zato mora izbrani gumb sam prilesti v
+// vidno polje - sicer po izbiri ali ponovnem izrisu ni videti, kaj je izbrano.
+// Pomikamo samo vrstico, ne strani, da stran ne poskoci pod prsti.
+function pokaziAktivniFilter(vrstica){
+  const el=typeof vrstica==='string'?document.getElementById(vrstica):vrstica;
+  const a=el?.querySelector('.fpill.active');
+  if(!a||el.scrollWidth<=el.clientWidth)return;
+  el.scrollTo({left:Math.max(0,a.offsetLeft-(el.clientWidth-a.offsetWidth)/2),behavior:'smooth'});
+}
+
 // ── DN FILTER ──
 function setDNFilter(f,btn){
   dnFilter=f;dnPage=0;
   document.querySelectorAll('.fpill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  pokaziAktivniFilter(btn.closest('.filter-row'));
   renderDN();
 }
 
@@ -3684,6 +3699,7 @@ function setMatSmerFilter(f,btn){
   matSmerFilter=f;matPage=0;
   document.querySelectorAll('[id^="ms-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  pokaziAktivniFilter(btn.closest('.filter-row'));
   renderMateriali();
 }
 
@@ -3721,6 +3737,7 @@ function setMatKat(kat,btn){
   matKatFilter=kat;matFilter='vsi';matTipFilter=null;matPage=0;
   document.querySelectorAll('[id^="mk-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  pokaziAktivniFilter(btn.closest('.filter-row'));
   // Prikaži podfilter
   const row=document.getElementById('matFilterRow');
   const podfilter=MAT_PODFILTER[kat];
@@ -3731,6 +3748,8 @@ function setMatKat(kat,btn){
   } else {
     row.innerHTML='';
   }
+  // Podfilter se je pravkar na novo izrisal in je zato pomaknjen na zacetek.
+  row.scrollLeft=0;
   renderMateriali();
 }
 
@@ -3738,6 +3757,7 @@ function setMatFilter(f,btn){
   matFilter=f;matTipFilter=null;matPage=0;
   document.querySelectorAll('#matFilterRow .fpill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  pokaziAktivniFilter(btn.closest('.filter-row'));
   renderMateriali();
 }
 
@@ -4184,6 +4204,7 @@ function setOpremaFilter(f,btn){
   opremaFilter=f;opremaPage=0;
   document.querySelectorAll('[id^="op-"]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  pokaziAktivniFilter(btn.closest('.filter-row'));
   renderOprema();
 }
 

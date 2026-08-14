@@ -1690,8 +1690,43 @@ let matTipiEmb=[];
 async function loadMatTipi(){
   try{
     const r=await sbFetch('gm_dn_mat_tipi','kat=eq.embalaza&order=kapaciteta.asc');
-    matTipiEmb=(r||[]).map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kapaciteta:t.kapaciteta||0}));
+    matTipiEmb=(r||[]).map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kapaciteta:t.kapaciteta||0,cena:0}));
+    await loadCeneEmbalaze();
   }catch(e){matTipiEmb=[];console.warn('loadMatTipi',e);}
+}
+
+// Cena na enoto se racuna enako kot matCenaEnote() v aplikaciji materiali:
+// tehtano povprecje nabav, nabave brez vpisanega stroska ne stejejo. Aplikaciji
+// si kode ne delita, delita pa si tabelo - ce se pravilo tam spremeni, ga je
+// treba popraviti tudi tu.
+async function loadCeneEmbalaze(){
+  if(!matTipiEmb.length)return;
+  try{
+    const r=await sbFetch('gm_dn_materiali','smer=eq.vhod&select=tip,kolicina,strosek');
+    const vsota={};
+    (r||[]).forEach(m=>{
+      if(!(m.kolicina>0)||!(m.strosek>0))return;
+      if(!vsota[m.tip])vsota[m.tip]={kol:0,eur:0};
+      vsota[m.tip].kol+=m.kolicina;vsota[m.tip].eur+=m.strosek;
+    });
+    matTipiEmb.forEach(t=>{const v=vsota[t.tip];t.cena=v&&v.kol>0?v.eur/v.kol:0;});
+  }catch(e){console.warn('loadCeneEmbalaze',e);}
+}
+
+// Koliko te ta paket stane po povprecni nabavni ceni. Samo izpis - na zapis
+// izhoda ne gre, ker strosek nosijo nabave in bi se sicer stel dvakrat.
+function skatlaStrosekIzpis(tip,kolicina){
+  const t=matTipiEmb.find(x=>x.tip===tip);
+  if(!t||!(t.cena>0)||!(kolicina>0))return '';
+  const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return `≈ ${eur(t.cena*kolicina)} € · ${eur(t.cena)} €/kos`;
+}
+function osveziSkatlaStrosek(){
+  const el=document.getElementById('skStrosek');
+  if(!el)return;
+  const tip=document.getElementById('skTip')?.value;
+  const kol=parseNum(document.getElementById('skKol')?.value);
+  el.textContent=skatlaStrosekIzpis(tip,kol);
 }
 
 // Najmanjsa skatla, ki narocilo se sprejme; ce ga nobena ne, vec najvecjih.
@@ -9832,15 +9867,16 @@ function openSkatlaSheet(invId){
       <div id="skPolja" style="display:${brez?'none':''}">
         <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">
           <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Škatla</label>
-          <select id="skTip" style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+          <select id="skTip" onchange="osveziSkatlaStrosek()" style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
             ${matTipiEmb.map(t=>`<option value="${t.tip}"${predlog&&predlog.tip===t.tip?' selected':''}>${t.ime}${t.kapaciteta?` — do ${t.kapaciteta} kom`:''}</option>`).join('')}
           </select>
         </div>
         <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.4rem">
           <label style="font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)">Količina</label>
           <input id="skKol" type="text" inputmode="decimal" value="${predlog?predlog.kolicina:1}"
-            style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+            oninput="osveziSkatlaStrosek()" style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
         </div>
+        <div id="skStrosek" style="font-size:.78rem;color:#3a6b4a;margin:-.15rem 0 .5rem"></div>
         <div style="font-size:.7rem;color:var(--muted);line-height:1.45;margin-bottom:.6rem">
           ${predlog&&!obstojec?'Predlog iz števila kosov — spremeni ga, če si pakiral drugače.':''}
           ${obstojec?'Za to odpremo je knjižba že zapisana; shranjevanje jo popravi.':''}
@@ -9851,6 +9887,7 @@ function openSkatlaSheet(invId){
         <button onclick="shraniSkatlo()" style="flex:2;padding:.65rem;border:none;border-radius:8px;background:var(--ink);color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Shrani</button>
       </div>
     </div>`;
+  osveziSkatlaStrosek();
 }
 
 function onSkatlaBrezChange(){

@@ -2659,6 +2659,44 @@ function saveDN(){
 }
 
 // ── DN DETAIL ──
+// Iztrzek se ne racuna ob vsakem odprtju naloga - trije klici v Supabase so
+// predrag privzetek. Sprozi ga gumb.
+async function prikaziIztrzek(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  const el=document.getElementById('dnIztrzek');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:.75rem;color:var(--muted);padding:.3rem 0">⏳ Berem prodaje…</div>';
+  try{
+    const pr=await dnIztrzek(d);
+    const st=dnStrosek(d);
+    const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(!pr||!pr.vrstic){
+      el.innerHTML=`<div style="font-size:.75rem;color:var(--muted);padding:.3rem 0">Za serijo ${d.serijaAlc} v prodaji ni zapisov.</div>`;
+      return;
+    }
+    // Strosek delimo na kos in ga pripisemo samo prodanim - ce bi od iztrzka
+    // odsteli cel strosek serije, bi bila serija videti slaba, dokler ni
+    // razprodana.
+    const naKos=st.kosov>0?st.skupaj/st.kosov:0;
+    const strosekProdanih=naKos*pr.prodanoKom;
+    const neto=pr.iztrzek-strosekProdanih;
+    const neprodano=Math.max(0,st.kosov-pr.prodanoKom-pr.brezPlacilaKom);
+    el.innerHTML=`<table class="mini-table">
+      <tr><td>Prodano</td><td>${pr.prodanoKom} kom · <strong>${eur(pr.iztrzek)} €</strong></td></tr>
+      ${pr.brezPlacilaKom?`<tr><td>Podarjeno / interno</td><td>${pr.brezPlacilaKom} kom · 0,00 €</td></tr>`:''}
+      ${neprodano?`<tr><td>Še ni prodano</td><td>${neprodano} kom</td></tr>`:''}
+      <tr><td>Strošek prodanih (${eur(naKos)} €/kos)</td><td>−${eur(strosekProdanih)} €</td></tr>
+      <tr><td style="font-weight:600">Neto iztržek</td><td style="font-weight:600;color:${neto>=0?'var(--success)':'var(--danger)'}">${eur(neto)} €</td></tr>
+      ${pr.prodanoKom?`<tr><td style="font-weight:600">Pokritje na prodan kos</td><td style="font-weight:600">${eur(neto/pr.prodanoKom)} €</td></tr>`:''}
+    </table>
+    ${neprodano?`<div style="font-size:.68rem;color:#8b5a2a;line-height:1.4;margin-bottom:.5rem">⚠ Serija še ni razprodana — ${neprodano} kom čaka na zalogi, zato iztržek še ni končen.</div>`:''}
+    <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin-bottom:.5rem">Strošek je razdeljen na kos in pripisan samo prodanim. Podaritve in interni odvzem ne prinesejo prihodka, stornirane prodaje se ne štejejo.</div>`;
+  }catch(e){
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);padding:.3rem 0">⚠ Prodaj ni bilo mogoče prebrati: ${e.message}</div>`;
+    console.error('prikaziIztrzek',e);
+  }
+}
+
 function openDNDetail(id){
   const d=workOrders.find(x=>x.id===id);if(!d)return;
   document.getElementById('dnDetailTitle').textContent=d.oznaka;
@@ -2724,7 +2762,8 @@ function openDNDetail(id){
         ${st.kosov>0?`<tr><td style="font-weight:600">Na kos (${st.kosov} kom)</td><td style="font-weight:600">${eur(st.skupaj/st.kosov)} €</td></tr>`:''}
       </table>
       ${st.manjkaCena?`<div style="font-size:.68rem;color:#8b5a2a;line-height:1.4;margin-bottom:.4rem">⚠ Pri nekaterih postavkah nabavna cena ni znana — vpiši strošek pri nabavi, da bo vsota popolna.</div>`:''}
-      <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin-bottom:.5rem">Izračunano iz knjiženih izhodov po povprečni nabavni ceni. Ni všteto delo in režija.</div>`;
+      <div style="font-size:.66rem;color:var(--muted);line-height:1.4;margin-bottom:.5rem">Izračunano iz knjiženih izhodov po povprečni nabavni ceni. Ni všteto delo in režija.</div>
+`;
     })()}
 
     ${d.opomba?`<div class="slabel">Opomba</div><div style="font-size:.8rem;color:var(--muted)">${d.opomba}</div>`:''}
@@ -2735,7 +2774,9 @@ function openDNDetail(id){
       <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','bilanca')">⚖️ Bilanca</button>
       <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','me')">🧮 Matični ekstrakt</button>
       <button type="button" class="dn-goto" onclick="dnPojdiNa('${d.id}','gly')">🧴 Glicerinska</button>
-    </div>`:''}
+      ${d.serijaAlc?`<button type="button" class="dn-goto" onclick="prikaziIztrzek('${d.id}')">💶 Iztržek</button>`:''}
+    </div>
+    <div id="dnIztrzek"></div>`:''}
 
     <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
       <button class="bsave" onclick="openDNSheet('${d.id}');closeSheet('dnDetailOverlay')">✎ Uredi</button>
@@ -3396,6 +3437,39 @@ function dnStrosek(d){
   const kosov=(d.kolAlc||0)+(d.kolGly||0)+(d.kolAlcInterno||0)+(d.kolGlyInterno||0);
   return {postavke,trosarina,material,skupaj:material+trosarina,kosov,
     manjkaCena:postavke.some(p=>!p.znanaCena)};
+}
+
+// Iztrzek serije: prodaje zivijo v aplikaciji zaloga, strosek pa se racuna tu,
+// zato podatke o prodaji poberemo iz Supabase. Racun je namenoma tu in ne tam -
+// pravilo o stroskih je zapleteno in mora ostati na enem mestu, sestevanje
+// prodaje pa je preprosto.
+// Promo in interni odhodi niso prihodek; stornirane prodaje se ne stejejo.
+async function dnIztrzek(d){
+  const serija=d.serijaAlc;
+  if(!serija)return null;
+  const bb=await sbFetch('gm_sale_line_batches',`batch_num=eq.${encodeURIComponent(serija)}&select=group_id,line_id,alc,gly`);
+  if(!bb.length)return {prodanoKom:0,iztrzek:0,brezPlacilaKom:0,vrstic:0};
+  const lineIds=[...new Set(bb.map(x=>x.line_id).filter(Boolean))];
+  const grpIds=[...new Set(bb.map(x=>x.group_id).filter(Boolean))];
+  const [lines,grps]=await Promise.all([
+    lineIds.length?sbFetch('gm_sale_lines',`id=in.(${lineIds.join(',')})&select=id,alc_price,gly_price`):[],
+    grpIds.length?sbFetch('gm_sale_groups',`id=in.(${grpIds.join(',')})&select=id,channel,status`):[],
+  ]);
+  const cena={};lines.forEach(l=>{cena[l.id]={alc:l.alc_price||0,gly:l.gly_price||0};});
+  const kanal={};grps.forEach(g=>{kanal[g.id]={ch:g.channel,st:g.status};});
+  let prodanoKom=0,iztrzek=0,brezPlacilaKom=0;
+  bb.forEach(x=>{
+    const g=kanal[x.group_id]||{};
+    if(g.st==='stornirano')return;
+    const kom=(x.alc||0)+(x.gly||0);
+    if(!kom)return;
+    // Podaritev in interni odvzem sta odhod blaga brez prihodka.
+    if(g.ch==='dar'||g.ch==='int'){brezPlacilaKom+=kom;return;}
+    const c=cena[x.line_id]||{alc:0,gly:0};
+    prodanoKom+=kom;
+    iztrzek+=(x.alc||0)*c.alc+(x.gly||0)*c.gly;
+  });
+  return {prodanoKom,iztrzek,brezPlacilaKom,vrstic:bb.length};
 }
 
 // Izračun zaloge po tipu

@@ -3293,6 +3293,42 @@ function matNovKljuc(ime){
   return osnova+'_'+Date.now();
 }
 
+// Cena na enoto je tehtano povprecje nabav: vsota stroskov deljena z vsoto
+// kupljenih kolicin. Strosek nosijo samo vhodi, zato se ne more steti dvakrat.
+// Nabave brez vpisanega stroska v povprecje ne gredo - sicer bi ga potisnile
+// navzdol, ceprav cena ni bila nic, ampak samo ni bila vpisana.
+function matCenaEnote(tip){
+  let kol=0,eur=0;
+  materiali.forEach(m=>{
+    if(m.tip!==tip||m.smer!=='vhod')return;
+    if(!(m.kolicina>0)||!(m.strosek>0))return;
+    kol+=m.kolicina;eur+=m.strosek;
+  });
+  return kol>0?eur/kol:0;
+}
+// Nabave brez vpisanega stroska: te kolicine se vrednotijo po povprecju
+// ostalih, zato je vrednost zaloge lahko vecja od dejansko placanega. Raje
+// povemo, kot da bi tiho kazali stevilko, ki ne drzi.
+function matNabaveBrezStroska(tip){
+  return materiali.filter(m=>m.tip===tip&&m.smer==='vhod'&&m.kolicina>0&&!(m.strosek>0)).length;
+}
+function matNabavljeno(tip){
+  return materiali.filter(m=>m.tip===tip&&m.smer==='vhod').reduce((s,m)=>s+(m.strosek||0),0);
+}
+// Vrednost tega, kar je se na zalogi, po povprecni nabavni ceni.
+function matVrednostZaloge(tip){
+  const c=matCenaEnote(tip);
+  return c>0?calcMatZaloga(tip)*c:0;
+}
+// Vrednost porabljenega v obdobju - izhodi po isti povprecni ceni.
+function matVrednostPorabe(tip,od,doo){
+  const c=matCenaEnote(tip);
+  if(!(c>0))return 0;
+  return materiali.filter(m=>m.tip===tip&&m.smer==='izhod'
+    &&(!od||(m.datum||'')>=od)&&(!doo||(m.datum||'')<=doo))
+    .reduce((s,m)=>s+(m.kolicina||0),0)*c;
+}
+
 // Izračun zaloge po tipu
 function calcMatZaloga(tip){
   const vhodi=materiali.filter(m=>m.tip===tip&&m.smer==='vhod').reduce((s,m)=>s+(m.kolicina||0),0);
@@ -3370,12 +3406,25 @@ function renderMatZaloga(){
     if(z===0&&!materiali.some(m=>m.tip===tip))return'';
     const enota=matEnota(tip);
     const isActive=matTipFilter===tip;
+    const cena=matCenaEnote(tip);
+    const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
     return`<div class="stat-card" style="padding:.4rem .6rem;cursor:pointer;${isActive?'border:2px solid var(--accent);background:rgba(175,132,85,.08)':''}" onclick="setMatTip('${tip}')">
       <div class="stat-label" style="font-size:.58rem">${matIme(tip)}</div>
       <div class="stat-value ${z<0?'warn':''}" style="font-size:1rem">${z} <span style="font-size:.65rem;color:var(--muted)">${enota}</span></div>
+      ${cena>0?`<div style="font-size:.6rem;color:var(--muted);margin-top:.1rem">${eur(cena)} €/${enota} · ${eur(matVrednostZaloge(tip))} €</div>`:''}
     </div>`;
   }).filter(Boolean).join('');
-  grid.innerHTML=zalogeHtml?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${zalogeHtml}</div>`:'';
+  // Povzetek: koliko je bilo za te materiale porabljeno in koliko jih se lezi
+  // na zalogi. Brez tega je strosek viden samo pri posameznem vnosu.
+  const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const nabavljeno=tipi.reduce((s,t)=>s+matNabavljeno(t),0);
+  const vrednost=tipi.reduce((s,t)=>s+matVrednostZaloge(t),0);
+  const brezStroska=tipi.reduce((s,t)=>s+matNabaveBrezStroska(t),0);
+  const povzetek=nabavljeno>0?`<div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.7rem;color:var(--muted);padding:.5rem .2rem 0">
+      <span>Nabavljeno skupaj: <strong style="color:var(--ink)">${eur(nabavljeno)} €</strong></span>
+      <span>Vrednost zaloge: <strong style="color:var(--ink)">${eur(vrednost)} €</strong></span>
+    </div>${brezStroska?`<div style="font-size:.66rem;color:#8b5a2a;padding:.25rem .2rem 0;line-height:1.4">⚠ ${brezStroska} ${brezStroska===1?'nabava je':'nabav je'} brez vpisanega stroška — vrednost zaloge je približek.</div>`:''}`:'';
+  grid.innerHTML=zalogeHtml?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${zalogeHtml}</div>${povzetek}`:'';
 }
 
 function renderMateriali(){

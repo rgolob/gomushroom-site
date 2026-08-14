@@ -3022,7 +3022,7 @@ function syncGobaIzhod(d,oldOznaka){
   const serije=d.serije?.filter(r=>r.masa>0)||[];
   if(!serije.length&&d.masaGobe>0)serije.push({serija:d.serijaGobe||'',masa:d.masaGobe});
   serije.forEach(row=>{
-    const m={id:uid(),datum:d.datum||todayISO(),tip:gobaTip,smer:'izhod',
+    const m={id:uid(),datum:dnDatumIzhoda(d,gobaTip),tip:gobaTip,smer:'izhod',
       dokument:d.oznaka,serijaGobe:row.serija||'',
       kolicina:row.masa,opomba:'DN goba izhod'};
     materiali.push(m);
@@ -3813,7 +3813,16 @@ function uskladitevSurovine(tip){
     if(m.znak===1){dodaj(s,'vhod',m.kolicina||0);if(!serije[s].prvi)serije[s].prvi=m.datum||'';}
     else{dodaj(s,'izhod',m.kolicina||0);if(m.dokument)serije[s].dokumenti.add(m.dokument);}
     tek=round(tek+m.znak*(m.kolicina||0),4);
-    if(m.znak===-1&&tek<-0.0005)podnicle.push({datum:m.datum||'',dokument:m.dokument||'',kolicina:m.kolicina||0,saldo:tek});
+    if(m.znak===-1&&tek<-0.0005){
+      // Datuma naloga prilozimo: skoraj vedno je vzrok prav v njiju - dobavnica
+      // datirana na racun namesto na prevzem ali nalog na odprtje namesto na
+      // dan ekstrakcije. Brez obeh datumov tega ni mogoce preveriti.
+      const dn=workOrders.find(x=>x.oznaka===m.dokument);
+      podnicle.push({datum:m.datum||'',dokument:m.dokument||'',kolicina:m.kolicina||0,saldo:tek,
+        zacetek:dn?.datum||'',zakljucek:dn?.datumZakljucka||'',
+        // Prva dobava po tem datumu je obicajno prav tista, iz katere je nalog delal.
+        prvaPoznejsa:zapisi.find(v=>v.znak===1&&(v.datum||'')>(m.datum||''))||null});
+    }
   });
 
   // Nalogi, ki po lastnem zapisu porabijo to gobo, izhoda pa nimajo knjizenega.
@@ -3896,7 +3905,11 @@ function odpriUskladitev(){
       ${u.podnicle.length?`<div style="margin-top:.5rem;font-size:.7rem;line-height:1.5">
         <div style="color:#8b5a2a;font-weight:600">Poraba pred dobavo</div>
         <div style="color:var(--muted);font-size:.66rem;margin-bottom:.2rem">Na ta dan zaloge ni bilo dovolj — dobava, iz katere je nalog delal, je vpisana s poznejšim datumom. Popravi datum dobave ali naloga.</div>
-        ${u.podnicle.map(p=>`<div>• ${fmtDate(p.datum)} · ${p.dokument||'brez dokumenta'} · −${st(p.kolicina)} ${e} → saldo ${st(p.saldo)} ${e}</div>`).join('')}
+        ${u.podnicle.map(p=>`<div style="margin-bottom:.3rem">
+          • <strong>${p.dokument||'brez dokumenta'}</strong> · ${fmtDate(p.datum)} · −${st(p.kolicina)} ${e} → saldo ${st(p.saldo)} ${e}
+          ${p.zacetek||p.zakljucek?`<div style="color:var(--muted);font-size:.66rem;padding-left:.7rem">nalog: začetek ${fmtDate(p.zacetek)}${p.zakljucek?` · zaključek ${fmtDate(p.zakljucek)}`:' · brez zaključka'}</div>`:''}
+          ${p.prvaPoznejsa?`<div style="color:var(--muted);font-size:.66rem;padding-left:.7rem">prva poznejša dobava: ${p.prvaPoznejsa.serijaGobe||'brez serije'} · ${fmtDate(p.prvaPoznejsa.datum)} · ${st(p.prvaPoznejsa.kolicina||0)} ${e}${p.prvaPoznejsa.dokument?' · '+p.prvaPoznejsa.dokument:''}</div>`:''}
+        </div>`).join('')}
       </div>`:''}
       ${u.brezSerije.length?`<div style="margin-top:.5rem;font-size:.7rem;line-height:1.5">
         <div style="color:#8b5a2a;font-weight:600">Izhodi brez serije</div>
@@ -4280,15 +4293,25 @@ function dnIzhodiMaterialov(oznaka){
   return materiali.filter(m=>m.smer==='izhod'&&m.dokument===oznaka&&!m.tip.startsWith('goba_'));
 }
 
-// Materiale odstejemo samo, ce so bili na zalogi na dan naloga - nabave, ki je
+// Kdaj je bil material dejansko porabljen. Goba gre v ekstraktor na zacetku
+// naloga, steklenicke in etikete pa se porabijo ob polnjenju na koncu - datuma
+// zato nista ista. Vazno je, da isti datum odloca o zalogi in konca na zapisu
+// izhoda: doslej je goba dobila zacetni datum, zaloga zanjo pa se je preverjala
+// na zakljucni, tako da sta se poti ob shranjevanju in ob zakljucku razsli.
+function dnDatumIzhoda(d,tip){
+  return String(tip||'').startsWith('goba_')
+    ?(d.datum||d.datumZakljucka||todayISO())
+    :(d.datumZakljucka||d.datum||todayISO());
+}
+
+// Materiale odstejemo samo, ce so bili na zalogi na dan porabe - nabave, ki je
 // takrat se ni bilo, nalog ni mogel porabiti.
 function dnBilNaZalogi(d,tip){
-  const dnDate=d.datumZakljucka||d.datum||'';
+  const dnDate=dnDatumIzhoda(d,tip);
   return materiali.some(m=>m.smer==='vhod'&&m.tip===tip&&(m.datum||'')<=dnDate);
 }
 
 function knjizMaterjaleIzhod(d){
-  const datum=d.datumZakljucka||d.datum;
   const dok=d.oznaka;
   // Idempotency: preskoci tipe, ki so za ta DN ze knjizeni
   const zeKnjizen=tip=>materiali.some(m=>m.smer==='izhod'&&m.dokument===dok
@@ -4296,7 +4319,7 @@ function knjizMaterjaleIzhod(d){
 
   const izhodi=dnNacrtIzhodov(d).filter(iz=>dnBilNaZalogi(d,iz.tip)&&!zeKnjizen(iz.tip));
   izhodi.forEach(iz=>{
-    materiali.push({id:uid(),datum,tip:iz.tip,smer:'izhod',
+    materiali.push({id:uid(),datum:dnDatumIzhoda(d,iz.tip),tip:iz.tip,smer:'izhod',
       dokument:dok,serijaGobe:iz.serijaGobe||'',kolicina:iz.kolicina,opomba:'DN izhod retro'});
   });
   return izhodi.length;
@@ -4523,34 +4546,12 @@ async function retroaktivnoPoknjiziVseDN(){
   // Sestavi plan za vse DNje (vključno z že knjiženim — retro vnosi se osvežijo)
   const plan=[];
   for(const d of closedDNs){
-    const dnDate=d.datumZakljucka||d.datum||'';
-    const datum=d.datumZakljucka||d.datum;
     const dok=d.oznaka;
-    const vrsta=(d.vrstaGobe||'').toLowerCase();
-    const stekAlcTip='steklenicka_'+(d.stekAlc||'bela');
-    const stekGlyTip='steklenicka_'+(d.stekGly||'bela');
-    const totAlc=(d.kolAlc||0)+(d.kolAlcInterno||0);
-    const totGly=(d.kolGly||0)+(d.kolGlyInterno||0);
-    const skupajBela=(stekAlcTip==='steklenicka_bela'?totAlc:0)+(stekGlyTip==='steklenicka_bela'?totGly:0);
-    const skupajCrna=(stekAlcTip==='steklenicka_crna'?totAlc:0)+(stekGlyTip==='steklenicka_crna'?totGly:0);
-    const etiketaTip=vrsta.includes('reishi')?'etiketa_reishi':vrsta.includes('bradovec')||vrsta.includes('brado')?'etiketa_bradovec':vrsta.includes('chaga')?'etiketa_chaga':vrsta.includes('smrek')?'etiketa_smrekovi':'etiketa_chaga';
-    const skupajEtikete=totAlc+totGly;
-    const vitc=round((d.vitCAlc||0)+(d.vitCGly||0),3);
-    const lecitin=round((d.lecitinAlc||0)+(d.lecitinGly||0),3);
-
-    const volGlicerin=round(((d.masaGlicerina||0)+(d.glicerinAlc||0))/(GLICERIN_GOSTOTA*1000),4);
-    const kandidati=[
-      {tip:'steklenicka_bela',kolicina:skupajBela},
-      {tip:'steklenicka_crna',kolicina:skupajCrna},
-      {tip:etiketaTip,kolicina:skupajEtikete},
-      {tip:'vitc',kolicina:vitc},
-      {tip:'lecitin',kolicina:lecitin},
-      {tip:'glicerin',kolicina:volGlicerin},
-    ];
-    kandidati.forEach(({tip,kolicina})=>{
-      if(kolicina<=0)return;
-      const ok=bilNaZalogi(tip,dnDate);
-      plan.push({d,datum,dok,tip,kolicina,dnDate,ok});
+    // Goba ni tu: njene izhode po serijah vzdrzuje syncGobaIzhod, ta pregled
+    // pa dela z enim samim skupnim zneskom na nalog.
+    dnNacrtIzhodov(d).filter(iz=>!iz.tip.startsWith('goba_')).forEach(({tip,kolicina})=>{
+      const dnDate=dnDatumIzhoda(d,tip);
+      plan.push({d,datum:dnDate,dok,tip,kolicina,dnDate,ok:bilNaZalogi(tip,dnDate)});
     });
   }
 

@@ -260,6 +260,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="fpill" id="mk-embalaza" onclick="setMatKat('embalaza',this)">📦 Embalaža</button>
     </div>
     <div class="filter-row" id="matFilterRow" style="margin-top:.2rem"></div>
+    <div class="filter-row" style="margin-top:.2rem">
+      <button class="fpill active" id="ms-vsi" onclick="setMatSmerFilter('vsi',this)">Vsi</button>
+      <button class="fpill" id="ms-vhod" onclick="setMatSmerFilter('vhod',this)">↑ Nabave</button>
+      <button class="fpill" id="ms-izhod" onclick="setMatSmerFilter('izhod',this)">↓ Izhodi</button>
+      <button class="fpill" id="ms-dobropis" onclick="setMatSmerFilter('dobropis',this)">↩ Dobropisi</button>
+      <button class="fpill" id="ms-uskladitev" onclick="setMatSmerFilter('uskladitev',this)">⚖ Uskladitve</button>
+    </div>
     <div id="matList"></div>
     <div class="pager" id="matPager"></div>
   </div>
@@ -660,6 +667,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <select id="matSmer" onchange="onMatSmerChange()">
             <option value="vhod">↑ Vhod (nakup)</option>
             <option value="izhod">↓ Izhod (ročno)</option>
+            <option value="dobropis">↩ Dobropis (vračilo dobavitelju)</option>
             <option value="uskladitev">⚖ Uskladitev (inventura)</option>
           </select>
         </div>
@@ -3309,6 +3317,16 @@ function matNovKljuc(ime){
   return osnova+'_'+Date.now();
 }
 
+// Dobropis je vracilo dobavitelju: blago gre z zaloge, hkrati pa se zmanjsa
+// tudi nabavljena vrednost, ker si denar dobil nazaj. Zato ga povsod, kjer gre
+// za strosek, stejemo kot negativno nabavo, pri zalogi pa kot izhod.
+function matJeNabava(m){return m.smer==='vhod';}
+function matJeDobropis(m){return m.smer==='dobropis';}
+function matZmanjsaZalogo(m){return m.smer==='izhod'||m.smer==='dobropis';}
+function matJeUskladitev(m){return m.smer==='izhod'&&(m.opomba||'').startsWith('Uskladitev');}
+// "Poraba" je samo tisto, kar je res slo v delo - vracilo dobavitelju ni poraba.
+function matJePoraba(m){return m.smer==='izhod';}
+
 // Cena na enoto je tehtano povprecje nabav: vsota stroskov deljena z vsoto
 // kupljenih kolicin. Strosek nosijo samo vhodi, zato se ne more steti dvakrat.
 // Nabave brez vpisanega stroska v povprecje ne gredo - sicer bi ga potisnile
@@ -3316,9 +3334,11 @@ function matNovKljuc(ime){
 function matCenaEnote(tip){
   let kol=0,eur=0;
   materiali.forEach(m=>{
-    if(m.tip!==tip||m.smer!=='vhod')return;
+    if(m.tip!==tip)return;
+    const znak=matJeNabava(m)?1:matJeDobropis(m)?-1:0;
+    if(!znak)return;
     if(!(m.kolicina>0)||!(m.strosek>0))return;
-    kol+=m.kolicina;eur+=m.strosek;
+    kol+=znak*m.kolicina;eur+=znak*m.strosek;
   });
   return kol>0?eur/kol:0;
 }
@@ -3326,10 +3346,10 @@ function matCenaEnote(tip){
 // ostalih, zato je vrednost zaloge lahko vecja od dejansko placanega. Raje
 // povemo, kot da bi tiho kazali stevilko, ki ne drzi.
 function matNabaveBrezStroska(tip){
-  return materiali.filter(m=>m.tip===tip&&m.smer==='vhod'&&m.kolicina>0&&!(m.strosek>0)).length;
+  return materiali.filter(m=>m.tip===tip&&(matJeNabava(m)||matJeDobropis(m))&&m.kolicina>0&&!(m.strosek>0)).length;
 }
 function matNabavljeno(tip){
-  return materiali.filter(m=>m.tip===tip&&m.smer==='vhod').reduce((s,m)=>s+(m.strosek||0),0);
+  return materiali.filter(m=>m.tip===tip).reduce((s,m)=>s+(matJeNabava(m)?(m.strosek||0):matJeDobropis(m)?-(m.strosek||0):0),0);
 }
 // Vrednost tega, kar je se na zalogi, po povprecni nabavni ceni.
 function matVrednostZaloge(tip){
@@ -3340,7 +3360,7 @@ function matVrednostZaloge(tip){
 function matVrednostPorabe(tip,od,doo){
   const c=matCenaEnote(tip);
   if(!(c>0))return 0;
-  return materiali.filter(m=>m.tip===tip&&m.smer==='izhod'
+  return materiali.filter(m=>m.tip===tip&&matJePoraba(m)
     &&(!od||(m.datum||'')>=od)&&(!doo||(m.datum||'')<=doo))
     .reduce((s,m)=>s+(m.kolicina||0),0)*c;
 }
@@ -3362,8 +3382,7 @@ function etCenaAAE(){
 // se scasoma razisla z nabavami, izracunana pa se popravi sama.
 function dnStrosek(d){
   const postavke=[];
-  materiali.filter(m=>m.smer==='izhod'&&m.dokument===d.oznaka
-    &&!(m.opomba||'').startsWith('Uskladitev')).forEach(m=>{
+  materiali.filter(m=>matJePoraba(m)&&!matJeUskladitev(m)&&m.dokument===d.oznaka).forEach(m=>{
     const cena=matCenaEnote(m.tip);
     postavke.push({ime:matIme(m.tip),kolicina:m.kolicina||0,enota:matEnota(m.tip),
       cena,znesek:(m.kolicina||0)*cena,znanaCena:cena>0});
@@ -3381,12 +3400,13 @@ function dnStrosek(d){
 
 // Izračun zaloge po tipu
 function calcMatZaloga(tip){
-  const vhodi=materiali.filter(m=>m.tip===tip&&m.smer==='vhod').reduce((s,m)=>s+(m.kolicina||0),0);
-  const izhodi=materiali.filter(m=>m.tip===tip&&m.smer==='izhod').reduce((s,m)=>s+(m.kolicina||0),0);
+  const vhodi=materiali.filter(m=>m.tip===tip&&matJeNabava(m)).reduce((s,m)=>s+(m.kolicina||0),0);
+  const izhodi=materiali.filter(m=>m.tip===tip&&matZmanjsaZalogo(m)).reduce((s,m)=>s+(m.kolicina||0),0);
   return round(vhodi-izhodi,3);
 }
 
 let matKatFilter='vsi';
+let matSmerFilter='vsi';
 let matFilter='vsi';
 let matTipFilter=null;
 let matPage=0;
@@ -3398,6 +3418,22 @@ function tipMatchesFilter(tip){
   if(matFilter==='goba')return tip.startsWith('goba');
   if(matFilter==='etiketa')return tip.startsWith('etiketa');
   return tip===matFilter;
+}
+
+// Uskladitev je shranjena kot izhod z opombo, zato je posebej - sicer bi se
+// pod "Izhodi" mesala z resnicno porabo.
+function matUstrezaSmeri(m){
+  if(matSmerFilter==='vsi')return true;
+  if(matSmerFilter==='uskladitev')return matJeUskladitev(m);
+  if(matSmerFilter==='izhod')return matJePoraba(m)&&!matJeUskladitev(m);
+  if(matSmerFilter==='dobropis')return matJeDobropis(m);
+  return matJeNabava(m);
+}
+function setMatSmerFilter(f,btn){
+  matSmerFilter=f;matPage=0;
+  document.querySelectorAll('[id^="ms-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMateriali();
 }
 
 function setMatTip(tip){
@@ -3490,6 +3526,8 @@ function renderMateriali(){
       m.tip===matFilter
     );
   }
+  // Smer vnosa
+  rows=rows.filter(matUstrezaSmeri);
   // Kartica filter (klik na kartico)
   if(matTipFilter)rows=rows.filter(m=>m.tip===matTipFilter);
   const total=rows.length;
@@ -3502,11 +3540,12 @@ function renderMateriali(){
     document.getElementById('matPager').innerHTML='';return;
   }
   el.innerHTML=page.map(m=>{
-    const isIn=m.smer==='vhod';
-    const isUsk=m.smer==='izhod'&&(m.opomba||'').startsWith('Uskladitev');
+    const isIn=matJeNabava(m);
+    const isDob=matJeDobropis(m);
+    const isUsk=matJeUskladitev(m);
     const enota=matEnota(m.tip);
-    const typeLabel=isIn?'Nabava':isUsk?'Uskladitev':'Izhod';
-    const typeCls=isIn?'eth-nabava':isUsk?'eth-reg':'eth-izhod';
+    const typeLabel=isIn?'Nabava':isDob?'Dobropis':isUsk?'Uskladitev':'Izhod';
+    const typeCls=isIn?'eth-nabava':isDob?'eth-reg':isUsk?'eth-reg':'eth-izhod';
     return`<div class="eth-card" style="flex-wrap:wrap;gap:.3rem">
       <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
         <div class="eth-type ${typeCls}" style="min-width:4rem;font-size:.6rem">${typeLabel}</div>
@@ -3515,9 +3554,9 @@ function renderMateriali(){
           <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${m.opomba?' · '+m.opomba:''}</div>
         </div>
         <div class="eth-qty">
-          <div class="eth-L" style="color:${isIn?'var(--success)':isUsk?'#2a5a8b':'var(--danger)'}">${isIn?'+':isUsk?'⚖':'-'}${m.kolicina} ${enota}</div>
-          ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${m.strosek.toFixed(2)} €</div>`
-            :(!isIn&&!isUsk&&matCenaEnote(m.tip)>0)?`<div class="eth-aae" style="color:var(--muted)">≈ ${((m.kolicina||0)*matCenaEnote(m.tip)).toFixed(2)} €</div>`:''}
+          <div class="eth-L" style="color:${isIn?'var(--success)':isUsk?'#2a5a8b':isDob?'#8b5a2a':'var(--danger)'}">${isIn?'+':isUsk?'⚖':isDob?'↩ -':'-'}${m.kolicina} ${enota}</div>
+          ${m.strosek?`<div class="eth-aae" style="color:var(--muted)">${isDob?'−':''}${m.strosek.toFixed(2)} €</div>`
+            :(matJePoraba(m)&&!isUsk&&matCenaEnote(m.tip)>0)?`<div class="eth-aae" style="color:var(--muted)">≈ ${((m.kolicina||0)*matCenaEnote(m.tip)).toFixed(2)} €</div>`:''}
         </div>
       </div>
       <div style="display:flex;gap:.3rem;width:100%;justify-content:flex-end">
@@ -3540,13 +3579,17 @@ function onMatSmerChange(){
   const smer=document.getElementById('matSmer').value;
   const isVhod=smer==='vhod';
   const isUsk=smer==='uskladitev';
-  // Dobavitelj in strosek samo pri vhodu
-  document.getElementById('matDobaviteljField').style.display=isVhod?'':'none';
+  const isDob=smer==='dobropis';
+  // Dobavitelj in strosek pri nabavi in dobropisu - pri vracilu je treba
+  // vedeti komu in koliko ti je vrnil, sicer se nabavna vrednost ne popravi.
+  document.getElementById('matDobaviteljField').style.display=(isVhod||isDob)?'':'none';
   // Skrijemo samo polje za strosek, ne cele vrstice - v njej je tudi kolicina,
   // ki je pri izhodu in uskladitvi nujna.
-  document.getElementById('matStrosek').closest('.field').style.display=isVhod?'':'none';
+  document.getElementById('matStrosek').closest('.field').style.display=(isVhod||isDob)?'':'none';
+  const strosekLabel=document.querySelector("label[for='matStrosek']")||document.getElementById('matStrosek').closest('.field').querySelector('label');
+  if(strosekLabel)strosekLabel.textContent=isDob?'Vrnjen znesek — skupaj (€)':'Strošek nabave — skupaj (€)';
   // Dokument placeholder
-  document.getElementById('matDok').placeholder=isUsk?'npr. INV-2026-05':isVhod?'npr. DOB-2026-01':'—';
+  document.getElementById('matDok').placeholder=isUsk?'npr. INV-2026-05':isDob?'npr. DOB-2026-01 (dobropis)':isVhod?'npr. DOB-2026-01':'—';
   // Opomba: predizpolni za uskladitev
   osveziCenoEnote();
   const opEl=document.getElementById('matOpomba');
@@ -3633,7 +3676,7 @@ function openMaterijalSheet(id){
   document.getElementById('matSheetTitle').textContent=m?'Uredi vnos':'Vnos materiala';
   // Smer
   const smer=m?.smer||'vhod';
-  document.getElementById('matSmer').value=smer==='uskladitev'?'uskladitev':smer==='izhod'&&m?.opomba?.startsWith('Uskladitev')?'uskladitev':smer;
+  document.getElementById('matSmer').value=smer==='dobropis'?'dobropis':smer==='izhod'&&m?.opomba?.startsWith('Uskladitev')?'uskladitev':smer;
   onMatSmerChange();
   // Nastavi kategorijo in zapolni dropdown
   const kat=m?matKat(m.tip):'surovina';
@@ -3698,7 +3741,8 @@ function osveziCenoEnote(){
   const kol=parseNum(document.getElementById('matKolicina').value);
   const eur=parseNum(document.getElementById('matStrosek').value);
   const smer=document.getElementById('matSmer').value;
-  if(smer!=='vhod'||!(kol>0)||!(eur>0)){el.style.display='none';return;}
+  // Tudi pri dobropisu je koristno videti, po kaksni ceni je bilo vrnjeno.
+  if((smer!=='vhod'&&smer!=='dobropis')||!(kol>0)||!(eur>0)){el.style.display='none';return;}
   const enota=matEnota(document.getElementById('matTip').value);
   el.textContent=`= ${(eur/kol).toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:4})} €/${enota}`;
   el.style.display='';
@@ -3755,8 +3799,9 @@ function saveMaterjal(){
   const kolicina=parseNum(document.getElementById('matKolicina').value);
   if(!kolicina){toast('⚠ Vnesi količino');return;}
   const smerSel=document.getElementById('matSmer').value;
-  const smer=smerSel==='vhod'?'vhod':'izhod';
+  const smer=smerSel==='vhod'?'vhod':smerSel==='dobropis'?'dobropis':'izhod';
   const isVhod=smer==='vhod';
+  const isDob=smer==='dobropis';
   const opombaBase=document.getElementById('matOpomba').value.trim();
   const opomba=smerSel==='uskladitev'&&!opombaBase.startsWith('Uskladitev')?'Uskladitev zaloge — '+opombaBase:opombaBase||( smerSel==='uskladitev'?'Uskladitev zaloge — inventura':'');
   const m={
@@ -3765,9 +3810,9 @@ function saveMaterjal(){
     tip,smer,
     dokument:document.getElementById('matDok').value.trim(),
     serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
-    dobavitelj:isVhod?getDobaviteljValue():'',
+    dobavitelj:(isVhod||isDob)?getDobaviteljValue():'',
     kolicina,
-    strosek:isVhod?parseNum(document.getElementById('matStrosek').value||'0'):0,
+    strosek:(isVhod||isDob)?parseNum(document.getElementById('matStrosek').value||'0'):0,
     opomba,
   };
   if(editingMatId){
@@ -3780,7 +3825,7 @@ function saveMaterjal(){
   sbPushMat(m);
   closeSheet('materialiOverlay');
   renderMateriali();
-  const smerLabel=smerSel==='uskladitev'?'⚖ Uskladitev':smer==='izhod'?'↓ Izhod':'↑ Vhod';
+  const smerLabel=smerSel==='uskladitev'?'⚖ Uskladitev':isDob?'↩ Dobropis':smer==='izhod'?'↓ Izhod':'↑ Vhod';
   toast(`✓ ${smerLabel} · ${matIme(tip)}: ${kolicina} ${matEnota(tip)}`);
   editingMatId=null;
 }

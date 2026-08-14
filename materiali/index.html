@@ -3340,8 +3340,8 @@ const MAT_KAT={
 // in kategoriji na enem mestu in ga ni treba dodajati na stiri.
 let matTipi=JSON.parse(localStorage.getItem('gm_dn_mat_tipi')||'[]');
 function matTipUpo(tip){return matTipi.find(t=>t.tip===tip)||null;}
-function matIme(tip){const u=matTipUpo(tip);return MAT_IME[tip]||(u&&u.ime)||tip;}
-function matEnota(tip){const u=matTipUpo(tip);return MAT_ENOTA[tip]||(u&&u.enota)||'kom';}
+function matIme(tip){if(tip===ET_TIP)return '🧪 Etanol';const u=matTipUpo(tip);return MAT_IME[tip]||(u&&u.ime)||tip;}
+function matEnota(tip){if(tip===ET_TIP)return 'L AAE';const u=matTipUpo(tip);return MAT_ENOTA[tip]||(u&&u.enota)||'kom';}
 function matKat(tip){const u=matTipUpo(tip);return MAT_KAT[tip]||(u&&u.kat)||'surovina';}
 function matVsiTipi(){return [...Object.keys(MAT_IME),...matTipi.map(t=>t.tip)];}
 function matOpcije(kat){
@@ -3472,6 +3472,27 @@ async function dnIztrzek(d){
   return {prodanoKom,iztrzek,brezPlacilaKom,vrstic:bb.length};
 }
 
+// Etanol ima svojo knjigo, ker trosarinska evidenca potrebuje izmerjen vol%,
+// gostoto in L AAE - tega vnos materiala nima. Da je seznam materialov vseeno
+// popoln, ga tu samo prikazemo: vnos in urejanje ostaneta na svojem zavihku,
+// zato se knjigi ne moreta raziti.
+const ET_TIP='__etanol';
+function etJeVhod(e){return e.tip==='nabava'||e.tip==='regeneracija';}
+function etKotMaterial(e){
+  return {
+    _et:true, _etTip:e.tip,
+    id:e.id, datum:e.datum, tip:ET_TIP,
+    smer:etJeVhod(e)?'vhod':'izhod',
+    dokument:e.dokument||'',
+    kolicina:round(e.lAAE||0,4),
+    strosek:e.strosek||0,
+    opomba:e.opomba||'',
+  };
+}
+function etZalogaAAE(){
+  return round(etanolKnjiga.reduce((s,e)=>s+(etJeVhod(e)?1:-1)*(e.lAAE||0),0),4);
+}
+
 // Izračun zaloge po tipu
 function calcMatZaloga(tip){
   const vhodi=materiali.filter(m=>m.tip===tip&&matJeNabava(m)).reduce((s,m)=>s+(m.kolicina||0),0);
@@ -3510,6 +3531,12 @@ function setMatSmerFilter(f,btn){
   renderMateriali();
 }
 
+// Etanola v materialih ne urejamo - odpremo ga tam, kjer je njegova knjiga.
+function odpriEtanolIz(id){
+  switchTab('etanol');
+  setTimeout(()=>{if(typeof openEtanolSheet==='function')openEtanolSheet(id);},60);
+}
+
 function setMatTip(tip){
   matTipFilter=matTipFilter===tip?null:tip;
   matPage=0;
@@ -3524,6 +3551,7 @@ const MAT_PODFILTER={
     {id:'vitc',label:'💊 Vit.C'},
     {id:'lecitin',label:'🌱 Lecitin'},
     {id:'glicerin',label:'🧴 Glicerin'},
+    {id:'__etanol',label:'🧪 Etanol'},
   ],
   embalaza:[
     {id:'vsi_e',label:'Vsi'},
@@ -3558,6 +3586,7 @@ function setMatFilter(f,btn){
 }
 
 function renderMatZaloga(){
+  const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
   const tipi=matVsiTipi().filter(tipMatchesFilter);
   const grid=document.getElementById('matZalogaGrid');
   if(!grid)return;
@@ -3576,22 +3605,34 @@ function renderMatZaloga(){
   }).filter(Boolean).join('');
   // Povzetek: koliko je bilo za te materiale porabljeno in koliko jih se lezi
   // na zalogi. Brez tega je strosek viden samo pri posameznem vnosu.
-  const eur=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
   const nabavljeno=tipi.reduce((s,t)=>s+matNabavljeno(t),0);
   const vrednost=tipi.reduce((s,t)=>s+matVrednostZaloge(t),0);
+  // Kartica etanola: zaloga v L AAE po lastni knjigi, cena iz nabav.
+  const etCena=etCenaAAE();
+  const etZal=etZalogaAAE();
+  const etKartica=(matKatFilter!=='embalaza'&&(matFilter==='vsi'||matFilter==='vsi_s'||matFilter===ET_TIP)&&(etZal||etanolKnjiga.length))
+    ?`<div class="stat-card" style="padding:.4rem .6rem;cursor:pointer" onclick="switchTab('etanol')">
+      <div class="stat-label" style="font-size:.58rem">🧪 Etanol</div>
+      <div class="stat-value ${etZal<0?'warn':''}" style="font-size:1rem">${etZal} <span style="font-size:.65rem;color:var(--muted)">L AAE</span></div>
+      ${etCena>0?`<div style="font-size:.6rem;color:var(--muted);margin-top:.1rem">${eur(etCena)} €/L AAE · ${eur(etZal*etCena)} €</div>`:''}
+    </div>`:'';
   const brezStroska=tipi.reduce((s,t)=>s+matNabaveBrezStroska(t),0);
   const povzetek=nabavljeno>0?`<div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.7rem;color:var(--muted);padding:.5rem .2rem 0">
       <span>Nabavljeno skupaj: <strong style="color:var(--ink)">${eur(nabavljeno)} €</strong></span>
       <span>Vrednost zaloge: <strong style="color:var(--ink)">${eur(vrednost)} €</strong></span>
     </div>${brezStroska?`<div style="font-size:.66rem;color:#8b5a2a;padding:.25rem .2rem 0;line-height:1.4">⚠ ${brezStroska} ${brezStroska===1?'nabava je':'nabav je'} brez vpisanega stroška — vrednost zaloge je približek.</div>`:''}`:'';
-  grid.innerHTML=zalogeHtml?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${zalogeHtml}</div>${povzetek}`:'';
+  const vseKartice=zalogeHtml+etKartica;
+  grid.innerHTML=vseKartice?`<div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">${vseKartice}</div>${povzetek}`:'';
 }
 
 function renderMateriali(){
   renderMatZaloga();
-  let rows=[...materiali].sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  // Etanol je surovina, zato ga pri filtru "Embalaža" ni.
+  const zEtanolom=matKatFilter!=='embalaza';
+  let rows=[...materiali,...(zEtanolom?etanolKnjiga.map(etKotMaterial):[])]
+    .sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
   // Kategorija filter
-  if(matKatFilter!=='vsi')rows=rows.filter(m=>matKat(m.tip)===matKatFilter);
+  if(matKatFilter!=='vsi')rows=rows.filter(m=>m._et||matKat(m.tip)===matKatFilter);
   // Podfilter
   if(matFilter!=='vsi'&&matFilter!=='vsi_s'&&matFilter!=='vsi_e'){
     rows=rows.filter(m=>
@@ -3614,11 +3655,13 @@ function renderMateriali(){
     document.getElementById('matPager').innerHTML='';return;
   }
   el.innerHTML=page.map(m=>{
+    const isEt=!!m._et;
     const isIn=matJeNabava(m);
     const isDob=matJeDobropis(m);
-    const isUsk=matJeUskladitev(m);
+    const isUsk=!isEt&&matJeUskladitev(m);
     const enota=matEnota(m.tip);
-    const typeLabel=isIn?'Nabava':isDob?'Dobropis':isUsk?'Uskladitev':'Izhod';
+    const typeLabel=isEt?(m._etTip==='nabava'?'Nabava':m._etTip==='regeneracija'?'Regenerat':m._etTip==='poraba-rd'?'R&D':'Ekstrakcija')
+      :isIn?'Nabava':isDob?'Dobropis':isUsk?'Uskladitev':'Izhod';
     const typeCls=isIn?'eth-nabava':isDob?'eth-reg':isUsk?'eth-reg':'eth-izhod';
     return`<div class="eth-card" style="flex-wrap:wrap;gap:.3rem">
       <div style="display:flex;gap:.6rem;align-items:center;flex:1;min-width:0">
@@ -3634,8 +3677,9 @@ function renderMateriali(){
         </div>
       </div>
       <div style="display:flex;gap:.3rem;width:100%;justify-content:flex-end">
-        <button onclick="openMaterijalSheet('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">✎ Uredi</button>
-        <button onclick="deleteMaterjal('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid rgba(139,58,42,.3);border-radius:6px;background:none;cursor:pointer;color:var(--danger)">✕</button>
+        ${isEt?`<button onclick="odpriEtanolIz('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">⧉ Odpri v Etanolu</button>`
+        :`<button onclick="openMaterijalSheet('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">✎ Uredi</button>
+        <button onclick="deleteMaterjal('${m.id}')" style="font-size:.65rem;padding:.2rem .6rem;border:1px solid rgba(139,58,42,.3);border-radius:6px;background:none;cursor:pointer;color:var(--danger)">✕</button>`}
       </div>
     </div>`;
   }).join('');

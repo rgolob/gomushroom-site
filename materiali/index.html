@@ -691,9 +691,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <input id="matDobaviteljNew" style="display:none;margin-top:.4rem" placeholder="Vnesite novega dobavitelja…" autocomplete="off">
       </div>
       <div class="frow">
-        <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label>Strošek nabave (€)</label><input id="matStrosek" type="text" inputmode="decimal" placeholder="0,00"></div>
+        <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0" oninput="osveziCenoEnote()"></div>
+        <div class="field"><label>Strošek nabave — skupaj (€)</label><input id="matStrosek" type="text" inputmode="decimal" placeholder="0,00" oninput="osveziCenoEnote()"></div>
       </div>
+      <div id="matCenaEnote" style="display:none;font-size:.72rem;color:#3a6b4a;margin:-.2rem 0 .5rem"></div>
       <div class="field"><label>Opomba</label><input id="matOpomba" placeholder="Neobvezno"></div>
     </div>
     <div class="shfoot">
@@ -3442,10 +3443,13 @@ function onMatSmerChange(){
   const isUsk=smer==='uskladitev';
   // Dobavitelj in strosek samo pri vhodu
   document.getElementById('matDobaviteljField').style.display=isVhod?'':'none';
-  document.getElementById('matStrosek').closest('.frow').style.display=isVhod?'':'none';
+  // Skrijemo samo polje za strosek, ne cele vrstice - v njej je tudi kolicina,
+  // ki je pri izhodu in uskladitvi nujna.
+  document.getElementById('matStrosek').closest('.field').style.display=isVhod?'':'none';
   // Dokument placeholder
   document.getElementById('matDok').placeholder=isUsk?'npr. INV-2026-05':isVhod?'npr. DOB-2026-01':'—';
   // Opomba: predizpolni za uskladitev
+  osveziCenoEnote();
   const opEl=document.getElementById('matOpomba');
   if(isUsk&&!opEl.value){opEl.value='Uskladitev zaloge — inventura';}
   else if(!isUsk&&opEl.value==='Uskladitev zaloge — inventura'){opEl.value='';}
@@ -3587,10 +3591,25 @@ function onMatKatSelChange(){
   onMatTipChange();
 }
 
+// Vpises skupno placano in kolicino; ceno na enoto izracunamo sproti, da je
+// takoj vidno, ali je stevilka smiselna, in da ni dvoma, kaj polje pomeni.
+function osveziCenoEnote(){
+  const el=document.getElementById('matCenaEnote');
+  if(!el)return;
+  const kol=parseNum(document.getElementById('matKolicina').value);
+  const eur=parseNum(document.getElementById('matStrosek').value);
+  const smer=document.getElementById('matSmer').value;
+  if(smer!=='vhod'||!(kol>0)||!(eur>0)){el.style.display='none';return;}
+  const enota=matEnota(document.getElementById('matTip').value);
+  el.textContent=`= ${(eur/kol).toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:4})} €/${enota}`;
+  el.style.display='';
+}
+
 function onMatTipChange(){
   const tip=document.getElementById('matTip').value;
   const enota=matEnota(tip);
   document.getElementById('matKolLabel').textContent=`Količina (${enota})`;
+  osveziCenoEnote();
   const isGoba=tip.startsWith('goba');
   document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
   document.getElementById('matDobaviteljField').style.display=tip?'':'none';

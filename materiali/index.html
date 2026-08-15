@@ -3237,14 +3237,15 @@ const ET_TIPI={
 function etTipLabel(tip){return ET_TIPI[tip]?.oznaka||'Izhod';}
 function etJeVhodTip(tip){return !!ET_TIPI[tip]?.vhod;}
 
-// Filtri: dve sta ozki (ekstrakcija, R&D), "Porabe" pa zajame vse izhode
-// skupaj, tudi izgube in rocne vnose, ki nimajo svojega tipa.
+// Poraba etanola je ekstrakcija - loceni filter "Porabe" bi bil isto z drugim
+// imenom. Aplikacija v knjigo zapise samo stiri vrste (nabava, regeneracija,
+// izhod_dn, poraba-rd), zato ta spisek pokrije vse; morebiten uvozen zapis
+// druge vrste ostane viden pod "Vsi".
 let etFilter='vsi';
 const ET_FILTRI=[
   {id:'vsi',label:'Vsi',velja:()=>true},
   {id:'nabava',label:'↑ Nabave',velja:e=>e.tip==='nabava'},
   {id:'regeneracija',label:'♻️ Regenerirani',velja:e=>e.tip==='regeneracija'},
-  {id:'poraba',label:'↓ Porabe',velja:e=>!etJeVhodTip(e.tip)},
   {id:'izhod_dn',label:'🍄 Ekstrakcije',velja:e=>e.tip==='izhod_dn'},
   {id:'poraba-rd',label:'🔬 R&D',velja:e=>e.tip==='poraba-rd'},
 ];

@@ -541,6 +541,16 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Račun / dokument</label><input id="etDok" placeholder="1-4-40742" autocapitalize="characters"></div>
       </div>
       <div id="etNabavaFields">
+        <div class="frow">
+          <div class="field"><label>Dobavitelj</label>
+            <input id="etDobavitelj" list="etDobaviteljList" placeholder="npr. ECP d.o.o." autocomplete="off">
+            <datalist id="etDobaviteljList"></datalist>
+          </div>
+          <div class="field"><label>Proizvajalec</label>
+            <input id="etProizvajalec" list="etProizvajalecList" placeholder="če ni isti kot dobavitelj" autocomplete="off">
+            <datalist id="etProizvajalecList"></datalist>
+          </div>
+        </div>
         <div style="display:flex;gap:.3rem;margin-bottom:.5rem">
           <button id="etTogMasa" onclick="setEtVnos('masa')" class="fpill active" style="flex:1">Masa (kg)</button>
           <button id="etTogVol" onclick="setEtVnos('vol')" class="fpill" style="flex:1">Volumen (L)</button>
@@ -699,6 +709,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <label>Dobavitelj</label>
         <select id="matDobaviteljSel" onchange="onDobaviteljSelChange()"></select>
         <input id="matDobaviteljNew" style="display:none;margin-top:.4rem" placeholder="Vnesite novega dobavitelja…" autocomplete="off">
+      </div>
+      <!-- Proizvajalec: pri etanolu in surovinah pogosto ni isti kot dobavitelj -->
+      <div id="matProizvajalecField" class="field" style="display:none">
+        <label>Proizvajalec <span style="color:var(--muted);font-weight:400">— če ni isti kot dobavitelj</span></label>
+        <input id="matProizvajalec" list="matProizvajalecList" placeholder="npr. destilarna, gojitelj" autocomplete="off">
+        <datalist id="matProizvajalecList"></datalist>
       </div>
       <div class="frow">
         <div class="field"><label id="matKolLabel">Količina (kom)</label><input id="matKolicina" type="text" inputmode="decimal" placeholder="0" oninput="osveziCenoEnote()"></div>
@@ -3198,7 +3214,7 @@ function renderEtanol(){
         <div class="eth-info">
           <div class="eth-doc">${e.dokument||'—'}</div>
           ${dnSub}
-          <div class="eth-detail">${fmtDate(e.datum)}</div>
+          <div class="eth-detail">${fmtDate(e.datum)}${virIzpis(e)}</div>
         </div>
         <div class="eth-qty">
           <div class="eth-L" style="color:${isIn?'var(--success)':'var(--danger)'}">${isIn?'+':'-'}${(e.lAAE||0).toFixed(4)} L AAE</div>
@@ -3229,6 +3245,9 @@ function openEtanolSheet(id){
   document.getElementById('etTip').value=e?.tip||'nabava';
   document.getElementById('etDatum').value=e?.datum||todayISO();
   document.getElementById('etDok').value=e?.dokument||'';
+  polniEtDobavitelje();
+  document.getElementById('etDobavitelj').value=e?.dobavitelj||'';
+  document.getElementById('etProizvajalec').value=e?.proizvajalec||'';
   document.getElementById('etMasa').value=e?.masa||'';
   document.getElementById('etVolVnos').value='';
   document.getElementById('etPct').value=e?.pct||'';
@@ -3281,6 +3300,8 @@ function saveEtanol(){
     datum:document.getElementById('etDatum').value,
     tip,
     dokument:document.getElementById('etDok').value.trim(),
+    dobavitelj:document.getElementById('etDobavitelj').value.trim(),
+    proizvajalec:document.getElementById('etProizvajalec').value.trim(),
     opomba:document.getElementById('etOpomba').value.trim(),
     masa:masaKg,pct,gostota,
     kolicina:volL,lAAE:aae,
@@ -3824,7 +3845,7 @@ function renderMateriali(){
         <div class="eth-type ${typeCls}" style="min-width:4rem;font-size:.6rem">${typeLabel}</div>
         <div class="eth-info">
           <div class="eth-doc">${matIme(m.tip)}</div>
-          <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${m.opomba?' · '+m.opomba:''}</div>
+          <div class="eth-detail">${fmtDate(m.datum)}${m.dokument?' · '+m.dokument:''}${m.serijaGobe?' · '+m.serijaGobe:''}${virIzpis(m)}${m.opomba?' · '+m.opomba:''}</div>
         </div>
         <div class="eth-qty">
           <div class="eth-L" style="color:${isIn?'var(--success)':isUsk?'#2a5a8b':isDob?'#8b5a2a':'var(--danger)'}">${isIn?'+':isUsk?'⚖':isDob?'↩ -':'-'}${m.kolicina} ${enota}</div>
@@ -3857,6 +3878,7 @@ function onMatSmerChange(){
   // Dobavitelj in strosek pri nabavi in dobropisu - pri vracilu je treba
   // vedeti komu in koliko ti je vrnil, sicer se nabavna vrednost ne popravi.
   document.getElementById('matDobaviteljField').style.display=(isVhod||isDob)?'':'none';
+  document.getElementById('matProizvajalecField').style.display=(isVhod||isDob)?'':'none';
   // Skrijemo samo polje za strosek, ne cele vrstice - v njej je tudi kolicina,
   // ki je pri izhodu in uskladitvi nujna.
   document.getElementById('matStrosek').closest('.field').style.display=(isVhod||isDob)?'':'none';
@@ -3947,6 +3969,8 @@ function izbrisiMatTip(tip){
 function openMaterijalSheet(id){
   editingMatId=id||null;
   const m=id?materiali.find(x=>x.id===id):null;
+  polniProizvajalce();
+  document.getElementById('matProizvajalec').value=m?.proizvajalec||'';
   document.getElementById('matSheetTitle').textContent=m?'Uredi vnos':'Vnos materiala';
   // Smer
   const smer=m?.smer||'vhod';
@@ -4030,6 +4054,7 @@ function onMatTipChange(){
   const isGoba=tip.startsWith('goba');
   document.getElementById('matGobaSerija').style.display=isGoba?'':'none';
   document.getElementById('matDobaviteljField').style.display=tip?'':'none';
+  const _pf=document.getElementById('matProizvajalecField');if(_pf)_pf.style.display=tip?'':'none';
   // Zgradi dropdown dobaviteljev za ta tip (bere dobavitelj in opomba kot vir)
   const sel=document.getElementById('matDobaviteljSel');
   const cur=getDobaviteljValue();
@@ -4061,6 +4086,33 @@ function onDobaviteljSelChange(){
   inp.style.display=isNew?'':'none';
   if(isNew)setTimeout(()=>inp.focus(),50);
 }
+// Ze uporabljena imena ponudimo v datalistu. Nov vnos je se vedno mogoc -
+// spisek je pripomocek, ne omejitev.
+// Dobavitelj in proizvajalec sta pogosto isti; takrat izpisemo eno samo ime,
+// sicer oba, ker je prav ta razlika razlog, da se proizvajalec sploh vodi.
+function virIzpis(z){
+  const d=(z.dobavitelj||'').trim(),pr=(z.proizvajalec||'').trim();
+  if(!d&&!pr)return'';
+  if(!pr||pr===d)return' · '+d;
+  if(!d)return' · proiz. '+pr;
+  return ` · ${d} (proiz. ${pr})`;
+}
+
+function zbernik(zapisi,polje){
+  return [...new Set(zapisi.map(z=>(z[polje]||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'sl'));
+}
+function polniDatalist(id,imena){
+  const dl=document.getElementById(id);
+  if(dl)dl.innerHTML=imena.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">`).join('');
+}
+function polniProizvajalce(){
+  polniDatalist('matProizvajalecList',zbernik([...materiali,...etanolKnjiga],'proizvajalec'));
+}
+function polniEtDobavitelje(){
+  polniDatalist('etDobaviteljList',zbernik([...etanolKnjiga,...materiali],'dobavitelj'));
+  polniDatalist('etProizvajalecList',zbernik([...etanolKnjiga,...materiali],'proizvajalec'));
+}
+
 function getDobaviteljValue(){
   const sel=document.getElementById('matDobaviteljSel');
   if(!sel)return'';
@@ -4085,6 +4137,7 @@ function saveMaterjal(){
     dokument:document.getElementById('matDok').value.trim(),
     serijaGobe:document.getElementById('matSerijaGobe').value.trim(),
     dobavitelj:(isVhod||isDob)?getDobaviteljValue():'',
+    proizvajalec:(isVhod||isDob)?document.getElementById('matProizvajalec').value.trim():'',
     kolicina,
     strosek:(isVhod||isDob)?parseNum(document.getElementById('matStrosek').value||'0'):0,
     opomba,
@@ -5158,6 +5211,7 @@ function sbToDn(r){return{
 // Converters Etanol ↔ Supabase
 function etToSb(e){return{
   id:e.id,datum:e.datum||null,tip:e.tip,dokument:e.dokument||null,
+  dobavitelj:e.dobavitelj||null,proizvajalec:e.proizvajalec||null,
   opomba:e.opomba||null,masa:e.masa||null,pct:e.pct||null,gostota:e.gostota||null,
   kolicina:e.kolicina||0,l_aae:e.lAAE||0,mas_pct:e.masPct||null,
   trosarina:e.trosarina||null,strosek:e.strosek||0,
@@ -5165,6 +5219,7 @@ function etToSb(e){return{
 };}
 function sbToEt(r){return{
   id:r.id,datum:r.datum,tip:r.tip,dokument:r.dokument||'',
+  dobavitelj:r.dobavitelj||'',proizvajalec:r.proizvajalec||'',
   opomba:r.opomba||'',masa:r.masa||0,pct:r.pct||0,gostota:r.gostota||0,
   kolicina:r.kolicina||0,lAAE:r.l_aae||0,masPct:r.mas_pct||0,
   trosarina:r.trosarina||0,strosek:r.strosek||0,
@@ -5175,13 +5230,13 @@ function sbToEt(r){return{
 function matToSb(m){return{
   id:m.id,datum:m.datum||todayISO(),tip:m.tip,smer:m.smer||'vhod',
   dokument:m.dokument||null,serija_gobe:m.serijaGobe||null,
-  dobavitelj:m.dobavitelj||null,
+  dobavitelj:m.dobavitelj||null,proizvajalec:m.proizvajalec||null,
   kolicina:m.kolicina||0,strosek:m.strosek||0,opomba:m.opomba||null
 };}
 function sbToMat(r){return{
   id:r.id,datum:r.datum,tip:r.tip,smer:r.smer||'vhod',
   dokument:r.dokument||'',serijaGobe:r.serija_gobe||'',
-  dobavitelj:r.dobavitelj||'',
+  dobavitelj:r.dobavitelj||'',proizvajalec:r.proizvajalec||'',
   kolicina:r.kolicina||0,strosek:r.strosek||0,opomba:r.opomba||''
 };}
 
@@ -5244,35 +5299,38 @@ function sbToBil(r){return{
 
 // Sync helpers
 function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
-async function sbPushDN(d){
-  try{await sbUpsert('gm_dn_work_orders',dnToSb(d));setSyncStatus('✓');return;}
+// Ce v bazi manjka kaksen novejsi stolpec, zapis vseeno sinhroniziramo brez
+// njega - sicer bi tiho odpovedala sinhronizacija celega zapisa. Ime stolpca
+// preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem novem polju.
+async function sbPushZapis(tabela,zapis,oznaka){
+  try{await sbUpsert(tabela,zapis);setSyncStatus('✓');return true;}
   catch(e){
-    // Ce v bazi manjka kaksen novejsi stolpec, nalog vseeno sinhroniziramo brez
-    // njega - sicer bi tiho odpovedala sinhronizacija celotnega naloga. Ime
-    // stolpca preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem
-    // novem polju.
     const sporocilo=String(e.message||'');
-    const brez=dnToSb(d);
     const manjka=/PGRST204|Could not find the/i.test(sporocilo)
-      ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in brez)
+      ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in zapis)
       :[];
     if(manjka.length){
+      const brez={...zapis};manjka.forEach(k=>delete brez[k]);
       try{
-        manjka.forEach(k=>delete brez[k]);
-        await sbUpsert('gm_dn_work_orders',brez);
+        await sbUpsert(tabela,brez);
         setSyncStatus('⚠');
-        if(!window._dnStolpciOpozorilo){
-          window._dnStolpciOpozorilo=true;
-          toast('⚠ V Supabase manjka stolpec gm_dn_work_orders.'+manjka.join(' / ')+' — ta podatek se ne sinhronizira');
+        const kljuc='_opozoriloStolpci_'+tabela;
+        if(!window[kljuc]){
+          window[kljuc]=true;
+          toast(`⚠ V Supabase manjka stolpec ${tabela}.${manjka.join(' / ')} — ta podatek se ne sinhronizira`);
         }
-        return;
-      }catch(e2){console.error('sbPushDN (brez '+manjka.join(',')+')',e2);}
+        return true;
+      }catch(e2){console.error(oznaka+' (brez '+manjka.join(',')+')',e2);}
     }
-    setSyncStatus('⚠');console.error('sbPushDN',e);
+    setSyncStatus('⚠');console.error(oznaka,e);
+    return false;
   }
 }
-async function sbPushEt(e){try{await sbUpsert('gm_dn_etanol',etToSb(e));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushEt',e);}}
-async function sbPushMat(m){try{await sbUpsert('gm_dn_materiali',matToSb(m));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushMat',e);toast('⚠ '+e.message.slice(0,120));}}
+async function sbPushDN(d){await sbPushZapis('gm_dn_work_orders',dnToSb(d),'sbPushDN');}
+async function sbPushEt(e){await sbPushZapis('gm_dn_etanol',etToSb(e),'sbPushEt');}
+async function sbPushMat(m){
+  if(!await sbPushZapis('gm_dn_materiali',matToSb(m),'sbPushMat'))toast('⚠ Material ni sinhroniziran');
+}
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
 // Converters zapis GLY <-> Supabase (tabela gm_dn_gly_zapisi)
 function glyToSb(z){return{

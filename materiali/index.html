@@ -247,6 +247,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="zb-val" id="etNabava">— L AAE</div>
       </div>
     </div>
+    <div class="filter-row" id="etFilterRow" style="margin-top:.2rem"></div>
+    <div id="etFilterPovzetek"></div>
     <div id="etanolList"></div>
     <div class="pager" id="etPager"></div>
   </div>
@@ -3224,8 +3226,67 @@ function renderEtStats(){
 }
 
 // ── RENDER ETANOL ──
+// Vrste zapisov v knjigi etanola. Doslej je bil ta prevod prepisan na dveh
+// mestih (seznam in porocilo) in bi se lahko razsel.
+const ET_TIPI={
+  nabava:{oznaka:'Nabava',vhod:true},
+  regeneracija:{oznaka:'Regeneriran',vhod:true},
+  izhod_dn:{oznaka:'Ekstrakcija',vhod:false},
+  'poraba-rd':{oznaka:'R&D',vhod:false},
+};
+function etTipLabel(tip){return ET_TIPI[tip]?.oznaka||'Izhod';}
+function etJeVhodTip(tip){return !!ET_TIPI[tip]?.vhod;}
+
+// Filtri: dve sta ozki (ekstrakcija, R&D), "Porabe" pa zajame vse izhode
+// skupaj, tudi izgube in rocne vnose, ki nimajo svojega tipa.
+let etFilter='vsi';
+const ET_FILTRI=[
+  {id:'vsi',label:'Vsi',velja:()=>true},
+  {id:'nabava',label:'↑ Nabave',velja:e=>e.tip==='nabava'},
+  {id:'regeneracija',label:'♻️ Regenerirani',velja:e=>e.tip==='regeneracija'},
+  {id:'poraba',label:'↓ Porabe',velja:e=>!etJeVhodTip(e.tip)},
+  {id:'izhod_dn',label:'🍄 Ekstrakcije',velja:e=>e.tip==='izhod_dn'},
+  {id:'poraba-rd',label:'🔬 R&D',velja:e=>e.tip==='poraba-rd'},
+];
+function etVelja(id,e){return (ET_FILTRI.find(f=>f.id===id)||ET_FILTRI[0]).velja(e);}
+
+function setEtFilter(id){
+  etFilter=id;etPage=0;
+  renderEtanol();
+}
+
+// Spisek s stevili pove tudi, cesa sploh ni - prazen filter je slabsi od
+// filtra, ki se ne pojavi.
+function renderEtFilterRow(){
+  const row=document.getElementById('etFilterRow');
+  if(!row)return;
+  const vidni=ET_FILTRI.filter(f=>f.id==='vsi'||etanolKnjiga.some(e=>f.velja(e)));
+  if(!vidni.some(f=>f.id===etFilter))etFilter='vsi';
+  row.innerHTML=vidni.map(f=>{
+    const n=f.id==='vsi'?etanolKnjiga.length:etanolKnjiga.filter(e=>f.velja(e)).length;
+    return`<button class="fpill${f.id===etFilter?' active':''}" onclick="setEtFilter('${f.id}')">${f.label} <span style="opacity:.6">${n}</span></button>`;
+  }).join('');
+  pokaziAktivniFilter(row);
+}
+
+// Ob izbranem filtru je zanimiva vsota prav izbranega dela, ne celotne knjige.
+function renderEtFilterPovzetek(rows){
+  const el=document.getElementById('etFilterPovzetek');
+  if(!el)return;
+  if(etFilter==='vsi'||!rows.length){el.innerHTML='';return;}
+  const aae=round(rows.reduce((a,e)=>a+(e.lAAE||0),0),4);
+  const eur=rows.reduce((a,e)=>a+(e.strosek||0),0);
+  const vhod=rows.every(e=>etJeVhodTip(e.tip));
+  el.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem .2rem .5rem">
+    Izbrano: <strong style="color:var(--ink)">${rows.length}</strong> vnosov ·
+    <strong style="color:${vhod?'var(--success)':'var(--danger)'}">${vhod?'+':'−'}${aae.toFixed(4)} L AAE</strong>${eur>0?` · ${eur.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} €`:''}
+  </div>`;
+}
+
 function renderEtanol(){
-  const rows=[...etanolKnjiga].sort((a,b)=>b.datum.localeCompare(a.datum));
+  renderEtFilterRow();
+  const rows=[...etanolKnjiga].filter(e=>etVelja(etFilter,e)).sort((a,b)=>b.datum.localeCompare(a.datum));
+  renderEtFilterPovzetek(rows);
   const total=rows.length;
   const pages=Math.ceil(total/ET_PER_PAGE)||1;
   if(etPage>=pages)etPage=0;
@@ -3233,6 +3294,8 @@ function renderEtanol(){
 
   const el=document.getElementById('etanolList');
   if(!rows.length){
+    // Filtra brez zapisov ni mogoce izbrati (renderEtFilterRow ga skrije in
+    // se vrne na "Vsi"), zato je prazen seznam vedno prazna knjiga.
     el.innerHTML=`<div class="empty"><div class="ei">🧪</div><div class="et">Ni vnosov etanola</div></div>`;
     document.getElementById('etPager').innerHTML='';
     return;
@@ -3240,7 +3303,7 @@ function renderEtanol(){
 
   el.innerHTML=page.map(e=>{
     const isIn=e.tip==='nabava'||e.tip==='regeneracija';
-    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':e.tip==='poraba-rd'?'R&D':'Izhod';
+    const tipLabel=etTipLabel(e.tip);
     const tipCls=e.tip==='nabava'?'eth-nabava':e.tip==='regeneracija'?'eth-reg':'eth-izhod';
     const isDN=e.tip==='izhod_dn';
     // Za DN izhode poiščemo DN podatke
@@ -3426,7 +3489,7 @@ async function genEtanolPorocilo(){
     if(isIn) tekocaZaloga=round(tekocaZaloga+aae,4);
     else tekocaZaloga=round(tekocaZaloga-aae,4);
 
-    const tipLabel=e.tip==='nabava'?'Nabava':e.tip==='regeneracija'?'Regeneriran':e.tip==='izhod_dn'?'Ekstrakcija':e.tip==='poraba-rd'?'R&D':'Izhod';
+    const tipLabel=etTipLabel(e.tip);
     const dn=e.tip==='izhod_dn'?workOrders.find(x=>x.oznaka===e.dokument):null;
     const opis=dn?`${e.dokument} · ${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}`:e.dokument||'—';
 

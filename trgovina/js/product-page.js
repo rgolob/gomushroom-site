@@ -284,7 +284,7 @@ async function loadOpenDN(slug) {
     const vrsta = SLUG_TO_VRSTA[slug];
     if (!vrsta) return;
     const r = await fetch(
-      `${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&vrsta_gobe=eq.${encodeURIComponent(vrsta)}&select=predviden_zakljucek&order=datum.desc&limit=1`,
+      `${SB_URL}/rest/v1/gm_odprti_nalogi?vrsta_gobe=eq.${encodeURIComponent(vrsta)}&select=predviden_zakljucek&order=datum.desc&limit=1`,
       { headers: SB_HEADERS }
     );
     if (!r.ok) return;

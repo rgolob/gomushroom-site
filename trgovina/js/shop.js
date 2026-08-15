@@ -261,7 +261,7 @@ async function loadProducts() {
     fetch(`${SB_URL}/rest/v1/gm_products?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_product_variants?active=eq.true&order=sort_order.asc&select=*`, { headers: SB_HEADERS }),
     fetch(`${SB_URL}/rest/v1/gm_variant_stock_status?select=*`, { headers: SB_HEADERS }),
-    fetch(`${SB_URL}/rest/v1/gm_dn_work_orders?status=eq.odprt&select=vrsta_gobe,serija_alc,oznaka,datum,predviden_zakljucek`, { headers: SB_HEADERS }),
+    fetch(`${SB_URL}/rest/v1/gm_odprti_nalogi?select=vrsta_gobe,serija_alc,oznaka,datum,predviden_zakljucek`, { headers: SB_HEADERS }),
     loadProductRatings()
   ]);
   if (!prodRes.ok || !varRes.ok) throw new Error('Napaka pri nalaganju.');

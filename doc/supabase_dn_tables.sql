@@ -130,6 +130,14 @@ ALTER TABLE gm_dn_materiali
 ALTER TABLE gm_dn_work_orders
   ADD COLUMN IF NOT EXISTS serije jsonb;
 
+-- gm_dn_materiali / gm_dn_etanol: proizvajalec (pri etanolu pogosto ni isti kot
+-- dobavitelj), etanol pa doslej dobavitelja sploh ni imel
+ALTER TABLE gm_dn_materiali
+  ADD COLUMN IF NOT EXISTS proizvajalec text;
+ALTER TABLE gm_dn_etanol
+  ADD COLUMN IF NOT EXISTS dobavitelj text,
+  ADD COLUMN IF NOT EXISTS proizvajalec text;
+
 -- ── Dovoli dostop z anon ključem ────────────────────────────────────────────
 -- Najlažje: v Supabase -> Authentication -> Policies -> onemogoči RLS za te tabele
 -- ALI dodaj politiko:

@@ -173,6 +173,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* ── LOGIN ── */
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 </style>
+<script src="../js/gm-auth.js"></script>
 </head>
 <body>
 
@@ -188,6 +189,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </button>
       <div style="font-size:.68rem;color:rgba(245,240,232,.3);margin-top:.6rem">ali</div>
     </div>
+    <input id="loginEmail" type="email" placeholder="E-naslov…" autocomplete="username" inputmode="email"
+      style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:.6rem;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')document.getElementById('loginPwd').focus()">
     <input id="loginPwd" type="password" placeholder="Geslo…" autocomplete="current-password"
       style="width:100%;padding:.9rem 1.1rem;border:1px solid rgba(175,132,85,.3);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;background:rgba(255,255,255,.06);color:#f5f0e8;outline:none;-webkit-appearance:none;margin-bottom:1rem;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')this.nextElementSibling.click()">
@@ -5376,6 +5380,15 @@ function delBilanca(id){
 const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+// ── Prijava v Supabase ──
+// Modul vpisuje zeton v isti objekt glave, ki ga aplikacija podaja vsakemu
+// zahtevku, zato klicnih mest ni treba spreminjati. Brez seje ostane v glavi
+// publishable kljuc in aplikacija dela kot doslej, le da opozori.
+GMAuth.init({
+  url:SB_URL, anonKey:SB_KEY, headers:SB_HDR,
+  onState:st=>{try{renderAuthOpozorilo(st);}catch(e){}},
+}).catch(e=>console.warn('GMAuth init',e));
+
 
 async function sbFetch(tbl,params=''){
   const r=await fetch(`${SB_URL}/rest/v1/${tbl}?${params}`,{headers:SB_HDR});
@@ -5753,17 +5766,62 @@ async function setupFaceId(){
 const LOGIN_HASH='9ba705471abb425a3f76d89a4ed3121f4832e0e20feff84412f21cff5166b3f5';
 async function hashPwd(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function doLogin(){
+  const email=(document.getElementById('loginEmail')?.value||'').trim();
   const pwd=document.getElementById('loginPwd')?.value||'';
   const err=document.getElementById('loginErr');
-  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
-  if(await hashPwd(pwd)===LOGIN_HASH){
-    try{localStorage.setItem('gm_auth','1');}catch(e){}
+  const konec=()=>{
     document.getElementById('loginScreen').style.display='none';
     if(err)err.textContent='';
-    appInit();
-  }else{
-    if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
-    document.getElementById('loginPwd').value='';
+    if(typeof appInit==='function')appInit();
+  };
+  if(!pwd){if(err)err.textContent='Vnesite geslo.';return;}
+
+  // Prava prijava: zeton uporabnika gre odslej v vsak zahtevek proti Supabase.
+  if(email){
+    if(err)err.textContent='Prijavljam…';
+    try{
+      await GMAuth.prijava(email,pwd);
+      try{localStorage.setItem('gm_auth','1');localStorage.setItem('gm_last_email',email);}catch(e){}
+      return konec();
+    }catch(e){
+      // Supabase vrne 400 tudi, kadar uporabnik obstaja, a e-naslov ni potrjen.
+      // Tega ne smemo prevesti v "napačno geslo" - prav ob prvi nastavitvi bi
+      // to poslalo cloveka iskat napako tam, kjer je ni.
+      if(err){
+        const m=String(e.message||'');
+        err.textContent=/not confirmed/i.test(m)?'E-naslov v Supabase ni potrjen — v Authentication → Users ga potrdi.'
+          :/disabled|not enabled/i.test(m)?'Prijava z e-naslovom v Supabase ni vklopljena.'
+          :e.status===400?'Napačen e-naslov ali geslo.'
+          :'Prijava ni uspela: '+m;
+        setTimeout(()=>{if(!err.textContent.startsWith('Napačen'))err.textContent='';},8000);
+      }
+      document.getElementById('loginPwd').value='';
+      return;
+    }
+  }
+
+  // Brez e-naslova ostane stara pot z geslom v strani. Dokler v Supabase ni
+  // ustvarjenega uporabnika, je to edini nacin, da lastnik pride do svojih
+  // podatkov - zato je ohranjena, aplikacija pa na to vidno opozori.
+  if(await hashPwd(pwd)===LOGIN_HASH){
+    try{localStorage.setItem('gm_auth','1');}catch(e){}
+    return konec();
+  }
+  if(err){err.textContent='Napačno geslo.';setTimeout(()=>err.textContent='',2500);}
+  document.getElementById('loginPwd').value='';
+}
+
+// Opozorilo je namenoma vsiljivo: brez seje zahtevki nosijo publishable kljuc,
+// ki je zapisan v strani, in podatki niso zasciteni.
+function renderAuthOpozorilo(st){
+  let el=document.getElementById('authOpozorilo');
+  if(st.prijavljen){if(el)el.remove();return;}
+  if(!el){
+    el=document.createElement('div');
+    el.id='authOpozorilo';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:900;background:#8b3a2a;color:#fff;font-family:Jost,sans-serif;font-size:.68rem;line-height:1.4;padding:.45rem .8rem;text-align:center';
+    el.innerHTML='⚠ Prijava brez Supabase Auth — podatki niso zaščiteni. Prijavi se z e-naslovom.';
+    document.body.appendChild(el);
   }
 }
 (function(){

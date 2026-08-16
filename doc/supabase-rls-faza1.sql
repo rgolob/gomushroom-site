@@ -28,8 +28,13 @@ create or replace view gm_odprti_nalogi as
 grant select on gm_odprti_nalogi to anon, authenticated;
 
 -- ── 2. Vklopi RLS in dovoli samo prijavljenim ──────────────────────────────
+-- POZOR: odstranimo VSE obstojece politike na teh tabelah, ne le svoje.
+-- Del tabel (gm_dn_*) ze ima politiko, vezano na vlogo anon. Ce bi jo pustili,
+-- bi tabela po vklopu RLS ostala odprta za publishable kljuc - videti bi bilo
+-- kot zascita, delovalo pa ne bi. Politike najprej izpisemo, da se vidi, kaj
+-- je bilo odstranjeno.
 do $$
-declare t text;
+declare t text; pol text; n int;
 begin
   foreach t in array array[
     'gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
@@ -40,11 +45,17 @@ begin
     if to_regclass(t) is null then
       raise notice 'preskocena (ne obstaja): %', t; continue;
     end if;
+    n := 0;
+    for pol in select policyname from pg_policies
+                where schemaname='public' and tablename=t loop
+      execute format('drop policy %I on %I', pol, t);
+      raise notice '  odstranjena stara politika %.%', t, pol;
+      n := n + 1;
+    end loop;
     execute format('alter table %I enable row level security', t);
-    execute format('drop policy if exists gm_auth_all on %I', t);
     execute format(
       'create policy gm_auth_all on %I for all to authenticated using (true) with check (true)', t);
-    raise notice 'zakljeno: %', t;
+    raise notice 'zaklenjeno: %  (odstranjenih starih politik: %)', t, n;
   end loop;
 end $$;
 

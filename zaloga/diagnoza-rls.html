@@ -83,21 +83,30 @@ async function tek(){
        <td class="${c(b)}">${b.txt}${b.opomba?`<br><span class="dim">${b.opomba}</span>`:''}</td></tr>`);
   }
 
-  // Razlaga naj bo tu, ne v glavi bralca: iz razlike med stolpcema se da
-  // vzrok prebrati enolicno.
-  const zasebne=izidi.filter(x=>x.t.startsWith('gm_dn_')||['gm_customers','gm_invoices','gm_sale_groups','gm_batches'].includes(x.t));
-  const anonBere=zasebne.some(x=>x.a.stanje==='ok');
-  const zetonBere=zasebne.some(x=>x.b.stanje==='ok');
+  // Stanje se od tabele do tabele razlikuje, zato ga presojamo za vsako
+  // posebej. Prvi poskus je sklepal s "some()" cez vse skupaj in je pri
+  // mesanem stanju - del tabel zaklenjenih, del ne - povedal narobe.
   const el=document.getElementById('izid');
   if(!s){el.innerHTML='';return;}
-  if(zetonBere&&anonBere)
-    el.innerHTML='<div class="izid slabo"><strong>RLS še ni vklopljen.</strong> Zasebne tabele bere tudi publishable ključ — torej kdorkoli. Poženi <code>doc/supabase-rls-faza1.sql</code>.</div>';
-  else if(zetonBere&&!anonBere)
-    el.innerHTML='<div class="izid dobro"><strong>Tako mora biti.</strong> Zasebne tabele bere samo tvoj žeton, publishable ključ ne vrne ničesar.</div>';
-  else if(!zetonBere&&!anonBere)
-    el.innerHTML='<div class="izid slabo"><strong>Nihče ne bere.</strong> RLS je vklopljen, a politike ne prepoznajo tvojega žetona — ali pa so tabele res prazne. Preveri v Table Editorju, ali so vrstice tam; če so, poženi <code>doc/supabase-rls-faza1.sql</code>.</div>';
-  else
-    el.innerHTML='<div class="izid slabo"><strong>Bere samo publishable ključ, tvoj žeton pa ne.</strong> Politika je vezana na vlogo <code>anon</code>. Popravi jo z <code>doc/supabase-rls-faza1.sql</code>, ki dovoli <code>authenticated</code>.</div>';
+  const ZASEBNE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
+                 'gm_customers','gm_invoices','gm_sale_groups','gm_batches'];
+  const sk={odprte:[],zaklenjene:[],anonOnly:[],nihce:[]};
+  izidi.filter(x=>ZASEBNE.includes(x.t)).forEach(({t,a,b})=>{
+    const A=a.stanje==='ok',B=b.stanje==='ok';
+    if(A&&B)sk.odprte.push(t); else if(!A&&B)sk.zaklenjene.push(t);
+    else if(A&&!B)sk.anonOnly.push(t); else sk.nihce.push(t);
+  });
+  const sez=a=>`<code>${a.join('</code>, <code>')}</code>`;
+  const deli=[];
+  if(sk.anonOnly.length)deli.push(`<div><strong class="err">Politika vezana na <code>anon</code>:</strong> ${sez(sk.anonOnly)}<br>
+    <span class="dim">RLS je vklopljen, a dovoljuje samo publishable ključ — tvoj žeton ne vidi ničesar. To je vzrok za „SB prazno". Popravi z <code>doc/supabase-rls-faza1.sql</code>.</span></div>`);
+  if(sk.odprte.length)deli.push(`<div style="margin-top:.55rem"><strong class="warn">Brez zaščite:</strong> ${sez(sk.odprte)}<br>
+    <span class="dim">Bere jih tudi publishable ključ, torej kdorkoli. Zaklene jih ista datoteka.</span></div>`);
+  if(sk.nihce.length)deli.push(`<div style="margin-top:.55rem"><strong class="warn">Ne bere nihče:</strong> ${sez(sk.nihce)}<br>
+    <span class="dim">Ali je tabela prazna ali pa RLS nima nobene politike.</span></div>`);
+  if(sk.zaklenjene.length)deli.push(`<div style="margin-top:.55rem"><strong class="ok">Pravilno zaklenjeno:</strong> ${sez(sk.zaklenjene)}</div>`);
+  const vseDobro=sk.zaklenjene.length&&!sk.odprte.length&&!sk.anonOnly.length;
+  el.innerHTML=`<div class="izid ${vseDobro?'dobro':'slabo'}">${deli.join('')}</div>`;
 }
 tek();
 </script>

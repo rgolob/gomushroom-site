@@ -59,6 +59,48 @@ begin
   end loop;
 end $$;
 
+-- ── 2b. Tabele, ki jih uporablja samo zaloga ───────────────────────────────
+-- Manjkale so v prvem seznamu. Trgovina se jih ne dotakne, zato enak zaklep.
+do $$
+declare t text; pol text;
+begin
+  foreach t in array array['gm_data','gm_expenses','partner_data'] loop
+    if to_regclass(t) is null then
+      raise notice 'preskocena (ne obstaja): %', t; continue;
+    end if;
+    for pol in select policyname from pg_policies
+                where schemaname='public' and tablename=t loop
+      execute format('drop policy %I on %I', pol, t);
+      raise notice '  odstranjena stara politika %.%', t, pol;
+    end loop;
+    execute format('alter table %I enable row level security', t);
+    execute format(
+      'create policy gm_auth_all on %I for all to authenticated using (true) with check (true)', t);
+    raise notice 'zaklenjeno: %', t;
+  end loop;
+end $$;
+
+-- ── 2c. Tabele, ki jih delita trgovina in zaloga ───────────────────────────
+-- Trgovina mora do njih brez prijave, zato obstojecih politik NE brisemo -
+-- samo dodamo se eno za prijavljenega, da zaloga spet bere in pise. Brisanje
+-- bi podrlo prodajo.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'gm_products','gm_product_variants','gm_settings','gm_reviews','gm_orders'
+  ] loop
+    if to_regclass(t) is null then
+      raise notice 'preskocena (ne obstaja): %', t; continue;
+    end if;
+    execute format('alter table %I enable row level security', t);
+    execute format('drop policy if exists gm_auth_all on %I', t);
+    execute format(
+      'create policy gm_auth_all on %I for all to authenticated using (true) with check (true)', t);
+    raise notice 'dodan dostop za prijavljenega: %  (obstojece politike ostajajo)', t;
+  end loop;
+end $$;
+
 -- ── 3. Preveri, kaj je zdaj zaklenjeno ─────────────────────────────────────
 -- rowsecurity mora biti true pri vseh spodnjih tabelah.
 select c.relname as tabela, c.relrowsecurity as rls_vklopljen,
@@ -66,7 +108,8 @@ select c.relname as tabela, c.relrowsecurity as rls_vklopljen,
          where p.schemaname='public' and p.tablename=c.relname) as st_politik
 from pg_class c
 join pg_namespace n on n.oid=c.relnamespace
-where n.nspname='public' and c.relkind='r' and c.relname like 'gm\_%'
+where n.nspname='public' and c.relkind='r'
+  and (c.relname like 'gm\_%' or c.relname='partner_data')
 order by c.relrowsecurity desc, c.relname;
 
 -- ── 4. Kontrolni seznam po zagonu ──────────────────────────────────────────

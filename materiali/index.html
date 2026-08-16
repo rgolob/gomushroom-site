@@ -1132,6 +1132,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <input type="file" id="importDNInput" accept=".json" style="display:none" onchange="importDN(this)">
       <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#2a5a8b;border-color:rgba(42,90,139,.3)" onclick="migrirajVSupabase()">☁️ Sinhroniziraj localStorage → Supabase</button>
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="odpriObnovo()">🛟 Preveri in obnovi podatke</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#5a6a2a;border-color:rgba(90,106,42,.3)" onclick="deduplicirajMateriale()">🔧 Dedupliraj materiale izhod</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#3a6b4a;border-color:rgba(58,107,74,.35)" onclick="retroaktivnoPoknjiziVseDN()">📦 Retroaktivno poknjiži vse DN</button>
       <div style="margin-bottom:.75rem">
@@ -5633,8 +5634,30 @@ async function sbPushMatTipi(){
 
 async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
 
+// Stran za obnovo bere localStorage neposredno, zato deluje tudi takrat, ko
+// aplikacija na zaslonu ze kaze streznisko kopijo. Odpremo jo v novem zavihku,
+// da stanje aplikacije ostane nedotaknjeno.
+function odpriObnovo(){
+  closeSheet('settingsOverlay');
+  window.open('./obnovi.html','_blank');
+}
+
+// Gumb obljublja "localStorage -> Supabase", posiljal pa je tisto, kar ima
+// aplikacija v pomnilniku. To dvoje se razlikuje natanko takrat, ko je razlika
+// najbolj nevarna: loadFromSB zamenja pomnilnik s strezniskimi podatki in v
+// localStorage pri tem ne pise, zato bi gumb po nalaganju poslal streznisko
+// kopijo nazaj na streznik namesto lokalnih vnosov. Obratno se ne more zgoditi
+// - vsaka uporabnikova akcija poklice save() -, zato je localStorage vedno
+// vsaj tako svez kot pomnilnik in je pravi vir.
+function beriLokalno(kljuc){
+  try{const v=JSON.parse(localStorage.getItem(kljuc)||'[]');return Array.isArray(v)?v:[];}
+  catch(e){return [];}
+}
 async function migrirajVSupabase(){
-  if(!confirm(`Sinhroniziraj VSE lokalne podatke v Supabase?\n\nDN: ${workOrders.length}\nEtanol: ${etanolKnjiga.length}\nMateriali: ${materiali.length}\nOprema: ${oprema.length}\nR&D: ${rdNalogi.length}\nBilanca: ${bilancaDogodki.length}\n\nObstoječi zapisi v Supabase bodo prepisani.`))return;
+  const lWo=beriLokalno('gm_dn_workorders'),lEt=beriLokalno('gm_dn_etanol'),
+        lMat=beriLokalno('gm_dn_materiali'),lOp=beriLokalno('gm_dn_oprema'),
+        lRd=beriLokalno('gm_dn_rd'),lBil=beriLokalno('gm_dn_bilanca');
+  if(!confirm(`Sinhroniziraj VSE lokalne podatke v Supabase?\n\nDN: ${lWo.length}\nEtanol: ${lEt.length}\nMateriali: ${lMat.length}\nOprema: ${lOp.length}\nR&D: ${lRd.length}\nBilanca: ${lBil.length}\n\nObstoječi zapisi v Supabase bodo prepisani.`))return;
   closeSheet('settingsOverlay');
   setSyncStatus('↻');
   toast('⏳ Sinhronizacija…');
@@ -5643,15 +5666,15 @@ async function migrirajVSupabase(){
       for(let i=0;i<rows.length;i+=50)
         await sbUpsert(tbl,rows.slice(i,i+50));
     };
-    await chunk('gm_dn_work_orders',workOrders.map(dnToSb));
-    await chunk('gm_dn_etanol',etanolKnjiga.map(etToSb));
-    await chunk('gm_dn_materiali',materiali.map(matToSb));
-    await chunk('gm_dn_oprema',oprema.map(opToSb));
-    if(rdNalogi.length)await chunk('gm_dn_rd',rdNalogi.map(rdToSb));
-    if(bilancaDogodki.length)await chunk('gm_dn_bilanca',bilancaDogodki.map(bilToSb));
+    await chunk('gm_dn_work_orders',lWo.map(dnToSb));
+    await chunk('gm_dn_etanol',lEt.map(etToSb));
+    await chunk('gm_dn_materiali',lMat.map(matToSb));
+    await chunk('gm_dn_oprema',lOp.map(opToSb));
+    if(lRd.length)await chunk('gm_dn_rd',lRd.map(rdToSb));
+    if(lBil.length)await chunk('gm_dn_bilanca',lBil.map(bilToSb));
     await sbPushMatTipi();
     setSyncStatus('✓');
-    toast(`✓ Sinhronizirano: ${workOrders.length} DN, ${etanolKnjiga.length} et, ${materiali.length} mat, ${oprema.length} op, ${rdNalogi.length} R&D, ${bilancaDogodki.length} bilanca`);
+    toast(`✓ Sinhronizirano: ${lWo.length} DN, ${lEt.length} et, ${lMat.length} mat, ${lOp.length} op, ${lRd.length} R&D, ${lBil.length} bilanca`);
   }catch(e){
     setSyncStatus('⚠');
     toast('❌ Napaka: '+e.message);

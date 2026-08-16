@@ -5692,7 +5692,11 @@ async function loadFromSB(){
     if(rds.length)rdNalogi=rds.map(sbToRd);
     if(bils.length)bilancaDogodki=bils.map(sbToBil);
     if(glys.length){
-      const zapisi={};
+      // Zdruzimo, ne prepisemo. Zapis, ki na streznik ni prisel - ker je bila
+      // sinhronizacija zavrnjena ali ker naprava ni imela povezave - obstaja
+      // samo tukaj; prepis bi ga izbrisal z edinega mesta, kjer se je nahajal.
+      let zapisi={};
+      try{zapisi=JSON.parse(localStorage.getItem('gm_dn_gly_zapisi')||'{}');}catch(e){}
       glys.map(sbToGly).forEach(z=>{zapisi[z.id]=z;});
       localStorage.setItem('gm_dn_gly_zapisi',JSON.stringify(zapisi));
     }

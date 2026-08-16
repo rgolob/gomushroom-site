@@ -33,9 +33,14 @@ code{background:rgba(255,255,255,.07);padding:.05rem .3rem;border-radius:3px}
 <script>
 const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
-const TABELE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
-              'gm_customers','gm_invoices','gm_sale_groups','gm_batches',
-              'gm_products','gm_odprti_nalogi'];
+// Zasebne: samo prijavljeni. Deljene: trgovina brez prijave in zaloga s
+// prijavo - tam mora brati oboje. Javne bere trgovina.
+const ZASEBNE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
+               'gm_dn_rd','gm_dn_bilanca','gm_customers','gm_invoices',
+               'gm_sale_groups','gm_batches','gm_data','gm_expenses','partner_data'];
+const DELJENE=['gm_products','gm_product_variants','gm_settings','gm_reviews','gm_orders'];
+const JAVNE=['gm_odprti_nalogi','gm_variant_stock_status'];
+const TABELE=[...ZASEBNE,...DELJENE,...JAVNE];
 
 function seja(){try{return JSON.parse(localStorage.getItem('gm_sb_session')||'null');}catch(e){return null;}}
 
@@ -88,8 +93,6 @@ async function tek(){
   // mesanem stanju - del tabel zaklenjenih, del ne - povedal narobe.
   const el=document.getElementById('izid');
   if(!s){el.innerHTML='';return;}
-  const ZASEBNE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
-                 'gm_customers','gm_invoices','gm_sale_groups','gm_batches'];
   const sk={odprte:[],zaklenjene:[],anonOnly:[],nihce:[]};
   izidi.filter(x=>ZASEBNE.includes(x.t)).forEach(({t,a,b})=>{
     const A=a.stanje==='ok',B=b.stanje==='ok';
@@ -105,7 +108,16 @@ async function tek(){
   if(sk.nihce.length)deli.push(`<div style="margin-top:.55rem"><strong class="warn">Ne bere nihče:</strong> ${sez(sk.nihce)}<br>
     <span class="dim">Ali je tabela prazna ali pa RLS nima nobene politike.</span></div>`);
   if(sk.zaklenjene.length)deli.push(`<div style="margin-top:.55rem"><strong class="ok">Pravilno zaklenjeno:</strong> ${sez(sk.zaklenjene)}</div>`);
-  const vseDobro=sk.zaklenjene.length&&!sk.odprte.length&&!sk.anonOnly.length;
+
+  // Deljene tabele mora brati OBOJE - trgovina brez prijave in zaloga z njo.
+  const slabeDeljene=izidi.filter(x=>DELJENE.includes(x.t)&&!(x.a.stanje==='ok'&&x.b.stanje==='ok'));
+  if(slabeDeljene.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Deljene tabele, ki jih ne bere oboje:</strong> ${sez(slabeDeljene.map(x=>x.t))}<br>
+    <span class="dim">Trgovina jih mora brati brez prijave, zaloga pa s prijavo. Popravi z razdelkom 2c v <code>doc/supabase-rls-faza1.sql</code>.</span></div>`);
+  const slabeJavne=izidi.filter(x=>JAVNE.includes(x.t)&&x.a.stanje!=='ok');
+  if(slabeJavne.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Trgovina ne bere:</strong> ${sez(slabeJavne.map(x=>x.t))}<br>
+    <span class="dim">Brez tega v trgovini izgine podatek o naslednji seriji ali zalogi.</span></div>`);
+
+  const vseDobro=sk.zaklenjene.length&&!sk.odprte.length&&!sk.anonOnly.length&&!sk.nihce.length&&!slabeDeljene.length&&!slabeJavne.length;
   el.innerHTML=`<div class="izid ${vseDobro?'dobro':'slabo'}">${deli.join('')}</div>`;
 }
 tek();

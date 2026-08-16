@@ -101,6 +101,31 @@ begin
   end loop;
 end $$;
 
+-- ── 2d. Pogledi morajo teci z lastnikovimi pravicami ───────────────────────
+-- Trgovina bere zalogo iz pogleda gm_variant_stock_status, ta pa jo sesteva iz
+-- gm_batches in gm_sale_lines - tabel, ki sta zdaj zaklenjeni. Ce pogled tece
+-- s pravicami klicatelja (security_invoker=true), anon skozenj ne vidi nobene
+-- sarze in trgovina pokaze, da ni nicesar na zalogi. Vrstice se vrne, zato je
+-- napaka videti kot prava nicelna zaloga - najbolj zoprna oblika.
+--
+-- Z lastnikovimi pravicami pogled sme sesteti zaklenjeni tabeli, navzven pa
+-- pokaze samo skupno kolicino - torej natanko toliko, kot mora biti javno.
+do $$
+declare v text;
+begin
+  foreach v in array array['gm_variant_stock_status','gm_odprti_nalogi'] loop
+    if to_regclass(v) is null then
+      raise notice 'preskocen (ne obstaja): %', v; continue;
+    end if;
+    execute format('alter view %I set (security_invoker = off)', v);
+    raise notice 'pogled tece z lastnikovimi pravicami: %', v;
+  end loop;
+exception when others then
+  -- Na starejsem Postgresu te moznosti ni; tam pogledi ze privzeto tecejo
+  -- z lastnikovimi pravicami in popravek ni potreben.
+  raise notice 'security_invoker ni podprt (starejsi Postgres) - pogledi ze tecejo z lastnikovimi pravicami';
+end $$;
+
 -- ── 3. Preveri, kaj je zdaj zaklenjeno ─────────────────────────────────────
 -- rowsecurity mora biti true pri vseh spodnjih tabelah.
 select c.relname as tabela, c.relrowsecurity as rls_vklopljen,
@@ -122,6 +147,8 @@ order by c.relrowsecurity desc, c.relname;
 -- Brez prijave (odjavi se ali odpri v anonimnem oknu):
 --   [ ] Trgovina: izdelki, cene, recenzije se prikažejo
 --   [ ] Trgovina: datum naslednje serije se še vedno prikaže (pogled deluje)
+--   [ ] Trgovina: pri izdelkih piše zaloga, NE "ni na zalogi" (pogled sešteva
+--       gm_batches, ki je zaklenjen — glej 2d)
 --   [ ] Trgovina: nakup gre do konca (najprej s testno kartico)
 --   [ ] curl spodaj mora vrniti prazno ali napako, NE pa vrstic:
 --       curl -s "https://<projekt>.supabase.co/rest/v1/gm_customers?select=*" \

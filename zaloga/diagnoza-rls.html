@@ -92,7 +92,17 @@ async function tek(){
   // posebej. Prvi poskus je sklepal s "some()" cez vse skupaj in je pri
   // mesanem stanju - del tabel zaklenjenih, del ne - povedal narobe.
   const el=document.getElementById('izid');
-  if(!s){el.innerHTML='';return;}
+  // Brez seje lahko preverimo samo levi stolpec - a ta ze pove, ali je zaklep
+  // prijel. Molcati bi pomenilo zamolcati polovico odgovora.
+  if(!s){
+    const odprte=izidi.filter(x=>ZASEBNE.includes(x.t)&&x.a.stanje==='ok').map(x=>x.t);
+    el.innerHTML=odprte.length
+      ?`<div class="izid slabo"><strong class="err">Publishable ključ še bere zasebne tabele:</strong> <code>${odprte.join('</code>, <code>')}</code><br>
+         <span class="dim">Zaklep pri teh še ni prijel. Poženi <code>doc/supabase-rls-faza1.sql</code>.</span></div>`
+      :`<div class="izid dobro"><strong>Zaklep drži.</strong> Publishable ključ ne bere nobene zasebne tabele.<br>
+         <span class="dim">Za drugo polovico preizkusa se prijavi v zalogo ali materiale na tej napravi in osveži to stran — šele takrat se vidi, ali tvoj žeton pride skozi.</span></div>`;
+    return;
+  }
   const sk={odprte:[],zaklenjene:[],anonOnly:[],nihce:[]};
   izidi.filter(x=>ZASEBNE.includes(x.t)).forEach(({t,a,b})=>{
     const A=a.stanje==='ok',B=b.stanje==='ok';

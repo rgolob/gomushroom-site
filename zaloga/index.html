@@ -1442,7 +1442,17 @@ async function doLogin(){
       try{localStorage.setItem('gm_auth','1');localStorage.setItem('gm_last_email',email);}catch(e){}
       return konec();
     }catch(e){
-      if(err){err.textContent=e.status===400?'Napačen e-naslov ali geslo.':'Prijava ni uspela: '+e.message;setTimeout(()=>{if(err.textContent.startsWith('Prijava ni uspela'))err.textContent='';},6000);}
+      // Supabase vrne 400 tudi, kadar uporabnik obstaja, a e-naslov ni potrjen.
+      // Tega ne smemo prevesti v "napačno geslo" - prav ob prvi nastavitvi bi
+      // to poslalo cloveka iskat napako tam, kjer je ni.
+      if(err){
+        const m=String(e.message||'');
+        err.textContent=/not confirmed/i.test(m)?'E-naslov v Supabase ni potrjen — v Authentication → Users ga potrdi.'
+          :/disabled|not enabled/i.test(m)?'Prijava z e-naslovom v Supabase ni vklopljena.'
+          :e.status===400?'Napačen e-naslov ali geslo.'
+          :'Prijava ni uspela: '+m;
+        setTimeout(()=>{if(!err.textContent.startsWith('Napačen'))err.textContent='';},8000);
+      }
       document.getElementById('loginPwd').value='';
       return;
     }

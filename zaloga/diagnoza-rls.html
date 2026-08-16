@@ -50,7 +50,8 @@ function seja(){try{return JSON.parse(localStorage.getItem('gm_sb_session')||'nu
 // "200 in nic vrstic" ter "401" bistvena in ju je treba lociti.
 async function preveri(tabela,zeton){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${tabela}?select=*&limit=1`,{
+    const locilo=tabela.includes('?')?'':'?';
+    const r=await fetch(`${SB_URL}/rest/v1/${tabela}${locilo}select=*&limit=1`,{
       headers:{apikey:SB_KEY,Authorization:'Bearer '+zeton},
     });
     if(!r.ok){
@@ -115,8 +116,16 @@ async function tek(){
     <span class="dim">RLS je vklopljen, a dovoljuje samo publishable ključ — tvoj žeton ne vidi ničesar. To je vzrok za „SB prazno". Popravi z <code>doc/supabase-rls-faza1.sql</code>.</span></div>`);
   if(sk.odprte.length)deli.push(`<div style="margin-top:.55rem"><strong class="warn">Brez zaščite:</strong> ${sez(sk.odprte)}<br>
     <span class="dim">Bere jih tudi publishable ključ, torej kdorkoli. Zaklene jih ista datoteka.</span></div>`);
-  if(sk.nihce.length)deli.push(`<div style="margin-top:.55rem"><strong class="warn">Ne bere nihče:</strong> ${sez(sk.nihce)}<br>
-    <span class="dim">Ali je tabela prazna ali pa RLS nima nobene politike.</span></div>`);
+  // Ce sestrske tabele z isto politiko berejo, potem politika ocitno deluje in
+  // je prazen odgovor prazna tabela - ne zaprta. To je treba povedati, sicer
+  // izpis brez potrebe skrbi.
+  if(sk.nihce.length){
+    const politikaDela=sk.zaklenjene.length>0;
+    deli.push(`<div style="margin-top:.55rem"><strong class="${politikaDela?'dim':'warn'}">Ne bere nihče:</strong> ${sez(sk.nihce)}<br>
+      <span class="dim">${politikaDela
+        ?'Politika deluje — druge tabele z isto politiko berejo — zato so te najbrž prazne. Preveri v Table Editorju.'
+        :'Ali je tabela prazna ali pa RLS nima nobene politike.'}</span></div>`);
+  }
   if(sk.zaklenjene.length)deli.push(`<div style="margin-top:.55rem"><strong class="ok">Pravilno zaklenjeno:</strong> ${sez(sk.zaklenjene)}</div>`);
 
   // Deljene tabele mora brati OBOJE - trgovina brez prijave in zaloga z njo.
@@ -124,8 +133,19 @@ async function tek(){
   if(slabeDeljene.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Deljene tabele, ki jih ne bere oboje:</strong> ${sez(slabeDeljene.map(x=>x.t))}<br>
     <span class="dim">Trgovina jih mora brati brez prijave, zaloga pa s prijavo. Popravi z razdelkom 2c v <code>doc/supabase-rls-faza1.sql</code>.</span></div>`);
   const slabeJavne=izidi.filter(x=>JAVNE.includes(x.t)&&x.a.stanje!=='ok');
-  if(slabeJavne.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Trgovina ne bere:</strong> ${sez(slabeJavne.map(x=>x.t))}<br>
-    <span class="dim">Brez tega v trgovini izgine podatek o naslednji seriji ali zalogi.</span></div>`);
+  if(slabeJavne.length){
+    // Pogled odprtih nalogov je prazen tudi takrat, ko odprtega naloga preprosto
+    // ni. Da ne bi vpili po nepotrebnem, vprasamo se izvorno tabelo.
+    let opomba='Brez tega v trgovini izgine podatek o naslednji seriji ali zalogi.';
+    if(slabeJavne.some(x=>x.t==='gm_odprti_nalogi')){
+      const src=await preveri('gm_dn_work_orders?status=eq.odprt&',s.access_token);
+      opomba=src.stanje==='ok'
+        ?'Odprti nalogi obstajajo, pogled pa jih ne vrne — pogled ni ustvarjen ali nima pravice za anon. Poženi razdelek 1 v <code>doc/supabase-rls-faza1.sql</code>.'
+        :'Odprtega delovnega naloga trenutno ni, zato je pogled prazen po pravici. Ko odpreš nalog, se mora datum v trgovini pojaviti.';
+    }
+    deli.push(`<div style="margin-top:.55rem"><strong class="err">Trgovina ne bere:</strong> ${sez(slabeJavne.map(x=>x.t))}<br>
+      <span class="dim">${opomba}</span></div>`);
+  }
 
   const vseDobro=sk.zaklenjene.length&&!sk.odprte.length&&!sk.anonOnly.length&&!sk.nihce.length&&!slabeDeljene.length&&!slabeJavne.length;
   el.innerHTML=`<div class="izid ${vseDobro?'dobro':'slabo'}">${deli.join('')}</div>`;

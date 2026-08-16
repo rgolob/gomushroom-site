@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GoMushroom — diagnoza dostopa</title>
+<style>
+body{font-family:ui-monospace,Menlo,monospace;background:#1a1209;color:#f5f0e8;padding:1rem;font-size:13px;line-height:1.5;margin:0}
+h2{color:#af8455;font-size:1rem;margin:0 0 .3rem}
+p.sub{color:#9a8f82;margin:0 0 1rem;font-size:12px}
+.box{background:#241708;border:1px solid rgba(175,132,85,.4);border-radius:8px;padding:.8rem;margin-bottom:.8rem}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:#9a8f82;font-weight:400;padding:.2rem .3rem;border-bottom:1px solid rgba(175,132,85,.25)}
+td{padding:.25rem .3rem;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+.ok{color:#6cc06c}.err{color:#e07060}.warn{color:#e0a860}.dim{color:#7a6f60}
+button{background:#af8455;color:#1a1209;border:none;padding:.6rem 1.1rem;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer}
+.izid{margin-top:.8rem;padding:.7rem;border-radius:6px;font-size:12.5px;line-height:1.6}
+.izid.dobro{background:rgba(108,192,108,.12);border:1px solid rgba(108,192,108,.4)}
+.izid.slabo{background:rgba(224,112,96,.12);border:1px solid rgba(224,112,96,.45)}
+code{background:rgba(255,255,255,.07);padding:.05rem .3rem;border-radius:3px}
+</style>
+</head>
+<body>
+<h2>🔐 Diagnoza dostopa do Supabase</h2>
+<p class="sub">Vsako tabelo vpraša dvakrat — enkrat s publishable ključem, enkrat s tvojim žetonom — in primerja odgovora.</p>
+
+<div class="box" id="seja">…</div>
+<div class="box"><table id="tabela"><thead><tr>
+  <th>tabela</th><th>publishable</th><th>tvoj žeton</th></tr></thead><tbody></tbody></table></div>
+<div id="izid"></div>
+<p><button onclick="tek()">↻ Ponovi</button></p>
+
+<script>
+const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
+const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+const TABELE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
+              'gm_customers','gm_invoices','gm_sale_groups','gm_batches',
+              'gm_products','gm_odprti_nalogi'];
+
+function seja(){try{return JSON.parse(localStorage.getItem('gm_sb_session')||'null');}catch(e){return null;}}
+
+// Odgovor beremo iz telesa, ne iz glave Content-Range: ta je pri navzkrižnem
+// izvoru viden samo, ce ga streznik izrecno razkrije, in bi tiho odpovedal.
+// RLS vrstic ne zavrne z napako, ampak jih odfiltrira - zato je razlika med
+// "200 in nic vrstic" ter "401" bistvena in ju je treba lociti.
+async function preveri(tabela,zeton){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${tabela}?select=*&limit=1`,{
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+zeton},
+    });
+    if(!r.ok){
+      let m='';try{m=(await r.json()).message||'';}catch(e){}
+      return {stanje:'err',txt:String(r.status),opomba:m};
+    }
+    const vrstice=await r.json().catch(()=>[]);
+    const n=Array.isArray(vrstice)?vrstice.length:0;
+    // Stevilo dodamo le, ce ga streznik razkrije; sklep sloni na telesu.
+    const cr=r.headers.get('content-range')||'';
+    const skupaj=cr.includes('/')?cr.split('/')[1]:'';
+    return n>0
+      ?{stanje:'ok',txt:skupaj?`${skupaj} vrstic`:'bere'}
+      :{stanje:'nic',txt:'0 vrstic'};
+  }catch(e){return {stanje:'err',txt:'ni povezave',opomba:e.message};}
+}
+
+async function tek(){
+  const s=seja();
+  document.getElementById('seja').innerHTML=s
+    ? `<span class="ok">✓ seja obstaja</span> · ${s.email||'brez e-naslova'}<br>
+       <span class="dim">poteče ${new Date(s.expires_at).toLocaleString('sl-SI')}</span>`
+    : `<span class="err">✕ seje ni</span> — najprej se prijavi v zalogo ali materiale`;
+
+  const tb=document.querySelector('#tabela tbody');
+  tb.innerHTML='';
+  const izidi=[];
+  for(const t of TABELE){
+    const a=await preveri(t,SB_KEY);
+    const b=s?await preveri(t,s.access_token):{stanje:'dim',txt:'—'};
+    izidi.push({t,a,b});
+    const c=x=>x.stanje==='ok'?'ok':x.stanje==='nic'?'warn':x.stanje==='err'?'err':'dim';
+    tb.insertAdjacentHTML('beforeend',
+      `<tr><td>${t}</td><td class="${c(a)}">${a.txt}${a.opomba?`<br><span class="dim">${a.opomba}</span>`:''}</td>
+       <td class="${c(b)}">${b.txt}${b.opomba?`<br><span class="dim">${b.opomba}</span>`:''}</td></tr>`);
+  }
+
+  // Razlaga naj bo tu, ne v glavi bralca: iz razlike med stolpcema se da
+  // vzrok prebrati enolicno.
+  const zasebne=izidi.filter(x=>x.t.startsWith('gm_dn_')||['gm_customers','gm_invoices','gm_sale_groups','gm_batches'].includes(x.t));
+  const anonBere=zasebne.some(x=>x.a.stanje==='ok');
+  const zetonBere=zasebne.some(x=>x.b.stanje==='ok');
+  const el=document.getElementById('izid');
+  if(!s){el.innerHTML='';return;}
+  if(zetonBere&&anonBere)
+    el.innerHTML='<div class="izid slabo"><strong>RLS še ni vklopljen.</strong> Zasebne tabele bere tudi publishable ključ — torej kdorkoli. Poženi <code>doc/supabase-rls-faza1.sql</code>.</div>';
+  else if(zetonBere&&!anonBere)
+    el.innerHTML='<div class="izid dobro"><strong>Tako mora biti.</strong> Zasebne tabele bere samo tvoj žeton, publishable ključ ne vrne ničesar.</div>';
+  else if(!zetonBere&&!anonBere)
+    el.innerHTML='<div class="izid slabo"><strong>Nihče ne bere.</strong> RLS je vklopljen, a politike ne prepoznajo tvojega žetona — ali pa so tabele res prazne. Preveri v Table Editorju, ali so vrstice tam; če so, poženi <code>doc/supabase-rls-faza1.sql</code>.</div>';
+  else
+    el.innerHTML='<div class="izid slabo"><strong>Bere samo publishable ključ, tvoj žeton pa ne.</strong> Politika je vezana na vlogo <code>anon</code>. Popravi jo z <code>doc/supabase-rls-faza1.sql</code>, ki dovoli <code>authenticated</code>.</div>';
+}
+tek();
+</script>
+</body>
+</html>

@@ -138,6 +138,28 @@ ALTER TABLE gm_dn_etanol
   ADD COLUMN IF NOT EXISTS dobavitelj text,
   ADD COLUMN IF NOT EXISTS proizvajalec text;
 
+-- ── Uporaba opreme po delovnih nalogih ──────────────────────────────────────
+-- Register opreme pove, kaj imaš; ta tabela pove, na čem je nastala posamezna
+-- serija — kar je za zapisnik o proizvodnji bistveno. Iz iste vezi bereš tudi
+-- obratno smer: katere serije so šle skozi določeno napravo.
+--
+-- Obdobja uporabe ne beležimo posebej: to je obdobje delovnega naloga. Beležimo
+-- namen, ker en nalog isto napravo uporabi v različnih korakih.
+CREATE TABLE IF NOT EXISTS gm_dn_oprema_uporaba (
+  id         text PRIMARY KEY,
+  dokument   text NOT NULL,          -- oznaka DN (npr. DN-26-004)
+  oprema_id  text NOT NULL,          -- gm_dn_oprema.id
+  namen      text,                   -- ekstrakcija, filtracija, polnjenje …
+  ustvarjen  timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_dokument_idx ON gm_dn_oprema_uporaba (dokument);
+CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_oprema_idx   ON gm_dn_oprema_uporaba (oprema_id);
+
+-- RLS enako kot ostale zasebne tabele (glej doc/supabase-rls-faza1.sql):
+-- ALTER TABLE gm_dn_oprema_uporaba ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY gm_auth_all ON gm_dn_oprema_uporaba FOR ALL TO authenticated
+--   USING (true) WITH CHECK (true);
+
 -- ── Dovoli dostop z anon ključem ────────────────────────────────────────────
 -- Najlažje: v Supabase -> Authentication -> Policies -> onemogoči RLS za te tabele
 -- ALI dodaj politiko:

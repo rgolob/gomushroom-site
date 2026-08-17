@@ -507,6 +507,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
+      <div class="slabel">Uporabljena oprema</div>
+      <div id="dnOpremaContainer"></div>
+      <button type="button" onclick="addDNOpremaRow()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">+ Dodaj opremo</button>
+      <datalist id="dnOpremaNameni">
+        <option value="Ekstrakcija"><option value="Filtracija"><option value="Stiskanje">
+        <option value="Mešanje"><option value="Polnjenje"><option value="Etiketiranje">
+        <option value="Tehtanje"><option value="Shranjevanje">
+      </datalist>
       <div class="field"><label>Opomba</label><textarea id="dnOpomba" placeholder="Neobvezna opomba…"></textarea></div>
       <div class="slabel">Zaključek</div>
       <div class="frow">
@@ -806,6 +814,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena/kom (€)</label><input id="opCenaInv" type="text" inputmode="decimal" placeholder="0,00"></div>
       </div>
       <div class="field"><label>Opomba</label><textarea id="opOpomba" placeholder="Lokacija, opombe…"></textarea></div>
+      <div id="opUporabaBlok"></div>
     </div>
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('opremaOverlay')">Prekliči</button>
@@ -1244,6 +1253,7 @@ function save(){
   localStorage.setItem('gm_dn_oprema',JSON.stringify(oprema));
   localStorage.setItem('gm_dn_rd',JSON.stringify(rdNalogi));
   localStorage.setItem('gm_dn_bilanca',JSON.stringify(bilancaDogodki));
+  localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
 }
 
 // ── TABELA GOSTOTE EtOH/H2O po volumskem % (20°C, g/mL) ──
@@ -2507,7 +2517,11 @@ function openDNSheet(id){
   } else {
     dnSerijeRows=[{serija:'',masa:''}];
   }
+  dnOpremaRows=id
+    ?dnOpremaZaDokument(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
+    :[];
   renderDNSerijeRows();
+  renderDNOpremaRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
   document.getElementById('dnKolAlc').value=d?.kolAlc||'';
@@ -2722,6 +2736,88 @@ function renderDNSerijeRows(){
   }).join('');
 }
 
+// ── UPORABLJENA OPREMA ─────────────────────────────────────────────────────
+// Register opreme je doslej vedel, kaj imas, ne pa na cem je nastala posamezna
+// serija. Za zapisnik o proizvodnji je drugo bistveno, iz iste vezi pa dobis
+// tudi obratno smer: katere serije so sle skozi doloceno napravo - kar rabis ob
+// vzdrzevanju ali reklamaciji.
+//
+// Obdobja uporabe ne belezimo posebej: to je obdobje naloga, ki ga ze imamo.
+// Belezimo namen, ker en nalog isto napravo uporabi v razlicnih korakih.
+let opremaUporaba = JSON.parse(localStorage.getItem('gm_dn_oprema_uporaba')||'[]');
+let dnOpremaRows=[];
+
+function opremaZaIzbiro(izbrani){
+  // Neaktivno opremo pokazemo le, ce je ze izbrana - stara serija je lahko
+  // nastala na napravi, ki je danes ni vec v uporabi, in tega ne smemo skriti.
+  const nujne=new Set(izbrani.filter(Boolean));
+  return oprema.filter(o=>o.status!=='neaktivna'||nujne.has(o.id));
+}
+function renderDNOpremaRows(){
+  const c=document.getElementById('dnOpremaContainer');
+  if(!c)return;
+  const naVoljo=opremaZaIzbiro(dnOpremaRows.map(r=>r.opremaId));
+  if(!naVoljo.length&&!dnOpremaRows.length){
+    c.innerHTML='<div style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem">V registru ni opreme — dodaj jo v zavihku Oprema.</div>';
+    return;
+  }
+  c.innerHTML=dnOpremaRows.map((row,idx)=>{
+    const opts=naVoljo.map(o=>
+      `<option value="${o.id}"${o.id===row.opremaId?' selected':''}>${o.naziv||'—'}${o.model?' · '+o.model:''}</option>`).join('');
+    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.35rem">
+      <div class="field" style="flex:2;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Naprava':'&nbsp;'}</label>
+        <select onchange="onDNOpremaChange(${idx},'opremaId',this.value)">
+          <option value="">— izberi —</option>${opts}
+        </select>
+      </div>
+      <div class="field" style="flex:1;margin-bottom:0">
+        <label style="font-size:.7rem">${idx===0?'Namen':'&nbsp;'}</label>
+        <input type="text" list="dnOpremaNameni" value="${(row.namen||'').replace(/"/g,'&quot;')}" placeholder="Ekstrakcija" oninput="onDNOpremaChange(${idx},'namen',this.value)">
+      </div>
+      <button type="button" onclick="removeDNOpremaRow(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1;margin-bottom:.05rem">✕</button>
+    </div>`;
+  }).join('');
+}
+function addDNOpremaRow(){dnOpremaRows.push({id:uid(),opremaId:'',namen:''});renderDNOpremaRows();}
+function removeDNOpremaRow(idx){dnOpremaRows.splice(idx,1);renderDNOpremaRows();}
+// Polja ne izrisujemo znova ob vsakem znaku - to bi vpisovanju namena vzelo
+// fokus po prvi crki.
+function onDNOpremaChange(idx,polje,val){if(dnOpremaRows[idx])dnOpremaRows[idx][polje]=val;}
+
+function dnOpremaZaDokument(oznaka){
+  return oznaka?opremaUporaba.filter(u=>u.dokument===oznaka):[];
+}
+function opremaNaziv(opremaId){
+  const o=oprema.find(x=>x.id===opremaId);
+  return o?(o.naziv||'—')+(o.model?' · '+o.model:''):'(odstranjena naprava)';
+}
+// Nalogi, v katerih je bila naprava uporabljena - obratna smer iste vezi.
+function nalogiZaOpremo(opremaId){
+  const oznake=[...new Set(opremaUporaba.filter(u=>u.opremaId===opremaId).map(u=>u.dokument))];
+  return oznake
+    .map(o=>({oznaka:o,dn:workOrders.find(d=>d.oznaka===o)}))
+    .sort((a,b)=>((b.dn?.datum)||'').localeCompare((a.dn?.datum)||''));
+}
+
+// Uporabo shranimo kot razliko: kar je uporabnik odstranil, izbrisemo tudi v
+// bazi, sicer bi odstranjena naprava ostala v zapisniku.
+async function shraniDNOpremo(oznaka){
+  if(!oznaka)return;
+  const prej=dnOpremaZaDokument(oznaka);
+  const zdaj=dnOpremaRows.filter(r=>r.opremaId).map(r=>({
+    id:r.id||uid(),dokument:oznaka,opremaId:r.opremaId,namen:(r.namen||'').trim(),
+  }));
+  const zdajIdji=new Set(zdaj.map(r=>r.id));
+  const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
+  opremaUporaba=opremaUporaba.filter(u=>u.dokument!==oznaka).concat(zdaj);
+  localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
+  for(const u of zaBrisanje){
+    try{await sbDel('gm_dn_oprema_uporaba',u.id);}catch(e){console.warn('sbDel opremaUporaba',e);}
+  }
+  for(const u of zdaj)await sbPushOpUp(u);
+}
+
 function addDNSerijaRow(){
   dnSerijeRows.push({serija:'',masa:''});
   renderDNSerijeRows();
@@ -2841,8 +2937,14 @@ function saveDN(){
   }
 
   syncGobaIzhod(d,oldOznaka);
+  // Ob preimenovanju naloga mora uporaba opreme za njim, sicer ostane pripeta
+  // na oznako, ki je ni vec.
+  if(oldOznaka&&oldOznaka!==d.oznaka){
+    opremaUporaba.forEach(u=>{if(u.dokument===oldOznaka)u.dokument=d.oznaka;});
+  }
   save();
   sbPushDN(d);
+  shraniDNOpremo(d.oznaka);
   closeSheet('dnOverlay');
   renderDNStats();renderDN();
   renderEtStats();renderMateriali();
@@ -2916,6 +3018,12 @@ function openDNDetail(id){
       ${(()=>{const ss=suhaSnovNaloga(d);const stat=suhaSnovStatBesedilo(d.vrstaGobe,d.id);
         return`<tr><td>Suha snov (Lod)</td><td>${ss!=null?ss.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':'—'}${stat?`<div style="font-size:.68rem;color:var(--muted)">${stat}</div>`:''}</td></tr>`;})()}
     </table>
+
+    ${(()=>{const u=dnOpremaZaDokument(d.oznaka);
+      if(!u.length)return'';
+      return`<div class="slabel">Uporabljena oprema</div>
+      <table class="mini-table">${u.map(x=>
+        `<tr><td>${opremaNaziv(x.opremaId)}</td><td>${x.namen||'—'}</td></tr>`).join('')}</table>`;})()}
 
     <div class="slabel">Alkoholna tinktura</div>
     <table class="mini-table">
@@ -4566,7 +4674,24 @@ function openOpremaSheet(id){
   document.getElementById('opOpomba').value=o?.opomba||'';
   onOpKatChange();
   document.getElementById('opStatus').value=o?.status||'aktivna';
+  renderOpUporaba(id);
   openSheet('opremaOverlay');
+}
+
+// Obratna smer vezi: na cem je naprava delala. Ob vzdrzevanju ali reklamaciji
+// je to prvo vprasanje in doslej nanj ni bilo odgovora.
+function renderOpUporaba(id){
+  const el=document.getElementById('opUporabaBlok');
+  if(!el)return;
+  const nalogi=id?nalogiZaOpremo(id):[];
+  if(!nalogi.length){el.innerHTML='';return;}
+  const vrstice=nalogi.slice(0,15).map(({oznaka,dn})=>{
+    const namen=[...new Set(opremaUporaba.filter(u=>u.opremaId===id&&u.dokument===oznaka).map(u=>u.namen).filter(Boolean))].join(', ');
+    return`<tr><td>${oznaka}</td><td>${dn?fmtDate(dn.datum):'—'}${namen?` · ${namen}`:''}</td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="slabel">Uporabljena v serijah (${nalogi.length})</div>
+    <table class="mini-table">${vrstice}</table>
+    ${nalogi.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${nalogi.length-15}</div>`:''}`;
 }
 
 function onOpKatChange(){
@@ -5643,6 +5768,21 @@ async function sbPushMat(m){
   if(!await sbPushZapis('gm_dn_materiali',matToSb(m),'sbPushMat'))toast('⚠ Material ni sinhroniziran');
 }
 async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+// Uporaba opreme je zapis za zapisnik o proizvodnji; tiha odpoved bi pomenila,
+// da na drugi napravi ni razvidno, na cem je serija nastala.
+function opUpToSb(u){return{id:u.id,dokument:u.dokument,oprema_id:u.opremaId,namen:u.namen||null};}
+function sbToOpUp(r){return{id:r.id,dokument:r.dokument||'',opremaId:r.oprema_id||'',namen:r.namen||''};}
+let _opUpOpozorilo=false;
+async function sbPushOpUp(u){
+  try{await sbUpsert('gm_dn_oprema_uporaba',opUpToSb(u));setSyncStatus('✓');}
+  catch(e){
+    setSyncStatus('⚠');console.error('sbPushOpUp',e);
+    if(!_opUpOpozorilo){
+      _opUpOpozorilo=true;
+      toast('⚠ Uporaba opreme ostaja lokalna — v Supabase manjka tabela gm_dn_oprema_uporaba');
+    }
+  }
+}
 // Converters zapis GLY <-> Supabase (tabela gm_dn_gly_zapisi)
 function glyToSb(z){return{
   id:z.id,dn_id:z.dnId||null,vir:z.vir||null,
@@ -5741,6 +5881,12 @@ async function migrirajVSupabase(){
     await chunk('gm_dn_oprema',lOp.map(opToSb));
     if(lRd.length)await chunk('gm_dn_rd',lRd.map(rdToSb));
     if(lBil.length)await chunk('gm_dn_bilanca',lBil.map(bilToSb));
+    const lOpUp=beriLokalno('gm_dn_oprema_uporaba');
+    if(lOpUp.length){
+      // Tabela je nova; ce je se ni, naj to ne ustavi celotne sinhronizacije.
+      try{await chunk('gm_dn_oprema_uporaba',lOpUp.map(opUpToSb));}
+      catch(e){console.warn('migracija uporabe opreme',e);toast('⚠ Uporaba opreme ni sinhronizirana — manjka tabela');}
+    }
     await sbPushMatTipi();
     setSyncStatus('✓');
     toast(`✓ Sinhronizirano: ${lWo.length} DN, ${lEt.length} et, ${lMat.length} mat, ${lOp.length} op, ${lRd.length} R&D, ${lBil.length} bilanca`);
@@ -5754,7 +5900,7 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops,rds,bils,glys,mtipi]=await Promise.all([
+    const [wos,ets,mats,ops,rds,bils,glys,mtipi,opup]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
@@ -5763,6 +5909,8 @@ async function loadFromSB(){
       sbFetch('gm_dn_bilanca','order=ts.asc').catch(()=>[]),
       sbFetch('gm_dn_gly_zapisi','order=shranjen.desc').catch(()=>[]),
       sbFetch('gm_dn_mat_tipi','order=ime.asc').catch(()=>null),
+      // null pomeni "tabele (se) ni" - takrat lokalne uporabe ne povozimo.
+      sbFetch('gm_dn_oprema_uporaba','order=dokument.asc').catch(()=>null),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -5783,6 +5931,10 @@ async function loadFromSB(){
     oprema=ops.map(sbToOp);
     if(rds.length)rdNalogi=rds.map(sbToRd);
     if(bils.length)bilancaDogodki=bils.map(sbToBil);
+    if(opup){
+      opremaUporaba=opup.map(sbToOpUp);
+      localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
+    }
     if(glys.length){
       // Zdruzimo, ne prepisemo. Zapis, ki na streznik ni prisel - ker je bila
       // sinhronizacija zavrnjena ali ker naprava ni imela povezave - obstaja

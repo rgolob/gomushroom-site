@@ -174,6 +174,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 </style>
 <script src="../js/gm-auth.js"></script>
+<!-- QR se izrise v brskalniku, brez omreznega klica: nalepke se tiskajo v
+     delavnici in tiskanje ne sme biti odvisno od povezave ali tujega servisa. -->
+<script src="../js/qrcode.js"></script>
 </head>
 <body>
 
@@ -338,7 +341,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <div class="view" id="view-oprema">
     <div class="view-hdr">
       <div class="view-title">Oprema</div>
-      <button class="hbtn2" onclick="openOpremaSheet()">+ Dodaj</button>
+      <div style="display:flex;gap:.35rem">
+        <button class="hbtn2" onclick="kopirajSeznamOznak()">🏷 Oznake</button>
+        <button class="hbtn2" onclick="openOpremaSheet()">+ Dodaj</button>
+      </div>
     </div>
     <div class="filter-row">
       <button class="fpill active" id="op-vsi" onclick="setOpremaFilter('vsi',this)">Vsa</button>
@@ -814,6 +820,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena/kom (€)</label><input id="opCenaInv" type="text" inputmode="decimal" placeholder="0,00"></div>
       </div>
       <div class="field"><label>Opomba</label><textarea id="opOpomba" placeholder="Lokacija, opombe…"></textarea></div>
+      <div id="opNalepkaBlok"></div>
       <div id="opUporabaBlok"></div>
     </div>
     <div class="shfoot">
@@ -4633,7 +4640,7 @@ function renderOprema(){
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
-          <div class="dn-meta">${o.kat==='inventar'?'📎 Drobni inventar':'⚙️ Oprema'}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.dobavitelj?' · '+o.dobavitelj:''}</div>
+          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${o.kat==='inventar'?'📎 Drobni inventar':'⚙️ Oprema'}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.dobavitelj?' · '+o.dobavitelj:''}</div>
           <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
           <div style="margin-top:.2rem">${vzdrz} ${garancija}</div>
         </div>
@@ -4655,6 +4662,111 @@ function renderOprema(){
 }
 
 let editingOpremaId=null;
+// ── INVENTARNE OZNAKE ──────────────────────────────────────────────────────
+// Stevilka je enotna za opremo in drobni inventar: register je en sam, dve
+// vzporedni stevilcenji pa bi ob prepisu z nalepke terjali se ugibanje, katero
+// od njiju bereš.
+//
+// Naslednjo poiscemo kot najvecjo obstojeco + 1 in ne kot dolzino seznama:
+// izbrisana naprava sicer sprosti svojo stevilko in bi jo naslednja podedovala,
+// stara nalepka pa bi kazala na napacno napravo.
+const INV_PREFIKS='GM-';
+function naslednjaInvSt(){
+  const najvecja=oprema.reduce((m,o)=>{
+    const n=parseInt(String(o.invSt||'').replace(INV_PREFIKS,''),10);
+    return Number.isFinite(n)&&n>m?n:m;
+  },0);
+  return INV_PREFIKS+String(najvecja+1).padStart(3,'0');
+}
+
+// QR kaze na kartico naprave v tej aplikaciji, ne le na njen id: skeniranje s
+// telefonom naj takoj pokaze, kaj naprava je, kdaj je bila nazadnje vzdrzevana
+// in katere serije so sle skoznjo. Gola stevilka bi terjala se iskanje.
+//
+// V naslovu je inventarna stevilka in ne notranji id: nalepko se da prebrati
+// tudi na oko in naslov rocno natipkati, ce se QR poskoduje. Na id se vrnemo
+// samo pri napravi, ki stevilke se nima.
+const NALEPKA_BAZA='https://gomushroom.si/materiali/';
+function opremaUrl(o){
+  return NALEPKA_BAZA+'?oprema='+encodeURIComponent(o.invSt||o.id);
+}
+function najdiOpremo(kljuc){
+  if(!kljuc)return null;
+  const k=String(kljuc).trim().toUpperCase();
+  return oprema.find(o=>String(o.invSt||'').toUpperCase()===k)
+      ||oprema.find(o=>o.id===kljuc)||null;
+}
+// Vrne QR kot podatkovni URL slike. Tip 0 = samodejna izbira velikosti glede na
+// dolzino besedila; 'M' prenese priblizno 15 % poskodbe nalepke.
+function qrSlika(besedilo,velikostPx){
+  const qr=qrcode(0,'M');
+  qr.addData(besedilo);
+  qr.make();
+  const modulov=qr.getModuleCount();
+  const cell=Math.max(1,Math.floor(velikostPx/(modulov+8)));
+  return qr.createDataURL(cell,cell*4);   // 4 moduli tihe cone, kot zahteva standard
+}
+
+function natisniNalepkeOpreme(idji){
+  const seznam=(idji&&idji.length?oprema.filter(o=>idji.includes(o.id)):oprema.filter(o=>o.status!=='neaktivna'));
+  if(!seznam.length){toast('Ni opreme za tiskanje');return;}
+  const manjkaSt=seznam.filter(o=>!o.invSt);
+  if(manjkaSt.length){
+    // Stara oprema je nastala, preden je stevilcenje obstajalo. Dodelimo jo zdaj
+    // in shranimo, sicer bi bila nalepka brez oznake ali z drugacno ob vsakem
+    // tiskanju.
+    manjkaSt.forEach(o=>{o.invSt=naslednjaInvSt();});
+    save();
+    manjkaSt.forEach(o=>sbPushOp(o));
+    toast(`Dodeljene inventarne številke: ${manjkaSt.length}`);
+  }
+  const nalepke=seznam.map(o=>`
+    <div class="nal">
+      <img src="${qrSlika(opremaUrl(o),120)}" alt="">
+      <div class="txt">
+        <div class="inv">${o.invSt||''}</div>
+        <div class="naziv">${(o.naziv||'—').slice(0,28)}</div>
+        <div class="drobno">${[o.model,o.serijska?'SN '+o.serijska:''].filter(Boolean).join(' · ').slice(0,34)}</div>
+        <div class="drobno">GoMushroom</div>
+      </div>
+    </div>`).join('');
+  const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
+<title>Inventarne nalepke — GoMushroom</title>
+<style>
+@page{size:A4;margin:8mm}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;margin:0;
+  display:grid;grid-template-columns:repeat(4,48mm);gap:2mm;align-content:start}
+.nal{width:48mm;height:28mm;border:.3mm dashed #bbb;border-radius:1.5mm;
+  padding:1.5mm;display:flex;gap:1.5mm;align-items:center;overflow:hidden;
+  break-inside:avoid;page-break-inside:avoid}
+.nal img{width:22mm;height:22mm;flex-shrink:0;image-rendering:pixelated}
+.txt{min-width:0;line-height:1.15}
+.inv{font-size:3.6mm;font-weight:700;letter-spacing:.02em}
+.naziv{font-size:2.7mm;font-weight:600;margin-top:.4mm;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drobno{font-size:2.1mm;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media screen{body{background:#f4f1ec;padding:8mm}.nal{background:#fff}}
+</style></head><body onload="setTimeout(()=>window.print(),300)">${nalepke}</body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+// Skenirana koda odpre kartico naprave. Parameter poberemo sele, ko so podatki
+// nalozeni, sicer opreme se ni in kartica bi ostala prazna.
+function odpriIzUrl(){
+  const kljuc=new URLSearchParams(location.search).get('oprema');
+  if(!kljuc)return;
+  const o=najdiOpremo(kljuc);
+  if(!o){toast('⚠ Naprava z oznako '+kljuc+' ne obstaja');return;}
+  switchTab('oprema');
+  openOpremaSheet(o.id);
+  // Naslov pocistimo, da osvezitev ne odpre kartice znova.
+  history.replaceState(null,'',location.pathname);
+}
+
 function openOpremaSheet(id){
   editingOpremaId=id||null;
   const o=id?oprema.find(x=>x.id===id):null;
@@ -4675,7 +4787,68 @@ function openOpremaSheet(id){
   onOpKatChange();
   document.getElementById('opStatus').value=o?.status||'aktivna';
   renderOpUporaba(id);
+  renderOpNalepka(id);
   openSheet('opremaOverlay');
+}
+
+// Predogled nalepke na kartici: pokaze, kaj bo natisnjeno, in omogoci tisk ene
+// same - ob zamenjani ali poskodovani nalepki ne zelis cele pole.
+function renderOpNalepka(id){
+  const el=document.getElementById('opNalepkaBlok');
+  if(!el)return;
+  const o=id?oprema.find(x=>x.id===id):null;
+  if(!o){el.innerHTML='';return;}
+  if(!o.invSt){
+    el.innerHTML=`<div class="slabel">Inventarna oznaka</div>
+      <div style="font-size:.72rem;color:var(--muted)">Dodeli se ob shranjevanju.</div>`;
+    return;
+  }
+  const url=opremaUrl(o);
+  el.innerHTML=`<div class="slabel">Inventarna oznaka</div>
+    <div style="display:flex;gap:.7rem;align-items:center;margin-bottom:.5rem">
+      <img src="${qrSlika(url,110)}" alt="" style="width:74px;height:74px;image-rendering:pixelated;border:1px solid var(--border);border-radius:6px;background:#fff">
+      <div style="min-width:0">
+        <div style="font-weight:700;font-size:1.05rem">${o.invSt}</div>
+        <div style="font-size:.66rem;color:var(--muted);word-break:break-all;margin-top:.15rem">${url}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <button type="button" class="bcancel" onclick="kopiraj('${url}','Povezava')" style="padding:.35rem .7rem;font-size:.75rem">📋 Kopiraj povezavo</button>
+      <button type="button" class="bcancel" onclick="kopiraj('${o.invSt}','Oznaka')" style="padding:.35rem .7rem;font-size:.75rem">📋 Kopiraj oznako</button>
+      <button type="button" class="bcancel" onclick="natisniNalepkeOpreme(['${o.id}'])" style="padding:.35rem .7rem;font-size:.75rem">🖨 A4</button>
+    </div>
+    <div style="font-size:.66rem;color:var(--muted);margin-top:.35rem">Za NIIMBOT prilepi povezavo v polje QR.</div>`;
+}
+
+// Clipboard API zahteva varni izvor in ni povsod na voljo; brez zaloznega
+// nacina bi kopiranje na kaksni napravi tiho odpovedalo.
+async function kopiraj(besedilo,kaj){
+  try{
+    await navigator.clipboard.writeText(besedilo);
+    toast(`✓ ${kaj} kopirana`);
+  }catch(e){
+    const t=document.createElement('textarea');
+    t.value=besedilo;t.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(t);t.select();
+    const ok=document.execCommand?.('copy');
+    t.remove();
+    toast(ok?`✓ ${kaj} kopirana`:'⚠ Kopiranje ni uspelo — označi in kopiraj ročno');
+  }
+}
+
+// Seznam za vnos v NIIMBOT: oznaka, naziv in povezava za vsako napravo, da ni
+// treba odpirati vsake kartice posebej.
+function kopirajSeznamOznak(){
+  const seznam=oprema.filter(o=>o.status!=='neaktivna');
+  const brez=seznam.filter(o=>!o.invSt);
+  if(brez.length){
+    brez.forEach(o=>{o.invSt=naslednjaInvSt();});
+    save();brez.forEach(o=>sbPushOp(o));
+  }
+  if(!seznam.length){toast('Ni opreme');return;}
+  const vrstice=seznam.map(o=>[o.invSt,o.naziv||'',o.model||'',opremaUrl(o)].join('\t'));
+  kopiraj(['oznaka\tnaziv\tmodel\tpovezava',...vrstice].join('\n'),
+    `Seznam ${seznam.length} naprav`);
 }
 
 // Obratna smer vezi: na cem je naprava delala. Ob vzdrzevanju ali reklamaciji
@@ -4714,8 +4887,12 @@ function saveOprema(){
   if(!naziv){toast('⚠ Vnesi naziv');return;}
   const kat=document.getElementById('opKat').value;
   const isInv=kat==='inventar';
+  const prejsnji=editingOpremaId?oprema.find(x=>x.id===editingOpremaId):null;
   const o={
     id:editingOpremaId||uid(),
+    // Inventarna stevilka se dodeli enkrat in se ne spreminja - nalepka na
+    // napravi je ze natisnjena in mora ostati veljavna.
+    invSt:prejsnji?.invSt||naslednjaInvSt(),
     kat,naziv,
     model:document.getElementById('opModel').value.trim(),
     status:document.getElementById('opStatus').value,
@@ -5678,14 +5855,14 @@ function sbToMat(r){return{
 
 // Converters Oprema ↔ Supabase
 function opToSb(o){return{
-  id:o.id,kat:o.kat||'oprema',naziv:o.naziv,model:o.model||null,
+  id:o.id,inv_st:o.invSt||null,kat:o.kat||'oprema',naziv:o.naziv,model:o.model||null,
   status:o.status||'aktivna',opomba:o.opomba||null,
   datum_nakupa:o.datumNakupa||null,cena:o.cena||null,
   serijska:o.serijska||null,dobavitelj:o.dobavitelj||null,
   garancija:o.garancija||null,vzdrz:o.vzdrz||null,kolicina:o.kolicina||null
 };}
 function sbToOp(r){return{
-  id:r.id,kat:r.kat||'oprema',naziv:r.naziv,model:r.model||'',
+  id:r.id,invSt:r.inv_st||'',kat:r.kat||'oprema',naziv:r.naziv,model:r.model||'',
   status:r.status||'aktivna',opomba:r.opomba||'',
   datumNakupa:r.datum_nakupa||'',cena:r.cena||0,
   serijska:r.serijska||'',dobavitelj:r.dobavitelj||'',
@@ -5767,7 +5944,7 @@ async function sbPushEt(e){await sbPushZapis('gm_dn_etanol',etToSb(e),'sbPushEt'
 async function sbPushMat(m){
   if(!await sbPushZapis('gm_dn_materiali',matToSb(m),'sbPushMat'))toast('⚠ Material ni sinhroniziran');
 }
-async function sbPushOp(o){try{await sbUpsert('gm_dn_oprema',opToSb(o));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushOp',e);}}
+async function sbPushOp(o){await sbPushZapis('gm_dn_oprema',opToSb(o),'sbPushOp');}
 // Uporaba opreme je zapis za zapisnik o proizvodnji; tiha odpoved bi pomenila,
 // da na drugi napravi ni razvidno, na cem je serija nastala.
 function opUpToSb(u){return{id:u.id,dokument:u.dokument,oprema_id:u.opremaId,namen:u.namen||null};}
@@ -6160,6 +6337,7 @@ async function appInit(){
   document.getElementById('dnDatum').value=todayISO();
   await loadFromSB();
   await migrateOpombaToDoabvitelj();
+  odpriIzUrl();
 }
 function init(){appInit();}
 

@@ -138,6 +138,11 @@ ALTER TABLE gm_dn_etanol
   ADD COLUMN IF NOT EXISTS dobavitelj text,
   ADD COLUMN IF NOT EXISTS proizvajalec text;
 
+-- gm_dn_oprema: inventarna številka (GM-001, GM-002 …) za nalepko na napravi.
+-- Dodeli se enkrat in se ne spreminja — natisnjena nalepka mora ostati veljavna.
+ALTER TABLE gm_dn_oprema
+  ADD COLUMN IF NOT EXISTS inv_st text;
+
 -- ── Uporaba opreme po delovnih nalogih ──────────────────────────────────────
 -- Register opreme pove, kaj imaš; ta tabela pove, na čem je nastala posamezna
 -- serija — kar je za zapisnik o proizvodnji bistveno. Iz iste vezi bereš tudi

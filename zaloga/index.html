@@ -1079,7 +1079,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shandle"></div>
     <div class="shdr"><span class="shtitle">Uredi zapis</span><button class="shclose" onclick="closeSheet('editGroupOverlay')">✕</button></div>
     <div class="shbody">
-      <div class="field"><label>Datum</label><input id="egDate" type="date"></div>
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="egDate" type="date"></div>
+        <div class="field"><label id="egChannelLabel">Način prodaje</label><select id="egChannel"></select></div>
+      </div>
+      <div id="egChannelHint" style="display:none;font-size:.7rem;color:var(--muted);margin:-.35rem 0 .6rem"></div>
       <div class="field"><label>Kupec / prejemnik</label><input id="egBuyer"></div>
       <div class="frow">
         <div class="field"><label>E-mail</label><input id="egEmail" type="email" placeholder="kupec@email.com" autocomplete="email"></div>
@@ -1522,68 +1526,6 @@ function stornoSale(groupId){
     if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
     toast('✓ Prodaja stornirana — zaloga vrnjena');
   });
-}
-
-// ── Popravek nacina prodaje ────────────────────────────────────────────────
-// Napacno izbran kanal je doslej terjal storno in ponoven vnos, kar pusti sled
-// o napaki, ki je ni bilo - in znova razporedi sarze. Dokler prodaja nima svoje
-// stevilke, je popravek kanala zgolj preklop oznake.
-//
-// Meja je izdan dokument: racun in dobavnica se stevilcita po kanalu
-// (nextInvNum), zato bi sprememba za nazaj razdrla stevilcenje serije. Takrat
-// je storno res edina pravilna pot.
-//
-// Zaloge to ne premakne: stockIsProdCh iz prodajne zaloge izvzame samo 'int',
-// zato so malo, velo, dar, wp in kom med seboj enakovredni. Edini prehod, ki
-// zalogo prerazporedi, je na 'int' ali z njega - tega posebej oznacimo.
-const KANALI_POPRAVEK=['malo','velo','dar','int','wp','kom'];
-function spremeniKanal(groupId){
-  const g=saleGroups.find(x=>x.id===groupId);
-  if(!g){toast('Prodaja ni najdena.');return;}
-  if(g.status==='stornirano'){toast('Stornirane prodaje ni mogoče spreminjati.');return;}
-  if(g.invoiceNum){toast('Račun je izdan — popravi s stornacijo in novim vnosom.');return;}
-  if(g.deliveryNum){toast('Dobavnica je izdana — popravi s stornacijo in novim vnosom.');return;}
-  document.getElementById('chanOverlay')?.remove();
-  const izbire=KANALI_POPRAVEK.filter(k=>k!==g.channel);
-  const el=document.createElement('div');
-  el.id='chanOverlay';
-  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
-  el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.5rem 1.25rem calc(var(--sab)+1.5rem);width:100%;max-width:480px;max-height:80vh;overflow:auto">
-    <div style="font-size:.82rem;font-weight:500;color:var(--ink)">Način prodaje</div>
-    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.9rem">${g.buyer||'—'} · ${fmtDate(g.date)} · trenutno ${CH[g.channel]?.label||g.channel}</div>
-    ${izbire.map(k=>`<button onclick="potrdiKanal('${g.id}','${k}')" style="width:100%;padding:.8rem;margin-bottom:.5rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;font-size:.88rem;text-align:left;cursor:pointer">${CH[k].icon} ${CH[k].label}${k==='int'?`<span style="color:var(--muted);font-size:.7rem"> — prestavi v interno zalogo</span>`:''}</button>`).join('')}
-    <button onclick="document.getElementById('chanOverlay').remove()" style="width:100%;padding:.75rem;margin-top:.3rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
-  </div>`;
-  document.body.appendChild(el);
-}
-// Pri podaritvi in internem prevzemu popust ni podatek o poslu, ampak sled
-// nacina, kako je bila brezplacnost vnesena skozi prodajni kanal: kdor podari
-// blago pod maloprodajo, mora dati 100% popusta, da pride do nic. Ko je kanal
-// pravi, popusta ni vec kaj popuscati - znacka "-100%" na kartici bi kazala
-// posel, ki ga ni bilo.
-const BREZ_POPUSTA=new Set(['dar','int']);
-function potrdiKanal(groupId,kanal){
-  document.getElementById('chanOverlay')?.remove();
-  const g=saleGroups.find(x=>x.id===groupId);
-  if(!g||!KANALI_POPRAVEK.includes(kanal))return;
-  const prej=g.channel;
-  if(prej===kanal)return;
-
-  const spremembe={channel:kanal};
-  const ciscenje=BREZ_POPUSTA.has(kanal)&&((g.discount||0)>0||(g.discountAmt||0)>0);
-  if(ciscenje){
-    g.discount=0;g.discountAmt=0;g.fullTotal=g.total||0;
-    Object.assign(spremembe,{discount:0,discount_amt:0,full_total:g.total||0});
-  }
-  g.channel=kanal;
-  save();
-  // Tiha odpoved bi pomenila, da se popravek na drugi napravi ne pozna, videti
-  // pa bi bilo, kot da je shranjen.
-  sbUpdate('gm_sale_groups',{id:g.id},spremembe)
-    .catch(e=>{console.warn('sbUpdate kanal failed:',e);toast('⚠ Popravek ni sinhroniziran — poskusi znova');});
-  renderStats();renderInventory();
-  if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
-  toast(`✓ ${CH[prej]?.label||prej} → ${CH[kanal]?.label||kanal}${ciscenje?' · popust odstranjen':''}`);
 }
 
 async function vrniKomisijo(groupId){
@@ -5064,7 +5006,6 @@ function renderSales(){
           })()}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
-          ${!isStorno&&!hasInvoice&&!g.deliveryNum?`<button class="tbtn" onclick="spremeniKanal('${g.id}')">🔀 Način prodaje</button>`:''}
           ${!isStorno&&g.channel!=='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>
@@ -5241,8 +5182,62 @@ function reprintInvoice(groupId){
   const g=saleGroups.find(x=>x.id===groupId);if(!g)return;printInvoice(g);
 }
 
+// ── Nacin prodaje ──────────────────────────────────────────────────────────
+// Popravlja se v istem listu kot datum in naslov. Loceni gumb na kartici je bil
+// se ena tipka v vrsti, ki je ze tako polna, urejanje zapisa pa je mesto, kjer
+// uporabnik take popravke ze pricakuje.
+//
+// Meja je izdan dokument: racun in dobavnica se stevilcita po kanalu
+// (nextInvNum), zato bi sprememba za nazaj razdrla stevilcenje serije. Takrat
+// polje zaklenemo in povemo, zakaj - molk bi bil videti kot okvara.
+//
+// Zaloge sprememba ne premakne: stockIsProdCh iz prodajne zaloge izvzame samo
+// 'int', zato so malo, velo, dar, wp in kom med seboj enakovredni. Edini
+// prehod, ki zalogo prerazporedi, je na 'int' ali z njega.
+const KANALI_POPRAVEK=['malo','velo','dar','int','wp','kom'];
+const BREZ_POPUSTA=new Set(['dar','int']);
+
+// Ena sama definicija, kdaj kanala ni vec dovoljeno spreminjati - uporabljata
+// jo izbirnik in shranjevanje. Ce bi shranjevanje sklepalo iz zaklenjenosti
+// polja, bi se dalo pravilo obiti s spremembo strani v brskalniku; tu izhaja
+// iz samega zapisa.
+//
+// invoiceId je zraven, ker se racun lahko zabelezi tudi brez stevilke v
+// invoiceNum, storno pa zato, ker je zaprt zapis.
+function kanalZaklenjen(g){
+  return !!(g.invoiceNum||g.invoiceId||g.deliveryNum||g.status==='stornirano');
+}
+function kanalRazlogZaklepa(g){
+  if(g.status==='stornirano')return 'je prodaja stornirana';
+  const dok=[
+    g.invoiceNum?'račun '+g.invoiceNum:(g.invoiceId?'račun':''),
+    g.deliveryNum?'dobavnica '+g.deliveryNum:'',
+  ].filter(Boolean).join(' in ');
+  return 'je izdan'+(dok?' '+dok:' dokument');
+}
+function napolniKanale(g){
+  const sel=document.getElementById('egChannel');
+  const hint=document.getElementById('egChannelHint');
+  const label=document.getElementById('egChannelLabel');
+  if(!sel)return;
+  // Ce je prodaja v kanalu, ki ga ne ponujamo (npr. 'stripe'), ga vseeno
+  // pokazemo - sicer bi izbirnik tiho kazal napacen kanal.
+  const seznam=KANALI_POPRAVEK.includes(g.channel)?KANALI_POPRAVEK:[g.channel,...KANALI_POPRAVEK];
+  sel.innerHTML=seznam.map(k=>
+    `<option value="${k}"${k===g.channel?' selected':''}>${CH[k]?.icon||''} ${CH[k]?.label||k}${k==='int'?' (interna zaloga)':''}</option>`).join('');
+  const zakleni=kanalZaklenjen(g);
+  sel.disabled=zakleni;
+  sel.style.opacity=zakleni?'.55':'';
+  if(label)label.textContent=zakleni?'Način prodaje 🔒':'Način prodaje';
+  hint.style.display=zakleni?'':'none';
+  hint.textContent=zakleni
+    ?`Zaklenjeno, ker ${kanalRazlogZaklepa(g)} — številčenje teče po kanalu. Popraviš s stornacijo in novim vnosom.`
+    :'';
+}
+
 function openEditGroup(id){
   editingGroupId=id;const g=saleGroups.find(x=>x.id===id);if(!g)return;
+  napolniKanale(g);
   document.getElementById('egDate').value=g.date||'';
   document.getElementById('egBuyer').value=g.buyer||'';
   document.getElementById('egEmail').value=g.email||'';
@@ -5257,6 +5252,22 @@ function openEditGroup(id){
 
 function saveEditGroup(){
   const g=saleGroups.find(x=>x.id===editingGroupId);if(!g)return;
+  const sel=document.getElementById('egChannel');
+  let kanalSpremenjen=false,popustPocisten=false;
+  if(sel&&!kanalZaklenjen(g)&&sel.value&&sel.value!==g.channel&&KANALI_POPRAVEK.includes(sel.value)){
+    g.channel=sel.value;
+    kanalSpremenjen=true;
+    // Popust pri podaritvi in internem prevzemu ni podatek o poslu, ampak sled
+    // nacina, kako je bila brezplacnost vnesena skozi napacen kanal: pod
+    // maloprodajo je treba dati 100% popusta, da pride do nic. Ko je kanal
+    // pravi, popusta ni vec kaj popuscati - znacka bi kazala posel, ki ga ni
+    // bilo. fullTotal poravnamo s totalom, da ne ostane znesek pred popustom,
+    // ki mu nic ne ustreza.
+    if(BREZ_POPUSTA.has(g.channel)&&((g.discount||0)>0||(g.discountAmt||0)>0)){
+      g.discount=0;g.discountAmt=0;g.fullTotal=g.total||0;
+      popustPocisten=true;
+    }
+  }
   g.date=document.getElementById('egDate').value;
   g.buyer=document.getElementById('egBuyer').value.trim();
   g.email=document.getElementById('egEmail').value.trim();
@@ -5274,7 +5285,13 @@ function saveEditGroup(){
   save();
   sbSaveGroup(g).catch(e=>console.warn('sbSaveGroup (edit) failed:',e));
   if(inv)sbSaveInvoice(inv).catch(e=>console.warn('sbSaveInvoice (edit) failed:',e));
-  closeSheet('editGroupOverlay');renderSales();if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}toast('Zapis posodobljen');
+  closeSheet('editGroupOverlay');
+  // Kanal steje v statistiko po kanalih, prehod na 'int' pa tudi v razdelitev
+  // zaloge - takrat ne zadosca osvezitev seznama prodaj.
+  if(kanalSpremenjen){renderStats();renderInventory();renderSalesSummary();}
+  renderSales();
+  if(currentTab==='dokumenti'){renderInvStats();renderInvoices();}
+  toast('Zapis posodobljen'+(popustPocisten?' · popust odstranjen':''));
 }
 async function deleteSaleGroup(id){
   const ok=await showConfirm('Izbriši to prodajo?\nZaloga se ne bo samodejno vrnila.','Izbriši');if(!ok)return;

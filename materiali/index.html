@@ -349,6 +349,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="filter-row">
       <button class="fpill active" id="op-vsi" onclick="setOpremaFilter('vsi',this)">Vsa</button>
       <button class="fpill" onclick="setOpremaFilter('oprema',this)">⚙️ Oprema</button>
+      <button class="fpill" onclick="setOpremaFilter('merilo',this)">📏 Merila</button>
       <button class="fpill" onclick="setOpremaFilter('inventar',this)">📎 Inventar</button>
       <button class="fpill" onclick="setOpremaFilter('vzdrz',this)">🔧 Vzdrž.</button>
       <button class="fpill" onclick="setOpremaFilter('neaktivna',this)">✗ Neaktivna</button>
@@ -780,6 +781,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Kategorija</label>
           <select id="opKat" onchange="onOpKatChange()">
             <option value="oprema">⚙️ Oprema</option>
+            <option value="merilo">📏 Merilo</option>
             <option value="inventar">📎 Drobni inventar</option>
           </select>
         </div>
@@ -822,12 +824,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Interval (mes.)</label><input id="opVzdrzInterval" type="text" inputmode="numeric" placeholder="12" oninput="onOpIntervalChange('vzdrz')"></div>
         </div>
         <div id="opVzdrzNamig" style="font-size:.68rem;color:var(--muted);margin:-.3rem 0 .5rem"></div>
-        <div class="slabel">Umerjanje <span style="font-weight:400;color:var(--muted);font-size:.7rem">— merilna oprema</span></div>
-        <div class="frow">
-          <div class="field"><label>Zadnje umerjanje</label><input id="opKalibracija" type="date" oninput="onOpIntervalChange('kal')"></div>
-          <div class="field"><label>Interval (mes.)</label><input id="opKalInterval" type="text" inputmode="numeric" placeholder="12" oninput="onOpIntervalChange('kal')"></div>
+        <div id="opKalibracijaBlok">
+          <div class="slabel">Umerjanje</div>
+          <div class="frow">
+            <div class="field"><label>Zadnje umerjanje</label><input id="opKalibracija" type="date" oninput="onOpIntervalChange('kal')"></div>
+            <div class="field"><label>Interval (mes.)</label><input id="opKalInterval" type="text" inputmode="numeric" placeholder="12" oninput="onOpIntervalChange('kal')"></div>
+          </div>
+          <div id="opKalNamig" style="font-size:.68rem;color:var(--muted);margin:-.3rem 0 .5rem"></div>
         </div>
-        <div id="opKalNamig" style="font-size:.68rem;color:var(--muted);margin:-.3rem 0 .5rem"></div>
       </div>
       <div class="field" style="flex-direction:row;align-items:center;gap:.5rem">
         <input id="opStikZivilo" type="checkbox" style="width:auto;margin:0">
@@ -4618,6 +4622,10 @@ function knjizMaterjaleIzhod(d){
 }
 
 // ── OPREMA ──
+// Merilo je svoja kategorija, ker je edino, pri katerem umerjanje kaj pomeni.
+// Zapisi brez kategorije so starejsi od te delitve in stejejo za opremo.
+const KAT_OPREME={oprema:'⚙️ Oprema',merilo:'📏 Merilo',inventar:'📎 Drobni inventar'};
+function katLabel(kat){return KAT_OPREME[kat]||KAT_OPREME.oprema;}
 let opremaFilter='vsi';
 let opremaPage=0;
 const OP_PER_PAGE=15;
@@ -4633,6 +4641,7 @@ function setOpremaFilter(f,btn){
 function renderOprema(){
   let rows=[...oprema];
   if(opremaFilter==='oprema')rows=rows.filter(o=>o.kat==='oprema'||!o.kat);
+  if(opremaFilter==='merilo')rows=rows.filter(o=>o.kat==='merilo');
   if(opremaFilter==='inventar')rows=rows.filter(o=>o.kat==='inventar');
   if(opremaFilter==='vzdrz')rows=rows.filter(o=>o.status==='vzdrz');
   if(opremaFilter==='neaktivna')rows=rows.filter(o=>o.status==='neaktivna');
@@ -4668,7 +4677,7 @@ function renderOprema(){
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
-          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${o.kat==='inventar'?'📎 Drobni inventar':'⚙️ Oprema'}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.dobavitelj?' · '+o.dobavitelj:''}</div>
+          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}</div>
           <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
           <div style="margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap">${vzdrz} ${kal} ${garancija}</div>
         </div>
@@ -4878,7 +4887,10 @@ function onOpIntervalChange(kaj){
     :`Velja do ${fmtDate(rok)}.`;
   el.style.color=poteklo?'var(--danger)':'var(--muted)';
 }
+// Rok velja samo za merila; pri drugi opremi je morebitna vrednost ostanek
+// prejsnje kategorije in ne sme sprozati opozoril.
 function kalibracijaRok(o){
+  if(o?.kat!=='merilo')return '';
   return (o?.kalibracija&&o?.kalInterval)?pristejMesece(o.kalibracija,o.kalInterval):'';
 }
 
@@ -4964,6 +4976,11 @@ function onOpKatChange(){
   document.getElementById('opKolicinaField').style.display=isInv?'':'none';
   document.getElementById('opOpremaFields').style.display=isInv?'none':'';
   document.getElementById('opInventarCena').style.display=isInv?'':'none';
+  // Umerjanje ima smisel samo pri merilih. Vrednosti ob preklopu kategorije NE
+  // brisemo - napacno izbrana kategorija se popravi in podatek se vrne; tiho
+  // brisanje bi ga izgubilo. Opozorilo o poteklem umerjanju zato izpisujemo
+  // samo pri merilih, da skrita vrednost ne strasi po nepotrebnem.
+  document.getElementById('opKalibracijaBlok').style.display=kat==='merilo'?'':'none';
   // Status: inventar nima vzdrževanja
   const statusSel=document.getElementById('opStatus');
   if(isInv){

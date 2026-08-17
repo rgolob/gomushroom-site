@@ -1556,21 +1556,34 @@ function spremeniKanal(groupId){
   </div>`;
   document.body.appendChild(el);
 }
+// Pri podaritvi in internem prevzemu popust ni podatek o poslu, ampak sled
+// nacina, kako je bila brezplacnost vnesena skozi prodajni kanal: kdor podari
+// blago pod maloprodajo, mora dati 100% popusta, da pride do nic. Ko je kanal
+// pravi, popusta ni vec kaj popuscati - znacka "-100%" na kartici bi kazala
+// posel, ki ga ni bilo.
+const BREZ_POPUSTA=new Set(['dar','int']);
 function potrdiKanal(groupId,kanal){
   document.getElementById('chanOverlay')?.remove();
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g||!KANALI_POPRAVEK.includes(kanal))return;
   const prej=g.channel;
   if(prej===kanal)return;
+
+  const spremembe={channel:kanal};
+  const ciscenje=BREZ_POPUSTA.has(kanal)&&((g.discount||0)>0||(g.discountAmt||0)>0);
+  if(ciscenje){
+    g.discount=0;g.discountAmt=0;g.fullTotal=g.total||0;
+    Object.assign(spremembe,{discount:0,discount_amt:0,full_total:g.total||0});
+  }
   g.channel=kanal;
   save();
   // Tiha odpoved bi pomenila, da se popravek na drugi napravi ne pozna, videti
   // pa bi bilo, kot da je shranjen.
-  sbUpdate('gm_sale_groups',{id:g.id},{channel:kanal})
+  sbUpdate('gm_sale_groups',{id:g.id},spremembe)
     .catch(e=>{console.warn('sbUpdate kanal failed:',e);toast('⚠ Popravek ni sinhroniziran — poskusi znova');});
   renderStats();renderInventory();
   if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
-  toast(`✓ ${CH[prej]?.label||prej} → ${CH[kanal]?.label||kanal}`);
+  toast(`✓ ${CH[prej]?.label||prej} → ${CH[kanal]?.label||kanal}${ciscenje?' · popust odstranjen':''}`);
 }
 
 async function vrniKomisijo(groupId){

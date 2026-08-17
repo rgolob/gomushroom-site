@@ -1524,6 +1524,55 @@ function stornoSale(groupId){
   });
 }
 
+// ── Popravek nacina prodaje ────────────────────────────────────────────────
+// Napacno izbran kanal je doslej terjal storno in ponoven vnos, kar pusti sled
+// o napaki, ki je ni bilo - in znova razporedi sarze. Dokler prodaja nima svoje
+// stevilke, je popravek kanala zgolj preklop oznake.
+//
+// Meja je izdan dokument: racun in dobavnica se stevilcita po kanalu
+// (nextInvNum), zato bi sprememba za nazaj razdrla stevilcenje serije. Takrat
+// je storno res edina pravilna pot.
+//
+// Zaloge to ne premakne: stockIsProdCh iz prodajne zaloge izvzame samo 'int',
+// zato so malo, velo, dar, wp in kom med seboj enakovredni. Edini prehod, ki
+// zalogo prerazporedi, je na 'int' ali z njega - tega posebej oznacimo.
+const KANALI_POPRAVEK=['malo','velo','dar','int','wp','kom'];
+function spremeniKanal(groupId){
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g){toast('Prodaja ni najdena.');return;}
+  if(g.status==='stornirano'){toast('Stornirane prodaje ni mogoče spreminjati.');return;}
+  if(g.invoiceNum){toast('Račun je izdan — popravi s stornacijo in novim vnosom.');return;}
+  if(g.deliveryNum){toast('Dobavnica je izdana — popravi s stornacijo in novim vnosom.');return;}
+  document.getElementById('chanOverlay')?.remove();
+  const izbire=KANALI_POPRAVEK.filter(k=>k!==g.channel);
+  const el=document.createElement('div');
+  el.id='chanOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.5rem 1.25rem calc(var(--sab)+1.5rem);width:100%;max-width:480px;max-height:80vh;overflow:auto">
+    <div style="font-size:.82rem;font-weight:500;color:var(--ink)">Način prodaje</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.9rem">${g.buyer||'—'} · ${fmtDate(g.date)} · trenutno ${CH[g.channel]?.label||g.channel}</div>
+    ${izbire.map(k=>`<button onclick="potrdiKanal('${g.id}','${k}')" style="width:100%;padding:.8rem;margin-bottom:.5rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;font-size:.88rem;text-align:left;cursor:pointer">${CH[k].icon} ${CH[k].label}${k==='int'?`<span style="color:var(--muted);font-size:.7rem"> — prestavi v interno zalogo</span>`:''}</button>`).join('')}
+    <button onclick="document.getElementById('chanOverlay').remove()" style="width:100%;padding:.75rem;margin-top:.3rem;border:1px solid var(--border);border-radius:8px;background:transparent;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+function potrdiKanal(groupId,kanal){
+  document.getElementById('chanOverlay')?.remove();
+  const g=saleGroups.find(x=>x.id===groupId);
+  if(!g||!KANALI_POPRAVEK.includes(kanal))return;
+  const prej=g.channel;
+  if(prej===kanal)return;
+  g.channel=kanal;
+  save();
+  // Tiha odpoved bi pomenila, da se popravek na drugi napravi ne pozna, videti
+  // pa bi bilo, kot da je shranjen.
+  sbUpdate('gm_sale_groups',{id:g.id},{channel:kanal})
+    .catch(e=>{console.warn('sbUpdate kanal failed:',e);toast('⚠ Popravek ni sinhroniziran — poskusi znova');});
+  renderStats();renderInventory();
+  if(currentTab==='prodaja'){renderSalesSummary();renderSales();}
+  toast(`✓ ${CH[prej]?.label||prej} → ${CH[kanal]?.label||kanal}`);
+}
+
 async function vrniKomisijo(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g)return;
@@ -5002,6 +5051,7 @@ function renderSales(){
           })()}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
+          ${!isStorno&&!hasInvoice&&!g.deliveryNum?`<button class="tbtn" onclick="spremeniKanal('${g.id}')">🔀 Način prodaje</button>`:''}
           ${!isStorno&&g.channel!=='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>

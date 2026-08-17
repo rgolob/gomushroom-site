@@ -138,10 +138,37 @@ ALTER TABLE gm_dn_etanol
   ADD COLUMN IF NOT EXISTS dobavitelj text,
   ADD COLUMN IF NOT EXISTS proizvajalec text;
 
--- gm_dn_oprema: inventarna številka (GM-001, GM-002 …) za nalepko na napravi.
--- Dodeli se enkrat in se ne spreminja — natisnjena nalepka mora ostati veljavna.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- OPREMA — inventarne oznake in uporaba po serijah
+-- Zaženi vse skupaj; vsak stavek je varen za ponovni zagon.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── Inventarna številka ─────────────────────────────────────────────────────
+-- GM-0001, GM-0002 … Dodeli se enkrat in se ne spreminja: natisnjena nalepka
+-- mora ostati veljavna. Nanjo je vezana QR povezava na kartico naprave.
 ALTER TABLE gm_dn_oprema
   ADD COLUMN IF NOT EXISTS inv_st text;
+-- Dve napravi ne smeta nositi iste oznake — nalepka bi kazala na napačno.
+CREATE UNIQUE INDEX IF NOT EXISTS gm_dn_oprema_inv_st_idx
+  ON gm_dn_oprema (inv_st) WHERE inv_st IS NOT NULL;
+
+-- ── Polja, ki jih register potrebuje za zapisnik o proizvodnji ──────────────
+ALTER TABLE gm_dn_oprema
+  -- Proizvajalec ni isto kot dobavitelj; pri reklamaciji rabiš prvega.
+  ADD COLUMN IF NOT EXISTS proizvajalec text,
+  -- Kje naprava stoji — za popis in za iskanje po delavnici.
+  ADD COLUMN IF NOT EXISTS lokacija text,
+  -- Interval vzdrževanja v mesecih. Stolpec vzdrz nosi datum naslednjega;
+  -- z intervalom ga je mogoče izračunati sam ob opravljenem vzdrževanju,
+  -- namesto da ga vsakič vpisuješ na roko in ga kdaj pozabiš.
+  ADD COLUMN IF NOT EXISTS vzdrz_interval_mes integer,
+  -- Umerjanje: velja za merilno opremo (tehtnica, alkoholmeter, termometer,
+  -- refraktometer). To je edino polje, ki ga ob zapisniku o proizvodnji nekdo
+  -- res preveri — meritev z neumerjeno tehtnico ni dokaz.
+  ADD COLUMN IF NOT EXISTS kalibracija date,
+  ADD COLUMN IF NOT EXISTS kalibracija_interval_mes integer,
+  -- Ali naprava pride v stik z izdelkom (HACCP).
+  ADD COLUMN IF NOT EXISTS stik_zivilo boolean DEFAULT false;
 
 -- ── Uporaba opreme po delovnih nalogih ──────────────────────────────────────
 -- Register opreme pove, kaj imaš; ta tabela pove, na čem je nastala posamezna
@@ -160,10 +187,27 @@ CREATE TABLE IF NOT EXISTS gm_dn_oprema_uporaba (
 CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_dokument_idx ON gm_dn_oprema_uporaba (dokument);
 CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_oprema_idx   ON gm_dn_oprema_uporaba (oprema_id);
 
--- RLS enako kot ostale zasebne tabele (glej doc/supabase-rls-faza1.sql):
--- ALTER TABLE gm_dn_oprema_uporaba ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY gm_auth_all ON gm_dn_oprema_uporaba FOR ALL TO authenticated
---   USING (true) WITH CHECK (true);
+-- RLS enako kot ostale zasebne tabele (glej doc/supabase-rls-faza1.sql).
+-- Brez tega bi bila nova tabela edina odprta za publishable ključ — torej za
+-- kogarkoli — medtem ko so vse sosednje zaklenjene.
+ALTER TABLE gm_dn_oprema_uporaba ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS gm_auth_all ON gm_dn_oprema_uporaba;
+CREATE POLICY gm_auth_all ON gm_dn_oprema_uporaba
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ── Preveri, kaj je nastalo ─────────────────────────────────────────────────
+select column_name, data_type
+  from information_schema.columns
+ where table_name = 'gm_dn_oprema'
+   and column_name in ('inv_st','proizvajalec','lokacija','vzdrz_interval_mes',
+                       'kalibracija','kalibracija_interval_mes','stik_zivilo')
+ order by column_name;
+
+select c.relname as tabela, c.relrowsecurity as rls_vklopljen,
+       (select count(*) from pg_policies p
+         where p.schemaname='public' and p.tablename=c.relname) as st_politik
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+ where n.nspname='public' and c.relname='gm_dn_oprema_uporaba';
 
 -- ── Dovoli dostop z anon ključem ────────────────────────────────────────────
 -- Najlažje: v Supabase -> Authentication -> Policies -> onemogoči RLS za te tabele

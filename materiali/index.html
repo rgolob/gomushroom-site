@@ -4676,7 +4676,7 @@ function naslednjaInvSt(){
     const n=parseInt(String(o.invSt||'').replace(INV_PREFIKS,''),10);
     return Number.isFinite(n)&&n>m?n:m;
   },0);
-  return INV_PREFIKS+String(najvecja+1).padStart(3,'0');
+  return INV_PREFIKS+String(najvecja+1).padStart(4,'0');
 }
 
 // QR kaze na kartico naprave v tej aplikaciji, ne le na njen id: skeniranje s

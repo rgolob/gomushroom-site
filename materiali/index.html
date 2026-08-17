@@ -1133,7 +1133,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="bcancel" style="width:100%;margin-bottom:.5rem" onclick="uvozHistoricnih()">📦 Uvozi zgodovinske podatke</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#2a5a8b;border-color:rgba(42,90,139,.3)" onclick="migrirajVSupabase()">☁️ Sinhroniziraj localStorage → Supabase</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="odpriObnovo()">🛟 Preveri in obnovi podatke</button>
-      <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#5a6a2a;border-color:rgba(90,106,42,.3)" onclick="deduplicirajMateriale()">🔧 Dedupliraj materiale izhod</button>
+      <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#5a6a2a;border-color:rgba(90,106,42,.3)" onclick="deduplicirajMateriale()">🔧 Počisti dvojnike porabe</button>
       <button class="bcancel" style="width:100%;margin-bottom:.5rem;color:#3a6b4a;border-color:rgba(58,107,74,.35)" onclick="retroaktivnoPoknjiziVseDN()">📦 Retroaktivno poknjiži vse DN</button>
       <div style="margin-bottom:.75rem">
         <button class="bcancel" style="width:100%;color:var(--danger);border-color:rgba(139,58,42,.3)" onclick="closeSheet('settingsOverlay');clearAll()">🗑 Izbriši vse</button>
@@ -4665,35 +4665,95 @@ function importDN(input){
   reader.readAsText(file);
 }
 
+// Katera od podvojenih vrstic je prava, ni stvar presoje: nalog sam pove, koliko
+// materiala porabi (dnNacrtIzhodov) in na kateri datum je porabljen
+// (dnDatumIzhoda). Prava je tista, ki se z nalogom ujema; odvecna je ostanek
+// starejsega knjizenja, ki ob popravku ni bil posodobljen, ampak napisan na novo.
+//
+// Doslej je ta pregled znal samo steti in je obdrzal prvo vrstico po vrstnem
+// redu - torej prav tako pogosto staro kot pravo.
+function dnPricakovaniIzhod(m,dnPoOznaki){
+  const d=dnPoOznaki[m.dokument];
+  if(!d)return null;
+  const datum=dnDatumIzhoda(d,m.tip);
+  // Goba se knjizi po serijah, zato pricakovano maso vzamemo iz razbitja, ne
+  // iz skupnega nacrta - sicer bi pri nalogu z dvema serijama nobena vrstica
+  // ne ustrezala.
+  if(String(m.tip||'').startsWith('goba_')){
+    const s=dnSerije(d).find(x=>(x.serija||'')===(m.serijaGobe||''));
+    return {kolicina:s?s.masa:null,datum};
+  }
+  const n=dnNacrtIzhodov(d).find(x=>x.tip===m.tip);
+  return {kolicina:n?n.kolicina:null,datum};
+}
 async function deduplicirajMateriale(){
-  // Dvojnik = isti dokument + tip + serija (smer=izhod). Serija je v kljucu
-  // nujna: en nalog sme porabiti vec serij iste surovine (npr. 1100 g serije R1
-  // in 650 g serije R2) in to sta dva zakonita izhoda. Brez serije v kljucu je
-  // ta pregled drugo vrstico izbrisal in s tem unicil razbitje po serijah.
-  const izhodiMap=new Map();
-  const toDelete=[];
+  const dnPoOznaki={};
+  workOrders.forEach(d=>{if(d.oznaka)dnPoOznaki[d.oznaka]=d;});
+
+  // Dvojnik = isti dokument + tip + serija. Serija je v kljucu nujna: en nalog
+  // sme porabiti vec serij iste surovine (1100 g serije R1 in 650 g serije R2)
+  // in to sta dva zakonita izhoda, ne dvojnik.
+  const skupine=new Map();
   materiali.filter(m=>m.smer==='izhod').forEach(m=>{
-    const key=`${m.dokument}|${m.tip}|${m.serijaGobe||''}`;
-    if(izhodiMap.has(key)){toDelete.push(m.id);}
-    else{izhodiMap.set(key,m.id);}
+    const k=`${m.dokument}|${m.tip}|${m.serijaGobe||''}`;
+    if(!skupine.has(k))skupine.set(k,[]);
+    skupine.get(k).push(m);
   });
-  if(!toDelete.length){toast('✓ Ni duplikatov');return;}
-  // Povemo, kaj se brise. Doslej je bila na voljo samo stevilka, izbris pa je
-  // nepovraten - pri izhodu, ki se je izkazal za zakonitega, je to prepozno.
-  const opis=toDelete.slice(0,8).map(id=>{
-    const m=materiali.find(x=>x.id===id);
-    return `• ${m.dokument||'—'} · ${m.tip}${m.serijaGobe?' · '+m.serijaGobe:''} · ${m.kolicina}`;
-  }).join('\n');
-  if(!confirm(`Najdeno ${toDelete.length} dvojnikov med izhodi.\n\n${opis}${toDelete.length>8?`\n… in še ${toDelete.length-8}`:''}\n\nIzbriši jih?`))return;
-  materiali=materiali.filter(m=>!toDelete.includes(m.id));
-  save();renderMateriali();
+
+  const izbrisi=[],obdrzani=[],negotovi=[];
+  for(const [k,v] of skupine){
+    if(v.length<2)continue;
+    const p=dnPricakovaniIzhod(v[0],dnPoOznaki);
+    if(!p){negotovi.push({k,v,zakaj:'naloga ni v seznamu'});continue;}
+
+    // Odloca kolicina. Datum sme lociti sele med vrsticami, ki se po kolicini
+    // ze ujemajo z nalogom - sam po sebi ne pove nicesar, ker je pri obeh
+    // vrsticah pogosto enak. (Prva razlicica je tockovala oboje skupaj in je
+    // pri paru, kjer se z nalogom ne ujema nobena kolicina, izbrisala eno na
+    // slepo.)
+    const ujema=m=>p.kolicina!=null&&Math.abs((+m.kolicina||0)-p.kolicina)<1e-6;
+    const ujemajoci=v.filter(ujema);
+    let obdrzi;
+    if(ujemajoci.length){
+      obdrzi=(p.datum&&ujemajoci.find(m=>m.datum===p.datum))||ujemajoci[0];
+    }else{
+      // Z nalogom se ne ujema nobena. Brisemo samo, ce sta vrstici dobesedno
+      // enaki - takrat je vseeno, katera ostane. Sicer bi ugibali, katera od
+      // dveh razlicnih vrednosti je prava, in lahko izbrisali edino pravilno.
+      const enake=v.every(m=>(+m.kolicina||0)===(+v[0].kolicina||0)&&(m.datum||'')===(v[0].datum||''));
+      if(!enake){negotovi.push({k,v,zakaj:'nobena se ne ujema z nalogom'});continue;}
+      obdrzi=v[0];
+    }
+    obdrzani.push(obdrzi);
+    izbrisi.push(...v.filter(m=>m!==obdrzi));
+  }
+
+  if(!izbrisi.length){
+    toast(negotovi.length?`Ni jasnih dvojnikov · ${negotovi.length} nejasnih`:'✓ Ni dvojnikov');
+    if(negotovi.length)console.warn('dedup — nejasni:',negotovi);
+    return;
+  }
+
+  const vrstica=m=>`${m.dokument||'—'} · ${m.tip}${m.serijaGobe?' · '+m.serijaGobe:''} · ${m.kolicina} · ${m.datum||'—'}`;
+  const opis=izbrisi.slice(0,10).map(m=>'✕ '+vrstica(m)).join('\n');
+  if(!confirm(
+    `Odstrani ${izbrisi.length} odvečnih vrstic porabe?\n\n`+
+    `Obdrži se tista, ki se ujema z nalogom (količina in datum izhoda), `+
+    `odstrani ostanek starejšega knjiženja.\n\n${opis}`+
+    `${izbrisi.length>10?`\n… in še ${izbrisi.length-10}`:''}`+
+    `${negotovi.length?`\n\n${negotovi.length} skupin ostane nedotaknjenih — nobena vrstica se ne ujema z nalogom.`:''}`
+  ))return;
+
+  const idji=new Set(izbrisi.map(m=>m.id));
+  materiali=materiali.filter(m=>!idji.has(m.id));
+  save();renderMateriali();renderMatUskladitevOpozorilo?.();
   let ok=0,fail=0;
-  for(const id of toDelete){
+  for(const id of idji){
     try{await sbDel('gm_dn_materiali',id);ok++;}
     catch(e){console.error('dedup del',id,e);fail++;}
   }
-  if(fail)toast(`⚠ ${ok} izbrisano, ${fail} napak – poskusi znova`);
-  else toast(`✓ ${ok} duplikatov odstranjenih`);
+  if(fail)toast(`⚠ ${ok} odstranjeno, ${fail} napak – poskusi znova`);
+  else toast(`✓ ${ok} odvečnih vrstic odstranjenih${negotovi.length?` · ${negotovi.length} nejasnih ostaja`:''}`);
 }
 
 async function retroaktivnoPoknjiziVseDN(){

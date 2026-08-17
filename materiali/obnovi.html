@@ -414,17 +414,53 @@ function pregledMaterialov(){
 
   const deli=[];
 
+  // Ali je dvojnik nastal ob prenosu s te naprave ali je starejsi, se ne da
+  // uganiti iz stevilk - vidi se samo tako, da vprasamo, katera od obeh vrstic
+  // obstaja tudi lokalno. Vrstica, ki je samo na strezniku, je ostanek; tista,
+  // ki je v obeh, je zapis, s katerim aplikacija dela.
+  const lokalniIdji=new Set((s.lokalni||[]).map(m=>m.id));
+  odvecneNaStrezniku=[];
+  let obeLokalno=0,obeSamoSrv=0,popravki=0;
+
   if(dvojni.length){
     const izpis=dvojni.map(([k,v])=>{
-      const kol=v.map(m=>(+m.kolicina||0)+(m.datum?` <span class="dim">(${m.datum})</span>`:'')).join(' + ');
       const enake=new Set(v.map(m=>+m.kolicina||0)).size===1;
-      return `<li><strong>${k}</strong> — ${v.length}× : ${kol}
-        ${enake?'<span class="err">enaki količini</span>':'<span class="warn">različni količini</span>'}</li>`;
+      const lok=v.filter(m=>lokalniIdji.has(m.id)),srvOnly=v.filter(m=>!lokalniIdji.has(m.id));
+      let znak='',razred='dim';
+      if(!enake){popravki++;znak='popravek — odloči ročno';razred='warn';}
+      else if(lok.length===1&&srvOnly.length===1){
+        odvecneNaStrezniku.push(srvOnly[0]);
+        znak='odvečna je vrstica, ki je ni lokalno';razred='ok';
+      }
+      else if(lok.length===v.length){obeLokalno++;znak='obe tudi lokalno';razred='warn';}
+      else{obeSamoSrv++;znak='obe samo na strežniku';razred='err';}
+      const kol=v.map(m=>`${+m.kolicina||0}<span class="dim">${m.datum?' ('+m.datum+')':''} ${lokalniIdji.has(m.id)?'lok':'⌁srv'}</span>`).join(' + ');
+      return `<li><strong>${k}</strong> — ${kol} · <span class="${razred}">${znak}</span></li>`;
     });
     deli.push(`<div class="slabo"><strong>Podvojeni izhodi: ${dvojni.length}</strong>
       <ul>${izpis.join('')}</ul>
-      <span class="dim">„enaki količini“ je skoraj zagotovo dvojnik. „različni količini“ je
-      lahko popravek, ki stare vrstice ni odstranil — takrat je odveč tista s staro vrednostjo.</span></div>`);
+      <span class="dim"><code>lok</code> = vrstica obstaja tudi v lokalni kopiji ·
+      <code>⌁srv</code> = samo na strežniku</span></div>`);
+
+    const povzetek=[];
+    if(odvecneNaStrezniku.length)povzetek.push(`<div><strong class="ok">${odvecneNaStrezniku.length}</strong>
+      parov ima eno vrstico lokalno in eno samo na strežniku. Strežniška je ostanek starejšega
+      knjiženja — najbrž pred popravkom datuma izhoda, ki je vrstico napisal na novo namesto
+      posodobil. Te je varno odstraniti: lokalna kopija ostane nedotaknjena.</div>`);
+    if(obeLokalno)povzetek.push(`<div style="margin-top:.4rem"><strong class="warn">${obeLokalno}</strong>
+      parov je podvojenih <em>tudi lokalno</em>. Teh tu ne odstranjujem — počisti jih v aplikaciji z
+      <em>Nastavitve → 🔧 Dedupliraj materiale izhod</em>, ki počisti oboje hkrati.</div>`);
+    if(obeSamoSrv)povzetek.push(`<div style="margin-top:.4rem"><strong class="err">${obeSamoSrv}</strong>
+      parov ni lokalno v nobeni obliki. Povej mi zanje — ne vem, katera je prava.</div>`);
+    if(popravki)povzetek.push(`<div style="margin-top:.4rem"><strong class="warn">${popravki}</strong>
+      parov ima različni količini. To so popravki, kjer stara vrstica ni bila odstranjena.
+      Katera je prava, veš samo ti, zato jih ne odstranjujem samodejno.</div>`);
+    deli.push(`<div class="box" style="margin:.6rem 0 0;background:rgba(255,255,255,.03)">${povzetek.join('')}</div>`);
+
+    if(odvecneNaStrezniku.length)deli.push(`<p style="margin:.7rem 0 0">
+      <button id="gumbCisti" onclick="pocistiOdvecne()">🧹 Odstrani ${odvecneNaStrezniku.length} odvečnih vrstic s strežnika</button>
+      <span id="cistiOpomba" class="dim" style="margin-left:.6rem"></span></p>
+      <div id="cistiDnevnik" class="dim" style="white-space:pre-wrap;font-size:11.5px;margin-top:.5rem;max-height:200px;overflow:auto"></div>`);
   }else{
     deli.push(`<div class="dobro">Podvojenih izhodov ni: noben dokument nima dveh izhodov
       istega materiala in iste serije.</div>`);
@@ -446,8 +482,40 @@ function pregledMaterialov(){
     <p class="sub" style="margin:.5rem 0 0">Skupaj ${vrstice.length} vrstic na strežniku.</p>`);
 
   cilj.innerHTML=deli.join('');
+  const g=document.getElementById('gumbCisti');
+  if(g){
+    g.disabled=!kopijaNarejena||!seja();
+    document.getElementById('cistiOpomba').textContent=
+      !seja()?'najprej se prijavi':!kopijaNarejena?'najprej prenesi varnostno kopijo':'';
+  }
 }
 function round(v){return Math.round(v*1000)/1000;}
+
+// Brisemo izkljucno vrstice, ki jih lokalna kopija nima. Ce brisanje kje pade,
+// gre preostalo vseeno skozi in izpis pove, katera vrstica je ostala.
+let odvecneNaStrezniku=[];
+async function pocistiOdvecne(){
+  if(!odvecneNaStrezniku.length)return;
+  if(!confirm(`Odstrani ${odvecneNaStrezniku.length} vrstic s strežnika?\n\n`+
+    `Odstranijo se samo tiste, ki jih tvoja lokalna kopija nima. Lokalni podatki ostanejo nedotaknjeni.\n\n`+
+    `Če se izkaže za napačno, jih vrneš s ponovnim prenosom lokalne kopije.`))return;
+  const b=document.getElementById('gumbCisti');
+  const d=document.getElementById('cistiDnevnik');
+  b.disabled=true;b.textContent='⏳ Odstranjujem…';d.textContent='';
+  let ok=0,fail=0;
+  for(const m of odvecneNaStrezniku){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/gm_dn_materiali?id=eq.${encodeURIComponent(m.id)}`,
+        {method:'DELETE',headers:glava()});
+      if(!r.ok)throw new Error(`HTTP ${r.status} — ${(await r.text()).slice(0,120)}`);
+      ok++;
+    }catch(e){fail++;d.textContent+=`✕ ${m.dokument||'—'} · ${m.tip} · ${m.kolicina}: ${e.message}\n`;}
+  }
+  d.textContent+=fail?`\n⚠ Odstranjeno ${ok}, neuspešno ${fail}.`
+                     :`\n✓ Odstranjeno ${ok} vrstic. Osvežujem pregled…`;
+  b.textContent=fail?'↻ Poskusi znova':'✓ Odstranjeno';
+  if(!fail)await tek();
+}
 
 // Razlike izpisemo poimensko. Stevilka "17 razlicnih" ne pove, ali gre za
 // danasnje vnose ali za nekaj drugega; imena nalogov in polj to povedo.

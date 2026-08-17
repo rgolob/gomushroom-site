@@ -4666,16 +4666,25 @@ function importDN(input){
 }
 
 async function deduplicirajMateriale(){
-  // Najdi duplicate izhod vnose (isti dokument + tip + smer=izhod)
+  // Dvojnik = isti dokument + tip + serija (smer=izhod). Serija je v kljucu
+  // nujna: en nalog sme porabiti vec serij iste surovine (npr. 1100 g serije R1
+  // in 650 g serije R2) in to sta dva zakonita izhoda. Brez serije v kljucu je
+  // ta pregled drugo vrstico izbrisal in s tem unicil razbitje po serijah.
   const izhodiMap=new Map();
   const toDelete=[];
   materiali.filter(m=>m.smer==='izhod').forEach(m=>{
-    const key=`${m.dokument}|${m.tip}`;
+    const key=`${m.dokument}|${m.tip}|${m.serijaGobe||''}`;
     if(izhodiMap.has(key)){toDelete.push(m.id);}
     else{izhodiMap.set(key,m.id);}
   });
   if(!toDelete.length){toast('✓ Ni duplikatov');return;}
-  if(!confirm(`Najdeno ${toDelete.length} duplikatov v materialih izhod.\n\nIzbriši jih?`))return;
+  // Povemo, kaj se brise. Doslej je bila na voljo samo stevilka, izbris pa je
+  // nepovraten - pri izhodu, ki se je izkazal za zakonitega, je to prepozno.
+  const opis=toDelete.slice(0,8).map(id=>{
+    const m=materiali.find(x=>x.id===id);
+    return `• ${m.dokument||'—'} · ${m.tip}${m.serijaGobe?' · '+m.serijaGobe:''} · ${m.kolicina}`;
+  }).join('\n');
+  if(!confirm(`Najdeno ${toDelete.length} dvojnikov med izhodi.\n\n${opis}${toDelete.length>8?`\n… in še ${toDelete.length-8}`:''}\n\nIzbriši jih?`))return;
   materiali=materiali.filter(m=>!toDelete.includes(m.id));
   save();renderMateriali();
   let ok=0,fail=0;

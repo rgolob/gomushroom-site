@@ -67,6 +67,14 @@ potisne lokalne v Supabase, da se izenačita.
 <div id="dnevnik" style="margin-top:.6rem"></div>
 </div>
 
+<div class="box">
+<h3>5 · Materiali — dvojniki in saldo</h3>
+<p class="sub" style="margin-bottom:.6rem">
+Gleda stanje <strong>na strežniku</strong>. Ničesar ne spreminja — samo pokaže.
+</p>
+<div id="materiali"><span class="dim">Počakaj na primerjavo.</span></div>
+</div>
+
 <p><button class="tih" onclick="tek()">↻ Ponovi primerjavo</button></p>
 
 <script>
@@ -350,7 +358,7 @@ async function tek(){
     const lokPoId=new Set(lokalni.map(l=>l.id));
     srvSurovi.forEach(r=>{if(!lokPoId.has(r.id))samoSrv.push(r.id);});
 
-    stanje.push({g,lokalni,novi,spremenjeni,samoSrv,srvSt:srvSurovi.length});
+    stanje.push({g,lokalni,novi,spremenjeni,samoSrv,srvSt:srvSurovi.length,srv:srvSurovi});
     vrstice.push(`<tr>
       <td>${g.ime}</td>
       <td class="num">${lokalni.length}</td>
@@ -372,8 +380,74 @@ async function tek(){
     </p>`;
 
   podrobnosti();
+  pregledMaterialov();
   osveziGumb();
 }
+
+// ── Materiali: dvojniki in saldo ────────────────────────────────────────────
+// Za dvojnik steje isti dokument + tip + serija. Serija je v kljucu nujna:
+// en nalog sme porabiti vec serij iste surovine (R1 1100 g + R2 650 g) in to
+// sta dva zakonita izhoda, ne dvojnik. Kolicine v kljuc ne jemljemo - dvojnik,
+// ki je nastal iz popravljene vrednosti (555 g in 760 g), je prav tisti, ki ga
+// je treba videti.
+function pregledMaterialov(){
+  const cilj=document.getElementById('materiali');
+  const s=stanje.find(x=>x.g.tabela==='gm_dn_materiali');
+  if(!s||!s.srv){cilj.innerHTML='<span class="err">Materialov ni bilo mogoče prebrati.</span>';return;}
+  const vrstice=s.srv;
+
+  const skupine=new Map();
+  vrstice.filter(m=>m.smer==='izhod').forEach(m=>{
+    const k=[m.dokument||'—',m.tip,m.serija_gobe||''].join(' | ');
+    if(!skupine.has(k))skupine.set(k,[]);
+    skupine.get(k).push(m);
+  });
+  const dvojni=[...skupine.entries()].filter(([,v])=>v.length>1);
+
+  const bil={};
+  vrstice.forEach(m=>{
+    const b=bil[m.tip]=bil[m.tip]||{vhod:0,izhod:0};
+    b[m.smer==='izhod'?'izhod':'vhod']+=(+m.kolicina||0);
+  });
+  const salda=Object.entries(bil).map(([tip,b])=>({tip,...b,saldo:b.vhod-b.izhod}))
+    .sort((a,b)=>a.saldo-b.saldo);
+
+  const deli=[];
+
+  if(dvojni.length){
+    const izpis=dvojni.map(([k,v])=>{
+      const kol=v.map(m=>(+m.kolicina||0)+(m.datum?` <span class="dim">(${m.datum})</span>`:'')).join(' + ');
+      const enake=new Set(v.map(m=>+m.kolicina||0)).size===1;
+      return `<li><strong>${k}</strong> — ${v.length}× : ${kol}
+        ${enake?'<span class="err">enaki količini</span>':'<span class="warn">različni količini</span>'}</li>`;
+    });
+    deli.push(`<div class="slabo"><strong>Podvojeni izhodi: ${dvojni.length}</strong>
+      <ul>${izpis.join('')}</ul>
+      <span class="dim">„enaki količini“ je skoraj zagotovo dvojnik. „različni količini“ je
+      lahko popravek, ki stare vrstice ni odstranil — takrat je odveč tista s staro vrednostjo.</span></div>`);
+  }else{
+    deli.push(`<div class="dobro">Podvojenih izhodov ni: noben dokument nima dveh izhodov
+      istega materiala in iste serije.</div>`);
+  }
+
+  const negativni=salda.filter(x=>x.saldo<-1e-9);
+  if(negativni.length)deli.push(`<div class="slabo" style="margin-top:.6rem">
+    <strong>Negativna zaloga pri ${negativni.length} materialih</strong> — porabljeno je več, kot je bilo nabavljeno.
+    <span class="dim">To je najbolj zanesljiv znak dvojnega odpisa.</span></div>`);
+
+  deli.push(`<table style="margin-top:.6rem"><thead><tr>
+      <th>material</th><th style="text-align:right">vhod</th>
+      <th style="text-align:right">izhod</th><th style="text-align:right">saldo</th></tr></thead><tbody>
+    ${salda.map(x=>`<tr><td>${x.tip}</td>
+      <td class="num dim">${round(x.vhod)}</td>
+      <td class="num dim">${round(x.izhod)}</td>
+      <td class="num ${x.saldo<-1e-9?'err':x.saldo<1e-9?'dim':'ok'}">${round(x.saldo)}</td></tr>`).join('')}
+    </tbody></table>
+    <p class="sub" style="margin:.5rem 0 0">Skupaj ${vrstice.length} vrstic na strežniku.</p>`);
+
+  cilj.innerHTML=deli.join('');
+}
+function round(v){return Math.round(v*1000)/1000;}
 
 // Razlike izpisemo poimensko. Stevilka "17 razlicnih" ne pove, ali gre za
 // danasnje vnose ali za nekaj drugega; imena nalogov in polj to povedo.

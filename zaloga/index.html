@@ -1081,7 +1081,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shbody">
       <div class="frow">
         <div class="field"><label>Datum</label><input id="egDate" type="date"></div>
-        <div class="field"><label>Način prodaje</label><select id="egChannel"></select></div>
+        <div class="field"><label id="egChannelLabel">Način prodaje</label><select id="egChannel"></select></div>
       </div>
       <div id="egChannelHint" style="display:none;font-size:.7rem;color:var(--muted);margin:-.35rem 0 .6rem"></div>
       <div class="field"><label>Kupec / prejemnik</label><input id="egBuyer"></div>
@@ -5196,21 +5196,42 @@ function reprintInvoice(groupId){
 // prehod, ki zalogo prerazporedi, je na 'int' ali z njega.
 const KANALI_POPRAVEK=['malo','velo','dar','int','wp','kom'];
 const BREZ_POPUSTA=new Set(['dar','int']);
+
+// Ena sama definicija, kdaj kanala ni vec dovoljeno spreminjati - uporabljata
+// jo izbirnik in shranjevanje. Ce bi shranjevanje sklepalo iz zaklenjenosti
+// polja, bi se dalo pravilo obiti s spremembo strani v brskalniku; tu izhaja
+// iz samega zapisa.
+//
+// invoiceId je zraven, ker se racun lahko zabelezi tudi brez stevilke v
+// invoiceNum, storno pa zato, ker je zaprt zapis.
+function kanalZaklenjen(g){
+  return !!(g.invoiceNum||g.invoiceId||g.deliveryNum||g.status==='stornirano');
+}
+function kanalRazlogZaklepa(g){
+  if(g.status==='stornirano')return 'je prodaja stornirana';
+  const dok=[
+    g.invoiceNum?'račun '+g.invoiceNum:(g.invoiceId?'račun':''),
+    g.deliveryNum?'dobavnica '+g.deliveryNum:'',
+  ].filter(Boolean).join(' in ');
+  return 'je izdan'+(dok?' '+dok:' dokument');
+}
 function napolniKanale(g){
   const sel=document.getElementById('egChannel');
   const hint=document.getElementById('egChannelHint');
+  const label=document.getElementById('egChannelLabel');
   if(!sel)return;
   // Ce je prodaja v kanalu, ki ga ne ponujamo (npr. 'stripe'), ga vseeno
   // pokazemo - sicer bi izbirnik tiho kazal napacen kanal.
   const seznam=KANALI_POPRAVEK.includes(g.channel)?KANALI_POPRAVEK:[g.channel,...KANALI_POPRAVEK];
   sel.innerHTML=seznam.map(k=>
     `<option value="${k}"${k===g.channel?' selected':''}>${CH[k]?.icon||''} ${CH[k]?.label||k}${k==='int'?' (interna zaloga)':''}</option>`).join('');
-  const zakleni=!!(g.invoiceNum||g.deliveryNum);
+  const zakleni=kanalZaklenjen(g);
   sel.disabled=zakleni;
-  const dok=[g.invoiceNum?'račun '+g.invoiceNum:'',g.deliveryNum?'dobavnica '+g.deliveryNum:''].filter(Boolean).join(' in ');
+  sel.style.opacity=zakleni?'.55':'';
+  if(label)label.textContent=zakleni?'Način prodaje 🔒':'Način prodaje';
   hint.style.display=zakleni?'':'none';
   hint.textContent=zakleni
-    ?`Zaklenjeno, ker je izdan${dok?' '+dok:' dokument'} — številčenje teče po kanalu. Popraviš s stornacijo in novim vnosom.`
+    ?`Zaklenjeno, ker ${kanalRazlogZaklepa(g)} — številčenje teče po kanalu. Popraviš s stornacijo in novim vnosom.`
     :'';
 }
 
@@ -5233,7 +5254,7 @@ function saveEditGroup(){
   const g=saleGroups.find(x=>x.id===editingGroupId);if(!g)return;
   const sel=document.getElementById('egChannel');
   let kanalSpremenjen=false,popustPocisten=false;
-  if(sel&&!sel.disabled&&sel.value&&sel.value!==g.channel&&KANALI_POPRAVEK.includes(sel.value)){
+  if(sel&&!kanalZaklenjen(g)&&sel.value&&sel.value!==g.channel&&KANALI_POPRAVEK.includes(sel.value)){
     g.channel=sel.value;
     kanalSpremenjen=true;
     // Popust pri podaritvi in internem prevzemu ni podatek o poslu, ampak sled

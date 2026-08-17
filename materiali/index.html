@@ -825,9 +825,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
         <div id="opVzdrzNamig" style="font-size:.68rem;color:var(--muted);margin:-.3rem 0 .5rem"></div>
         <div id="opKalibracijaBlok">
-          <div class="slabel">Umerjanje</div>
-          <div class="frow">
-            <div class="field"><label>Zadnje umerjanje</label><input id="opKalibracija" type="date" oninput="onOpIntervalChange('kal')"></div>
+          <div class="slabel">Točnost</div>
+          <div class="field"><label>Kako se potrdi</label>
+            <select id="opPreverjanje" onchange="onOpPreverjanjeChange()">
+              <option value="umerjanje">Umerjanje pri zunanjem izvajalcu — s certifikatom</option>
+              <option value="preverjanje">Preverjanje proti referenci — brez nastavljanja</option>
+              <option value="nastavitev">Nastavitev pred uporabo (npr. na destilirano vodo)</option>
+              <option value="certifikat">Tovarniški certifikat / razred — brez roka</option>
+              <option value="brez">Ni potrebno</option>
+            </select>
+          </div>
+          <div id="opCertBlok" class="field"><label>Št. certifikata / razred</label><input id="opCertifikat" placeholder="npr. razred III, cert. 12345"></div>
+          <div id="opRokBlok" class="frow">
+            <div class="field"><label id="opKalDatumLabel">Zadnje umerjanje</label><input id="opKalibracija" type="date" oninput="onOpIntervalChange('kal')"></div>
             <div class="field"><label>Interval (mes.)</label><input id="opKalInterval" type="text" inputmode="numeric" placeholder="12" oninput="onOpIntervalChange('kal')"></div>
           </div>
           <div id="opKalNamig" style="font-size:.68rem;color:var(--muted);margin:-.3rem 0 .5rem"></div>
@@ -4667,11 +4677,16 @@ function renderOprema(){
     // Poteklo umerjanje je hujse od zamujenega vzdrzevanja: meritve s tako
     // napravo v zapisniku ne veljajo, zato mora biti vidno ze na seznamu.
     const kalRok=kalibracijaRok(o);
+    const nacin=nacinPreverjanja(o);
     const kal=kalRok
       ?(kalRok<danes
-        ?`<span style="color:var(--danger);font-size:.65rem">⚠ Umerjanje poteklo ${fmtDate(kalRok)}</span>`
-        :`<span style="font-size:.65rem;color:var(--muted)">Umerjeno do ${fmtDate(kalRok)}</span>`)
-      :'';
+        ?`<span style="color:var(--danger);font-size:.65rem">⚠ ${nacin==='preverjanje'?'Preverjanje':'Umerjanje'} poteklo ${fmtDate(kalRok)}</span>`
+        :`<span style="font-size:.65rem;color:var(--muted)">Velja do ${fmtDate(kalRok)}</span>`)
+      // Pri merilih brez roka povemo, kako se tocnost potrdi - sicer bi bila
+      // videti kot merila, pri katerih na to nihce ni pomislil.
+      :(o.kat==='merilo'&&PREVERJANJE_LABEL[nacin]
+        ?`<span style="font-size:.65rem;color:var(--muted)">${PREVERJANJE_LABEL[nacin]}${o.certifikat?' · '+o.certifikat:''}</span>`
+        :'');
     const garancija=o.garancija?`<span style="font-size:.65rem;color:var(--muted)">Garancija: ${fmtDate(o.garancija)}</span>`:'';
     return`<div class="dn-card">
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
@@ -4818,6 +4833,8 @@ function openOpremaSheet(id){
   document.getElementById('opProizvajalec').value=o?.proizvajalec||'';
   document.getElementById('opLokacija').value=o?.lokacija||'';
   document.getElementById('opVzdrzInterval').value=o?.vzdrzInterval||'';
+  document.getElementById('opPreverjanje').value=o?.preverjanje||'umerjanje';
+  document.getElementById('opCertifikat').value=o?.certifikat||'';
   document.getElementById('opKalibracija').value=o?.kalibracija||'';
   document.getElementById('opKalInterval').value=o?.kalInterval||'';
   document.getElementById('opStikZivilo').checked=!!o?.stikZivilo;
@@ -4829,7 +4846,8 @@ function openOpremaSheet(id){
   document.getElementById('opKat').value=o?.kat||'oprema';
   document.getElementById('opOpomba').value=o?.opomba||'';
   onOpKatChange();
-  onOpIntervalChange('vzdrz');onOpIntervalChange('kal');
+  onOpPreverjanjeChange();
+  onOpIntervalChange('vzdrz');
   document.getElementById('opStatus').value=o?.status||'aktivna';
   renderOpUporaba(id);
   renderOpNalepka(id);
@@ -4875,23 +4893,63 @@ function onOpIntervalChange(kaj){
       :`Brez vpisanega roka. Če danes opraviš vzdrževanje, je naslednji ${fmtDate(pristejMesece(danes,int))}.`;
     return;
   }
-  const int=parseNum(document.getElementById('opKalInterval').value);
-  const zadnja=document.getElementById('opKalibracija').value;
   const el=document.getElementById('opKalNamig');
   if(!el)return;
-  if(!zadnja||!int){el.textContent='';el.style.color='var(--muted)';return;}
+  el.style.color='var(--muted)';
+  const nacin=document.getElementById('opPreverjanje')?.value||'umerjanje';
+  if(nacin==='nastavitev'){
+    el.textContent='Opravi se pred vsako uporabo, zato roka ni. Zabeleži se v zapisniku serije.';
+    return;
+  }
+  if(nacin==='certifikat'){
+    el.textContent='Certifikat velja, dokler je merilo nepoškodovano — roka ni.';
+    return;
+  }
+  if(nacin==='brez'){el.textContent='';return;}
+  const int=parseNum(document.getElementById('opKalInterval').value);
+  const zadnja=document.getElementById('opKalibracija').value;
+  if(!zadnja||!int){el.textContent='';return;}
   const rok=pristejMesece(zadnja,int);
   const poteklo=rok&&rok<danes;
+  const naziv=nacin==='preverjanje'?'Preverjanje':'Umerjanje';
   el.textContent=poteklo
-    ?`⚠ Umerjanje je poteklo ${fmtDate(rok)} — meritve s to napravo niso dokaz.`
+    ?`⚠ ${naziv} je poteklo ${fmtDate(rok)} — meritve s to napravo niso dokaz.`
     :`Velja do ${fmtDate(rok)}.`;
   el.style.color=poteklo?'var(--danger)':'var(--muted)';
 }
-// Rok velja samo za merila; pri drugi opremi je morebitna vrednost ostanek
-// prejsnje kategorije in ne sme sprozati opozoril.
+// Merila se po nacinu potrjevanja tocnosti bistveno razlikujejo in tega ni
+// mogoce stlaciti v eno polje "umerjanje":
+//
+//   umerjanje   tehtnica - zunanji izvajalec z utezmi izda certifikat; rok velja
+//   preverjanje primerjava proti referenci brez nastavljanja; rok velja
+//   nastavitev  refraktometer - nastavis ga na destilirano vodo pred uporabo;
+//               roka ni, ker se opravi vsakic sproti
+//   certifikat  steklen alkoholmeter po gostoti - nima cesa nastavljati, ima
+//               tovarniski certifikat in razred; roka ni
+//   brez        tocnost ni kriticna
+//
+// Rok zato velja samo pri prvih dveh. Pri ostalih bi izracunani rok zavajal -
+// alkoholmetru bi ocital zamujeno umerjanje, ki ga sploh ni mogoce opraviti.
+const ROK_VELJA=new Set(['umerjanje','preverjanje']);
+function nacinPreverjanja(o){return o?.preverjanje||'umerjanje';}
 function kalibracijaRok(o){
   if(o?.kat!=='merilo')return '';
+  if(!ROK_VELJA.has(nacinPreverjanja(o)))return '';
   return (o?.kalibracija&&o?.kalInterval)?pristejMesece(o.kalibracija,o.kalInterval):'';
+}
+const PREVERJANJE_LABEL={
+  umerjanje:'Umerjanje',preverjanje:'Preverjanje',
+  nastavitev:'Nastavitev pred uporabo',certifikat:'Tovarniški certifikat',brez:'',
+};
+function onOpPreverjanjeChange(){
+  const nacin=document.getElementById('opPreverjanje').value;
+  const rokVelja=ROK_VELJA.has(nacin);
+  document.getElementById('opRokBlok').style.display=rokVelja?'':'none';
+  document.getElementById('opCertBlok').style.display=
+    (nacin==='umerjanje'||nacin==='certifikat')?'':'none';
+  document.getElementById('opKalDatumLabel').textContent=
+    nacin==='preverjanje'?'Zadnje preverjanje':'Zadnje umerjanje';
+  onOpIntervalChange('kal');
 }
 
 // Predogled nalepke na kartici: pokaze, kaj bo natisnjeno, in omogoci tisk ene
@@ -5016,6 +5074,8 @@ function saveOprema(){
     garancija:isInv?'':document.getElementById('opGarancija').value,
     vzdrz:isInv?'':document.getElementById('opVzdrz').value,
     vzdrzInterval:isInv?null:(parseNum(document.getElementById('opVzdrzInterval').value)||null),
+    preverjanje:isInv?'':document.getElementById('opPreverjanje').value,
+    certifikat:isInv?'':document.getElementById('opCertifikat').value.trim(),
     kalibracija:isInv?'':document.getElementById('opKalibracija').value,
     kalInterval:isInv?null:(parseNum(document.getElementById('opKalInterval').value)||null),
     // Samo inventar
@@ -5976,6 +6036,7 @@ function opToSb(o){return{
   proizvajalec:o.proizvajalec||null,lokacija:o.lokacija||null,
   garancija:o.garancija||null,vzdrz:o.vzdrz||null,
   vzdrz_interval_mes:o.vzdrzInterval||null,
+  preverjanje:o.preverjanje||null,certifikat:o.certifikat||null,
   kalibracija:o.kalibracija||null,kalibracija_interval_mes:o.kalInterval||null,
   stik_zivilo:!!o.stikZivilo,
   kolicina:o.kolicina||null
@@ -5988,6 +6049,7 @@ function sbToOp(r){return{
   proizvajalec:r.proizvajalec||'',lokacija:r.lokacija||'',
   garancija:r.garancija||'',vzdrz:r.vzdrz||'',
   vzdrzInterval:r.vzdrz_interval_mes||null,
+  preverjanje:r.preverjanje||'',certifikat:r.certifikat||'',
   kalibracija:r.kalibracija||'',kalInterval:r.kalibracija_interval_mes||null,
   stikZivilo:!!r.stik_zivilo,
   kolicina:r.kolicina||null

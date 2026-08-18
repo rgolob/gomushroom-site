@@ -176,7 +176,15 @@ ALTER TABLE gm_dn_oprema
   ADD COLUMN IF NOT EXISTS kalibracija date,
   ADD COLUMN IF NOT EXISTS kalibracija_interval_mes integer,
   -- Ali naprava pride v stik z izdelkom (HACCP).
-  ADD COLUMN IF NOT EXISTS stik_zivilo boolean DEFAULT false;
+  ADD COLUMN IF NOT EXISTS stik_zivilo boolean DEFAULT false,
+  -- Naprave, ki vedno tečejo skupaj s to: rotavapor → chiller, vakuumska
+  -- črpalka, kontroler. Ko glavno napravo izbereš pri delovnem nalogu, se
+  -- vpišejo tudi one.
+  --
+  -- Seznam je pripet na glavno napravo in ne kot skupna oznaka sklopa: ena
+  -- črpalka je lahko naštet spremljevalec pri več rotavaporjih, česar oznaka
+  -- sklopa ne zmore. Zveza je zato usmerjena — črpalka ne potegne rotavaporjev.
+  ADD COLUMN IF NOT EXISTS spremljevalci jsonb;
 
 -- ── Uporaba opreme po delovnih nalogih ──────────────────────────────────────
 -- Register opreme pove, kaj imaš; ta tabela pove, na čem je nastala posamezna

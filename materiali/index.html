@@ -854,6 +854,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena/kom (€)</label><input id="opCenaInv" type="text" inputmode="decimal" placeholder="0,00"></div>
       </div>
       <div class="field"><label>Opomba</label><textarea id="opOpomba" placeholder="Lokacija, opombe…"></textarea></div>
+      <div id="opSpremBlok"></div>
       <div id="opNalepkaBlok"></div>
       <div id="opUporabaBlok"></div>
     </div>
@@ -2823,8 +2824,34 @@ function renderDNOpremaRows(){
 function addDNOpremaRow(){dnOpremaRows.push({id:uid(),opremaId:'',namen:''});renderDNOpremaRows();}
 function removeDNOpremaRow(idx){dnOpremaRows.splice(idx,1);renderDNOpremaRows();}
 // Polja ne izrisujemo znova ob vsakem znaku - to bi vpisovanju namena vzelo
-// fokus po prvi crki.
-function onDNOpremaChange(idx,polje,val){if(dnOpremaRows[idx])dnOpremaRows[idx][polje]=val;}
+// fokus po prvi crki. Izbira naprave je izjema: takrat pripnemo se njene
+// spremljevalce in seznam je treba izrisati znova.
+function onDNOpremaChange(idx,polje,val){
+  if(!dnOpremaRows[idx])return;
+  dnOpremaRows[idx][polje]=val;
+  if(polje!=='opremaId'||!val)return;
+  const dodani=pripniSpremljevalce(val,dnOpremaRows[idx].namen);
+  if(dodani)renderDNOpremaRows();
+}
+
+// Glavna naprava potegne za sabo svoje spremljevalce (rotavapor -> chiller,
+// crpalka, kontroler). Zveza je usmerjena: crpalka ne potegne rotavaporjev,
+// sicer bi skupna crpalka pripeljala vso delavnico. Gremo samo eno stopnjo
+// globoko - predvidljivost je tu vec vredna od iznajdljivosti.
+function pripniSpremljevalce(opremaId,namen){
+  const glavna=oprema.find(o=>o.id===opremaId);
+  const seznam=Array.isArray(glavna?.spremljevalci)?glavna.spremljevalci:[];
+  if(!seznam.length)return 0;
+  const ze=new Set(dnOpremaRows.map(r=>r.opremaId).filter(Boolean));
+  let dodanih=0;
+  seznam.forEach(sid=>{
+    if(!sid||ze.has(sid))return;
+    if(!oprema.some(o=>o.id===sid))return;   // naprava je bila izbrisana
+    dnOpremaRows.push({id:uid(),opremaId:sid,namen:namen||''});
+    ze.add(sid);dodanih++;
+  });
+  return dodanih;
+}
 
 function dnOpremaZaDokument(oznaka){
   return oznaka?opremaUporaba.filter(u=>u.dokument===oznaka):[];
@@ -4692,7 +4719,7 @@ function renderOprema(){
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
-          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}</div>
+          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}${o.spremljevalci?.length?` · 🔗 +${o.spremljevalci.length}`:''}</div>
           <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
           <div style="margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap">${vzdrz} ${kal} ${garancija}</div>
         </div>
@@ -4845,6 +4872,8 @@ function openOpremaSheet(id){
   document.getElementById('opVzdrz').value=o?.vzdrz||'';
   document.getElementById('opKat').value=o?.kat||'oprema';
   document.getElementById('opOpomba').value=o?.opomba||'';
+  opSpremRows=Array.isArray(o?.spremljevalci)?[...o.spremljevalci]:[];
+  renderOpSprem(id);
   onOpKatChange();
   onOpPreverjanjeChange();
   onOpIntervalChange('vzdrz');
@@ -4952,6 +4981,49 @@ function onOpPreverjanjeChange(){
   onOpIntervalChange('kal');
 }
 
+// ── SPREMLJEVALNE NAPRAVE ──────────────────────────────────────────────────
+// Rotavapor je glavna naprava, ob njem pa vedno tecejo chiller, vakuumska
+// crpalka in kontroler. Namesto skupne oznake sklopa je seznam pripet na
+// glavno napravo: ena sama crpalka je lahko nastet spremljevalec pri vec
+// rotavaporjih, oznaka sklopa pa bi to zmogla samo z izmisljanjem.
+//
+// V zapis serije gredo posamezne naprave, ne "sklop" - ko bo cez cas kaksna
+// prevezana, bodo stari zapisniki se vedno povedali, katera je takrat tekla.
+let opSpremRows=[];
+function renderOpSprem(id){
+  const el=document.getElementById('opSpremBlok');
+  if(!el)return;
+  const kat=document.getElementById('opKat')?.value||'oprema';
+  if(kat==='inventar'){el.innerHTML='';return;}
+  const naVoljo=oprema.filter(o=>o.id!==id&&(o.status!=='neaktivna'||opSpremRows.includes(o.id)));
+  const vrstice=opSpremRows.map((sid,idx)=>{
+    const opts=naVoljo.map(o=>
+      `<option value="${o.id}"${o.id===sid?' selected':''}>${o.invSt?o.invSt+' · ':''}${o.naziv||'—'}</option>`).join('');
+    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.3rem">
+      <div class="field" style="flex:1;margin-bottom:0">
+        <select onchange="onOpSpremChange(${idx},this.value)">
+          <option value="">— izberi —</option>${opts}
+        </select>
+      </div>
+      <button type="button" onclick="odstraniOpSprem(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1">✕</button>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="slabel">Spremljevalne naprave</div>
+    <div style="font-size:.68rem;color:var(--muted);margin:-.2rem 0 .45rem">
+      Naprave, ki vedno tečejo skupaj s to. Ko jo pri delovnem nalogu izbereš, se vpišejo tudi one.
+    </div>
+    ${vrstice}
+    <button type="button" onclick="dodajOpSprem()" style="width:100%;padding:.4rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">+ Dodaj napravo</button>`;
+}
+function dodajOpSprem(){opSpremRows.push('');renderOpSprem(editingOpremaId);}
+function odstraniOpSprem(idx){opSpremRows.splice(idx,1);renderOpSprem(editingOpremaId);}
+function onOpSpremChange(idx,val){
+  // Ista naprava dvakrat ne pove nic novega, pri knjizenju pa bi jo morali
+  // vsakic loviti kot dvojnik.
+  if(val&&opSpremRows.some((s,i)=>i!==idx&&s===val)){toast('Ta naprava je že na seznamu');renderOpSprem(editingOpremaId);return;}
+  opSpremRows[idx]=val;
+}
+
 // Predogled nalepke na kartici: pokaze, kaj bo natisnjeno, in omogoci tisk ene
 // same - ob zamenjani ali poskodovani nalepki ne zelis cele pole.
 function renderOpNalepka(id){
@@ -5039,6 +5111,7 @@ function onOpKatChange(){
   // brisanje bi ga izgubilo. Opozorilo o poteklem umerjanju zato izpisujemo
   // samo pri merilih, da skrita vrednost ne strasi po nepotrebnem.
   document.getElementById('opKalibracijaBlok').style.display=kat==='merilo'?'':'none';
+  renderOpSprem(editingOpremaId);
   // Status: inventar nima vzdrževanja
   const statusSel=document.getElementById('opStatus');
   if(isInv){
@@ -5067,6 +5140,8 @@ function saveOprema(){
     cena:parseNum((isInv?document.getElementById('opCenaInv'):document.getElementById('opCena')).value||'0'),
     lokacija:document.getElementById('opLokacija').value.trim(),
     stikZivilo:document.getElementById('opStikZivilo').checked,
+    // Prazne vrstice in naprave, ki so bile vmes izbrisane, ne sodijo v zapis.
+    spremljevalci:isInv?[]:[...new Set(opSpremRows.filter(sid=>sid&&oprema.some(o=>o.id===sid)))],
     // Samo oprema
     serijska:isInv?'':document.getElementById('opSerijska').value.trim(),
     dobavitelj:isInv?'':document.getElementById('opDobavitelj').value.trim(),
@@ -6037,6 +6112,7 @@ function opToSb(o){return{
   garancija:o.garancija||null,vzdrz:o.vzdrz||null,
   vzdrz_interval_mes:o.vzdrzInterval||null,
   preverjanje:o.preverjanje||null,certifikat:o.certifikat||null,
+  spremljevalci:o.spremljevalci?.length?o.spremljevalci:null,
   kalibracija:o.kalibracija||null,kalibracija_interval_mes:o.kalInterval||null,
   stik_zivilo:!!o.stikZivilo,
   kolicina:o.kolicina||null
@@ -6050,6 +6126,7 @@ function sbToOp(r){return{
   garancija:r.garancija||'',vzdrz:r.vzdrz||'',
   vzdrzInterval:r.vzdrz_interval_mes||null,
   preverjanje:r.preverjanje||'',certifikat:r.certifikat||'',
+  spremljevalci:Array.isArray(r.spremljevalci)?r.spremljevalci:[],
   kalibracija:r.kalibracija||'',kalInterval:r.kalibracija_interval_mes||null,
   stikZivilo:!!r.stik_zivilo,
   kolicina:r.kolicina||null

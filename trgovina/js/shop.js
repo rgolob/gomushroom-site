@@ -92,9 +92,8 @@ function renderActiveDiscountBanner() {
       ? `⏰ <strong>Time-limited discount</strong>: −${p.vrednost}%`
       : `⏰ <strong>Časovni popust</strong>: −${p.vrednost}%`;
   });
-  if (brezplacnaOd) vrstice.push(LANG === 'en'
-    ? `🚚 Free shipping over <strong>${formatPrice(brezplacnaOd)}</strong>`
-    : `🚚 Brezplačna dostava nad <strong>${formatPrice(brezplacnaOd)}</strong>`);
+  const postninaTxt = besediloBrezplacnePostnine(_settings, LANG);
+  if (postninaTxt) vrstice.push(`🚚 ${postninaTxt}`);
   banner.innerHTML = `<div style="display:flex;flex-direction:column;gap:.15rem">
     ${vrstice.map(v=>`<span style="font-size:.75rem;color:rgba(43,11,57,.55);line-height:1.5;letter-spacing:.01em">${v}</span>`).join('')}
   </div>`;

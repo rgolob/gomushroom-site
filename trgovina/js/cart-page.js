@@ -14,15 +14,15 @@ const CP_STR = {
   sl: {
     empty: 'Košarica je prazna', back: '← Nazaj v trgovino', unit: '/ kom', remove: 'Odstrani',
     itemsCount: (n) => `Skupaj (${n} kosov)`, discount: (pct) => `Popust ${pct}%`,
-    shipping: 'Poštnina', free: 'Brezplačno', addMore: (v) => `Dodaj še ${v} za brezplačno dostavo`,
-    total: 'Skupaj za plačilo', applyCoupon: 'Uveljavi', couponPartial: 'Delno',
+    shipping: 'Poštnina', shippingNote: 'Izračunana na blagajni, glede na izbrano državo dostave.',
+    subtotal: 'Vmesna vsota', applyCoupon: 'Uveljavi', couponPartial: 'Delno',
     dateLocale: 'sl-SI'
   },
   en: {
     empty: 'Your cart is empty', back: '← Back to shop', unit: '/ each', remove: 'Remove',
     itemsCount: (n) => `Total (${n} item${n === 1 ? '' : 's'})`, discount: (pct) => `Discount ${pct}%`,
-    shipping: 'Shipping', free: 'Free', addMore: (v) => `Add ${v} more for free shipping`,
-    total: 'Total to pay', applyCoupon: 'Apply', couponPartial: 'Partial',
+    shipping: 'Shipping', shippingNote: 'Calculated at checkout, based on the delivery country.',
+    subtotal: 'Subtotal', applyCoupon: 'Apply', couponPartial: 'Partial',
     dateLocale: 'en-IE'
   }
 }[CP_LANG];
@@ -30,6 +30,10 @@ const CP_STR = {
 let settings = {
   postnina: 3.90,
   brezplacnaPosninaOd: 60,
+  // Enake zaloznice kot na blagajni, da se strani ne razhajata, ce nastavitve
+  // niso na voljo.
+  postninaTujina: 0,
+  brezplacnaPosninaOdTujina: 60,
   sestevajPopuste: false,
   maxPopust: 50,
   popusti: [],
@@ -110,7 +114,7 @@ function renderCart() {
         <div style="font-size:1.4rem;font-weight:300">${CP_STR.empty}</div>
         <a href="${CP_HOME}" style="display:inline-block;margin-top:1.25rem;padding:.55rem 1.25rem;background:#2b0b39;color:#f0ebe3;border-radius:999px;text-decoration:none;font-size:.85rem">${CP_STR.back}</a>
       </div>`;
-    updateSummary(0, 0, 0, 0, []);
+    updateSummary(0, 0, 0, []);
     return;
   }
 
@@ -145,23 +149,24 @@ function renderCart() {
   const koda = document.getElementById('kupon-input')?.value?.trim() || '';
   const { pct, ujemajoci } = izracunajPopust(bruto, kolicina, koda);
   const popustZnesek = bruto * pct / 100;
-  const zneskPoPopustu = bruto - popustZnesek;
-  const postnina = zneskPoPopustu >= (settings.brezplacnaPosninaOd || 60) ? 0 : (settings.postnina || 3.90);
-  const skupaj = zneskPoPopustu + postnina;
 
-  updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci);
+  updateSummary(bruto, pct, popustZnesek, ujemajoci);
 }
 
-function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = []) {
+// Poštnina je odvisna od drzave dostave, ta pa se izbere sele na blagajni -
+// tu je se ne poznamo. Prej smo tu izracunali domaco poštnino in jo prikazali
+// kot da je dokoncna; tujemu kupcu je kosarica obljubljala napacen znesek.
+// Namesto ugibanja povzetek pove oba prava, znesek za placilo pa ostane brez
+// postnine - dokoncen izracun kupec vidi na blagajni.
+function updateSummary(bruto, pct, popustZnesek, ujemajoci = []) {
   const el = document.getElementById('cart-summary-detail');
   const btn = document.getElementById('checkout-btn');
   if (!el) return;
   const cart = getCart();
   if (btn) btn.disabled = !cart.length;
 
-  const brezplacnaOd = settings.brezplacnaPosninaOd || 60;
   const zneskPoPopustu = bruto - popustZnesek;
-  const doBrezplacne = brezplacnaOd - zneskPoPopustu;
+  const postninaTxt = besediloBrezplacnePostnine(settings, CP_LANG);
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:.4rem">
@@ -176,14 +181,13 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
         </div>
         ${ujemajoci.map(u => `<div style="font-size:.68rem;color:#3a6b4a;text-align:right;letter-spacing:.01em">✓ ${u.opis}</div>`).join('')}
       ` : ''}
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.83rem;color:rgba(43,11,57,.55);padding:.1rem 0">
-        <span>${CP_STR.shipping}</span>
-        <span style="color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.55)'}">${postnina === 0 ? CP_STR.free : fmt(postnina)}</span>
-      </div>
-      ${doBrezplacne > 0 && postnina > 0 ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">${CP_STR.addMore(fmt(doBrezplacne))}</div>` : ''}
+      ${postninaTxt ? `<div style="font-size:.78rem;color:rgba(43,11,57,.55);padding:.3rem 0;line-height:1.5">
+        🚚 ${postninaTxt}
+        <span style="display:block;font-size:.68rem;color:rgba(43,11,57,.4);margin-top:.1rem">${CP_STR.shippingNote}</span>
+      </div>` : `<div style="font-size:.78rem;color:rgba(43,11,57,.55);padding:.3rem 0">${CP_STR.shipping}: ${CP_STR.shippingNote}</div>`}
       <div style="border-top:1px solid rgba(43,11,57,.08);padding-top:.7rem;margin-top:.25rem;display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${CP_STR.total}</span>
-        <span style="font-size:1.3rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>
+        <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${CP_STR.subtotal}</span>
+        <span style="font-size:1.3rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(zneskPoPopustu)}</span>
       </div>
     </div>`;
 }

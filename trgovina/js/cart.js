@@ -52,6 +52,42 @@ function formatPrice(value) {
   }) + " €";
 }
 
+// ── Prag brezplačne poštnine ──────────────────────────────
+// Za tujino velja svoj prag (brezplacnaPosninaOdTujina), blagajna to upošteva,
+// trgovina in košarica pa sta doslej izpisovali samo domačega — tujemu kupcu je
+// stran obljubljala brezplačno dostavo pri znesku, pri katerem je ne dobi.
+//
+// Države na teh dveh straneh ne poznamo; kupec jo izbere šele na blagajni. Zato
+// izpišemo oba praga: en sam bi bil za polovico kupcev napačen. Če v tujino
+// poštnine sploh ne zaračunavamo, prag tam ničesar ne pomeni in ga izpustimo.
+// cart.js je naložen na vseh straneh trgovine (SL in EN), zato pravilo živi tu.
+function pragiPostnine(settings) {
+  const pragDoma = Number(settings?.brezplacnaPosninaOd) || 0;
+  const pragTujina = Number(settings?.brezplacnaPosninaOdTujina) || pragDoma;
+  const cenaTujina = Number(settings?.postninaTujina) || 0;
+  return {
+    doma: pragDoma,
+    tujina: pragTujina,
+    // Prag za tujino povemo samo takrat, ko tam poštnino sploh zaračunamo in se
+    // od domačega razlikuje.
+    lociVelja: pragDoma > 0 && cenaTujina > 0 && pragTujina !== pragDoma,
+  };
+}
+
+function besediloBrezplacnePostnine(settings, lang) {
+  const p = pragiPostnine(settings);
+  if (!p.doma) return '';
+  const en = lang === 'en';
+  if (!p.lociVelja) {
+    return en
+      ? `Free shipping over <strong>${formatPrice(p.doma)}</strong>`
+      : `Brezplačna dostava nad <strong>${formatPrice(p.doma)}</strong>`;
+  }
+  return en
+    ? `Free shipping over <strong>${formatPrice(p.doma)}</strong> in Slovenia, <strong>${formatPrice(p.tujina)}</strong> abroad`
+    : `Brezplačna dostava nad <strong>${formatPrice(p.doma)}</strong> v Sloveniji, <strong>${formatPrice(p.tujina)}</strong> v tujino`;
+}
+
 function updateCartBadge() {
   const cart = getCart();
   const count = cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0);

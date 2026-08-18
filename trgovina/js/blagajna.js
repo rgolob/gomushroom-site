@@ -1308,7 +1308,7 @@ async function sendStripeConfirmationEmail(order, calc) {
 <meta name="supported-color-schemes" content="light">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;-webkit-font-smoothing:antialiased;color-scheme:light}
+  body{background:#f0ebe3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1209;-webkit-font-smoothing:antialiased;color-scheme:light}
   .wrap{max-width:600px;margin:0 auto;background:#fff}
   @media(min-width:640px){.wrap{margin:2rem auto;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,.08);overflow:hidden}}
 </style></head>
@@ -1520,7 +1520,7 @@ async function sendConfirmationEmail(order, rf, calc) {
   const html = `<!DOCTYPE html><html lang="${emailLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light only">
   <meta name="supported-color-schemes" content="light"></head>
-  <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;color-scheme:light">
+  <body style="margin:0;padding:0;background:#f0ebe3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1209;color-scheme:light">
   <div style="max-width:600px;margin:0 auto;background:#fff">
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">

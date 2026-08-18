@@ -626,6 +626,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="caka">🟡 Čaka</option>
           <option value="placano">🟢 Plačano</option>
           <option value="predano">📦 Predano</option>
+          <option value="stornirano">⊘ Stornirano</option>
         </select>
         <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
         <button class="fpill" id="printLabelsBtn" onclick="printAllPaidLabels()" style="flex:0 0 auto;background:rgba(43,11,57,.07);border-color:rgba(43,11,57,.2)" title="Natisni nalepke za plačane račune z naslovom">🏷</button>
@@ -5356,6 +5357,23 @@ function cycleInvDatePreset(){
   applyInvDatePreset();
 }
 
+// ── Storniran racun ────────────────────────────────────────────────────────
+// Storno prodaje doslej ni nic povedal njenemu racunu: ta je ostal v seznamu
+// "caka na placilo" in stel v prihodek, ceprav podlage zanj ni bilo vec.
+//
+// Statusa ne shranjujemo na racun, ker bi se lahko razsel s prodajo (storno se
+// lahko zgodi tudi drugod ali se razveljavi). Racun je vezan na prodajo, zato
+// stanje beremo od tam - ena resnica, ne dve.
+function racunStorniran(inv){
+  if(!inv)return false;
+  const g=saleGroups.find(x=>x.id===inv.groupId);
+  return g?.status==='stornirano';
+}
+// Ucinkovni status: storno prevlada nad shranjenim.
+function invStatusEff(inv){
+  return racunStorniran(inv)?'stornirano':(inv?.invStatus||'caka');
+}
+
 function renderInvStats(){
   const fFrom=document.getElementById('invDateFrom')?.value||'';
   const fTo=document.getElementById('invDateTo')?.value||'';
@@ -5364,7 +5382,11 @@ function renderInvStats(){
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
 
   // Filtered by date + channel for totals
-  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
+  const vObdobju=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
+  // Stornirani ne stejejo v prihodek. Ne izginejo pa tiho - koliko jih je,
+  // izpisemo pod stevilom racunov, sicer bi se sestevek zdel napacen.
+  const stornirani=vObdobju.filter(racunStorniran);
+  const f=vObdobju.filter(i=>!racunStorniran(i));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
   const totalUnits=f.reduce((a,i)=>{
     const g=saleGroups.find(x=>x.id===i.groupId);
@@ -5386,7 +5408,7 @@ function renderInvStats(){
     </div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
-    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div>${stornirani.length?`<div style="font-size:.56rem;color:#8b3a2a;margin-top:.15rem;letter-spacing:.02em">⊘ ${stornirani.length} storniranih</div>`:''}</div>
     <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
     <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
 }
@@ -5413,7 +5435,7 @@ function renderInvoices(){
   const fTo=document.getElementById('invDateTo')?.value||'';
   const rows=invoices.filter(i=>{
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
-    const ms=!fSt||(i.invStatus||'caka')===fSt;
+    const ms=!fSt||invStatusEff(i)===fSt;
     const md=(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo);
     const chMatch=!fCh||(fCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===fCh);
     return mq&&chMatch&&ms&&md;
@@ -5431,12 +5453,14 @@ function renderInvoices(){
     caka:{label:'🟡 Čaka',cls:'inv-status-caka'},
     placano:{label:'🟢 Plačano',cls:'inv-status-placano'},
     predano:{label:'📦 Predano',cls:'inv-status-predano'},
+    stornirano:{label:'⊘ Stornirano',cls:'inv-status-caka'},
   };
 
   el.innerHTML=page.map(i=>{
     const ch=CH[i.channel]||CH.malo;
-    const st=i.invStatus||'caka';
+    const st=invStatusEff(i);
     const s=STATUS[st]||STATUS.caka;
+    const jeStorno=st==='stornirano';
     const exp=expandedInvoices.has(i.id);
     return `<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;cursor:pointer" onclick="toggleInvoiceCard('${i.id}')">
       <div class="sg-header">
@@ -5454,8 +5478,10 @@ function renderInvoices(){
           </div>
         </div>
         <div class="sg-right">
-          <div class="sg-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
-          <button class="inv-status ${s.cls}" onclick="event.stopPropagation();cycleInvStatus('${i.id}')">${s.label}</button>
+          <div class="sg-total"${jeStorno?' style="text-decoration:line-through;color:var(--muted)"':''}>${i.total?i.total.toFixed(2)+' €':'—'}</div>
+          ${jeStorno
+            ? `<span class="inv-status ${s.cls}" style="background:rgba(139,58,42,.12);color:#8b3a2a;border-color:rgba(139,58,42,.3);cursor:default">${s.label}</span>`
+            : `<button class="inv-status ${s.cls}" onclick="event.stopPropagation();cycleInvStatus('${i.id}')">${s.label}</button>`}
         </div>
       </div>
       ${exp?`<div class="sg-footer" onclick="event.stopPropagation()">
@@ -5957,6 +5983,8 @@ function printAllPaidLabels(){
   const fTo=document.getElementById('invDateTo').value||'';
   const candidates=invoices.filter(i=>
     (i.invStatus==='placano')&&
+    // Stornirana prodaja se ne odpremi - nalepka bi pomenila poslano posiljko.
+    !racunStorniran(i)&&
     (i.street||i.address)&&
     (!fCh||i.channel===fCh)&&
     (!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)
@@ -7421,10 +7449,15 @@ function genReport(type){
     const doVal=document.getElementById('rr-do').value;
     const showItems=document.getElementById('rr-izdelki').checked;
 
-    const filtered=invoices.filter(inv=>
+    // Stornirani racuni ne sodijo v obracun - ucinkovni status jih izloci, ker
+    // se ne ujema z nobenim od izbranih. Koliko jih je bilo, povemo pod
+    // povzetkom: tiho izginotje bi izgledalo kot napacen sestevek.
+    const vOkviru=invoices.filter(inv=>
       chFilter.includes(inv.channel)&&
-      stFilter.includes(inv.invStatus||'caka')&&
-      (!od||inv.date>=od)&&(!doVal||inv.date<=doVal)
+      (!od||inv.date>=od)&&(!doVal||inv.date<=doVal));
+    const izpuscenoStorno=vOkviru.filter(inv=>racunStorniran(inv)&&stFilter.includes(inv.invStatus||'caka'));
+    const filtered=vOkviru.filter(inv=>
+      stFilter.includes(invStatusEff(inv))
     ).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||String(a.num||'').localeCompare(String(b.num||'')));
 
     // povzetek po vrsti prodaje
@@ -7445,14 +7478,14 @@ function genReport(type){
     // Statusi gredo: caka -> placano -> predano. 'placano' in 'predano' torej
     // oba pomenita, da je racun placan (enako kot isPaid drugod v aplikaciji),
     // kot cakajoc na placilo steje samo status 'caka'.
-    const unpaid=filtered.filter(inv=>(inv.invStatus||'caka')==='caka');
+    const unpaid=filtered.filter(inv=>invStatusEff(inv)==='caka');
     const unpaidSum=unpaid.reduce((a,inv)=>a+(inv.total||0),0);
 
     const ST={placano:{l:'Plačano',i:'🟢'},caka:{l:'Čaka',i:'🟡'},predano:{l:'Predano',i:'📦'}};
     let rows='';
     filtered.forEach(inv=>{
       const ch=CH[inv.channel]||CH.malo;
-      const st=ST[inv.invStatus||'caka']||ST.caka;
+      const st=ST[invStatusEff(inv)]||ST.caka;
       let itemsHtml='';
       if(showItems){
         const g=saleGroups.find(x=>x.id===inv.groupId);
@@ -7480,6 +7513,7 @@ function genReport(type){
       <div class="s-item"><div class="s-label">Skupaj</div><div class="s-val" style="color:#3a6b4a">${totalSum.toFixed(2)} €</div></div>
       ${unpaid.length?`<div class="s-item"><div class="s-label">Čaka na plačilo</div><div class="s-val" style="color:#c0392b">${unpaidSum.toFixed(2)} €</div><div style="font-size:.7rem;color:#7a6f60">${unpaid.length} rač.</div></div>`:''}
     </div>
+    ${izpuscenoStorno.length?`<div style="font-size:.75rem;color:#8b3a2a;margin-bottom:.5rem">⊘ Izpuščenih ${izpuscenoStorno.length} računov storniranih prodaj (${izpuscenoStorno.reduce((a,x)=>a+(x.total||0),0).toFixed(2)} €): ${izpuscenoStorno.map(x=>x.num).join(', ')}</div>`:''}
     <table>
       <tr><th>Št. računa</th><th>Datum</th><th>Kupec</th><th>Vrsta prodaje</th><th>Status</th><th style="text-align:right">Znesek</th></tr>
       ${rows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni računov za izbrane filtre</td></tr>'}
@@ -9627,6 +9661,10 @@ async function sendInvoiceEmail(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}
 
+  // Racuna stornirane prodaje ne posiljamo - kupec bi dobil zahtevek za
+  // placilo posla, ki ga ni vec.
+  if(racunStorniran(inv)){toast('⊘ Prodaja je stornirana — računa ne pošiljamo.');return;}
+
   const email=inv.email;
   if(!email){toast('⚠ Kupec nima e-maila');return;}
 
@@ -10125,6 +10163,9 @@ async function loadSkatlaZapisi(){
 
 async function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
+  // Storniran racun ni terjatev - oznaka "placano" na njem ne pomeni nicesar.
+  // Znacka je ze neklikljiva, a pravilo mora drzati tudi tu.
+  if(racunStorniran(i)){toast('⊘ Prodaja je stornirana — status računa ni več v igri.');return;}
   const cur=i.invStatus||'caka';
   if(cur==='predano'){
     const pwd=prompt('Vnesi geslo za razveljavitev statusa "Predano":');

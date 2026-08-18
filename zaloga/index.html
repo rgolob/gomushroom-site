@@ -8236,8 +8236,11 @@ let _recenzije = null;
 
 async function naloziRecenzije() {
   try {
+    // Z zetonom prijavljenega uporabnika, ne s publishable kljucem: pregled
+    // recenzij mora videti tudi nepregledane (status=pending), tiste pa smejo
+    // brati samo prijavljeni.
     const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?order=created_at.desc&limit=200`, {
-      headers: { ...SB_HEADERS, 'Authorization': 'Bearer ' + SB_HEADERS['apikey'] }
+      headers: SB_HEADERS
     });
     _recenzije = r.ok ? await r.json() : [];
     renderRecenzije();

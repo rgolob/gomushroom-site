@@ -550,6 +550,17 @@ function isTujina(country) {
   return !!country && country !== HOME_COUNTRY;
 }
 
+// isTujina() primerja proti HOME_COUNTRY v jeziku TE strani - dovolj za
+// postnino, ker je bila vrednost izbrana iz iste, jezikovno usklajene
+// izbirnice. Za jezik potrditvenega mejla pa stran, na kateri je kupec
+// pomotoma pristal, ni zanesljiv signal: "Nemčija" iz slovenske izbirnice
+// mora dati anglesko sporocilo prav tako kot "Germany" iz angleske. Primerjaj
+// zato proti obema imenoma domovine, ne glede na to, katera stran je poslala
+// zahtevek.
+function narocilnoTujina(country) {
+  return !!country && country !== 'Slovenija' && country !== 'Slovenia';
+}
+
 // ISO-2 koda (iz Stripe Express Checkout naslova) -> ime drzave v jeziku strani.
 // Samo drzave EU - narocila dostavljamo izkljucno znotraj EU.
 const EU_COUNTRY_NAMES = {
@@ -572,7 +583,10 @@ const EU_COUNTRY_NAMES = {
 };
 const ISO_TO_SL_COUNTRY = EU_COUNTRY_NAMES[BJ_LANG];
 
-const BJ_STR = {
+// BJ_STR_ALL drzi oba jezika - stran uporablja resen BJ_STR (jezik strani),
+// potrditveni mejli pa berejo iz BJ_STR_ALL po jeziku, ki ga doloca drzava
+// dostave (glej narocilnoTujina) - stran in mejl imata lahko razlicen jezik.
+const BJ_STR_ALL = {
   sl: {
     dateLocale: 'sl-SI', stripeLocale: 'sl',
     free: 'Brezplačno', discountLabel: (pct) => `Popust (${pct}%)`,
@@ -633,7 +647,8 @@ const BJ_STR = {
       afterPayment: 'Once we receive your payment, we will ship your order promptly.',
     },
   }
-}[BJ_LANG];
+};
+const BJ_STR = BJ_STR_ALL[BJ_LANG];
 
 // Nastavitve
 let settings = {
@@ -1199,9 +1214,18 @@ async function saveStripeOrder(paymentIntentId) {
 }
 
 async function sendStripeConfirmationEmail(order, calc) {
+  // Mejl gre v anglescini, ce je narocilo tuje - ne glede na to, ali je kupec
+  // pomotoma pristal na slovenski strani. Stran sama (BJ_LANG/BJ_STR) ostane
+  // nedotaknjena, ker ta izbira velja samo za to sporocilo.
+  const emailLang = narocilnoTujina(order.country) ? 'en' : BJ_LANG;
+  const ES = BJ_STR_ALL[emailLang];
+
   const pct = calc.pct || 0;
   const ujemajoci = calc.ujemajoci || [];
-  const dateStr = new Date().toLocaleDateString(BJ_STR.dateLocale);
+  const dateStr = new Date().toLocaleDateString(ES.dateLocale);
+  // codePrefix filtrira ujemajoci - ta polja so ze izracunana v jeziku strani
+  // (BJ_LANG), zato mora ostati BJ_LANG, ne emailLang, sicer se ujemanje
+  // podre.
   const codePrefix = BJ_LANG === 'en' ? 'Code ' : 'Koda ';
 
   // Ločimo popuste na artikel-nivo (količina, znesek) in koda-nivo
@@ -1240,7 +1264,7 @@ async function sendStripeConfirmationEmail(order, calc) {
   }).join('');
 
   // Vrstica za količinski popust (če obstaja)
-  const itemDiscLabel = BJ_STR.email.qtyDiscountLabel(itemDiscounts.length === 1 ? itemDiscounts[0].vrednost : itemDisplayPct);
+  const itemDiscLabel = ES.email.qtyDiscountLabel(itemDiscounts.length === 1 ? itemDiscounts[0].vrednost : itemDisplayPct);
   const itemDiscRow = hasItemDiscount && itemAmt > 0 ? `<tr>
     <td colspan="3" style="${tdBase};color:#3a6b4a">${itemDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${itemAmt.toFixed(2)} €</td>
@@ -1249,7 +1273,7 @@ async function sendStripeConfirmationEmail(order, calc) {
   // Vrstica za kodo
   const codeDiscLabel = codeDiscounts.length === 1
     ? `${codeDiscounts[0].opis} (${codeDiscounts[0].vrednost}%)`
-    : BJ_STR.email.promoCodeLabel(rawCodePct);
+    : ES.email.promoCodeLabel(rawCodePct);
   const codeDiscRow = hasCodeDiscount ? `<tr>
     <td colspan="3" style="${tdBase};color:#3a6b4a">${codeDiscLabel}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${codeAmt.toFixed(2)} €</td>
@@ -1257,29 +1281,29 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   // Če ni ločenih tipov, pokaži skupno vrstico
   const simpleDiscRow = pct > 0 && !hasItemDiscount && !hasCodeDiscount ? `<tr>
-    <td colspan="3" style="${tdBase};color:#3a6b4a">${BJ_STR.discountLabel(pct)}</td>
+    <td colspan="3" style="${tdBase};color:#3a6b4a">${ES.discountLabel(pct)}</td>
     <td style="${tdBase};text-align:right;color:#3a6b4a;font-weight:600">−${Number(calc.popustZnesek).toFixed(2)} €</td>
   </tr>` : '';
 
   // Vmesna vsota (po individualnih popustih, pred skupinskimi) — samo če obstajajo skupinski popusti
   const hasOrderDiscount = Number(calc.popustZnesek) > 0;
   const subtotalRow = hasOrderDiscount ? `<tr>
-    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.55);font-style:italic">${BJ_STR.email.itemsSubtotal}</td>
+    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.55);font-style:italic">${ES.email.itemsSubtotal}</td>
     <td style="${tdBase};text-align:right;color:rgba(26,18,9,.55)">${Number(calc.bruto).toFixed(2)} €</td>
   </tr>` : '';
 
   const shippingRow = `<tr>
-    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">${BJ_STR.email.shipping}</td>
-    <td style="${tdBase};text-align:right;color:rgba(26,18,9,.6)">${calc.postnina === 0 ? BJ_STR.free : Number(calc.postnina).toFixed(2) + ' €'}</td>
+    <td colspan="3" style="${tdBase};color:rgba(26,18,9,.6)">${ES.email.shipping}</td>
+    <td style="${tdBase};text-align:right;color:rgba(26,18,9,.6)">${calc.postnina === 0 ? ES.free : Number(calc.postnina).toFixed(2) + ' €'}</td>
   </tr>`;
 
   const totalRow = `<tr>
-    <td colspan="3" style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;font-weight:700;font-size:.9rem">${BJ_STR.email.totalToPay}</td>
+    <td colspan="3" style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;font-weight:700;font-size:.9rem">${ES.email.totalToPay}</td>
     <td style="padding:.7rem .6rem;border-top:2px solid #af8455;background:#f7f3ee;text-align:right;font-weight:700;font-size:1rem;color:#af8455">${Number(calc.skupaj).toFixed(2)} €</td>
   </tr>`;
 
   const html = `<!DOCTYPE html>
-<html lang="${BJ_LANG}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="${emailLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
 <style>
@@ -1299,7 +1323,7 @@ async function sendStripeConfirmationEmail(order, calc) {
               <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
             </td>
             <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
-              <div style="font-size:.95rem;font-weight:500;color:#1a1209">${BJ_STR.email.headerTitle}</div>
+              <div style="font-size:.95rem;font-weight:500;color:#1a1209">${ES.email.headerTitle}</div>
               <div style="font-size:.72rem;color:#9a8f82;margin-top:.2rem">${dateStr}</div>
               <div style="font-size:.68rem;color:#9a8f82;margin-top:.1rem">Rok Golob s.p. · gomushroom.si</div>
             </td>
@@ -1311,17 +1335,17 @@ async function sendStripeConfirmationEmail(order, calc) {
 
   <div style="padding:1.5rem">
     <div style="font-size:.88rem;line-height:1.8;color:#1a1209;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #ede6d6">
-      ${BJ_STR.email.greeting(order.name)}<br><br>
-      ${BJ_STR.email.thanksPaid}
+      ${ES.email.greeting(order.name)}<br><br>
+      ${ES.email.thanksPaid}
     </div>
 
-    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.6rem">${BJ_STR.email.orderLabel}</div>
+    <div style="font-size:.58rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9a8f82;margin-bottom:.6rem">${ES.email.orderLabel}</div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
       <thead><tr>
-        <th style="${thBase};text-align:left">${BJ_STR.email.colItem}</th>
-        <th style="${thBase};text-align:right">${BJ_STR.email.colQty}</th>
-        <th style="${thBase};text-align:right">${BJ_STR.email.colPricePer}</th>
-        <th style="${thBase};text-align:right">${BJ_STR.email.colTotal}</th>
+        <th style="${thBase};text-align:left">${ES.email.colItem}</th>
+        <th style="${thBase};text-align:right">${ES.email.colQty}</th>
+        <th style="${thBase};text-align:right">${ES.email.colPricePer}</th>
+        <th style="${thBase};text-align:right">${ES.email.colTotal}</th>
       </tr></thead>
       <tbody>
         ${itemRows}
@@ -1335,10 +1359,10 @@ async function sendStripeConfirmationEmail(order, calc) {
     </table>
 
     <div style="background:#f0f7f0;border-left:3px solid #3a6b4a;padding:.85rem 1rem;border-radius:0 6px 6px 0;font-size:.85rem;line-height:1.6">
-      ${BJ_STR.email.paymentConfirmedBanner}
+      ${ES.email.paymentConfirmedBanner}
     </div>
 
-    <p style="margin:2.5rem 0 0;font-size:.88rem">${BJ_STR.email.regards}</p>
+    <p style="margin:2.5rem 0 0;font-size:.88rem">${ES.email.regards}</p>
   </div>
 
   <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid #ede6d6;font-size:.68rem;color:#9a8f82;line-height:1.7">
@@ -1353,7 +1377,7 @@ async function sendStripeConfirmationEmail(order, calc) {
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: BJ_STR.email.subjectPaymentConfirmed, html }),
+      body: JSON.stringify({ to: order.email, subject: ES.email.subjectPaymentConfirmed, html }),
     });
     // Obvestilo lastniku
     const ownerHtml = `<b>Novo naročilo (Stripe)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
@@ -1480,16 +1504,23 @@ async function placeOrder() {
 
 // ── Email ─────────────────────────────────────────────────
 async function sendConfirmationEmail(order, rf, calc) {
+  // Enako kot pri Stripe potrditvi: jezik mejla sledi drzavi dostave, ne
+  // strani, na kateri je bilo narocilo oddano.
+  const emailLang = narocilnoTujina(order.country) ? 'en' : BJ_LANG;
+  const ES = BJ_STR_ALL[emailLang];
+
   const ibanFormatted = GM_IBAN.replace(/(.{4})/g,'$1 ').trim();
   const itemsList = order.items.map(i =>
     `<tr><td style="padding:.4rem .5rem;border-bottom:1px solid #f5f0e8">${i.name} - ${i.variantLabel||''}</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8">${i.quantity}×</td><td style="padding:.4rem .5rem;text-align:right;border-bottom:1px solid #f5f0e8;font-weight:600">${(Number(i.price)*i.quantity).toFixed(2)} €</td></tr>`
   ).join('');
 
   const qr = qrUrl(calc.skupaj, rf, `Placilo narocila GoMushroom`, 160);
-  const discountLabelPlain = BJ_LANG === 'en' ? 'Discount' : 'Popust';
+  const discountLabelPlain = emailLang === 'en' ? 'Discount' : 'Popust';
 
-  const html = `<!DOCTYPE html><html lang="${BJ_LANG}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-  <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209">
+  const html = `<!DOCTYPE html><html lang="${emailLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light"></head>
+  <body style="margin:0;padding:0;background:#f0ebe3;font-family:Georgia,serif;color:#1a1209;color-scheme:light">
   <div style="max-width:600px;margin:0 auto;background:#fff">
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -1498,40 +1529,40 @@ async function sendConfirmationEmail(order, rf, calc) {
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:.9rem;font-weight:500">${BJ_STR.email.proforma}</div>
-          <div style="font-size:.72rem;color:#9a8f82">${new Date().toLocaleDateString(BJ_STR.dateLocale)}</div>
+          <div style="font-size:.9rem;font-weight:500">${ES.email.proforma}</div>
+          <div style="font-size:.72rem;color:#9a8f82">${new Date().toLocaleDateString(ES.dateLocale)}</div>
         </div>
       </div>
     </div>
     <div style="padding:1.5rem">
-      <p style="margin:0 0 1rem">${BJ_STR.email.greeting(order.name)}</p>
-      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">${BJ_STR.email.thanksUpn}</p>
+      <p style="margin:0 0 1rem">${ES.email.greeting(order.name)}</p>
+      <p style="margin:0 0 1.75rem;color:rgba(26,18,9,.7)">${ES.email.thanksUpn}</p>
       <table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem">
         <thead><tr style="background:#f7f3ee">
-          <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colItem}</th>
-          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colQty}</th>
-          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${BJ_STR.email.colTotal}</th>
+          <th style="padding:.5rem;text-align:left;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${ES.email.colItem}</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${ES.email.colQty}</th>
+          <th style="padding:.5rem;text-align:right;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#9a8f82">${ES.email.colTotal}</th>
         </tr></thead>
         <tbody>${itemsList}</tbody>
       </table>
       ${Number(calc.popustZnesek) > 0 ? `<div style="color:#3a6b4a;font-size:.85rem;text-align:right;margin-bottom:.35rem">${discountLabelPlain}${calc.pct > 0 ? ` (${calc.pct}%)` : ''}: −${Number(calc.popustZnesek).toFixed(2)} €</div>` : ''}
-      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">${BJ_STR.email.shipping}: ${calc.postnina === 0 ? BJ_STR.free : Number(calc.postnina).toFixed(2) + ' €'}</div>
-      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">${BJ_STR.email.colTotal}: ${Number(calc.skupaj).toFixed(2)} €</div>
+      <div style="font-size:.85rem;text-align:right;margin-bottom:.35rem;color:rgba(26,18,9,.6)">${ES.email.shipping}: ${calc.postnina === 0 ? ES.free : Number(calc.postnina).toFixed(2) + ' €'}</div>
+      <div style="font-size:1.05rem;font-weight:700;text-align:right;padding:.5rem 0;border-top:2px solid #af8455">${ES.email.colTotal}: ${Number(calc.skupaj).toFixed(2)} €</div>
 
       <div style="background:#f7f3ee;border-left:3px solid #af8455;padding:1rem;border-radius:0 8px 8px 0;margin:1.25rem 0;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
         <div style="flex:1;min-width:160px;font-size:.82rem;line-height:1.8">
-          <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;margin-bottom:.25rem">${BJ_STR.paymentDetailsLabel}</div>
-          ${BJ_STR.recipient}: ${GM_NAME}<br>
+          <div style="font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;margin-bottom:.25rem">${ES.paymentDetailsLabel}</div>
+          ${ES.recipient}: ${GM_NAME}<br>
           IBAN: ${ibanFormatted}<br>
           BIC: HDELSI22<br>
-          ${BJ_STR.reference}: <strong>${rf}</strong><br>
-          ${BJ_STR.amount}: <strong>${calc.skupaj.toFixed(2)} €</strong>
+          ${ES.reference}: <strong>${rf}</strong><br>
+          ${ES.amount}: <strong>${calc.skupaj.toFixed(2)} €</strong>
         </div>
         <img src="${qr}" width="120" height="120" alt="UPN QR" style="border-radius:8px;flex-shrink:0">
       </div>
 
-      <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">${BJ_STR.email.afterPayment}</p>
-      <p style="margin:2.5rem 0 0">${BJ_STR.email.regards}</p>
+      <p style="font-size:.82rem;color:rgba(26,18,9,.6);margin:0 0 1.25rem">${ES.email.afterPayment}</p>
+      <p style="margin:2.5rem 0 0">${ES.email.regards}</p>
     </div>
     <div style="background:#f7f3ee;padding:1rem 1.5rem;border-top:1px solid rgba(26,18,9,.08);font-size:.7rem;color:#9a8f82">
       GoMushroom, Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža ·
@@ -1545,7 +1576,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: BJ_STR.email.subjectOrderConfirmed, html })
+      body: JSON.stringify({ to: order.email, subject: ES.email.subjectOrderConfirmed, html })
     });
     await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
       method: 'PATCH', headers: SB_HEADERS,

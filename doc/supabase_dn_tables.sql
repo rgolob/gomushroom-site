@@ -162,9 +162,17 @@ ALTER TABLE gm_dn_oprema
   -- z intervalom ga je mogoče izračunati sam ob opravljenem vzdrževanju,
   -- namesto da ga vsakič vpisuješ na roko in ga kdaj pozabiš.
   ADD COLUMN IF NOT EXISTS vzdrz_interval_mes integer,
-  -- Umerjanje: velja za merilno opremo (tehtnica, alkoholmeter, termometer,
-  -- refraktometer). To je edino polje, ki ga ob zapisniku o proizvodnji nekdo
-  -- res preveri — meritev z neumerjeno tehtnico ni dokaz.
+  -- Kako se pri merilu potrdi točnost. Vsakega merila ni mogoče umeriti in
+  -- enotno polje "kalibracija" bi silit v vpis, ki ne obstaja:
+  --   umerjanje   tehtnica — zunanji izvajalec z utežmi izda certifikat; rok velja
+  --   preverjanje primerjava proti referenci brez nastavljanja; rok velja
+  --   nastavitev  refraktometer — nastaviš ga na destilirano vodo pred uporabo
+  --   certifikat  stekleni alkoholmeter po gostoti — nima česa nastavljati,
+  --               ima tovarniški certifikat in razred; roka ni
+  --   brez        točnost ni kritična
+  ADD COLUMN IF NOT EXISTS preverjanje text,
+  ADD COLUMN IF NOT EXISTS certifikat text,
+  -- Datum in interval veljata samo pri umerjanju in preverjanju.
   ADD COLUMN IF NOT EXISTS kalibracija date,
   ADD COLUMN IF NOT EXISTS kalibracija_interval_mes integer,
   -- Ali naprava pride v stik z izdelkom (HACCP).

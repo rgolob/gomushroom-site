@@ -308,6 +308,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
     <div id="bilNalogInfo"></div>
+    <div id="bilOpremaBlok"></div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
     <div id="bilStatusSums"></div>
@@ -2854,7 +2855,12 @@ function pripniSpremljevalce(opremaId,namen){
 }
 
 function dnOpremaZaDokument(oznaka){
-  return oznaka?opremaUporaba.filter(u=>u.dokument===oznaka):[];
+  // Uporabe iz bilance imajo svoj cas in svoj izbirnik; v nalogu jih ne
+  // urejamo, sicer bi jih shranjevanje naloga poteptalo.
+  return oznaka?opremaUporaba.filter(u=>u.dokument===oznaka&&!u.bilKljuc):[];
+}
+function bilOpremaZaSerijo(kljuc){
+  return kljuc?opremaUporaba.filter(u=>u.bilKljuc===kljuc):[];
 }
 function opremaNaziv(opremaId){
   const o=oprema.find(x=>x.id===opremaId);
@@ -2878,7 +2884,9 @@ async function shraniDNOpremo(oznaka){
   }));
   const zdajIdji=new Set(zdaj.map(r=>r.id));
   const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
-  opremaUporaba=opremaUporaba.filter(u=>u.dokument!==oznaka).concat(zdaj);
+  // Vrstice iz bilance nosijo isti dokument, a jih ta obrazec ne ureja - filter
+  // samo po dokumentu bi jih ob vsakem shranjevanju naloga pobrisal.
+  opremaUporaba=opremaUporaba.filter(u=>u.dokument!==oznaka||u.bilKljuc).concat(zdaj);
   localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
   for(const u of zaBrisanje){
     try{await sbDel('gm_dn_oprema_uporaba',u.id);}catch(e){console.warn('sbDel opremaUporaba',e);}
@@ -5089,15 +5097,29 @@ function kopirajSeznamOznak(){
 function renderOpUporaba(id){
   const el=document.getElementById('opUporabaBlok');
   if(!el)return;
-  const nalogi=id?nalogiZaOpremo(id):[];
-  if(!nalogi.length){el.innerHTML='';return;}
-  const vrstice=nalogi.slice(0,15).map(({oznaka,dn})=>{
-    const namen=[...new Set(opremaUporaba.filter(u=>u.opremaId===id&&u.dokument===oznaka).map(u=>u.namen).filter(Boolean))].join(', ');
-    return`<tr><td>${oznaka}</td><td>${dn?fmtDate(dn.datum):'—'}${namen?` · ${namen}`:''}</td></tr>`;
+  // Dnevnik dela: vsaka uporaba svoja vrstica, z neto casom, kjer ga imamo.
+  // Ure so podlaga za servisne intervale, zato jih sestejemo tudi skupaj.
+  const uporabe=id?opremaUporaba.filter(u=>u.opremaId===id):[];
+  if(!uporabe.length){el.innerHTML='';return;}
+  const kljucDatuma=u=>{
+    if(u.od)return String(u.od).slice(0,10);
+    const dn=workOrders.find(d=>d.oznaka===u.dokument);
+    return dn?.datum||'';
+  };
+  const urejene=[...uporabe].sort((a,b)=>(kljucDatuma(b)||'').localeCompare(kljucDatuma(a)||''));
+  const skupajMin=uporabe.reduce((s,u)=>s+(u.minute||0),0);
+  const vrstice=urejene.slice(0,15).map(u=>{
+    const oznaka=u.dokument||(u.bilKljuc?u.bilKljuc.split('|||').filter(Boolean).join(' · '):'—');
+    const d=kljucDatuma(u);
+    return`<tr>
+      <td>${oznaka}</td>
+      <td>${d?fmtDate(d):'—'}${u.namen?` · ${u.namen}`:''}</td>
+      <td class="num">${u.minute?fmtTrajanje(u.minute):'—'}</td></tr>`;
   }).join('');
-  el.innerHTML=`<div class="slabel">Uporabljena v serijah (${nalogi.length})</div>
+  el.innerHTML=`<div class="slabel">Dnevnik dela (${uporabe.length})</div>
+    ${skupajMin?`<div style="font-size:.72rem;color:var(--muted);margin:-.2rem 0 .35rem">Skupaj <strong>${fmtTrajanje(skupajMin)}</strong> neto</div>`:''}
     <table class="mini-table">${vrstice}</table>
-    ${nalogi.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${nalogi.length-15}</div>`:''}`;
+    ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}`;
 }
 
 function onOpKatChange(){
@@ -5654,6 +5676,133 @@ function renderBilancaSelect(){
   renderBilanca();
 }
 
+// ── NETO ČAS DELOVANJA ─────────────────────────────────────────────────────
+// Bilanca je proces koncentriranja in rotavapor tece ves cas, ko je serija v
+// njem. Neto cas je vsota odsekov od vhoda (V) do izhoda (I) ali regenerata
+// (R); Corr je knjigovodski popravek in ne pomeni, da je naprava tekla.
+//
+// Odseke sestavljamo s hojo po dogodkih v casovnem zaporedju: prvi V odpre
+// odsek, prvi I ali R ga zapre. Vec zaporednih V ne zacne novega odseka -
+// dolivanje med vretjem ni nov zagon in bi drugace cas steli dvakrat.
+//
+// Odsek, ki ostane odprt (vhod brez izhoda), se ne steje: serija je se v teku
+// in koncni cas se ne obstaja. Vrnemo ga posebej, da lahko vmesnik to pove
+// namesto da bi molcal.
+function bilNetoOdseki(kljuc){
+  const dogodki=bilancaDogodki
+    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
+    .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
+  const odseki=[];let zacetek=null;
+  for(const d of dogodki){
+    if(d.status==='V'){ if(zacetek===null)zacetek=bilTsMs(d.ts); continue; }
+    if(d.status==='R'||d.status==='I'){
+      if(zacetek===null)continue;      // izhod brez vhoda: nimamo zacetka
+      odseki.push({od:zacetek,do:bilTsMs(d.ts)});
+      zacetek=null;
+    }
+  }
+  const minute=odseki.reduce((s,o)=>s+Math.max(0,o.do-o.od),0)/60000;
+  return {
+    odseki,
+    minute:Math.round(minute),
+    od:odseki.length?odseki[0].od:null,
+    do:odseki.length?odseki[odseki.length-1].do:null,
+    odprt:zacetek!==null,
+  };
+}
+// ── OPREMA V BILANCI ───────────────────────────────────────────────────────
+// Izbereš rotavapor, ki je serijo koncentriral; njegovi spremljevalci se
+// pripnejo sami. Neto cas se izracuna iz dogodkov in zapise na vsako napravo,
+// tako da se gradi dnevnik njenega dela.
+function renderBilOprema(){
+  const el=document.getElementById('bilOpremaBlok');
+  if(!el)return;
+  if(!bilSelectedKey){el.innerHTML='';return;}
+  const cas=bilNetoOdseki(bilSelectedKey);
+  const vpisane=bilOpremaZaSerijo(bilSelectedKey);
+  const izbrani=new Set(vpisane.map(u=>u.opremaId));
+  const naVoljo=oprema.filter(o=>o.kat!=='inventar'&&(o.status!=='neaktivna'||izbrani.has(o.id)));
+
+  const casOpis=cas.minute
+    ?`<strong>${fmtTrajanje(cas.minute)}</strong> neto${cas.odseki.length>1?` · ${cas.odseki.length} odseki`:''}`
+    :cas.odprt?'<span class="dim">serija je še v teku — vhod brez izhoda</span>'
+    :'<span class="dim">brez neto časa — vpiši vhod in izhod s časom</span>';
+
+  const cipi=vpisane.map(u=>{
+    const o=oprema.find(x=>x.id===u.opremaId);
+    return`<span style="display:inline-flex;align-items:center;gap:.3rem;border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.24rem .5rem .24rem .7rem;font-size:.7rem">
+      ${o?(o.invSt?o.invSt+' · ':'')+(o.naziv||'—'):'(odstranjena naprava)'}
+      <button type="button" onclick="odstraniBilOpremo('${u.id}')" title="Odstrani" style="border:none;background:none;cursor:pointer;color:var(--danger);font-size:.8rem;line-height:1;padding:0 .1rem">✕</button>
+    </span>`;
+  }).join(' ');
+
+  el.innerHTML=`
+    <div style="border:1px solid rgba(175,132,85,.3);border-radius:var(--rs);padding:.55rem .65rem;margin:0 0 .7rem">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap">
+        <div style="font-size:.72rem;font-weight:600">Oprema v procesu</div>
+        <div style="font-size:.72rem;color:var(--muted)">${casOpis}</div>
+      </div>
+      ${cipi?`<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin:.45rem 0 .35rem">${cipi}</div>`:''}
+      <select onchange="dodajBilOpremo(this.value);this.value=''" style="margin-top:.35rem">
+        <option value="">${vpisane.length?'+ dodaj napravo':'— izberi rotavapor —'}</option>
+        ${naVoljo.filter(o=>!izbrani.has(o.id)).map(o=>
+          `<option value="${o.id}">${o.invSt?o.invSt+' · ':''}${o.naziv||'—'}</option>`).join('')}
+      </select>
+    </div>`;
+}
+
+function dodajBilOpremo(opremaId){
+  if(!opremaId||!bilSelectedKey)return;
+  const glavna=oprema.find(o=>o.id===opremaId);
+  if(!glavna)return;
+  const ze=new Set(bilOpremaZaSerijo(bilSelectedKey).map(u=>u.opremaId));
+  // Glavna naprava potegne spremljevalce, enako kot pri delovnem nalogu; ista
+  // crpalka pri dveh rotavaporjih se ne podvoji.
+  const seznam=Array.isArray(glavna.spremljevalci)?glavna.spremljevalci:[];
+  const dodaj=[opremaId,...seznam].filter(id=>id&&!ze.has(id)&&oprema.some(o=>o.id===id));
+  if(!dodaj.length)return;
+  const dn=bilNalog();
+  dodaj.forEach(id=>{
+    opremaUporaba.push({id:uid(),dokument:dn?.oznaka||'',opremaId:id,
+      namen:'Koncentriranje',bilKljuc:bilSelectedKey,minute:0,od:null,doo:null});
+  });
+  osveziBilCase(bilSelectedKey);
+  toast(dodaj.length>1?`✓ Dodano ${dodaj.length} naprav`:'✓ Naprava dodana');
+}
+function odstraniBilOpremo(id){
+  const u=opremaUporaba.find(x=>x.id===id);
+  opremaUporaba=opremaUporaba.filter(x=>x.id!==id);
+  save();renderBilOprema();
+  if(u)sbDel('gm_dn_oprema_uporaba',id).catch(e=>console.warn('sbDel bilOprema',e));
+}
+
+// Cas prepisemo na vse naprave serije. Klicemo ga ob vsaki spremembi dogodkov,
+// sicer bi dnevnik naprave obtical na stanju ob prvem izboru.
+function osveziBilCase(kljuc){
+  const vpisane=bilOpremaZaSerijo(kljuc);
+  if(!vpisane.length){renderBilOprema();return;}
+  const cas=bilNetoOdseki(kljuc);
+  const dn=workOrders.find(d=>meDnKljuc(d)===kljuc);
+  let spremenjeni=0;
+  vpisane.forEach(u=>{
+    // 'doo' in ne 'do': 'do' je rezervirana beseda in bi v objektu delovala,
+    // v SQL pa terjala narekovaje - raje se ji ognemo povsod enako.
+    const nov={minute:cas.minute,od:cas.od?new Date(cas.od).toISOString():null,
+      doo:cas.do?new Date(cas.do).toISOString():null,dokument:dn?.oznaka||u.dokument||''};
+    if(u.minute===nov.minute&&u.od===nov.od&&u.doo===nov.doo&&u.dokument===nov.dokument)return;
+    Object.assign(u,nov);spremenjeni++;
+    sbPushOpUp(u);
+  });
+  if(spremenjeni)save();
+  renderBilOprema();
+}
+
+function fmtTrajanje(minute){
+  if(!minute)return '0 min';
+  const h=Math.floor(minute/60),m=minute%60;
+  return h?`${h} h ${m?m+' min':''}`.trim():`${m} min`;
+}
+
 // Delovni nalog, ki pripada trenutno izbrani seriji v bilanci (ce obstaja).
 function bilNalog(){
   if(!bilSelectedKey)return null;
@@ -5670,11 +5819,15 @@ function renderBilanca(){
   const nalogBox=document.getElementById('bilNalogInfo');
   if(!bilSelectedKey){
     if(nalogBox)nalogBox.innerHTML='';
+    renderBilOprema();
     fazaGrids.innerHTML='';
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem 0">Ni dogodkov. Dodaj prvega z gumbom "+ Dogodek".</div>';
     return;
   }
   const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
+  // Cas naprav je izpeljan iz dogodkov; ce ga ne osvezimo ob vsakem izrisu,
+  // dnevnik naprave obtici na stanju ob prvem izboru.
+  osveziBilCase(bilSelectedKey);
 
   // Povezava na delovni nalog in na zapis glicerinske tinkture za isto serijo.
   if(nalogBox){
@@ -6210,8 +6363,15 @@ async function sbPushMat(m){
 async function sbPushOp(o){await sbPushZapis('gm_dn_oprema',opToSb(o),'sbPushOp');}
 // Uporaba opreme je zapis za zapisnik o proizvodnji; tiha odpoved bi pomenila,
 // da na drugi napravi ni razvidno, na cem je serija nastala.
-function opUpToSb(u){return{id:u.id,dokument:u.dokument,oprema_id:u.opremaId,namen:u.namen||null};}
-function sbToOpUp(r){return{id:r.id,dokument:r.dokument||'',opremaId:r.oprema_id||'',namen:r.namen||''};}
+function opUpToSb(u){return{
+  id:u.id,dokument:u.dokument||null,oprema_id:u.opremaId,namen:u.namen||null,
+  bil_kljuc:u.bilKljuc||null,minute:u.minute||0,
+  cas_od:u.od||null,cas_do:u.doo||null,
+};}
+function sbToOpUp(r){return{
+  id:r.id,dokument:r.dokument||'',opremaId:r.oprema_id||'',namen:r.namen||'',
+  bilKljuc:r.bil_kljuc||'',minute:r.minute||0,od:r.cas_od||null,doo:r.cas_do||null,
+};}
 let _opUpOpozorilo=false;
 async function sbPushOpUp(u){
   try{await sbUpsert('gm_dn_oprema_uporaba',opUpToSb(u));setSyncStatus('✓');}

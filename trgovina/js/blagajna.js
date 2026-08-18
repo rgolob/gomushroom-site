@@ -666,6 +666,32 @@ async function loadSettings() {
 }
 
 // ── RF referenca ──────────────────────────────────────────
+// Naročilo dobi id v brskalniku, ne v bazi.
+//
+// Doslej ga je dodelil Supabase, trgovina pa je vstavljeno vrstico prebrala
+// nazaj (Prefer: return=representation), da je do njega prišla. Za to je
+// potrebovala bralno pravico na gm_orders — in ker RLS ne zna omejiti branja
+// na »vrstico, ki si jo pravkar vstavil brez prijave«, je ta pravica veljala za
+// vsa naročila vseh kupcev. Publishable ključ je v izvorni kodi trgovine, torej
+// so bili imena, e-naslovi in naslovi kupcev javno berljivi.
+//
+// Z id-jem, ustvarjenim tukaj, branja nazaj ni več in bralno pravico lahko
+// odvzamemo. Iz istega id-ja izračunamo tudi RF referenco, zato odpade še
+// poznejši popravek vrstice.
+function novOrderId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  // Starejši brskalniki brez randomUUID: v4 iz kriptografsko varnih bajtov.
+  // Math.random() tu ne pride v poštev — id je hkrati osnova za RF referenco.
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+function rfIzId(orderId) {
+  return generateRF(String(orderId).replace(/-/g, '').substring(0, 12).toUpperCase());
+}
+
 function generateRF(orderId) {
   const ref = String(orderId).replace(/[^A-Z0-9]/gi, '').toUpperCase();
   if (!ref) return '';
@@ -1126,6 +1152,7 @@ async function saveStripeOrder(paymentIntentId) {
   const calc = window._orderCalc;
 
   const orderData = {
+    id:       novOrderId(),
     name:     document.getElementById('c-name').value.trim(),
     email:    document.getElementById('c-email').value.trim(),
     phone:    document.getElementById('c-phone').value.trim() || null,
@@ -1149,11 +1176,12 @@ async function saveStripeOrder(paymentIntentId) {
 
   const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
     method: 'POST',
-    headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
     body: JSON.stringify(orderData),
   });
   if (!r.ok) throw new Error('Shranjevanje naročila ni uspelo');
-  const [order] = await r.json();
+  // Vrstice ne beremo nazaj; vse, kar potrebujemo, smo poslali sami.
+  const order = orderData;
 
   await sendStripeConfirmationEmail(order, calc);
   showStripeSuccess(order);
@@ -1391,7 +1419,13 @@ async function placeOrder() {
   const name = document.getElementById('c-name').value.trim();
   const email = document.getElementById('c-email').value.trim();
 
+  // RF referenca je izpeljana iz id-ja, zato jo lahko izračunamo že tu in
+  // vstavimo skupaj z naročilom — namesto da bi vrstico naknadno popravljali.
+  const orderId = novOrderId();
+  const rf = rfIzId(orderId);
+
   const orderData = {
+    id: orderId,
     name, email,
     phone: document.getElementById('c-phone').value.trim() || null,
     street: document.getElementById('c-street').value.trim(),
@@ -1408,35 +1442,27 @@ async function placeOrder() {
     coupon_code: calc.koda || null,
     channel: 'wp',
     status: 'pending',
-    rf_reference: '',
+    rf_reference: rf,
   };
 
   try {
     const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
       method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
       body: JSON.stringify(orderData)
     });
     if (!r.ok) throw new Error('Supabase error: ' + r.status);
-    const [order] = await r.json();
-
-    // RF referenca z order ID
-    const rf = generateRF(order.id.replace(/-/g,'').substring(0,12).toUpperCase());
-    await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
-      method: 'PATCH',
-      headers: SB_HEADERS,
-      body: JSON.stringify({ rf_reference: rf })
-    });
+    const order = orderData;
 
     const calcUpn = { ...calc, skupaj: skupajUpn, popustZnesek: calc.popustZnesek + upnDiscountAmt };
-    await sendConfirmationEmail({ ...order, rf_reference: rf }, rf, calcUpn);
-    showSuccess({ ...order, rf_reference: rf }, rf, calcUpn);
+    await sendConfirmationEmail(order, rf, calcUpn);
+    showSuccess(order, rf, calcUpn);
     await gmEnsureTracking();
     if (typeof gmPurchase === 'function')
-      gmPurchase(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
+      gmPurchase(orderId, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     if (typeof gmFbPurchase === 'function')
-      gmFbPurchase(cart, skupajUpn, order.id);
-    trackPurchaseServer(order.id, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
+      gmFbPurchase(cart, skupajUpn, orderId);
+    trackPurchaseServer(orderId, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
     sessionStorage.setItem('gm_cart_backup', JSON.stringify(cart));
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');

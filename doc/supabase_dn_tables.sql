@@ -203,6 +203,27 @@ CREATE TABLE IF NOT EXISTS gm_dn_oprema_uporaba (
 CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_dokument_idx ON gm_dn_oprema_uporaba (dokument);
 CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_oprema_idx   ON gm_dn_oprema_uporaba (oprema_id);
 
+-- ── Neto čas delovanja iz masne bilance ─────────────────────────────────────
+-- Bilanca je proces koncentriranja: rotavapor teče ves čas, ko je serija v
+-- njem. Neto čas je vsota odsekov od vhoda (V) do izhoda (I) ali regenerata
+-- (R); Corr je knjigovodski popravek in ne pomeni, da je naprava tekla.
+--
+-- Zapisan je na vsako napravo v procesu in je podlaga za dnevnik njenega dela
+-- ter za servisne intervale po urah.
+ALTER TABLE gm_dn_oprema_uporaba
+  ADD COLUMN IF NOT EXISTS bil_kljuc text,     -- serija iz bilance: tinktura|||batch
+  ADD COLUMN IF NOT EXISTS minute integer DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS cas_od timestamptz,   -- prvi vhod
+  ADD COLUMN IF NOT EXISTS cas_do timestamptz;   -- zadnji izhod ali regenerat
+-- Stolpca nista "od"/"do": "do" je v Postgresu rezervirana beseda in bi terjala
+-- narekovaje v vsaki poizvedbi.
+CREATE INDEX IF NOT EXISTS gm_dn_oprema_uporaba_bil_idx ON gm_dn_oprema_uporaba (bil_kljuc);
+
+-- Serija v bilanci nima nujno delovnega naloga, zato dokument ne sme biti
+-- obvezen; brez tega bi bila uporaba opreme na taki seriji zavrnjena.
+ALTER TABLE gm_dn_oprema_uporaba
+  ALTER COLUMN dokument DROP NOT NULL;
+
 -- RLS enako kot ostale zasebne tabele (glej doc/supabase-rls-faza1.sql).
 -- Brez tega bi bila nova tabela edina odprta za publishable ključ — torej za
 -- kogarkoli — medtem ko so vse sosednje zaklenjene.

@@ -626,6 +626,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="caka">🟡 Čaka</option>
           <option value="placano">🟢 Plačano</option>
           <option value="predano">📦 Predano</option>
+          <option value="stornirano">⊘ Stornirano</option>
         </select>
         <button class="fpill" onclick="clearInvFilters()" style="flex:0 0 auto">✕</button>
         <button class="fpill" id="printLabelsBtn" onclick="printAllPaidLabels()" style="flex:0 0 auto;background:rgba(43,11,57,.07);border-color:rgba(43,11,57,.2)" title="Natisni nalepke za plačane račune z naslovom">🏷</button>
@@ -1532,6 +1533,10 @@ async function vrniKomisijo(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g)return;
   if(g.status==='stornirano'){toast('Komisija je že stornirana.');return;}
+  // Izdan racun je meja. Vrnitev blaga prodajo stornira, racun pa bi ostal in
+  // kazal na stornirano prodajo - dokument brez podlage. Gumb je takrat ze
+  // skrit, a se pravilo mora drzati tudi tu: skrit gumb ni pravilo.
+  if(g.invoiceNum){toast('Račun '+g.invoiceNum+' je že izdan — uporabi ⊘ Storniraj.');return;}
   const ok=await showConfirm(`↩ Vrni komisijsko blago\n\nPartner: ${g.buyer||'—'}\nDatum: ${g.date||'—'}\n\nBlago bo vrnjeno v razpoložljivo zalogo.`,'Vrni blago');
   if(!ok)return;
   g.status='stornirano';
@@ -1574,7 +1579,7 @@ async function potrdiKomisijoPlacilo(groupId){
     return rows.join('');
   }).join('');
   el.innerHTML=`<div style="background:var(--cream);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem calc(var(--sab,0px)+1.25rem);width:100%;max-width:480px;max-height:88vh;overflow-y:auto;box-sizing:border-box">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;margin-bottom:.2rem">💶 Potrdi plačilo komisije</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;margin-bottom:.2rem">🧾 Obračun komisije</div>
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">${g.buyer||'—'} · ${g.deliveryNum||g.extDelivery||'—'}</div>
     <div style="font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Datum računa</div>
     <input type="date" id="kpp-date" value="${todayISO()}" style="width:100%;box-sizing:border-box;padding:.45rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:.9rem;margin-bottom:.9rem;outline:none">
@@ -1584,9 +1589,10 @@ async function potrdiKomisijoPlacilo(groupId){
       <span style="font-size:.85rem;font-weight:500">Skupaj za račun</span>
       <span id="kpp-total" style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:#3a6b4a">0.00 €</span>
     </div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:1rem;line-height:1.5">Račun se izda s statusom <strong>čaka na plačilo</strong>. Ko partner plača, ga označiš v zavihku Dokumenti.</div>
     <div style="display:flex;gap:.75rem">
       <button onclick="document.getElementById('komPlaciloOverlay').remove()" style="flex:1;padding:.75rem;border:1px solid var(--border);border-radius:10px;background:white;font-family:'Jost',sans-serif;cursor:pointer">Prekliči</button>
-      <button onclick="_komPayConfirm()" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:#3a6b4a;color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Potrdi in izdaj račun</button>
+      <button onclick="_komPayConfirm()" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:#3a6b4a;color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Izdaj račun</button>
     </div>
   </div>`;
   document.body.appendChild(el);
@@ -4992,7 +4998,7 @@ function renderSales(){
           ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(139,90,42,.1);color:var(--ch-kom);border-color:rgba(139,90,42,.3)" onclick="printDobavnica(saleGroups.find(x=>x.id==='${g.id}'))">🖨 Dobavnica</button>`:''}
           ${(g.channel==='kom'||g.channel==='velo')&&g.deliveryNum&&!isStorno?(g.signedAt?'<span style="font-size:.62rem;color:var(--success);padding:.2rem .45rem;border:1px solid rgba(58,107,74,.3);border-radius:8px;background:rgba(58,107,74,.08)">✓ Podp.</span>':`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4);color:var(--accent-dark)" onclick="showSignModal('${g.id}')">✍ Podpiši</button>`):''}
           ${g.channel==='velo'&&!g.deliveryNum&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.12);color:#3a6b4a;border-color:rgba(58,107,74,.35)" onclick="ustvariDobavnico('${g.id}')">📦 Dobavnica</button>`:''}
-          ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">💶 Potrdi plačilo</button>`:''}
+          ${g.channel==='kom'&&!hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(58,107,74,.15);color:#3a6b4a;border-color:rgba(58,107,74,.4)" onclick="potrdiKomisijoPlacilo('${g.id}')">🧾 Obračunaj</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" onclick="reprintInvoice('${g.id}')">🖨 Natisni</button>`:''}
           ${hasInvoice&&!isStorno?`<button class="tbtn" style="background:rgba(175,132,85,.15);border-color:rgba(175,132,85,.4)" onclick="openAddArtikel('${g.id}')">+ Artikel</button>`:''}
           ${(g.street||g.address)&&!isStorno?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printSaleLabel('${g.id}')">🏷 Nalepka</button>`:''}
@@ -5005,8 +5011,11 @@ function renderSales(){
             return `<button class="tbtn" style="background:rgba(60,107,74,.25);color:#3a6b4a;border-color:rgba(60,107,74,.5)" onclick="sendToPartner('${g.id}','${partner.id}')" title="Pošlji zalogo partnerju ${partner.name}">🤝 ${partner.name}</button>`;
           })()}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
-          ${!isStorno&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
-          ${!isStorno&&g.channel!=='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
+          ${!isStorno&&!hasInvoice&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
+          ${/* Komisija ima svojo pot nazaj - vrnitev blaga - dokler racun ni izdan.
+                Potem je edini pravilni izhod storno z razlogom, sicer bi ostal
+                izdan racun brez podlage in prodaja brez poti nazaj. */''}
+          ${!isStorno&&(g.channel!=='kom'||hasInvoice)?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="stornoSale('${g.id}')">⊘ Storniraj</button>`:''}
           <button class="tbtn del" onclick="deleteSaleGroup('${g.id}')">✕</button>
         </div>
       </div>`:''}
@@ -5348,6 +5357,23 @@ function cycleInvDatePreset(){
   applyInvDatePreset();
 }
 
+// ── Storniran racun ────────────────────────────────────────────────────────
+// Storno prodaje doslej ni nic povedal njenemu racunu: ta je ostal v seznamu
+// "caka na placilo" in stel v prihodek, ceprav podlage zanj ni bilo vec.
+//
+// Statusa ne shranjujemo na racun, ker bi se lahko razsel s prodajo (storno se
+// lahko zgodi tudi drugod ali se razveljavi). Racun je vezan na prodajo, zato
+// stanje beremo od tam - ena resnica, ne dve.
+function racunStorniran(inv){
+  if(!inv)return false;
+  const g=saleGroups.find(x=>x.id===inv.groupId);
+  return g?.status==='stornirano';
+}
+// Ucinkovni status: storno prevlada nad shranjenim.
+function invStatusEff(inv){
+  return racunStorniran(inv)?'stornirano':(inv?.invStatus||'caka');
+}
+
 function renderInvStats(){
   const fFrom=document.getElementById('invDateFrom')?.value||'';
   const fTo=document.getElementById('invDateTo')?.value||'';
@@ -5356,7 +5382,11 @@ function renderInvStats(){
   const periodBadge=`<span style="font-size:.52rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-dark);background:rgba(43,11,57,.09);padding:.05rem .35rem;border-radius:4px;margin-left:.35rem">${periodLabel}</span>`;
 
   // Filtered by date + channel for totals
-  const f=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
+  const vObdobju=invoices.filter(i=>(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)&&(!activeCh||(activeCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===activeCh)));
+  // Stornirani ne stejejo v prihodek. Ne izginejo pa tiho - koliko jih je,
+  // izpisemo pod stevilom racunov, sicer bi se sestevek zdel napacen.
+  const stornirani=vObdobju.filter(racunStorniran);
+  const f=vObdobju.filter(i=>!racunStorniran(i));
   const total=f.reduce((a,i)=>a+(i.total||0),0);
   const totalUnits=f.reduce((a,i)=>{
     const g=saleGroups.find(x=>x.id===i.groupId);
@@ -5378,7 +5408,7 @@ function renderInvStats(){
     </div>`;
   }).join('');
   document.getElementById('invStatsGrid').innerHTML=`
-    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div></div>
+    <div class="stat-card${!activeCh?' active':''}" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj računov${periodBadge}</div><div class="stat-value">${f.length}</div>${stornirani.length?`<div style="font-size:.56rem;color:#8b3a2a;margin-top:.15rem;letter-spacing:.02em">⊘ ${stornirani.length} storniranih</div>`:''}</div>
     <div class="stat-card" onclick="cycleInvDatePreset()"><div class="stat-label">Skupaj €${periodBadge}</div><div class="stat-value ok">${total.toFixed(2)} €</div>${totalUnits>0?`<div style="font-size:.56rem;color:var(--muted);margin-top:.15rem;letter-spacing:.02em">ø ${avgUnit.toFixed(2)} € / tinktura</div>`:''}</div>
     <div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem">${byChannel}</div>`;
 }
@@ -5405,7 +5435,7 @@ function renderInvoices(){
   const fTo=document.getElementById('invDateTo')?.value||'';
   const rows=invoices.filter(i=>{
     const mq=!q||i.num.toLowerCase().includes(q)||(i.buyer||'').toLowerCase().includes(q)||(i.extInvoice||'').toLowerCase().includes(q);
-    const ms=!fSt||(i.invStatus||'caka')===fSt;
+    const ms=!fSt||invStatusEff(i)===fSt;
     const md=(!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo);
     const chMatch=!fCh||(fCh==='wp'?(i.channel==='wp'||i.channel==='stripe'):i.channel===fCh);
     return mq&&chMatch&&ms&&md;
@@ -5423,12 +5453,14 @@ function renderInvoices(){
     caka:{label:'🟡 Čaka',cls:'inv-status-caka'},
     placano:{label:'🟢 Plačano',cls:'inv-status-placano'},
     predano:{label:'📦 Predano',cls:'inv-status-predano'},
+    stornirano:{label:'⊘ Stornirano',cls:'inv-status-caka'},
   };
 
   el.innerHTML=page.map(i=>{
     const ch=CH[i.channel]||CH.malo;
-    const st=i.invStatus||'caka';
+    const st=invStatusEff(i);
     const s=STATUS[st]||STATUS.caka;
+    const jeStorno=st==='stornirano';
     const exp=expandedInvoices.has(i.id);
     return `<div class="sg-card" style="margin-bottom:.5rem;background:white;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;cursor:pointer" onclick="toggleInvoiceCard('${i.id}')">
       <div class="sg-header">
@@ -5446,8 +5478,10 @@ function renderInvoices(){
           </div>
         </div>
         <div class="sg-right">
-          <div class="sg-total">${i.total?i.total.toFixed(2)+' €':'—'}</div>
-          <button class="inv-status ${s.cls}" onclick="event.stopPropagation();cycleInvStatus('${i.id}')">${s.label}</button>
+          <div class="sg-total"${jeStorno?' style="text-decoration:line-through;color:var(--muted)"':''}>${i.total?i.total.toFixed(2)+' €':'—'}</div>
+          ${jeStorno
+            ? `<span class="inv-status ${s.cls}" style="background:rgba(139,58,42,.12);color:#8b3a2a;border-color:rgba(139,58,42,.3);cursor:default">${s.label}</span>`
+            : `<button class="inv-status ${s.cls}" onclick="event.stopPropagation();cycleInvStatus('${i.id}')">${s.label}</button>`}
         </div>
       </div>
       ${exp?`<div class="sg-footer" onclick="event.stopPropagation()">
@@ -5949,6 +5983,8 @@ function printAllPaidLabels(){
   const fTo=document.getElementById('invDateTo').value||'';
   const candidates=invoices.filter(i=>
     (i.invStatus==='placano')&&
+    // Stornirana prodaja se ne odpremi - nalepka bi pomenila poslano posiljko.
+    !racunStorniran(i)&&
     (i.street||i.address)&&
     (!fCh||i.channel===fCh)&&
     (!fFrom||i.date>=fFrom)&&(!fTo||i.date<=fTo)
@@ -6179,7 +6215,7 @@ const RACUN_T={
     brezplacno:'Brezplačno 🎁',
     skupajArtikli:'Skupaj artikli', dostava:'Dostava', osebniPrevzem:'Osebni prevzem',
     postnina:'Poštnina', brezplacnaPostnina:'Brezplačna', skupaj:'Skupaj',
-    zunanjiRacun:'Zunanji račun', dobavnicaRef:'Dobavnica',
+    zunanjiRacun:'Zunanji račun', dobavnicaRef:'Dobavnica', dobavnicaPartner:'Partnerjeva dobavnica',
     trosarina:'Trošarina za etanol v izdelku je bila že poravnana. Kupec nima dodatnih obveznosti glede trošarine. Podlaga: Zakon o trošarinah (ZTro-1).',
     ddv:'Nisem zavezanec za DDV po 1. odstavku 94. člena ZDDV-1.',
     upnQr:'UPN QR', podatkiPlacilo:'Podatki za plačilo', prejemnik:'Prejemnik',
@@ -6198,7 +6234,7 @@ const RACUN_T={
     brezplacno:'Free 🎁',
     skupajArtikli:'Items subtotal', dostava:'Delivery', osebniPrevzem:'Personal pickup',
     postnina:'Shipping', brezplacnaPostnina:'Free', skupaj:'Total',
-    zunanjiRacun:'External invoice', dobavnicaRef:'Delivery note',
+    zunanjiRacun:'External invoice', dobavnicaRef:'Delivery note', dobavnicaPartner:'Partner delivery note',
     trosarina:'Excise duty on the ethanol contained in the product has already been paid. The buyer has no further excise obligations. Legal basis: Slovenian Excise Duty Act (ZTro-1).',
     ddv:'Not liable for VAT under Article 94(1) of the Slovenian VAT Act (ZDDV-1).',
     upnQr:'UPN QR', podatkiPlacilo:'Payment details', prejemnik:'Beneficiary',
@@ -6219,6 +6255,20 @@ const CH_EN={malo:'Retail',velo:'Wholesale',dar:'Gift',int:'Internal',wp:'Online
 const MESECI_EN=['','January','February','March','April','May','June','July','August','September','October','November','December'];
 function fmtDateEn(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${Number(d)} ${MESECI_EN[Number(m)]} ${y}`;}
 
+// Ali racun terja placilo - torej ali nanj sodijo podatki za nakazilo.
+//
+// Pravilo je bilo zapisano dvakrat: enkrat pri pripravi QR slike, enkrat pri
+// sestavljanju racuna. Ker sta se pogoja razlikovala (eden je gledal tujino,
+// drugi znesek), ju zdruzimo tukaj.
+//
+// Komisija sodi zraven: blago odide z dobavnico, ob obracunu izdamo racun in
+// partner placa sele po njem. Racun brez UPN QR je za partnerja rocno
+// prepisovanje reference.
+const RACUN_S_PLACILOM=new Set(['malo','velo','kom']);
+function racunTerjaPlacilo(group){
+  return RACUN_S_PLACILOM.has(group.channel)&&(group.total||0)>0;
+}
+
 function buildInvoiceHTML(group, qrDataURL){
   const ch=CH[group.channel]||CH.malo;
   const lang=racunJezik(group.country);
@@ -6233,7 +6283,7 @@ function buildInvoiceHTML(group, qrDataURL){
 
   // QR: UPN je slovenski standard in ga tuja banka ne prebere. Za tujino
   // izpisemo IBAN in BIC, s katerima gre nakazilo od kjerkoli.
-  const hasPayment=(group.channel==='malo'||group.channel==='velo')&&total>0;
+  const hasPayment=racunTerjaPlacilo(group);
   let qrImgTag='';
   if(hasPayment&&!tujina){
     const upnString=buildUpnString(total,upnRef,'Placilo '+(invNum||'racuna'));
@@ -6308,7 +6358,20 @@ if(l.gly>0){
             ? `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.postnina}</span><span style="color:#7a6f60">${group.shippingFee.toFixed(2)} €</span></div>`
             : `<div class="trow"><span style="color:#7a6f60;font-style:italic">${T.postnina}</span><span style="color:#7a6f60">${T.brezplacnaPostnina}</span></div>`))
     : '';
-  const extRefs=(group.extInvoice||group.extDelivery)?`<div class="refs">${group.extInvoice?`<span>${T.zunanjiRacun}: <strong>${group.extInvoice}</strong></span>`:''}${group.extDelivery?`<span>${T.dobavnicaRef}: <strong>${group.extDelivery}</strong></span>`:''}</div>`:'';
+  // Sklic na naso dobavnico: pri komisiji in veleprodaji je blago odslo z
+  // dobavnico, racun pa sledi kasneje. Brez te vrstice na racunu ni sledi, kdaj
+  // je blago dejansko odslo - pri komisiji je ravno to bistvo obracuna.
+  // Stevilke ne hranimo na racunu; racun je vezan na prodajo, dobavnica visi na
+  // isti prodaji, zato jo beremo od tam in se ne moreta razhajati.
+  const nasaDobavnica=group.deliveryNum||'';
+  const refDeli=[
+    group.extInvoice?`<span>${T.zunanjiRacun}: <strong>${group.extInvoice}</strong></span>`:'',
+    nasaDobavnica?`<span>${T.dobavnicaRef}: <strong>${nasaDobavnica}</strong></span>`:'',
+    // Partnerjevo stevilko izpisemo posebej, sicer bi bilo videti, kot da je
+    // nasa; ce nase ni, ostane sama v vrstici dobavnice kot doslej.
+    group.extDelivery?`<span>${nasaDobavnica?T.dobavnicaPartner:T.dobavnicaRef}: <strong>${group.extDelivery}</strong></span>`:'',
+  ].filter(Boolean);
+  const extRefs=refDeli.length?`<div class="refs">${refDeli.join('')}</div>`:'';
   const mailSubject=`${T.mailNaslov} ${invNum} — GoMushroom`;
   const mailBody=`${T.mailPozdrav} ${group.buyer||''},\n\n${T.mailTelo} ${invNum} ${T.mailZnesek} ${total.toFixed(2)} €.\n\n${T.mailKonec}\nGoMushroom`;
   const emailBtn=group.email?`<a class="btn btn-email" href="mailto:${group.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}">${T.poslji}</a>`:'';
@@ -6519,8 +6582,8 @@ async function printInvoice(group){
   const invNum=group.invoiceNum||'';
   const upnRef=invNum?generateRF(invNum):'';
   // UPN QR je slovenski standard - za tuj racun ga sploh ne generiramo.
-  const hasPayment=(group.channel==='malo'||group.channel==='velo')&&!jeTujina(group.country);
-  const upnString=hasPayment&&total>0?buildUpnString(total,upnRef,'Placilo '+invNum):'';
+  const hasPayment=racunTerjaPlacilo(group)&&!jeTujina(group.country);
+  const upnString=hasPayment?buildUpnString(total,upnRef,'Placilo '+invNum):'';
 
   let qrDataURL='';
   if(upnString){
@@ -7386,10 +7449,15 @@ function genReport(type){
     const doVal=document.getElementById('rr-do').value;
     const showItems=document.getElementById('rr-izdelki').checked;
 
-    const filtered=invoices.filter(inv=>
+    // Stornirani racuni ne sodijo v obracun - ucinkovni status jih izloci, ker
+    // se ne ujema z nobenim od izbranih. Koliko jih je bilo, povemo pod
+    // povzetkom: tiho izginotje bi izgledalo kot napacen sestevek.
+    const vOkviru=invoices.filter(inv=>
       chFilter.includes(inv.channel)&&
-      stFilter.includes(inv.invStatus||'caka')&&
-      (!od||inv.date>=od)&&(!doVal||inv.date<=doVal)
+      (!od||inv.date>=od)&&(!doVal||inv.date<=doVal));
+    const izpuscenoStorno=vOkviru.filter(inv=>racunStorniran(inv)&&stFilter.includes(inv.invStatus||'caka'));
+    const filtered=vOkviru.filter(inv=>
+      stFilter.includes(invStatusEff(inv))
     ).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||String(a.num||'').localeCompare(String(b.num||'')));
 
     // povzetek po vrsti prodaje
@@ -7410,14 +7478,14 @@ function genReport(type){
     // Statusi gredo: caka -> placano -> predano. 'placano' in 'predano' torej
     // oba pomenita, da je racun placan (enako kot isPaid drugod v aplikaciji),
     // kot cakajoc na placilo steje samo status 'caka'.
-    const unpaid=filtered.filter(inv=>(inv.invStatus||'caka')==='caka');
+    const unpaid=filtered.filter(inv=>invStatusEff(inv)==='caka');
     const unpaidSum=unpaid.reduce((a,inv)=>a+(inv.total||0),0);
 
     const ST={placano:{l:'Plačano',i:'🟢'},caka:{l:'Čaka',i:'🟡'},predano:{l:'Predano',i:'📦'}};
     let rows='';
     filtered.forEach(inv=>{
       const ch=CH[inv.channel]||CH.malo;
-      const st=ST[inv.invStatus||'caka']||ST.caka;
+      const st=ST[invStatusEff(inv)]||ST.caka;
       let itemsHtml='';
       if(showItems){
         const g=saleGroups.find(x=>x.id===inv.groupId);
@@ -7445,6 +7513,7 @@ function genReport(type){
       <div class="s-item"><div class="s-label">Skupaj</div><div class="s-val" style="color:#3a6b4a">${totalSum.toFixed(2)} €</div></div>
       ${unpaid.length?`<div class="s-item"><div class="s-label">Čaka na plačilo</div><div class="s-val" style="color:#c0392b">${unpaidSum.toFixed(2)} €</div><div style="font-size:.7rem;color:#7a6f60">${unpaid.length} rač.</div></div>`:''}
     </div>
+    ${izpuscenoStorno.length?`<div style="font-size:.75rem;color:#8b3a2a;margin-bottom:.5rem">⊘ Izpuščenih ${izpuscenoStorno.length} računov storniranih prodaj (${izpuscenoStorno.reduce((a,x)=>a+(x.total||0),0).toFixed(2)} €): ${izpuscenoStorno.map(x=>x.num).join(', ')}</div>`:''}
     <table>
       <tr><th>Št. računa</th><th>Datum</th><th>Kupec</th><th>Vrsta prodaje</th><th>Status</th><th style="text-align:right">Znesek</th></tr>
       ${rows||'<tr><td colspan="6" style="text-align:center;color:#7a6f60;padding:1rem">Ni računov za izbrane filtre</td></tr>'}
@@ -8236,8 +8305,11 @@ let _recenzije = null;
 
 async function naloziRecenzije() {
   try {
+    // Z zetonom prijavljenega uporabnika, ne s publishable kljucem: pregled
+    // recenzij mora videti tudi nepregledane (status=pending), tiste pa smejo
+    // brati samo prijavljeni.
     const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?order=created_at.desc&limit=200`, {
-      headers: { ...SB_HEADERS, 'Authorization': 'Bearer ' + SB_HEADERS['apikey'] }
+      headers: SB_HEADERS
     });
     _recenzije = r.ok ? await r.json() : [];
     renderRecenzije();
@@ -9589,6 +9661,10 @@ async function sendInvoiceEmail(invId){
   const inv=invoices.find(x=>x.id===invId);
   if(!inv){toast('Račun ni najden');return;}
 
+  // Racuna stornirane prodaje ne posiljamo - kupec bi dobil zahtevek za
+  // placilo posla, ki ga ni vec.
+  if(racunStorniran(inv)){toast('⊘ Prodaja je stornirana — računa ne pošiljamo.');return;}
+
   const email=inv.email;
   if(!email){toast('⚠ Kupec nima e-maila');return;}
 
@@ -10087,6 +10163,9 @@ async function loadSkatlaZapisi(){
 
 async function cycleInvStatus(invId){
   const i=invoices.find(x=>x.id===invId);if(!i)return;
+  // Storniran racun ni terjatev - oznaka "placano" na njem ne pomeni nicesar.
+  // Znacka je ze neklikljiva, a pravilo mora drzati tudi tu.
+  if(racunStorniran(i)){toast('⊘ Prodaja je stornirana — status računa ni več v igri.');return;}
   const cur=i.invStatus||'caka';
   if(cur==='predano'){
     const pwd=prompt('Vnesi geslo za razveljavitev statusa "Predano":');

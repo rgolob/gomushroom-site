@@ -9833,7 +9833,11 @@ async function sendInvoiceEmail(invId){
     return;
   }
 
-  const isMaloVelo=g?.channel==='malo'||g?.channel==='velo';
+  // Isto pravilo kot na natisnjenem racunu. Tu je bilo zapisano se enkrat po
+  // svoje (samo malo- in veleprodaja), zato komisijski racun po e-posti ni imel
+  // ne navodila za placilo ne QR kode.
+  // Znesek beremo z racuna, ker je to znesek, ki ga sporocilo tudi prikaze.
+  const terjaPlacilo=racunTerjaPlacilo({channel:g?.channel,total:inv.total});
   const subject=L(`Račun ${inv.num} — GoMushroom`,`Invoice ${inv.num} — GoMushroom`);
 
   // Navodilo za placilo: doma QR koda, v tujini nakazilo po IBAN in BIC.
@@ -9841,17 +9845,17 @@ async function sendInvoiceEmail(invId){
     tujina?'\n\nZnesek nakažite na bančne podatke spodaj.':'\n\nPlačilo izvedite na bančni račun s pomočjo QR kode spodaj.',
     tujina?'\n\nPlease transfer the amount using the bank details below.':'\n\nPlease pay using the QR code below.');
 
-  const bodyText=(isPaid||isMaloVelo)
+  const bodyText=(isPaid||terjaPlacilo)
     ?L(`Spoštovani ${inv.buyer||''},
 
-hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
+hvala za nakup pri GoMushroom. V nadaljevanju najdete vaš račun ${inv.num}.${terjaPlacilo&&!isPaid?navodiloPlacilo:''}
 
 Za morebitna vprašanja smo dosegljivi na info@gomushroom.si.
 
 Lep pozdrav,
 Rok`,`Dear ${inv.buyer||''},
 
-thank you for your purchase at GoMushroom. Please find your invoice ${inv.num} below.${isMaloVelo&&!isPaid?navodiloPlacilo:''}
+thank you for your purchase at GoMushroom. Please find your invoice ${inv.num} below.${terjaPlacilo&&!isPaid?navodiloPlacilo:''}
 
 If you have any questions, reach us at info@gomushroom.si.
 
@@ -9991,7 +9995,7 @@ Rok`);
       </tbody>
     </table>
 
-    ${(g?.channel==='malo'||g?.channel==='velo')&&(inv.total||0)>0?`<div class="payment-box">
+    ${terjaPlacilo?`<div class="payment-box">
       <div class="payment-details">
         <strong>${L('Podatki za plačilo','Payment details')}</strong>
         ${L('Prejemnik','Beneficiary')}: ${UPN_NAME}${tujina?', '+UPN_ADDRESS_DISPLAY+', '+UPN_CITY_DISPLAY+', '+drzavaIme('SI',lang):''}<br>

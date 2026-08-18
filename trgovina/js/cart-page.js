@@ -15,6 +15,7 @@ const CP_STR = {
     empty: 'Košarica je prazna', back: '← Nazaj v trgovino', unit: '/ kom', remove: 'Odstrani',
     itemsCount: (n) => `Skupaj (${n} kosov)`, discount: (pct) => `Popust ${pct}%`,
     shipping: 'Poštnina', free: 'Brezplačno', addMore: (v) => `Dodaj še ${v} za brezplačno dostavo`,
+    abroadThreshold: (v) => `V tujino je dostava brezplačna nad ${v}`,
     total: 'Skupaj za plačilo', applyCoupon: 'Uveljavi', couponPartial: 'Delno',
     dateLocale: 'sl-SI'
   },
@@ -22,6 +23,7 @@ const CP_STR = {
     empty: 'Your cart is empty', back: '← Back to shop', unit: '/ each', remove: 'Remove',
     itemsCount: (n) => `Total (${n} item${n === 1 ? '' : 's'})`, discount: (pct) => `Discount ${pct}%`,
     shipping: 'Shipping', free: 'Free', addMore: (v) => `Add ${v} more for free shipping`,
+    abroadThreshold: (v) => `Shipping abroad is free over ${v}`,
     total: 'Total to pay', applyCoupon: 'Apply', couponPartial: 'Partial',
     dateLocale: 'en-IE'
   }
@@ -30,6 +32,10 @@ const CP_STR = {
 let settings = {
   postnina: 3.90,
   brezplacnaPosninaOd: 60,
+  // Enake zaloznice kot na blagajni, da se strani ne razhajata, ce nastavitve
+  // niso na voljo.
+  postninaTujina: 0,
+  brezplacnaPosninaOdTujina: 60,
   sestevajPopuste: false,
   maxPopust: 50,
   popusti: [],
@@ -181,6 +187,10 @@ function updateSummary(bruto, pct, popustZnesek, postnina, skupaj, ujemajoci = [
         <span style="color:${postnina===0?'#3a6b4a':'rgba(43,11,57,.55)'}">${postnina === 0 ? CP_STR.free : fmt(postnina)}</span>
       </div>
       ${doBrezplacne > 0 && postnina > 0 ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">${CP_STR.addMore(fmt(doBrezplacne))}</div>` : ''}
+      ${/* Znesek zgoraj je izracunan za Slovenijo - drzavo kupec izbere sele na
+            blagajni. Ce za tujino velja svoj prag, ga tu povemo, sicer bi kupec
+            iz tujine racunal z napacnim. */''}
+      ${pragiPostnine(settings).lociVelja ? `<div style="font-size:.68rem;color:rgba(43,11,57,.38);text-align:right">${CP_STR.abroadThreshold(fmt(pragiPostnine(settings).tujina))}</div>` : ''}
       <div style="border-top:1px solid rgba(43,11,57,.08);padding-top:.7rem;margin-top:.25rem;display:flex;justify-content:space-between;align-items:baseline">
         <span style="font-size:.82rem;font-weight:600;color:#2b0b39">${CP_STR.total}</span>
         <span style="font-size:1.3rem;font-weight:700;color:#2b0b39;font-family:'Cormorant Garamond',serif">${fmt(skupaj)}</span>

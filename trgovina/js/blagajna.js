@@ -52,7 +52,6 @@ async function gmEnsureTracking() {
 }
 // STRIPE: zamenjaj s svojim publishable ključem iz Stripe Dashboard
 const STRIPE_PK = 'pk_live_51TYJWhLYTCFQNvWnrcdDl8I9BvW7uBLGLZuuV5XY1sV4Kwzho4Oo9lAsLZjcV9roh38ezVvFEq3uQ0PZcOouoGMg00sNtGFH54';
-const STRIPE_TEST_MODE = STRIPE_PK.startsWith('pk_test_');
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';const SB_HEADERS = {
   'Content-Type': 'application/json',
@@ -681,44 +680,14 @@ async function loadSettings() {
 }
 
 // ── RF referenca ──────────────────────────────────────────
-// Naročilo dobi id v brskalniku, ne v bazi.
+// Id naročila in RF referenco ustvari strežnik (netlify/functions/create-order),
+// ne več brskalnik. Tu ju samo prikažemo, tako kot pridejo iz odgovora.
 //
-// Doslej ga je dodelil Supabase, trgovina pa je vstavljeno vrstico prebrala
-// nazaj (Prefer: return=representation), da je do njega prišla. Za to je
-// potrebovala bralno pravico na gm_orders — in ker RLS ne zna omejiti branja
-// na »vrstico, ki si jo pravkar vstavil brez prijave«, je ta pravica veljala za
-// vsa naročila vseh kupcev. Publishable ključ je v izvorni kodi trgovine, torej
-// so bili imena, e-naslovi in naslovi kupcev javno berljivi.
-//
-// Z id-jem, ustvarjenim tukaj, branja nazaj ni več in bralno pravico lahko
-// odvzamemo. Iz istega id-ja izračunamo tudi RF referenco, zato odpade še
-// poznejši popravek vrstice.
-function novOrderId() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  // Starejši brskalniki brez randomUUID: v4 iz kriptografsko varnih bajtov.
-  // Math.random() tu ne pride v poštev — id je hkrati osnova za RF referenco.
-  const b = crypto.getRandomValues(new Uint8Array(16));
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
-  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
-}
-function rfIzId(orderId) {
-  return generateRF(String(orderId).replace(/-/g, '').substring(0, 12).toUpperCase());
-}
-
-function generateRF(orderId) {
-  const ref = String(orderId).replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  if (!ref) return '';
-  const moved = ref + 'RF00';
-  const numeric = moved.split('').map(c => {
-    const code = c.charCodeAt(0);
-    return code >= 65 ? String(code - 55) : c;
-  }).join('');
-  const remainder = BigInt(numeric) % 97n;
-  const checkDigits = String(98n - remainder).padStart(2, '0');
-  return `RF${checkDigits}${ref}`;
-}
+// Zgodovina: sprva ju je dodelil Supabase, trgovina pa je vstavljeno vrstico
+// prebrala nazaj (Prefer: return=representation) — za kar je potrebovala bralno
+// pravico nad vsemi naročili, torej tudi tujimi (faza 2). Nato ju je izračunal
+// brskalnik. Odkar naročilo sestavi strežnik, brskalnik nad gm_orders nima več
+// nobene pravice (faza 3, doc/supabase-rls-faza3.sql).
 
 // ── UPN QR ────────────────────────────────────────────────
 function buildUPNString(amount, rf, purpose) {
@@ -761,13 +730,6 @@ function fmt(v) {
 }
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-// Doda dejansko plačano ceno na kos (po vseh popustih) v vsak artikel naročila,
-// da je v gm_orders.items shranjena resnica ob nakupu - namesto da bi jo kdo
-// kasneje poskušal ugibati/rekonstruirati iz skupnega zneska.
-function withPricePaid(cart, factor) {
-  return cart.map(i => ({ ...i, pricePaid: Math.round((Number(i.price) || 0) * factor * 100) / 100 }));
-}
 
 // ── Popusti ───────────────────────────────────────────────
 function izracunajPopust(skupaj, kolicina, koda) {
@@ -1164,39 +1126,17 @@ async function saveStripeOrder(paymentIntentId) {
     const backup = JSON.parse(sessionStorage.getItem('gm_cart_backup') || '[]');
     if (backup.length) cart = backup;
   }
-  const calc = window._orderCalc;
-
-  const orderData = {
-    id:       novOrderId(),
-    name:     document.getElementById('c-name').value.trim(),
-    email:    document.getElementById('c-email').value.trim(),
-    phone:    document.getElementById('c-phone').value.trim() || null,
-    street:   document.getElementById('c-street').value.trim(),
-    post:     document.getElementById('c-post').value.trim(),
-    city:     document.getElementById('c-city').value.trim(),
-    country:  calc.country || 'Slovenija',
-    note:     document.getElementById('c-note').value.trim() || null,
-    items:    withPricePaid(cart, 1 - (calc.pct || 0) / 100),
-    subtotal: calc.bruto,
-    discount_pct: calc.pct,
-    discount_amt: calc.popustZnesek,
-    shipping: calc.postnina,
-    total:    calc.skupaj,
-    coupon_code: calc.koda || null,
-    status:   'paid',
-    channel:  'stripe',
-    rf_reference: paymentIntentId,
-    is_test:  STRIPE_TEST_MODE,
-  };
-
-  const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
-    method: 'POST',
-    headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-    body: JSON.stringify(orderData),
+  // Naročilo ustvari strežnik in pri Stripu preveri, da je bilo plačano vsaj
+  // toliko, kolikor stane — status 'paid' torej ne more priti iz brskalnika.
+  const { order, calc: calcSrv } = await ustvariNarocilo({
+    channel: 'stripe',
+    paymentIntentId,
+    items: kosaricaZaStreznik(cart),
+    customer: kupecIzObrazca(),
+    coupon: window._orderCalc?.koda || '',
   });
-  if (!r.ok) throw new Error('Shranjevanje naročila ni uspelo');
-  // Vrstice ne beremo nazaj; vse, kar potrebujemo, smo poslali sami.
-  const order = orderData;
+
+  const calc = { ...(window._orderCalc || {}), ...calcSrv };
 
   await sendStripeConfirmationEmail(order, calc);
   showStripeSuccess(order);
@@ -1398,6 +1338,48 @@ function showStripeSuccess(order) {
   successEl.scrollIntoView({ behavior: 'smooth' });
 }
 
+// ── Ustvarjanje naročila na strežniku ─────────────────────
+// Brskalnik pove samo, KAJ je v košarici in komu naj gre. Ceno, popust,
+// poštnino in status določi create-order iz cen v bazi — brskalnik jih ne more
+// več narekovati, zato tudi ni več mogoče naročiti za 0,01 € ali si vstaviti
+// vrstice, ki je že označena kot plačana.
+function kosaricaZaStreznik(cart) {
+  return cart.map(i => ({
+    sku: i.sku || '',
+    slug: i.slug || '',
+    variant: i.variant || '',
+    quantity: i.quantity,
+    name: i.name,
+    variantLabel: i.variantLabel || '',
+    image: i.image || '',
+  }));
+}
+
+function kupecIzObrazca() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    name:   v('c-name'),
+    email:  v('c-email'),
+    phone:  v('c-phone'),
+    street: v('c-street'),
+    post:   v('c-post'),
+    city:   v('c-city'),
+    country: document.getElementById('c-country')?.value || 'Slovenija',
+    note:   v('c-note'),
+  };
+}
+
+async function ustvariNarocilo(payload) {
+  const r = await fetch('/.netlify/functions/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `create-order: ${r.status}`);
+  return data;
+}
+
 // ── Submit (UPN bančno nakazilo) ──────────────────────────
 async function placeOrder() {
   const btn = document.getElementById('upn-pay-btn');
@@ -1426,7 +1408,9 @@ async function placeOrder() {
   const cart = JSON.parse(localStorage.getItem('gomushroom_cart') || '[]');
   const calc = window._orderCalc;
 
-  // UPN popust iz nastavitev
+  // UPN popust iz nastavitev — samo za predogled v povzetku, dokler strežnik ne
+  // vrne pravih zneskov. Merodajen je izračun v create-order, ki isti popust
+  // izpelje iz gm_settings.
   const upnCfg = settings.upnPopust;
   const upnPct = (upnCfg?.aktiven && upnCfg.vrednost > 0) ? upnCfg.vrednost : 0;
   const upnDiscountAmt = Math.round(calc.skupaj * upnPct / 100 * 100) / 100;
@@ -1440,53 +1424,27 @@ async function placeOrder() {
     document.getElementById('order-total').textContent = fmt(skupajUpn);
   }
 
-  const name = document.getElementById('c-name').value.trim();
-  const email = document.getElementById('c-email').value.trim();
-
-  // RF referenca je izpeljana iz id-ja, zato jo lahko izračunamo že tu in
-  // vstavimo skupaj z naročilom — namesto da bi vrstico naknadno popravljali.
-  const orderId = novOrderId();
-  const rf = rfIzId(orderId);
-
-  const orderData = {
-    id: orderId,
-    name, email,
-    phone: document.getElementById('c-phone').value.trim() || null,
-    street: document.getElementById('c-street').value.trim(),
-    post: document.getElementById('c-post').value.trim(),
-    city: document.getElementById('c-city').value.trim(),
-    country: calc.country || 'Slovenija',
-    note: document.getElementById('c-note').value.trim() || null,
-    items: cart,
-    subtotal: calc.bruto,
-    discount_pct: calc.pct,
-    discount_amt: calc.popustZnesek + upnDiscountAmt,
-    shipping: calc.postnina,
-    total: skupajUpn,
-    coupon_code: calc.koda || null,
-    channel: 'wp',
-    status: 'pending',
-    rf_reference: rf,
-  };
-
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
-      method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-      body: JSON.stringify(orderData)
+    const { order, calc: calcSrv } = await ustvariNarocilo({
+      channel: 'wp',
+      items: kosaricaZaStreznik(cart),
+      customer: kupecIzObrazca(),
+      coupon: calc.koda || '',
     });
-    if (!r.ok) throw new Error('Supabase error: ' + r.status);
-    const order = orderData;
 
-    const calcUpn = { ...calc, skupaj: skupajUpn, popustZnesek: calc.popustZnesek + upnDiscountAmt };
+    // Opisi popustov (ujemajoci) so stvar prikaza in prevoda, zato ostanejo iz
+    // brskalnika; vsi zneski od tu naprej so strežnikovi.
+    const calcUpn = { ...calc, ...calcSrv };
+    const rf = order.rf_reference;
+
     await sendConfirmationEmail(order, rf, calcUpn);
     showSuccess(order, rf, calcUpn);
     await gmEnsureTracking();
     if (typeof gmPurchase === 'function')
-      gmPurchase(orderId, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
+      gmPurchase(order.id, cart, order.total, order.shipping, order.discount_amt, order.coupon_code);
     if (typeof gmFbPurchase === 'function')
-      gmFbPurchase(cart, skupajUpn, orderId);
-    trackPurchaseServer(orderId, cart, skupajUpn, calc.postnina, calc.popustZnesek + upnDiscountAmt, calc.koda);
+      gmFbPurchase(cart, order.total, order.id);
+    trackPurchaseServer(order.id, cart, order.total, order.shipping, order.discount_amt, order.coupon_code);
     sessionStorage.setItem('gm_cart_backup', JSON.stringify(cart));
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
@@ -1498,7 +1456,9 @@ async function placeOrder() {
     btn.innerHTML = upnCfgErr?.aktiven && upnCfgErr.vrednost > 0
       ? `<span>${BJ_STR.bankTransfer}</span><span style="font-size:.7rem;color:#3a6b4a;font-weight:600;letter-spacing:.03em">${BJ_STR.extraDiscount(upnCfgErr.vrednost)}</span>`
       : BJ_STR.bankTransfer;
-    alert(BJ_STR.orderError);
+    // Razlog (npr. da izdelka ni več v prodaji) je za kupca uporaben, zato ga
+    // pripnemo pod splošno sporočilo.
+    alert(e.message ? `${BJ_STR.orderError}\n\n${e.message}` : BJ_STR.orderError);
   }
 }
 
@@ -1573,14 +1533,19 @@ async function sendConfirmationEmail(order, rf, calc) {
   </body></html>`;
 
   try {
+    // orderId pove send-email, naj po uspešni oddaji sam zabeleži
+    // confirmation_sent_at s strežniškim ključem. Brskalnik nad gm_orders nima
+    // več nobene pravice (faza 3), zato tega popravka ne more več narediti sam
+    // — prej ga je delal s publishable ključem.
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: ES.email.subjectOrderConfirmed, html })
-    });
-    await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${order.id}`, {
-      method: 'PATCH', headers: SB_HEADERS,
-      body: JSON.stringify({ confirmation_sent_at: new Date().toISOString() })
+      body: JSON.stringify({
+        to: order.email,
+        subject: ES.email.subjectOrderConfirmed,
+        html,
+        orderId: order.id,
+      })
     });
     // Obvestilo lastniku
     const ownerHtml = `<b>Novo naročilo (bančno nakazilo)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${calc.skupaj.toFixed(2)} €<br>Referenca: ${order.rf_reference||'—'}<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;

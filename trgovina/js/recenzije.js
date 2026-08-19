@@ -196,7 +196,7 @@ function bindEvents(slug,productName){
         method:'POST',headers:{...SB_H,'Prefer':'return=minimal'},
         body:JSON.stringify({name,email,rating,title:title||null,body,
           product_id:slug,product_name:productName,
-          status:'pending',coupon_pct:cfg.recenzijaPct,
+          status:'pending',coupon_pct:cfg.recenzijaPct,lang:LANG,
           created_at:new Date().toISOString()})
       });
       if(r.ok||r.status===201){
@@ -246,7 +246,7 @@ function bindEvents(slug,productName){
           body:`IG: ${handle}${link?'\nLink: '+link:''}`,
           product_id:'ig-'+id,
           product_name:'📸 Instagram: '+a.label,
-          status:'pending',coupon_pct:pct,
+          status:'pending',coupon_pct:pct,lang:LANG,
           created_at:new Date().toISOString()
         })
       });

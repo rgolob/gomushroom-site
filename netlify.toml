@@ -31,12 +31,6 @@
   force = true
 
 [[redirects]]
-  from = "/en/shop/lions-mane-tincture/"
-  to = "/trgovina/resasti-bradovec-tinktura/"
-  status = 301
-  force = true
-
-[[redirects]]
   from = "/qc/heavy-metals/"
   to = "/en/qc/heavy-metals/"
   status = 301

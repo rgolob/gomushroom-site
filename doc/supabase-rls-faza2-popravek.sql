@@ -70,20 +70,29 @@ create policy gm_orders_anon_select_id on gm_orders
 -- USPEH, ne napaka. NE sledi Postgresovemu HINT-u
 -- (»GRANT SELECT ON public.gm_orders TO anon«) — ta bi luknjo znova odprl.
 --
--- ── Popravek obstoječih naročil ───────────────────────────────────────────
--- Naročila, oddana med uvedbo faze 2 in tem popravkom, imajo
--- confirmation_sent_at = NULL, čeprav je sporočilo šlo ven. Če je pomembno, da
--- stolpec odraža resnično stanje, ga popravi na created_at (edini približek, ki
--- ga imamo, saj se e-pošta pošlje takoj po vstavitvi):
---   update gm_orders
---      set confirmation_sent_at = created_at
---    where confirmation_sent_at is null
---      and created_at between '<datum faze 2>' and '<datum tega popravka>';
+-- ── Obstoječa naročila: popravek ni bil potreben ──────────────────────────
+-- Naročila, oddana med uvedbo faze 2 in tem popravkom, bi morala imeti
+-- confirmation_sent_at = NULL, čeprav je sporočilo šlo ven. Preverjeno:
+--   select id, created_at, status, confirmation_sent_at
+--     from gm_orders
+--    where channel = 'wp' and confirmation_sent_at is null;
+-- Vrne prazno — v tem oknu ni bilo nobenega naročila z nakazilom razen
+-- testnega, ki je bil popravljen sproti. Vsebinskega popravka torej ni bilo.
 --
--- ── Še odprto: DELETE ──────────────────────────────────────────────────────
--- Anon ima na gm_orders še vedno širok GRANT DELETE (spet Supabasejev privzeti
--- grant). Trenutno ga ustavi RLS, ker DELETE politike za anon ni — torej ista
--- krhka postavitev, ki je pravkar pokvarila SELECT. Ob prvi priložnosti:
---   revoke delete, truncate on gm_orders from anon;
+-- Opomba za prihodnjič: confirmation_sent_at se piše IZKLJUČNO v poti za
+-- bančno nakazilo (sendConfirmationEmail, channel='wp'). Pri Stripe naročilih
+-- (sendStripeConfirmationEmail) je NULL po zasnovi — teh vrstic ne popravljaj.
+
+-- ── DELETE: zaprto ─────────────────────────────────────────────────────────
+-- Anon je imel na gm_orders še širok GRANT DELETE (spet Supabasejev privzeti
+-- grant), ki ga je ustavljala samo odsotnost DELETE politike — ista krhka
+-- postavitev, ki je pravkar pokvarila SELECT. Zaprto skupaj s tem popravkom:
+
+revoke delete, truncate on gm_orders from anon;
+
+-- Anon ima odslej nad gm_orders: INSERT (vsi stolpci), SELECT (samo id),
+-- UPDATE (samo confirmation_sent_at). Nič drugega.
+--
 -- V fazi 3, ko gre ustvarjanje naročila v Netlify funkcijo s strežniškim
--- ključem, odpade tudi INSERT in anon nad to tabelo nima več ničesar.
+-- ključem (kot že create-payment-intent), odpade tudi INSERT in anon nad to
+-- tabelo nima več ničesar.

@@ -1,3 +1,24 @@
+const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+
+async function markConfirmationSent(orderId) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(orderId))) throw new Error('Neveljaven orderId');
+
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!key) throw new Error('SUPABASE_SECRET_KEY ni nastavljen');
+
+  const r = await fetch(`${SB_URL}/rest/v1/gm_orders?id=eq.${orderId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': key,
+      'Authorization': 'Bearer ' + key,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ confirmation_sent_at: new Date().toISOString() }),
+  });
+  if (!r.ok) throw new Error(`PATCH gm_orders: ${r.status} ${await r.text()}`);
+}
+
 exports.handler = async (event) => {
   // CORS headers
   const headers = {
@@ -16,7 +37,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, subject, html, from, attachments } = JSON.parse(event.body);
+    const { to, subject, html, from, attachments, orderId } = JSON.parse(event.body);
 
     if (!to || !subject || !html) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -48,6 +69,18 @@ exports.handler = async (event) => {
 
     if (!response.ok) {
       return { statusCode: response.status, headers, body: JSON.stringify(data) };
+    }
+
+    // Zabeležimo, da je potrditveno sporočilo šlo ven. To je delala trgovina
+    // sama, dokler je imela pravico pisati v gm_orders; po fazi 3 je nima več,
+    // zato to opravi tu strežniški ključ. Neuspeh tu ne sme pokvariti pošiljanja
+    // — sporočilo je takrat že oddano.
+    if (orderId) {
+      try {
+        await markConfirmationSent(orderId);
+      } catch (e) {
+        console.error('confirmation_sent_at ni bil zabeležen:', e);
+      }
     }
 
     return { statusCode: 200, headers, body: JSON.stringify(data) };

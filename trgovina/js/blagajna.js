@@ -1314,10 +1314,18 @@ async function sendStripeConfirmationEmail(order, calc) {
 </body></html>`;
 
   try {
+    // orderId pove send-email, naj zabeleži confirmation_sent_at. Kartična pot
+    // tega doslej ni delala (stolpec je ostal prazen tudi pri starih naročilih),
+    // zato je zdaj enak kot pri nakazilu.
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: order.email, subject: ES.email.subjectPaymentConfirmed, html }),
+      body: JSON.stringify({
+        to: order.email,
+        subject: ES.email.subjectPaymentConfirmed,
+        html,
+        orderId: order.id,
+      }),
     });
     // Obvestilo lastniku
     const ownerHtml = `<b>Novo naročilo (Stripe)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;

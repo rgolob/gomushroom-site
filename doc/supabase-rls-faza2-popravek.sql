@@ -4,13 +4,12 @@
 --
 -- Kaj je bilo narobe
 -- ──────────────────
--- supabase-rls-faza2.sql je anon pustil pravico UPDATE (stolpec
--- confirmation_sent_at) in politiko gm_orders_anon_update z using(true), a
--- odstranil VSAKO SELECT pravico nad gm_orders. Postgres RLS za UPDATE/DELETE
--- najprej poišče vrstice prek SELECT vidljivosti in šele nato preveri USING
--- klavzulo UPDATE politike — brez SELECT pravice anon ne najde nobene
--- vrstice, zato PATCH .../gm_orders?id=eq.<id> tiho "uspe" (ni napake), a
--- popravi 0 vrstic.
+-- supabase-rls-faza2.sql je anonu pustil pravico UPDATE (stolpec
+-- confirmation_sent_at) in politiko gm_orders_anon_update z using(true), ni pa
+-- ustvaril nobene SELECT politike. Postgres za UPDATE vrstice najprej poišče
+-- prek SELECT vidljivosti in šele nato preveri USING klavzulo UPDATE politike —
+-- brez SELECT politike anon ne najde nobene vrstice, zato
+-- PATCH .../gm_orders?id=eq.<id> tiho "uspe" (ni napake), a popravi 0 vrstic.
 --
 -- Posledica: pri VSEH naročilih z bančnim nakazilom, oddanih po uvedbi faze 2,
 -- je confirmation_sent_at ostal NULL, čeprav je potrditveno sporočilo dejansko
@@ -19,37 +18,72 @@
 --
 -- Popravek
 -- ────────
--- Anon dobi SELECT samo na stolpec id — UUID sam po sebi ne razkriva ničesar
--- o kupcu, potreben pa je, da PATCH z WHERE id=eq... sploh najde vrstico.
--- Poizvedba, ki bi poskusila prebrati kateri koli drug stolpec (select=name
--- ali select=* ipd.), ostane zavrnjena na nivoju stolpčnih pravic.
+-- Anon dobi SELECT samo na stolpec id — UUID sam po sebi ne razkriva ničesar o
+-- kupcu, potreben pa je, da PATCH z WHERE id=eq... sploh najde vrstico.
+--
+-- ⚠ VRSTNI RED JE BISTVEN: REVOKE mora priti PRED GRANT.
+--
+-- Faza 2 je luknjo zaprla samo z odsotnostjo SELECT *politike* — širok GRANT
+-- SELECT na vse stolpce (Supabase ga anonu podeli privzeto ob nastanku tabele)
+-- je ostal nedotaknjen. Dokler politike ni bilo, je RLS branje ustavil kljub
+-- grantu, zato se je videlo, kot da je vse v redu.
+--
+-- Ko sem SELECT politiko dodal, ne da bi prej odvzel širok grant, se je odprlo
+-- natanko to, kar je faza 2 zaprla: imena in e-naslovi kupcev so bili spet
+-- javno berljivi. GRANT in RLS politika sta dve neodvisni plasti — politika
+-- pove KATERE VRSTICE, grant pove KATERE STOLPCE. Politika sama granta nikoli
+-- ne zameji.
+--
+-- Zato: najprej pospravi širok grant, šele nato podeli ozkega.
 
-grant select (id) on gm_orders to anon;
+revoke select on gm_orders from anon;
+grant  select (id) on gm_orders to anon;
 
 create policy gm_orders_anon_select_id on gm_orders
   for select to anon using (true);
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
--- Mora iti skozi in popraviti 1 vrstico (uporabi id iz katerega koli
--- testnega naročila):
---   set role anon;
---   update gm_orders set confirmation_sent_at = now() where id = '<id>';
---   reset role;
+-- SQL Editor snippet požene kot en blok, zato prvi (pričakovano neuspešen)
+-- stavek prekine transakcijo in ostalih ne izvede. Ta DO blok pričakovano
+-- napako ujame in izpiše vse tri rezultate hkrati (zavihek Notices).
 --
--- Mora ostati prazno (id sam po sebi ni PII, a ostali stolpci morajo biti
--- še vedno nedostopni):
---   set role anon;
---   select name, email from gm_orders;         -- pričakovano: napaka (denied)
---   select id from gm_orders limit 5;           -- pričakovano: gre skozi
---   reset role;
+--   do $$
+--   declare bere_pii boolean; st_id int; st_upd int;
+--   begin
+--     set local role anon;
+--     begin
+--       perform name, email from gm_orders limit 1;
+--       bere_pii := true;
+--     exception when insufficient_privilege then
+--       bere_pii := false;
+--     end;
+--     select count(*) into st_id from (select id from gm_orders limit 3) t;
+--     update gm_orders set confirmation_sent_at = now() where id = '<id>';
+--     get diagnostics st_upd = row_count;
+--     reset role;
+--     raise notice 'PII berljiv:     %  (mora biti false)', bere_pii;
+--     raise notice 'id berljiv:      % vrstic (mora biti 3)', st_id;
+--     raise notice 'update popravil: % vrstic (mora biti 1)', st_upd;
+--   end $$;
+--
+-- Če select name, email javi »permission denied for table gm_orders«, je to
+-- USPEH, ne napaka. NE sledi Postgresovemu HINT-u
+-- (»GRANT SELECT ON public.gm_orders TO anon«) — ta bi luknjo znova odprl.
 --
 -- ── Popravek obstoječih naročil ───────────────────────────────────────────
 -- Naročila, oddana med uvedbo faze 2 in tem popravkom, imajo
--- confirmation_sent_at = NULL, čeprav je sporočilo šlo ven. Če je pomembno,
--- da stolpec odraža resnično stanje, ga ročno popravi na created_at (edini
--- približek, ki ga imamo, saj se e-pošta pošlje takoj po vstavitvi):
+-- confirmation_sent_at = NULL, čeprav je sporočilo šlo ven. Če je pomembno, da
+-- stolpec odraža resnično stanje, ga popravi na created_at (edini približek, ki
+-- ga imamo, saj se e-pošta pošlje takoj po vstavitvi):
 --   update gm_orders
 --      set confirmation_sent_at = created_at
 --    where confirmation_sent_at is null
---      and status = 'pending'
---      and created_at > '<datum uvedbe faze 2>';
+--      and created_at between '<datum faze 2>' and '<datum tega popravka>';
+--
+-- ── Še odprto: DELETE ──────────────────────────────────────────────────────
+-- Anon ima na gm_orders še vedno širok GRANT DELETE (spet Supabasejev privzeti
+-- grant). Trenutno ga ustavi RLS, ker DELETE politike za anon ni — torej ista
+-- krhka postavitev, ki je pravkar pokvarila SELECT. Ob prvi priložnosti:
+--   revoke delete, truncate on gm_orders from anon;
+-- V fazi 3, ko gre ustvarjanje naročila v Netlify funkcijo s strežniškim
+-- ključem, odpade tudi INSERT in anon nad to tabelo nima več ničesar.

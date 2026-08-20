@@ -3381,6 +3381,9 @@ function prenesDN(id){
       datum:d.datumZakljucka||d.datum,
       vrstaGobe:d.vrstaGobe,
       serijaAlc:d.serijaAlc,
+      // Brez zastavic bi bulk nalog v zalogi pristal kot kosi.
+      alcBulk:!!d.alcBulk,
+      glyBulk:!!d.glyBulk,
       kolAlc:d.kolAlc,
       kolAlcInterno:d.kolAlcInterno,
       kolGly:d.kolGly,

@@ -989,15 +989,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="var-panel alc">
         <div class="var-panel-hdr">🥃 Alkohol</div>
         <div class="var-panel-body">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .5rem;cursor:pointer">
+            <input type="checkbox" id="bAlcBulk" onchange="onBatchBulkToggle('Alc')">
+            🛢 Bulk — ni ustekleničeno, količina v litrih
+          </label>
           <div class="frow">
             <div class="field"><label>SKU</label><input id="bAlcSku" placeholder="GM-LM-ALC-50" autocapitalize="characters"></div>
-            <div class="field"><label>Količina (kom.)</label><input type="number" id="bAlcQty" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Alc')"></div>
+            <div class="field"><label id="bLabAlcQty">Količina (kom.)</label><input type="number" id="bAlcQty" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Alc')"></div>
           </div>
           <div class="frow">
-            <div class="field"><label>Cena malo (€)</label><input type="text" id="bAlcPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
-            <div class="field"><label>Volumen (ml)</label><input type="number" id="bAlcVol" placeholder="50" inputmode="numeric"></div>
+            <div class="field"><label id="bLabAlcPrice">Cena malo (€)</label><input type="text" id="bAlcPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
+            <div class="field" id="bFieldAlcVol"><label>Volumen (ml)</label><input type="number" id="bAlcVol" placeholder="50" inputmode="numeric"></div>
           </div>
-          <div class="field"><label>Razporeditev po namenu (kom.)</label>
+          <div class="field"><label id="bLabAlcAlloc">Razporeditev po namenu (kom.)</label>
             <div class="ch-alloc-grid">
               <div class="ch-alloc-row"><span class="ch-alloc-label malo">🛒 Prodaja</span><input type="number" id="bAlcProd" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Alc')"></div>
               <div class="ch-alloc-row"><span class="ch-alloc-label int">🔬 Interno</span><input type="number" id="bAlcInt" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Alc')"></div>
@@ -1011,15 +1015,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="var-panel gly">
         <div class="var-panel-hdr">🌿 Glicerin</div>
         <div class="var-panel-body">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .5rem;cursor:pointer">
+            <input type="checkbox" id="bGlyBulk" onchange="onBatchBulkToggle('Gly')">
+            🛢 Bulk — ni ustekleničeno, količina v litrih
+          </label>
           <div class="frow">
             <div class="field"><label>SKU</label><input id="bGlySku" placeholder="GM-LM-GLY-50" autocapitalize="characters"></div>
-            <div class="field"><label>Količina (kom.)</label><input type="number" id="bGlyQty" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Gly')"></div>
+            <div class="field"><label id="bLabGlyQty">Količina (kom.)</label><input type="number" id="bGlyQty" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Gly')"></div>
           </div>
           <div class="frow">
-            <div class="field"><label>Cena malo (€)</label><input type="text" id="bGlyPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
-            <div class="field"><label>Volumen (ml)</label><input type="number" id="bGlyVol" placeholder="50" inputmode="numeric"></div>
+            <div class="field"><label id="bLabGlyPrice">Cena malo (€)</label><input type="text" id="bGlyPriceMalo" placeholder="29.90" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"></div>
+            <div class="field" id="bFieldGlyVol"><label>Volumen (ml)</label><input type="number" id="bGlyVol" placeholder="50" inputmode="numeric"></div>
           </div>
-          <div class="field"><label>Razporeditev po namenu (kom.)</label>
+          <div class="field"><label id="bLabGlyAlloc">Razporeditev po namenu (kom.)</label>
             <div class="ch-alloc-grid">
               <div class="ch-alloc-row"><span class="ch-alloc-label malo">🛒 Prodaja</span><input type="number" id="bGlyProd" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Gly')"></div>
               <div class="ch-alloc-row"><span class="ch-alloc-label int">🔬 Interno</span><input type="number" id="bGlyInt" min="0" placeholder="0" inputmode="numeric" oninput="updateAllocHint('Gly')"></div>
@@ -1945,12 +1953,14 @@ function sbBatchToApp(b){
     serijaGobe:b.serija_gobe||'', masaGobe:b.masa_gobe||0,
     safetyAlc:b.safety_alc||0, safetyGly:b.safety_gly||0,
     alc:{
-      sku:b.alc_sku, qty:b.alc_qty||0, priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
-      alloc:{prod:b.alc_alloc_prod||0, int:b.alc_alloc_int||0, malo:0, velo:0, dar:0}
+      sku:b.alc_sku, qty:Number(b.alc_qty)||0, bulk:!!b.alc_bulk,
+      priceMalo:b.alc_price_malo||0, vol:b.alc_vol,
+      alloc:{prod:Number(b.alc_alloc_prod)||0, int:Number(b.alc_alloc_int)||0, malo:0, velo:0, dar:0}
     },
     gly:{
-      sku:b.gly_sku, qty:b.gly_qty||0, priceMalo:b.gly_price_malo||0, vol:b.gly_vol,
-      alloc:{prod:b.gly_alloc_prod||0, int:b.gly_alloc_int||0, malo:0, velo:0, dar:0}
+      sku:b.gly_sku, qty:Number(b.gly_qty)||0, bulk:!!b.gly_bulk,
+      priceMalo:b.gly_price_malo||0, vol:b.gly_vol,
+      alloc:{prod:Number(b.gly_alloc_prod)||0, int:Number(b.gly_alloc_int)||0, malo:0, velo:0, dar:0}
     },
   };
 }
@@ -1963,10 +1973,10 @@ function appBatchToSb(b){
     serija_gobe:b.serijaGobe||null, masa_gobe:b.masaGobe||null,
     safety_alc:b.safetyAlc||0, safety_gly:b.safetyGly||0,
     alc_sku:b.alc?.sku||null, alc_qty:b.alc?.qty||0, alc_price_malo:b.alc?.priceMalo||0,
-    alc_vol:b.alc?.vol||null,
+    alc_vol:b.alc?.vol||null, alc_bulk:!!b.alc?.bulk,
     alc_alloc_prod:b.alc?.alloc?.prod||0, alc_alloc_int:b.alc?.alloc?.int||0,
     gly_sku:b.gly?.sku||null, gly_qty:b.gly?.qty||0, gly_price_malo:b.gly?.priceMalo||0,
-    gly_vol:b.gly?.vol||null,
+    gly_vol:b.gly?.vol||null, gly_bulk:!!b.gly?.bulk,
     gly_alloc_prod:b.gly?.alloc?.prod||0, gly_alloc_int:b.gly?.alloc?.int||0,
   };
 }
@@ -3542,16 +3552,21 @@ function uvozDNPredfill(idx){
     // Serija gobe (če je DN zabeležil več serij/lotov, jih združi)
     document.getElementById('bSerijaGobe').value=serije.length?serije.map(r=>r.serija||'?').join(', '):dn.serijaGobe||'';
     document.getElementById('bMasaGobe').value=serije.length?serije.reduce((s,r)=>s+(parseFloat(r.masa)||0),0):dn.masaGobe||'';
-    // Količine alc + gly (skupaj = prodaja + interno)
-    const alcInterno=dn.kolAlcInterno||0;
-    const glyInterno=dn.kolGlyInterno||0;
-    const alcSkupaj=(dn.kolAlc||0)+alcInterno;
-    const glySkupaj=(dn.kolGly||0)+glyInterno;
-    if(alcSkupaj>0)document.getElementById('bAlcQty').value=alcSkupaj;
-    if(glySkupaj>0)document.getElementById('bGlyQty').value=glySkupaj;
+    // Bulk zastavica potuje z naloga na serijo. Postaviti jo je treba PRED
+    // kolicinami, sicer bi preklop napisov povozil ravnokar vpisane vrednosti.
+    document.getElementById('bAlcBulk').checked=!!dn.alcBulk;
+    document.getElementById('bGlyBulk').checked=!!dn.glyBulk;
+    onBatchBulkToggle('Alc');onBatchBulkToggle('Gly');
+    // Količine alc + gly (skupaj = prodaja + interno); pri bulku v litrih
+    const alcInterno=Number(dn.kolAlcInterno)||0;
+    const glyInterno=Number(dn.kolGlyInterno)||0;
+    const alcSkupaj=(Number(dn.kolAlc)||0)+alcInterno;
+    const glySkupaj=(Number(dn.kolGly)||0)+glyInterno;
+    if(alcSkupaj>0)document.getElementById('bAlcQty').value=kolZaPrikaz({qty:alcSkupaj,bulk:dn.alcBulk});
+    if(glySkupaj>0)document.getElementById('bGlyQty').value=kolZaPrikaz({qty:glySkupaj,bulk:dn.glyBulk});
     // Razporeditev prodaja/interno iz DN
-    if(alcSkupaj>0)setAlloc('Alc',{prod:dn.kolAlc||0,int:alcInterno});
-    if(glySkupaj>0)setAlloc('Gly',{prod:dn.kolGly||0,int:glyInterno});
+    if(alcSkupaj>0)setAlloc('Alc',{prod:Number(dn.kolAlc)||0,int:alcInterno},!!dn.alcBulk);
+    if(glySkupaj>0)setAlloc('Gly',{prod:Number(dn.kolGly)||0,int:glyInterno},!!dn.glyBulk);
     // Poskusi poiskati produkt po imenu gobe
     if(dn.vrstaGobe){
       const gobaN=(dn.vrstaGobe||'').toLowerCase();
@@ -3773,15 +3788,49 @@ function updateAllocHint(type){
   else if(diff>0){el.textContent=`Še ${diff} nerazporejenih`;el.className='alloc-hint warn';}
   else{el.textContent=`Preveč za ${Math.abs(diff)}!`;el.className='alloc-hint err';}
 }
+// Bulk kolicine so v litrih in decimalne — parseInt bi 2,5 tiho zaokrozil.
+function batchJeBulk(t){return !!document.getElementById('b'+t+'Bulk')?.checked;}
+function batchKol(id,bulk){
+  const v=document.getElementById(id)?.value;
+  return bulk?(parseNum(v||'0')||0):(parseInt(v)||0);
+}
+
+function onBatchBulkToggle(t){
+  const bulk=batchJeBulk(t);
+  const enota=bulk?'L':'kom.';
+  document.getElementById('bLab'+t+'Qty').textContent=`Količina (${enota})`;
+  document.getElementById('bLab'+t+'Alloc').textContent=`Razporeditev po namenu (${enota})`;
+  document.getElementById('bLab'+t+'Price').textContent=bulk?'Cena (€/L)':'Cena malo (€)';
+  for(const id of ['b'+t+'Qty','b'+t+'Prod','b'+t+'Int']){
+    const el=document.getElementById(id);
+    if(!el)continue;
+    el.type=bulk?'text':'number';
+    el.inputMode=bulk?'decimal':'numeric';
+    el.placeholder=bulk?'0,0':'0';
+  }
+  // Pri bulku je volumen na enoto vedno 1 L, zato polja ni smiselno kazati.
+  const vol=document.getElementById('bField'+t+'Vol');
+  if(vol)vol.style.display=bulk?'none':'';
+  updateAllocHint(t);
+}
+
 function getAlloc(type){
+  const bulk=batchJeBulk(type);
   return{
-    prod:parseInt(document.getElementById('b'+type+'Prod').value)||0,
-    int: parseInt(document.getElementById('b'+type+'Int').value)||0,
+    prod:batchKol('b'+type+'Prod',bulk),
+    int: batchKol('b'+type+'Int',bulk),
   };
 }
-function setAlloc(type,alloc){
-  document.getElementById('b'+type+'Prod').value=(alloc?.prod||alloc?.malo||0)||'';
-  document.getElementById('b'+type+'Int').value=(alloc?.int||0)||'';
+// Decimalke pisemo z vejico, kot jih uporabnik vnasa; cela stevila brez nje.
+function kolZaPrikaz(v){
+  const q=Number(v?.qty)||0;
+  if(!q)return'';
+  return v?.bulk?String(q).replace('.',','):q;
+}
+function setAlloc(type,alloc,bulk){
+  const zapis=x=>{const n=Number(x)||0;return n?(bulk?String(n).replace('.',','):n):'';};
+  document.getElementById('b'+type+'Prod').value=zapis(alloc?.prod||alloc?.malo);
+  document.getElementById('b'+type+'Int').value=zapis(alloc?.int);
   updateAllocHint(type);
 }
 function clearAllocFields(type){
@@ -3849,9 +3898,13 @@ function openBatchSheet(id=null){
       document.getElementById('bBatch').removeAttribute('readonly');
       lockWarn.style.display='none';
     }
-    document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=b.alc?.qty||'';document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
-    document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=b.gly?.qty||'';document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
-    setAlloc('Alc',b.alc?.alloc||null);setAlloc('Gly',b.gly?.alloc||null);
+    // Zastavici najprej, da preklop zamenja napise in tipe polj, preden vanje pisemo.
+    document.getElementById('bAlcBulk').checked=!!b.alc?.bulk;
+    document.getElementById('bGlyBulk').checked=!!b.gly?.bulk;
+    onBatchBulkToggle('Alc');onBatchBulkToggle('Gly');
+    document.getElementById('bAlcSku').value=b.alc?.sku||'';document.getElementById('bAlcQty').value=kolZaPrikaz(b.alc);document.getElementById('bAlcPriceMalo').value=b.alc?.priceMalo||'';document.getElementById('bAlcVol').value=b.alc?.vol||'';
+    document.getElementById('bGlySku').value=b.gly?.sku||'';document.getElementById('bGlyQty').value=kolZaPrikaz(b.gly);document.getElementById('bGlyPriceMalo').value=b.gly?.priceMalo||'';document.getElementById('bGlyVol').value=b.gly?.vol||'';
+    setAlloc('Alc',b.alc?.alloc||null,!!b.alc?.bulk);setAlloc('Gly',b.gly?.alloc||null,!!b.gly?.bulk);
   } else {
     document.getElementById('batchSheetTitle').textContent='Nova serija';
     ['bBatch','bNote','bWorkOrder','bSerijaGobe','bMasaGobe','bAlcSku','bAlcQty','bAlcPriceMalo','bAlcVol','bGlySku','bGlyQty','bGlyPriceMalo','bGlyVol','bNewProduct'].forEach(i=>document.getElementById(i).value='');
@@ -3874,8 +3927,9 @@ function saveBatch(){
   if(!productId&&!newName){alert('Izberi produkt ali vpiši novo ime.');return;}
   if(newName){const ex=products.find(p=>p.name.toLowerCase()===newName.toLowerCase());if(ex){productId=ex.id;}else{const np={id:uid(),name:newName};products.push(np);productId=np.id;}}
   const productName=products.find(p=>p.id===productId)?.name||'';
-  const alcQty=parseInt(document.getElementById('bAlcQty').value)||0;
-  const glyQty=parseInt(document.getElementById('bGlyQty').value)||0;
+  const alcBulk=batchJeBulk('Alc'),glyBulk=batchJeBulk('Gly');
+  const alcQty=batchKol('bAlcQty',alcBulk);
+  const glyQty=batchKol('bGlyQty',glyBulk);
   if(!alcQty&&!glyQty){alert('Vnesi vsaj eno količino.');return;}
   const alcAlloc=getAlloc('Alc'),glyAlloc=getAlloc('Gly');
   if((alcAlloc.prod+alcAlloc.int)>alcQty){alert('Alkohol: razporejenih preveč.');return;}
@@ -3884,8 +3938,11 @@ function saveBatch(){
     serijaGobe:document.getElementById('bSerijaGobe').value.trim(),
     masaGobe:parseFloat(document.getElementById('bMasaGobe').value)||0,
     safetyAlc:parseInt(document.getElementById('bSafetyAlc').value)||10,safetyGly:parseInt(document.getElementById('bSafetyGly').value)||10,
-    alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:parseInt(document.getElementById('bAlcVol').value)||null,alloc:alcAlloc},
-    gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:parseInt(document.getElementById('bGlyVol').value)||null,alloc:glyAlloc},
+    // Pri bulku je enota liter, zato vol=1000 ml. S tem ostane razmerje
+    // qty × vol = volumen resnicno tudi za bulk in izracuni, ki nanj racunajo,
+    // delujejo naprej.
+    alc:{sku:document.getElementById('bAlcSku').value.trim(),qty:alcQty,bulk:alcBulk,priceMalo:parseNum(document.getElementById('bAlcPriceMalo').value),vol:alcBulk?1000:(parseInt(document.getElementById('bAlcVol').value)||null),alloc:alcAlloc},
+    gly:{sku:document.getElementById('bGlySku').value.trim(),qty:glyQty,bulk:glyBulk,priceMalo:parseNum(document.getElementById('bGlyPriceMalo').value),vol:glyBulk?1000:(parseInt(document.getElementById('bGlyVol').value)||null),alloc:glyAlloc},
   };
   if(editingBatchId){const i=batches.findIndex(x=>x.id===editingBatchId);if(i!==-1)batches[i]={...batches[i],...bData};}
   else batches.unshift({id:uid(),...bData});

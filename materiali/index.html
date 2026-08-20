@@ -554,6 +554,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
       </div></details>
+      <details class="dnsec" id="dnsecKoraki">
+      <summary>🧪 Procesni koraki <span class="dnsum" id="dnsumKoraki"></span></summary>
+      <div class="dnsec-body">
+        <div id="dnKorakiContainer"></div>
+        <button type="button" onclick="ustvariKorakeIzPredloge()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">↻ Ustvari korake iz predloge</button>
+      </div></details>
       <details class="dnsec" id="dnsecOprema">
       <summary>🔧 Uporabljena oprema <span class="dnsum" id="dnsumOprema"></span></summary>
       <div class="dnsec-body">
@@ -2256,10 +2262,211 @@ function dnVolAlcTinkture(){
   return bulk?kol:kol*TINKTURA_VOL_KOM;
 }
 
+// ── Procesni koraki ───────────────────────────────────────────────────────
+// Zaporedje je pri tem procesu vedno isto, zato koraki ne nastajajo na prazno,
+// ampak iz predloge. Korak, ki ga pri konkretni seriji ni bilo, se oznaci kot
+// preskocen - kar je hkrati dokaz, da ni bil pozabljen.
+//
+// Bilanca (gm_dn_bilanca) odgovarja na "koliko snovi je kje" po fazah OF/VF/TE.
+// Cas tja ne sodi: rotavapor, ki je tekel stiri ure, in tisti, ki je tekel
+// stirideset minut, dasta lahko enake masne vrstice. Koraki dodajo manjkajoco
+// plast - kdaj, s cim in kako dolgo. Faza je skupna os obeh.
+//
+// parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
+// koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
+const DN_PREDLOGA_KORAKOV=[
+  {korak:'etanol_priprava', naziv:'Priprava mešanice etanola', faza:'',
+   parametri:[['vol_pct','Ciljni vol%','%'],['masa','Masa mešanice','kg']]},
+  {korak:'vlaga',           naziv:'Meritev vlage surovine', faza:'',
+   parametri:[['vlaga','Vlaga','%']]},
+  {korak:'tehtanje',        naziv:'Tehtanje in polnjenje kozarcev', faza:'',
+   parametri:[['kozarci','Št. kozarcev',''],['masa_kozarec','Surovina / kozarec','g'],
+              ['etanol_kozarec','Etanol / kozarec','g']]},
+  {korak:'uz_1',            naziv:'UZ ekstrakcija — 1. dan', faza:'OF',
+   parametri:[['moc','Moč UZ','%'],['min_kozarec','Trajanje / kozarec','min'],
+              ['kozarci','Št. kozarcev',''],['t_zac','T začetna','°C'],['t_kon','T končna','°C']]},
+  {korak:'uz_2',            naziv:'UZ ekstrakcija — 2. dan', faza:'OF',
+   parametri:[['moc','Moč UZ','%'],['min_kozarec','Trajanje / kozarec','min'],
+              ['kozarci','Št. kozarcev',''],['t_zac','T začetna','°C'],['t_kon','T končna','°C']]},
+  {korak:'stiskanje_of',    naziv:'Stiskanje matičnega ekstrakta', faza:'OF',
+   parametri:[['masa','Masa ekstrakta','g']]},
+  {korak:'koncentriranje_of', naziv:'Koncentriranje OF', faza:'OF',
+   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+  {korak:'vrocevodna',      naziv:'Vročevodna ekstrakcija', faza:'VF',
+   parametri:[['t','Temperatura','°C'],['ure','Trajanje','h']]},
+  {korak:'stiskanje_vf',    naziv:'Stiskanje vodne faze', faza:'VF',
+   parametri:[['masa','Masa ekstrakta','g']]},
+  {korak:'koncentriranje_vf', naziv:'Koncentriranje VF', faza:'VF',
+   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+  {korak:'tlacna',          naziv:'Tlačna ekstrakcija', faza:'TE',
+   parametri:[['t','Temperatura','°C'],['ure','Trajanje','h']]},
+  {korak:'stiskanje_te',    naziv:'Stiskanje in ločevanje', faza:'TE',
+   parametri:[['masa','Masa ekstrakta','g']]},
+  {korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
+   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+  {korak:'formulacija_alc', naziv:'Formulacija alkoholna', faza:'',
+   parametri:[['lecitin','Lecitin','g'],['glicerin','Glicerin','g'],
+              ['tinktura','Alk. tinktura','g'],['suha_snov','Suha snov','%']]},
+  {korak:'pasta',           naziv:'Koncentriranje do paste', faza:'',
+   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+  {korak:'formulacija_gly', naziv:'Formulacija glicerinska', faza:'',
+   parametri:[['glicerin','Glicerin','g'],['voda','Voda','g'],['suha_snov','Suha snov','%']]},
+];
+
+const KORAK_STATUSI={nacrtovan:'○ načrtovan',v_teku:'▶ v teku',koncan:'✓ končan',preskocen:'⊘ preskočen'};
+
+let dnKorakiRows=[];
+let dnKoraki=JSON.parse(localStorage.getItem('gm_dn_koraki')||'[]');
+
+function korakiZaDokument(oznaka){
+  return oznaka?dnKoraki.filter(k=>k.dokument===oznaka).sort((a,b)=>a.zaporedje-b.zaporedje):[];
+}
+
+// Naziv se shrani ob nastanku: predloga se lahko scasoma spremeni, star nalog
+// pa mora ostati berljiv tako, kot je bil izveden.
+function korakiIzPredloge(){
+  return DN_PREDLOGA_KORAKOV.map((t,i)=>({
+    id:uid(),zaporedje:i+1,korak:t.korak,naziv:t.naziv,faza:t.faza||'',
+    opremaId:'',zacetek:'',konec:'',izvajalec:'',parametri:{},status:'nacrtovan',opomba:''
+  }));
+}
+
+function predlogaZaKorak(kljuc){
+  return DN_PREDLOGA_KORAKOV.find(t=>t.korak===kljuc)||{parametri:[]};
+}
+
+// Trajanje v urah; brez obeh casov ni znano.
+function korakUre(k){
+  if(!k.zacetek||!k.konec)return null;
+  const a=new Date(k.zacetek).getTime(),b=new Date(k.konec).getTime();
+  if(!isFinite(a)||!isFinite(b)||b<=a)return null;
+  return (b-a)/3600000;
+}
+
+function fmtUre(h){
+  if(h==null)return '—';
+  const ur=Math.floor(h),min=Math.round((h-ur)*60);
+  return ur?`${ur} h ${min} min`:`${min} min`;
+}
+
+function lokalniCasZdaj(){
+  const d=new Date();
+  d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+
+function onDNKorakChange(idx,polje,val){
+  const k=dnKorakiRows[idx];if(!k)return;
+  k[polje]=val;
+  // Status sledi casom sam, dokler ga uporabnik ne postavi rocno na preskocen.
+  if(k.status!=='preskocen'){
+    if(k.zacetek&&k.konec)k.status='koncan';
+    else if(k.zacetek)k.status='v_teku';
+    else k.status='nacrtovan';
+  }
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+}
+
+function onDNKorakParam(idx,kljuc,val){
+  const k=dnKorakiRows[idx];if(!k)return;
+  k.parametri=k.parametri||{};
+  if(String(val).trim()==='')delete k.parametri[kljuc];
+  else k.parametri[kljuc]=String(val).trim();
+}
+
+function onDNKorakStatus(idx,val){
+  const k=dnKorakiRows[idx];if(!k)return;
+  k.status=val;
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+}
+
+function nastaviKorakCas(idx,polje){
+  const k=dnKorakiRows[idx];if(!k)return;
+  onDNKorakChange(idx,polje,lokalniCasZdaj());
+}
+
+function ustvariKorakeIzPredloge(){
+  if(dnKorakiRows.length&&!confirm('Koraki že obstajajo. Zamenjam jih s predlogo? Vneseni časi in parametri se izgubijo.'))return;
+  dnKorakiRows=korakiIzPredloge();
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+}
+
+function renderDNKorakiRows(){
+  const c=document.getElementById('dnKorakiContainer');
+  if(!c)return;
+  if(!dnKorakiRows.length){
+    c.innerHTML=`<div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">
+      Koraki še niso ustvarjeni. Predloga jih doda po tvojem procesu — časi in parametri se vpišejo sproti.</div>`;
+    return;
+  }
+  const opts=o=>oprema.map(x=>
+    `<option value="${x.id}"${x.id===o?' selected':''}>${x.naziv||'—'}${x.model?' · '+x.model:''}</option>`).join('');
+
+  c.innerHTML=dnKorakiRows.map((k,idx)=>{
+    const t=predlogaZaKorak(k.korak);
+    const ure=korakUre(k);
+    const preskocen=k.status==='preskocen';
+    const barvaFaze=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
+    const parametri=(t.parametri||[]).map(([kl,napis,enota])=>`
+      <div class="field" style="flex:1;min-width:84px;margin-bottom:0">
+        <label style="font-size:.62rem">${napis}${enota?` (${enota})`:''}</label>
+        <input type="text" inputmode="decimal" value="${(k.parametri?.[kl]??'').toString().replace(/"/g,'&quot;')}"
+               oninput="onDNKorakParam(${idx},'${kl}',this.value)">
+      </div>`).join('');
+
+    return `<div style="border:1px solid var(--border);border-radius:var(--rs);padding:.5rem;margin-bottom:.4rem;${preskocen?'opacity:.5':''}">
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem">
+        <span style="font-size:.62rem;color:var(--muted);min-width:1.2rem">${k.zaporedje}.</span>
+        <span style="font-size:.76rem;font-weight:600;flex:1">${k.naziv}</span>
+        ${k.faza?`<span style="font-size:.58rem;font-weight:600;letter-spacing:.06em;padding:.1rem .3rem;border-radius:4px;color:${barvaFaze};background:${barvaFaze}22">${k.faza}</span>`:''}
+        <select onchange="onDNKorakStatus(${idx},this.value)" style="font-size:.62rem;padding:.1rem .2rem;width:auto;flex-shrink:0">
+          ${Object.entries(KORAK_STATUSI).map(([v,n])=>`<option value="${v}"${k.status===v?' selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      ${preskocen?'':`
+      <div style="display:flex;gap:.3rem;align-items:flex-end;margin-bottom:.3rem;flex-wrap:wrap">
+        <div class="field" style="flex:1;min-width:130px;margin-bottom:0">
+          <label style="font-size:.62rem">Začetek</label>
+          <div style="display:flex;gap:.2rem">
+            <input type="datetime-local" value="${k.zacetek||''}" onchange="onDNKorakChange(${idx},'zacetek',this.value)">
+            <button type="button" onclick="nastaviKorakCas(${idx},'zacetek')" title="Zdaj"
+              style="flex-shrink:0;padding:.2rem .4rem;border:1px solid var(--border);border-radius:var(--rs);background:none;cursor:pointer;font-size:.62rem">zdaj</button>
+          </div>
+        </div>
+        <div class="field" style="flex:1;min-width:130px;margin-bottom:0">
+          <label style="font-size:.62rem">Konec</label>
+          <div style="display:flex;gap:.2rem">
+            <input type="datetime-local" value="${k.konec||''}" onchange="onDNKorakChange(${idx},'konec',this.value)">
+            <button type="button" onclick="nastaviKorakCas(${idx},'konec')" title="Zdaj"
+              style="flex-shrink:0;padding:.2rem .4rem;border:1px solid var(--border);border-radius:var(--rs);background:none;cursor:pointer;font-size:.62rem">zdaj</button>
+          </div>
+        </div>
+        <div style="font-size:.66rem;color:var(--muted);padding-bottom:.35rem;white-space:nowrap">${fmtUre(ure)}</div>
+      </div>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.3rem">${parametri}</div>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+        <div class="field" style="flex:2;min-width:140px;margin-bottom:0">
+          <label style="font-size:.62rem">Naprava</label>
+          <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">
+            <option value="">— brez —</option>${opts(k.opremaId)}
+          </select>
+        </div>
+        <div class="field" style="flex:2;min-width:120px;margin-bottom:0">
+          <label style="font-size:.62rem">Opomba</label>
+          <input type="text" value="${(k.opomba||'').replace(/"/g,'&quot;')}" oninput="onDNKorakChange(${idx},'opomba',this.value)">
+        </div>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
 // ── Harmonika na delovnem nalogu ──────────────────────────────────────────
 // Zaprt sklop mora povedati, kaj je v njem, sicer je skrivanje skoda in ne
 // korist. Povzetek zato nosi stanje: kolicine, AAE, ali se bilanca izide.
-const DN_SEKCIJE=['Alc','Gly','Bil','Cene','Oprema','Konec'];
+const DN_SEKCIJE=['Alc','Gly','Bil','Koraki','Cene','Oprema','Konec'];
 const DN_ODPRTO_KLJUC='gm_dn_sekcije_odprto';
 
 function dnPisiPovzetek(id,besedilo,razred=''){
@@ -2296,6 +2503,19 @@ function dnOsveziPovzetke(){
   const cenaG=parseNum(document.getElementById('dnCenaGly')?.value||'0');
   dnPisiPovzetek('Cene',(cenaA||cenaG)?`${cenaA?fmtNum(cenaA,2)+' €':'—'} / ${cenaG?fmtNum(cenaG,2)+' €':'—'}`:'ni vneseno');
 
+  // Povzetek pove napredek in skupni cas - to je edino, kar te pri zaprtem
+  // sklopu zanima.
+  if(dnKorakiRows.length){
+    const koncani=dnKorakiRows.filter(k=>k.status==='koncan').length;
+    const preskoceni=dnKorakiRows.filter(k=>k.status==='preskocen').length;
+    const skupajUre=dnKorakiRows.reduce((s,k)=>s+(korakUre(k)||0),0);
+    dnPisiPovzetek('Koraki',
+      `${koncani}/${dnKorakiRows.length-preskoceni}${skupajUre>0?' · '+fmtUre(skupajUre):''}`,
+      (koncani&&koncani===dnKorakiRows.length-preskoceni)?'ok':'');
+  } else {
+    dnPisiPovzetek('Koraki','ni ustvarjenih');
+  }
+
   const nOpr=(typeof dnOpremaRows!=='undefined'&&Array.isArray(dnOpremaRows))
     ?dnOpremaRows.filter(r=>r.opremaId).length:0;
   dnPisiPovzetek('Oprema',nOpr?`${nOpr} ${nOpr===1?'naprava':nOpr===2?'napravi':'naprav'}`:'ni izbrane');
@@ -2312,7 +2532,7 @@ function dnNastaviZacetnoStanje(){
   try{shranjeno=JSON.parse(localStorage.getItem(DN_ODPRTO_KLJUC)||'{}');}catch(e){}
   const imaAlc=dnKol('dnKolAlc',dnJeBulk('Alc'))+dnKol('dnKolAlcInterno',dnJeBulk('Alc'))>0;
   const imaGly=dnKol('dnKolGly',dnJeBulk('Gly'))+dnKol('dnKolGlyInterno',dnJeBulk('Gly'))>0;
-  const privzeto={Alc:imaAlc||!imaGly,Gly:imaGly,Bil:true,Cene:false,Oprema:false,Konec:false};
+  const privzeto={Alc:imaAlc||!imaGly,Gly:imaGly,Bil:true,Koraki:false,Cene:false,Oprema:false,Konec:false};
   for(const s of DN_SEKCIJE){
     const el=document.getElementById('dnsec'+s);
     if(!el)continue;
@@ -2744,8 +2964,12 @@ function openDNSheet(id){
   dnOpremaRows=id
     ?dnOpremaZaDokument(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
     :[];
+  // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
+  // prazen seznam nikomur ne koristi.
+  dnKorakiRows=id?korakiZaDokument(d?.oznaka).map(k=>({...k,parametri:{...(k.parametri||{})}})):korakiIzPredloge();
   renderDNSerijeRows();
   renderDNOpremaRows();
+  renderDNKorakiRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
   // Zastavici nastavimo PRED kolicinami, da onDnBulkToggle pravilno preklopi
@@ -3064,6 +3288,45 @@ function nalogiZaOpremo(opremaId){
     .sort((a,b)=>((b.dn?.datum)||'').localeCompare((a.dn?.datum)||''));
 }
 
+// Enak vzorec kot pri opremi: shranimo kot razliko, da odstranjen korak izgine
+// tudi v bazi.
+async function shraniDNKorake(oznaka){
+  if(!oznaka)return;
+  const prej=korakiZaDokument(oznaka);
+  const zdaj=dnKorakiRows.map((k,i)=>({...k,id:k.id||uid(),dokument:oznaka,zaporedje:i+1}));
+  const zdajIdji=new Set(zdaj.map(k=>k.id));
+  const zaBrisanje=prej.filter(k=>!zdajIdji.has(k.id));
+  dnKoraki=dnKoraki.filter(k=>k.dokument!==oznaka).concat(zdaj);
+  try{localStorage.setItem('gm_dn_koraki',JSON.stringify(dnKoraki));}catch(e){}
+  for(const k of zaBrisanje){
+    try{await sbDel('gm_dn_koraki',k.id);}catch(e){console.warn('sbDel koraki',e);}
+  }
+  for(const k of zdaj){
+    try{await sbUpsert('gm_dn_koraki',korakToSb(k));}
+    catch(e){console.warn('sbUpsert koraki',e);}
+  }
+}
+
+// datetime-local da lokalni cas brez cone; v bazo gre kot timestamptz.
+function korakToSb(k){return{
+  id:k.id,dokument:k.dokument,zaporedje:k.zaporedje,korak:k.korak,
+  naziv:k.naziv||null,faza:k.faza||null,oprema_id:k.opremaId||null,
+  zacetek:k.zacetek?new Date(k.zacetek).toISOString():null,
+  konec:k.konec?new Date(k.konec).toISOString():null,
+  izvajalec:k.izvajalec||null,parametri:k.parametri||{},
+  status:k.status||'nacrtovan',opomba:k.opomba||null,
+};}
+function sbToKorak(r){
+  const lok=t=>{if(!t)return'';const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+  return{
+    id:r.id,dokument:r.dokument,zaporedje:r.zaporedje||0,korak:r.korak,
+    naziv:r.naziv||'',faza:r.faza||'',opremaId:r.oprema_id||'',
+    zacetek:lok(r.zacetek),konec:lok(r.konec),
+    izvajalec:r.izvajalec||'',parametri:r.parametri||{},
+    status:r.status||'nacrtovan',opomba:r.opomba||'',
+  };
+}
+
 // Uporabo shranimo kot razliko: kar je uporabnik odstranil, izbrisemo tudi v
 // bazi, sicer bi odstranjena naprava ostala v zapisniku.
 async function shraniDNOpremo(oznaka){
@@ -3221,6 +3484,7 @@ function saveDN(){
   save();
   sbPushDN(d);
   shraniDNOpremo(d.oznaka);
+  shraniDNKorake(d.oznaka);
   closeSheet('dnOverlay');
   renderDNStats();renderDN();
   renderEtStats();renderMateriali();
@@ -6716,7 +6980,7 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops,rds,bils,glys,mtipi,opup]=await Promise.all([
+    const [wos,ets,mats,ops,rds,bils,glys,mtipi,opup,koraki]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
@@ -6727,6 +6991,7 @@ async function loadFromSB(){
       sbFetch('gm_dn_mat_tipi','order=ime.asc').catch(()=>null),
       // null pomeni "tabele (se) ni" - takrat lokalne uporabe ne povozimo.
       sbFetch('gm_dn_oprema_uporaba','order=dokument.asc').catch(()=>null),
+      sbFetch('gm_dn_koraki','order=zaporedje.asc').catch(()=>null),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -6750,6 +7015,11 @@ async function loadFromSB(){
     if(opup){
       opremaUporaba=opup.map(sbToOpUp);
       localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
+    }
+    // null pomeni "tabele (se) ni" - takrat lokalnih korakov ne povozimo.
+    if(koraki){
+      dnKoraki=koraki.map(sbToKorak);
+      try{localStorage.setItem('gm_dn_koraki',JSON.stringify(dnKoraki));}catch(e){}
     }
     if(glys.length){
       // Zdruzimo, ne prepisemo. Zapis, ki na streznik ni prisel - ker je bila

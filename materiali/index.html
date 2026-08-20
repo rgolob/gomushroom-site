@@ -440,18 +440,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
         </div>
         <div class="slabel-alc">🥃 Alkoholna tinktura</div>
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .35rem;cursor:pointer">
+          <input type="checkbox" id="dnAlcBulk" onchange="onDnBulkToggle('Alc')">
+          🛢 Bulk — ni ustekleničeno, količina v litrih
+        </label>
         <div class="frow">
-          <div class="field"><label>Alc prodaja (kom.)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-          <div class="field"><label>Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label id="dnLabAlcProd">Alc prodaja (kom.)</label><input id="dnKolAlc" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label id="dnLabAlcInt">Alc interno (kom.)</label><input id="dnKolAlcInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Steklenička alc</label>
+          <div class="field" id="dnFieldStekAlc"><label>Steklenička alc</label>
             <select id="dnStekAlc">
               <option value="bela">⬜ Bela</option>
               <option value="crna">⬛ Črna</option>
             </select>
           </div>
-          <div class="field"><label>Skupaj alc (kom.)</label><input id="dnKolAlcSkupaj" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+          <div class="field"><label id="dnLabAlcSkupaj">Skupaj alc (kom.)</label><input id="dnKolAlcSkupaj" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
         </div>
         <div class="frow">
           <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
@@ -470,18 +474,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
         </div>
         <div class="slabel-gly">🌿 Glicerinska tinktura</div>
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .35rem;cursor:pointer">
+          <input type="checkbox" id="dnGlyBulk" onchange="onDnBulkToggle('Gly')">
+          🛢 Bulk — ni ustekleničeno, količina v litrih
+        </label>
         <div class="frow">
-          <div class="field"><label>Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
-          <div class="field"><label>Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label id="dnLabGlyProd">Gly prodaja (kom.)</label><input id="dnKolGly" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
+          <div class="field"><label id="dnLabGlyInt">Gly interno (kom.)</label><input id="dnKolGlyInterno" type="number" min="0" placeholder="0" inputmode="numeric" oninput="calcDNTinktura()"></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Steklenička gly</label>
+          <div class="field" id="dnFieldStekGly"><label>Steklenička gly</label>
             <select id="dnStekGly">
               <option value="bela">⬜ Bela</option>
               <option value="crna">⬛ Črna</option>
             </select>
           </div>
-          <div class="field"><label>Skupaj gly (kom.)</label><input id="dnKolGlySkupaj" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
+          <div class="field"><label id="dnLabGlySkupaj">Skupaj gly (kom.)</label><input id="dnKolGlySkupaj" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
         </div>
         <div class="frow">
           <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
@@ -1287,6 +1295,8 @@ function parseDate(v){
 }
 function parseNum(v){return parseFloat(String(v).replace(',','.'))||0;}
 function round(v,n=3){return Math.round(v*Math.pow(10,n))/Math.pow(10,n);}
+// Za prikaz decimalnih kolicin (bulk v litrih) - z vejico, brez odvecnih nicel.
+function fmtNum(v,n=3){return String(round(v,n)).replace('.',',');}
 
 // ── SAVE ──
 function save(){
@@ -2192,29 +2202,71 @@ function calcGlicerin(){
   const vol=masa>0?round(masa/(GLICERIN_GOSTOTA*1000),4):null;
   document.getElementById('dnVolGlicerina').value=vol?vol+' L':'';
 }
+// Bulk: kolicina ni v steklenicah, ampak v litrih. Zato tudi ne sme skozi
+// parseInt - 2,5 L bi postalo 2.
+function dnJeBulk(t){return !!document.getElementById('dn'+t+'Bulk')?.checked;}
+function dnKol(id,bulk){
+  const v=document.getElementById(id)?.value;
+  return bulk?(parseNum(v||'0')||0):(parseInt(v)||0);
+}
+
+// Volumen alkoholne tinkture v litrih - edini vhod, ki ga potrebujeta AAE in
+// trosarina. Pri steklenicah izpeljan iz stevila kosov, pri bulku vnesen.
+function dnVolAlcTinkture(){
+  const bulk=dnJeBulk('Alc');
+  const kol=dnKol('dnKolAlc',bulk)+dnKol('dnKolAlcInterno',bulk);
+  return bulk?kol:kol*TINKTURA_VOL_KOM;
+}
+
+function onDnBulkToggle(t){
+  const bulk=dnJeBulk(t);
+  const enota=bulk?'L':'kom.';
+  const ime=t==='Alc'?'Alc':'Gly';
+  document.getElementById('dnLab'+t+'Prod').textContent=`${ime} prodaja (${enota})`;
+  document.getElementById('dnLab'+t+'Int').textContent=`${ime} interno (${enota})`;
+  document.getElementById('dnLab'+t+'Skupaj').textContent=`Skupaj ${ime.toLowerCase()} (${enota})`;
+  // Bulk je decimalen, kosi ne. type=number z inputmode=decimal se na telefonu
+  // obnasa slabo, zato pri bulku preklopimo na text.
+  for(const id of ['dnKol'+t,'dnKol'+t+'Interno']){
+    const el=document.getElementById(id);
+    if(!el)continue;
+    el.type=bulk?'text':'number';
+    el.inputMode=bulk?'decimal':'numeric';
+    el.placeholder=bulk?'0,0':'0';
+  }
+  // Brez stekleniceenja steklenicka nima pomena.
+  const stek=document.getElementById('dnFieldStek'+t);
+  if(stek)stek.style.display=bulk?'none':'';
+  calcDNTinktura();
+}
+
 function calcDNTinktura(){
-  const alcProd=parseInt(document.getElementById('dnKolAlc')?.value)||0;
-  const alcInt=parseInt(document.getElementById('dnKolAlcInterno')?.value)||0;
+  const alcBulk=dnJeBulk('Alc'), glyBulk=dnJeBulk('Gly');
+  const alcProd=dnKol('dnKolAlc',alcBulk);
+  const alcInt=dnKol('dnKolAlcInterno',alcBulk);
   const kom=alcProd+alcInt;
-  const glyProd=parseInt(document.getElementById('dnKolGly')?.value)||0;
-  const glyInt=parseInt(document.getElementById('dnKolGlyInterno')?.value)||0;
+  const glyProd=dnKol('dnKolGly',glyBulk);
+  const glyInt=dnKol('dnKolGlyInterno',glyBulk);
   const komGly=glyProd+glyInt;
-  document.getElementById('dnKolAlcSkupaj').value=kom||'';
-  document.getElementById('dnKolGlySkupaj').value=komGly||'';
+  document.getElementById('dnKolAlcSkupaj').value=kom?(alcBulk?fmtNum(kom)+' L':kom):'';
+  document.getElementById('dnKolGlySkupaj').value=komGly?(glyBulk?fmtNum(komGly)+' L':komGly):'';
   if(!kom){
     document.getElementById('dnAAETinkture').value='';
     calcDNBilanca();
     return;
   }
-  const volT=kom*TINKTURA_VOL_KOM;
+  const volT=alcBulk?kom:kom*TINKTURA_VOL_KOM;
   const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
   document.getElementById('dnAAETinkture').value=
-    `${aaeT.toFixed(4)} L  (${kom} × 0,050 L × 30%)`;
+    `${aaeT.toFixed(4)} L  (${alcBulk?fmtNum(kom)+' L':kom+' × 0,050 L'} × 30%)`;
   calcDNBilanca();
 }
 
 function calcDNBilanca(){
-  const kom=parseInt(document.getElementById('dnKolAlc')?.value)||0;
+  // Pri bulku je kolicina ze v litrih, sicer so kosi po 50 mL. Bilanca mora
+  // odsteti AAE dejansko izdelane tinkture, sicer pokaze primanjkljaj, ki ga ni.
+  const alcBulk=dnJeBulk('Alc');
+  const kom=dnKol('dnKolAlc',alcBulk)+dnKol('dnKolAlcInterno',alcBulk);
   const aaeVhod=parseNum(document.getElementById('dnLAAE')?.value);
   const izgube=parseNum(document.getElementById('dnIzgube')?.value||'0');
   const etanolGlyRaw=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
@@ -2567,18 +2619,22 @@ function openDNSheet(id){
   renderDNOpremaRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
-  document.getElementById('dnKolAlc').value=d?.kolAlc||'';
-  document.getElementById('dnKolAlcInterno').value=d?.kolAlcInterno||'';
-  document.getElementById('dnKolAlcSkupaj').value=((d?.kolAlc||0)+(d?.kolAlcInterno||0))||'';
+  // Zastavici nastavimo PRED kolicinami, da onDnBulkToggle pravilno preklopi
+  // napise in tip vnosnih polj, preden vanje pisemo.
+  document.getElementById('dnAlcBulk').checked=!!d?.alcBulk;
+  document.getElementById('dnGlyBulk').checked=!!d?.glyBulk;
+  onDnBulkToggle('Alc');
+  onDnBulkToggle('Gly');
+  document.getElementById('dnKolAlc').value=d?.kolAlc?(d.alcBulk?fmtNum(d.kolAlc):d.kolAlc):'';
+  document.getElementById('dnKolAlcInterno').value=d?.kolAlcInterno?(d.alcBulk?fmtNum(d.kolAlcInterno):d.kolAlcInterno):'';
   document.getElementById('dnStekAlc').value=d?.stekAlc||'bela';
   document.getElementById('dnVitCAlc').value=d?.vitCAlc||'';
   document.getElementById('dnLecitinAlc').value=d?.lecitinAlc||'';
   document.getElementById('dnGlicerinAlc').value=d?.glicerinAlc||'';
   const ss=suhaSnovNaloga(d);
   document.getElementById('dnSuhaSnov').value=ss==null?'':String(ss).replace('.',',');
-  document.getElementById('dnKolGly').value=d?.kolGly||'';
-  document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno||'';
-  document.getElementById('dnKolGlySkupaj').value=((d?.kolGly||0)+(d?.kolGlyInterno||0))||'';
+  document.getElementById('dnKolGly').value=d?.kolGly?(d.glyBulk?fmtNum(d.kolGly):d.kolGly):'';
+  document.getElementById('dnKolGlyInterno').value=d?.kolGlyInterno?(d.glyBulk?fmtNum(d.kolGlyInterno):d.kolGlyInterno):'';
   document.getElementById('dnStekGly').value=d?.stekGly||'bela';
   document.getElementById('dnMasaGlicerina').value=d?.masaGlicerina||'';
   calcGlicerin();
@@ -2593,6 +2649,10 @@ function openDNSheet(id){
   document.getElementById('dnPredvidenZakljucek').value=d?.predvidenZakljucek||'';
   document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
   calcDN();
+  // calcDN() se pri nalogu brez etanola predcasno vrne in calcDNTinktura()
+  // ne poklice - brez tega bi polji "Skupaj" ostali prazni pri cisto
+  // glicerinskih nalogih.
+  calcDNTinktura();
   onDnSuhaSnovInput();
   const aaeProsto=round(calcEtZaloga()-calcEtRezervirano(),4);
   const indEl=document.getElementById('etZaloгаDN');
@@ -2960,8 +3020,10 @@ function saveDN(){
     masaGobe:round(dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0),3),
     serijaAlc:document.getElementById('dnSerijaAlc').value.trim().toUpperCase(),
     predvidenZakljucek:document.getElementById('dnPredvidenZakljucek').value||'',
-    kolAlc:parseInt(document.getElementById('dnKolAlc').value)||0,
-    kolAlcInterno:parseInt(document.getElementById('dnKolAlcInterno').value)||0,
+    alcBulk:dnJeBulk('Alc'),
+    glyBulk:dnJeBulk('Gly'),
+    kolAlc:dnKol('dnKolAlc',dnJeBulk('Alc')),
+    kolAlcInterno:dnKol('dnKolAlcInterno',dnJeBulk('Alc')),
     stekAlc:document.getElementById('dnStekAlc').value,
     vitCAlc:parseNum(document.getElementById('dnVitCAlc').value||'0'),
     lecitinAlc:parseNum(document.getElementById('dnLecitinAlc').value||'0'),
@@ -2969,16 +3031,18 @@ function saveDN(){
     // Prazno polje pomeni "se ni izmerjeno" in ne nic - sicer bi neizmerjeni
     // nalogi vlekli povprecje suhe snovi proti nic.
     suhaSnov:(()=>{const v=document.getElementById('dnSuhaSnov').value.trim();return v===''?null:parseNum(v)||null;})(),
-    kolGly:parseInt(document.getElementById('dnKolGly').value)||0,
-    kolGlyInterno:parseInt(document.getElementById('dnKolGlyInterno').value)||0,
+    kolGly:dnKol('dnKolGly',dnJeBulk('Gly')),
+    kolGlyInterno:dnKol('dnKolGlyInterno',dnJeBulk('Gly')),
     stekGly:document.getElementById('dnStekGly').value,
     masaGlicerina:parseNum(document.getElementById('dnMasaGlicerina').value||'0'),
     vitCGly:parseNum(document.getElementById('dnVitCGly').value||'0'),
     lecitinGly:parseNum(document.getElementById('dnLecitinGly').value||'0'),
     etanolGly:(()=>{const v=parseNum(document.getElementById('dnEtanolGly').value||'0');return _etanolGlyEnota==='mL'?round(v*etohDensity(volPct),1):v;})(),
     izgube:parseNum(document.getElementById('dnIzgube').value||'0'),
-    aaeTinkture:calcAAE(((parseInt(document.getElementById('dnKolAlc').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,TINKTURA_VOL_PCT),
-    volTinkture:((parseInt(document.getElementById('dnKolAlc').value)||0)+(parseInt(document.getElementById('dnKolAlcInterno').value)||0))*TINKTURA_VOL_KOM,
+    // Pri bulku je vnesena kolicina ze volumen; pri steklenicah ga izpeljemo.
+    // Trosarina od tu naprej racuna z volumnom in se ne spremeni.
+    aaeTinkture:calcAAE(dnVolAlcTinkture(),TINKTURA_VOL_PCT),
+    volTinkture:dnVolAlcTinkture(),
     masaEtOH,pctEtOH:volPct,gostota,
     volL,volPct:round(volPct,2),lAAE,
     trosarina:calcTrosarina(lAAE,volL),
@@ -6186,12 +6250,20 @@ function dnToSb(d){return{
   // Nalog lahko porabi vec serij gobe. Brez tega stolpca je v bazi ostala samo
   // prva serija in razbitje se je ob branju iz Supabase izgubilo.
   serije:d.serije?.length?d.serije:null,
-  serija_alc:d.serijaAlc||null,kol_alc:d.kolAlc||0,stek_alc:d.stekAlc||'bela',
-  kol_alc_interno:d.kolAlcInterno??null,
+  serija_alc:d.serijaAlc||null,kol_alc:d.alcBulk?0:(d.kolAlc||0),stek_alc:d.stekAlc||'bela',
+  kol_alc_interno:d.alcBulk?null:(d.kolAlcInterno??null),
+  // Bulk: kolicina gre v litrske stolpce, kol_alc ostane 0. S tem porocila, ki
+  // sestevajo kol_alc kot kose, bulka ne pomesajo med steklenice - tiho ga
+  // izpustijo, kar je varnejsi izid kot napacna vsota.
+  alc_bulk:!!d.alcBulk,gly_bulk:!!d.glyBulk,
+  kol_alc_l:d.alcBulk?(d.kolAlc||0):null,
+  kol_alc_l_interno:d.alcBulk?(d.kolAlcInterno||0):null,
+  kol_gly_l:d.glyBulk?(d.kolGly||0):null,
+  kol_gly_l_interno:d.glyBulk?(d.kolGlyInterno||0):null,
   vit_c_alc:d.vitCAlc||0,lecitin_alc:d.lecitinAlc||0,glicerin_alc:d.glicerinAlc||0,
   suha_snov:d.suhaSnov??null,
-  kol_gly:d.kolGly||0,stek_gly:d.stekGly||'bela',
-  kol_gly_interno:d.kolGlyInterno??null,
+  kol_gly:d.glyBulk?0:(d.kolGly||0),stek_gly:d.stekGly||'bela',
+  kol_gly_interno:d.glyBulk?null:(d.kolGlyInterno??null),
   masa_glicerina:d.masaGlicerina||0,
   vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,etanol_gly:d.etanolGly||0,
   izgube:d.izgube||0,aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
@@ -6206,12 +6278,17 @@ function sbToDn(r){return{
   id:r.id,oznaka:r.oznaka,jeRd:!!r.je_rd,datum:r.datum,namen:r.namen,
   vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
   serije:Array.isArray(r.serije)?r.serije:[],
-  serijaAlc:r.serija_alc||'',kolAlc:r.kol_alc||0,stekAlc:r.stek_alc||'bela',
-  kolAlcInterno:r.kol_alc_interno??null,
+  serijaAlc:r.serija_alc||'',stekAlc:r.stek_alc||'bela',
+  // V aplikaciji je kolAlc ena sama kolicina, enoto pove zastavica. V bazi sta
+  // loceni, da porocila po kosih bulka ne pomesajo med steklenice.
+  alcBulk:!!r.alc_bulk,glyBulk:!!r.gly_bulk,
+  kolAlc:r.alc_bulk?(Number(r.kol_alc_l)||0):(Number(r.kol_alc)||0),
+  kolAlcInterno:r.alc_bulk?(Number(r.kol_alc_l_interno)||0):(r.kol_alc_interno??null),
   vitCAlc:r.vit_c_alc||0,lecitinAlc:r.lecitin_alc||0,glicerinAlc:r.glicerin_alc||0,
   suhaSnov:r.suha_snov??null,
-  kolGly:r.kol_gly||0,stekGly:r.stek_gly||'bela',
-  kolGlyInterno:r.kol_gly_interno??null,
+  stekGly:r.stek_gly||'bela',
+  kolGly:r.gly_bulk?(Number(r.kol_gly_l)||0):(Number(r.kol_gly)||0),
+  kolGlyInterno:r.gly_bulk?(Number(r.kol_gly_l_interno)||0):(r.kol_gly_interno??null),
   masaGlicerina:r.masa_glicerina||0,
   vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,etanolGly:r.etanol_gly||0,
   izgube:r.izgube||0,aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,

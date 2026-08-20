@@ -72,14 +72,20 @@ alter table gm_sale_lines
 -- kol_alc / kol_gly ostaneta za steklenice; pri bulku sta 0, količina pa gre v
 -- kol_alc_l / kol_gly_l. Zastavica je eksplicitna, da obrazec ve, kaj risati,
 -- tudi kadar količina še ni vnesena.
+-- Litri so v LOČENIH stolpcih, ne v kol_alc. S tem poročila, ki seštevajo
+-- kol_alc kot kose, bulka ne pomešajo med steklenice — tiho ga izpustijo, kar
+-- je varnejši izid kot napačna vsota. Delitev prodaja/interno je potrebna tudi
+-- pri bulku, ker iz nje nastane razporeditev na seriji.
 alter table gm_dn_work_orders
-  add column if not exists alc_bulk  boolean default false,
-  add column if not exists gly_bulk  boolean default false,
-  add column if not exists kol_alc_l numeric,
-  add column if not exists kol_gly_l numeric;
+  add column if not exists alc_bulk          boolean default false,
+  add column if not exists gly_bulk          boolean default false,
+  add column if not exists kol_alc_l         numeric,
+  add column if not exists kol_alc_l_interno numeric,
+  add column if not exists kol_gly_l         numeric,
+  add column if not exists kol_gly_l_interno numeric;
 
 comment on column gm_dn_work_orders.kol_alc_l is
-  'Volumen alkoholne tinkture v litrih, kadar je alc_bulk. Pri steklenicah ostane prazen — vol_tinkture se takrat še naprej izpelje iz kol_alc.';
+  'Volumen alkoholne tinkture za prodajo, v litrih, kadar je alc_bulk. Pri steklenicah ostane prazen — vol_tinkture se takrat še naprej izpelje iz kol_alc.';
 
 -- ── 4. Serija ──────────────────────────────────────────────────────────────
 -- alc_vol (ml na enoto) že obstaja. Pri bulku ga nastaviš na 1000, s čimer

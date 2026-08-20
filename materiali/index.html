@@ -146,6 +146,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;
   color:var(--ink);outline:none;text-align:center}
 .korak-ccp-vr:focus{border-color:var(--accent)}
+.korak-izr{background:rgba(175,132,85,.1);border-color:rgba(175,132,85,.35);font-weight:600}
 .korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
   border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
   font-family:'Jost',sans-serif;min-height:26px}
@@ -2389,9 +2390,15 @@ const DN_PREDLOGA_KORAKOV=[
       moznosti:['96 % etanol','regeneriran etanol','voda']},
      {k:'m_surovine',tip:'meritev',napis:'Σm surovine',enota:'g'},
      {k:'m_etoh',tip:'meritev',napis:'Σm EtOH',enota:'kg'},
-     {k:'v_etoh',tip:'meritev',napis:'ΣV EtOH',enota:'L'},
-     {k:'c_etoh_mm',tip:'meritev',napis:'C EtOH',enota:'% m/m'},
      {k:'c_etoh_vv',tip:'meritev',napis:'C EtOH',enota:'% v/v'},
+     // Vnese se masa in izmerjena volumska koncentracija; volumen in masni
+     // odstotek sta izpeljana - vpisovati oboje bi pomenilo dvakrat zapisati
+     // isto in tvegati, da se razideta.
+     {k:'v_etoh',tip:'izracun',napis:'ΣV EtOH',enota:'L',
+      izracun:pa=>{const m=parseNum(pa.m_etoh),v=parseNum(pa.c_etoh_vv);
+        return (m>0&&v>0)?round(m/etohDensity(v),3):null;}},
+     {k:'c_etoh_mm',tip:'izracun',napis:'C EtOH',enota:'% m/m',
+      izracun:pa=>{const v=parseNum(pa.c_etoh_vv);return v>0?round(volToMas(v),1):null;}},
    ]},
   {st:'1.1', korak:'uz_1', naziv:'Ultrazvočna sonikacija — 1.', faza:'OF',
    polja:[
@@ -2425,7 +2432,6 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
    polja:[
-     {k:'t_kopeli',tip:'meritev',napis:'T kopeli',enota:'°C'},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_ss',tip:'meritev',napis:'m suhe snovi',enota:'g'},
      {k:'m_of',tip:'meritev',napis:'m OF',enota:'g'},
@@ -2442,7 +2448,6 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
    polja:[
-     {k:'t_kopeli',tip:'meritev',napis:'T kopeli',enota:'°C'},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m HVE koncentrata',enota:'g'},
    ]},
@@ -2458,7 +2463,6 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'3.1', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
    polja:[
-     {k:'t_kopeli',tip:'meritev',napis:'T kopeli',enota:'°C'},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m TE koncentrata',enota:'g'},
    ]},
@@ -2656,6 +2660,35 @@ function onDNKorakParam(idx,kljuc,val){
   k.parametri=k.parametri||{};
   if(String(val).trim()==='')delete k.parametri[kljuc];
   else k.parametri[kljuc]=String(val).trim();
+  osveziIzracuneKoraka(idx);
+}
+
+// Izracunanih polj ne izrisujemo na novo - to bi med tipkanjem vzelo fokus.
+// Posodobimo samo njihove vrednosti na mestu.
+function osveziIzracuneKoraka(idx){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  if(!polja.length)return;
+  const kartica=document.querySelectorAll('#dnKorakiContainer > .korak')[idx];
+  if(!kartica)return;
+  const vnosi=kartica.querySelectorAll('.korak-izr');
+  polja.forEach((x,i)=>{
+    const v=x.izracun?x.izracun(k.parametri||{}):null;
+    if(vnosi[i])vnosi[i].value=v==null?'':String(v).replace('.',',');
+  });
+}
+
+// Ob shranjevanju izracunane vrednosti zapisemo med parametre, da jih zapisnik
+// nosi tudi takrat, ko formule ni vec pri roki.
+function zapisiIzracune(k){
+  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  if(!polja.length)return k;
+  const pa={...(k.parametri||{})};
+  polja.forEach(x=>{
+    const v=x.izracun?x.izracun(pa):null;
+    if(v==null)delete pa[x.k]; else pa[x.k]=String(v);
+  });
+  return {...k,parametri:pa};
 }
 
 // CCP presoja: ustreza / ne ustreza. Zapise se tudi, kdaj je bila dana.
@@ -2752,6 +2785,15 @@ function renderDNKorakiRows(){
                   onclick="nastaviKorakCas(${idx},'${kaj}')">⏱</button>
         </div>
       </div>`;
+    // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
+    // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
+    const izracuni=(t.polja||[]).filter(x=>x.tip==='izracun').map(x=>{
+      const v=x.izracun?x.izracun(k.parametri||{}):null;
+      return `<div class="korak-f">
+        <label>${x.napis}${x.enota?' '+x.enota:''}</label>
+        <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
+      </div>`;}).join('');
+
     const meritve=(t.polja||[]).filter(x=>x.tip==='meritev').map(x=>`
       <div class="korak-f">
         <label title="${(x.napis+(x.enota?' '+x.enota:'')).replace(/"/g,'&quot;')}">${x.napis}${x.enota?' '+x.enota:''}</label>
@@ -2787,7 +2829,7 @@ function renderDNKorakiRows(){
           `<button type="button" class="${izbranaMoznost(k,x.k,m)?'izbran':''}"
             onclick="onDNKorakIzbira(${idx},'${x.k}','${m.replace(/'/g,"\\'")}',${!!x.vec})">${m}</button>`).join('')}</div>
       </div>`).join('');
-    const parametri=meritve;
+    const parametri=meritve+izracuni;
 
     const odprt=korakJeOdprt(k);
     const povz=korakPovzetek(k);
@@ -3682,8 +3724,8 @@ async function shraniDNKorake(oznaka){
   const prej=korakiZaDokument(oznaka);
   const kdo=trenutniUporabnik();
   const cas=new Date().toISOString();
-  const zdaj=dnKorakiRows.map((k,i)=>({...k,id:k.id||uid(),dokument:oznaka,zaporedje:i+1,
-    izvajalec:k.izvajalec||kdo, spremenil:kdo, spremenjen:cas}));
+  const zdaj=dnKorakiRows.map((k,i)=>({...zapisiIzracune(k),id:k.id||uid(),dokument:oznaka,
+    zaporedje:i+1, izvajalec:k.izvajalec||kdo, spremenil:kdo, spremenjen:cas}));
   const zdajIdji=new Set(zdaj.map(k=>k.id));
   const zaBrisanje=prej.filter(k=>!zdajIdji.has(k.id));
   dnKoraki=dnKoraki.filter(k=>k.dokument!==oznaka).concat(zdaj);

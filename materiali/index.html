@@ -119,6 +119,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 /* ── SLABEL ── */
 .slabel{font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.6rem 0 .3rem}
+/* Harmonika na delovnem nalogu. Zaprt sklop mora povedati, kaj je v njem —
+   zato desno od naslova stoji povzetek (dnsum), ki nosi stanje. */
+.dnsec{border:1px solid var(--border);border-radius:var(--rs);margin-bottom:.5rem;background:var(--card,transparent)}
+.dnsec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;
+  padding:.55rem .65rem;font-size:.72rem;font-weight:600;letter-spacing:.04em;color:var(--ink)}
+.dnsec>summary::-webkit-details-marker{display:none}
+.dnsec>summary::before{content:'▸';font-size:.7rem;color:var(--muted);transition:transform .15s;flex-shrink:0}
+.dnsec[open]>summary::before{transform:rotate(90deg)}
+.dnsec>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:var(--rs)}
+.dnsec-body{padding:0 .65rem .6rem}
+.dnsum{margin-left:auto;font-weight:400;font-size:.68rem;color:var(--muted);text-align:right;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+.dnsum.warn{color:var(--danger,#8b3a2a);font-weight:600}
+.dnsum.ok{color:var(--success,#3a6b4a)}
+@media (prefers-reduced-motion:reduce){.dnsec>summary::before{transition:none}}
 .slabel-alc{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b5a2a;margin:0 0 .4rem;padding:.25rem .5rem;border-left:3px solid #af8455;background:rgba(175,132,85,.12);border-radius:0 4px 4px 0}
 .slabel-gly{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2a6b4a;margin:0 0 .4rem;padding:.25rem .5rem;border-left:3px solid #3a7a5a;background:rgba(58,122,90,.12);border-radius:0 4px 4px 0}
 .dn-block-alc{background:rgba(175,132,85,.05);border:1px solid rgba(175,132,85,.2);border-radius:8px;padding:.6rem .6rem .4rem;margin-bottom:.5rem}
@@ -428,6 +443,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
         <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
       </div>
+      <details class="dnsec" id="dnsecAlc" open>
+      <summary>🥃 Alkoholna <span class="dnsum" id="dnsumAlc"></span></summary>
+      <div class="dnsec-body">
       <div class="dn-block-alc">
         <div class="slabel-alc">🥃 Etanol — vhod</div>
         <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
@@ -467,6 +485,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
         <div id="dnSuhaSnovNamig" style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:-.15rem 0 .1rem"></div>
       </div>
+      </div></details>
+      <details class="dnsec" id="dnsecGly" open>
+      <summary>🌿 Glicerinska <span class="dnsum" id="dnsumGly"></span></summary>
+      <div class="dnsec-body">
       <div class="dn-block-gly">
         <div class="slabel-gly">🌿 Glicerin — vhod</div>
         <div class="frow">
@@ -511,6 +533,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="frow">
         <div class="field"><label>AAE v tinktaurah (L) ⚡ trošarina</label><input id="dnAAETinkture" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent)" placeholder="—"></div>
       </div>
+      </div></details>
+      <details class="dnsec" id="dnsecBil" open>
+      <summary>⚖️ Bilanca etanola <span class="dnsum" id="dnsumBil"></span></summary>
+      <div class="dnsec-body">
       <div class="slabel">Bilanca etanola</div>
       <div class="frow">
         <div class="field"><label>AAE vhod. EtOH (L)</label><input id="dnLAAE" type="text" readonly style="background:var(--parchment)" placeholder="—"></div>
@@ -518,11 +544,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div id="dnBilanca" style="font-size:.72rem;padding:.4rem .6rem;border-radius:6px;background:var(--parchment);margin-bottom:.5rem;display:none"></div>
       <div class="calc-hint" id="dnCalcHint"></div>
+      </div></details>
+      <details class="dnsec" id="dnsecCene">
+      <summary>💶 Cene za Zaloga app <span class="dnsum" id="dnsumCene"></span></summary>
+      <div class="dnsec-body">
       <div class="slabel">Cene za Zaloga app</div>
       <div class="frow">
         <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
+      </div></details>
+      <details class="dnsec" id="dnsecOprema">
+      <summary>🔧 Uporabljena oprema <span class="dnsum" id="dnsumOprema"></span></summary>
+      <div class="dnsec-body">
       <div class="slabel">Uporabljena oprema</div>
       <div id="dnOpremaContainer"></div>
       <button type="button" onclick="addDNOpremaRow()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">+ Dodaj opremo</button>
@@ -531,11 +565,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <option value="Mešanje"><option value="Polnjenje"><option value="Etiketiranje">
         <option value="Tehtanje"><option value="Shranjevanje">
       </datalist>
+      </div></details>
+      <details class="dnsec" id="dnsecKonec">
+      <summary>✔️ Opomba in zaključek <span class="dnsum" id="dnsumKonec"></span></summary>
+      <div class="dnsec-body">
       <div class="field"><label>Opomba</label><textarea id="dnOpomba" placeholder="Neobvezna opomba…"></textarea></div>
-      <div class="slabel">Zaključek</div>
       <div class="frow">
         <div class="field"><label>Datum zaključka</label><input id="dnDatumZakljucka" type="date"></div>
       </div>
+      </div></details>
     </div>
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('dnOverlay')">Prekliči</button>
@@ -2218,6 +2256,91 @@ function dnVolAlcTinkture(){
   return bulk?kol:kol*TINKTURA_VOL_KOM;
 }
 
+// ── Harmonika na delovnem nalogu ──────────────────────────────────────────
+// Zaprt sklop mora povedati, kaj je v njem, sicer je skrivanje skoda in ne
+// korist. Povzetek zato nosi stanje: kolicine, AAE, ali se bilanca izide.
+const DN_SEKCIJE=['Alc','Gly','Bil','Cene','Oprema','Konec'];
+const DN_ODPRTO_KLJUC='gm_dn_sekcije_odprto';
+
+function dnPisiPovzetek(id,besedilo,razred=''){
+  const el=document.getElementById('dnsum'+id);
+  if(!el)return;
+  el.textContent=besedilo;
+  el.className='dnsum'+(razred?' '+razred:'');
+}
+
+function dnOsveziPovzetke(){
+  const stev=(t)=>{
+    const bulk=dnJeBulk(t);
+    const k=dnKol('dnKol'+t,bulk)+dnKol('dnKol'+t+'Interno',bulk);
+    return k?(bulk?fmtNum(k)+' L':k+' kom'):'';
+  };
+  const alc=stev('Alc');
+  const aae=parseNum((document.getElementById('dnAAETinkture')?.value||'').split(' ')[0]);
+  dnPisiPovzetek('Alc',alc?`${alc}${aae?' · AAE '+aae.toFixed(3)+' L':''}`:'ni vnosa');
+  const gly=stev('Gly');
+  dnPisiPovzetek('Gly',gly||'ni vnosa');
+
+  // Bilanca: povzetek pove izid, ne vsebine — to je edini sklop, kjer je
+  // zaprto stanje lahko nevarno.
+  const bil=document.getElementById('dnBilanca');
+  if(bil&&bil.style.display!=='none'){
+    const razlika=_dnZadnjaRazlika;
+    const ok=Math.abs(razlika)<0.005;
+    dnPisiPovzetek('Bil',ok?'se izide':`⚠ razlika ${razlika>0?'+':''}${fmtNum(razlika,4)} L`,ok?'ok':'warn');
+  } else {
+    dnPisiPovzetek('Bil','ni podatkov');
+  }
+
+  const cenaA=parseNum(document.getElementById('dnCenaAlc')?.value||'0');
+  const cenaG=parseNum(document.getElementById('dnCenaGly')?.value||'0');
+  dnPisiPovzetek('Cene',(cenaA||cenaG)?`${cenaA?fmtNum(cenaA,2)+' €':'—'} / ${cenaG?fmtNum(cenaG,2)+' €':'—'}`:'ni vneseno');
+
+  const nOpr=(typeof dnOpremaRows!=='undefined'&&Array.isArray(dnOpremaRows))
+    ?dnOpremaRows.filter(r=>r.opremaId).length:0;
+  dnPisiPovzetek('Oprema',nOpr?`${nOpr} ${nOpr===1?'naprava':nOpr===2?'napravi':'naprav'}`:'ni izbrane');
+
+  const zak=document.getElementById('dnDatumZakljucka')?.value;
+  const opomba=(document.getElementById('dnOpomba')?.value||'').trim();
+  dnPisiPovzetek('Konec',zak?zak.split('-').reverse().join('.'):(opomba?'opomba':'—'));
+}
+
+// Sklop brez kolicine se sam zapre — cisto glicerinskemu nalogu alkoholnega
+// ni treba kazati. Uporabnikova izbira ima prednost pred tem.
+function dnNastaviZacetnoStanje(){
+  let shranjeno={};
+  try{shranjeno=JSON.parse(localStorage.getItem(DN_ODPRTO_KLJUC)||'{}');}catch(e){}
+  const imaAlc=dnKol('dnKolAlc',dnJeBulk('Alc'))+dnKol('dnKolAlcInterno',dnJeBulk('Alc'))>0;
+  const imaGly=dnKol('dnKolGly',dnJeBulk('Gly'))+dnKol('dnKolGlyInterno',dnJeBulk('Gly'))>0;
+  const privzeto={Alc:imaAlc||!imaGly,Gly:imaGly,Bil:true,Cene:false,Oprema:false,Konec:false};
+  for(const s of DN_SEKCIJE){
+    const el=document.getElementById('dnsec'+s);
+    if(!el)continue;
+    el.open=(s in shranjeno)?!!shranjeno[s]:privzeto[s];
+  }
+  dnOsveziPovzetke();
+}
+
+function dnShraniStanjeSekcij(){
+  const stanje={};
+  for(const s of DN_SEKCIJE){
+    const el=document.getElementById('dnsec'+s);
+    if(el)stanje[s]=el.open;
+  }
+  try{localStorage.setItem(DN_ODPRTO_KLJUC,JSON.stringify(stanje));}catch(e){}
+}
+
+// Napaka za zaprtim naslovom je najhujsi nacin, da uporabnik obtici — zato
+// se sklop ob njej sam odpre.
+function dnOdpriSekcijo(s){
+  const el=document.getElementById('dnsec'+s);
+  if(el&&!el.open){el.open=true;dnShraniStanjeSekcij();}
+}
+
+document.addEventListener('toggle',e=>{
+  if(e.target?.classList?.contains('dnsec'))dnShraniStanjeSekcij();
+},true);
+
 function onDnBulkToggle(t){
   const bulk=dnJeBulk(t);
   const enota=bulk?'L':'kom.';
@@ -2253,6 +2376,7 @@ function calcDNTinktura(){
   if(!kom){
     document.getElementById('dnAAETinkture').value='';
     calcDNBilanca();
+    dnOsveziPovzetke();
     return;
   }
   const volT=alcBulk?kom:kom*TINKTURA_VOL_KOM;
@@ -2260,8 +2384,10 @@ function calcDNTinktura(){
   document.getElementById('dnAAETinkture').value=
     `${aaeT.toFixed(4)} L  (${alcBulk?fmtNum(kom)+' L':kom+' × 0,050 L'} × 30%)`;
   calcDNBilanca();
+  dnOsveziPovzetke();
 }
 
+let _dnZadnjaRazlika=0;
 function calcDNBilanca(){
   // Pri bulku je kolicina ze v litrih, sicer so kosi po 50 mL. Bilanca mora
   // odsteti AAE dejansko izdelane tinkture, sicer pokaze primanjkljaj, ki ga ni.
@@ -2272,13 +2398,16 @@ function calcDNBilanca(){
   const etanolGlyRaw=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
   const volPct=parseNum(document.getElementById('dnPctEtOH')?.value)||96.25;
   const el=document.getElementById('dnBilanca');
-  if(!aaeVhod){el.style.display='none';return;}
+  if(!aaeVhod){el.style.display='none';_dnZadnjaRazlika=0;dnOsveziPovzetke();return;}
 
-  const volT=kom*TINKTURA_VOL_KOM;
+  // Pri bulku je kom ze volumen v litrih; mnozenje z 0,050 bi ga stisnilo
+  // dvajsetkrat in bilanca bi kazala ogromen presezek.
+  const volT=alcBulk?kom:kom*TINKTURA_VOL_KOM;
   const aaeT=calcAAE(volT,TINKTURA_VOL_PCT);
   const glyVolL=etanolGlyRaw>0?(_etanolGlyEnota==='mL'?etanolGlyRaw/1000:etanolGlyRaw/(etohDensity(volPct)*1000)):0;
   const aaeGly=glyVolL>0?round(calcAAE(glyVolL,volPct),4):0;
   const razlika=round(aaeVhod-aaeT-aaeGly-izgube,4);
+  _dnZadnjaRazlika=razlika;
   const ok=Math.abs(razlika)<0.005;
 
   el.style.display='';
@@ -2653,6 +2782,7 @@ function openDNSheet(id){
   // ne poklice - brez tega bi polji "Skupaj" ostali prazni pri cisto
   // glicerinskih nalogih.
   calcDNTinktura();
+  dnNastaviZacetnoStanje();
   onDnSuhaSnovInput();
   const aaeProsto=round(calcEtZaloga()-calcEtRezervirano(),4);
   const indEl=document.getElementById('etZaloгаDN');
@@ -3055,7 +3185,13 @@ function saveDN(){
   };
 
   if(!d.oznaka){toast('⚠ Vnesi oznako DN');return;}
-  if(!d.masaEtOH||d.masaEtOH<=0){toast('⚠ Vnesi maso etanola');return;}
+  // Masa etanola je v alkoholnem sklopu — ce je ta zaprt, bi opozorilo kazalo
+  // na polje, ki ga uporabnik ne vidi.
+  if(!d.masaEtOH||d.masaEtOH<=0){
+    dnOdpriSekcijo('Alc');
+    document.getElementById('dnMasaEtOH')?.focus();
+    toast('⚠ Vnesi maso etanola');return;
+  }
 
   // Preveri zalogo etanola — samo za nov DN (ne za urejanje)
   if(!editingDNId&&d.lAAE>0){

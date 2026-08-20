@@ -134,6 +134,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-hdr{cursor:pointer}
 .korak-hdr:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .korak-zlozen{font-size:.64rem;color:var(--muted);padding-left:1.15rem}
+.korak-ccp{border:1px solid rgba(139,58,42,.25);background:rgba(139,58,42,.05);border-radius:var(--rs);
+  padding:.3rem .4rem;margin-bottom:.28rem}
+.korak-ccp.da{border-color:rgba(58,107,74,.3);background:rgba(58,107,74,.06)}
+.korak-ccp.ne{border-color:rgba(139,58,42,.55);background:rgba(139,58,42,.1)}
+.korak-ccp-vrh{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+.korak-ccp-napis{font-size:.62rem;font-weight:600;color:var(--ink);flex:1;min-width:110px}
+.korak-ccp-napis em{font-style:normal;font-weight:400;color:var(--muted)}
+.korak-ccp-gumbi{display:flex;gap:.2rem;flex:0 0 auto}
+.korak-ccp-vr{flex:0 0 62px;min-width:0;padding:.2rem .3rem;border:1px solid var(--border);
+  border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;
+  color:var(--ink);outline:none;text-align:center}
+.korak-ccp-vr:focus{border-color:var(--accent)}
+.korak-izr{background:rgba(175,132,85,.1);border-color:rgba(175,132,85,.35);font-weight:600}
+.korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
+  border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
+  font-family:'Jost',sans-serif;min-height:26px}
+.korak-ccp-gumbi button.izbran{border-color:#3a6b4a;background:rgba(58,107,74,.15);color:#2a5a3a;font-weight:600}
+.korak-ccp-gumbi button.izbran.ne{border-color:#8b3a2a;background:rgba(139,58,42,.15);color:#8b3a2a}
+.korak-opis{font-size:.58rem;color:var(--muted);line-height:1.35;margin-top:.2rem}
+.korak-izbira{margin-bottom:.28rem}
+.korak-izbira-napis{font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.15rem}
+.korak-izbira-moz{display:flex;flex-wrap:wrap;gap:.2rem}
+.korak-izbira-moz button.izbran{border-color:var(--accent);background:rgba(175,132,85,.15);
+  color:var(--accent);font-weight:600}
+.korak-akcija{width:100%;padding:.35rem;margin-bottom:.28rem;border:1px dashed var(--accent);
+  border-radius:var(--rs);background:rgba(175,132,85,.08);color:var(--accent);
+  cursor:pointer;font-size:.68rem;font-family:'Jost',sans-serif}
 .calc-hint{font-size:.65rem;color:var(--accent);margin-top:.2rem;font-style:italic}
 
 /* ── OVERLAY / SHEET ── */
@@ -1132,7 +1160,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shandle"></div>
     <div class="shdr">
       <span class="shtitle">🧮 Matični ekstrakt — koliko dati na stran</span>
-      <button class="shclose" onclick="closeSheet('meOverlay')">✕</button>
+      <button class="shclose" onclick="prevzemiPreracunVKorak();closeSheet('meOverlay')">✕</button>
     </div>
     <div class="shbody">
       <div class="field"><label>Delovni nalog / serija</label>
@@ -1181,7 +1209,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
     </div>
     <div class="shfoot">
-      <button class="bcancel" onclick="closeSheet('meOverlay')">Zapri</button>
+      <button class="bcancel" onclick="prevzemiPreracunVKorak();closeSheet('meOverlay')">Zapri</button>
     </div>
   </div>
 </div>
@@ -2193,6 +2221,50 @@ function openMeSheet(){
   openSheet('meOverlay');
 }
 
+// Preracun, klican iz koraka na nalogu. Znano se ne vpisuje znova: nalog,
+// serija in masa surovine pridejo sami, ce je nalog ze shranjen. Pri novem,
+// se neshranjenem nalogu vzamemo maso naravnost iz obrazca - drugace bi moral
+// uporabnik nalog shraniti, preden bi lahko sploh racunal.
+let _meIzKoraka=null;
+
+function odpriPreracunME(korakId){
+  _meIzKoraka=korakId||null;
+  openMeSheet();
+  const sel=document.getElementById('meDnSel');
+  if(editingDNId&&meNalog(editingDNId)){
+    sel.value=editingDNId;
+    onMeDnChange();
+  } else {
+    const masa=dnSerijeRows.reduce((v,r)=>v+(parseNum(r.masa)||0),0);
+    if(masa>0)document.getElementById('meMasaGobe').value=String(masa).replace('.',',');
+    const serija=(document.getElementById('dnSerijaAlc')?.value||'').trim();
+    const info=document.getElementById('meDnInfo');
+    if(info)info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
+      Nalog še ni shranjen — podatki so vzeti iz obrazca${serija?`, serija <strong>${serija}</strong>`:''}.</div>`;
+    calcMe();
+  }
+}
+
+// Rezultat prepisemo v korak, da je zapisnik samozadosten - kdor ga bere
+// pozneje, ne rabi odpirati preracuna, da bi vedel, s cim se je delalo.
+function prevzemiPreracunVKorak(){
+  if(!_meIzKoraka)return;
+  const k=dnKorakiRows.find(x=>x.id===_meIzKoraka);
+  _meIzKoraka=null;
+  if(!k)return;
+  const stevilo=id=>{const v=parseNum(document.getElementById(id)?.value||'0');
+    return v>0?String(round(v,1)).replace('.',','):null;};
+  const v=stevilo('meVme'),m=stevilo('meMme');
+  if(!v&&!m)return;
+  k.parametri=k.parametri||{};
+  if(v)k.parametri.v_me=v;
+  if(m)k.parametri.m_me=m;
+  if(k.status!=='preskocen')k.status='koncan';
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+  toast('✓ Rezultat prevzet v korak');
+}
+
 function calcMe(){
   const masaGobe=parseNum(document.getElementById('meMasaGobe').value);
   const razmerje=parseNum(document.getElementById('meRazmerje').value)||ME_PRIVZETO.razmerje;
@@ -2310,42 +2382,142 @@ function dnVolAlcTinkture(){
 // parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
 const DN_PREDLOGA_KORAKOV=[
-  {korak:'etanol_priprava', naziv:'Priprava mešanice etanola', faza:'',
-   parametri:[['vol_pct','vol%','%'],['masa','masa','kg']]},
-  {korak:'vlaga',           naziv:'Meritev vlage surovine', faza:'',
-   parametri:[['vlaga','vlaga','%']]},
-  {korak:'tehtanje',        naziv:'Tehtanje in polnjenje kozarcev', faza:'',
-   parametri:[['kozarci','kozarcev',''],['masa_kozarec','surovina/koz.','g'],
-              ['etanol_kozarec','etanol/koz.','g']]},
-  {korak:'uz_1',            naziv:'UZ ekstrakcija — 1. dan', faza:'OF',
-   parametri:[['moc','moč','%'],['min_kozarec','min/koz.',''],
-              ['kozarci','kozarcev',''],['t_zac','T zač.','°C'],['t_kon','T konč.','°C']]},
-  {korak:'uz_2',            naziv:'UZ ekstrakcija — 2. dan', faza:'OF',
-   parametri:[['moc','moč','%'],['min_kozarec','min/koz.',''],
-              ['kozarci','kozarcev',''],['t_zac','T zač.','°C'],['t_kon','T konč.','°C']]},
-  {korak:'stiskanje_of',    naziv:'Stiskanje matičnega ekstrakta', faza:'OF',
-   parametri:[['masa','masa','g']]},
-  {korak:'koncentriranje_of', naziv:'Koncentriranje OF', faza:'OF',
-   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
-  {korak:'vrocevodna',      naziv:'Vročevodna ekstrakcija', faza:'VF',
-   parametri:[['t','T','°C'],['ure','trajanje','h']]},
-  {korak:'stiskanje_vf',    naziv:'Stiskanje vodne faze', faza:'VF',
-   parametri:[['masa','masa','g']]},
-  {korak:'koncentriranje_vf', naziv:'Koncentriranje VF', faza:'VF',
-   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
-  {korak:'tlacna',          naziv:'Tlačna ekstrakcija', faza:'TE',
-   parametri:[['t','T','°C'],['ure','trajanje','h']]},
-  {korak:'stiskanje_te',    naziv:'Stiskanje in ločevanje', faza:'TE',
-   parametri:[['masa','masa','g']]},
-  {korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
-   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
-  {korak:'formulacija_alc', naziv:'Formulacija alkoholna', faza:'',
-   parametri:[['lecitin','lecitin','g'],['glicerin','glicerin','g'],
-              ['tinktura','tinktura','g'],['suha_snov','suha sn.','%']]},
-  {korak:'pasta',           naziv:'Koncentriranje do paste', faza:'',
-   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
-  {korak:'formulacija_gly', naziv:'Formulacija glicerinska', faza:'',
-   parametri:[['glicerin','glicerin','g'],['voda','voda','g'],['suha_snov','suha sn.','%']]},
+  {st:'1',   korak:'etanol_priprava', naziv:'Etanolna ekstrakcija — priprava', faza:'',
+   polja:[
+     {k:'vlaznost',tip:'ccp',napis:'Vlažnost surovine',enota:'%',meja:'< 12 %',
+      opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
+     {k:'vir_etanola',tip:'izbira',napis:'Etanol pripravljen z',vec:true,
+      moznosti:['96 % etanol','regeneriran etanol','voda']},
+     {k:'m_surovine',tip:'meritev',napis:'Σm surovine',enota:'g'},
+     {k:'m_etoh',tip:'meritev',napis:'Σm EtOH',enota:'kg'},
+     {k:'c_etoh_vv',tip:'meritev',napis:'C EtOH',enota:'% v/v'},
+     // Vnese se masa in izmerjena volumska koncentracija; volumen in masni
+     // odstotek sta izpeljana - vpisovati oboje bi pomenilo dvakrat zapisati
+     // isto in tvegati, da se razideta.
+     {k:'v_etoh',tip:'izracun',napis:'ΣV EtOH',enota:'L',
+      izracun:pa=>{const m=parseNum(pa.m_etoh),v=parseNum(pa.c_etoh_vv);
+        return (m>0&&v>0)?round(m/etohDensity(v),3):null;}},
+     {k:'c_etoh_mm',tip:'izracun',napis:'C EtOH',enota:'% m/m',
+      izracun:pa=>{const v=parseNum(pa.c_etoh_vv);return v>0?round(volToMas(v),1):null;}},
+   ]},
+  {st:'1.1', korak:'uz_1', naziv:'Ultrazvočna sonikacija — 1.', faza:'OF',
+   polja:[
+     {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
+     {k:'moc',tip:'meritev',napis:'P',enota:'%'},
+     {k:'t_konc',tip:'meritev',napis:'T končna',enota:'°C'},
+     {k:'temp_ok',tip:'ccp',napis:'Temperatura med ekstrakcijo',meja:'≤ 55 °C',
+      opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
+   ]},
+  {st:'1.1', korak:'uz_2', naziv:'Ultrazvočna sonikacija — 2.', faza:'OF',
+   polja:[
+     {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
+     {k:'moc',tip:'meritev',napis:'P',enota:'%'},
+     {k:'t_konc',tip:'meritev',napis:'T končna',enota:'°C'},
+     {k:'temp_ok',tip:'ccp',napis:'Temperatura med ekstrakcijo',meja:'≤ 55 °C',
+      opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
+   ]},
+  {st:'1.2', korak:'stiskanje_of', naziv:'Stiskanje organske faze — matični ekstrakt', faza:'OF',
+   polja:[
+     {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
+      opis:'Stiskanje in filtracija preko 400 mesh ~37 µm najlonske filtrirne tkanine.'},
+     {k:'m_me',tip:'meritev',napis:'Σm ME',enota:'g'},
+     {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
+     {k:'m_topila',tip:'meritev',napis:'m topila v pogači',enota:'g'},
+   ]},
+  {st:'1.3', korak:'preracun_me', naziv:'Ločitev matičnega ekstrakta', faza:'OF', akcija:'me',
+   polja:[
+     {k:'v_me',tip:'meritev',napis:'V ME',enota:'mL'},
+     {k:'m_me',tip:'meritev',napis:'m ME',enota:'g'},
+     {k:'v_aae_of',tip:'meritev',napis:'V AAE v OF',enota:'mL'},
+   ]},
+  {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
+   polja:[
+     {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
+     {k:'m_ss',tip:'meritev',napis:'m suhe snovi',enota:'g'},
+     {k:'m_of',tip:'meritev',napis:'m OF',enota:'g'},
+   ]},
+  {st:'2',   korak:'hve', naziv:'Vroča vodna ekstrakcija — HVE', faza:'VF',
+   polja:[
+     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'80–90'},
+     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'300'},
+     {k:'m_pogace',tip:'meritev',napis:'m pogače',enota:'g'},
+     {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
+     {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
+      opis:'Stiskanje in filtracija skozi 300 mesh ~48 µm najlonsko filtrno tkanino.'},
+     {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
+   ]},
+  {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
+   polja:[
+     {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
+     {k:'m_koncentrata',tip:'meritev',napis:'m HVE koncentrata',enota:'g'},
+   ]},
+  {st:'3',   korak:'te', naziv:'Tlačna ekstrakcija — TE', faza:'TE',
+   polja:[
+     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'115–130'},
+     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'150'},
+     {k:'m_pogace',tip:'meritev',napis:'m pogače',enota:'g'},
+     {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
+     {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
+      opis:'Stiskanje in filtracija skozi 400 mesh ~37 µm najlonsko filtrsko tkanino.'},
+     {k:'m_te',tip:'meritev',napis:'m TE ekstrakta',enota:'g'},
+   ]},
+  {st:'3.1', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
+   polja:[
+     {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
+     {k:'m_koncentrata',tip:'meritev',napis:'m TE koncentrata',enota:'g'},
+   ]},
+  {st:'4',   korak:'formulacija_alc', naziv:'Alkoholna formulacija', faza:'',
+   polja:[
+     {k:'m_tinkture',tip:'meritev',napis:'m tinkture',enota:'g'},
+     {k:'v_tinkture',tip:'meritev',napis:'V tinkture',enota:'mL'},
+     {k:'ro',tip:'meritev',napis:'ρ tinkture',enota:'g/mL'},
+     {k:'c_etoh',tip:'meritev',napis:'C EtOH',enota:'% v/v'},
+   ]},
+  {st:'4.1', korak:'vitc_lecitin', naziv:'Dodajanje vitamina C in lecitina', faza:'',
+   polja:[
+     {k:'m_vitc',tip:'meritev',napis:'m vit. C',enota:'g',
+      opis:'0,20 % m/m glede na skupno maso tinkture. Vitamin C se vedno doda pred lecitinom.'},
+     {k:'m_lecitin',tip:'meritev',napis:'m lecitina',enota:'g',
+      opis:'0,30 % m/m; sončnični lecitin (non-GMO).'},
+     {k:'mesanje_ok',tip:'izbira',napis:'Mešano ≥ 4 h pri T < 40 °C',moznosti:['da','ne']},
+   ]},
+  {st:'5',   korak:'suha_snov', naziv:'Analiza suhe snovi', faza:'',
+   polja:[
+     {k:'w_ss',tip:'meritev',napis:'W ss',enota:'%',
+      opis:'Halogenski sušilnik HR83, 1000 mg ± 500 mg, 105 °C, izklopni kriterij 3.'},
+     {k:'ss_ok',tip:'ccp',napis:'Vsebnost suhe snovi',
+      meja:'Reishi ≥ 4,0 % · Chaga ≥ 6,0 % · Resasti bradovec ≥ 10,0 %'},
+   ]},
+  {st:'6',   korak:'formulacija_gly', naziv:'Glicerinska formulacija', faza:'',
+   polja:[
+     {k:'m0',tip:'meritev',napis:'m0 alk. tinkture',enota:'g'},
+     {k:'m_glicerina',tip:'meritev',napis:'m dodanega glicerina',enota:'g'},
+     {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
+     {k:'v_tinkture',tip:'meritev',napis:'V tinkture',enota:'mL'},
+     {k:'w_glicerina',tip:'meritev',napis:'W glicerina',enota:'%'},
+     {k:'etoh_ok',tip:'ccp',napis:'Koncentracija etanola v alkoholni tinkturi',
+      meja:'≥ 25,0 % v/v (20,5 % m/m)'},
+   ]},
+  {st:'6.1', korak:'vitc_gly', naziv:'Vitamin C v glicerinski tinkturi', faza:'',
+   polja:[
+     {k:'m_vitc',tip:'meritev',napis:'m vit. C',enota:'g',
+      opis:'0,50 % m/m; meša na rotavaporju ob T kopeli < 40 °C do popolne raztopitve.'},
+   ]},
+  {st:'8',   korak:'polnjenje', naziv:'Polnjenje', faza:'',
+   polja:[
+     {k:'predpogoji',tip:'izbira',napis:'Predpogoji',vec:true,
+      moznosti:['Flowhood/HEPA','UV/ozon cikel','Površine & orodje','Steklo/krhki materiali',
+                'Polnilna postaja','Embalaža','Osebna higiena & OVO','Okolje urejeno']},
+     {k:'predpogoji_ok',tip:'ccp',napis:'Vsi predpogoji izpolnjeni',
+      opis:'CCP iz Analize tveganja (DOK-002).'},
+     {k:'st_alk',tip:'meritev',napis:'Alkoholnih polnitev',enota:''},
+     {k:'st_gly',tip:'meritev',napis:'Glicerinskih polnitev',enota:''},
+   ]},
+  {st:'9',   korak:'organoleptika', naziv:'Organoleptična analiza', faza:'',
+   polja:[
+     {k:'ocena',tip:'ccp',napis:'Ustreza organoleptičnim zahtevam',
+      opis:'Ocena z vidom, vonjem, okusom in tipom po OBR-0003/01.'},
+   ]},
 ];
 
 const KORAK_STATUSI={nacrtovan:'○ načrtovan',v_teku:'▶ v teku',koncan:'✓ končan',preskocen:'⊘ preskočen'};
@@ -2379,7 +2551,21 @@ function korakiIzPredloge(){
 }
 
 function predlogaZaKorak(kljuc){
-  return DN_PREDLOGA_KORAKOV.find(t=>t.korak===kljuc)||{parametri:[]};
+  return DN_PREDLOGA_KORAKOV.find(t=>t.korak===kljuc)||{polja:[]};
+}
+
+// Kriticne kontrolne tocke. Neodgovorjen CCP mora zadrzati korak - to je
+// celoten smisel kriticne tocke; sicer je le se eno polje, ki se ga da
+// preskociti.
+function korakCCP(k){
+  return (predlogaZaKorak(k.korak).polja||[]).filter(p=>p.tip==='ccp');
+}
+function korakCCPManjka(k){
+  if(k.status==='preskocen')return [];
+  return korakCCP(k).filter(p=>!k.parametri?.[p.k+'__presoja']);
+}
+function korakCCPNeustreza(k){
+  return korakCCP(k).filter(p=>k.parametri?.[p.k+'__presoja']==='ne');
 }
 
 // Trajanje v urah; brez obeh casov ni znano.
@@ -2393,6 +2579,8 @@ function korakUre(k){
 // Kaj mora povedati zlozen korak: kdaj in kako dolgo. Brez tega bi bilo
 // zlaganje skoda in ne korist.
 function korakPovzetek(k){
+  const ne=korakCCPNeustreza(k);
+  if(ne.length)return `⚠ ne ustreza: ${ne.map(p=>p.napis).join(', ')}`;
   const d=korakDatum(k);
   const dan=d?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
   const od=korakUra(k,'zacetek'),doU=korakUra(k,'konec');
@@ -2453,14 +2641,18 @@ function onDNKorakCas(idx,kaj,val){
 function onDNKorakChange(idx,polje,val){
   const k=dnKorakiRows[idx];if(!k)return;
   if(polje)k[polje]=val;
-  // Status sledi casom sam, dokler ga uporabnik ne postavi rocno na preskocen.
-  if(k.status!=='preskocen'){
-    if(k.zacetek&&k.konec)k.status='koncan';
-    else if(k.zacetek)k.status='v_teku';
-    else k.status='nacrtovan';
-  }
+  osveziStatusKoraka(k);
   renderDNKorakiRows();
   dnOsveziPovzetke();
+}
+
+// Status sledi casom sam, dokler ga uporabnik ne postavi rocno na preskocen -
+// in dokler so vse kriticne tocke odgovorjene.
+function osveziStatusKoraka(k){
+  if(k.status==='preskocen')return;
+  if(k.zacetek&&k.konec)k.status=korakCCPManjka(k).length?'v_teku':'koncan';
+  else if(k.zacetek)k.status='v_teku';
+  else k.status=korakCCPManjka(k).length?'nacrtovan':(korakCCP(k).length?'koncan':'nacrtovan');
 }
 
 function onDNKorakParam(idx,kljuc,val){
@@ -2468,10 +2660,83 @@ function onDNKorakParam(idx,kljuc,val){
   k.parametri=k.parametri||{};
   if(String(val).trim()==='')delete k.parametri[kljuc];
   else k.parametri[kljuc]=String(val).trim();
+  osveziIzracuneKoraka(idx);
+}
+
+// Izracunanih polj ne izrisujemo na novo - to bi med tipkanjem vzelo fokus.
+// Posodobimo samo njihove vrednosti na mestu.
+function osveziIzracuneKoraka(idx){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  if(!polja.length)return;
+  const kartica=document.querySelectorAll('#dnKorakiContainer > .korak')[idx];
+  if(!kartica)return;
+  const vnosi=kartica.querySelectorAll('.korak-izr');
+  polja.forEach((x,i)=>{
+    const v=x.izracun?x.izracun(k.parametri||{}):null;
+    if(vnosi[i])vnosi[i].value=v==null?'':String(v).replace('.',',');
+  });
+}
+
+// Ob shranjevanju izracunane vrednosti zapisemo med parametre, da jih zapisnik
+// nosi tudi takrat, ko formule ni vec pri roki.
+function zapisiIzracune(k){
+  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  if(!polja.length)return k;
+  const pa={...(k.parametri||{})};
+  polja.forEach(x=>{
+    const v=x.izracun?x.izracun(pa):null;
+    if(v==null)delete pa[x.k]; else pa[x.k]=String(v);
+  });
+  return {...k,parametri:pa};
+}
+
+// CCP presoja: ustreza / ne ustreza. Zapise se tudi, kdaj je bila dana.
+function onDNKorakCCP(idx,kljuc,izid){
+  const k=dnKorakiRows[idx];if(!k)return;
+  k.parametri=k.parametri||{};
+  if(k.parametri[kljuc+'__presoja']===izid){
+    delete k.parametri[kljuc+'__presoja'];
+    delete k.parametri[kljuc+'__cas'];
+  } else {
+    k.parametri[kljuc+'__presoja']=izid;
+    k.parametri[kljuc+'__cas']=new Date().toISOString();
+  }
+  osveziStatusKoraka(k);
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+}
+
+// Izbire: ena ali vec. Shranijo se kot niz, locen z vejico.
+function onDNKorakIzbira(idx,kljuc,vrednost,vec){
+  const k=dnKorakiRows[idx];if(!k)return;
+  k.parametri=k.parametri||{};
+  if(!vec){
+    if(k.parametri[kljuc]===vrednost)delete k.parametri[kljuc];
+    else k.parametri[kljuc]=vrednost;
+  } else {
+    const zdaj=(k.parametri[kljuc]||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const i=zdaj.indexOf(vrednost);
+    if(i>=0)zdaj.splice(i,1); else zdaj.push(vrednost);
+    if(zdaj.length)k.parametri[kljuc]=zdaj.join(', ');
+    else delete k.parametri[kljuc];
+  }
+  renderDNKorakiRows();
+}
+function izbranaMoznost(k,kljuc,vrednost){
+  return (k.parametri?.[kljuc]||'').split(',').map(x=>x.trim()).includes(vrednost);
 }
 
 function onDNKorakStatus(idx,val){
   const k=dnKorakiRows[idx];if(!k)return;
+  if(val==='koncan'){
+    const manjka=korakCCPManjka(k);
+    if(manjka.length){
+      toast(`⚠ Najprej presodi: ${manjka.map(p=>p.napis).join(', ')}`);
+      renderDNKorakiRows();
+      return;
+    }
+  }
   k.status=val;
   renderDNKorakiRows();
   dnOsveziPovzetke();
@@ -2520,12 +2785,51 @@ function renderDNKorakiRows(){
                   onclick="nastaviKorakCas(${idx},'${kaj}')">⏱</button>
         </div>
       </div>`;
-    const parametri=(t.parametri||[]).map(([kl,napis,enota])=>`
+    // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
+    // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
+    const izracuni=(t.polja||[]).filter(x=>x.tip==='izracun').map(x=>{
+      const v=x.izracun?x.izracun(k.parametri||{}):null;
+      return `<div class="korak-f">
+        <label>${x.napis}${x.enota?' '+x.enota:''}</label>
+        <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
+      </div>`;}).join('');
+
+    const meritve=(t.polja||[]).filter(x=>x.tip==='meritev').map(x=>`
       <div class="korak-f">
-        <label>${napis}${enota?' '+enota:''}</label>
-        <input type="text" inputmode="decimal" value="${(k.parametri?.[kl]??'').toString().replace(/"/g,'&quot;')}"
-               oninput="onDNKorakParam(${idx},'${kl}',this.value)">
+        <label title="${(x.napis+(x.enota?' '+x.enota:'')).replace(/"/g,'&quot;')}">${x.napis}${x.enota?' '+x.enota:''}</label>
+        <input type="text" inputmode="decimal" placeholder="${x.naziv_priv||''}"
+               value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
+               oninput="onDNKorakParam(${idx},'${x.k}',this.value)">
       </div>`).join('');
+
+    // Presoja stoji nad meritvami, ker zadrzuje zakljucek koraka.
+    const ccp=(t.polja||[]).filter(x=>x.tip==='ccp').map(x=>{
+      const izid=k.parametri?.[x.k+'__presoja']||'';
+      // Nekatere kriticne tocke imajo poleg presoje tudi izmerjeno vrednost
+      // (vlaznost 9,21 % ob meji < 12 %), druge so samo presoja (filtrat bister).
+      const vrednost=x.enota?`<input type="text" inputmode="decimal" class="korak-ccp-vr"
+        placeholder="${x.enota}" value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
+        oninput="onDNKorakParam(${idx},'${x.k}',this.value)">`:'';
+      return `<div class="korak-ccp${izid==='ne'?' ne':izid==='da'?' da':''}">
+        <div class="korak-ccp-vrh">
+          <span class="korak-ccp-napis">⚠ ${x.napis}${x.meja?` <em>${x.meja}</em>`:''}</span>
+          ${vrednost}
+          <span class="korak-ccp-gumbi">
+            <button type="button" class="${izid==='da'?'izbran':''}" onclick="onDNKorakCCP(${idx},'${x.k}','da')">ustreza</button>
+            <button type="button" class="${izid==='ne'?'izbran ne':''}" onclick="onDNKorakCCP(${idx},'${x.k}','ne')">ne ustreza</button>
+          </span>
+        </div>
+        ${x.opis?`<div class="korak-opis">${x.opis}</div>`:''}
+      </div>`;}).join('');
+
+    const izbire=(t.polja||[]).filter(x=>x.tip==='izbira').map(x=>`
+      <div class="korak-izbira">
+        <div class="korak-izbira-napis">${x.napis}</div>
+        <div class="korak-izbira-moz">${x.moznosti.map(m=>
+          `<button type="button" class="${izbranaMoznost(k,x.k,m)?'izbran':''}"
+            onclick="onDNKorakIzbira(${idx},'${x.k}','${m.replace(/'/g,"\\'")}',${!!x.vec})">${m}</button>`).join('')}</div>
+      </div>`).join('');
+    const parametri=meritve+izracuni;
 
     const odprt=korakJeOdprt(k);
     const povz=korakPovzetek(k);
@@ -2533,7 +2837,7 @@ function renderDNKorakiRows(){
       <div class="korak-hdr" onclick="preklopiKorak('${k.id}')" role="button" tabindex="0"
            aria-expanded="${odprt}"
            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();preklopiKorak('${k.id}')}">
-        <span class="korak-st">${odprt?'▾':'▸'} ${k.zaporedje}.</span>
+        <span class="korak-st">${odprt?'▾':'▸'} ${t.st||k.zaporedje}</span>
         <span class="korak-naziv">${k.naziv}</span>
         ${k.faza?`<span class="korak-faza" style="color:${bf};background:${bf}22">${k.faza}</span>`:''}
         <select onchange="onDNKorakStatus(${idx},this.value)" onclick="event.stopPropagation()">
@@ -2549,6 +2853,9 @@ function renderDNKorakiRows(){
         ${ura('od','Od')}${ura('do','Do')}
       </div>
       ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
+      ${t.akcija==='me'?`<button type="button" class="korak-akcija"
+        onclick="odpriPreracunME('${k.id}')">🧮 Odpri preračun matičnega ekstrakta</button>`:''}
+      ${ccp}${izbire}
       <div class="korak-grid">${parametri}</div>
       <div class="korak-grid" style="grid-template-columns:1fr 1fr">
         <div class="korak-f">
@@ -2612,9 +2919,20 @@ function dnOsveziPovzetke(){
     const koncani=dnKorakiRows.filter(k=>k.status==='koncan').length;
     const preskoceni=dnKorakiRows.filter(k=>k.status==='preskocen').length;
     const skupajUre=dnKorakiRows.reduce((s,k)=>s+(korakUre(k)||0),0);
-    dnPisiPovzetek('Koraki',
-      `${koncani}/${dnKorakiRows.length-preskoceni}${skupajUre>0?' · '+fmtUre(skupajUre):''}`,
-      (koncani&&koncani===dnKorakiRows.length-preskoceni)?'ok':'');
+    // Neustrezna kriticna tocka je pomembnejsa od napredka - pokazemo jo prvo.
+    const neustreza=dnKorakiRows.reduce((n,k)=>n+korakCCPNeustreza(k).length,0);
+    // Presoje stejemo samo pri korakih, ki so se zaceli - pri nedotaknjenih ne
+    // manjka nic, le se ni na vrsti.
+    const cakajo=dnKorakiRows.filter(k=>k.zacetek||k.status==='v_teku')
+      .reduce((n,k)=>n+korakCCPManjka(k).length,0);
+    if(neustreza)
+      dnPisiPovzetek('Koraki',`⚠ ${neustreza} × ne ustreza`,'warn');
+    else if(cakajo)
+      dnPisiPovzetek('Koraki',`${koncani}/${dnKorakiRows.length-preskoceni} · ⚠ ${cakajo} presoj`,'warn');
+    else
+      dnPisiPovzetek('Koraki',
+        `${koncani}/${dnKorakiRows.length-preskoceni}${skupajUre>0?' · '+fmtUre(skupajUre):''}`,
+        (koncani&&koncani===dnKorakiRows.length-preskoceni)?'ok':'');
   } else {
     dnPisiPovzetek('Koraki','ni ustvarjenih');
   }
@@ -3391,12 +3709,23 @@ function nalogiZaOpremo(opremaId){
     .sort((a,b)=>((b.dn?.datum)||'').localeCompare((a.dn?.datum)||''));
 }
 
+// Kdo dela. Papir ima podpis, elektronski zapisnik pa mora vedeti isto - zato
+// se belezi ze zdaj, ceprav se nikjer ne prikazuje. Ce bi to dodali sele ob
+// prehodu na elektronsko obliko, bi bile brez sledi ravno tiste serije, na
+// katerih je bil sistem preizkusen - torej dokaz, da deluje.
+function trenutniUporabnik(){
+  try{return (window.GMAuth?.stanje?.()||{}).email||'';}catch(e){return '';}
+}
+
 // Enak vzorec kot pri opremi: shranimo kot razliko, da odstranjen korak izgine
 // tudi v bazi.
 async function shraniDNKorake(oznaka){
   if(!oznaka)return;
   const prej=korakiZaDokument(oznaka);
-  const zdaj=dnKorakiRows.map((k,i)=>({...k,id:k.id||uid(),dokument:oznaka,zaporedje:i+1}));
+  const kdo=trenutniUporabnik();
+  const cas=new Date().toISOString();
+  const zdaj=dnKorakiRows.map((k,i)=>({...zapisiIzracune(k),id:k.id||uid(),dokument:oznaka,
+    zaporedje:i+1, izvajalec:k.izvajalec||kdo, spremenil:kdo, spremenjen:cas}));
   const zdajIdji=new Set(zdaj.map(k=>k.id));
   const zaBrisanje=prej.filter(k=>!zdajIdji.has(k.id));
   dnKoraki=dnKoraki.filter(k=>k.dokument!==oznaka).concat(zdaj);
@@ -3418,6 +3747,7 @@ function korakToSb(k){return{
   konec:k.konec?new Date(k.konec).toISOString():null,
   izvajalec:k.izvajalec||null,parametri:k.parametri||{},
   status:k.status||'nacrtovan',opomba:k.opomba||null,
+  spremenil:k.spremenil||null,spremenjen:k.spremenjen||null,
 };}
 function sbToKorak(r){
   const lok=t=>{if(!t)return'';const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
@@ -3427,6 +3757,7 @@ function sbToKorak(r){
     zacetek:lok(r.zacetek),konec:lok(r.konec),datum:lok(r.zacetek||r.konec).slice(0,10),
     izvajalec:r.izvajalec||'',parametri:r.parametri||{},
     status:r.status||'nacrtovan',opomba:r.opomba||'',
+    spremenil:r.spremenil||'',spremenjen:r.spremenjen||'',
   };
 }
 

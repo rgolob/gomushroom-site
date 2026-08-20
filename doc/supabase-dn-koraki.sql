@@ -88,3 +88,12 @@ grant select on gm_oprema_ure to authenticated;
 --   set role anon;
 --   select count(*) from gm_dn_koraki;   -- pricakovano: permission denied
 --   reset role;
+
+-- ── Kdo je kaj spremenil in kdaj ──────────────────────────────────────────
+-- Papirni zapisnik ima podpis; elektronski mora vedeti isto. Beleži se že zdaj,
+-- čeprav se nikjer ne prikazuje — če bi to dodali šele ob prehodu na
+-- elektronsko obliko, bi bile brez sledi ravno tiste serije, na katerih je bil
+-- sistem preizkušen, torej dokaz, da deluje.
+alter table gm_dn_koraki
+  add column if not exists spremenil  text,
+  add column if not exists spremenjen timestamptz;

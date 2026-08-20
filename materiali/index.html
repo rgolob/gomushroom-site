@@ -1030,7 +1030,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shandle"></div>
     <div class="shdr">
       <span class="shtitle">🧴 Glicerinska tinktura — priprava</span>
-      <button class="shclose" onclick="closeSheet('glyOverlay')">✕</button>
+      <button class="shclose" onclick="prevzemiGlyVKorak();closeSheet('glyOverlay')">✕</button>
     </div>
     <div class="shbody">
       <div class="field"><label>Delovni nalog / serija</label>
@@ -1149,7 +1149,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
     </div>
     <div class="shfoot">
-      <button class="bcancel" onclick="closeSheet('glyOverlay')">Zapri</button>
+      <button class="bcancel" onclick="prevzemiGlyVKorak();closeSheet('glyOverlay')">Zapri</button>
     </div>
   </div>
 </div>
@@ -2024,6 +2024,7 @@ function renderGlyLodNamig(n,lodPct){
 
 // Ce uporabnik vrednost vpise sam, je ne povozimo; sicer sledi uparjanju.
 let _glyVodaRocna=false;
+let _glyZadnjiIzid=null,_glyZadnjiVnos=null;
 function glyUporabiVodo(g){
   _glyVodaRocna=false;
   document.getElementById('glyVodaZe').value=String(g).replace('.',',');
@@ -2075,6 +2076,9 @@ function calcGly(){
     return;
   }
   const r=glyRacun(o);
+  // Zadnji izid hranimo, da ga korak na nalogu lahko prevzame - drugace bi ga
+  // moral prebrati iz izpisanega HTML.
+  _glyZadnjiIzid=r; _glyZadnjiVnos=o;
   const n=(v,d=1)=>v.toLocaleString('sl-SI',{minimumFractionDigits:d,maximumFractionDigits:d});
   const pct=v=>v.toLocaleString('sl-SI',{maximumFractionDigits:3});
   const vrstica=(oznaka,vrednost,enota,poudari)=>`
@@ -2243,6 +2247,45 @@ function odpriPreracunME(korakId){
       Nalog še ni shranjen — podatki so vzeti iz obrazca${serija?`, serija <strong>${serija}</strong>`:''}.</div>`;
     calcMe();
   }
+}
+
+// Glicerinska formulacija ima svoj preracun. Isti vzorec kot pri maticnem
+// ekstraktu: nalog se izbere sam, rezultat se vrne v korak.
+let _glyIzKoraka=null;
+
+function odpriPreracunGly(korakId){
+  _glyIzKoraka=korakId||null;
+  openGlySheet();
+  if(editingDNId&&workOrders.some(d=>d.id===editingDNId)){
+    const sel=document.getElementById('glyNalogSel');
+    sel.value='dn:'+editingDNId;
+    if(sel.value==='dn:'+editingDNId)onGlyNalogChange();
+  } else {
+    const serija=(document.getElementById('dnSerijaAlc')?.value||'').trim();
+    if(serija)document.getElementById('glySerija').value=serija;
+    const info=document.getElementById('glyNalogInfo');
+    if(info)info.innerHTML=`<div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .5rem">
+      Nalog še ni shranjen — podatki so vzeti iz obrazca${serija?`, serija <strong>${serija}</strong>`:''}.</div>`;
+    calcGly();
+  }
+}
+
+function prevzemiGlyVKorak(){
+  if(!_glyIzKoraka)return;
+  const k=dnKorakiRows.find(x=>x.id===_glyIzKoraka);
+  const r=_glyZadnjiIzid,o=_glyZadnjiVnos;
+  _glyIzKoraka=null;
+  if(!k||!r)return;
+  const st=v=>(v!=null&&isFinite(v)&&v>0)?String(round(v,1)).replace('.',','):null;
+  const vpisi={m0:st(o?.m0), m_glicerina:st(r.gly), m_vode:st(r.vodaDodati),
+               v_tinkture:st(r.v0), w_glicerina:st(o?.ciljPct)};
+  let karkoli=false;
+  k.parametri=k.parametri||{};
+  for(const [kl,v] of Object.entries(vpisi))if(v){k.parametri[kl]=v;karkoli=true;}
+  if(!karkoli)return;
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+  toast('✓ Rezultat prevzet v korak');
 }
 
 // Rezultat prepisemo v korak, da je zapisnik samozadosten - kdor ga bere
@@ -2488,7 +2531,7 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'ss_ok',tip:'ccp',napis:'Vsebnost suhe snovi',
       meja:'Reishi ≥ 4,0 % · Chaga ≥ 6,0 % · Resasti bradovec ≥ 10,0 %'},
    ]},
-  {st:'6',   korak:'formulacija_gly', naziv:'Glicerinska formulacija', faza:'',
+  {st:'6',   korak:'formulacija_gly', naziv:'Glicerinska formulacija', faza:'', akcija:'gly',
    polja:[
      {k:'m0',tip:'meritev',napis:'m0 alk. tinkture',enota:'g'},
      {k:'m_glicerina',tip:'meritev',napis:'m dodanega glicerina',enota:'g'},
@@ -2855,6 +2898,8 @@ function renderDNKorakiRows(){
       ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
       ${t.akcija==='me'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunME('${k.id}')">🧮 Odpri preračun matičnega ekstrakta</button>`:''}
+      ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
+        onclick="odpriPreracunGly('${k.id}')">🧮 Odpri glicerinski preračun</button>`:''}
       ${ccp}${izbire}
       <div class="korak-grid">${parametri}</div>
       <div class="korak-grid" style="grid-template-columns:1fr 1fr">

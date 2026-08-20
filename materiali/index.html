@@ -99,6 +99,41 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .field input:focus,.field select:focus{border-color:var(--accent)}
 .field textarea{min-height:50px;resize:vertical}
 .frow{display:flex;gap:.4rem}.frow .field{flex:1;min-width:0}
+/* Procesni koraki. Polja so ozka in se pakirajo v mrezo namesto raztezajo;
+   brez min-width:0 se flex elementi nocejo skrciti pod svojo vsebino in gumb
+   za trenutni cas konca izven kartice. */
+.korak{border:1px solid var(--border);border-radius:var(--rs);padding:.4rem .45rem;margin-bottom:.35rem}
+.korak.presk{opacity:.45}
+.korak-hdr{display:flex;align-items:center;gap:.3rem;margin-bottom:.3rem;min-width:0}
+.korak-st{font-size:.6rem;color:var(--muted);flex:0 0 auto}
+.korak-naziv{font-size:.72rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.korak-faza{font-size:.55rem;font-weight:600;letter-spacing:.05em;padding:.05rem .25rem;border-radius:3px;flex:0 0 auto}
+.korak-hdr select{font-size:.6rem;padding:.1rem .15rem;border:1px solid var(--border);border-radius:4px;
+  background:white;color:var(--ink);flex:0 0 auto;max-width:7rem}
+.korak-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:.28rem;margin-bottom:.28rem}
+.korak-cas{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:.28rem}
+.korak-f{display:flex;flex-direction:column;gap:.1rem;min-width:0}
+.korak-f label{font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.korak-f input,.korak-f select{width:100%;min-width:0;padding:.28rem .35rem;border:1px solid var(--border);
+  border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:16px;background:white;color:var(--ink);outline:none}
+.korak-f input:focus,.korak-f select:focus{border-color:var(--accent)}
+/* Brskalnik doda v datumska in casovna polja svojo ikono, ki na ozkem zaslonu
+   poje toliko prostora, da se vrednost odreze - poleg tega stoji tik ob nasem
+   gumbu za trenutni cas, torej dve uri drug ob drugem. Polje ostane povsem
+   uporabno: tipkanje in dotik ga se vedno odpreta. */
+.korak-f input[type=time]::-webkit-calendar-picker-indicator,
+.korak-f input[type=date]::-webkit-calendar-picker-indicator{display:none}
+.korak-f input[type=time],.korak-f input[type=date]{text-align:center}
+.korak-casbox{display:flex;gap:.15rem;min-width:0}
+.korak-zdaj{flex:0 0 auto;min-width:34px;display:flex;align-items:center;justify-content:center;
+  padding:.2rem .3rem;border:1px solid var(--border);border-radius:var(--rs);
+  background:none;color:var(--muted);cursor:pointer;font-size:.78rem;line-height:1}
+.korak-zdaj:hover{border-color:var(--accent);color:var(--accent)}
+.korak-ure{font-size:.6rem;color:var(--muted);text-align:right;white-space:nowrap;margin:.15rem 0 .28rem}
+.korak-hdr{cursor:pointer}
+.korak-hdr:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.korak-zlozen{font-size:.64rem;color:var(--muted);padding-left:1.15rem}
 .calc-hint{font-size:.65rem;color:var(--accent);margin-top:.2rem;font-style:italic}
 
 /* ── OVERLAY / SHEET ── */
@@ -2276,46 +2311,58 @@ function dnVolAlcTinkture(){
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
 const DN_PREDLOGA_KORAKOV=[
   {korak:'etanol_priprava', naziv:'Priprava mešanice etanola', faza:'',
-   parametri:[['vol_pct','Ciljni vol%','%'],['masa','Masa mešanice','kg']]},
+   parametri:[['vol_pct','vol%','%'],['masa','masa','kg']]},
   {korak:'vlaga',           naziv:'Meritev vlage surovine', faza:'',
-   parametri:[['vlaga','Vlaga','%']]},
+   parametri:[['vlaga','vlaga','%']]},
   {korak:'tehtanje',        naziv:'Tehtanje in polnjenje kozarcev', faza:'',
-   parametri:[['kozarci','Št. kozarcev',''],['masa_kozarec','Surovina / kozarec','g'],
-              ['etanol_kozarec','Etanol / kozarec','g']]},
+   parametri:[['kozarci','kozarcev',''],['masa_kozarec','surovina/koz.','g'],
+              ['etanol_kozarec','etanol/koz.','g']]},
   {korak:'uz_1',            naziv:'UZ ekstrakcija — 1. dan', faza:'OF',
-   parametri:[['moc','Moč UZ','%'],['min_kozarec','Trajanje / kozarec','min'],
-              ['kozarci','Št. kozarcev',''],['t_zac','T začetna','°C'],['t_kon','T končna','°C']]},
+   parametri:[['moc','moč','%'],['min_kozarec','min/koz.',''],
+              ['kozarci','kozarcev',''],['t_zac','T zač.','°C'],['t_kon','T konč.','°C']]},
   {korak:'uz_2',            naziv:'UZ ekstrakcija — 2. dan', faza:'OF',
-   parametri:[['moc','Moč UZ','%'],['min_kozarec','Trajanje / kozarec','min'],
-              ['kozarci','Št. kozarcev',''],['t_zac','T začetna','°C'],['t_kon','T končna','°C']]},
+   parametri:[['moc','moč','%'],['min_kozarec','min/koz.',''],
+              ['kozarci','kozarcev',''],['t_zac','T zač.','°C'],['t_kon','T konč.','°C']]},
   {korak:'stiskanje_of',    naziv:'Stiskanje matičnega ekstrakta', faza:'OF',
-   parametri:[['masa','Masa ekstrakta','g']]},
+   parametri:[['masa','masa','g']]},
   {korak:'koncentriranje_of', naziv:'Koncentriranje OF', faza:'OF',
-   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
   {korak:'vrocevodna',      naziv:'Vročevodna ekstrakcija', faza:'VF',
-   parametri:[['t','Temperatura','°C'],['ure','Trajanje','h']]},
+   parametri:[['t','T','°C'],['ure','trajanje','h']]},
   {korak:'stiskanje_vf',    naziv:'Stiskanje vodne faze', faza:'VF',
-   parametri:[['masa','Masa ekstrakta','g']]},
+   parametri:[['masa','masa','g']]},
   {korak:'koncentriranje_vf', naziv:'Koncentriranje VF', faza:'VF',
-   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
   {korak:'tlacna',          naziv:'Tlačna ekstrakcija', faza:'TE',
-   parametri:[['t','Temperatura','°C'],['ure','Trajanje','h']]},
+   parametri:[['t','T','°C'],['ure','trajanje','h']]},
   {korak:'stiskanje_te',    naziv:'Stiskanje in ločevanje', faza:'TE',
-   parametri:[['masa','Masa ekstrakta','g']]},
+   parametri:[['masa','masa','g']]},
   {korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
-   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
   {korak:'formulacija_alc', naziv:'Formulacija alkoholna', faza:'',
-   parametri:[['lecitin','Lecitin','g'],['glicerin','Glicerin','g'],
-              ['tinktura','Alk. tinktura','g'],['suha_snov','Suha snov','%']]},
+   parametri:[['lecitin','lecitin','g'],['glicerin','glicerin','g'],
+              ['tinktura','tinktura','g'],['suha_snov','suha sn.','%']]},
   {korak:'pasta',           naziv:'Koncentriranje do paste', faza:'',
-   parametri:[['t','Temperatura','°C'],['ciljna_masa','Ciljna masa','g']]},
+   parametri:[['t','T','°C'],['ciljna_masa','cilj','g']]},
   {korak:'formulacija_gly', naziv:'Formulacija glicerinska', faza:'',
-   parametri:[['glicerin','Glicerin','g'],['voda','Voda','g'],['suha_snov','Suha snov','%']]},
+   parametri:[['glicerin','glicerin','g'],['voda','voda','g'],['suha_snov','suha sn.','%']]},
 ];
 
 const KORAK_STATUSI={nacrtovan:'○ načrtovan',v_teku:'▶ v teku',koncan:'✓ končan',preskocen:'⊘ preskočen'};
 
 let dnKorakiRows=[];
+// Koncan in preskocen korak se zlozi v eno vrstico - odprt ostane tisti, ki ga
+// se delas. Rocna izbira ima prednost pred tem pravilom.
+let dnKorakiOdprti=new Set();
+function korakJeOdprt(k){
+  if(dnKorakiOdprti.has(k.id))return true;
+  return k.status!=='koncan'&&k.status!=='preskocen';
+}
+function preklopiKorak(id){
+  if(dnKorakiOdprti.has(id))dnKorakiOdprti.delete(id);
+  else dnKorakiOdprti.add(id);
+  renderDNKorakiRows();
+}
 let dnKoraki=JSON.parse(localStorage.getItem('gm_dn_koraki')||'[]');
 
 function korakiZaDokument(oznaka){
@@ -2327,7 +2374,7 @@ function korakiZaDokument(oznaka){
 function korakiIzPredloge(){
   return DN_PREDLOGA_KORAKOV.map((t,i)=>({
     id:uid(),zaporedje:i+1,korak:t.korak,naziv:t.naziv,faza:t.faza||'',
-    opremaId:'',zacetek:'',konec:'',izvajalec:'',parametri:{},status:'nacrtovan',opomba:''
+    opremaId:'',datum:'',zacetek:'',konec:'',izvajalec:'',parametri:{},status:'nacrtovan',opomba:''
   }));
 }
 
@@ -2343,10 +2390,49 @@ function korakUre(k){
   return (b-a)/3600000;
 }
 
+// Kaj mora povedati zlozen korak: kdaj in kako dolgo. Brez tega bi bilo
+// zlaganje skoda in ne korist.
+function korakPovzetek(k){
+  const d=korakDatum(k);
+  const dan=d?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
+  const od=korakUra(k,'zacetek'),doU=korakUra(k,'konec');
+  const ure=korakUre(k);
+  const deli=[];
+  if(dan&&od)deli.push(`${dan} ${od}${doU?'–'+doU:''}`);
+  else if(dan)deli.push(dan);
+  if(ure!=null)deli.push(fmtUre(ure));
+  return deli.join(' · ');
+}
+
 function fmtUre(h){
   if(h==null)return '—';
   const ur=Math.floor(h),min=Math.round((h-ur)*60);
   return ur?`${ur} h ${min} min`:`${min} min`;
+}
+
+// datetime-local na ozkem zaslonu odreze letnico, zato vnos razdelimo na datum
+// in dve uri - kar je tudi blizje temu, kako se cas dejansko zapisuje.
+function korakDatum(k){
+  // Datum se hrani tudi posebej: dokler ni vpisana nobena ura, ga casa ne
+  // moreta nositi, uporabnik pa ga je ze izbral.
+  return k.datum||(k.zacetek||k.konec||'').slice(0,10);
+}
+function korakUra(k,polje){
+  return (k[polje]||'').slice(11,16);
+}
+// Ce je konec pred zacetkom, je korak tekel cez polnoc.
+function sestaviCase(k,datum,od,doU){
+  k.datum=datum||'';
+  if(!datum){k.zacetek='';k.konec='';return;}
+  k.zacetek=od?`${datum}T${od}`:'';
+  if(!doU){k.konec='';return;}
+  let dan=datum;
+  if(od&&doU<od){
+    const d=new Date(datum+'T00:00');
+    d.setDate(d.getDate()+1);
+    dan=d.toISOString().slice(0,10);
+  }
+  k.konec=`${dan}T${doU}`;
 }
 
 function lokalniCasZdaj(){
@@ -2355,9 +2441,18 @@ function lokalniCasZdaj(){
   return d.toISOString().slice(0,16);
 }
 
+function onDNKorakCas(idx,kaj,val){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const datum=kaj==='datum'?val:korakDatum(k);
+  const od   =kaj==='od'   ?val:korakUra(k,'zacetek');
+  const doU  =kaj==='do'   ?val:korakUra(k,'konec');
+  sestaviCase(k,datum,od,doU);
+  onDNKorakChange(idx,null,null);
+}
+
 function onDNKorakChange(idx,polje,val){
   const k=dnKorakiRows[idx];if(!k)return;
-  k[polje]=val;
+  if(polje)k[polje]=val;
   // Status sledi casom sam, dokler ga uporabnik ne postavi rocno na preskocen.
   if(k.status!=='preskocen'){
     if(k.zacetek&&k.konec)k.status='koncan';
@@ -2382,9 +2477,12 @@ function onDNKorakStatus(idx,val){
   dnOsveziPovzetke();
 }
 
-function nastaviKorakCas(idx,polje){
+function nastaviKorakCas(idx,kaj){
   const k=dnKorakiRows[idx];if(!k)return;
-  onDNKorakChange(idx,polje,lokalniCasZdaj());
+  const zdaj=lokalniCasZdaj();
+  // Prvi vpis doloci tudi datum koraka.
+  if(!korakDatum(k))sestaviCase(k,zdaj.slice(0,10),'','');
+  onDNKorakCas(idx,kaj,zdaj.slice(11,16));
 }
 
 function ustvariKorakeIzPredloge(){
@@ -2409,53 +2507,58 @@ function renderDNKorakiRows(){
     const t=predlogaZaKorak(k.korak);
     const ure=korakUre(k);
     const preskocen=k.status==='preskocen';
-    const barvaFaze=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
+    const bf=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
+    const opts=oprema.map(x=>
+      `<option value="${x.id}"${x.id===k.opremaId?' selected':''}>${x.naziv||'—'}</option>`).join('');
+    const ura=(kaj,napis)=>`
+      <div class="korak-f">
+        <label>${napis}</label>
+        <div class="korak-casbox">
+          <input type="time" value="${korakUra(k,kaj==='od'?'zacetek':'konec')}"
+                 onchange="onDNKorakCas(${idx},'${kaj}',this.value)">
+          <button type="button" class="korak-zdaj" title="Vpiši trenutni čas" aria-label="Vpiši trenutni čas"
+                  onclick="nastaviKorakCas(${idx},'${kaj}')">⏱</button>
+        </div>
+      </div>`;
     const parametri=(t.parametri||[]).map(([kl,napis,enota])=>`
-      <div class="field" style="flex:1;min-width:84px;margin-bottom:0">
-        <label style="font-size:.62rem">${napis}${enota?` (${enota})`:''}</label>
+      <div class="korak-f">
+        <label>${napis}${enota?' '+enota:''}</label>
         <input type="text" inputmode="decimal" value="${(k.parametri?.[kl]??'').toString().replace(/"/g,'&quot;')}"
                oninput="onDNKorakParam(${idx},'${kl}',this.value)">
       </div>`).join('');
 
-    return `<div style="border:1px solid var(--border);border-radius:var(--rs);padding:.5rem;margin-bottom:.4rem;${preskocen?'opacity:.5':''}">
-      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem">
-        <span style="font-size:.62rem;color:var(--muted);min-width:1.2rem">${k.zaporedje}.</span>
-        <span style="font-size:.76rem;font-weight:600;flex:1">${k.naziv}</span>
-        ${k.faza?`<span style="font-size:.58rem;font-weight:600;letter-spacing:.06em;padding:.1rem .3rem;border-radius:4px;color:${barvaFaze};background:${barvaFaze}22">${k.faza}</span>`:''}
-        <select onchange="onDNKorakStatus(${idx},this.value)" style="font-size:.62rem;padding:.1rem .2rem;width:auto;flex-shrink:0">
+    const odprt=korakJeOdprt(k);
+    const povz=korakPovzetek(k);
+    return `<div class="korak${preskocen?' presk':''}">
+      <div class="korak-hdr" onclick="preklopiKorak('${k.id}')" role="button" tabindex="0"
+           aria-expanded="${odprt}"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();preklopiKorak('${k.id}')}">
+        <span class="korak-st">${odprt?'▾':'▸'} ${k.zaporedje}.</span>
+        <span class="korak-naziv">${k.naziv}</span>
+        ${k.faza?`<span class="korak-faza" style="color:${bf};background:${bf}22">${k.faza}</span>`:''}
+        <select onchange="onDNKorakStatus(${idx},this.value)" onclick="event.stopPropagation()">
           ${Object.entries(KORAK_STATUSI).map(([v,n])=>`<option value="${v}"${k.status===v?' selected':''}>${n}</option>`).join('')}
         </select>
       </div>
-      ${preskocen?'':`
-      <div style="display:flex;gap:.3rem;align-items:flex-end;margin-bottom:.3rem;flex-wrap:wrap">
-        <div class="field" style="flex:1;min-width:130px;margin-bottom:0">
-          <label style="font-size:.62rem">Začetek</label>
-          <div style="display:flex;gap:.2rem">
-            <input type="datetime-local" value="${k.zacetek||''}" onchange="onDNKorakChange(${idx},'zacetek',this.value)">
-            <button type="button" onclick="nastaviKorakCas(${idx},'zacetek')" title="Zdaj"
-              style="flex-shrink:0;padding:.2rem .4rem;border:1px solid var(--border);border-radius:var(--rs);background:none;cursor:pointer;font-size:.62rem">zdaj</button>
-          </div>
+      ${!odprt?(povz?`<div class="korak-zlozen">${povz}</div>`:''):preskocen?'':`
+      <div class="korak-cas">
+        <div class="korak-f">
+          <label>Datum</label>
+          <input type="date" value="${korakDatum(k)}" onchange="onDNKorakCas(${idx},'datum',this.value)">
         </div>
-        <div class="field" style="flex:1;min-width:130px;margin-bottom:0">
-          <label style="font-size:.62rem">Konec</label>
-          <div style="display:flex;gap:.2rem">
-            <input type="datetime-local" value="${k.konec||''}" onchange="onDNKorakChange(${idx},'konec',this.value)">
-            <button type="button" onclick="nastaviKorakCas(${idx},'konec')" title="Zdaj"
-              style="flex-shrink:0;padding:.2rem .4rem;border:1px solid var(--border);border-radius:var(--rs);background:none;cursor:pointer;font-size:.62rem">zdaj</button>
-          </div>
-        </div>
-        <div style="font-size:.66rem;color:var(--muted);padding-bottom:.35rem;white-space:nowrap">${fmtUre(ure)}</div>
+        ${ura('od','Od')}${ura('do','Do')}
       </div>
-      <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.3rem">${parametri}</div>
-      <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-        <div class="field" style="flex:2;min-width:140px;margin-bottom:0">
-          <label style="font-size:.62rem">Naprava</label>
+      ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
+      <div class="korak-grid">${parametri}</div>
+      <div class="korak-grid" style="grid-template-columns:1fr 1fr">
+        <div class="korak-f">
+          <label>Naprava</label>
           <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">
-            <option value="">— brez —</option>${opts(k.opremaId)}
+            <option value="">—</option>${opts}
           </select>
         </div>
-        <div class="field" style="flex:2;min-width:120px;margin-bottom:0">
-          <label style="font-size:.62rem">Opomba</label>
+        <div class="korak-f">
+          <label>Opomba</label>
           <input type="text" value="${(k.opomba||'').replace(/"/g,'&quot;')}" oninput="onDNKorakChange(${idx},'opomba',this.value)">
         </div>
       </div>`}
@@ -3321,7 +3424,7 @@ function sbToKorak(r){
   return{
     id:r.id,dokument:r.dokument,zaporedje:r.zaporedje||0,korak:r.korak,
     naziv:r.naziv||'',faza:r.faza||'',opremaId:r.oprema_id||'',
-    zacetek:lok(r.zacetek),konec:lok(r.konec),
+    zacetek:lok(r.zacetek),konec:lok(r.konec),datum:lok(r.zacetek||r.konec).slice(0,10),
     izvajalec:r.izvajalec||'',parametri:r.parametri||{},
     status:r.status||'nacrtovan',opomba:r.opomba||'',
   };

@@ -131,6 +131,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   background:none;color:var(--muted);cursor:pointer;font-size:.78rem;line-height:1}
 .korak-zdaj:hover{border-color:var(--accent);color:var(--accent)}
 .korak-ure{font-size:.6rem;color:var(--muted);text-align:right;white-space:nowrap;margin:.15rem 0 .28rem}
+.korak-hdr{cursor:pointer}
+.korak-hdr:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.korak-zlozen{font-size:.64rem;color:var(--muted);padding-left:1.15rem}
 .calc-hint{font-size:.65rem;color:var(--accent);margin-top:.2rem;font-style:italic}
 
 /* ── OVERLAY / SHEET ── */
@@ -2348,6 +2351,18 @@ const DN_PREDLOGA_KORAKOV=[
 const KORAK_STATUSI={nacrtovan:'○ načrtovan',v_teku:'▶ v teku',koncan:'✓ končan',preskocen:'⊘ preskočen'};
 
 let dnKorakiRows=[];
+// Koncan in preskocen korak se zlozi v eno vrstico - odprt ostane tisti, ki ga
+// se delas. Rocna izbira ima prednost pred tem pravilom.
+let dnKorakiOdprti=new Set();
+function korakJeOdprt(k){
+  if(dnKorakiOdprti.has(k.id))return true;
+  return k.status!=='koncan'&&k.status!=='preskocen';
+}
+function preklopiKorak(id){
+  if(dnKorakiOdprti.has(id))dnKorakiOdprti.delete(id);
+  else dnKorakiOdprti.add(id);
+  renderDNKorakiRows();
+}
 let dnKoraki=JSON.parse(localStorage.getItem('gm_dn_koraki')||'[]');
 
 function korakiZaDokument(oznaka){
@@ -2373,6 +2388,20 @@ function korakUre(k){
   const a=new Date(k.zacetek).getTime(),b=new Date(k.konec).getTime();
   if(!isFinite(a)||!isFinite(b)||b<=a)return null;
   return (b-a)/3600000;
+}
+
+// Kaj mora povedati zlozen korak: kdaj in kako dolgo. Brez tega bi bilo
+// zlaganje skoda in ne korist.
+function korakPovzetek(k){
+  const d=korakDatum(k);
+  const dan=d?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
+  const od=korakUra(k,'zacetek'),doU=korakUra(k,'konec');
+  const ure=korakUre(k);
+  const deli=[];
+  if(dan&&od)deli.push(`${dan} ${od}${doU?'–'+doU:''}`);
+  else if(dan)deli.push(dan);
+  if(ure!=null)deli.push(fmtUre(ure));
+  return deli.join(' · ');
 }
 
 function fmtUre(h){
@@ -2498,16 +2527,20 @@ function renderDNKorakiRows(){
                oninput="onDNKorakParam(${idx},'${kl}',this.value)">
       </div>`).join('');
 
+    const odprt=korakJeOdprt(k);
+    const povz=korakPovzetek(k);
     return `<div class="korak${preskocen?' presk':''}">
-      <div class="korak-hdr">
-        <span class="korak-st">${k.zaporedje}.</span>
+      <div class="korak-hdr" onclick="preklopiKorak('${k.id}')" role="button" tabindex="0"
+           aria-expanded="${odprt}"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();preklopiKorak('${k.id}')}">
+        <span class="korak-st">${odprt?'▾':'▸'} ${k.zaporedje}.</span>
         <span class="korak-naziv">${k.naziv}</span>
         ${k.faza?`<span class="korak-faza" style="color:${bf};background:${bf}22">${k.faza}</span>`:''}
-        <select onchange="onDNKorakStatus(${idx},this.value)">
+        <select onchange="onDNKorakStatus(${idx},this.value)" onclick="event.stopPropagation()">
           ${Object.entries(KORAK_STATUSI).map(([v,n])=>`<option value="${v}"${k.status===v?' selected':''}>${n}</option>`).join('')}
         </select>
       </div>
-      ${preskocen?'':`
+      ${!odprt?(povz?`<div class="korak-zlozen">${povz}</div>`:''):preskocen?'':`
       <div class="korak-cas">
         <div class="korak-f">
           <label>Datum</label>

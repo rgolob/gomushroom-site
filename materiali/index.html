@@ -143,15 +143,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-ccp-napis{font-size:.62rem;font-weight:600;color:var(--ink);flex:1;min-width:110px}
 .korak-ccp-napis em{font-style:normal;font-weight:400;color:var(--muted)}
 .korak-ccp-gumbi{display:flex;gap:.2rem;flex:0 0 auto}
-.korak-ccp-vr{width:4.2rem;min-width:0;flex:0 0 auto;padding:.18rem .3rem;border:1px solid var(--border);
-  border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;color:var(--ink);
-  outline:none;text-align:center}
-.korak-ccp-vr:focus{border-color:var(--accent)}
 .korak-ccp-vr{flex:0 0 62px;min-width:0;padding:.2rem .3rem;border:1px solid var(--border);
   border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;
   color:var(--ink);outline:none;text-align:center}
 .korak-ccp-vr:focus{border-color:var(--accent)}
-.korak-izr{background:rgba(175,132,85,.1);border-color:rgba(175,132,85,.35);font-weight:600}
+/* Izracunana vrednost in vrednost iz naloga nista vnosni. Polje bi vabilo k
+   tipkanju in zasedlo prostor v vrsti; majhen izpis pove isto in ne laze. */
+/* Preseljena rubrika v koraku. Ostane ista kot na nalogu, le tesneje
+   postavljena - kartica koraka je ozja od obrazca. */
+.korak-premik:empty{display:none}
+.korak-premik{margin:.25rem 0 .1rem}
+.korak-premik .field{margin-bottom:.4rem}
+.korak-premik .slabel-alc,.korak-premik .slabel-gly{margin-top:0}
+.korak-izpis{display:flex;flex-wrap:wrap;gap:.1rem .8rem;margin:.1rem 0 .25rem}
+.korak-izpis-p{display:inline-flex;align-items:baseline;gap:.25rem;font-size:.58rem;color:var(--muted)}
+.korak-izpis-p b{font-size:.72rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.korak-izpis-p .izvor{color:var(--accent);font-weight:600}
 .korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
   border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
   font-family:'Jost',sans-serif;min-height:26px}
@@ -506,24 +513,32 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <input id="dnNamen" type="text" readonly style="background:var(--parchment);font-size:16px" placeholder="—">
         </div>
       </div>
-      <div id="dnSerijeContainer"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-        <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
-        <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
+      <!-- Rubrike, oznacene z dn-premik, so procesne in ne administrativne.
+           Ko nalog ima korake, jih korak k sebi preseli (dnPremakniBloke) -
+           element je isti, zato racuni, namigi in preklopniki delajo naprej.
+           Dokler korakov ni, ostanejo tu, da nalog ni neizpolnljiv. -->
+      <div id="dnBlokSerije" class="dn-premik">
+        <div id="dnSerijeContainer"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+          <div style="font-size:.72rem;color:var(--muted)">Skupaj goba: <strong id="dnMasaGobeTotal">—</strong> kg</div>
+          <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
+        </div>
       </div>
       <details class="dnsec" id="dnsecAlc" open>
       <summary>🥃 Alkoholna <span class="dnsum" id="dnsumAlc"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-alc">
-        <div class="slabel-alc">🥃 Etanol — vhod</div>
-        <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
-        <div class="frow">
-          <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
-          <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="dnPctEtOH" type="text" placeholder="npr. 96,25" inputmode="decimal" oninput="calcDN()"></div>
-        </div>
-        <div class="frow">
-          <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
-          <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+        <div id="dnBlokEtOH" class="dn-premik">
+          <div class="slabel-alc">🥃 Etanol — vhod</div>
+          <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="etZaloгаDN">Na zalogi: — L</div>
+          <div class="frow">
+            <div class="field"><label>Masa EtOH (kg)</label><input id="dnMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcDN()"></div>
+            <div class="field"><label>% EtOH vol. (izmerjeno)</label><input id="dnPctEtOH" type="text" placeholder="npr. 96,25" inputmode="decimal" oninput="calcDN()"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+            <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+          </div>
         </div>
         <div class="slabel-alc">🥃 Alkoholna tinktura</div>
         <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .35rem;cursor:pointer">
@@ -543,25 +558,31 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           </div>
           <div class="field"><label id="dnLabAlcSkupaj">Skupaj alc (kom.)</label><input id="dnKolAlcSkupaj" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
         </div>
-        <div class="frow">
-          <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
-          <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+        <div id="dnBlokVitCAlc" class="dn-premik">
+          <div class="frow">
+            <div class="field"><label>Vit. C alc (g)</label><input id="dnVitCAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+            <div class="field"><label>Lecitin alc (g)</label><input id="dnLecitinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
+          </div>
         </div>
-        <div class="frow">
+        <div id="dnBlokGlicerinAlc" class="dn-premik">
           <div class="field"><label>Glicerin v alc (g)</label><input id="dnGlicerinAlc" type="text" inputmode="decimal" placeholder="0,0"></div>
-          <div class="field"><label>Suha snov — Lod (%)</label><input id="dnSuhaSnov" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="onDnSuhaSnovInput()"></div>
         </div>
-        <div id="dnSuhaSnovNamig" style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:-.15rem 0 .1rem"></div>
+        <div id="dnBlokSuhaSnov" class="dn-premik">
+          <div class="field"><label>Suha snov — Lod (%)</label><input id="dnSuhaSnov" type="text" inputmode="decimal" placeholder="npr. 4,79" oninput="onDnSuhaSnovInput()"></div>
+          <div id="dnSuhaSnovNamig" style="font-size:.66rem;color:var(--muted);line-height:1.4;margin:.15rem 0 .1rem"></div>
+        </div>
       </div>
       </div></details>
       <details class="dnsec" id="dnsecGly" open>
       <summary>🌿 Glicerinska <span class="dnsum" id="dnsumGly"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-gly">
-        <div class="slabel-gly">🌿 Glicerin — vhod</div>
-        <div class="frow">
-          <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
-          <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
+        <div id="dnBlokGlicerin" class="dn-premik">
+          <div class="slabel-gly">🌿 Glicerin — vhod</div>
+          <div class="frow">
+            <div class="field"><label>Masa glicerina (g)</label><input id="dnMasaGlicerina" type="text" inputmode="decimal" placeholder="0,0" oninput="calcGlicerin()"></div>
+            <div class="field"><label>Volumen gly (L, auto)</label><input id="dnVolGlicerina" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
+          </div>
         </div>
         <div class="slabel-gly">🌿 Glicerinska tinktura</div>
         <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .35rem;cursor:pointer">
@@ -581,11 +602,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           </div>
           <div class="field"><label id="dnLabGlySkupaj">Skupaj gly (kom.)</label><input id="dnKolGlySkupaj" type="text" readonly style="background:rgba(58,122,90,.1)" placeholder="—"></div>
         </div>
-        <div class="frow">
-          <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
-          <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+        <div id="dnBlokVitCGly" class="dn-premik">
+          <div class="frow">
+            <div class="field"><label>Vit. C gly (g)</label><input id="dnVitCGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+            <div class="field"><label>Lecitin gly (g)</label><input id="dnLecitinGly" type="text" inputmode="decimal" placeholder="0,0"></div>
+          </div>
         </div>
-        <div class="frow">
+        <div id="dnBlokEtanolGly" class="dn-premik">
           <div class="field">
             <label>Etanol v gly</label>
             <div style="display:flex;gap:.35rem;align-items:center">
@@ -2435,26 +2458,35 @@ function dnVolAlcTinkture(){
 // parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
 const DN_PREDLOGA_KORAKOV=[
-  {st:'1',   korak:'etanol_priprava', naziv:'Etanolna ekstrakcija — priprava', faza:'',
+  // Tehtanje je prvi procesni korak, ne uvod v obrazec: serija in masa se
+  // izmerita takrat, ko se dela, in imata svoj cas ter izvajalca kot vsak
+  // drug korak. Rubrika se preseli sem, ne podvoji.
+  {st:'0',   korak:'tehtanje', naziv:'Tehtanje surovine', faza:'', vsebina:['dnBlokSerije'],
    polja:[
      {k:'vlaznost',tip:'ccp',napis:'Vlažnost surovine',enota:'%',meja:'< 12 %',
       opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
-     {k:'vir_etanola',tip:'izbira',napis:'Etanol pripravljen z',vec:true,
-      moznosti:['96 % etanol','regeneriran etanol','voda']},
      // Masa je v kilogramih, kot je vpisana pri seriji - pretvorba v grame bi
      // bila tiho mesto za napako desetiskega mesta.
-     {k:'m_surovine',tip:'iz_naloga',napis:'Σm surovine',enota:'kg',
+     {k:'m_surovine',tip:'iz_naloga',napis:'Σm surovine',enota:'kg',tiho:true,
       vir:()=>{const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);return v>0?round(v,3):null;}},
-     {k:'m_etoh',tip:'iz_naloga',napis:'Σm EtOH',enota:'kg',
+   ]},
+  {st:'1',   korak:'etanol_priprava', naziv:'Priprava ekstrakcijskega topila', faza:'',
+   vsebina:['dnBlokEtOH'],
+   polja:[
+     {k:'vir_etanola',tip:'izbira',napis:'Etanol pripravljen z',vec:true,
+      moznosti:['96 % etanol','regeneriran etanol','voda']},
+     // Masa in izmerjena volumska koncentracija se vpiseta v preseljeni
+     // rubriki nad tem; tu ju samo prevzamemo v zapisnik (tiho), da ju
+     // zapisnik nosi tudi takrat, ko obrazca ni vec pri roki.
+     {k:'m_etoh',tip:'iz_naloga',napis:'Σm EtOH',enota:'kg',tiho:true,
       vir:()=>parseNum(document.getElementById('dnMasaEtOH')?.value)||null},
-     {k:'c_etoh_vv',tip:'iz_naloga',napis:'C EtOH',enota:'% v/v',
+     {k:'c_etoh_vv',tip:'iz_naloga',napis:'C EtOH',enota:'% v/v',tiho:true,
       vir:()=>parseNum(document.getElementById('dnPctEtOH')?.value)||null},
-     // Vnese se masa in izmerjena volumska koncentracija; volumen in masni
-     // odstotek sta izpeljana - vpisovati oboje bi pomenilo dvakrat zapisati
-     // isto in tvegati, da se razideta.
-     {k:'v_etoh',tip:'izracun',napis:'ΣV EtOH',enota:'L',
+     {k:'v_etoh',tip:'izracun',napis:'ΣV EtOH',enota:'L',tiho:true,
       izracun:pa=>{const m=parseNum(pa.m_etoh),v=parseNum(pa.c_etoh_vv);
         return (m>0&&v>0)?round(m/etohDensity(v),3):null;}},
+     // Masni odstotek je edini, ki ga preseljena rubrika ne pokaze - v/v je
+     // izmerjen, m/m pa je tisti, po katerem se presoja meja 20,5 % m/m.
      {k:'c_etoh_mm',tip:'izracun',napis:'C EtOH',enota:'% m/m',
       izracun:pa=>{const v=parseNum(pa.c_etoh_vv);return v>0?round(volToMas(v),1):null;}},
    ]},
@@ -2552,41 +2584,54 @@ const DN_PREDLOGA_KORAKOV=[
         return round(hve+te-(mTot-parseNum(drugi('koncentriranje_of').m_of)),1);}},
    ]},
   {st:'4',   korak:'formulacija_alc', naziv:'Alkoholna formulacija', faza:'',
+   vsebina:['dnBlokGlicerinAlc'],
    polja:[
      {k:'m_tinkture',tip:'meritev',napis:'m tinkture',enota:'g'},
      {k:'v_tinkture',tip:'meritev',napis:'V tinkture',enota:'mL'},
      {k:'ro',tip:'meritev',napis:'ρ tinkture',enota:'g/mL'},
      {k:'c_etoh',tip:'meritev',napis:'C EtOH',enota:'% v/v'},
+     {k:'glicerin_alc',tip:'iz_naloga',napis:'m glicerina v alk.',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnGlicerinAlc')?.value)||null},
    ]},
   {st:'4.1', korak:'vitc_lecitin', naziv:'Dodajanje vitamina C in lecitina', faza:'',
+   vsebina:['dnBlokVitCAlc'],
+   opis:'Vitamin C 0,20 % m/m glede na skupno maso tinkture, vedno pred lecitinom. Sončnični lecitin (non-GMO) 0,30 % m/m.',
    polja:[
-     {k:'m_vitc',tip:'meritev',napis:'m vit. C',enota:'g',
-      opis:'0,20 % m/m glede na skupno maso tinkture. Vitamin C se vedno doda pred lecitinom.'},
-     {k:'m_lecitin',tip:'meritev',napis:'m lecitina',enota:'g',
-      opis:'0,30 % m/m; sončnični lecitin (non-GMO).'},
+     {k:'m_vitc',tip:'iz_naloga',napis:'m vit. C',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnVitCAlc')?.value)||null},
+     {k:'m_lecitin',tip:'iz_naloga',napis:'m lecitina',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnLecitinAlc')?.value)||null},
      {k:'mesanje_ok',tip:'izbira',napis:'Mešano ≥ 4 h pri T < 40 °C',moznosti:['da','ne']},
    ]},
   {st:'5',   korak:'suha_snov', naziv:'Analiza suhe snovi', faza:'',
+   vsebina:['dnBlokSuhaSnov'],
+   opis:'Halogenski sušilnik HR83, 1000 mg ± 500 mg, 105 °C, izklopni kriterij 3.',
    polja:[
-     {k:'w_ss',tip:'meritev',napis:'W ss',enota:'%',
-      opis:'Halogenski sušilnik HR83, 1000 mg ± 500 mg, 105 °C, izklopni kriterij 3.'},
+     {k:'w_ss',tip:'iz_naloga',napis:'W ss',enota:'%',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnSuhaSnov')?.value)||null},
      {k:'ss_ok',tip:'ccp',napis:'Vsebnost suhe snovi',
       meja:'Reishi ≥ 4,0 % · Chaga ≥ 6,0 % · Resasti bradovec ≥ 10,0 %'},
    ]},
   {st:'6',   korak:'formulacija_gly', naziv:'Glicerinska formulacija', faza:'', akcija:'gly',
+   vsebina:['dnBlokGlicerin','dnBlokEtanolGly'],
    polja:[
      {k:'m0',tip:'meritev',napis:'m0 alk. tinkture',enota:'g'},
-     {k:'m_glicerina',tip:'meritev',napis:'m dodanega glicerina',enota:'g'},
      {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
      {k:'v_tinkture',tip:'meritev',napis:'V tinkture',enota:'mL'},
      {k:'w_glicerina',tip:'meritev',napis:'W glicerina',enota:'%'},
+     {k:'m_glicerina',tip:'iz_naloga',napis:'m dodanega glicerina',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnMasaGlicerina')?.value)||null},
      {k:'etoh_ok',tip:'ccp',napis:'Koncentracija etanola v alkoholni tinkturi',
       meja:'≥ 25,0 % v/v (20,5 % m/m)'},
    ]},
   {st:'6.1', korak:'vitc_gly', naziv:'Vitamin C v glicerinski tinkturi', faza:'',
+   vsebina:['dnBlokVitCGly'],
+   opis:'0,50 % m/m; meša na rotavaporju ob T kopeli < 40 °C do popolne raztopitve.',
    polja:[
-     {k:'m_vitc',tip:'meritev',napis:'m vit. C',enota:'g',
-      opis:'0,50 % m/m; meša na rotavaporju ob T kopeli < 40 °C do popolne raztopitve.'},
+     {k:'m_vitc',tip:'iz_naloga',napis:'m vit. C',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnVitCGly')?.value)||null},
+     {k:'m_lecitin',tip:'iz_naloga',napis:'m lecitina',enota:'g',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnLecitinGly')?.value)||null},
    ]},
   {st:'8',   korak:'polnjenje', naziv:'Polnjenje', faza:'',
    polja:[
@@ -2793,14 +2838,39 @@ function onDNKorakParam(idx,kljuc,val){
 // Posodobimo samo njihove vrednosti na mestu.
 function osveziIzracuneKoraka(idx){
   const k=dnKorakiRows[idx];if(!k)return;
-  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  const polja=poljaKoraka(predlogaZaKorak(k.korak)).filter(x=>x.tip==='izracun');
   if(!polja.length)return;
   const kartica=document.querySelectorAll('#dnKorakiContainer > .korak')[idx];
   if(!kartica)return;
-  const vnosi=kartica.querySelectorAll('.korak-izr');
-  polja.forEach((x,i)=>{
+  // Iscemo po kljucu, ne po zaporedju: pogojna polja (velja) se lahko skrijejo
+  // in bi zamik vpisal vrednost v napacno rubriko.
+  polja.forEach(x=>{
+    const el=kartica.querySelector(`.korak-izpis-p[data-izpis="${x.k}"] b`);
+    if(!el)return;
     const v=x.izracun?x.izracun(paramiZViri(k),paramiKoraka):null;
-    if(vnosi[i])vnosi[i].value=v==null?'':String(v).replace('.',',');
+    el.textContent=v==null?'—':String(v).replace('.',',');
+  });
+}
+
+// Vrednosti iz naloga se spremenijo drugje kot v koraku - masa surovine v
+// rubriki tehtanja, masa etanola pri pripravi topila. Izpis mora slediti,
+// sicer korak kaze crtico ob vpisani stevilki.
+function dnOsveziIzpise(){
+  const kartice=document.querySelectorAll('#dnKorakiContainer > .korak');
+  if(!kartice.length)return;
+  dnKorakiRows.forEach((k,i)=>{
+    const kartica=kartice[i];
+    if(!kartica)return;
+    const t=predlogaZaKorak(k.korak);
+    poljaKoraka(t).forEach(x=>{
+      if(x.tip!=='izracun'&&x.tip!=='iz_naloga')return;
+      const el=kartica.querySelector(`.korak-izpis-p[data-izpis="${x.k}"] b`);
+      if(!el)return;
+      const v=x.tip==='izracun'
+        ? (x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null)
+        : vrednostIzNaloga(x);
+      el.textContent=v==null?'—':String(v).replace('.',',');
+    });
   });
 }
 
@@ -2896,9 +2966,46 @@ function ustvariKorakeIzPredloge(){
   dnOsveziPovzetke();
 }
 
+// ── Preseljene rubrike ────────────────────────────────────────────────────
+// Tehtanje, priprava topila in formulacije so procesni koraki, ne uvod v
+// obrazec. Rubrike zato zivijo v korakih - a kot isti element, ne kot kopija:
+// podvojeno polje bi pomenilo dve resnici in tiho razhajanje. Zato element
+// samo preselimo; racuni, namigi in preklopnik g/mL delajo naprej.
+// Domov se blok vrne po sidru, ne po sosedu: sosed je lahko tudi sam preseljen
+// in blok bi pristal na napacnem mestu. Sidro ostane, kjer je bilo.
+const dnSidra=new Map();
+function dnZapomniDom(){
+  document.querySelectorAll('.dn-premik').forEach(el=>{
+    if(dnSidra.has(el.id))return;
+    const sidro=document.createElement('div');
+    sidro.hidden=true;
+    el.parentNode.insertBefore(sidro,el);
+    dnSidra.set(el.id,sidro);
+  });
+}
+function dnVrniBlokeDomov(){
+  dnSidra.forEach((sidro,id)=>{
+    const el=document.getElementById(id);
+    if(!el||el.previousSibling===sidro)return;
+    sidro.parentNode.insertBefore(el,sidro.nextSibling);
+  });
+}
+function dnPremakniBloke(){
+  document.querySelectorAll('#dnKorakiContainer [data-vsebina]').forEach(cilj=>{
+    cilj.dataset.vsebina.split('|').forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)cilj.appendChild(el);
+    });
+  });
+}
+
 function renderDNKorakiRows(){
   const c=document.getElementById('dnKorakiContainer');
   if(!c)return;
+  // Blok mora domov, preden innerHTML pobrise kartice - sicer bi element s
+  // svojo vsebino izginil in nalog bi ostal brez rubrike.
+  dnZapomniDom();
+  dnVrniBlokeDomov();
   if(!dnKorakiRows.length){
     c.innerHTML=`<div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">
       Koraki še niso ustvarjeni. Predloga jih doda po tvojem procesu — časi in parametri se vpišejo sproti.</div>`;
@@ -2927,20 +3034,18 @@ function renderDNKorakiRows(){
     // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
     // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
     const vp=poljaKoraka(t);
-    const izracuni=vp.filter(x=>x.tip==='izracun').map(x=>{
-      const v=x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null;
-      return `<div class="korak-f">
-        <label>${x.napis}${x.enota?' '+x.enota:''}</label>
-        <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
-      </div>`;}).join('');
+    const izpis=(x,v,izvor)=>`<span class="korak-izpis-p" data-izpis="${x.k}"
+        ${izvor?'title="Iz naloga"':''}><span>${x.napis}${izvor?' <span class="izvor">↑</span>':''}</span
+        ><b>${v==null?'—':String(v).replace('.',',')}</b>${x.enota?'<span>'+x.enota+'</span>':''}</span>`;
+
+    // "tiho" pomeni: vrednost gre v zapisnik, na zaslon pa ne - rubrika tik nad
+    // korakom jo ze pokaze in dvojni izpis bi bral kot dva podatka.
+    const izracuni=vp.filter(x=>x.tip==='izracun'&&!x.tiho).map(x=>
+      izpis(x,x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null,false)).join('');
 
     // Iz naloga: samo za branje. Ce je vpisano v nalogu, se tu ne vprasa znova.
-    const izNaloga=vp.filter(x=>x.tip==='iz_naloga').map(x=>{
-      const v=vrednostIzNaloga(x);
-      return `<div class="korak-f">
-        <label title="Iz naloga">${x.napis}${x.enota?' '+x.enota:''} <span class="izvor">↑</span></label>
-        <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
-      </div>`;}).join('');
+    const izNaloga=vp.filter(x=>x.tip==='iz_naloga'&&!x.tiho).map(x=>
+      izpis(x,vrednostIzNaloga(x),true)).join('');
 
     const meritve=vp.filter(x=>x.tip==='meritev').map(x=>`
       <div class="korak-f">
@@ -2953,14 +3058,9 @@ function renderDNKorakiRows(){
     // Presoja stoji nad meritvami, ker zadrzuje zakljucek koraka.
     const ccp=vp.filter(x=>x.tip==='ccp').map(x=>{
       const izid=k.parametri?.[x.k+'__presoja']||'';
-      // Nekatere kriticne tocke imajo poleg presoje tudi izmerjeno vrednost
-      // (vlaznost 9,21 % ob meji < 12 %), druge so samo presoja (filtrat bister).
-      const vrednost=x.enota?`<input type="text" inputmode="decimal" class="korak-ccp-vr"
-        placeholder="${x.enota}" value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
-        oninput="onDNKorakParam(${idx},'${x.k}',this.value)">`:'';
-      // Nekatere kriticne tocke se presodijo po meritvi (vlaznost), druge so
-      // cista presoja (filtrat bister). Prve potrebujejo tudi stevilko - sicer
-      // zapisnik pove, da ustreza, ne pa cesa.
+      // Nekatere kriticne tocke se presodijo po meritvi (vlaznost 9,21 % ob
+      // meji < 12 %), druge so cista presoja (filtrat bister). Prve
+      // potrebujejo tudi stevilko - sicer zapisnik pove, da ustreza, ne pa cesa.
       const meri=x.enota?`<input type="text" inputmode="decimal" class="korak-ccp-vr"
           value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
           placeholder="${x.enota}" aria-label="${x.napis} (${x.enota})"
@@ -2969,7 +3069,6 @@ function renderDNKorakiRows(){
         <div class="korak-ccp-vrh">
           <span class="korak-ccp-napis">⚠ ${x.napis}${x.meja?` <em>${x.meja}</em>`:''}</span>
           ${meri}
-          ${vrednost}
           <span class="korak-ccp-gumbi">
             <button type="button" class="${izid==='da'?'izbran':''}" onclick="onDNKorakCCP(${idx},'${x.k}','da')">ustreza</button>
             <button type="button" class="${izid==='ne'?'izbran ne':''}" onclick="onDNKorakCCP(${idx},'${x.k}','ne')">ne ustreza</button>
@@ -2985,7 +3084,7 @@ function renderDNKorakiRows(){
           `<button type="button" class="${izbranaMoznost(k,x.k,m)?'izbran':''}"
             onclick="onDNKorakIzbira(${idx},'${x.k}','${m.replace(/'/g,"\\'")}',${!!x.vec})">${m}</button>`).join('')}</div>
       </div>`).join('');
-    const parametri=meritve+izracuni;
+    const izpisi=izNaloga+izracuni;
 
     const odprt=korakJeOdprt(k);
     const povz=korakPovzetek(k);
@@ -3013,8 +3112,11 @@ function renderDNKorakiRows(){
         onclick="odpriPreracunME('${k.id}')">🧮 Odpri preračun matičnega ekstrakta</button>`:''}
       ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunGly('${k.id}')">🧮 Odpri glicerinski preračun</button>`:''}
+      ${t.opis?`<div class="korak-opis">${t.opis}</div>`:''}
       ${ccp}${izbire}
-      <div class="korak-grid">${izNaloga}${parametri}</div>
+      ${t.vsebina?`<div class="korak-premik" data-vsebina="${t.vsebina.join('|')}"></div>`:''}
+      ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
+      ${meritve?`<div class="korak-grid">${meritve}</div>`:''}
       <div class="korak-grid" style="grid-template-columns:1fr 1fr">
         <div class="korak-f">
           <label>Naprava</label>
@@ -3029,6 +3131,7 @@ function renderDNKorakiRows(){
       </div>`}
     </div>`;
   }).join('');
+  dnPremakniBloke();
 }
 
 // ── Harmonika na delovnem nalogu ──────────────────────────────────────────
@@ -3102,6 +3205,8 @@ function dnOsveziPovzetke(){
   const zak=document.getElementById('dnDatumZakljucka')?.value;
   const opomba=(document.getElementById('dnOpomba')?.value||'').trim();
   dnPisiPovzetek('Konec',zak?zak.split('-').reverse().join('.'):(opomba?'opomba':'—'));
+
+  dnOsveziIzpise();
 }
 
 // Sklop brez kolicine se sam zapre — cisto glicerinskemu nalogu alkoholnega
@@ -3782,6 +3887,7 @@ function renderDNSerijeRows(){
     </div>
     <div id="dnSerijeHint-${idx}" style="font-size:.67rem;color:${prevec?'var(--danger)':'var(--muted)'};min-height:.85rem;padding-left:.1rem;margin-bottom:.3rem">${hintTxt}</div>`;
   }).join('');
+  if(typeof dnOsveziIzpise==='function')dnOsveziIzpise();
 }
 
 // ── UPORABLJENA OPREMA ─────────────────────────────────────────────────────
@@ -3988,6 +4094,8 @@ function onDNMasaChange(idx,val){
   const totalMasa=dnSerijeRows.reduce((s,r)=>s+(parseNum(r.masa)||0),0);
   const totalEl=document.getElementById('dnMasaGobeTotal');
   if(totalEl)totalEl.textContent=totalMasa>0?totalMasa.toFixed(3):'—';
+  // Rubrika tehtanja stoji v koraku - njegov izpis mase mora slediti vnosu.
+  dnOsveziIzpise();
 }
 
 function updateDNNamen(){

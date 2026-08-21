@@ -524,6 +524,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <button type="button" class="fpill" onclick="addDNSerijaRow()">+ Serija</button>
         </div>
       </div>
+      <details class="dnsec" id="dnsecKoraki">
+      <summary>🧪 Procesni koraki <span class="dnsum" id="dnsumKoraki"></span></summary>
+      <div class="dnsec-body">
+        <div id="dnKorakiContainer"></div>
+        <button type="button" onclick="ustvariKorakeIzPredloge()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">↻ Ustvari korake iz predloge</button>
+      </div></details>
       <details class="dnsec" id="dnsecAlc" open>
       <summary>🥃 Alkoholna <span class="dnsum" id="dnsumAlc"></span></summary>
       <div class="dnsec-body">
@@ -644,12 +650,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
-      </div></details>
-      <details class="dnsec" id="dnsecKoraki">
-      <summary>🧪 Procesni koraki <span class="dnsum" id="dnsumKoraki"></span></summary>
-      <div class="dnsec-body">
-        <div id="dnKorakiContainer"></div>
-        <button type="button" onclick="ustvariKorakeIzPredloge()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">↻ Ustvari korake iz predloge</button>
       </div></details>
       <details class="dnsec" id="dnsecOprema">
       <summary>🔧 Uporabljena oprema <span class="dnsum" id="dnsumOprema"></span></summary>
@@ -3137,7 +3137,9 @@ function renderDNKorakiRows(){
 // ── Harmonika na delovnem nalogu ──────────────────────────────────────────
 // Zaprt sklop mora povedati, kaj je v njem, sicer je skrivanje skoda in ne
 // korist. Povzetek zato nosi stanje: kolicine, AAE, ali se bilanca izide.
-const DN_SEKCIJE=['Alc','Gly','Bil','Koraki','Cene','Oprema','Konec'];
+// Koraki so na vrhu, ker se nalog tam dejansko dela - serija, masa surovine
+// in topilo se vpisejo v prvih dveh korakih. Kolicine in cene pridejo za tem.
+const DN_SEKCIJE=['Koraki','Alc','Gly','Bil','Cene','Oprema','Konec'];
 const DN_ODPRTO_KLJUC='gm_dn_sekcije_odprto';
 
 function dnPisiPovzetek(id,besedilo,razred=''){
@@ -3216,12 +3218,18 @@ function dnNastaviZacetnoStanje(){
   try{shranjeno=JSON.parse(localStorage.getItem(DN_ODPRTO_KLJUC)||'{}');}catch(e){}
   const imaAlc=dnKol('dnKolAlc',dnJeBulk('Alc'))+dnKol('dnKolAlcInterno',dnJeBulk('Alc'))>0;
   const imaGly=dnKol('dnKolGly',dnJeBulk('Gly'))+dnKol('dnKolGlyInterno',dnJeBulk('Gly'))>0;
-  const privzeto={Alc:imaAlc||!imaGly,Gly:imaGly,Bil:true,Koraki:false,Cene:false,Oprema:false,Konec:false};
+  const privzeto={Koraki:true,Alc:imaAlc||!imaGly,Gly:imaGly,Bil:true,Cene:false,Oprema:false,Konec:false};
   for(const s of DN_SEKCIJE){
     const el=document.getElementById('dnsec'+s);
     if(!el)continue;
     el.open=(s in shranjeno)?!!shranjeno[s]:privzeto[s];
   }
+  // Serija in masa surovine se vpiseta v prvem koraku. Ce naloga se ni in je
+  // sklop zaprt, nalog nima nobenega mesta za vnos - to je slepa ulica, zato
+  // shranjena izbira tu ne velja. Odprtje se tudi zapomni: kdor od prej nosi
+  // "koraki zaprti", tega ni izbral za obrazec, v katerem se koraki delajo.
+  if(dnKorakiRows.length&&!dnSerijeRows.some(r=>parseNum(r.masa)>0))
+    dnOdpriSekcijo('Koraki');
   dnOsveziPovzetke();
 }
 

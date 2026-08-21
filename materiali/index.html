@@ -125,6 +125,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-f input[type=time]::-webkit-calendar-picker-indicator,
 .korak-f input[type=date]::-webkit-calendar-picker-indicator{display:none}
 .korak-f input[type=time],.korak-f input[type=date]{text-align:center}
+.korak-f .izvor{color:var(--accent);font-weight:600}
 .korak-casbox{display:flex;gap:.15rem;min-width:0}
 .korak-zdaj{flex:0 0 auto;min-width:34px;display:flex;align-items:center;justify-content:center;
   padding:.2rem .3rem;border:1px solid var(--border);border-radius:var(--rs);
@@ -2403,6 +2404,11 @@ function calcGlicerin(){
 // Bulk: kolicina ni v steklenicah, ampak v litrih. Zato tudi ne sme skozi
 // parseInt - 2,5 L bi postalo 2.
 function dnJeBulk(t){return !!document.getElementById('dn'+t+'Bulk')?.checked;}
+function dnKolSkupaj(t){
+  const bulk=dnJeBulk(t);
+  const v=dnKol('dnKol'+t,bulk)+dnKol('dnKol'+t+'Interno',bulk);
+  return v>0?v:null;
+}
 function dnKol(id,bulk){
   const v=document.getElementById(id)?.value;
   return bulk?(parseNum(v||'0')||0):(parseInt(v)||0);
@@ -2435,9 +2441,14 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
      {k:'vir_etanola',tip:'izbira',napis:'Etanol pripravljen z',vec:true,
       moznosti:['96 % etanol','regeneriran etanol','voda']},
-     {k:'m_surovine',tip:'meritev',napis:'Σm surovine',enota:'g'},
-     {k:'m_etoh',tip:'meritev',napis:'Σm EtOH',enota:'kg'},
-     {k:'c_etoh_vv',tip:'meritev',napis:'C EtOH',enota:'% v/v'},
+     // Masa je v kilogramih, kot je vpisana pri seriji - pretvorba v grame bi
+     // bila tiho mesto za napako desetiskega mesta.
+     {k:'m_surovine',tip:'iz_naloga',napis:'Σm surovine',enota:'kg',
+      vir:()=>{const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);return v>0?round(v,3):null;}},
+     {k:'m_etoh',tip:'iz_naloga',napis:'Σm EtOH',enota:'kg',
+      vir:()=>parseNum(document.getElementById('dnMasaEtOH')?.value)||null},
+     {k:'c_etoh_vv',tip:'iz_naloga',napis:'C EtOH',enota:'% v/v',
+      vir:()=>parseNum(document.getElementById('dnPctEtOH')?.value)||null},
      // Vnese se masa in izmerjena volumska koncentracija; volumen in masni
      // odstotek sta izpeljana - vpisovati oboje bi pomenilo dvakrat zapisati
      // isto in tvegati, da se razideta.
@@ -2592,14 +2603,14 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'predpogoji_ok',tip:'ccp',napis:'Vsi predpogoji izpolnjeni',
       opis:'CCP iz Analize tveganja (DOK-002).'},
      // Kolicina se pove v tisti enoti, v kateri je serija dejansko koncala.
-     {k:'st_alk',tip:'meritev',napis:'Alkoholnih polnitev',enota:'',
-      velja:()=>!dnJeBulk('Alc')},
-     {k:'l_alk',tip:'meritev',napis:'Alkoholna razsuto',enota:'L',
-      velja:()=>dnJeBulk('Alc')},
-     {k:'st_gly',tip:'meritev',napis:'Glicerinskih polnitev',enota:'',
-      velja:()=>!dnJeBulk('Gly')},
-     {k:'l_gly',tip:'meritev',napis:'Glicerinska razsuto',enota:'L',
-      velja:()=>dnJeBulk('Gly')},
+     {k:'st_alk',tip:'iz_naloga',napis:'Alkoholnih polnitev',enota:'',
+      velja:()=>!dnJeBulk('Alc'),vir:()=>dnKolSkupaj('Alc')},
+     {k:'l_alk',tip:'iz_naloga',napis:'Alkoholna razsuto',enota:'L',
+      velja:()=>dnJeBulk('Alc'),vir:()=>dnKolSkupaj('Alc')},
+     {k:'st_gly',tip:'iz_naloga',napis:'Glicerinskih polnitev',enota:'',
+      velja:()=>!dnJeBulk('Gly'),vir:()=>dnKolSkupaj('Gly')},
+     {k:'l_gly',tip:'iz_naloga',napis:'Glicerinska razsuto',enota:'L',
+      velja:()=>dnJeBulk('Gly'),vir:()=>dnKolSkupaj('Gly')},
    ]},
   {st:'9',   korak:'organoleptika', naziv:'Organoleptična analiza', faza:'',
    polja:[
@@ -2645,6 +2656,26 @@ function predlogaZaKorak(kljuc){
 // Nekatera polja veljajo samo v dolocenih okoliscinah - stevilo polnitev nima
 // pomena, ce serija ni ustekleniceena. Nalog to ze ve, zato se ne vprasa
 // dvakrat.
+// Nekatera polja rubrik so ista stvar kot polja naloga - masa surovine,
+// masa etanola, izmerjena koncentracija, kolicine na koncu. Vprasati dvakrat
+// pomeni tvegati, da se razideta, zato jih rubrika pokaze, ne pa zahteva.
+// Vir bere iz obrazca, da deluje tudi pri se neshranjenem nalogu.
+function vrednostIzNaloga(x){
+  try{const v=x.vir?x.vir():null;return (v==null||v===''||(typeof v==='number'&&!v))?null:v;}
+  catch(e){return null;}
+}
+
+// Parametri, dopolnjeni z vrednostmi iz naloga - izracuni berejo eno samo
+// sliko, ne glede na to, od kod posamezen podatek pride.
+function paramiZViri(k,t){
+  const pa={...(k.parametri||{})};
+  poljaKoraka(t||predlogaZaKorak(k.korak)).filter(x=>x.tip==='iz_naloga').forEach(x=>{
+    const v=vrednostIzNaloga(x);
+    if(v!=null)pa[x.k]=String(v);
+  });
+  return pa;
+}
+
 function poljaKoraka(t){
   return (t.polja||[]).filter(x=>typeof x.velja!=='function'||x.velja());
 }
@@ -2768,7 +2799,7 @@ function osveziIzracuneKoraka(idx){
   if(!kartica)return;
   const vnosi=kartica.querySelectorAll('.korak-izr');
   polja.forEach((x,i)=>{
-    const v=x.izracun?x.izracun(k.parametri||{},paramiKoraka):null;
+    const v=x.izracun?x.izracun(paramiZViri(k),paramiKoraka):null;
     if(vnosi[i])vnosi[i].value=v==null?'':String(v).replace('.',',');
   });
 }
@@ -2784,10 +2815,15 @@ function paramiKoraka(kljuc){
 // Ob shranjevanju izracunane vrednosti zapisemo med parametre, da jih zapisnik
 // nosi tudi takrat, ko formule ni vec pri roki.
 function zapisiIzracune(k){
-  const polja=poljaKoraka(predlogaZaKorak(k.korak)).filter(x=>x.tip==='izracun');
-  if(!polja.length)return k;
-  const pa={...(k.parametri||{})};
-  polja.forEach(x=>{
+  const t=predlogaZaKorak(k.korak);
+  const polja=poljaKoraka(t);
+  const izr=polja.filter(x=>x.tip==='izracun');
+  const viri=polja.filter(x=>x.tip==='iz_naloga');
+  if(!izr.length&&!viri.length)return k;
+  // Vrednosti iz naloga se zapisejo skupaj z izracuni: izpis tece iz shranjenih
+  // podatkov, ne iz odprtega obrazca, zato jih tam drugace ne bi bilo.
+  const pa=paramiZViri(k,t);
+  izr.forEach(x=>{
     const v=x.izracun?x.izracun(pa,paramiKoraka):null;
     if(v==null)delete pa[x.k]; else pa[x.k]=String(v);
   });
@@ -2892,9 +2928,17 @@ function renderDNKorakiRows(){
     // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
     const vp=poljaKoraka(t);
     const izracuni=vp.filter(x=>x.tip==='izracun').map(x=>{
-      const v=x.izracun?x.izracun(k.parametri||{},paramiKoraka):null;
+      const v=x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null;
       return `<div class="korak-f">
         <label>${x.napis}${x.enota?' '+x.enota:''}</label>
+        <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
+      </div>`;}).join('');
+
+    // Iz naloga: samo za branje. Ce je vpisano v nalogu, se tu ne vprasa znova.
+    const izNaloga=vp.filter(x=>x.tip==='iz_naloga').map(x=>{
+      const v=vrednostIzNaloga(x);
+      return `<div class="korak-f">
+        <label title="Iz naloga">${x.napis}${x.enota?' '+x.enota:''} <span class="izvor">↑</span></label>
         <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
       </div>`;}).join('');
 
@@ -2970,7 +3014,7 @@ function renderDNKorakiRows(){
       ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunGly('${k.id}')">🧮 Odpri glicerinski preračun</button>`:''}
       ${ccp}${izbire}
-      <div class="korak-grid">${parametri}</div>
+      <div class="korak-grid">${izNaloga}${parametri}</div>
       <div class="korak-grid" style="grid-template-columns:1fr 1fr">
         <div class="korak-f">
           <label>Naprava</label>
@@ -4864,7 +4908,7 @@ async function genZapisnikProizvodnje(dnId){
         ${cas?`<span class="cas">${dat(cas)} ${ura(cas)}</span>`:''}
       </div>`;}).join('');
 
-    const meritve=polja.filter(x=>x.tip==='meritev'||x.tip==='izracun').map(x=>{
+    const meritve=polja.filter(x=>x.tip==='meritev'||x.tip==='izracun'||x.tip==='iz_naloga').map(x=>{
       const v=x.tip==='izracun'
         ? (x.izracun?x.izracun(k.parametri||{},drugi):null)
         : k.parametri?.[x.k];

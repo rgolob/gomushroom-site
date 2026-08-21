@@ -2491,8 +2491,18 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
    polja:[
+     {k:'v_koncni',tip:'meritev',napis:'V končni',enota:'mL',
+      opis:'Ciljni volumen končne tinkture. Iz njega sledi skupna masa m_tot = ρ30 × V, pri ρ30 iz tabele gostot (0,9622 g/mL).'},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m HVE koncentrata',enota:'g'},
+     {k:'m_tot',tip:'izracun',napis:'m tot',enota:'g',
+      izracun:pa=>{const v=parseNum(pa.v_koncni);return v>0?round(v*etohDensity(30),1):null;}},
+     // Polovica je le teoreticni cilj in ga ni mogoce zadeti. Zavezujoca je
+     // vsota HVE + TE; kar tu manjka, mora dati TE, in obratno.
+     {k:'m_hve_cilj',tip:'izracun',napis:'cilj ½',enota:'g',
+      izracun:(pa,drugi)=>{const v=parseNum(pa.v_koncni);if(!(v>0))return null;
+        const of=parseNum(drugi('koncentriranje_of').m_of);
+        return round((v*etohDensity(30)-of)/2,1);}},
    ]},
   {st:'3',   korak:'te', naziv:'Tlačna ekstrakcija — TE', faza:'TE',
    polja:[
@@ -2508,6 +2518,23 @@ const DN_PREDLOGA_KORAKOV=[
    polja:[
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m TE koncentrata',enota:'g'},
+     // Ne polovica, ampak razlika do vsote: TE mora dopolniti tisto, cesar HVE
+     // ni dala. Zato se cilj premakne, brz ko je HVE stehtana.
+     {k:'m_te_potreben',tip:'izracun',napis:'potreben',enota:'g',
+      opis:'m_tot − m_OF − dejanska masa HVE koncentrata. Vsota HVE in TE mora dati m_tot − m_OF; če je HVE manjša od polovice, mora biti TE za toliko večja.',
+      izracun:(pa,drugi)=>{const h=drugi('koncentriranje_hve');
+        const mTot=parseNum(h.m_tot)||(parseNum(h.v_koncni)>0?parseNum(h.v_koncni)*etohDensity(30):0);
+        if(!(mTot>0))return null;
+        const of=parseNum(drugi('koncentriranje_of').m_of);
+        const hve=parseNum(h.m_koncentrata);
+        return round(mTot-of-hve,1);}},
+     {k:'odstopanje',tip:'izracun',napis:'odstopanje',enota:'g',
+      opis:'(m_HVE + m_TE) − (m_tot − m_OF). Mora biti blizu nič.',
+      izracun:(pa,drugi)=>{const h=drugi('koncentriranje_hve');
+        const mTot=parseNum(h.m_tot)||(parseNum(h.v_koncni)>0?parseNum(h.v_koncni)*etohDensity(30):0);
+        const hve=parseNum(h.m_koncentrata),te=parseNum(pa.m_koncentrata);
+        if(!(mTot>0)||!(hve>0)||!(te>0))return null;
+        return round(hve+te-(mTot-parseNum(drugi('koncentriranje_of').m_of)),1);}},
    ]},
   {st:'4',   korak:'formulacija_alc', naziv:'Alkoholna formulacija', faza:'',
    polja:[
@@ -2716,9 +2743,17 @@ function osveziIzracuneKoraka(idx){
   if(!kartica)return;
   const vnosi=kartica.querySelectorAll('.korak-izr');
   polja.forEach((x,i)=>{
-    const v=x.izracun?x.izracun(k.parametri||{}):null;
+    const v=x.izracun?x.izracun(k.parametri||{},paramiKoraka):null;
     if(vnosi[i])vnosi[i].value=v==null?'':String(v).replace('.',',');
   });
+}
+
+// Nekatera polja se ne dajo izracunati iz svojega koraka - masa TE koncentrata
+// je odvisna od tega, koliko je dejansko dala HVE. Zato izracun poleg svojih
+// parametrov dobi se dostop do sosednjih korakov.
+function paramiKoraka(kljuc){
+  const k=dnKorakiRows.find(x=>x.korak===kljuc);
+  return k?(k.parametri||{}):{};
 }
 
 // Ob shranjevanju izracunane vrednosti zapisemo med parametre, da jih zapisnik
@@ -2728,7 +2763,7 @@ function zapisiIzracune(k){
   if(!polja.length)return k;
   const pa={...(k.parametri||{})};
   polja.forEach(x=>{
-    const v=x.izracun?x.izracun(pa):null;
+    const v=x.izracun?x.izracun(pa,paramiKoraka):null;
     if(v==null)delete pa[x.k]; else pa[x.k]=String(v);
   });
   return {...k,parametri:pa};
@@ -2831,7 +2866,7 @@ function renderDNKorakiRows(){
     // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
     // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
     const izracuni=(t.polja||[]).filter(x=>x.tip==='izracun').map(x=>{
-      const v=x.izracun?x.izracun(k.parametri||{}):null;
+      const v=x.izracun?x.izracun(k.parametri||{},paramiKoraka):null;
       return `<div class="korak-f">
         <label>${x.napis}${x.enota?' '+x.enota:''}</label>
         <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">

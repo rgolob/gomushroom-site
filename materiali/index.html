@@ -155,6 +155,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-premik{margin:.25rem 0 .1rem}
 .korak-premik .field{margin-bottom:.4rem}
 .korak-premik .slabel-alc,.korak-premik .slabel-gly{margin-top:0}
+/* Podkorak: del skupine, ne svoj korak. Zamik in tanka crta povesta, da cas
+   in zakljucek pripadata kartici nad njim. */
+.podkorak{margin:.45rem 0 .1rem .5rem;padding-left:.55rem;border-left:2px solid var(--border)}
+.podkorak-hdr{display:flex;align-items:baseline;gap:.35rem;margin-bottom:.15rem}
+.podkorak-st{font-size:.6rem;font-weight:600;color:var(--accent);flex:0 0 auto}
+.podkorak-naziv{font-size:.72rem;font-weight:600;color:var(--ink)}
 .korak-izpis{display:flex;flex-wrap:wrap;gap:.1rem .8rem;margin:.1rem 0 .25rem}
 .korak-izpis-p{display:inline-flex;align-items:baseline;gap:.25rem;font-size:.58rem;color:var(--muted)}
 .korak-izpis-p b{font-size:.72rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -2463,20 +2469,29 @@ function dnVolAlcTinkture(){
 // parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
 const DN_PREDLOGA_KORAKOV=[
-  // Tehtanje je prvi procesni korak, ne uvod v obrazec: serija in masa se
-  // izmerita takrat, ko se dela, in imata svoj cas ter izvajalca kot vsak
-  // drug korak. Rubrika se preseli sem, ne podvoji.
-  {st:'0',   korak:'tehtanje', naziv:'Tehtanje surovine', faza:'', vsebina:['dnBlokSerije'],
-   naprave:['tehtnica','susilnik','mlin'],
+  // Priprava surovine je eno opravilo, ki se ga opravi v enem zamahu: stehta
+  // se goba, dolodi vlaga in pripravi topilo. Cas pripada temu opravilu, ne
+  // vsakemu tehtanju posebej - vpisovati zacetek in konec trikrat bi bilo vec
+  // pisanja kot dela. Naprave in meritve pa se razlikujejo, zato podkoraki.
+  {st:'1',   korak:'priprava', naziv:'Priprava surovine', faza:'', polja:[]},
+  // Kljuci ostajajo isti kot prej ('tehtanje', 'etanol_priprava'), da nalogi,
+  // ki so ze bili delani, ne izgubijo vpisanega.
+  {st:'1a',  korak:'tehtanje', nad:'priprava', naziv:'Tehtanje gobe',
+   naprave:['tehtnica','mlin'], vsebina:['dnBlokSerije'],
    polja:[
-     {k:'vlaznost',tip:'ccp',napis:'Vlažnost surovine',enota:'%',meja:'< 12 %',
-      opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
      // Masa je v kilogramih, kot je vpisana pri seriji - pretvorba v grame bi
      // bila tiho mesto za napako desetiskega mesta.
      {k:'m_surovine',tip:'iz_naloga',napis:'Σm surovine',enota:'kg',tiho:true,
       vir:()=>{const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);return v>0?round(v,3):null;}},
    ]},
-  {st:'1',   korak:'etanol_priprava', naziv:'Priprava ekstrakcijskega topila', faza:'',
+  {st:'1b',  korak:'vlaga', nad:'priprava', naziv:'Določitev vlažnosti gobe',
+   naprave:['susilnik'],
+   opis:'Halogenski sušilnik, 105 °C. Meritev se opravi na pripravljeni (zmleti) surovini.',
+   polja:[
+     {k:'vlaznost',tip:'ccp',napis:'Vlažnost surovine',enota:'%',meja:'< 12 %',
+      opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
+   ]},
+  {st:'1c',  korak:'etanol_priprava', nad:'priprava', naziv:'Tehtanje in priprava topila',
    naprave:['tehtnica','alkoholometer'],
    vsebina:['dnBlokEtOH'],
    polja:[
@@ -2790,18 +2805,37 @@ function poljaKoraka(t){
   return (t.polja||[]).filter(x=>typeof x.velja!=='function'||x.velja());
 }
 
+// ── Skupina korakov ───────────────────────────────────────────────────────
+// Nekaj opravil se opravi v enem zamahu: goba se stehta, dolodi se vlaga in
+// pripravi topilo. Vpisovati zacetek in konec trikrat bi bilo vec pisanja kot
+// dela, zato cas nosi nadrejeni korak. Naprave in meritve pa se razlikujejo,
+// zato ima vsak svoj podkorak.
+//
+// V zapisu ostanejo vrstice ravne - podkorak je navadna vrstica, ki ji
+// predloga pove, komu pripada. Tako se oblika zapisa (gm_dn_koraki) ne
+// spremeni in stari nalogi ostanejo berljivi.
+function jePodkorak(k){return !!predlogaZaKorak(k.korak).nad;}
+function podkoraki(k){
+  return dnKorakiRows.filter(x=>predlogaZaKorak(x.korak).nad===k.korak);
+}
+function imaPodkorake(k){return podkoraki(k).length>0;}
+function vrhnjiKoraki(){return dnKorakiRows.filter(k=>!jePodkorak(k));}
+// Korak skupaj s svojimi podkoraki - presoje in ure se stejejo po skupini.
+function skupinaKoraka(k){return [k,...podkoraki(k)];}
+
 // Kriticne kontrolne tocke. Neodgovorjen CCP mora zadrzati korak - to je
 // celoten smisel kriticne tocke; sicer je le se eno polje, ki se ga da
-// preskociti.
+// preskociti. Presoja podkoraka zadrzuje nadrejenega: skupina se ne more
+// zakljuciti, dokler vlaznost ni presojena.
 function korakCCP(k){
   return poljaKoraka(predlogaZaKorak(k.korak)).filter(p=>p.tip==='ccp');
 }
 function korakCCPManjka(k){
   if(k.status==='preskocen')return [];
-  return korakCCP(k).filter(p=>!k.parametri?.[p.k+'__presoja']);
+  return skupinaKoraka(k).flatMap(x=>korakCCP(x).filter(p=>!x.parametri?.[p.k+'__presoja']));
 }
 function korakCCPNeustreza(k){
-  return korakCCP(k).filter(p=>k.parametri?.[p.k+'__presoja']==='ne');
+  return skupinaKoraka(k).flatMap(x=>korakCCP(x).filter(p=>x.parametri?.[p.k+'__presoja']==='ne'));
 }
 
 // Trajanje v urah; brez obeh casov ni znano.
@@ -2884,7 +2918,16 @@ function onDNKorakChange(idx,polje,val){
 
 // Status sledi casom sam, dokler ga uporabnik ne postavi rocno na preskocen -
 // in dokler so vse kriticne tocke odgovorjene.
+//
+// Podkorak statusa nima; ce se presodi njegova kriticna tocka, se to pozna na
+// nadrejenem, ki edini nosi cas in zakljucek.
 function osveziStatusKoraka(k){
+  const nad=predlogaZaKorak(k.korak).nad;
+  if(nad){
+    const stars=dnKorakiRows.find(x=>x.korak===nad);
+    if(stars)osveziStatusKoraka(stars);
+    return;
+  }
   if(k.status==='preskocen')return;
   if(k.zacetek&&k.konec)k.status=korakCCPManjka(k).length?'v_teku':'koncan';
   else if(k.zacetek)k.status='v_teku';
@@ -2905,31 +2948,32 @@ function osveziIzracuneKoraka(idx){
   const k=dnKorakiRows[idx];if(!k)return;
   const polja=poljaKoraka(predlogaZaKorak(k.korak)).filter(x=>x.tip==='izracun');
   if(!polja.length)return;
-  const kartica=document.querySelectorAll('#dnKorakiContainer > .korak')[idx];
-  if(!kartica)return;
-  // Iscemo po kljucu, ne po zaporedju: pogojna polja (velja) se lahko skrijejo
-  // in bi zamik vpisal vrednost v napacno rubriko.
+  // Iscemo po kljucu vrstice in polja, ne po zaporedju: pogojna polja (velja)
+  // se lahko skrijejo, podkoraki pa so gnezdeni - zamik bi vpisal vrednost v
+  // napacno rubriko.
   polja.forEach(x=>{
-    const el=kartica.querySelector(`.korak-izpis-p[data-izpis="${x.k}"] b`);
+    const el=izpisElement(k,x.k);
     if(!el)return;
     const v=x.izracun?x.izracun(paramiZViri(k),paramiKoraka):null;
     el.textContent=v==null?'—':String(v).replace('.',',');
   });
 }
 
+function izpisElement(k,kljuc){
+  return document.querySelector(
+    `#dnKorakiContainer .korak-izpis-p[data-izpis="${k.id}|${kljuc}"] b`);
+}
+
 // Vrednosti iz naloga se spremenijo drugje kot v koraku - masa surovine v
 // rubriki tehtanja, masa etanola pri pripravi topila. Izpis mora slediti,
 // sicer korak kaze crtico ob vpisani stevilki.
 function dnOsveziIzpise(){
-  const kartice=document.querySelectorAll('#dnKorakiContainer > .korak');
-  if(!kartice.length)return;
-  dnKorakiRows.forEach((k,i)=>{
-    const kartica=kartice[i];
-    if(!kartica)return;
+  if(!document.querySelector('#dnKorakiContainer .korak'))return;
+  dnKorakiRows.forEach(k=>{
     const t=predlogaZaKorak(k.korak);
     poljaKoraka(t).forEach(x=>{
       if(x.tip!=='izracun'&&x.tip!=='iz_naloga')return;
-      const el=kartica.querySelector(`.korak-izpis-p[data-izpis="${x.k}"] b`);
+      const el=izpisElement(k,x.k);
       if(!el)return;
       const v=x.tip==='izracun'
         ? (x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null)
@@ -3076,14 +3120,15 @@ function renderDNKorakiRows(){
       Koraki še niso ustvarjeni. Predloga jih doda po tvojem procesu — časi in parametri se vpišejo sproti.</div>`;
     return;
   }
-  const opts=o=>oprema.map(x=>
-    `<option value="${x.id}"${x.id===o?' selected':''}>${x.naziv||'—'}${x.model?' · '+x.model:''}</option>`).join('');
+  c.innerHTML=vrhnjiKoraki().map(k=>korakKartica(k)).join('');
+  dnPremakniBloke();
+}
 
-  c.innerHTML=dnKorakiRows.map((k,idx)=>{
+// Rubrike enega koraka. Podkorak jih izrise enako kot samostojen korak -
+// razlikuje se le v tem, da nima svojega casa in statusa.
+function korakRubrike(k){
+    const idx=dnKorakiRows.indexOf(k);
     const t=predlogaZaKorak(k.korak);
-    const ure=korakUre(k);
-    const preskocen=k.status==='preskocen';
-    const bf=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
     const opts=opcijeNaprav(t,k.opremaId);
     const ura=(kaj,napis)=>`
       <div class="korak-f">
@@ -3098,7 +3143,9 @@ function renderDNKorakiRows(){
     // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
     // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
     const vp=poljaKoraka(t);
-    const izpis=(x,v,izvor)=>`<span class="korak-izpis-p" data-izpis="${x.k}"
+    // Kljuc nosi tudi vrstico: podkorak je gnezden v kartici nadrejenega in
+    // iskanje samo po imenu polja bi zadelo napacnega.
+    const izpis=(x,v,izvor)=>`<span class="korak-izpis-p" data-izpis="${k.id}|${x.k}"
         ${izvor?'title="Iz naloga"':''}><span>${x.napis}${izvor?' <span class="izvor">↑</span>':''}</span
         ><b>${v==null?'—':String(v).replace('.',',')}</b>${x.enota?'<span>'+x.enota+'</span>':''}</span>`;
 
@@ -3149,29 +3196,15 @@ function renderDNKorakiRows(){
             onclick="onDNKorakIzbira(${idx},'${x.k}','${m.replace(/'/g,"\\'")}',${!!x.vec})">${m}</button>`).join('')}</div>
       </div>`).join('');
     const izpisi=izNaloga+izracuni;
-
-    const odprt=korakJeOdprt(k);
-    const povz=korakPovzetek(k);
-    return `<div class="korak${preskocen?' presk':''}">
-      <div class="korak-hdr" onclick="preklopiKorak('${k.id}')" role="button" tabindex="0"
-           aria-expanded="${odprt}"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();preklopiKorak('${k.id}')}">
-        <span class="korak-st">${odprt?'▾':'▸'} ${t.st||k.zaporedje}</span>
-        <span class="korak-naziv">${k.naziv}</span>
-        ${k.faza?`<span class="korak-faza" style="color:${bf};background:${bf}22">${k.faza}</span>`:''}
-        <select onchange="onDNKorakStatus(${idx},this.value)" onclick="event.stopPropagation()">
-          ${Object.entries(KORAK_STATUSI).map(([v,n])=>`<option value="${v}"${k.status===v?' selected':''}>${n}</option>`).join('')}
-        </select>
-      </div>
-      ${!odprt?(povz?`<div class="korak-zlozen">${povz}</div>`:''):preskocen?'':`
-      <div class="korak-cas">
+    // Nadrejeni korak naprave nima - te pripadajo podkorakom, ki jo tudi
+    // izberejo. Prikazati prazen spustni seznam bi vabilo k vpisu na napacno
+    // mesto.
+    const napravaPolje=imaPodkorake(k)?'':`
         <div class="korak-f">
-          <label>Datum</label>
-          <input type="date" value="${korakDatum(k)}" onchange="onDNKorakCas(${idx},'datum',this.value)">
-        </div>
-        ${ura('od','Od')}${ura('do','Do')}
-      </div>
-      ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
+          <label>Naprava</label>
+          <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">${opts}</select>
+        </div>`;
+    return `
       ${t.akcija==='me'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunME('${k.id}')">🧮 Odpri preračun matičnega ekstrakta</button>`:''}
       ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
@@ -3181,19 +3214,70 @@ function renderDNKorakiRows(){
       ${t.vsebina?`<div class="korak-premik" data-vsebina="${t.vsebina.join('|')}"></div>`:''}
       ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       ${meritve?`<div class="korak-grid">${meritve}</div>`:''}
-      <div class="korak-grid" style="grid-template-columns:1fr 1fr">
-        <div class="korak-f">
-          <label>Naprava</label>
-          <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">${opts}</select>
-        </div>
+      <div class="korak-grid" style="grid-template-columns:${napravaPolje?'1fr 1fr':'1fr'}">
+        ${napravaPolje}
         <div class="korak-f">
           <label>Opomba</label>
           <input type="text" value="${(k.opomba||'').replace(/"/g,'&quot;')}" oninput="onDNKorakChange(${idx},'opomba',this.value)">
         </div>
-      </div>`}
+      </div>`;
+}
+
+// Podkorak: svoje naprave, svoje meritve, svoje presoje - a brez ure in brez
+// statusa. Cas in zakljucek pripadata skupini, ker se opravi v enem zamahu.
+function podkorakHtml(pk){
+  const t=predlogaZaKorak(pk.korak);
+  return `<div class="podkorak">
+    <div class="podkorak-hdr"><span class="podkorak-st">${t.st||''}</span>
+      <span class="podkorak-naziv">${pk.naziv}</span></div>
+    ${korakRubrike(pk)}
+  </div>`;
+}
+
+function korakKartica(k){
+  const idx=dnKorakiRows.indexOf(k);
+  const t=predlogaZaKorak(k.korak);
+  const ure=korakUre(k);
+  const preskocen=k.status==='preskocen';
+  const bf=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
+  const ura=(kaj,napis)=>`
+    <div class="korak-f">
+      <label>${napis}</label>
+      <div class="korak-casbox">
+        <input type="time" value="${korakUra(k,kaj==='od'?'zacetek':'konec')}"
+               onchange="onDNKorakCas(${idx},'${kaj}',this.value)">
+        <button type="button" class="korak-zdaj" title="Vpiši trenutni čas" aria-label="Vpiši trenutni čas"
+                onclick="nastaviKorakCas(${idx},'${kaj}')">⏱</button>
+      </div>
     </div>`;
-  }).join('');
-  dnPremakniBloke();
+  const odprt=korakJeOdprt(k);
+  const povz=korakPovzetek(k);
+  return `<div class="korak${preskocen?' presk':''}">
+    <div class="korak-hdr" onclick="preklopiKorak('${k.id}')" role="button" tabindex="0"
+         aria-expanded="${odprt}"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();preklopiKorak('${k.id}')}">
+      <span class="korak-st">${odprt?'▾':'▸'} ${t.st||k.zaporedje}</span>
+      <span class="korak-naziv">${k.naziv}</span>
+      ${k.faza?`<span class="korak-faza" style="color:${bf};background:${bf}22">${k.faza}</span>`:''}
+      <select onchange="onDNKorakStatus(${idx},this.value)" onclick="event.stopPropagation()">
+        ${Object.entries(KORAK_STATUSI).map(([v,n])=>`<option value="${v}"${k.status===v?' selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    ${!odprt?(povz?`<div class="korak-zlozen">${povz}</div>`:''):preskocen?'':`
+    <div class="korak-cas">
+      <div class="korak-f">
+        <label>Datum</label>
+        <input type="date" value="${korakDatum(k)}" onchange="onDNKorakCas(${idx},'datum',this.value)">
+      </div>
+      ${ura('od','Od')}${ura('do','Do')}
+    </div>
+    ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
+    ${imaPodkorake(k)
+      // Vsebina skupine so podkoraki; opomba nadrejenega pripada celoti, zato
+      // stoji za njimi, ne pred.
+      ? podkoraki(k).map(podkorakHtml).join('')+korakRubrike(k)
+      : korakRubrike(k)}`}
+  </div>`;
 }
 
 // ── Harmonika na delovnem nalogu ──────────────────────────────────────────
@@ -3241,23 +3325,27 @@ function dnOsveziPovzetke(){
   // Povzetek pove napredek in skupni cas - to je edino, kar te pri zaprtem
   // sklopu zanima.
   if(dnKorakiRows.length){
-    const koncani=dnKorakiRows.filter(k=>k.status==='koncan').length;
-    const preskoceni=dnKorakiRows.filter(k=>k.status==='preskocen').length;
-    const skupajUre=dnKorakiRows.reduce((s,k)=>s+(korakUre(k)||0),0);
+    // Stejemo vrhnje korake: podkorak ni svoje opravilo, ampak del skupine, in
+    // "0/21" namesto "0/18" bi napredek samo popacil. Presoje podkorakov so ze
+    // vstete pri nadrejenem.
+    const vrhnji=vrhnjiKoraki();
+    const koncani=vrhnji.filter(k=>k.status==='koncan').length;
+    const preskoceni=vrhnji.filter(k=>k.status==='preskocen').length;
+    const skupajUre=vrhnji.reduce((s,k)=>s+(korakUre(k)||0),0);
     // Neustrezna kriticna tocka je pomembnejsa od napredka - pokazemo jo prvo.
-    const neustreza=dnKorakiRows.reduce((n,k)=>n+korakCCPNeustreza(k).length,0);
+    const neustreza=vrhnji.reduce((n,k)=>n+korakCCPNeustreza(k).length,0);
     // Presoje stejemo samo pri korakih, ki so se zaceli - pri nedotaknjenih ne
     // manjka nic, le se ni na vrsti.
-    const cakajo=dnKorakiRows.filter(k=>k.zacetek||k.status==='v_teku')
+    const cakajo=vrhnji.filter(k=>k.zacetek||k.status==='v_teku')
       .reduce((n,k)=>n+korakCCPManjka(k).length,0);
     if(neustreza)
       dnPisiPovzetek('Koraki',`⚠ ${neustreza} × ne ustreza`,'warn');
     else if(cakajo)
-      dnPisiPovzetek('Koraki',`${koncani}/${dnKorakiRows.length-preskoceni} · ⚠ ${cakajo} presoj`,'warn');
+      dnPisiPovzetek('Koraki',`${koncani}/${vrhnji.length-preskoceni} · ⚠ ${cakajo} presoj`,'warn');
     else
       dnPisiPovzetek('Koraki',
-        `${koncani}/${dnKorakiRows.length-preskoceni}${skupajUre>0?' · '+fmtUre(skupajUre):''}`,
-        (koncani&&koncani===dnKorakiRows.length-preskoceni)?'ok':'');
+        `${koncani}/${vrhnji.length-preskoceni}${skupajUre>0?' · '+fmtUre(skupajUre):''}`,
+        (koncani&&koncani===vrhnji.length-preskoceni)?'ok':'');
   } else {
     dnPisiPovzetek('Koraki','ni ustvarjenih');
   }
@@ -5069,11 +5157,17 @@ async function genZapisnikProizvodnje(dnId){
     ? serije.map(r=>surVrstica(r.serija,r.masa)).join('')
     : surVrstica(d.serijaGobe,d.masaGobe);
 
+  // Podkorak nima svojega casa - nosi ga nadrejeni, ker se opravilo opravi v
+  // enem zamahu. Preskocen nadrejeni preskoci tudi svoje podkorake.
+  const nadrejeni=k=>{const n=predlogaZaKorak(k.korak).nad;
+    return n?koraki.find(x=>x.korak===n):null;};
+
   const rubrike=koraki.map(k=>{
     const t=predlogaZaKorak(k.korak);
     const polja=poljaKoraka(t);
-    const ure=korakUre(k);
-    const presk=k.status==='preskocen';
+    const stars=nadrejeni(k);
+    const ure=stars?null:korakUre(k);
+    const presk=(stars||k).status==='preskocen';
 
     const ccpVrstice=polja.filter(x=>x.tip==='ccp').map(x=>{
       const izid=k.parametri?.[x.k+'__presoja'];
@@ -5100,14 +5194,18 @@ async function genZapisnikProizvodnje(dnId){
       .filter(Boolean).join('');
 
     const napravaIme=k.opremaId?opremaNaziv(k.opremaId):'';
-    const prazna=!ccpVrstice&&!meritve&&!izbire&&!k.zacetek&&!k.opomba;
+    // Nadrejeni korak sam po sebi nima rubrik - njegova vsebina so podkoraki,
+    // zato ga "ni izpolnjeno" ne zadeva.
+    const prazna=!ccpVrstice&&!meritve&&!izbire&&!k.zacetek&&!k.opomba
+      &&!koraki.some(x=>predlogaZaKorak(x.korak).nad===k.korak);
 
-    return `<section class="rub${presk?' presk':''}">
+    return `<section class="rub${presk?' presk':''}${stars?' pod':''}">
       <div class="rub-hdr">
         <span class="rub-st">${esc(t.st||k.zaporedje)}</span>
         <span class="rub-naziv">${esc(k.naziv)}</span>
         ${k.faza?`<span class="rub-faza">${esc(k.faza)}</span>`:''}
         <span class="rub-cas">${presk?'⊘ preskočeno'
+          :stars?''
           :k.zacetek?`${dat(k.zacetek)} ${ura(k.zacetek)}${k.konec?' – '+ura(k.konec):''}${ure!=null?` · ${fmtUre(ure)}`:''}`
           :'—'}</span>
       </div>
@@ -5124,7 +5222,7 @@ async function genZapisnikProizvodnje(dnId){
   const vseCCP=koraki.flatMap(k=>korakCCP(k).map(x=>({
     st:predlogaZaKorak(k.korak).st, napis:x.napis,
     izid:k.parametri?.[x.k+'__presoja']||'',
-    presk:k.status==='preskocen',
+    presk:(nadrejeni(k)||k).status==='preskocen',
   }))).filter(x=>!x.presk);
   const neustreza=vseCCP.filter(x=>x.izid==='ne');
   const nepresojeno=vseCCP.filter(x=>!x.izid);
@@ -5153,6 +5251,9 @@ table{width:100%;border-collapse:collapse}
 .opozorilo strong{color:#8b3a2a}
 .rub{border:1px solid #ede6d6;border-radius:4px;margin-bottom:.45rem;page-break-inside:avoid;break-inside:avoid}
 .rub.presk{opacity:.55}
+/* Podkorak: cas nosi rubrika nad njim, zato je zamaknjen in brez svoje ure. */
+.rub.pod{margin-left:1.1rem;border-left:2px solid #d8cdb6}
+.rub.pod .rub-hdr{background:#fdfcfa}
 .rub-hdr{display:flex;align-items:baseline;gap:.45rem;padding:.3rem .5rem;background:#f9f7f3;border-bottom:1px solid #ede6d6}
 .rub-st{font-weight:600;min-width:1.8rem}
 .rub-naziv{font-weight:500;flex:1}

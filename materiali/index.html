@@ -3681,15 +3681,27 @@ function getAvailableSeries(gobaTip,vkljuci){
 
 // Pri ze porabljeni seriji je zaloga 0 povsem pricakovana - nalog jo je pravkar
 // porabil - zato tam ne opozarjamo, ampak samo povemo, zakaj je se na spisku.
+// Dobavitelj se zapise ze ob nabavi, skupaj s serijo gobe - iskati ga je torej
+// treba, ne vpisovati znova. Ce je bila ista serija nabavljena pri vec
+// dobaviteljih, jih navedemo vse; to je znak, da je oznaka serije zlepljena.
+function dobaviteljSerije(serija){
+  if(!serija)return'';
+  return [...new Set(materiali
+    .filter(m=>m.smer==='vhod'&&m.serijaGobe===serija&&m.dobavitelj)
+    .map(m=>m.dobavitelj))].join(', ');
+}
+
 function dnSerijaHint(serija,s,masa){
   if(!serija)return'';
+  const dob=dobaviteljSerije(serija);
+  const odKoga=dob?` · ${dob}`:'';
   const zaloga=s?.zaloga||0;
-  if(zaloga>0.001)return masa>zaloga+0.001?`⚠ Na zalogi le ${zaloga.toFixed(3)} kg`:`Na zalogi: ${zaloga.toFixed(3)} kg`;
+  if(zaloga>0.001)return (masa>zaloga+0.001?`⚠ Na zalogi le ${zaloga.toFixed(3)} kg`:`Na zalogi: ${zaloga.toFixed(3)} kg`)+odKoga;
   // Serija brez ene same nabave je skoraj vedno zlepljeno ime dveh serij
   // ("R1/R2"). Taka oznaka pokvari stanje obeh pravih serij, zato jo povemo
   // takoj in pokazemo, kako se nalog razdeli, kot je bilo v resnici.
   if(!(s?.vhod>0))return'⚠ Ta serija ni bila nikoli nabavljena. Če je nalog porabil dve seriji, vpiši vsako v svojo vrstico z „+ Serija".';
-  return'Serija je porabljena — ostaja zaradi zgodovine naloga';
+  return'Serija je porabljena — ostaja zaradi zgodovine naloga'+odKoga;
 }
 
 function renderDNSerijeRows(){
@@ -4829,9 +4841,11 @@ async function genZapisnikProizvodnje(dnId){
   ].filter(Boolean).join(' · ')||'—';
 
   const serije=(d.serije||[]).filter(r=>r.serija||r.masa);
+  const surVrstica=(serija,masa)=>`<tr><td>${esc(serija||'—')}</td>
+      <td>${esc(dobaviteljSerije(serija)||'—')}</td><td class="num">${stev(masa)} g</td></tr>`;
   const surovinaVrstice=serije.length
-    ? serije.map(r=>`<tr><td>${esc(r.serija||'—')}</td><td class="num">${stev(r.masa)} g</td></tr>`).join('')
-    : `<tr><td>${esc(d.serijaGobe||'—')}</td><td class="num">${stev(d.masaGobe)} g</td></tr>`;
+    ? serije.map(r=>surVrstica(r.serija,r.masa)).join('')
+    : surVrstica(d.serijaGobe,d.masaGobe);
 
   const rubrike=koraki.map(k=>{
     const t=predlogaZaKorak(k.korak);
@@ -4971,7 +4985,7 @@ table{width:100%;border-collapse:collapse}
   <div class="gp"><div class="gp-l">Glicerinska</div><div class="gp-v">${kol(d.glyBulk,(Number(d.kolGly)||0)+(Number(d.kolGlyInterno)||0))}</div></div>
 </div>
 
-<table class="sur"><tr><th>Serija surovine / dobavitelj</th><th style="text-align:right">Masa</th></tr>${surovinaVrstice}</table>
+<table class="sur"><tr><th>Serija surovine</th><th>Dobavitelj</th><th style="text-align:right">Masa</th></tr>${surovinaVrstice}</table>
 
 ${(neustreza.length||nepresojeno.length)?`<div class="opozorilo">
   ${neustreza.length?`<div><strong>Ne ustreza (${neustreza.length}):</strong> ${neustreza.map(x=>esc(x.st+' '+x.napis)).join(' · ')}</div>`:''}

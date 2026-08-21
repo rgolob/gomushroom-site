@@ -142,6 +142,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-ccp-napis{font-size:.62rem;font-weight:600;color:var(--ink);flex:1;min-width:110px}
 .korak-ccp-napis em{font-style:normal;font-weight:400;color:var(--muted)}
 .korak-ccp-gumbi{display:flex;gap:.2rem;flex:0 0 auto}
+.korak-ccp-vr{width:4.2rem;min-width:0;flex:0 0 auto;padding:.18rem .3rem;border:1px solid var(--border);
+  border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;color:var(--ink);
+  outline:none;text-align:center}
+.korak-ccp-vr:focus{border-color:var(--accent)}
 .korak-ccp-vr{flex:0 0 62px;min-width:0;padding:.2rem .3rem;border:1px solid var(--border);
   border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;
   color:var(--ink);outline:none;text-align:center}
@@ -2910,9 +2914,17 @@ function renderDNKorakiRows(){
       const vrednost=x.enota?`<input type="text" inputmode="decimal" class="korak-ccp-vr"
         placeholder="${x.enota}" value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
         oninput="onDNKorakParam(${idx},'${x.k}',this.value)">`:'';
+      // Nekatere kriticne tocke se presodijo po meritvi (vlaznost), druge so
+      // cista presoja (filtrat bister). Prve potrebujejo tudi stevilko - sicer
+      // zapisnik pove, da ustreza, ne pa cesa.
+      const meri=x.enota?`<input type="text" inputmode="decimal" class="korak-ccp-vr"
+          value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
+          placeholder="${x.enota}" aria-label="${x.napis} (${x.enota})"
+          oninput="onDNKorakParam(${idx},'${x.k}',this.value)">`:'';
       return `<div class="korak-ccp${izid==='ne'?' ne':izid==='da'?' da':''}">
         <div class="korak-ccp-vrh">
           <span class="korak-ccp-napis">⚠ ${x.napis}${x.meja?` <em>${x.meja}</em>`:''}</span>
+          ${meri}
           ${vrednost}
           <span class="korak-ccp-gumbi">
             <button type="button" class="${izid==='da'?'izbran':''}" onclick="onDNKorakCCP(${idx},'${x.k}','da')">ustreza</button>
@@ -4157,6 +4169,7 @@ function openDNDetail(id){
 
     <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
       <button class="bsave" onclick="openDNSheet('${d.id}');closeSheet('dnDetailOverlay')">✎ Uredi</button>
+      <button class="bsave" style="background:#5a4a3a" onclick="genZapisnikProizvodnje('${d.id}')">📄 Zapisnik o proizvodnji</button>
       ${canClose?`<button class="bsave green" onclick="zaklucDN('${d.id}')">✓ Zaključi DN</button>`:''}
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
@@ -4779,6 +4792,223 @@ th.num{text-align:right}
     // Safari popup blocker — fallback: download
     const a=document.createElement('a');
     a.href=url;a.download='etanol-kartica.html';a.click();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+// ── ZAPISNIK O PROIZVODNJI (batch record) ────────────────────────────────
+// Izpis, ne vnosni obrazec. Zato pobira, kar je ze zapisano drugje: nalog,
+// korake in preracune. Kar se da izpeljati, se ne vpisuje - in zato tudi ne
+// sme biti vneseno dvakrat.
+async function genZapisnikProizvodnje(dnId){
+  const d=workOrders.find(x=>x.id===dnId);
+  if(!d){toast('⚠ Nalog ni shranjen — najprej ga shrani');return;}
+
+  const _zsRaw=JSON.parse(localStorage.getItem('gm_zaloga_settings')||'{}');
+  const gmSig=_zsRaw.podpisSlika||null;
+  let gmLogo='';
+  try{
+    const r=await fetch('/assets/logo-h168.webp');
+    const b=await r.blob();
+    gmLogo=await new Promise(res=>{const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(b);});
+  }catch(e){}
+
+  const koraki=korakiZaDokument(d.oznaka);
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const dat=t=>t?String(t).slice(0,10).split('-').reverse().join('.'):'';
+  const ura=t=>t?String(t).slice(11,16):'';
+  const stev=v=>v==null||v===''?'':String(v).replace('.',',');
+  // Parametri sosednjega koraka - izracuni v izpisu berejo iste vire kot obrazec.
+  const drugi=kljuc=>{const k=koraki.find(y=>y.korak===kljuc);return k?(k.parametri||{}):{};};
+  // Kolicina v tisti enoti, v kateri je serija koncala.
+  const kol=(bulk,q)=>!q?'—':(bulk?stev(q)+' L':stev(q)+' kos');
+
+  const vrstaIzdelka=[
+    ((Number(d.kolAlc)||0)+(Number(d.kolAlcInterno)||0))?`Alkoholna${d.alcBulk?' (razsuto)':''}`:'',
+    ((Number(d.kolGly)||0)+(Number(d.kolGlyInterno)||0))?`Glicerinska${d.glyBulk?' (razsuto)':''}`:'',
+  ].filter(Boolean).join(' · ')||'—';
+
+  const serije=(d.serije||[]).filter(r=>r.serija||r.masa);
+  const surovinaVrstice=serije.length
+    ? serije.map(r=>`<tr><td>${esc(r.serija||'—')}</td><td class="num">${stev(r.masa)} g</td></tr>`).join('')
+    : `<tr><td>${esc(d.serijaGobe||'—')}</td><td class="num">${stev(d.masaGobe)} g</td></tr>`;
+
+  const rubrike=koraki.map(k=>{
+    const t=predlogaZaKorak(k.korak);
+    const polja=poljaKoraka(t);
+    const ure=korakUre(k);
+    const presk=k.status==='preskocen';
+
+    const ccpVrstice=polja.filter(x=>x.tip==='ccp').map(x=>{
+      const izid=k.parametri?.[x.k+'__presoja'];
+      const cas=k.parametri?.[x.k+'__cas'];
+      const znak=izid==='da'?'☒ USTREZA':izid==='ne'?'☒ NE USTREZA':'☐ ni presojeno';
+      const izmerjeno=x.enota&&k.parametri?.[x.k]?` <span class="vr">${stev(k.parametri[x.k])} ${esc(x.enota)}</span>`:'';
+      return `<div class="ccp ${izid==='ne'?'ne':izid==='da'?'da':'prazno'}">
+        <span class="izid">${znak}</span>
+        <strong>${esc(x.napis)}</strong>${izmerjeno}${x.meja?` <span class="meja">${esc(x.meja)}</span>`:''}
+        ${cas?`<span class="cas">${dat(cas)} ${ura(cas)}</span>`:''}
+      </div>`;}).join('');
+
+    const meritve=polja.filter(x=>x.tip==='meritev'||x.tip==='izracun').map(x=>{
+      const v=x.tip==='izracun'
+        ? (x.izracun?x.izracun(k.parametri||{},drugi):null)
+        : k.parametri?.[x.k];
+      return (v==null||v==='')?'':`<tr><td>${esc(x.napis)}</td>
+        <td class="num">${stev(v)}</td><td class="enota">${esc(x.enota||'')}</td></tr>`;
+    }).filter(Boolean).join('');
+
+    const izbire=polja.filter(x=>x.tip==='izbira')
+      .map(x=>{const v=k.parametri?.[x.k];
+        return v?`<div class="izbira"><span>${esc(x.napis)}:</span> ${esc(v)}</div>`:'';})
+      .filter(Boolean).join('');
+
+    const napravaIme=k.opremaId?opremaNaziv(k.opremaId):'';
+    const prazna=!ccpVrstice&&!meritve&&!izbire&&!k.zacetek&&!k.opomba;
+
+    return `<section class="rub${presk?' presk':''}">
+      <div class="rub-hdr">
+        <span class="rub-st">${esc(t.st||k.zaporedje)}</span>
+        <span class="rub-naziv">${esc(k.naziv)}</span>
+        ${k.faza?`<span class="rub-faza">${esc(k.faza)}</span>`:''}
+        <span class="rub-cas">${presk?'⊘ preskočeno'
+          :k.zacetek?`${dat(k.zacetek)} ${ura(k.zacetek)}${k.konec?' – '+ura(k.konec):''}${ure!=null?` · ${fmtUre(ure)}`:''}`
+          :'—'}</span>
+      </div>
+      ${presk?'':(prazna?'<div class="prazno">— ni izpolnjeno —</div>':`
+        ${ccpVrstice}
+        ${izbire}
+        ${meritve?`<table class="mer">${meritve}</table>`:''}
+        ${napravaIme?`<div class="naprava">Naprava: ${esc(napravaIme)}</div>`:''}
+        ${k.opomba?`<div class="opomba">${esc(k.opomba)}</div>`:''}`)}
+    </section>`;
+  }).join('');
+
+  // Kriticne tocke na enem mestu - kdor pregleduje zapisnik, isce najprej te.
+  const vseCCP=koraki.flatMap(k=>korakCCP(k).map(x=>({
+    st:predlogaZaKorak(k.korak).st, napis:x.napis,
+    izid:k.parametri?.[x.k+'__presoja']||'',
+    presk:k.status==='preskocen',
+  }))).filter(x=>!x.presk);
+  const neustreza=vseCCP.filter(x=>x.izid==='ne');
+  const nepresojeno=vseCCP.filter(x=>!x.izid);
+  const skupajUre=koraki.reduce((sum,k)=>sum+(korakUre(k)||0),0);
+
+  const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zapisnik o proizvodnji — ${esc(d.oznaka||'')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;padding:1.5rem 2rem;max-width:820px;margin:0 auto;color:#1a1209;font-size:11.5px;line-height:1.45}
+.doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.9rem;padding-bottom:.6rem;border-bottom:2px solid #1a1209}
+.doc-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300}.doc-logo span{color:#af8455}
+.doc-naslov{font-size:.95rem;font-weight:500}
+.doc-sifra{font-size:.68rem;color:#7a6f60}
+.glava{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.8rem}
+.gp{border:1px solid #ede6d6;border-radius:4px;padding:.3rem .5rem}
+.gp-l{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60}
+.gp-v{font-size:.85rem}
+table{width:100%;border-collapse:collapse}
+.sur th{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;padding:.2rem .4rem;border-bottom:1px solid #1a1209;text-align:left}
+.sur td{padding:.2rem .4rem;border-bottom:1px solid #f2ece1}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.opozorilo{border:1px solid #8b3a2a;background:rgba(139,58,42,.07);border-radius:4px;padding:.4rem .6rem;margin:.8rem 0;font-size:.78rem}
+.opozorilo strong{color:#8b3a2a}
+.rub{border:1px solid #ede6d6;border-radius:4px;margin-bottom:.45rem;page-break-inside:avoid;break-inside:avoid}
+.rub.presk{opacity:.55}
+.rub-hdr{display:flex;align-items:baseline;gap:.45rem;padding:.3rem .5rem;background:#f9f7f3;border-bottom:1px solid #ede6d6}
+.rub-st{font-weight:600;min-width:1.8rem}
+.rub-naziv{font-weight:500;flex:1}
+.rub-faza{font-size:.58rem;font-weight:600;letter-spacing:.05em;padding:.05rem .25rem;border-radius:3px;background:#ede6d6;color:#6b5a3a}
+.rub-cas{font-size:.68rem;color:#7a6f60;white-space:nowrap}
+.ccp{padding:.25rem .5rem;font-size:.75rem;border-left:3px solid #ede6d6;overflow:hidden}
+.ccp.da{border-left-color:#3a6b4a;background:rgba(58,107,74,.05)}
+.ccp.ne{border-left-color:#8b3a2a;background:rgba(139,58,42,.08)}
+.ccp.prazno{border-left-color:#c9a227;background:rgba(201,162,39,.07)}
+.ccp .meja{color:#7a6f60;font-weight:400}
+.ccp .vr{font-weight:600;font-variant-numeric:tabular-nums}
+.ccp .izid{float:right;font-weight:600;margin-left:.6rem}
+.ccp .cas{display:block;font-size:.62rem;color:#7a6f60}
+.izbira{padding:.2rem .5rem;font-size:.72rem}
+.izbira span{color:#7a6f60}
+.mer{margin:.15rem 0}
+.mer td{padding:.13rem .5rem;border-bottom:1px solid #f6f2ea;font-size:.75rem}
+.mer td.enota{color:#7a6f60;width:3.5rem}
+.mer td.num{width:6rem}
+.naprava,.opomba{padding:.2rem .5rem;font-size:.7rem;color:#7a6f60}
+.opomba{font-style:italic}
+.prazno{padding:.3rem .5rem;font-size:.7rem;color:#a89b88}
+.sign{margin-top:1.5rem;border-top:1px solid #e8e0d5;padding-top:.8rem;page-break-inside:avoid;break-inside:avoid;display:flex;justify-content:space-between;gap:2rem}
+.sign-l{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a6f60;margin-bottom:.3rem}
+.crta{border-bottom:1px solid #1a1209;width:11rem;margin-top:1.2rem}
+.noga{margin-top:.8rem;display:flex;justify-content:space-between;font-size:.62rem;color:#7a6f60}
+.btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem}
+.savepdfbtn{padding:.55rem 1.5rem;border:none;border-radius:4px;background:#1a1209;color:white;font-family:'Jost',sans-serif;font-size:.8rem;cursor:pointer}
+@page{margin:0}
+@media print{.btnrow{display:none}body{padding:1.1cm 1.2cm;max-width:none}}
+</style></head><body>
+<div class="doc-header">
+  <div>
+    ${gmLogo?`<img src="${gmLogo}" style="height:2.2rem;display:block;margin-bottom:.2rem">`:`<div class="doc-logo">Go<span>Mushroom</span></div>`}
+    <div style="font-size:.65rem;color:#7a6f60">GoMushroom, Rok Golob s.p.</div>
+  </div>
+  <div style="text-align:right">
+    <div class="doc-naslov">Zapisnik o proizvodnji</div>
+    <div class="doc-sifra">Šifra dokumenta: <strong>${esc(d.oznaka||'')}</strong></div>
+    <div class="doc-sifra">OBR-0003/02 · SOP-0003</div>
+  </div>
+</div>
+
+<div class="glava">
+  <div class="gp"><div class="gp-l">Delovni nalog</div><div class="gp-v">${esc(d.oznaka||'—')}</div></div>
+  <div class="gp"><div class="gp-l">Oznaka serije</div><div class="gp-v">${esc(d.serijaAlc||'—')}</div></div>
+  <div class="gp"><div class="gp-l">Surovina</div><div class="gp-v">${esc(d.vrstaGobe||'—')}</div></div>
+  <div class="gp"><div class="gp-l">Vrsta izdelka</div><div class="gp-v">${esc(vrstaIzdelka)}</div></div>
+  <div class="gp"><div class="gp-l">Datum začetka</div><div class="gp-v">${dat(d.datum)||'—'}</div></div>
+  <div class="gp"><div class="gp-l">Datum konca</div><div class="gp-v">${dat(d.datumZakljucka)||'—'}</div></div>
+  <div class="gp"><div class="gp-l">Alkoholna</div><div class="gp-v">${kol(d.alcBulk,(Number(d.kolAlc)||0)+(Number(d.kolAlcInterno)||0))}</div></div>
+  <div class="gp"><div class="gp-l">Glicerinska</div><div class="gp-v">${kol(d.glyBulk,(Number(d.kolGly)||0)+(Number(d.kolGlyInterno)||0))}</div></div>
+</div>
+
+<table class="sur"><tr><th>Serija surovine / dobavitelj</th><th style="text-align:right">Masa</th></tr>${surovinaVrstice}</table>
+
+${(neustreza.length||nepresojeno.length)?`<div class="opozorilo">
+  ${neustreza.length?`<div><strong>Ne ustreza (${neustreza.length}):</strong> ${neustreza.map(x=>esc(x.st+' '+x.napis)).join(' · ')}</div>`:''}
+  ${nepresojeno.length?`<div>Nepresojenih kritičnih točk: <strong>${nepresojeno.length}</strong> — ${nepresojeno.map(x=>esc(x.st)).join(', ')}</div>`:''}
+</div>`:`<div class="opozorilo" style="border-color:#3a6b4a;background:rgba(58,107,74,.06)">
+  <strong style="color:#3a6b4a">Vse kritične točke presojene kot ustrezne (${vseCCP.length}).</strong>
+</div>`}
+
+${rubrike||'<div class="prazno">Za ta nalog ni zabeleženih korakov.</div>'}
+
+<div class="noga">
+  <span>Skupni zabeleženi čas: <strong>${fmtUre(skupajUre||null)}</strong></span>
+  <span>Kritičnih točk: ${vseCCP.length}</span>
+</div>
+
+<div class="sign">
+  <div>
+    <div class="sign-l">Izvedel</div>
+    <div class="crta"></div>
+  </div>
+  <div style="text-align:right">
+    <div class="sign-l">Odobril</div>
+    <div style="font-size:.75rem">GoMushroom, Rok Golob</div>
+    <div style="font-size:.65rem;color:#7a6f60">${new Date().toLocaleDateString('sl-SI',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+    ${gmSig?`<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.3rem;margin-left:auto">`:`<div class="crta" style="margin-left:auto"></div>`}
+  </div>
+</div>
+
+<div class="btnrow"><button class="savepdfbtn" onclick="window.print()">📄 Shrani / Natisni</button></div>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(!win){
+    const a=document.createElement('a');
+    a.href=url;a.download=`zapisnik-${(d.oznaka||'dn').toLowerCase()}.html`;a.click();
   }
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }

@@ -941,6 +941,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Naziv</label><input id="opNaziv" placeholder="npr. Rotavapor"></div>
         <div class="field"><label>Model</label><input id="opModel" placeholder="npr. RE-52A"></div>
       </div>
+      <!-- Vrsta: po njej korak ve, katero napravo naj ponudi -->
+      <div id="opVrstaField" class="field"><label>Vrsta naprave</label>
+        <select id="opVrsta"></select>
+        <div id="opVrstaNamig" style="font-size:.66rem;color:var(--muted);line-height:1.35;margin-top:.2rem"></div>
+      </div>
       <!-- Samo za inventar -->
       <div id="opKolicinaField" class="frow" style="display:none">
         <div class="field"><label>Količina (kom)</label><input id="opKolicina" type="text" inputmode="numeric" placeholder="1"></div>
@@ -2462,6 +2467,7 @@ const DN_PREDLOGA_KORAKOV=[
   // izmerita takrat, ko se dela, in imata svoj cas ter izvajalca kot vsak
   // drug korak. Rubrika se preseli sem, ne podvoji.
   {st:'0',   korak:'tehtanje', naziv:'Tehtanje surovine', faza:'', vsebina:['dnBlokSerije'],
+   naprave:['tehtnica','susilnik','mlin'],
    polja:[
      {k:'vlaznost',tip:'ccp',napis:'Vlažnost surovine',enota:'%',meja:'< 12 %',
       opis:'Surovina mora biti pregledana in ustrezno zmleta (brez večjih delcev). CCP iz Analize tveganja (DOK-0002).'},
@@ -2471,6 +2477,7 @@ const DN_PREDLOGA_KORAKOV=[
       vir:()=>{const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);return v>0?round(v,3):null;}},
    ]},
   {st:'1',   korak:'etanol_priprava', naziv:'Priprava ekstrakcijskega topila', faza:'',
+   naprave:['tehtnica','alkoholometer'],
    vsebina:['dnBlokEtOH'],
    polja:[
      {k:'vir_etanola',tip:'izbira',napis:'Etanol pripravljen z',vec:true,
@@ -2491,6 +2498,7 @@ const DN_PREDLOGA_KORAKOV=[
       izracun:pa=>{const v=parseNum(pa.c_etoh_vv);return v>0?round(volToMas(v),1):null;}},
    ]},
   {st:'1.1', korak:'uz_1', naziv:'Ultrazvočna sonikacija — 1.', faza:'OF',
+   naprave:['uz_kopel','termometer'],
    polja:[
      {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
      {k:'moc',tip:'meritev',napis:'P',enota:'%'},
@@ -2499,6 +2507,7 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
    ]},
   {st:'1.1', korak:'uz_2', naziv:'Ultrazvočna sonikacija — 2.', faza:'OF',
+   naprave:['uz_kopel','termometer'],
    polja:[
      {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
      {k:'moc',tip:'meritev',napis:'P',enota:'%'},
@@ -2507,6 +2516,7 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
    ]},
   {st:'1.2', korak:'stiskanje_of', naziv:'Stiskanje organske faze — matični ekstrakt', faza:'OF',
+   naprave:['stiskalnica','tehtnica'],
    polja:[
      {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
       opis:'Stiskanje in filtracija preko 400 mesh ~37 µm najlonske filtrirne tkanine.'},
@@ -2515,18 +2525,21 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'m_topila',tip:'meritev',napis:'m topila v pogači',enota:'g'},
    ]},
   {st:'1.3', korak:'preracun_me', naziv:'Ločitev matičnega ekstrakta', faza:'OF', akcija:'me',
+   naprave:['tehtnica'],
    polja:[
      {k:'v_me',tip:'meritev',napis:'V ME',enota:'mL'},
      {k:'m_me',tip:'meritev',napis:'m ME',enota:'g'},
      {k:'v_aae_of',tip:'meritev',napis:'V AAE v OF',enota:'mL'},
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
+   naprave:['rotavapor','vakuum','chiller'],
    polja:[
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_ss',tip:'meritev',napis:'m suhe snovi',enota:'g'},
      {k:'m_of',tip:'meritev',napis:'m OF',enota:'g'},
    ]},
   {st:'2',   korak:'hve', naziv:'Vroča vodna ekstrakcija — HVE', faza:'VF',
+   naprave:['grelnik','stiskalnica','tehtnica'],
    polja:[
      {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'80–90'},
      {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'300'},
@@ -2537,6 +2550,7 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
    ]},
   {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
+   naprave:['rotavapor','vakuum','chiller'],
    polja:[
      {k:'v_koncni',tip:'meritev',napis:'V končni',enota:'mL',
       opis:'Ciljni volumen končne tinkture. Iz njega sledi skupna masa m_tot = ρ30 × V, pri ρ30 iz tabele gostot (0,9622 g/mL).'},
@@ -2552,6 +2566,7 @@ const DN_PREDLOGA_KORAKOV=[
         return round((v*etohDensity(30)-of)/2,1);}},
    ]},
   {st:'3',   korak:'te', naziv:'Tlačna ekstrakcija — TE', faza:'TE',
+   naprave:['tlacni','stiskalnica','tehtnica'],
    polja:[
      {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'115–130'},
      {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'150'},
@@ -2562,6 +2577,7 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'m_te',tip:'meritev',napis:'m TE ekstrakta',enota:'g'},
    ]},
   {st:'3.1', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
+   naprave:['rotavapor','vakuum','chiller'],
    polja:[
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m TE koncentrata',enota:'g'},
@@ -2584,6 +2600,7 @@ const DN_PREDLOGA_KORAKOV=[
         return round(hve+te-(mTot-parseNum(drugi('koncentriranje_of').m_of)),1);}},
    ]},
   {st:'4',   korak:'formulacija_alc', naziv:'Alkoholna formulacija', faza:'',
+   naprave:['tehtnica','alkoholometer','mesalo'],
    vsebina:['dnBlokGlicerinAlc'],
    polja:[
      {k:'m_tinkture',tip:'meritev',napis:'m tinkture',enota:'g'},
@@ -2594,6 +2611,7 @@ const DN_PREDLOGA_KORAKOV=[
       vir:()=>parseNum(document.getElementById('dnGlicerinAlc')?.value)||null},
    ]},
   {st:'4.1', korak:'vitc_lecitin', naziv:'Dodajanje vitamina C in lecitina', faza:'',
+   naprave:['tehtnica','mesalo'],
    vsebina:['dnBlokVitCAlc'],
    opis:'Vitamin C 0,20 % m/m glede na skupno maso tinkture, vedno pred lecitinom. Sončnični lecitin (non-GMO) 0,30 % m/m.',
    polja:[
@@ -2604,6 +2622,7 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'mesanje_ok',tip:'izbira',napis:'Mešano ≥ 4 h pri T < 40 °C',moznosti:['da','ne']},
    ]},
   {st:'5',   korak:'suha_snov', naziv:'Analiza suhe snovi', faza:'',
+   naprave:['susilnik'],
    vsebina:['dnBlokSuhaSnov'],
    opis:'Halogenski sušilnik HR83, 1000 mg ± 500 mg, 105 °C, izklopni kriterij 3.',
    polja:[
@@ -2613,6 +2632,7 @@ const DN_PREDLOGA_KORAKOV=[
       meja:'Reishi ≥ 4,0 % · Chaga ≥ 6,0 % · Resasti bradovec ≥ 10,0 %'},
    ]},
   {st:'6',   korak:'formulacija_gly', naziv:'Glicerinska formulacija', faza:'', akcija:'gly',
+   naprave:['tehtnica','rotavapor','mesalo'],
    vsebina:['dnBlokGlicerin','dnBlokEtanolGly'],
    polja:[
      {k:'m0',tip:'meritev',napis:'m0 alk. tinkture',enota:'g'},
@@ -2625,6 +2645,7 @@ const DN_PREDLOGA_KORAKOV=[
       meja:'≥ 25,0 % v/v (20,5 % m/m)'},
    ]},
   {st:'6.1', korak:'vitc_gly', naziv:'Vitamin C v glicerinski tinkturi', faza:'',
+   naprave:['tehtnica','rotavapor'],
    vsebina:['dnBlokVitCGly'],
    opis:'0,50 % m/m; meša na rotavaporju ob T kopeli < 40 °C do popolne raztopitve.',
    polja:[
@@ -2634,6 +2655,7 @@ const DN_PREDLOGA_KORAKOV=[
       vir:()=>parseNum(document.getElementById('dnLecitinGly')?.value)||null},
    ]},
   {st:'8',   korak:'polnjenje', naziv:'Polnjenje', faza:'',
+   naprave:['polnilnik','flowhood','tehtnica'],
    polja:[
      // Pri razsutem odpadeta stekleniceenje in polnilna postaja; higiena,
      // zrak in embalaza veljajo naprej - tudi kanto je treba napolniti cisto.
@@ -2690,8 +2712,51 @@ function korakiZaDokument(oznaka){
 function korakiIzPredloge(){
   return DN_PREDLOGA_KORAKOV.map((t,i)=>({
     id:uid(),zaporedje:i+1,korak:t.korak,naziv:t.naziv,faza:t.faza||'',
-    opremaId:'',datum:'',zacetek:'',konec:'',izvajalec:'',parametri:{},status:'nacrtovan',opomba:''
+    opremaId:privzetaNaprava(t),datum:'',zacetek:'',konec:'',izvajalec:'',
+    parametri:{},status:'nacrtovan',opomba:''
   }));
+}
+
+// ── Katero napravo korak poklice ──────────────────────────────────────────
+// Register ima cel kup naprav, korak pa jih uporabi eno ali dve. Iskanje po
+// dolgem spustnem seznamu je zamudno in je mesto za napacen klik, zato korak
+// pove, katere VRSTE potrebuje, izbira pa jih postavi na vrh.
+//
+// Ne skrijemo nicesar: kar ne ustreza, ostane pod "Ostalo". Zapis brez vrste
+// je starejsi od te delitve in mora ostati dosegljiv, sicer bi manjkajoca
+// vrsta zaustavila delo.
+function napraveZaIzbiro(izbrana){
+  return oprema.filter(o=>o.kat!=='inventar'&&(o.status!=='neaktivna'||o.id===izbrana));
+}
+function napraveVrste(vrsta,izbrana){
+  return napraveZaIzbiro(izbrana).filter(o=>o.vrsta===vrsta);
+}
+
+// Ce je naprava te vrste v registru natanko ena, izbire ni - korak jo dobi ze
+// ob nastanku. Ce jih je vec, je izbira clovekova in ne ugibamo.
+function privzetaNaprava(t){
+  const prva=(t.naprave||[])[0];
+  if(!prva)return '';
+  const kandidati=napraveVrste(prva,'').filter(o=>o.status==='aktivna');
+  return kandidati.length===1?kandidati[0].id:'';
+}
+
+function opcijeNaprav(t,izbrana){
+  const naVoljo=napraveZaIzbiro(izbrana);
+  const ime=o=>`${o.naziv||'—'}${o.model?' · '+o.model:''}`;
+  const opt=o=>`<option value="${o.id}"${o.id===izbrana?' selected':''}>${ime(o)}</option>`;
+  const prazna=`<option value=""${izbrana?'':' selected'}>—</option>`;
+  // Vrstni red skupine sledi vrstnemu redu vrst v predlogi: tehtanje najprej
+  // ponudi tehtnico, sele nato susilnik.
+  const zaKorak=[];
+  (t.naprave||[]).forEach(v=>naVoljo.forEach(o=>{
+    if(o.vrsta===v&&!zaKorak.includes(o))zaKorak.push(o);
+  }));
+  if(!zaKorak.length)return prazna+naVoljo.map(opt).join('');
+  const ostalo=naVoljo.filter(o=>!zaKorak.includes(o));
+  return prazna
+    +`<optgroup label="Za ta korak">${zaKorak.map(opt).join('')}</optgroup>`
+    +(ostalo.length?`<optgroup label="Ostalo">${ostalo.map(opt).join('')}</optgroup>`:'');
 }
 
 function predlogaZaKorak(kljuc){
@@ -3019,8 +3084,7 @@ function renderDNKorakiRows(){
     const ure=korakUre(k);
     const preskocen=k.status==='preskocen';
     const bf=k.faza==='OF'?'#8b5a2a':k.faza==='VF'?'#2a6b4a':k.faza==='TE'?'#5a4a8b':'var(--muted)';
-    const opts=oprema.map(x=>
-      `<option value="${x.id}"${x.id===k.opremaId?' selected':''}>${x.naziv||'—'}</option>`).join('');
+    const opts=opcijeNaprav(t,k.opremaId);
     const ura=(kaj,napis)=>`
       <div class="korak-f">
         <label>${napis}</label>
@@ -3120,9 +3184,7 @@ function renderDNKorakiRows(){
       <div class="korak-grid" style="grid-template-columns:1fr 1fr">
         <div class="korak-f">
           <label>Naprava</label>
-          <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">
-            <option value="">—</option>${opts}
-          </select>
+          <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">${opts}</select>
         </div>
         <div class="korak-f">
           <label>Opomba</label>
@@ -6078,6 +6140,44 @@ function knjizMaterjaleIzhod(d){
 // Zapisi brez kategorije so starejsi od te delitve in stejejo za opremo.
 const KAT_OPREME={oprema:'⚙️ Oprema',merilo:'📏 Merilo',inventar:'📎 Drobni inventar'};
 function katLabel(kat){return KAT_OPREME[kat]||KAT_OPREME.oprema;}
+
+// Vrsta pove, KAJ naprava je - kategorija le, kako se z njo ravna. Sele vrsta
+// omogoci, da korak ponudi tehtnico in ne celega registra. Seznam je zaprt,
+// ker se mora ujemati s tem, kar zahteva korak; prosto besedilo se ne bi.
+//
+// "ugani" so vzorci za zapise, ki so starejsi od te delitve: obrazec predlaga
+// vrsto iz naziva, potrdi pa jo clovek ob shranjevanju.
+const VRSTE_OPREME={
+  tehtnica:     {naziv:'⚖️ Tehtnica',              ugani:/tehtnic|vaga|kern|mettler|precisa/i},
+  susilnik:     {naziv:'🔥 Halogenski sušilnik',   ugani:/sušilni|susilni|halogen|hr ?83|moisture/i},
+  uz_kopel:     {naziv:'〰️ Ultrazvočna kopel',     ugani:/ultrazvo|ultrazvo|uz kopel|sonic/i},
+  stiskalnica:  {naziv:'🗜️ Stiskalnica',           ugani:/stiskal|presa|press/i},
+  rotavapor:    {naziv:'🌀 Rotavapor',             ugani:/rotavap|rotacij|büchi|buchi|re-?52/i},
+  chiller:      {naziv:'❄️ Chiller',               ugani:/chiller|hladil|kriostat/i},
+  vakuum:       {naziv:'💨 Vakuumska črpalka',     ugani:/vakuum|črpalk|crpalk|pump/i},
+  tlacni:       {naziv:'♨️ Tlačni ekstraktor',     ugani:/tlačn|tlacn|avtoklav|autoklav|ekspres/i},
+  grelnik:      {naziv:'🍲 Grelna kopel / kotel',  ugani:/grel|kopel|kotel|termostat|plošč/i},
+  mesalo:       {naziv:'🥄 Mešalo',                ugani:/mešal|mesal|stirrer|homogeniz/i},
+  mlin:         {naziv:'🌾 Mlin',                  ugani:/mlin|mill|drobil/i},
+  polnilnik:    {naziv:'💧 Polnilna postaja',      ugani:/polniln|polnjenj|dozir/i},
+  flowhood:     {naziv:'🌬️ Flowhood / HEPA',       ugani:/flowhood|hepa|laminar|komora/i},
+  alkoholometer:{naziv:'🍸 Alkoholometer',         ugani:/alkoholo|alkometer|areometer|refrakto/i},
+  termometer:   {naziv:'🌡️ Termometer',            ugani:/termome|temperatur/i},
+  ph:           {naziv:'🧪 pH meter',              ugani:/ph ?met|ph ?mer/i},
+  hladilnik:    {naziv:'🧊 Hladilnik / zamrzovalnik', ugani:/hladilnik|zamrzoval|freezer/i},
+  drugo:        {naziv:'⚙️ Drugo'},
+};
+function vrstaLabel(v){return VRSTE_OPREME[v]?.naziv||'';}
+
+// Predlog za zapis brez vrste. Naziv in model sta edino, kar imamo; ce se nic
+// ne ujema, ne ugibamo naprej - prazno polje je bolj posteno od napacne vrste.
+function ugibVrste(naziv,model){
+  const t=`${naziv||''} ${model||''}`;
+  for(const [k,v] of Object.entries(VRSTE_OPREME))
+    if(v.ugani&&v.ugani.test(t))return k;
+  return '';
+}
+
 let opremaFilter='vsi';
 let opremaPage=0;
 const OP_PER_PAGE=15;
@@ -6134,7 +6234,7 @@ function renderOprema(){
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
-          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}${o.spremljevalci?.length?` · 🔗 +${o.spremljevalci.length}`:''}</div>
+          <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.vrsta&&vrstaLabel(o.vrsta)?' · '+vrstaLabel(o.vrsta):''}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}${o.spremljevalci?.length?` · 🔗 +${o.spremljevalci.length}`:''}</div>
           <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
           <div style="margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap">${vzdrz} ${kal} ${garancija}</div>
         </div>
@@ -6286,6 +6386,7 @@ function openOpremaSheet(id){
   document.getElementById('opGarancija').value=o?.garancija||'';
   document.getElementById('opVzdrz').value=o?.vzdrz||'';
   document.getElementById('opKat').value=o?.kat||'oprema';
+  nastaviOpVrsto(o);
   document.getElementById('opOpomba').value=o?.opomba||'';
   opSpremRows=Array.isArray(o?.spremljevalci)?[...o.spremljevalci]:[];
   renderOpSprem(id);
@@ -6529,6 +6630,21 @@ function renderOpUporaba(id){
     ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}`;
 }
 
+// Vrsta se za stare zapise predlaga iz naziva, a se ne vsili: dokler je clovek
+// ne potrdi s shranjevanjem, je to le predlog, in namig pod poljem to pove.
+function nastaviOpVrsto(o){
+  const sel=document.getElementById('opVrsta');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— ni določena —</option>'+
+    Object.entries(VRSTE_OPREME).map(([k,v])=>`<option value="${k}">${v.naziv}</option>`).join('');
+  const ugib=o&&!o.vrsta?ugibVrste(o.naziv,o.model):'';
+  sel.value=o?.vrsta||ugib||'';
+  const namig=document.getElementById('opVrstaNamig');
+  if(namig)namig.textContent=ugib
+    ? 'Predlagano iz naziva — shrani, če se ujema.'
+    : 'Po vrsti procesni korak ve, katero napravo naj ponudi.';
+}
+
 function onOpKatChange(){
   const kat=document.getElementById('opKat').value;
   const isInv=kat==='inventar';
@@ -6540,6 +6656,9 @@ function onOpKatChange(){
   // brisanje bi ga izgubilo. Opozorilo o poteklem umerjanju zato izpisujemo
   // samo pri merilih, da skrita vrednost ne strasi po nepotrebnem.
   document.getElementById('opKalibracijaBlok').style.display=kat==='merilo'?'':'none';
+  // Drobni inventar ni naprava, ki bi jo korak klical - filtrirni obroc nima
+  // vrste. Oprema in merila jo imata.
+  document.getElementById('opVrstaField').style.display=isInv?'none':'';
   renderOpSprem(editingOpremaId);
   // Status: inventar nima vzdrževanja
   const statusSel=document.getElementById('opStatus');
@@ -6563,6 +6682,7 @@ function saveOprema(){
     invSt:prejsnji?.invSt||naslednjaInvSt(),
     kat,naziv,
     model:document.getElementById('opModel').value.trim(),
+    vrsta:isInv?'':document.getElementById('opVrsta').value,
     status:document.getElementById('opStatus').value,
     opomba:document.getElementById('opOpomba').value.trim(),
     datumNakupa:isInv?document.getElementById('opDatumNakupa').value:document.getElementById('opDatumNakupa2').value,
@@ -7677,7 +7797,8 @@ function sbToMat(r){return{
 
 // Converters Oprema ↔ Supabase
 function opToSb(o){return{
-  id:o.id,inv_st:o.invSt||null,kat:o.kat||'oprema',naziv:o.naziv,model:o.model||null,
+  id:o.id,inv_st:o.invSt||null,kat:o.kat||'oprema',vrsta:o.vrsta||null,
+  naziv:o.naziv,model:o.model||null,
   status:o.status||'aktivna',opomba:o.opomba||null,
   datum_nakupa:o.datumNakupa||null,cena:o.cena||null,
   serijska:o.serijska||null,dobavitelj:o.dobavitelj||null,
@@ -7691,7 +7812,8 @@ function opToSb(o){return{
   kolicina:o.kolicina||null
 };}
 function sbToOp(r){return{
-  id:r.id,invSt:r.inv_st||'',kat:r.kat||'oprema',naziv:r.naziv,model:r.model||'',
+  id:r.id,invSt:r.inv_st||'',kat:r.kat||'oprema',vrsta:r.vrsta||'',
+  naziv:r.naziv,model:r.model||'',
   status:r.status||'aktivna',opomba:r.opomba||'',
   datumNakupa:r.datum_nakupa||'',cena:r.cena||0,
   serijska:r.serijska||'',dobavitelj:r.dobavitelj||'',

@@ -2575,13 +2575,27 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'8',   korak:'polnjenje', naziv:'Polnjenje', faza:'',
    polja:[
+     // Pri razsutem odpadeta stekleniceenje in polnilna postaja; higiena,
+     // zrak in embalaza veljajo naprej - tudi kanto je treba napolniti cisto.
      {k:'predpogoji',tip:'izbira',napis:'Predpogoji',vec:true,
+      velja:()=>!(dnJeBulk('Alc')&&dnJeBulk('Gly')),
       moznosti:['Flowhood/HEPA','UV/ozon cikel','Površine & orodje','Steklo/krhki materiali',
                 'Polnilna postaja','Embalaža','Osebna higiena & OVO','Okolje urejeno']},
+     {k:'predpogoji_bulk',tip:'izbira',napis:'Predpogoji',vec:true,
+      velja:()=>dnJeBulk('Alc')&&dnJeBulk('Gly'),
+      moznosti:['Flowhood/HEPA','UV/ozon cikel','Površine & orodje',
+                'Embalaža','Osebna higiena & OVO','Okolje urejeno']},
      {k:'predpogoji_ok',tip:'ccp',napis:'Vsi predpogoji izpolnjeni',
       opis:'CCP iz Analize tveganja (DOK-002).'},
-     {k:'st_alk',tip:'meritev',napis:'Alkoholnih polnitev',enota:''},
-     {k:'st_gly',tip:'meritev',napis:'Glicerinskih polnitev',enota:''},
+     // Kolicina se pove v tisti enoti, v kateri je serija dejansko koncala.
+     {k:'st_alk',tip:'meritev',napis:'Alkoholnih polnitev',enota:'',
+      velja:()=>!dnJeBulk('Alc')},
+     {k:'l_alk',tip:'meritev',napis:'Alkoholna razsuto',enota:'L',
+      velja:()=>dnJeBulk('Alc')},
+     {k:'st_gly',tip:'meritev',napis:'Glicerinskih polnitev',enota:'',
+      velja:()=>!dnJeBulk('Gly')},
+     {k:'l_gly',tip:'meritev',napis:'Glicerinska razsuto',enota:'L',
+      velja:()=>dnJeBulk('Gly')},
    ]},
   {st:'9',   korak:'organoleptika', naziv:'Organoleptična analiza', faza:'',
    polja:[
@@ -2624,11 +2638,18 @@ function predlogaZaKorak(kljuc){
   return DN_PREDLOGA_KORAKOV.find(t=>t.korak===kljuc)||{polja:[]};
 }
 
+// Nekatera polja veljajo samo v dolocenih okoliscinah - stevilo polnitev nima
+// pomena, ce serija ni ustekleniceena. Nalog to ze ve, zato se ne vprasa
+// dvakrat.
+function poljaKoraka(t){
+  return (t.polja||[]).filter(x=>typeof x.velja!=='function'||x.velja());
+}
+
 // Kriticne kontrolne tocke. Neodgovorjen CCP mora zadrzati korak - to je
 // celoten smisel kriticne tocke; sicer je le se eno polje, ki se ga da
 // preskociti.
 function korakCCP(k){
-  return (predlogaZaKorak(k.korak).polja||[]).filter(p=>p.tip==='ccp');
+  return poljaKoraka(predlogaZaKorak(k.korak)).filter(p=>p.tip==='ccp');
 }
 function korakCCPManjka(k){
   if(k.status==='preskocen')return [];
@@ -2759,7 +2780,7 @@ function paramiKoraka(kljuc){
 // Ob shranjevanju izracunane vrednosti zapisemo med parametre, da jih zapisnik
 // nosi tudi takrat, ko formule ni vec pri roki.
 function zapisiIzracune(k){
-  const polja=(predlogaZaKorak(k.korak).polja||[]).filter(x=>x.tip==='izracun');
+  const polja=poljaKoraka(predlogaZaKorak(k.korak)).filter(x=>x.tip==='izracun');
   if(!polja.length)return k;
   const pa={...(k.parametri||{})};
   polja.forEach(x=>{
@@ -2865,14 +2886,15 @@ function renderDNKorakiRows(){
       </div>`;
     // Izracunano polje ni vnosno - vrednost se izpelje iz meritev in se ob
     // shranjevanju zapise skupaj z njimi, da je zapisnik berljiv brez formul.
-    const izracuni=(t.polja||[]).filter(x=>x.tip==='izracun').map(x=>{
+    const vp=poljaKoraka(t);
+    const izracuni=vp.filter(x=>x.tip==='izracun').map(x=>{
       const v=x.izracun?x.izracun(k.parametri||{},paramiKoraka):null;
       return `<div class="korak-f">
         <label>${x.napis}${x.enota?' '+x.enota:''}</label>
         <input type="text" readonly class="korak-izr" value="${v==null?'':String(v).replace('.',',')}" placeholder="—">
       </div>`;}).join('');
 
-    const meritve=(t.polja||[]).filter(x=>x.tip==='meritev').map(x=>`
+    const meritve=vp.filter(x=>x.tip==='meritev').map(x=>`
       <div class="korak-f">
         <label title="${(x.napis+(x.enota?' '+x.enota:'')).replace(/"/g,'&quot;')}">${x.napis}${x.enota?' '+x.enota:''}</label>
         <input type="text" inputmode="decimal" placeholder="${x.naziv_priv||''}"
@@ -2881,7 +2903,7 @@ function renderDNKorakiRows(){
       </div>`).join('');
 
     // Presoja stoji nad meritvami, ker zadrzuje zakljucek koraka.
-    const ccp=(t.polja||[]).filter(x=>x.tip==='ccp').map(x=>{
+    const ccp=vp.filter(x=>x.tip==='ccp').map(x=>{
       const izid=k.parametri?.[x.k+'__presoja']||'';
       // Nekatere kriticne tocke imajo poleg presoje tudi izmerjeno vrednost
       // (vlaznost 9,21 % ob meji < 12 %), druge so samo presoja (filtrat bister).
@@ -2900,7 +2922,7 @@ function renderDNKorakiRows(){
         ${x.opis?`<div class="korak-opis">${x.opis}</div>`:''}
       </div>`;}).join('');
 
-    const izbire=(t.polja||[]).filter(x=>x.tip==='izbira').map(x=>`
+    const izbire=vp.filter(x=>x.tip==='izbira').map(x=>`
       <div class="korak-izbira">
         <div class="korak-izbira-napis">${x.napis}</div>
         <div class="korak-izbira-moz">${x.moznosti.map(m=>

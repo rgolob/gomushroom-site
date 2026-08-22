@@ -4258,6 +4258,9 @@ function sbToKorak(r){
 function uporabaPoKorakih(oznaka,zdaj){
   const izBilance=new Set(
     opremaUporaba.filter(u=>u.bilKljuc&&u.minute).map(u=>u.opremaId));
+  // Vrstica, ki jo je prevzel ze en korak, ne sme prevzeti se drugega:
+  // tehtnica v tehtanju gobe in v pripravi topila sta dve opravili, ne eno.
+  const prevzete=new Set();
   for(const k of dnKorakiRows){
     if(!k.opremaId)continue;
     const vodi=napravaVodi(k.opremaId);
@@ -4278,15 +4281,22 @@ function uporabaPoKorakih(oznaka,zdaj){
     }
 
     // Naprava, ki je ze na seznamu uporabljene opreme, dobi podatek dopisan -
-    // dve vrstici za isto delo bi uro sesteli dvakrat.
-    const obstoj=zdaj.find(r=>r.opremaId===k.opremaId&&!r.minute);
+    // brez tega bi dve vrstici za isto delo uro sesteli dvakrat.
+    //
+    // Pri merilu pa zdruzevanje skodi: ista tehtnica v tehtanju gobe in v
+    // pripravi topila sta dve opravili in dnevnik mora nositi obe - sicer se
+    // ob neumerjeni tehtnici ne vidi, katerih meritev vse zadeva. Zato vsak
+    // korak dobi svojo vrstico, obstojeco pa prevzame kvecjemu eden.
+    const obstoj=zdaj.find(r=>r.opremaId===k.opremaId&&!r.minute
+      &&!prevzete.has(r));
     const vrstica=obstoj||{id:uid(),dokument:oznaka,opremaId:k.opremaId,namen:''};
+    if(jeMerilo&&obstoj)prevzete.add(obstoj);
     vrstica.namen=vrstica.namen||k.naziv||'';
     if(minute)vrstica.minute=(vrstica.minute||0)+minute;
     // Datum je pri merilu bistven, zato ga vzamemo tudi iz koraka brez ur.
     vrstica.od=vrstica.od||k.zacetek||(korakDatum(k)?korakDatum(k)+'T00:00':null);
     if(k.konec)vrstica.doo=k.konec;
-    if(!obstoj)zdaj.push(vrstica);
+    if(!obstoj){zdaj.push(vrstica); if(jeMerilo)prevzete.add(vrstica);}
   }
 }
 

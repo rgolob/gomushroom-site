@@ -97,3 +97,12 @@ grant select on gm_oprema_ure to authenticated;
 alter table gm_dn_koraki
   add column if not exists spremenil  text,
   add column if not exists spremenjen timestamptz;
+
+-- ── Datum koraka ──────────────────────────────────────────────────────────
+-- Korak ima lahko datum brez ur — nalog, izpolnjen za nazaj, je tak skoraj
+-- vedno: naprave se spomniš, ure pa ne. Doslej se je datum izpeljeval iz
+-- zacetka oz. konca, zato ga je korak brez ur ob ponovnem branju izgubil.
+-- Pri merilu je datum bistvo dnevnika uporabe: po njem se vidi, katere serije
+-- zadene morebitno neumerjanje.
+alter table gm_dn_koraki
+  add column if not exists datum date;

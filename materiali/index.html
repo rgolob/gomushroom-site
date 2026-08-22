@@ -235,6 +235,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .fpill.active{background:var(--accent);border-color:var(--accent);color:white;font-weight:500}
 
 /* ── TABLE ── */
+/* Dnevnik dela naprave. Zaprt naslov nosi ure, ker so one razlog, da ga kdo
+   odpre — skenirana koda na napravi pripelje prav sem. */
+.opdnevnik{border:1px solid var(--border);border-radius:var(--rs);margin-bottom:.6rem;
+  background:var(--parchment)}
+.opdnevnik>summary{cursor:pointer;list-style:none;padding:.4rem .55rem;font-size:.74rem;
+  font-weight:600;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.opdnevnik>summary::-webkit-details-marker{display:none}
+.opdnevnik>summary::after{content:'▸';margin-left:auto;color:var(--muted);font-weight:400}
+.opdnevnik[open]>summary::after{content:'▾'}
+.opd-st{font-size:.62rem;font-weight:600;color:var(--muted);background:var(--border);
+  border-radius:999px;padding:.05rem .35rem}
+.opd-ure{font-size:.68rem;font-weight:400;color:var(--muted)}
+.opdnevnik .mini-table{margin:0;padding:0 .55rem .45rem}
 .mini-table{width:100%;border-collapse:collapse;font-size:.72rem;margin:.4rem 0}
 .mini-table th{text-align:left;padding:.2rem .35rem;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border);white-space:nowrap}
 .mini-table td{padding:.25rem .35rem;border-bottom:1px solid var(--parchment)}
@@ -952,6 +965,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <select id="opVrsta"></select>
         <div id="opVrstaNamig" style="font-size:.66rem;color:var(--muted);line-height:1.35;margin-top:.2rem"></div>
       </div>
+      <!-- Dnevnik dela stoji visoko: ko skeniras kodo na napravi, je to prvo,
+           kar hoces videti, ne pa cez cel obrazec navzdol. -->
+      <div id="opUporabaBlok"></div>
       <!-- Samo za inventar -->
       <div id="opKolicinaField" class="frow" style="display:none">
         <div class="field"><label>Količina (kom)</label><input id="opKolicina" type="text" inputmode="numeric" placeholder="1"></div>
@@ -1011,7 +1027,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div class="field"><label>Opomba</label><textarea id="opOpomba" placeholder="Lokacija, opombe…"></textarea></div>
       <div id="opSpremBlok"></div>
       <div id="opNalepkaBlok"></div>
-      <div id="opUporabaBlok"></div>
     </div>
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('opremaOverlay')">Prekliči</button>
@@ -6393,13 +6408,19 @@ function renderOprema(){
         ?`<span style="font-size:.65rem;color:var(--muted)">${PREVERJANJE_LABEL[nacin]}${o.certifikat?' · '+o.certifikat:''}</span>`
         :'');
     const garancija=o.garancija?`<span style="font-size:.65rem;color:var(--muted)">Garancija: ${fmtDate(o.garancija)}</span>`:'';
+    // Ure na seznamu: pri napravi, ki se obrablja, je to podatek, zaradi
+    // katerega se kartico sploh odpre. Pri tehtnici ali stiskalnici ur ni in
+    // prazna rubrika bi bila samo sum.
+    const min=vrstaVodi(o.vrsta)==='ure'
+      ?opremaUporaba.filter(u=>u.opremaId===o.id).reduce((n,u)=>n+(u.minute||0),0):0;
+    const ure=min?`<span style="font-size:.65rem;color:var(--muted)">🕘 ${fmtTrajanje(min)}</span>`:'';
     return`<div class="dn-card">
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
           <div class="dn-meta">${o.invSt?`<strong>${o.invSt}</strong> · `:''}${katLabel(o.kat)}${o.vrsta&&vrstaLabel(o.vrsta)?' · '+vrstaLabel(o.vrsta):''}${o.kat==='inventar'&&o.kolicina?' · '+o.kolicina+' kom':''}${o.serijska?' · SN: '+o.serijska:''}${o.lokacija?' · 📍 '+o.lokacija:''}${o.spremljevalci?.length?` · 🔗 +${o.spremljevalci.length}`:''}</div>
           <div class="dn-meta">${fmtDate(o.datumNakupa)}${o.cena?' · '+o.cena.toFixed(2)+' €':''}</div>
-          <div style="margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap">${vzdrz} ${kal} ${garancija}</div>
+          <div style="margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap">${vzdrz} ${kal} ${ure} ${garancija}</div>
         </div>
         <div class="dn-right">
           <div class="status-badge ${statusCls[o.status]||''}">${statusIcon[o.status]||''} ${o.status==='aktivna'?'Aktivna':o.status==='vzdrz'?'Vzdrž.':'Neaktivna'}</div>
@@ -6519,7 +6540,9 @@ function odpriIzUrl(){
   const o=najdiOpremo(kljuc);
   if(!o){toast('⚠ Naprava z oznako '+kljuc+' ne obstaja');return;}
   switchTab('oprema');
+  _opDnevnikOdprt=true;
   openOpremaSheet(o.id);
+  _opDnevnikOdprt=false;
   // Naslov pocistimo, da osvezitev ne odpre kartice znova.
   history.replaceState(null,'',location.pathname);
 }
@@ -6792,11 +6815,20 @@ function renderOpUporaba(id){
   }).join('');
   const skupaj=[neto?`<strong>${fmtTrajanje(neto)}</strong> neto`:'',
                 bruto?`<strong>${fmtTrajanje(bruto)}</strong> bruto`:''].filter(Boolean).join(' · ');
-  el.innerHTML=`<div class="slabel">Dnevnik dela (${uporabe.length})</div>
-    ${skupaj?`<div style="font-size:.72rem;color:var(--muted);margin:-.2rem 0 .35rem">Skupaj ${skupaj}</div>`:''}
+  // Zaprt naslov mora povedati, kaj je v njem - sicer je zlaganje skoda in ne
+  // korist. Ure so tisto, zaradi cesar clovek dnevnik odpre, zato stojijo ze
+  // v naslovu in jih ni treba iskati.
+  el.innerHTML=`<details class="opdnevnik"${_opDnevnikOdprt?' open':''}>
+    <summary>🕘 Dnevnik dela <span class="opd-st">${uporabe.length}</span>
+      <span class="opd-ure">${skupaj||'brez ur'}</span></summary>
     <table class="mini-table">${vrstice}</table>
-    ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}`;
+    ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}
+  </details>`;
 }
+
+// Ko kartico odpre skenirana koda, je clovek pri napravi in ga zanima prav
+// dnevnik - takrat naj bo ze odprt.
+let _opDnevnikOdprt=false;
 
 // Vrsta se za stare zapise predlaga iz naziva, a se ne vsili: dokler je clovek
 // ne potrdi s shranjevanjem, je to le predlog, in namig pod poljem to pove.

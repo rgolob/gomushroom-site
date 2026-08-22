@@ -8507,8 +8507,14 @@ function saveZdruzi(){
 function openBilancaSheet(id){
   editingBilId=id||null;
   document.getElementById('bilSheetTitle').textContent=id?'Uredi dogodek':'Nov dogodek';
-  const tinkture=[...new Set(bilancaDogodki.map(d=>d.tinktura).filter(Boolean))];
-  const batchi=[...new Set(bilancaDogodki.map(d=>d.batch).filter(Boolean))];
+  // Imena in oznake ponudimo tudi iz delovnih nalogov, ne le iz ze vpisanih
+  // dogodkov. Prva bilanca serije se sicer vpisuje na prazno in ime, natipkano
+  // drugace kot v nalogu ("Bradovec" namesto "Resasti bradovec"), naredi drugo
+  // serijo - nalog svoje bilance nikoli ne najde.
+  const tinkture=[...new Set([...bilancaDogodki.map(d=>d.tinktura),
+    ...workOrders.map(d=>d.vrstaGobe)].filter(Boolean))];
+  const batchi=[...new Set([...bilancaDogodki.map(d=>d.batch),
+    ...workOrders.map(d=>d.serijaAlc)].filter(Boolean))];
   document.getElementById('bilTinkturaList').innerHTML=tinkture.map(t=>`<option value="${t}">`).join('');
   document.getElementById('bilBatchListDL').innerHTML=batchi.map(b=>`<option value="${b}">`).join('');
 

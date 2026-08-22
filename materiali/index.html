@@ -2757,12 +2757,26 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
    ]},
   {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
-   naprave:['rotavapor','vakuum','chiller'],
+   naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'VF',
+   opis:'Kot pri organski fazi: rezultat pove bilanca, tehtanje ga potrdi.',
    polja:[
+     {k:'m_bil',tip:'iz_naloga',cilj:true,napis:'iz bilance',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'VF')?.m??null},
+     {k:'c_bil',tip:'iz_naloga',cilj:true,napis:'C EtOH',enota:'% m/m',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'VF')?.mm??null},
+     {k:'aae_bil',tip:'iz_naloga',cilj:true,napis:'AAE',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'VF')?.aae??null},
      {k:'v_koncni',tip:'meritev',napis:'V končni',enota:'mL',
       opis:'Ciljni volumen končne tinkture. Iz njega sledi skupna masa m_tot = ρ30 × V, pri ρ30 iz tabele gostot (0,9622 g/mL).'},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m HVE koncentrata',enota:'g'},
+     {k:'hve_ok',tip:'ccp',podMeritvami:true,napis:'Masa HVE se ujema z bilanco',
+      opis:'Tehtanje potrdi, kar je izračunala bilanca za vodno fazo.',
+      namig:pa=>{const c=parseNum(pa.m_bil),d=parseNum(pa.m_koncentrata);
+        if(!(c>0))return {besedilo:'bilanca še brez VF'};
+        if(!(d>0))return {besedilo:'stehtaj'};
+        const o=round((d-c)/c*100,2);
+        return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=2};}},
      {k:'m_tot',tip:'izracun',napis:'m tot',enota:'g',
       izracun:pa=>{const v=parseNum(pa.v_koncni);return v>0?round(v*etohDensity(30),1):null;}},
      // Polovica je le teoreticni cilj in ga ni mogoce zadeti. Zavezujoca je
@@ -2784,10 +2798,24 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'m_te',tip:'meritev',napis:'m TE ekstrakta',enota:'g'},
    ]},
   {st:'3.1', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
-   naprave:['rotavapor','vakuum','chiller'],
+   naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'TE',
+   opis:'Kot pri organski in vodni fazi: rezultat pove bilanca, tehtanje ga potrdi.',
    polja:[
+     {k:'m_bil',tip:'iz_naloga',cilj:true,napis:'iz bilance',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'TE')?.m??null},
+     {k:'c_bil',tip:'iz_naloga',cilj:true,napis:'C EtOH',enota:'% m/m',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'TE')?.mm??null},
+     {k:'aae_bil',tip:'iz_naloga',cilj:true,napis:'AAE',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'TE')?.aae??null},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_koncentrata',tip:'meritev',napis:'m TE koncentrata',enota:'g'},
+     {k:'te_ok',tip:'ccp',podMeritvami:true,napis:'Masa TE se ujema z bilanco',
+      opis:'Tehtanje potrdi, kar je izračunala bilanca za tlačno fazo.',
+      namig:pa=>{const c=parseNum(pa.m_bil),d=parseNum(pa.m_koncentrata);
+        if(!(c>0))return {besedilo:'bilanca še brez TE'};
+        if(!(d>0))return {besedilo:'stehtaj'};
+        const o=round((d-c)/c*100,2);
+        return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=2};}},
      // Ne polovica, ampak razlika do vsote: TE mora dopolniti tisto, cesar HVE
      // ni dala. Zato se cilj premakne, brz ko je HVE stehtana.
      {k:'m_te_potreben',tip:'izracun',napis:'potreben',enota:'g',
@@ -8075,7 +8103,7 @@ function renderBilOprema(){
       </div>
       ${cipi?`<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin:.45rem 0 .35rem">${cipi}</div>`:''}
       <select onchange="dodajBilOpremo(this.value);this.value=''" style="margin-top:.35rem">
-        <option value="">${vpisane.length?'+ dodaj napravo':'— izberi rotavapor —'}</option>
+        <option value="">${vpisane.length?'+ dodaj napravo':'— izberi rotavapor, tehtnico, alkoholometer —'}</option>
         ${naVoljo.filter(o=>!izbrani.has(o.id)).map(o=>
           `<option value="${o.id}">${o.invSt?o.invSt+' · ':''}${o.naziv||'—'}</option>`).join('')}
       </select>
@@ -8115,11 +8143,24 @@ function osveziBilCase(kljuc){
   const cas=bilNetoOdseki(kljuc);
   const dn=workOrders.find(d=>meDnKljuc(d)===kljuc);
   let spremenjeni=0;
+  // Prvi in zadnji dogodek serije: pri merilu je to obseg njegove uporabe.
+  // Tehtnica in alkoholometer sta v procesu ob vsakem vhodu in izhodu, a ne
+  // teceta - ur jima ne pripisujemo, datum uporabe pa je bistven, ker se po
+  // njem vidi, katere serije zadene morebitno neumerjanje.
+  const vsi=bilancaDogodki
+    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
+    .map(d=>bilTsMs(d.ts)).sort((a,b)=>a-b);
   vpisane.forEach(u=>{
+    const jeMerilo=napravaVodi(u.opremaId)==='meritev';
     // 'doo' in ne 'do': 'do' je rezervirana beseda in bi v objektu delovala,
     // v SQL pa terjala narekovaje - raje se ji ognemo povsod enako.
-    const nov={minute:cas.minute,od:cas.od?new Date(cas.od).toISOString():null,
-      doo:cas.do?new Date(cas.do).toISOString():null,dokument:dn?.oznaka||u.dokument||''};
+    const nov=jeMerilo
+      ? {minute:0,
+         od:vsi.length?new Date(vsi[0]).toISOString():null,
+         doo:vsi.length?new Date(vsi[vsi.length-1]).toISOString():null,
+         dokument:dn?.oznaka||u.dokument||''}
+      : {minute:cas.minute,od:cas.od?new Date(cas.od).toISOString():null,
+         doo:cas.do?new Date(cas.do).toISOString():null,dokument:dn?.oznaka||u.dokument||''};
     if(u.minute===nov.minute&&u.od===nov.od&&u.doo===nov.doo&&u.dokument===nov.dokument)return;
     Object.assign(u,nov);spremenjeni++;
     sbPushOpUp(u);

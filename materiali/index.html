@@ -3905,7 +3905,7 @@ function openDNSheet(id){
     dnSerijeRows=[{serija:'',masa:''}];
   }
   dnOpremaRows=id
-    ?dnOpremaZaDokument(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
+    ?dnOpremaRocno(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
     :[];
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
@@ -4229,6 +4229,21 @@ function dnOpremaZaDokument(oznaka){
   // urejamo, sicer bi jih shranjevanje naloga poteptalo.
   return oznaka?opremaUporaba.filter(u=>u.dokument===oznaka&&!u.bilKljuc):[];
 }
+
+// Vrstica, ki jo je naredil procesni korak, nosi njegov kljuc v svojem id-ju.
+// Po tem se loci od tiste, ki jo je clovek vpisal rocno - in prav ta locnica
+// je bistvena: korakova vrstica se ob vsakem shranjevanju izpelje na novo,
+// rocna pa ostane, dokler je kdo ne odstrani.
+const KORAK_UP='kor-';
+function jeKorakovaUporaba(u){return String(u?.id||'').startsWith(KORAK_UP);}
+
+// Rocno vpisane vrstice - te ureja razdelek "Uporabljena oprema" na nalogu.
+// Korakovih vrstic tu ni: ce bi se vpisale v seznam, bi se ob naslednjem
+// shranjevanju obravnavale kot rocne in bi zamenjana naprava ostala zapisana
+// poleg nove.
+function dnOpremaRocno(oznaka){
+  return dnOpremaZaDokument(oznaka).filter(u=>!jeKorakovaUporaba(u));
+}
 function bilOpremaZaSerijo(kljuc){
   return kljuc?opremaUporaba.filter(u=>u.bilKljuc===kljuc):[];
 }
@@ -4343,9 +4358,13 @@ function uporabaPoKorakih(oznaka,zdaj){
     // pripravi topila sta dve opravili in dnevnik mora nositi obe - sicer se
     // ob neumerjeni tehtnici ne vidi, katerih meritev vse zadeva. Zato vsak
     // korak dobi svojo vrstico, obstojeco pa prevzame kvecjemu eden.
+    // Prevzame se lahko samo rocna vrstica - korakova pripada svojemu koraku.
     const obstoj=zdaj.find(r=>r.opremaId===k.opremaId&&!r.minute
-      &&!prevzete.has(r));
-    const vrstica=obstoj||{id:uid(),dokument:oznaka,opremaId:k.opremaId,namen:''};
+      &&!jeKorakovaUporaba(r)&&!prevzete.has(r));
+    // Stalen id iz koraka: ob zamenjavi naprave se ista vrstica popravi,
+    // namesto da bi zraven nastala se ena. Ob izbrisu naprave iz koraka
+    // vrstica izpade iz seznama in se izbrise tudi v bazi.
+    const vrstica=obstoj||{id:KORAK_UP+k.id,dokument:oznaka,opremaId:k.opremaId,namen:''};
     if(jeMerilo&&obstoj)prevzete.add(obstoj);
     vrstica.namen=vrstica.namen||k.naziv||'';
     if(minute)vrstica.minute=(vrstica.minute||0)+minute;

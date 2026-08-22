@@ -191,6 +191,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* ── OVERLAY / SHEET ── */
 .overlay{position:fixed;inset:0;background:rgba(26,18,9,.45);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;padding:0 5px}
 .overlay.open{opacity:1;pointer-events:all}
+/* Lista, ki se odpreta NAD drugim listom: dnevnik iz kartice opreme in
+   preverjanje iz koraka. Vsi listi imajo isti z-index, zato bi odlocal vrstni
+   red v dokumentu - in ta dva stojita pred obrazci, torej bi ostala spodaj. */
+#dnevnikOverlay{z-index:210}
+#preverjanjeOverlay{z-index:220}
 .sheet{background:var(--cream);border-radius:16px 16px 0 0;height:92vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,0,.67,0);overflow:hidden;width:100%;max-width:560px;margin:0 auto}
 .overlay.open .sheet{transform:translateY(0)}
 .shandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:.6rem auto .2rem}
@@ -255,6 +260,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .opd-ure{font-size:.68rem;font-weight:400;color:var(--muted)}
 .opd-prazno{font-size:.68rem;color:var(--muted);line-height:1.4;padding:0 .55rem .45rem}
 .opd-sporno{color:var(--danger);font-weight:600}
+/* Zapora v koraku: poteklo merilo. Rdeca in gumb, ker je edino nadaljevanje
+   preverjanje - opozorilo brez poti iz njega bi bilo samo ovira. */
+.korak-zapora{font-size:.6rem;color:#8b2a2a;line-height:1.4;margin-top:.25rem;
+  padding:.35rem .45rem;border:1px solid rgba(139,42,42,.45);border-radius:var(--rs);
+  background:rgba(139,42,42,.07)}
+.korak-zapora button{display:block;margin-top:.3rem;padding:.25rem .6rem;
+  border:1px solid #8b2a2a;border-radius:4px;background:#8b2a2a;color:#fff;
+  font-family:'Jost',sans-serif;font-size:.62rem;font-weight:600;cursor:pointer}
+.prev-naprava{font-size:.8rem;margin-bottom:.6rem}
+.prev-poteklo{font-size:.7rem;color:var(--danger);font-weight:600;margin-top:.15rem}
+.prev-rok{font-size:.7rem;color:var(--muted);margin-top:.2rem}
 /* Pot do dnevnika v obrazcu opreme: pove vsoto, podrobnosti so en dotik stran. */
 .opdnevnik-gumb{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;
   border:1px solid var(--border);border-radius:var(--rs);background:var(--parchment);
@@ -518,6 +534,42 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem" id="nav-vec" onclick="openVecMenu()"><span class="nicon">⋯</span>Več</button>
 </nav>
 
+<!-- SHEET: PREVERJANJE / UMERJANJE MERILA -->
+<div class="overlay" id="preverjanjeOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="prevNaslov">Preverjanje merila</span>
+      <button class="shclose" onclick="closeSheet('preverjanjeOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div id="prevNaprava" class="prev-naprava"></div>
+      <div class="field"><label>Kaj je bilo opravljeno</label>
+        <select id="prevNacin" onchange="onPrevNacinChange()">
+          <option value="preverjanje">Preverjanje proti referenci</option>
+          <option value="umerjanje">Umerjanje pri zunanjem izvajalcu</option>
+          <option value="nastavitev">Nastavitev pred uporabo</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Datum</label><input id="prevDatum" type="date" onchange="osveziPrevRok()"></div>
+        <div class="field"><label>Ura</label><input id="prevUra" type="time"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Izvajalec</label><input id="prevIzvajalec" placeholder="ime ali podjetje"></div>
+        <div class="field"><label>Interval (mes.)</label><input id="prevInterval" type="text" inputmode="numeric" placeholder="12" oninput="osveziPrevRok()"></div>
+      </div>
+      <div id="prevCertBlok" class="field"><label>Št. certifikata</label><input id="prevCertifikat" placeholder="npr. cert. 12345"></div>
+      <div class="field"><label>Rezultat / opomba</label><textarea id="prevOpomba" placeholder="npr. odstopanje 0,002 g — ustreza"></textarea></div>
+      <div id="prevRokNamig" class="prev-rok"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('preverjanjeOverlay')">Prekliči</button>
+      <button class="bsave" onclick="shraniPreverjanje()">Zapiši preverjanje</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET: DNEVNIK DELA NAPRAVE -->
 <!-- Svoj list, ker je dnevnik zapis za branje; obrazec opreme je za urejanje. -->
 <div class="overlay" id="dnevnikOverlay">
@@ -724,18 +776,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
-      </div></details>
-      <details class="dnsec" id="dnsecOprema">
-      <summary>🔧 Uporabljena oprema <span class="dnsum" id="dnsumOprema"></span></summary>
-      <div class="dnsec-body">
-      <div class="slabel">Uporabljena oprema</div>
-      <div id="dnOpremaContainer"></div>
-      <button type="button" onclick="addDNOpremaRow()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">+ Dodaj opremo</button>
-      <datalist id="dnOpremaNameni">
-        <option value="Ekstrakcija"><option value="Filtracija"><option value="Stiskanje">
-        <option value="Mešanje"><option value="Polnjenje"><option value="Etiketiranje">
-        <option value="Tehtanje"><option value="Shranjevanje">
-      </datalist>
       </div></details>
       <details class="dnsec" id="dnsecKonec">
       <summary>✔️ Opomba in zaključek <span class="dnsum" id="dnsumKonec"></span></summary>
@@ -1523,6 +1563,7 @@ function save(){
   localStorage.setItem('gm_dn_rd',JSON.stringify(rdNalogi));
   localStorage.setItem('gm_dn_bilanca',JSON.stringify(bilancaDogodki));
   localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
+  localStorage.setItem('gm_dn_umerjanja',JSON.stringify(umerjanja));
 }
 
 // ── TABELA GOSTOTE EtOH/H2O po volumskem % (20°C, g/mL) ──
@@ -3012,9 +3053,12 @@ function osveziStatusKoraka(k){
     return;
   }
   if(k.status==='preskocen')return;
-  if(k.zacetek&&k.konec)k.status=korakCCPManjka(k).length?'v_teku':'koncan';
+  // Poteklo merilo steje enako kot neodgovorjena kriticna tocka: korak ostane
+  // v teku, dokler ni preverjanje opravljeno.
+  const zadrzano=korakCCPManjka(k).length||korakPoteklaMerila(k).length;
+  if(k.zacetek&&k.konec)k.status=zadrzano?'v_teku':'koncan';
   else if(k.zacetek)k.status='v_teku';
-  else k.status=korakCCPManjka(k).length?'nacrtovan':(korakCCP(k).length?'koncan':'nacrtovan');
+  else k.status=zadrzano?'nacrtovan':(korakCCP(k).length?'koncan':'nacrtovan');
 }
 
 function onDNKorakParam(idx,kljuc,val){
@@ -3131,6 +3175,15 @@ function izbranaMoznost(k,kljuc,vrednost){
 function onDNKorakStatus(idx,val){
   const k=dnKorakiRows[idx];if(!k)return;
   if(val==='koncan'){
+    // Poteklo merilo zadrzi korak pred kriticnimi tockami: brez veljavnega
+    // merila je vprasljiva ze meritev, po kateri se presoja.
+    const potekla=korakPoteklaMerila(k);
+    if(potekla.length){
+      toast(`⛔ Poteklo umerjanje: ${potekla.map(o=>o.naziv).join(', ')} — najprej opravi preverjanje`);
+      if(potekla.length===1)odpriPreverjanje(potekla[0].id);
+      renderDNKorakiRows();
+      return;
+    }
     const manjka=korakCCPManjka(k);
     if(manjka.length){
       toast(`⚠ Najprej presodi: ${manjka.map(p=>p.napis).join(', ')}`);
@@ -3215,6 +3268,13 @@ function uraNamig(k){
   if(!k.opremaId)return '';
   const o=oprema.find(x=>x.id===k.opremaId);
   if(!o)return '';
+  // Poteklo merilo ni namig, ampak zapora: dokler preverjanje ni opravljeno,
+  // korak ne more biti koncan. Zato tu stoji tudi pot iz nje.
+  if(kalibracijaPotekla(o))
+    return `<div class="korak-zapora">⛔ ${PREVERJANJE_LABEL[nacinPreverjanja(o)]||'Rok'}
+      je poteklo ${fmtDate(kalibracijaRok(o))} — korak se ne more zakljuciti.
+      <button type="button" onclick="event.stopPropagation();odpriPreverjanje('${o.id}')">Opravi preverjanje</button></div>`
+      .replace('zakljuciti','zaključiti');
   if(!o.vrsta)
     return `<div class="korak-namig">Napravi ni določena vrsta — ure se ji ne vodijo.</div>`;
   if(vrstaVodi(o.vrsta)!=='ure')return '';
@@ -3385,7 +3445,7 @@ function korakKartica(k){
 // korist. Povzetek zato nosi stanje: kolicine, AAE, ali se bilanca izide.
 // Koraki so na vrhu, ker se nalog tam dejansko dela - serija, masa surovine
 // in topilo se vpisejo v prvih dveh korakih. Kolicine in cene pridejo za tem.
-const DN_SEKCIJE=['Koraki','Alc','Gly','Bil','Cene','Oprema','Konec'];
+const DN_SEKCIJE=['Koraki','Alc','Gly','Bil','Cene','Konec'];
 const DN_ODPRTO_KLJUC='gm_dn_sekcije_odprto';
 
 function dnPisiPovzetek(id,besedilo,razred=''){
@@ -3449,10 +3509,6 @@ function dnOsveziPovzetke(){
   } else {
     dnPisiPovzetek('Koraki','ni ustvarjenih');
   }
-
-  const nOpr=(typeof dnOpremaRows!=='undefined'&&Array.isArray(dnOpremaRows))
-    ?dnOpremaRows.filter(r=>r.opremaId).length:0;
-  dnPisiPovzetek('Oprema',nOpr?`${nOpr} ${nOpr===1?'naprava':nOpr===2?'napravi':'naprav'}`:'ni izbrane');
 
   const zak=document.getElementById('dnDatumZakljucka')?.value;
   const opomba=(document.getElementById('dnOpomba')?.value||'').trim();
@@ -3904,14 +3960,10 @@ function openDNSheet(id){
   } else {
     dnSerijeRows=[{serija:'',masa:''}];
   }
-  dnOpremaRows=id
-    ?dnOpremaRocno(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
-    :[];
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
   dnKorakiRows=id?korakiZaDokument(d?.oznaka).map(k=>({...k,parametri:{...(k.parametri||{})}})):korakiIzPredloge();
   renderDNSerijeRows();
-  renderDNOpremaRows();
   renderDNKorakiRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
@@ -4158,70 +4210,32 @@ function renderDNSerijeRows(){
 // Obdobja uporabe ne belezimo posebej: to je obdobje naloga, ki ga ze imamo.
 // Belezimo namen, ker en nalog isto napravo uporabi v razlicnih korakih.
 let opremaUporaba = JSON.parse(localStorage.getItem('gm_dn_oprema_uporaba')||'[]');
-let dnOpremaRows=[];
 
+// ── UMERJANJA IN PREVERJANJA MERIL ─────────────────────────────────────────
+// Vsako potrjevanje tocnosti je svoj zapis s casom, ne le datum na napravi.
+// Datum pove, kdaj je bilo nazadnje; zapis pove, kolikokrat, kdo in s cim - in
+// prav to potrebuje zapisnik, ko je treba dokazati, da je bila meritev
+// opravljena z merilom, ki je takrat veljalo.
+let umerjanja = JSON.parse(localStorage.getItem('gm_dn_umerjanja')||'[]');
+function umerjanjaZaOpremo(id){
+  return id?umerjanja.filter(u=>u.opremaId===id)
+    .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||''))):[];
+}
 function opremaZaIzbiro(izbrani){
   // Neaktivno opremo pokazemo le, ce je ze izbrana - stara serija je lahko
   // nastala na napravi, ki je danes ni vec v uporabi, in tega ne smemo skriti.
   const nujne=new Set(izbrani.filter(Boolean));
   return oprema.filter(o=>o.status!=='neaktivna'||nujne.has(o.id));
 }
-function renderDNOpremaRows(){
-  const c=document.getElementById('dnOpremaContainer');
-  if(!c)return;
-  const naVoljo=opremaZaIzbiro(dnOpremaRows.map(r=>r.opremaId));
-  if(!naVoljo.length&&!dnOpremaRows.length){
-    c.innerHTML='<div style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem">V registru ni opreme — dodaj jo v zavihku Oprema.</div>';
-    return;
-  }
-  c.innerHTML=dnOpremaRows.map((row,idx)=>{
-    const opts=naVoljo.map(o=>
-      `<option value="${o.id}"${o.id===row.opremaId?' selected':''}>${o.naziv||'—'}${o.model?' · '+o.model:''}</option>`).join('');
-    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.35rem">
-      <div class="field" style="flex:2;margin-bottom:0">
-        <label style="font-size:.7rem">${idx===0?'Naprava':'&nbsp;'}</label>
-        <select onchange="onDNOpremaChange(${idx},'opremaId',this.value)">
-          <option value="">— izberi —</option>${opts}
-        </select>
-      </div>
-      <div class="field" style="flex:1;margin-bottom:0">
-        <label style="font-size:.7rem">${idx===0?'Namen':'&nbsp;'}</label>
-        <input type="text" list="dnOpremaNameni" value="${(row.namen||'').replace(/"/g,'&quot;')}" placeholder="Ekstrakcija" oninput="onDNOpremaChange(${idx},'namen',this.value)">
-      </div>
-      <button type="button" onclick="removeDNOpremaRow(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1;margin-bottom:.05rem">✕</button>
-    </div>`;
-  }).join('');
-}
-function addDNOpremaRow(){dnOpremaRows.push({id:uid(),opremaId:'',namen:''});renderDNOpremaRows();}
-function removeDNOpremaRow(idx){dnOpremaRows.splice(idx,1);renderDNOpremaRows();}
-// Polja ne izrisujemo znova ob vsakem znaku - to bi vpisovanju namena vzelo
-// fokus po prvi crki. Izbira naprave je izjema: takrat pripnemo se njene
-// spremljevalce in seznam je treba izrisati znova.
-function onDNOpremaChange(idx,polje,val){
-  if(!dnOpremaRows[idx])return;
-  dnOpremaRows[idx][polje]=val;
-  if(polje!=='opremaId'||!val)return;
-  const dodani=pripniSpremljevalce(val,dnOpremaRows[idx].namen);
-  if(dodani)renderDNOpremaRows();
-}
 
 // Glavna naprava potegne za sabo svoje spremljevalce (rotavapor -> chiller,
 // crpalka, kontroler). Zveza je usmerjena: crpalka ne potegne rotavaporjev,
 // sicer bi skupna crpalka pripeljala vso delavnico. Gremo samo eno stopnjo
 // globoko - predvidljivost je tu vec vredna od iznajdljivosti.
-function pripniSpremljevalce(opremaId,namen){
+function spremljevalciNaprave(opremaId){
   const glavna=oprema.find(o=>o.id===opremaId);
   const seznam=Array.isArray(glavna?.spremljevalci)?glavna.spremljevalci:[];
-  if(!seznam.length)return 0;
-  const ze=new Set(dnOpremaRows.map(r=>r.opremaId).filter(Boolean));
-  let dodanih=0;
-  seznam.forEach(sid=>{
-    if(!sid||ze.has(sid))return;
-    if(!oprema.some(o=>o.id===sid))return;   // naprava je bila izbrisana
-    dnOpremaRows.push({id:uid(),opremaId:sid,namen:namen||''});
-    ze.add(sid);dodanih++;
-  });
-  return dodanih;
+  return seznam.filter(sid=>sid&&oprema.some(o=>o.id===sid));
 }
 
 function dnOpremaZaDokument(oznaka){
@@ -4237,13 +4251,6 @@ function dnOpremaZaDokument(oznaka){
 const KORAK_UP='kor-';
 function jeKorakovaUporaba(u){return String(u?.id||'').startsWith(KORAK_UP);}
 
-// Rocno vpisane vrstice - te ureja razdelek "Uporabljena oprema" na nalogu.
-// Korakovih vrstic tu ni: ce bi se vpisale v seznam, bi se ob naslednjem
-// shranjevanju obravnavale kot rocne in bi zamenjana naprava ostala zapisana
-// poleg nove.
-function dnOpremaRocno(oznaka){
-  return dnOpremaZaDokument(oznaka).filter(u=>!jeKorakovaUporaba(u));
-}
 function bilOpremaZaSerijo(kljuc){
   return kljuc?opremaUporaba.filter(u=>u.bilKljuc===kljuc):[];
 }
@@ -4372,6 +4379,16 @@ function uporabaPoKorakih(oznaka,zdaj){
     vrstica.od=vrstica.od||k.zacetek||(korakDatum(k)?korakDatum(k)+'T00:00':null);
     if(k.konec)vrstica.doo=k.konec;
     if(!obstoj){zdaj.push(vrstica); if(jeMerilo)prevzete.add(vrstica);}
+
+    // Rotavapor ne tece sam: z njim gresta chiller in crpalka. Spremljevalci
+    // dobijo svojo vrstico, da je v dnevniku vidno tudi njihovo delo - cas
+    // podedujejo od glavne naprave, ker tecejo z njo.
+    spremljevalciNaprave(k.opremaId).forEach(sid=>{
+      const sid_id=KORAK_UP+k.id+'-'+sid;
+      if(zdaj.some(r=>r.id===sid_id))return;
+      zdaj.push({id:sid_id,dokument:oznaka,opremaId:sid,namen:k.naziv||'',
+                 minute:vrstica.minute||0,od:vrstica.od||null,doo:vrstica.doo||null});
+    });
   }
 }
 
@@ -4380,9 +4397,10 @@ function uporabaPoKorakih(oznaka,zdaj){
 async function shraniDNOpremo(oznaka){
   if(!oznaka)return;
   const prej=dnOpremaZaDokument(oznaka);
-  const zdaj=dnOpremaRows.filter(r=>r.opremaId).map(r=>({
-    id:r.id||uid(),dokument:oznaka,opremaId:r.opremaId,namen:(r.namen||'').trim(),
-  }));
+  // Uporaba nastane iz procesnih korakov, ne iz seznama, ki bi ga clovek
+  // vzdrzeval ob njih. Kar je bilo v rabi, je ze zapisano tam, kjer se je
+  // delalo; podvojen seznam bi bil samo se eno mesto, ki se lahko razide.
+  const zdaj=[];
   uporabaPoKorakih(oznaka,zdaj);
   const zdajIdji=new Set(zdaj.map(r=>r.id));
   const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
@@ -4617,11 +4635,22 @@ function openDNDetail(id){
         return`<tr><td>Suha snov (Lod)</td><td>${ss!=null?ss.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':'—'}${stat?`<div style="font-size:.68rem;color:var(--muted)">${stat}</div>`:''}</td></tr>`;})()}
     </table>
 
-    ${(()=>{const u=dnOpremaZaDokument(d.oznaka);
+    ${(()=>{
+      // Naprave, ne vsaka posamezna uporaba: ista tehtnica v osmih korakih je
+      // ena naprava, ne osem vrstic. Kje natanko je bila v rabi, pove korak.
+      const u=dnOpremaZaDokument(d.oznaka);
       if(!u.length)return'';
+      const po=new Map();
+      u.forEach(x=>{
+        const t=po.get(x.opremaId)||{koraki:new Set(),minute:0};
+        if(x.namen)t.koraki.add(x.namen);
+        t.minute+=(x.minute||0);
+        po.set(x.opremaId,t);
+      });
       return`<div class="slabel">Uporabljena oprema</div>
-      <table class="mini-table">${u.map(x=>
-        `<tr><td>${opremaNaziv(x.opremaId)}</td><td>${x.namen||'—'}</td></tr>`).join('')}</table>`;})()}
+      <table class="mini-table">${[...po].map(([id,t])=>
+        `<tr><td>${opremaNaziv(id)}</td><td>${[...t.koraki].join(', ')||'—'}${
+          t.minute?` <span style="color:var(--muted)">· ${fmtTrajanje(t.minute)}</span>`:''}</td></tr>`).join('')}</table>`;})()}
 
     <div class="slabel">Alkoholna tinktura</div>
     <table class="mini-table">
@@ -6801,6 +6830,26 @@ function kalibracijaRok(o){
   if(!ROK_VELJA.has(nacinPreverjanja(o)))return '';
   return (o?.kalibracija&&o?.kalInterval)?pristejMesece(o.kalibracija,o.kalInterval):'';
 }
+// Merilo s poteklim rokom ni merilo, s katerim se sme meriti: stevilka, ki jo
+// da, v zapisniku ne vzdrzi. Zato korak, ki ga imenuje, ne more biti koncan,
+// dokler ni preverjanje opravljeno in zapisano.
+function kalibracijaPotekla(o){
+  const rok=kalibracijaRok(o);
+  return !!rok&&rok<todayISO();
+}
+function napravaPotekla(opremaId){
+  const o=oprema.find(x=>x.id===opremaId);
+  return !!o&&kalibracijaPotekla(o);
+}
+// Merila s poteklim rokom, ki jih imenuje ta korak ali kateri od njegovih
+// podkorakov.
+function korakPoteklaMerila(k){
+  if(k.status==='preskocen')return [];
+  return skupinaKoraka(k)
+    .map(x=>oprema.find(o=>o.id===x.opremaId))
+    .filter(o=>o&&kalibracijaPotekla(o));
+}
+
 const PREVERJANJE_LABEL={
   umerjanje:'Umerjanje',preverjanje:'Preverjanje',
   nastavitev:'Nastavitev pred uporabo',certifikat:'Tovarniški certifikat',brez:'',
@@ -7012,6 +7061,100 @@ function sklonUporab(n){
   const d=n%100;
   const beseda=(d===1)?'uporaba':(d===2)?'uporabi':(d===3||d===4)?'uporabe':'uporab';
   return `${n} ${beseda}`;
+}
+
+// ── PREVERJANJE / UMERJANJE MERILA ─────────────────────────────────────────
+// Ko rok potece, se z merilom ne sme meriti. Namesto tihe rdece opombe v
+// registru te aplikacija ustavi tam, kjer se dela - v koraku - in ponudi
+// edino smiselno nadaljevanje: opravi preverjanje in ga zapisi.
+let _prevOpremaId=null;
+
+function odpriPreverjanje(opremaId){
+  const o=oprema.find(x=>x.id===opremaId);
+  if(!o){toast('Naprava ne obstaja');return;}
+  _prevOpremaId=opremaId;
+  const zdaj=lokalniCasZdaj();               // 'YYYY-MM-DDTHH:MM' po lokalnem casu
+  document.getElementById('prevNaslov').textContent=
+    kalibracijaPotekla(o)?'Poteklo — opravi preverjanje':'Preverjanje merila';
+  const rok=kalibracijaRok(o);
+  document.getElementById('prevNaprava').innerHTML=
+    `<strong>${o.naziv||'—'}</strong>${o.model?' · '+o.model:''}${o.invSt?' · '+o.invSt:''}`
+    +(rok?`<div class="prev-poteklo">${kalibracijaPotekla(o)
+        ? `⚠ ${PREVERJANJE_LABEL[nacinPreverjanja(o)]||'Rok'} je poteklo ${fmtDate(rok)}`
+        : `Velja do ${fmtDate(rok)}`}</div>`:'');
+  document.getElementById('prevNacin').value=
+    ROK_VELJA.has(nacinPreverjanja(o))?nacinPreverjanja(o):'preverjanje';
+  document.getElementById('prevDatum').value=zdaj.slice(0,10);
+  document.getElementById('prevUra').value=zdaj.slice(11,16);
+  document.getElementById('prevIzvajalec').value='';
+  document.getElementById('prevInterval').value=o.kalInterval||'';
+  document.getElementById('prevCertifikat').value='';
+  document.getElementById('prevOpomba').value='';
+  onPrevNacinChange();
+  openSheet('preverjanjeOverlay');
+}
+
+function onPrevNacinChange(){
+  const nacin=document.getElementById('prevNacin').value;
+  document.getElementById('prevCertBlok').style.display=nacin==='umerjanje'?'':'none';
+  // Nastavitev pred uporabo se opravi vsakic sproti in nima roka; interval bi
+  // pri njej obljubljal veljavnost, ki je nima.
+  document.getElementById('prevInterval').closest('.field').style.display=
+    ROK_VELJA.has(nacin)?'':'none';
+  osveziPrevRok();
+}
+
+function osveziPrevRok(){
+  const el=document.getElementById('prevRokNamig');
+  if(!el)return;
+  const nacin=document.getElementById('prevNacin').value;
+  const datum=document.getElementById('prevDatum').value;
+  const mes=parseNum(document.getElementById('prevInterval').value);
+  if(!ROK_VELJA.has(nacin)){
+    el.textContent='Ta način nima roka — velja do naslednje uporabe.';
+    return;
+  }
+  el.textContent=(datum&&mes>0)
+    ? `Nov rok: ${fmtDate(pristejMesece(datum,mes))}`
+    : 'Vpiši datum in interval, da se izračuna nov rok.';
+}
+
+function shraniPreverjanje(){
+  const o=oprema.find(x=>x.id===_prevOpremaId);
+  if(!o){toast('Naprava ne obstaja');return;}
+  const datum=document.getElementById('prevDatum').value;
+  if(!datum){toast('⚠ Vpiši datum');return;}
+  const ura=document.getElementById('prevUra').value||'00:00';
+  const nacin=document.getElementById('prevNacin').value;
+  const mes=ROK_VELJA.has(nacin)?(parseNum(document.getElementById('prevInterval').value)||null):null;
+  const zapis={
+    id:uid(),opremaId:o.id,ts:`${datum}T${ura}`,nacin,
+    rok:mes?pristejMesece(datum,mes):'',
+    izvajalec:document.getElementById('prevIzvajalec').value.trim(),
+    certifikat:nacin==='umerjanje'?document.getElementById('prevCertifikat').value.trim():'',
+    interval:mes,
+    opomba:document.getElementById('prevOpomba').value.trim(),
+  };
+  umerjanja.push(zapis);
+  // Naprava nosi zadnje stanje, da rok in opozorila delajo naprej; zgodovina
+  // je v zapisih. Nacina ne spreminjamo pri nastavitvi pred uporabo - ta je
+  // enkraten dogodek in ne pove, kako se merilo potrjuje nasploh.
+  if(ROK_VELJA.has(nacin)){
+    o.preverjanje=nacin;
+    o.kalibracija=datum;
+    if(mes)o.kalInterval=mes;
+    if(zapis.certifikat)o.certifikat=zapis.certifikat;
+  }
+  save();
+  sbPushUm(zapis);
+  sbPushOp(o);
+  closeSheet('preverjanjeOverlay');
+  renderOprema();
+  if(currentTab==='dnevniki')renderDnevniki();
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+  toast(`✓ ${PREVERJANJE_LABEL[nacin]||'Preverjanje'} zapisano${zapis.rok?' · velja do '+fmtDate(zapis.rok):''}`);
+  _prevOpremaId=null;
 }
 
 // ── DNEVNIK DELA NAPRAVE ───────────────────────────────────────────────────
@@ -8439,6 +8582,19 @@ async function sbPushOpUp(u){
     toast('⚠ Uporaba opreme ostaja lokalna — poglej klicaj v glavi');
   }
 }
+// Converters umerjanje <-> Supabase (tabela gm_dn_umerjanja)
+function umToSb(u){return{
+  id:u.id,oprema_id:u.opremaId,ts:u.ts||null,nacin:u.nacin||null,
+  rok:u.rok||null,izvajalec:u.izvajalec||null,certifikat:u.certifikat||null,
+  interval_mes:u.interval||null,opomba:u.opomba||null,
+};}
+function sbToUm(r){return{
+  id:r.id,opremaId:r.oprema_id||'',ts:r.ts||'',nacin:r.nacin||'',
+  rok:r.rok||'',izvajalec:r.izvajalec||'',certifikat:r.certifikat||'',
+  interval:r.interval_mes||null,opomba:r.opomba||'',
+};}
+async function sbPushUm(u){await sbPushZapis('gm_dn_umerjanja',umToSb(u),'sbPushUm');}
+
 // Converters zapis GLY <-> Supabase (tabela gm_dn_gly_zapisi)
 function glyToSb(z){return{
   id:z.id,dn_id:z.dnId||null,vir:z.vir||null,
@@ -8555,7 +8711,7 @@ async function migrirajVSupabase(){
 async function loadFromSB(){
   setSyncStatus('↻');
   try{
-    const [wos,ets,mats,ops,rds,bils,glys,mtipi,opup,koraki]=await Promise.all([
+    const [wos,ets,mats,ops,rds,bils,glys,mtipi,opup,koraki,umer]=await Promise.all([
       sbFetch('gm_dn_work_orders','order=datum.desc'),
       sbFetch('gm_dn_etanol','order=datum.asc'),
       sbFetch('gm_dn_materiali','order=datum.desc'),
@@ -8567,6 +8723,7 @@ async function loadFromSB(){
       // null pomeni "tabele (se) ni" - takrat lokalne uporabe ne povozimo.
       sbFetch('gm_dn_oprema_uporaba','order=dokument.asc').catch(()=>null),
       sbFetch('gm_dn_koraki','order=zaporedje.asc').catch(()=>null),
+      sbFetch('gm_dn_umerjanja','order=ts.desc').catch(()=>null),
     ]);
     // Varnostna preveritev: ne prepiši lokalnih podatkov s praznimi Supabase rezultati
     const sbTotal=wos.length+ets.length+mats.length+ops.length;
@@ -8595,6 +8752,10 @@ async function loadFromSB(){
     if(koraki){
       dnKoraki=koraki.map(sbToKorak);
       try{localStorage.setItem('gm_dn_koraki',JSON.stringify(dnKoraki));}catch(e){}
+    }
+    if(umer){
+      umerjanja=umer.map(sbToUm);
+      try{localStorage.setItem('gm_dn_umerjanja',JSON.stringify(umerjanja));}catch(e){}
     }
     if(glys.length){
       // Zdruzimo, ne prepisemo. Zapis, ki na streznik ni prisel - ker je bila
@@ -8822,6 +8983,17 @@ async function appInit(){
   await loadFromSB();
   await migrateOpombaToDoabvitelj();
   odpriIzUrl();
+  opozoriNaPoteklaMerila();
+}
+
+// Poteklo merilo se pokaze samo, ce ga kdo odpre - kar pomeni, da ga vidis
+// sele, ko z njim ze meris. Zato ob zagonu povemo, katera merila cakajo.
+function opozoriNaPoteklaMerila(){
+  const potekla=oprema.filter(o=>o.status!=='neaktivna'&&kalibracijaPotekla(o));
+  if(!potekla.length)return;
+  setTimeout(()=>toast(
+    `⛔ Poteklo umerjanje: ${potekla.map(o=>o.naziv).join(', ')} — koraki s temi merili se ne dajo zaključiti`),
+    1200);
 }
 function init(){appInit();}
 

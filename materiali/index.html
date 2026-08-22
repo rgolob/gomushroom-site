@@ -150,6 +150,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   border-radius:4px;font-family:'Jost',sans-serif;font-size:16px;background:white;
   color:var(--ink);outline:none;text-align:center}
 .korak-ccp-vr:focus{border-color:var(--accent)}
+/* Izracunano odstopanje ob kriticni tocki: presojas s stevilko pred sabo. */
+.korak-ccp-izr{font-size:.68rem;font-weight:600;color:var(--muted);flex:0 0 auto;
+  font-variant-numeric:tabular-nums}
+.korak-ccp-izr.da{color:#2a6b4a}
+.korak-ccp-izr.ne{color:var(--danger)}
 /* Izracunana vrednost in vrednost iz naloga nista vnosni. Polje bi vabilo k
    tipkanju in zasedlo prostor v vrsti; majhen izpis pove isto in ne laze. */
 /* Preseljena rubrika v koraku. Ostane ista kot na nalogu, le tesneje
@@ -2460,11 +2465,14 @@ function prevzemiPreracunVKorak(){
   if(!v&&!m)return;
   k.parametri=k.parametri||{};
   if(v)k.parametri.v_me=v;
-  if(m)k.parametri.m_me=m;
-  if(k.status!=='preskocen')k.status='koncan';
+  // Preracun da POTREBNO maso, ne stehtane. Prej se je vpisala kot m_me in je
+  // v zapisniku izgledala kot meritev, ceprav je nihce ni stehtal.
+  if(m)k.parametri.m_me_potreben=m;
+  // Koraka ne zakljucimo: zatehtek se caka in presoja odstopanja tudi.
+  if(k.status==='nacrtovan')k.status='v_teku';
   renderDNKorakiRows();
   dnOsveziPovzetke();
-  toast('✓ Rezultat prevzet v korak');
+  toast('✓ Potrebna masa prevzeta — zdaj zatehtaj in vpiši dejansko');
 }
 
 function calcMe(){
@@ -2665,9 +2673,25 @@ const DN_PREDLOGA_KORAKOV=[
    ]},
   {st:'1.3', korak:'preracun_me', naziv:'Ločitev matičnega ekstrakta', faza:'OF', akcija:'me',
    naprave:['tehtnica'],
+   opis:'Preračun pove, koliko matičnega ekstrakta je treba dati na stran. Zatehtaj in vpiši dejansko maso — od izračunane sme odstopati največ 1 %.',
    polja:[
+     // Prvo je dejanski zatehtek, ker je to tisto, kar clovek naredi in vpise.
+     // Izracunana masa stoji ob njem kot majhna stevilka: je cilj, ne meritev,
+     // in v zapisniku ne sme biti videti kot da je bila stehtana.
+     {k:'m_me',tip:'meritev',napis:'m ME zatehtano',enota:'g'},
+     {k:'m_me_potreben',tip:'izracun',napis:'potrebno',enota:'g',
+      opis:'Iz preračuna matičnega ekstrakta.',
+      izracun:pa=>{const v=parseNum(pa.m_me_potreben);return v>0?round(v,1):null;}},
+     {k:'odstopanje_me',tip:'izracun',napis:'odstopanje',enota:'%',
+      izracun:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
+        return (c>0&&d>0)?round((d-c)/c*100,2):null;}},
+     {k:'zatehtek_ok',tip:'ccp',napis:'Zatehtek matičnega ekstrakta',meja:'± 1 % od izračunanega',
+      opis:'Odstopanje nad 1 % pomeni drugačno razmerje v končni tinkturi, kot ga je dal preračun.',
+      namig:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
+        if(!(c>0)||!(d>0))return {besedilo:'vpiši zatehtek'};
+        const o=round((d-c)/c*100,2);
+        return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=1};}},
      {k:'v_me',tip:'meritev',napis:'V ME',enota:'mL'},
-     {k:'m_me',tip:'meritev',napis:'m ME',enota:'g'},
      {k:'v_aae_of',tip:'meritev',napis:'V AAE v OF',enota:'mL'},
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
@@ -3335,9 +3359,14 @@ function korakRubrike(k){
           value="${(k.parametri?.[x.k]??'').toString().replace(/"/g,'&quot;')}"
           placeholder="${x.enota}" aria-label="${x.napis} (${x.enota})"
           oninput="onDNKorakParam(${idx},'${x.k}',this.value)">`:'';
+      // Nekatere kriticne tocke se presojajo po stevilki, ki jo zna izracunati
+      // aplikacija sama (odstopanje zatehtka). Clovek jo mora videti tu, ne
+      // dve vrstici nizje - sicer presoja na pamet.
+      const namig=x.namig?x.namig(paramiZViri(k,t)):null;
       return `<div class="korak-ccp${izid==='ne'?' ne':izid==='da'?' da':''}">
         <div class="korak-ccp-vrh">
           <span class="korak-ccp-napis">⚠ ${x.napis}${x.meja?` <em>${x.meja}</em>`:''}</span>
+          ${namig?`<span class="korak-ccp-izr ${namig.ok===false?'ne':namig.ok?'da':''}">${namig.besedilo}</span>`:''}
           ${meri}
           <span class="korak-ccp-gumbi">
             <button type="button" class="${izid==='da'?'izbran':''}" onclick="onDNKorakCCP(${idx},'${x.k}','da')">ustreza</button>

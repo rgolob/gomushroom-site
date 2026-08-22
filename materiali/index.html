@@ -247,6 +247,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .opd-st{font-size:.62rem;font-weight:600;color:var(--muted);background:var(--border);
   border-radius:999px;padding:.05rem .35rem}
 .opd-ure{font-size:.68rem;font-weight:400;color:var(--muted)}
+.opd-prazno{font-size:.68rem;color:var(--muted);line-height:1.4;padding:0 .55rem .45rem}
 .opdnevnik .mini-table{margin:0;padding:0 .55rem .45rem}
 .mini-table{width:100%;border-collapse:collapse;font-size:.72rem;margin:.4rem 0}
 .mini-table th{text-align:left;padding:.2rem .35rem;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -6794,7 +6795,24 @@ function renderOpUporaba(id){
   // Dnevnik dela: vsaka uporaba svoja vrstica, z neto casom, kjer ga imamo.
   // Ure so podlaga za servisne intervale, zato jih sestejemo tudi skupaj.
   const uporabe=id?opremaUporaba.filter(u=>u.opremaId===id):[];
-  if(!uporabe.length){el.innerHTML='';return;}
+  const o=id?oprema.find(x=>x.id===id):null;
+  // Nova naprava zapisov se nima. Skriti razdelek pomeni, da ga clovek isce in
+  // ne najde - in ne izve, zakaj ga ni. Zato prazen dnevnik pokazemo in
+  // povemo, od kod se napolni. Skrijemo ga samo pri drobnem inventarju, ki ni
+  // naprava, in pri neshranjeni napravi, ki se nima kaj pokazati.
+  if(!o||o.kat==='inventar'){el.innerHTML='';return;}
+  if(!uporabe.length){
+    const brezVrste=!o.vrsta
+      ?' Napravi še ni določena vrsta — dokler ni, korak ne ve, da ji vodi ure.'
+      :'';
+    el.innerHTML=`<details class="opdnevnik">
+      <summary>🕘 Dnevnik dela <span class="opd-ure">brez zapisov</span></summary>
+      <div class="opd-prazno">Napolni se sam: iz bilance, ko na njej izbereš to napravo,
+      in ob shranjevanju delovnega naloga, če jo imenuje kakšen procesni korak.
+      Vpišeš jo lahko tudi ročno pod „Uporabljena oprema“ na nalogu.${brezVrste}</div>
+    </details>`;
+    return;
+  }
   const kljucDatuma=u=>{
     if(u.od)return String(u.od).slice(0,10);
     const dn=workOrders.find(d=>d.oznaka===u.dokument);

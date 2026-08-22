@@ -2461,10 +2461,10 @@ function prevzemiPreracunVKorak(){
   if(!k)return;
   const stevilo=id=>{const v=parseNum(document.getElementById(id)?.value||'0');
     return v>0?String(round(v,1)).replace('.',','):null;};
-  const v=stevilo('meVme'),m=stevilo('meMme');
-  if(!v&&!m)return;
+  const m=stevilo('meMme');
+  if(!m)return;
   k.parametri=k.parametri||{};
-  if(v)k.parametri.v_me=v;
+  // Volumna ne prevzemamo: izpelje se iz dejanskega zatehtka, ne iz nacrta.
   // Preracun da POTREBNO maso, ne stehtane. Prej se je vpisala kot m_me in je
   // v zapisniku izgledala kot meritev, ceprav je nihce ni stehtal.
   if(m)k.parametri.m_me_potreben=m;
@@ -2685,14 +2685,26 @@ const DN_PREDLOGA_KORAKOV=[
      {k:'odstopanje_me',tip:'izracun',napis:'odstopanje',enota:'%',
       izracun:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
         return (c>0&&d>0)?round((d-c)/c*100,2):null;}},
-     {k:'zatehtek_ok',tip:'ccp',napis:'Zatehtek matičnega ekstrakta',meja:'± 1 % od izračunanega',
+     // Presoja stoji POD poljem, v katerem se vpise zatehtek - najprej stehtas,
+     // sele nato presodis. Drugod je presoja nad meritvami, ker jih pogojuje.
+     {k:'zatehtek_ok',tip:'ccp',podMeritvami:true,
+      napis:'Zatehtek matičnega ekstrakta',meja:'± 1 % od izračunanega',
       opis:'Odstopanje nad 1 % pomeni drugačno razmerje v končni tinkturi, kot ga je dal preračun.',
       namig:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
         if(!(c>0)||!(d>0))return {besedilo:'vpiši zatehtek'};
         const o=round((d-c)/c*100,2);
         return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=1};}},
-     {k:'v_me',tip:'meritev',napis:'V ME',enota:'mL'},
-     {k:'v_aae_of',tip:'meritev',napis:'V AAE v OF',enota:'mL'},
+     // Volumna se izracunata iz stehtane mase in izmerjene koncentracije
+     // topila; vpisovati ju bi pomenilo isto stvar povedati dvakrat in tvegati,
+     // da se razideta. Gostota je gostota etanolne raztopine te koncentracije.
+     {k:'c_etoh_me',tip:'iz_naloga',napis:'C EtOH',enota:'% v/v',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnPctEtOH')?.value)||null},
+     {k:'v_me',tip:'izracun',napis:'V ME',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c),1):null;}},
+     {k:'v_aae_of',tip:'izracun',napis:'V AAE v OF',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c)*c/100,1):null;}},
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
    naprave:['rotavapor','vakuum','chiller'],
@@ -3349,8 +3361,11 @@ function korakRubrike(k){
                oninput="onDNKorakParam(${idx},'${x.k}',this.value)">
       </div>`).join('');
 
-    // Presoja stoji nad meritvami, ker zadrzuje zakljucek koraka.
-    const ccp=vp.filter(x=>x.tip==='ccp').map(x=>{
+    // Presoja praviloma stoji nad meritvami, ker jih pogojuje - filtrat mora
+    // biti bister, preden se sploh splaca tehtati. Kjer pa je presoja sodba O
+    // meritvi (zatehtek matičnega ekstrakta), stoji pod njo: najprej stehtas,
+    // sele nato presodis.
+    const ccpVse=x=>{
       const izid=k.parametri?.[x.k+'__presoja']||'';
       // Nekatere kriticne tocke se presodijo po meritvi (vlaznost 9,21 % ob
       // meji < 12 %), druge so cista presoja (filtrat bister). Prve
@@ -3374,7 +3389,9 @@ function korakRubrike(k){
           </span>
         </div>
         ${x.opis?`<div class="korak-opis">${x.opis}</div>`:''}
-      </div>`;}).join('');
+      </div>`;};
+    const ccp=vp.filter(x=>x.tip==='ccp'&&!x.podMeritvami).map(ccpVse).join('');
+    const ccpPod=vp.filter(x=>x.tip==='ccp'&&x.podMeritvami).map(ccpVse).join('');
 
     const izbire=vp.filter(x=>x.tip==='izbira').map(x=>`
       <div class="korak-izbira">
@@ -3401,8 +3418,9 @@ function korakRubrike(k){
       ${t.opis?`<div class="korak-opis">${t.opis}</div>`:''}
       ${ccp}${izbire}
       ${t.vsebina?`<div class="korak-premik" data-vsebina="${t.vsebina.join('|')}"></div>`:''}
-      ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       ${meritve?`<div class="korak-grid">${meritve}</div>`:''}
+      ${ccpPod}
+      ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       <div class="korak-grid" style="grid-template-columns:${napravaPolje?'1fr 1fr':'1fr'}">
         ${napravaPolje}
         <div class="korak-f">

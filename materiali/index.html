@@ -456,6 +456,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   </div>
 
   <!-- OPREMA VIEW -->
+  <!-- Dnevniki dela: pregled cez vse naprave, ki so kaj delale. Register
+       opreme pove, kaj imas; ta zaslon pove, kaj je bilo v rabi. -->
+  <div class="view" id="view-dnevniki">
+    <div class="view-hdr">
+      <div class="view-title">Dnevniki dela</div>
+    </div>
+    <div class="filter-row">
+      <button class="fpill active" id="dnv-vsi" onclick="setDnevnikFilter('vsi',this)">Vse</button>
+      <button class="fpill" onclick="setDnevnikFilter('ure',this)">🕘 Z urami</button>
+      <button class="fpill" onclick="setDnevnikFilter('merilo',this)">📏 Merila</button>
+      <button class="fpill" onclick="setDnevnikFilter('sporno',this)">⚠ Izven umerjanja</button>
+    </div>
+    <div id="dnevnikiList"></div>
+  </div>
+
   <div class="view" id="view-oprema">
     <div class="view-hdr">
       <div class="view-title">Oprema</div>
@@ -498,6 +513,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shbody">
       <button class="vec-item" onclick="vecOdpri('materiali')"><span class="vec-ico">📦</span><span><strong>Materiali</strong><small>Zaloga steklenic, etiket, gob, glicerina</small></span></button>
       <button class="vec-item" onclick="vecOdpri('oprema')"><span class="vec-ico">🔧</span><span><strong>Oprema</strong><small>Oprema, inventar, vzdrževanje</small></span></button>
+      <button class="vec-item" onclick="vecOdpri('dnevniki')"><span class="vec-ico">🕘</span><span><strong>Dnevniki dela</strong><small>Naprave, ki so kaj delale — ure in uporabe</small></span></button>
       <button class="vec-item" onclick="vecOdpri('rd')"><span class="vec-ico">🔬</span><span><strong>R&amp;D</strong><small>Razvojni nalogi</small></span></button>
       <button class="vec-item" onclick="closeSheet('vecOverlay');openSettings()"><span class="vec-ico">⚙️</span><span><strong>Nastavitve</strong><small>Sinhronizacija, cene, trošarina</small></span></button>
     </div>
@@ -3645,7 +3661,7 @@ function onEtTipChange(){
 // ── TAB ──
 // Zasloni pod gumbom "Vec" nimajo svojega gumba v spodnji vrstici, zato ostane
 // oznacen gumb "Vec" - sicer med njimi ni oznacen noben zavihek.
-const NAV_VEC=['materiali','oprema','rd'];
+const NAV_VEC=['materiali','oprema','rd','dnevniki'];
 
 function switchTab(id,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -3659,6 +3675,7 @@ function switchTab(id,btn){
   if(id==='etanol'){renderEtStats();renderEtanol();}
   if(id==='materiali'){renderMateriali();}
   if(id==='oprema'){renderOprema();}
+  if(id==='dnevniki'){renderDnevniki();}
   if(id==='rd'){renderRD();}
   if(id==='bilanca'){renderBilancaSelect();}
   if(id==='preracuni'){renderPreracuni();}
@@ -6846,6 +6863,100 @@ function kopirajSeznamOznak(){
   const vrstice=seznam.map(o=>[o.invSt,o.naziv||'',o.model||'',opremaUrl(o)].join('\t'));
   kopiraj(['oznaka\tnaziv\tmodel\tpovezava',...vrstice].join('\n'),
     `Seznam ${seznam.length} naprav`);
+}
+
+// ── DNEVNIKI DELA ──────────────────────────────────────────────────────────
+// Register opreme pove, kaj imas; ta zaslon pove, kaj je bilo v rabi. Naprave
+// brez ene same uporabe tu ni - prazna vrstica ne pove nicesar, iskanje po njej
+// pa stane. Kdor jo isce, jo najde v registru.
+let dnevnikFilter='vsi';
+function setDnevnikFilter(f,btn){
+  dnevnikFilter=f;
+  const vrsta=btn.closest('.filter-row');
+  vrsta.querySelectorAll('.fpill').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  renderDnevniki();
+}
+
+// Kaj naprava pokaze v pregledu: ure, ce se obrablja, sicer stevilo uporab -
+// in pri merilu se, koliko uporab je po izteku umerjanja.
+function dnevnikPovzetek(o){
+  const uporabe=opremaUporaba.filter(u=>u.opremaId===o.id);
+  const vodi=vrstaVodi(o.vrsta);
+  const neto=uporabe.filter(u=>u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
+  const bruto=uporabe.filter(u=>!u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
+  const rok=kalibracijaRok(o);
+  const datum=u=>{
+    if(u.od)return String(u.od).slice(0,10);
+    const dn=workOrders.find(d=>d.oznaka===u.dokument);
+    return dn?.datum||'';
+  };
+  const sporne=(vodi==='meritev'&&rok)
+    ?uporabe.filter(u=>{const d=datum(u);return !!d&&d>rok;}).length:0;
+  const zadnja=uporabe.map(datum).filter(Boolean).sort().pop()||'';
+  return {uporabe,vodi,neto,bruto,sporne,zadnja,
+          nalogi:new Set(uporabe.map(u=>u.dokument).filter(Boolean)).size};
+}
+
+function renderDnevniki(){
+  const el=document.getElementById('dnevnikiList');
+  if(!el)return;
+  // Samo naprave s kaksnim zapisom uporabe.
+  let rows=oprema.filter(o=>o.kat!=='inventar'
+    &&opremaUporaba.some(u=>u.opremaId===o.id));
+  const povz=new Map(rows.map(o=>[o.id,dnevnikPovzetek(o)]));
+  if(dnevnikFilter==='ure')   rows=rows.filter(o=>povz.get(o.id).vodi==='ure');
+  if(dnevnikFilter==='merilo')rows=rows.filter(o=>povz.get(o.id).vodi==='meritev');
+  if(dnevnikFilter==='sporno')rows=rows.filter(o=>povz.get(o.id).sporne>0);
+  // Najprej tisto, kar je bilo nazadnje v rabi.
+  rows.sort((a,b)=>(povz.get(b.id).zadnja||'').localeCompare(povz.get(a.id).zadnja||''));
+
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="ei">🕘</div>
+      <div class="et">${dnevnikFilter==='vsi'?'Ni dnevnikov':'Ni naprav v tem izboru'}</div>
+      <div class="es">${dnevnikFilter==='vsi'
+        ? 'Vrstica nastane, ko napravo imenuje procesni korak ali ko jo izbereš v bilanci.'
+        : 'Poskusi z drugim filtrom.'}</div></div>`;
+    return;
+  }
+  el.innerHTML=rows.map(o=>{
+    const p=povz.get(o.id);
+    const ure=[];
+    if(p.neto) ure.push(`<strong>${fmtTrajanje(p.neto)}</strong> neto`);
+    if(p.bruto)ure.push(`<strong>${fmtTrajanje(p.bruto)}</strong> bruto`);
+    // Pri merilu ur ni; takrat je stevilo uporab edino, kar je za povedati, in
+    // ga ne izpisemo dvakrat.
+    const stUporab=sklonUporab(p.uporabe.length);
+    const znak=ure.length?ure.join(' · '):stUporab;
+    const podznak=ure.length?stUporab:'';
+    const nalogi=p.nalogi?`${p.nalogi} ${p.nalogi===1?'nalog':p.nalogi===2?'naloga':p.nalogi<5?'nalogi':'nalogov'}`:'';
+    // Vrsta naprave, kadar pove kaj vec od naziva - "Rotavapor · Rotavapor" ne.
+    const vrs=vrstaLabel(o.vrsta)||katLabel(o.kat);
+    const golo=vrs.replace(/[^\p{L}\s\/]/gu,'').trim().toLowerCase();
+    const vrsta=golo&&golo!==(o.naziv||'').trim().toLowerCase()?vrs:'';
+    const meta=[vrsta,nalogi,p.zadnja?'nazadnje '+fmtDate(p.zadnja):''].filter(Boolean).join(' · ');
+    return`<div class="dn-card">
+      <div class="dn-header" onclick="openOpremaSheetZDnevnikom('${o.id}')">
+        <div class="dn-info">
+          <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
+          <div class="dn-meta">${meta}</div>
+          ${p.sporne?`<div class="dn-meta" style="color:var(--danger);font-weight:600;margin-top:.2rem">⚠ ${sklonUporab(p.sporne)} po izteku umerjanja</div>`:''}
+        </div>
+        <div class="dn-right">
+          <div class="status-badge">${znak}</div>
+          ${podznak?`<div class="dn-meta" style="margin-top:.3rem">${podznak}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Iz pregleda se kartica naprave odpre z ze odprtim dnevnikom - po njem si
+// prisel.
+function openOpremaSheetZDnevnikom(id){
+  _opDnevnikOdprt=true;
+  openOpremaSheet(id);
+  _opDnevnikOdprt=false;
 }
 
 // Obratna smer vezi: na cem je naprava delala. Ob vzdrzevanju ali reklamaciji

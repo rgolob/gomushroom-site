@@ -43,6 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const pageMapSlToEn = {
     "/qc/tezke-kovine/": "/en/qc/heavy-metals/",
     "/trgovina/": "/en/shop/",
+    "/trgovina/kosarica/": "/en/shop/cart/",
+    "/trgovina/blagajna/": "/en/shop/checkout/",
     "/trgovina/reishi-tinktura/": "/en/shop/reishi-tincture/",
     "/trgovina/chaga-tinktura/": "/en/shop/chaga-tincture/",
     "/trgovina/resasti-bradovec-tinktura/": "/en/shop/lions-mane-tincture/",
@@ -68,6 +70,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const pageMapEnToSl = {
     "/en/qc/heavy-metals/": "/qc/tezke-kovine/",
     "/en/shop/": "/trgovina/",
+    "/en/shop/cart/": "/trgovina/kosarica/",
+    "/en/shop/checkout/": "/trgovina/blagajna/",
     "/en/shop/reishi-tincture/": "/trgovina/reishi-tinktura/",
     "/en/shop/chaga-tincture/": "/trgovina/chaga-tinktura/",
     "/en/shop/lions-mane-tincture/": "/trgovina/resasti-bradovec-tinktura/",
@@ -158,6 +162,30 @@ document.addEventListener("DOMContentLoaded", () => {
           <span id="cart-count" class="cart-count" aria-label="${isEn ? 'Number of items in cart' : 'Število izdelkov v košarici'}">0</span>
         </a>` : "";
 
+  const flagSl = `
+          <a id="lang-sl" class="lang-flag" href="${slUrl}" aria-label="Slovenščina" title="Slovenščina" lang="sl">
+            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
+          </a>`;
+
+  const flagEn = `
+          <a id="lang-en" class="lang-flag" href="${enUrl}" aria-label="English" title="English" lang="en">
+            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
+          </a>`;
+
+  // V trgovini stoji poleg zastavic se kosarica, zato tam pokazemo eno samo -
+  // tisto, kamor preklopis. Dve enaki zastavici brez oznake aktivnega jezika
+  // itak ne povesta, v katerem jeziku si; ena pove, kam gres.
+  const langSwitchHtml = showCart
+    ? `
+        <div class="lang-switch" aria-label="${isEn ? "Language" : "Jezik"}">
+          ${isEn ? flagSl : flagEn}
+        </div>`
+    : `
+        <div class="lang-switch" aria-label="Jezik">
+${flagSl}
+${flagEn}
+        </div>`;
+
   header.innerHTML = `
     <div class="wrap nav">
 
@@ -176,18 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       <div class="nav-actions" aria-label="Jezik in meni">
 ${cartHtml}
-${showCart ? "" : `
-        <div class="lang-switch" aria-label="Jezik">
-
-          <a id="lang-sl" class="lang-flag" href="${slUrl}" aria-label="Slovenščina" lang="sl">
-            <img class="flag-img" src="/assets/flag-sl-64.webp" alt="Slovenščina" width="34" height="34" loading="lazy">
-          </a>
-
-          <a id="lang-en" class="lang-flag" href="${enUrl}" aria-label="English" lang="en">
-            <img class="flag-img" src="/assets/flag-uk-64.webp" alt="English" width="34" height="34" loading="lazy">
-          </a>
-
-        </div>`}
+${langSwitchHtml}
 
         <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Meni" aria-expanded="false" aria-controls="primary-nav">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

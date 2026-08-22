@@ -171,6 +171,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-ccp-gumbi button.izbran{border-color:#3a6b4a;background:rgba(58,107,74,.15);color:#2a5a3a;font-weight:600}
 .korak-ccp-gumbi button.izbran.ne{border-color:#8b3a2a;background:rgba(139,58,42,.15);color:#8b3a2a}
 .korak-opis{font-size:.58rem;color:var(--muted);line-height:1.35;margin-top:.2rem}
+/* Zakaj korak ne bo dal ur. Tiho preskakovanje je bilo tisto, zaradi cesar se
+   dnevnik ni pojavil in se ni vedelo, zakaj. */
+.korak-namig{font-size:.56rem;color:#8b5a2a;line-height:1.35;margin-top:.15rem}
 .korak-izbira{margin-bottom:.28rem}
 .korak-izbira-napis{font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
   color:var(--muted);margin-bottom:.15rem}
@@ -248,6 +251,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   border-radius:999px;padding:.05rem .35rem}
 .opd-ure{font-size:.68rem;font-weight:400;color:var(--muted)}
 .opd-prazno{font-size:.68rem;color:var(--muted);line-height:1.4;padding:0 .55rem .45rem}
+.opd-sporno{color:var(--danger);font-weight:600}
 .opdnevnik .mini-table{margin:0;padding:0 .55rem .45rem}
 .mini-table{width:100%;border-collapse:collapse;font-size:.72rem;margin:.4rem 0}
 .mini-table th{text-align:left;padding:.2rem .35rem;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -3153,6 +3157,22 @@ function renderDNKorakiRows(){
   dnPremakniBloke();
 }
 
+// Dnevnik dela naprave nastane iz koraka samo, ce sta izpolnjena oba pogoja:
+// naprava je take vrste, da se ji vodijo ure, in korak ima cas od-do. Doslej je
+// bil preskok tih - vpisal si napravo, ure pa se niso nikjer pojavile in nisi
+// izvedel, zakaj. Zato tu povemo, cesa manjka.
+function uraNamig(k){
+  if(!k.opremaId)return '';
+  const o=oprema.find(x=>x.id===k.opremaId);
+  if(!o)return '';
+  if(!o.vrsta)
+    return `<div class="korak-namig">Napravi ni določena vrsta — ure se ji ne vodijo.</div>`;
+  if(vrstaVodi(o.vrsta)!=='ure')return '';
+  if(korakUre(k)==null)
+    return `<div class="korak-namig">Za dnevnik dela manjka čas od–do.</div>`;
+  return '';
+}
+
 // Rubrike enega koraka. Podkorak jih izrise enako kot samostojen korak -
 // razlikuje se le v tem, da nima svojega casa in statusa.
 function korakRubrike(k){
@@ -3232,6 +3252,7 @@ function korakRubrike(k){
         <div class="korak-f">
           <label>Naprava</label>
           <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">${opts}</select>
+          ${uraNamig(k)}
         </div>`;
     return `
       ${t.akcija==='me'?`<button type="button" class="korak-akcija"
@@ -4234,24 +4255,37 @@ function sbToKorak(r){
 // stevilka je katera - sicer bi vsota izgledala natancnejsa, kot je.
 // Bilanca ima prednost: kjer neto cas ze obstaja, bruto ne sme pripisovati se
 // enkrat istega dela.
-function urePoKorakih(oznaka,zdaj){
+function uporabaPoKorakih(oznaka,zdaj){
   const izBilance=new Set(
     opremaUporaba.filter(u=>u.bilKljuc&&u.minute).map(u=>u.opremaId));
   for(const k of dnKorakiRows){
-    if(!k.opremaId||napravaVodi(k.opremaId)!=='ure')continue;
-    if(izBilance.has(k.opremaId))continue;
-    const ure=korakUre(k);
-    if(ure==null)continue;
-    const minute=Math.round(ure*60);
-    if(!minute)continue;
-    // Ce je naprava ze na seznamu uporabljene opreme, ji cas samo dopisemo -
+    if(!k.opremaId)continue;
+    const vodi=napravaVodi(k.opremaId);
+    if(vodi!=='ure'&&vodi!=='meritev')continue;
+
+    // Merilo ne potrebuje ure, ampak zapis, DA je bilo uporabljeno. Ce se
+    // pozneje izkaze, da je bilo neumerjeno, je to edini seznam, po katerem
+    // najdes serije, katerih stevilke so vprasljive. Zato zadostuje datum in
+    // korak - casa pri nalogu za nazaj pogosto ni in ga ne zahtevamo.
+    const jeMerilo=vodi==='meritev';
+    let minute=0;
+    if(!jeMerilo){
+      if(izBilance.has(k.opremaId))continue;   // neto cas iz bilance ima prednost
+      const ure=korakUre(k);
+      if(ure==null)continue;
+      minute=Math.round(ure*60);
+      if(!minute)continue;
+    }
+
+    // Naprava, ki je ze na seznamu uporabljene opreme, dobi podatek dopisan -
     // dve vrstici za isto delo bi uro sesteli dvakrat.
     const obstoj=zdaj.find(r=>r.opremaId===k.opremaId&&!r.minute);
     const vrstica=obstoj||{id:uid(),dokument:oznaka,opremaId:k.opremaId,namen:''};
     vrstica.namen=vrstica.namen||k.naziv||'';
-    vrstica.minute=(vrstica.minute||0)+minute;
-    vrstica.od=vrstica.od||k.zacetek||null;
-    vrstica.doo=k.konec||vrstica.doo||null;
+    if(minute)vrstica.minute=(vrstica.minute||0)+minute;
+    // Datum je pri merilu bistven, zato ga vzamemo tudi iz koraka brez ur.
+    vrstica.od=vrstica.od||k.zacetek||(korakDatum(k)?korakDatum(k)+'T00:00':null);
+    if(k.konec)vrstica.doo=k.konec;
     if(!obstoj)zdaj.push(vrstica);
   }
 }
@@ -4264,7 +4298,7 @@ async function shraniDNOpremo(oznaka){
   const zdaj=dnOpremaRows.filter(r=>r.opremaId).map(r=>({
     id:r.id||uid(),dokument:oznaka,opremaId:r.opremaId,namen:(r.namen||'').trim(),
   }));
-  urePoKorakih(oznaka,zdaj);
+  uporabaPoKorakih(oznaka,zdaj);
   const zdajIdji=new Set(zdaj.map(r=>r.id));
   const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
   // Vrstice iz bilance nosijo isti dokument, a jih ta obrazec ne ureja - filter
@@ -4421,6 +4455,13 @@ function saveDN(){
   renderDNStats();renderDN();
   renderEtStats();renderMateriali();
   toast('✓ DN shranjen · etanol rezerviran');
+  // Nalog za nazaj se pogosto izpolni brez ur: naprava je vpisana, cas pa ne,
+  // in dnevnik dela ostane prazen. Povemo, pri katerem koraku in zakaj, da se
+  // ne isce, cesar ni.
+  const brezUr=dnKorakiRows.filter(k=>k.opremaId&&korakUre(k)==null
+    &&napravaVodi(k.opremaId)==='ure');
+  if(brezUr.length)setTimeout(()=>toast(
+    `⏱ Brez časa od–do: ${brezUr.map(k=>k.naziv).join(', ')} — ure naprave niso zabeležene`),2400);
 }
 
 // ── DN DETAIL ──
@@ -6412,9 +6453,14 @@ function renderOprema(){
     // Ure na seznamu: pri napravi, ki se obrablja, je to podatek, zaradi
     // katerega se kartico sploh odpre. Pri tehtnici ali stiskalnici ur ni in
     // prazna rubrika bi bila samo sum.
-    const min=vrstaVodi(o.vrsta)==='ure'
+    const vodi=vrstaVodi(o.vrsta);
+    const min=vodi==='ure'
       ?opremaUporaba.filter(u=>u.opremaId===o.id).reduce((n,u)=>n+(u.minute||0),0):0;
-    const ure=min?`<span style="font-size:.65rem;color:var(--muted)">🕘 ${fmtTrajanje(min)}</span>`:'';
+    // Pri merilu ura ne pove nicesar - pove pa, kolikokrat je bilo v rabi, ker
+    // je to seznam serij, ki jih zadene morebitno neumerjanje.
+    const nUp=vodi==='meritev'?opremaUporaba.filter(u=>u.opremaId===o.id).length:0;
+    const ure=min?`<span style="font-size:.65rem;color:var(--muted)">🕘 ${fmtTrajanje(min)}</span>`
+      :nUp?`<span style="font-size:.65rem;color:var(--muted)">📋 ${nUp}× uporabljeno</span>`:'';
     return`<div class="dn-card">
       <div class="dn-header" onclick="openOpremaSheet('${o.id}')">
         <div class="dn-info">
@@ -6789,6 +6835,13 @@ function kopirajSeznamOznak(){
 
 // Obratna smer vezi: na cem je naprava delala. Ob vzdrzevanju ali reklamaciji
 // je to prvo vprasanje in doslej nanj ni bilo odgovora.
+// 1 uporaba, 2 uporabi, 3-4 uporabe, 5+ uporab.
+function sklonUporab(n){
+  const d=n%100;
+  const beseda=(d===1)?'uporaba':(d===2)?'uporabi':(d===3||d===4)?'uporabe':'uporab';
+  return `${n} ${beseda}`;
+}
+
 function renderOpUporaba(id){
   const el=document.getElementById('opUporabaBlok');
   if(!el)return;
@@ -6801,9 +6854,10 @@ function renderOpUporaba(id){
   // povemo, od kod se napolni. Skrijemo ga samo pri drobnem inventarju, ki ni
   // naprava, in pri neshranjeni napravi, ki se nima kaj pokazati.
   if(!o||o.kat==='inventar'){el.innerHTML='';return;}
+  const jeMerilo=vrstaVodi(o.vrsta)==='meritev';
   if(!uporabe.length){
     const brezVrste=!o.vrsta
-      ?' Napravi še ni določena vrsta — dokler ni, korak ne ve, da ji vodi ure.'
+      ?' Napravi še ni določena vrsta — dokler ni, korak ne ve, da naj zabeleži uporabo.'
       :'';
     el.innerHTML=`<details class="opdnevnik">
       <summary>🕘 Dnevnik dela <span class="opd-ure">brez zapisov</span></summary>
@@ -6823,16 +6877,33 @@ function renderOpUporaba(id){
   // koraka. Sesteti ju v eno stevilko bi dalo vsoti natancnost, ki je nima.
   const neto=uporabe.filter(u=>u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
   const bruto=uporabe.filter(u=>!u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
+  // Pri merilu ura ne pove nicesar, pove pa umerjanje: ce je bila meritev
+  // opravljena po izteku roka, so stevilke iz tiste serije vprasljive. To je
+  // edini razlog, zaradi katerega merilo sploh potrebuje dnevnik.
+  const rok=kalibracijaRok(o);
+  const izvenRoka=u=>{
+    if(!jeMerilo||!rok)return false;
+    const d=kljucDatuma(u);
+    return !!d&&d>rok;
+  };
+  const sporne=urejene.filter(izvenRoka);
   const vrstice=urejene.slice(0,15).map(u=>{
     const oznaka=u.dokument||(u.bilKljuc?u.bilKljuc.split('|||').filter(Boolean).join(' · '):'—');
     const d=kljucDatuma(u);
+    const zadnji=jeMerilo
+      ?(izvenRoka(u)?'<span class="opd-sporno">⚠ izven umerjanja</span>':'')
+      :(u.minute?fmtTrajanje(u.minute)+(u.bilKljuc?' neto':' bruto'):'—');
     return`<tr>
       <td>${oznaka}</td>
       <td>${d?fmtDate(d):'—'}${u.namen?` · ${u.namen}`:''}</td>
-      <td class="num">${u.minute?fmtTrajanje(u.minute)+(u.bilKljuc?' neto':' bruto'):'—'}</td></tr>`;
+      <td class="num">${zadnji}</td></tr>`;
   }).join('');
-  const skupaj=[neto?`<strong>${fmtTrajanje(neto)}</strong> neto`:'',
-                bruto?`<strong>${fmtTrajanje(bruto)}</strong> bruto`:''].filter(Boolean).join(' · ');
+  const skupaj=jeMerilo
+    ? (sporne.length
+        ? `<span class="opd-sporno">⚠ ${sklonUporab(sporne.length)} po izteku umerjanja</span>`
+        : sklonUporab(uporabe.length))
+    : [neto?`<strong>${fmtTrajanje(neto)}</strong> neto`:'',
+       bruto?`<strong>${fmtTrajanje(bruto)}</strong> bruto`:''].filter(Boolean).join(' · ');
   // Zaprt naslov mora povedati, kaj je v njem - sicer je zlaganje skoda in ne
   // korist. Ure so tisto, zaradi cesar clovek dnevnik odpre, zato stojijo ze
   // v naslovu in jih ni treba iskati.

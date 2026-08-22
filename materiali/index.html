@@ -929,7 +929,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="shclose" onclick="closeSheet('bilancaOverlay')">✕</button>
     </div>
     <div class="shbody">
-      <div class="frow">
+      <div id="bilNalogPas"></div>
+      <div class="frow" id="bilSerijaPolja">
         <div class="field"><label>Tinktura</label><input id="bilTinktura" list="bilTinkturaList" placeholder="Reishi"><datalist id="bilTinkturaList"></datalist></div>
         <div class="field"><label>Batch</label><input id="bilBatch" list="bilBatchListDL" placeholder="R25" autocapitalize="characters"><datalist id="bilBatchListDL"></datalist></div>
       </div>
@@ -1773,7 +1774,7 @@ function meRacun(masaGobe,razmerje,tolPct,volKoncni,pctEtOHme,lecitinPct,cVitPct
 // Katera faza je matični ekstrakt, se razlikuje od serije do serije, zato
 // vrednosti iz bilance samo ponudimo - izbere jih uporabnik z dotikom.
 function meBilancaVolPct(kljuc){
-  const ev=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d));
+  const ev=bilancaDogodki.filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d));
   if(!ev.length)return [];
   const po={};
   ev.forEach(d=>{
@@ -1814,7 +1815,12 @@ function meNalog(id){
     tinktura:rd.surovina||'',serija:rd.serijaS||'',masaGobe:rd.masaS||0};
   return null;
 }
-function meDnKljucNalog(n){return (n.tinktura||'').trim()+'|||'+(n.serija||'').trim();}
+// Bilanca delovnega naloga je vodena pod nalogom, ne pod oznako serije; R&D
+// nalog svoje bilance nima, zato zanj ostane stara oblika kljuca.
+function meDnKljucNalog(n){
+  if(n&&n.vir==='dn')return 'dn:'+n.id;
+  return (n?.tinktura||'').trim()+'|||'+(n?.serija||'').trim();
+}
 // Kljuc serije iz delovnega naloga. Ista oblika kot bilKey(tinktura,batch) -
 // serija v bilanci in serija alkoholne tinkture v DN sta ista stvar.
 function meDnKljuc(dn){
@@ -2035,7 +2041,7 @@ function openGlySheet(){
   ['glyDejGly','glyDejVoda','glyDejCVit','glyDejLec'].forEach(id=>set(id,''));
   document.getElementById('glyOpomba').value='';
   renderGlyNalogSel();
-  const bilN=dnZaKljuc(bilSelectedKey);
+  const bilN=bilNalogZaKljuc(bilSelectedKey);
   document.getElementById('glyNalogSel').value=bilN?'dn:'+bilN.id:(bilSelectedKey?'bil:'+bilSelectedKey:'');
   if(document.getElementById('glyNalogSel').value){onGlyNalogChange();return openSheet('glyOverlay');}
   document.getElementById('glyNalogInfo').innerHTML='';
@@ -2059,7 +2065,7 @@ function glyKljucNaloga(v){
     const d=workOrders.find(x=>x.id===v.slice(3));
     if(!d)return null;
     return {vir:'dn',id:v,dnId:d.id,oznaka:d.oznaka||'DN',
-      tinktura:d.vrstaGobe||'',batch:d.serijaAlc||'',bilKljuc:meDnKljuc(d)};
+      tinktura:d.vrstaGobe||'',batch:d.serijaAlc||'',bilKljuc:'dn:'+d.id};
   }
   const k=v.slice(4);
   const [tinktura,batch]=k.split('|||');
@@ -2071,9 +2077,9 @@ function renderGlyNalogSel(){
   if(!sel)return;
   const dnji=workOrders.filter(d=>d.serijaAlc||d.vrstaGobe)
     .sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
-  const pokriti=new Set(dnji.map(d=>bilKljucNorm(meDnKljuc(d))));
-  const serije=[...new Set(bilancaDogodki.map(d=>bilKey(d.tinktura,d.batch)))]
-    .filter(k=>k&&k!=='|||'&&!pokriti.has(bilKljucNorm(k))).sort();
+  // Serije, ki naloga nimajo - dogodki naloga so ze zajeti v skupini zgoraj.
+  const serije=[...new Set(bilancaDogodki.map(d=>bilDogodekKljuc(d)))]
+    .filter(k=>k&&k!=='|||'&&!bilJeNalogKljuc(k)).sort();
   sel.innerHTML='<option value="">— brez povezave —</option>'+
     (dnji.length?`<optgroup label="Delovni nalogi">${dnji.map(d=>
       `<option value="dn:${d.id}">${d.oznaka||'DN'} · ${d.vrstaGobe||''} ${d.serijaAlc||''}</option>`).join('')}</optgroup>`:'')+
@@ -2085,7 +2091,7 @@ function renderGlyNalogSel(){
 // uporabnik. Katera faza je alkoholna tinktura, ki gre v glicerinsko, se
 // razlikuje od serije do serije, zato tega ne prevzemamo samodejno.
 function glyBilancaMase(kljuc){
-  const ev=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d));
+  const ev=bilancaDogodki.filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d));
   if(!ev.length)return [];
   const po={};
   ev.forEach(d=>{const f=d.faza||'—';po[f]=(po[f]||0)+(d.m||0);});
@@ -2386,10 +2392,12 @@ function openMeSheet(){
   set('meMasaTinkture','');   // stehtani masi sta vedno vezani na konkretno serijo
   set('meMhveDej','');
   renderMeDnSel();
-  // Ce je v Bilanci ze izbrana serija, jo prevzamemo tudi tu.
-  const dn=bilSelectedKey
-    ?[...workOrders,...rdNalogi].map(x=>meNalog(x.id)).find(n=>n&&meDnKljucNalog(n)===bilSelectedKey)
-    :null;
+  // Ce je v Bilanci ze izbran nalog oz. serija, ga prevzamemo tudi tu.
+  const bilDn=bilNalogZaKljuc(bilSelectedKey);
+  const dn=bilDn?meNalog(bilDn.id)
+    :(bilSelectedKey
+      ?[...workOrders,...rdNalogi].map(x=>meNalog(x.id)).find(n=>n&&meDnKljucNalog(n)===bilSelectedKey)
+      :null);
   document.getElementById('meDnSel').value=dn?dn.id:'';
   if(dn)onMeDnChange(); else {document.getElementById('meDnInfo').innerHTML='';calcMe();}
   openSheet('meOverlay');
@@ -3912,20 +3920,14 @@ function openVecMenu(){openSheet('vecOverlay');}
 function dnPojdiNa(dnId,kam){
   const d=workOrders.find(x=>x.id===dnId);
   if(!d)return;
-  const kljuc=meDnKljuc(d);
-  // Brez oznake serije ni kam iti; list pustimo odprt, da jo lahko vpises.
-  if(kam==='bilanca'&&!bilKljucImaSerijo(kljuc)){
-    toast('⚠ Nalog nima oznake serije — vpiši jo, da se bilanca veže nanj');
-    return;
-  }
   closeSheet('dnDetailOverlay');
   if(kam==='bilanca'){
-    // Vedno bilanca TEGA naloga, tudi ce je se prazna - sicer bi se odprla
-    // zadnja izbrana, torej tuja serija.
-    odpriBilancoSerije(kljuc);
+    // Vedno bilanca TEGA naloga, tudi ce je se prazna in tudi ce oznake serije
+    // se ni - sicer bi se odprla zadnja izbrana, torej tuja.
+    odpriBilancoSerije('dn:'+d.id);
     return;
   }
-  bilSelectedKey=bilObstojeciKljuc(kljuc);
+  bilSelectedKey='dn:'+d.id;
   switchTab('preracuni');
   if(kam==='me')openMeSheet(); else openGlySheet();
 }
@@ -4387,7 +4389,10 @@ const KORAK_UP='kor-';
 function jeKorakovaUporaba(u){return String(u?.id||'').startsWith(KORAK_UP);}
 
 function bilOpremaZaSerijo(kljuc){
-  return kljuc?opremaUporaba.filter(u=>u.bilKljuc===kljuc):[];
+  if(!kljuc)return[];
+  // Oprema, vpisana pred prehodom na kljuc naloga, nosi se staro oznako serije.
+  const kljuci=new Set(bilVsiKljuci(kljuc));
+  return opremaUporaba.filter(u=>u.bilKljuc&&kljuci.has(u.bilKljuc));
 }
 function opremaNaziv(opremaId){
   const o=oprema.find(x=>x.id===opremaId);
@@ -4700,6 +4705,8 @@ function saveDN(){
     &&napravaVodi(k.opremaId)==='ure');
   if(brezUr.length)setTimeout(()=>toast(
     `⏱ Brez časa od–do: ${brezUr.map(k=>k.naziv).join(', ')} — ure naprave niso zabeležene`),2400);
+  // Id shranjenega naloga: nanj se veze bilanca, ko iz koraka odhajas vanjo.
+  return d.id;
 }
 
 // ── DN DETAIL ──
@@ -7903,19 +7910,51 @@ function bilKey(tinktura,batch){return (tinktura||'').trim()+'|||'+(batch||'').t
 // jo clovek vtipka. Brez tega bi nalog odprl prazno dvojcico svoje serije,
 // dogodki pa bi ostali v drugi.
 function bilKljucNorm(kljuc){return String(kljuc||'').trim().toUpperCase();}
-// Ce dogodki te serije ze obstajajo, vrnemo kljuc, pod katerim so zapisani -
-// tja spada tudi nalog. Sicer vrnemo kljuc takega, kot je prisel.
-function bilObstojeciKljuc(kljuc){
-  const n=bilKljucNorm(kljuc);
-  if(!n)return kljuc;
-  const d=bilancaDogodki.find(x=>bilKljucNorm(bilKey(x.tinktura,x.batch))===n);
-  return d?bilKey(d.tinktura,d.batch):kljuc;
-}
 // Delovni nalog te serije - primerjamo enako ohlapno kot zgoraj.
 function dnZaKljuc(kljuc){
   const n=bilKljucNorm(kljuc);
   if(!n)return null;
   return workOrders.find(d=>bilKljucNorm(meDnKljuc(d))===n)||null;
+}
+
+// ── KOMU PRIPADA BILANCA ───────────────────────────────────────────────────
+// Delovnemu nalogu, ne oznaki serije: ko serijo koncentriras, oznake se ni -
+// znana je sele ob polnjenju oziroma zakljucku. Kljuc bilance je zato "dn:<id>".
+//
+// Stara oblika kljuca (tinktura|||batch) ostane za serije, ki naloga nimajo -
+// razvojne poskuse in zapise izpred te spremembe. Obstojecih vrstic ni treba
+// prepisovati: dogodek, ki ima serijo istega imena kot nalog, se nanj pripne
+// sam, oznaka serije pa je od tu naprej samo podatek naloga, ne vec identiteta.
+function bilJeNalogKljuc(k){return String(k||'').startsWith('dn:');}
+function bilNalogKljuc(dn){return dn?'dn:'+dn.id:'';}
+function bilNalogZaKljuc(kljuc){
+  if(bilJeNalogKljuc(kljuc))
+    return workOrders.find(d=>d.id===String(kljuc).slice(3))||null;
+  return dnZaKljuc(kljuc);
+}
+// Kljuc, pod katerega spada dogodek. Enolicno mesto, kjer se to odloca.
+function bilDogodekKljuc(d){
+  if(d.dnId&&workOrders.some(x=>x.id===d.dnId))return 'dn:'+d.dnId;
+  const dn=dnZaKljuc(bilKey(d.tinktura,d.batch));
+  return dn?'dn:'+dn.id:bilKey(d.tinktura,d.batch);
+}
+// Kam kljuc dejansko pelje: stara oblika, ki pripada nalogu, se preslika nanj.
+// Sicer bi ista bilanca nastopala dvakrat - enkrat pod nalogom, enkrat pod
+// oznako serije.
+function bilKljucKamor(kljuc){
+  const dn=bilNalogZaKljuc(kljuc);
+  return dn?'dn:'+dn.id:kljuc;
+}
+// Ista bilanca je bila prej vodena pod oznako serije. Oprema in zapisi, vpisani
+// takrat, se nanjo se vedno nanasajo, zato jih iscemo po obeh kljucih.
+function bilVsiKljuci(kljuc){
+  const k=[kljuc];
+  const dn=bilNalogZaKljuc(kljuc);
+  if(dn){
+    const star=meDnKljuc(dn);
+    if(bilKljucImaSerijo(star)&&star!==kljuc)k.push(star);
+  }
+  return k;
 }
 // Serija brez oznake ni serija: nalog, ki je se nima, nima kam odpreti bilance.
 function bilKljucImaSerijo(kljuc){return !!String(kljuc||'').split('|||')[1];}
@@ -7956,24 +7995,23 @@ function toggleBilUkljucen(id){
 function renderBilancaSelect(){
   const sel=document.getElementById('bilBatchSel');
   const combos={};
-  bilancaDogodki.forEach(d=>{
-    const k=bilKey(d.tinktura,d.batch);
-    if(!combos[k])combos[k]={tinktura:d.tinktura,batch:d.batch,last:d.ts||''};
-    if((d.ts||'')>combos[k].last)combos[k].last=d.ts;
-  });
-  // Serija delovnega naloga je v bilanci prisotna, brz ko nalog obstaja - tudi
-  // preden je vpisan prvi dogodek. Sicer se iz koraka ne bi imelo kam priti in
-  // bilance za nov nalog ne bi bilo mogoce zaceti.
+  // Vsak nalog ima svojo bilanco, brz ko obstaja - tudi prazno in tudi brez
+  // oznake serije. Koncentriranje se zacne, preden je oznaka znana.
   workOrders.forEach(d=>{
-    const t=(d.vrstaGobe||'').trim(),bt=(d.serijaAlc||'').trim();
-    if(!bt)return;
-    const k=bilObstojeciKljuc(bilKey(t,bt));
-    if(!combos[k])combos[k]={tinktura:t,batch:bt,last:d.datum||'',prazna:true};
+    combos['dn:'+d.id]={tinktura:(d.vrstaGobe||'').trim(),batch:(d.serijaAlc||'').trim(),
+      last:d.datum||'',prazna:true};
   });
-  // Serija, ki jo je zahteval korak ali nalog, je merodajna. Ce je v seznamu ni,
-  // jo dodamo - sicer bi izbirnik tiho skocil na zadnjo bilanco, torej na tujo
-  // serijo, in bi clovek vpisoval v napacno.
-  if(bilKljucImaSerijo(bilSelectedKey)&&!combos[bilSelectedKey]){
+  bilancaDogodki.forEach(d=>{
+    const k=bilDogodekKljuc(d);
+    if(!combos[k])combos[k]={tinktura:d.tinktura,batch:d.batch,last:d.ts||''};
+    combos[k].prazna=false;
+    if((d.ts||'')>String(combos[k].last||''))combos[k].last=d.ts;
+  });
+  // Serija brez naloga, ki jo je zahteval preracun, je merodajna. Ce je v
+  // seznamu ni, jo dodamo - sicer bi izbirnik tiho skocil na zadnjo bilanco,
+  // torej na tujo serijo, in bi clovek vpisoval v napacno.
+  if(!bilJeNalogKljuc(bilSelectedKey)&&bilKljucImaSerijo(bilSelectedKey)
+     &&!combos[bilSelectedKey]&&!bilNalogZaKljuc(bilSelectedKey)){
     const [t,bt]=bilSelectedKey.split('|||');
     combos[bilSelectedKey]={tinktura:t,batch:bt,last:'',prazna:true};
   }
@@ -7985,17 +8023,16 @@ function renderBilancaSelect(){
     return;
   }
   const keep=list.some(([k])=>k===bilSelectedKey)?bilSelectedKey:list[0][0];
-  // Serije z delovnim nalogom in brez njega locimo v skupini, enako kot pri
-  // preracunih - serija v bilanci in serija alkoholne tinkture v DN sta ista
-  // stvar, le zapisani na dveh mestih.
+  // Nalog se prepozna po svoji oznaki; oznaka serije je pripis, ki se pojavi,
+  // ko jo vpises, in bilance ne preimenuje.
   const opt=([k,v])=>{
-    const dn=dnZaKljuc(k);
-    const oznaka=(dn?`${dn.oznaka||'DN'} · ${v.tinktura} ${v.batch}`:`${v.tinktura} — ${v.batch}`)
-      +(v.prazna?' · brez dogodkov':'');
+    const dn=bilNalogZaKljuc(k);
+    const oznaka=(dn?`${dn.oznaka||'DN'} · ${v.tinktura||dn.vrstaGobe||''}${v.batch?' · '+v.batch:''}`
+      :`${v.tinktura} — ${v.batch}`)+(v.prazna?' · brez dogodkov':'');
     return `<option value="${k}"${k===keep?' selected':''}>${oznaka}</option>`;
   };
-  const zNalogom=list.filter(([k])=>dnZaKljuc(k));
-  const brez=list.filter(([k])=>!dnZaKljuc(k));
+  const zNalogom=list.filter(([k])=>bilNalogZaKljuc(k));
+  const brez=list.filter(([k])=>!bilNalogZaKljuc(k));
   sel.innerHTML=
     (zNalogom.length?`<optgroup label="Delovni nalogi">${zNalogom.map(opt).join('')}</optgroup>`:'')+
     (brez.length?`<optgroup label="Serije brez naloga">${brez.map(opt).join('')}</optgroup>`:'');
@@ -8017,7 +8054,7 @@ function renderBilancaSelect(){
 // namesto da bi molcal.
 function bilNetoOdseki(kljuc){
   const dogodki=bilancaDogodki
-    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
+    .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
     .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
   const odseki=[];let zacetek=null;
   for(const d of dogodki){
@@ -8041,47 +8078,48 @@ function bilNetoOdseki(kljuc){
 // vpisano. Ce shranjevanje ne uspe (manjka oznaka, premalo etanola), list
 // ostane odprt in nikamor ne gremo.
 function shraniInOdpriBilanco(){
-  const kljuc=bilKljucIzObrazca();
-  if(!bilKljucImaSerijo(kljuc)){toast('⚠ Vpiši oznako serije, da najdem bilanco');return;}
-  const zeShranjen=!!editingDNId;
-  saveDN();
+  // Nalog mora obstajati - bilanca pripada njemu in se brez njega nima na kaj
+  // vezati. Oznaka serije za to ni potrebna; ob koncentriranju je se ni.
+  const id=saveDN();
   // Shranjevanje zapre list; ce je odprt, ni uspelo in je ze povedalo, zakaj.
   if(!document.getElementById('dnOverlay')?.classList.contains('open')){
-    odpriBilancoSerije(kljuc);
+    if(id)odpriBilancoSerije('dn:'+id);
     return;
   }
-  // Nov nalog mora najprej obstajati - bilanca brez naloga ne bi imela oznake,
-  // na katero bi se vezala.
-  if(!zeShranjen)return;
-  // Pri ze shranjenem nalogu pa te manjkajoc podatek ne sme zadrzati: v bilanco
-  // gres pogosto prav zato, ker ga se ni. Povemo, kaj to stane.
+  if(!editingDNId)return;
+  // Pri ze shranjenem nalogu manjkajoc podatek ne sme zadrzati: v bilanco gres
+  // pogosto prav zato, ker ga se ni. Povemo, kaj to stane.
   if(!confirm('Naloga ni bilo mogoče shraniti.\n\nOdprem bilanco brez shranjevanja? Spremembe, ki jih nisi shranil, bodo izgubljene.'))return;
+  const staraId=editingDNId;
   closeSheet('dnOverlay');
-  odpriBilancoSerije(kljuc);
+  odpriBilancoSerije('dn:'+staraId);
 }
 
-// Bilanca serije se odpre tudi, kadar dogodkov se ni: serija delovnega naloga
-// je v izbirniku prisotna, brz ko nalog obstaja, in vnos prvega dogodka ima
-// tinkturo in batch ze izpolnjena. Tako se bilanca za nov nalog zacne tam, kjer
-// se je clovek ustavil, namesto da bi jo iskal.
+// Bilanca naloga se odpre tudi, kadar dogodkov se ni: v izbirniku je prisotna,
+// brz ko nalog obstaja. Tako se bilanca za nov nalog zacne tam, kjer se je
+// clovek ustavil, namesto da bi jo iskal.
 function odpriBilancoSerije(kljuc){
-  if(!bilKljucImaSerijo(kljuc)){
-    toast('⚠ Nalog nima oznake serije — vpiši jo, da se bilanca veže nanj');
+  const cilj=bilKljucKamor(kljuc);
+  // Nalog ima bilanco vedno; serija brez naloga jo ima le, ce je oznacena.
+  if(!bilJeNalogKljuc(cilj)&&!bilKljucImaSerijo(cilj)){
+    toast('⚠ Te bilance ne najdem — odpri jo iz delovnega naloga');
     return false;
   }
-  // Ce dogodki te serije ze obstajajo, gremo na kljuc, pod katerim so zapisani.
-  const cilj=bilObstojeciKljuc(kljuc);
+  if(bilJeNalogKljuc(cilj)&&!bilNalogZaKljuc(cilj)){
+    toast('⚠ Delovnega naloga ni več — bilance ne morem odpreti');
+    return false;
+  }
   bilSelectedKey=cilj;
   switchTab('bilanca');
-  // switchTab izrise izbirnik; ta zahtevano serijo obdrzi, ker jo po potrebi
+  // switchTab izrise izbirnik; ta zahtevano bilanco obdrzi, ker jo po potrebi
   // sam doda. Ce se je kljub temu premaknil, ga postavimo nazaj - v bilanco
-  // tuje serije nas ne sme odnesti.
+  // tujega naloga nas ne sme odnesti.
   if(bilSelectedKey!==cilj){
     bilSelectedKey=cilj;
     renderBilancaSelect();
   }
-  if(!bilancaDogodki.some(x=>bilKey(x.tinktura,x.batch)===cilj))
-    toast('Bilanca te serije je še prazna — dodaj prvi dogodek');
+  if(!bilancaDogodki.some(x=>bilDogodekKljuc(x)===cilj))
+    toast('Bilanca tega naloga je še prazna — dodaj prvi dogodek');
   return true;
 }
 
@@ -8089,14 +8127,14 @@ function odpriBilancoSerije(kljuc){
 // Koncentriranje organske faze JE bilanca: rezultat je kolicina organske faze
 // s svojo koncentracijo etanola, tehtanje na koncu pa to potrdi. Zato korak
 // teh stevilk ne sprasuje, ampak jih prebere.
+// Korak bere bilanco naloga, v katerem stoji. Nov, se neshranjen nalog je nima -
+// bilanca se veze na nalog, ta pa mora prej obstajati.
 function bilKljucIzObrazca(){
-  const t=(document.getElementById('dnVrstaGobe')?.value||'').trim();
-  const b=(document.getElementById('dnSerijaAlc')?.value||'').trim();
-  return t+'|||'+b;
+  return editingDNId?'dn:'+editingDNId:'';
 }
 function bilFazaDogodki(kljuc,faza){
   return bilancaDogodki
-    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&(d.faza||'')===faza)
+    .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&(d.faza||'')===faza)
     .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
 }
 // Masa, AAE in koncentracija faze - isti sestevek kot v preglednici bilance.
@@ -8122,13 +8160,13 @@ function bilFazaCas(kljuc,faza){
     return d.toISOString().slice(0,16);};
   return {od:lok(od),konec:lok(doo),ure:(doo-od)/3600000};
 }
-// Kljuc serije za korak: pri odprtem nalogu iz obrazca, sicer iz shranjenega
-// naloga - izpis zapisnika tece brez obrazca.
+// Bilanca za korak: pri odprtem nalogu iz obrazca, sicer iz shranjenega naloga -
+// izpis zapisnika tece brez obrazca.
 function korakKljucSerije(k){
   if(document.getElementById('dnOverlay')?.classList.contains('open'))
-    return bilObstojeciKljuc(bilKljucIzObrazca());
+    return bilKljucIzObrazca();
   const d=workOrders.find(x=>x.oznaka===k.dokument);
-  return d?bilObstojeciKljuc(meDnKljuc(d)):'';
+  return d?'dn:'+d.id:'';
 }
 function korakCasIzBilance(k){
   const faza=predlogaZaKorak(k.korak).casIzBilance;
@@ -8216,7 +8254,7 @@ function osveziBilCase(kljuc){
   // teceta - ur jima ne pripisujemo, datum uporabe pa je bistven, ker se po
   // njem vidi, katere serije zadene morebitno neumerjanje.
   const vsi=bilancaDogodki
-    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
+    .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
     .map(d=>bilTsMs(d.ts)).sort((a,b)=>a-b);
   vpisane.forEach(u=>{
     const jeMerilo=napravaVodi(u.opremaId)==='meritev';
@@ -8245,7 +8283,7 @@ function fmtTrajanje(minute){
 
 // Delovni nalog, ki pripada trenutno izbrani seriji v bilanci (ce obstaja).
 function bilNalog(){
-  return dnZaKljuc(bilSelectedKey);
+  return bilNalogZaKljuc(bilSelectedKey);
 }
 function onBilBatchChange(){
   bilSelectedKey=document.getElementById('bilBatchSel').value;
@@ -8263,7 +8301,7 @@ function renderBilanca(){
     list.innerHTML='<div style="text-align:center;color:var(--muted);padding:2rem 0">Ni dogodkov. Dodaj prvega z gumbom "+ Dogodek".</div>';
     return;
   }
-  const events=bilancaDogodki.filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey).sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
+  const events=bilancaDogodki.filter(d=>bilDogodekKljuc(d)===bilSelectedKey).sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
   // Cas naprav je izpeljan iz dogodkov; ce ga ne osvezimo ob vsakem izrisu,
   // dnevnik naprave obtici na stanju ob prvem izboru.
   osveziBilCase(bilSelectedKey);
@@ -8389,7 +8427,7 @@ let _zdrSel={};
 function zdruziKandidati(){
   if(!bilSelectedKey)return[];
   return bilancaDogodki
-    .filter(d=>bilKey(d.tinktura,d.batch)===bilSelectedKey&&bilIncluded(d))
+    .filter(d=>bilDogodekKljuc(d)===bilSelectedKey&&bilIncluded(d))
     .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
 }
 
@@ -8484,6 +8522,7 @@ function saveZdruzi(){
   const casi=sel.map(d=>fmtTs(d.ts)).join(', ');
   const d={
     id:uid(),
+    dnId:src.dnId||null,
     tinktura:src.tinktura,batch:src.batch,ts,
     faza:src.faza,status,
     m,mmPct,volPct:vol,mAae,mH2o,mSs:null,
@@ -8518,6 +8557,21 @@ function openBilancaSheet(id){
   document.getElementById('bilTinkturaList').innerHTML=tinkture.map(t=>`<option value="${t}">`).join('');
   document.getElementById('bilBatchListDL').innerHTML=batchi.map(b=>`<option value="${b}">`).join('');
 
+  // Kadar bilanca pripada nalogu, se serije ne vpisuje: vrsto gobe da nalog,
+  // oznake serije pa ob koncentriranju se ni. Zato polji skrijemo in povemo,
+  // kam dogodek gre.
+  const nalog=bilNalogZaKljuc(bilSelectedKey);
+  const polja=document.getElementById('bilSerijaPolja');
+  const pas=document.getElementById('bilNalogPas');
+  if(polja)polja.style.display=nalog?'none':'';
+  if(pas)pas.innerHTML=nalog
+    ?`<div style="font-size:.72rem;color:var(--muted);padding:.1rem 0 .6rem;line-height:1.45">
+        <span style="color:#2a5a8b;font-weight:600">📋 ${nalog.oznaka||'DN'}</span>
+        · ${nalog.vrstaGobe||''}${nalog.serijaAlc?' · serija '+nalog.serijaAlc
+          :' · <span style="color:#8b5a2a">oznaka serije še ni vpisana</span>'}
+      </div>`
+    :'';
+
   if(id){
     const d=bilancaDogodki.find(x=>x.id===id);if(!d)return;
     document.getElementById('bilTinktura').value=d.tinktura||'';
@@ -8531,7 +8585,7 @@ function openBilancaSheet(id){
     document.getElementById('bilOpomba').value=d.opomba||'';
   } else {
     ['bilTinktura','bilBatch','bilM','bilVol','bilMss','bilOpomba'].forEach(i=>document.getElementById(i).value='');
-    if(bilSelectedKey){
+    if(bilSelectedKey&&!bilJeNalogKljuc(bilSelectedKey)){
       const [t,b]=bilSelectedKey.split('|||');
       document.getElementById('bilTinktura').value=t||'';
       document.getElementById('bilBatch').value=b||'';
@@ -8546,10 +8600,17 @@ function openBilancaSheet(id){
 }
 
 function saveBilanca(){
-  const tinktura=document.getElementById('bilTinktura').value.trim();
-  const batch=document.getElementById('bilBatch').value.trim();
+  // Dogodek pripada nalogu, ce je bilanca njegova. Vrsto gobe in oznako serije
+  // takrat prepisemo iz naloga - v bilanci ju ni treba vpisovati in se ne
+  // moreta razhajati. Oznaka serije sme biti se prazna.
+  const existingD=editingBilId?bilancaDogodki.find(x=>x.id===editingBilId):null;
+  const nalog=existingD
+    ?bilNalogZaKljuc(bilDogodekKljuc(existingD))
+    :bilNalogZaKljuc(bilSelectedKey);
+  const tinktura=nalog?(nalog.vrstaGobe||'').trim():document.getElementById('bilTinktura').value.trim();
+  const batch=nalog?(nalog.serijaAlc||'').trim():document.getElementById('bilBatch').value.trim();
   const ts=document.getElementById('bilTs').value;
-  if(!tinktura||!batch){toast('⚠ Vnesi tinkturo in batch');return;}
+  if(!nalog&&(!tinktura||!batch)){toast('⚠ Vnesi tinkturo in batch');return;}
   if(!ts){toast('⚠ Vnesi datum in uro');return;}
   const status=document.getElementById('bilStatus').value;
   const m=bilSignedM(parseNum(document.getElementById('bilM').value),status);
@@ -8560,9 +8621,10 @@ function saveBilanca(){
   const mAae=round(m*mmPct/100,2);
   const mH2o=round(m-mAae,2);
 
-  const existing=editingBilId?bilancaDogodki.find(x=>x.id===editingBilId):null;
+  const existing=existingD;
   const d={
     id:editingBilId||uid(),
+    dnId:nalog?nalog.id:null,
     tinktura,batch,ts,
     faza:document.getElementById('bilFaza').value,
     status,
@@ -8578,7 +8640,7 @@ function saveBilanca(){
   } else {
     bilancaDogodki.push(d);
   }
-  bilSelectedKey=bilKey(tinktura,batch);
+  bilSelectedKey=bilDogodekKljuc(d);
   save();
   sbPushBilanca(d);
   closeSheet('bilancaOverlay');
@@ -8769,7 +8831,7 @@ function sbToRd(r){return{
 
 // Converters Bilanca ↔ Supabase
 function bilToSb(d){return{
-  id:d.id,tinktura:d.tinktura||null,batch:d.batch||null,
+  id:d.id,dn_id:d.dnId||null,tinktura:d.tinktura||null,batch:d.batch||null,
   ts:d.ts?new Date(d.ts).toISOString():null,
   faza:d.faza||null,status:d.status||null,
   m:d.m??0,mm_pct:d.mmPct??null,vol_pct:d.volPct??null,
@@ -8778,7 +8840,7 @@ function bilToSb(d){return{
   opomba:d.opomba||null,ustvarjen:d.ustvarjen||new Date().toISOString()
 };}
 function sbToBil(r){return{
-  id:r.id,tinktura:r.tinktura||'',batch:r.batch||'',ts:r.ts,
+  id:r.id,dnId:r.dn_id||null,tinktura:r.tinktura||'',batch:r.batch||'',ts:r.ts,
   faza:r.faza||'',status:r.status||'',
   m:r.m||0,mmPct:r.mm_pct||0,volPct:r.vol_pct||0,
   mAae:r.m_aae||0,mH2o:r.m_h2o||0,mSs:r.m_ss??null,
@@ -8944,7 +9006,9 @@ async function sbPushMatTipi(){
   }
 }
 
-async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){sinkNapaka('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
+// Preko sbPushZapis: ce stolpca dn_id se ni, gre dogodek skozi brez njega -
+// vez na nalog se takrat drzi imena serije, kot se je do zdaj.
+async function sbPushBilanca(d){await sbPushZapis('gm_dn_bilanca',bilToSb(d),'sbPushBilanca');}
 
 // Stran za obnovo bere localStorage neposredno, zato deluje tudi takrat, ko
 // aplikacija na zaslonu ze kaze streznisko kopijo. Odpremo jo v novem zavihku,

@@ -777,18 +777,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
       </div></details>
-      <details class="dnsec" id="dnsecOprema">
-      <summary>🔧 Uporabljena oprema <span class="dnsum" id="dnsumOprema"></span></summary>
-      <div class="dnsec-body">
-      <div class="slabel">Uporabljena oprema</div>
-      <div id="dnOpremaContainer"></div>
-      <button type="button" onclick="addDNOpremaRow()" style="width:100%;padding:.45rem;border:1px dashed var(--border);border-radius:var(--rs);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;margin-bottom:.5rem">+ Dodaj opremo</button>
-      <datalist id="dnOpremaNameni">
-        <option value="Ekstrakcija"><option value="Filtracija"><option value="Stiskanje">
-        <option value="Mešanje"><option value="Polnjenje"><option value="Etiketiranje">
-        <option value="Tehtanje"><option value="Shranjevanje">
-      </datalist>
-      </div></details>
       <details class="dnsec" id="dnsecKonec">
       <summary>✔️ Opomba in zaključek <span class="dnsum" id="dnsumKonec"></span></summary>
       <div class="dnsec-body">
@@ -3457,7 +3445,7 @@ function korakKartica(k){
 // korist. Povzetek zato nosi stanje: kolicine, AAE, ali se bilanca izide.
 // Koraki so na vrhu, ker se nalog tam dejansko dela - serija, masa surovine
 // in topilo se vpisejo v prvih dveh korakih. Kolicine in cene pridejo za tem.
-const DN_SEKCIJE=['Koraki','Alc','Gly','Bil','Cene','Oprema','Konec'];
+const DN_SEKCIJE=['Koraki','Alc','Gly','Bil','Cene','Konec'];
 const DN_ODPRTO_KLJUC='gm_dn_sekcije_odprto';
 
 function dnPisiPovzetek(id,besedilo,razred=''){
@@ -3521,10 +3509,6 @@ function dnOsveziPovzetke(){
   } else {
     dnPisiPovzetek('Koraki','ni ustvarjenih');
   }
-
-  const nOpr=(typeof dnOpremaRows!=='undefined'&&Array.isArray(dnOpremaRows))
-    ?dnOpremaRows.filter(r=>r.opremaId).length:0;
-  dnPisiPovzetek('Oprema',nOpr?`${nOpr} ${nOpr===1?'naprava':nOpr===2?'napravi':'naprav'}`:'ni izbrane');
 
   const zak=document.getElementById('dnDatumZakljucka')?.value;
   const opomba=(document.getElementById('dnOpomba')?.value||'').trim();
@@ -3976,14 +3960,10 @@ function openDNSheet(id){
   } else {
     dnSerijeRows=[{serija:'',masa:''}];
   }
-  dnOpremaRows=id
-    ?dnOpremaRocno(d?.oznaka).map(u=>({id:u.id,opremaId:u.opremaId,namen:u.namen||''}))
-    :[];
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
   dnKorakiRows=id?korakiZaDokument(d?.oznaka).map(k=>({...k,parametri:{...(k.parametri||{})}})):korakiIzPredloge();
   renderDNSerijeRows();
-  renderDNOpremaRows();
   renderDNKorakiRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
   document.getElementById('dnPctEtOH').value=d?.pctEtOH||'';
@@ -4241,70 +4221,21 @@ function umerjanjaZaOpremo(id){
   return id?umerjanja.filter(u=>u.opremaId===id)
     .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||''))):[];
 }
-let dnOpremaRows=[];
-
 function opremaZaIzbiro(izbrani){
   // Neaktivno opremo pokazemo le, ce je ze izbrana - stara serija je lahko
   // nastala na napravi, ki je danes ni vec v uporabi, in tega ne smemo skriti.
   const nujne=new Set(izbrani.filter(Boolean));
   return oprema.filter(o=>o.status!=='neaktivna'||nujne.has(o.id));
 }
-function renderDNOpremaRows(){
-  const c=document.getElementById('dnOpremaContainer');
-  if(!c)return;
-  const naVoljo=opremaZaIzbiro(dnOpremaRows.map(r=>r.opremaId));
-  if(!naVoljo.length&&!dnOpremaRows.length){
-    c.innerHTML='<div style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem">V registru ni opreme — dodaj jo v zavihku Oprema.</div>';
-    return;
-  }
-  c.innerHTML=dnOpremaRows.map((row,idx)=>{
-    const opts=naVoljo.map(o=>
-      `<option value="${o.id}"${o.id===row.opremaId?' selected':''}>${o.naziv||'—'}${o.model?' · '+o.model:''}</option>`).join('');
-    return`<div style="display:flex;gap:.35rem;align-items:flex-end;margin-bottom:.35rem">
-      <div class="field" style="flex:2;margin-bottom:0">
-        <label style="font-size:.7rem">${idx===0?'Naprava':'&nbsp;'}</label>
-        <select onchange="onDNOpremaChange(${idx},'opremaId',this.value)">
-          <option value="">— izberi —</option>${opts}
-        </select>
-      </div>
-      <div class="field" style="flex:1;margin-bottom:0">
-        <label style="font-size:.7rem">${idx===0?'Namen':'&nbsp;'}</label>
-        <input type="text" list="dnOpremaNameni" value="${(row.namen||'').replace(/"/g,'&quot;')}" placeholder="Ekstrakcija" oninput="onDNOpremaChange(${idx},'namen',this.value)">
-      </div>
-      <button type="button" onclick="removeDNOpremaRow(${idx})" style="flex-shrink:0;padding:.45rem .5rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);cursor:pointer;line-height:1;margin-bottom:.05rem">✕</button>
-    </div>`;
-  }).join('');
-}
-function addDNOpremaRow(){dnOpremaRows.push({id:uid(),opremaId:'',namen:''});renderDNOpremaRows();}
-function removeDNOpremaRow(idx){dnOpremaRows.splice(idx,1);renderDNOpremaRows();}
-// Polja ne izrisujemo znova ob vsakem znaku - to bi vpisovanju namena vzelo
-// fokus po prvi crki. Izbira naprave je izjema: takrat pripnemo se njene
-// spremljevalce in seznam je treba izrisati znova.
-function onDNOpremaChange(idx,polje,val){
-  if(!dnOpremaRows[idx])return;
-  dnOpremaRows[idx][polje]=val;
-  if(polje!=='opremaId'||!val)return;
-  const dodani=pripniSpremljevalce(val,dnOpremaRows[idx].namen);
-  if(dodani)renderDNOpremaRows();
-}
 
 // Glavna naprava potegne za sabo svoje spremljevalce (rotavapor -> chiller,
 // crpalka, kontroler). Zveza je usmerjena: crpalka ne potegne rotavaporjev,
 // sicer bi skupna crpalka pripeljala vso delavnico. Gremo samo eno stopnjo
 // globoko - predvidljivost je tu vec vredna od iznajdljivosti.
-function pripniSpremljevalce(opremaId,namen){
+function spremljevalciNaprave(opremaId){
   const glavna=oprema.find(o=>o.id===opremaId);
   const seznam=Array.isArray(glavna?.spremljevalci)?glavna.spremljevalci:[];
-  if(!seznam.length)return 0;
-  const ze=new Set(dnOpremaRows.map(r=>r.opremaId).filter(Boolean));
-  let dodanih=0;
-  seznam.forEach(sid=>{
-    if(!sid||ze.has(sid))return;
-    if(!oprema.some(o=>o.id===sid))return;   // naprava je bila izbrisana
-    dnOpremaRows.push({id:uid(),opremaId:sid,namen:namen||''});
-    ze.add(sid);dodanih++;
-  });
-  return dodanih;
+  return seznam.filter(sid=>sid&&oprema.some(o=>o.id===sid));
 }
 
 function dnOpremaZaDokument(oznaka){
@@ -4320,13 +4251,6 @@ function dnOpremaZaDokument(oznaka){
 const KORAK_UP='kor-';
 function jeKorakovaUporaba(u){return String(u?.id||'').startsWith(KORAK_UP);}
 
-// Rocno vpisane vrstice - te ureja razdelek "Uporabljena oprema" na nalogu.
-// Korakovih vrstic tu ni: ce bi se vpisale v seznam, bi se ob naslednjem
-// shranjevanju obravnavale kot rocne in bi zamenjana naprava ostala zapisana
-// poleg nove.
-function dnOpremaRocno(oznaka){
-  return dnOpremaZaDokument(oznaka).filter(u=>!jeKorakovaUporaba(u));
-}
 function bilOpremaZaSerijo(kljuc){
   return kljuc?opremaUporaba.filter(u=>u.bilKljuc===kljuc):[];
 }
@@ -4455,6 +4379,16 @@ function uporabaPoKorakih(oznaka,zdaj){
     vrstica.od=vrstica.od||k.zacetek||(korakDatum(k)?korakDatum(k)+'T00:00':null);
     if(k.konec)vrstica.doo=k.konec;
     if(!obstoj){zdaj.push(vrstica); if(jeMerilo)prevzete.add(vrstica);}
+
+    // Rotavapor ne tece sam: z njim gresta chiller in crpalka. Spremljevalci
+    // dobijo svojo vrstico, da je v dnevniku vidno tudi njihovo delo - cas
+    // podedujejo od glavne naprave, ker tecejo z njo.
+    spremljevalciNaprave(k.opremaId).forEach(sid=>{
+      const sid_id=KORAK_UP+k.id+'-'+sid;
+      if(zdaj.some(r=>r.id===sid_id))return;
+      zdaj.push({id:sid_id,dokument:oznaka,opremaId:sid,namen:k.naziv||'',
+                 minute:vrstica.minute||0,od:vrstica.od||null,doo:vrstica.doo||null});
+    });
   }
 }
 
@@ -4463,9 +4397,10 @@ function uporabaPoKorakih(oznaka,zdaj){
 async function shraniDNOpremo(oznaka){
   if(!oznaka)return;
   const prej=dnOpremaZaDokument(oznaka);
-  const zdaj=dnOpremaRows.filter(r=>r.opremaId).map(r=>({
-    id:r.id||uid(),dokument:oznaka,opremaId:r.opremaId,namen:(r.namen||'').trim(),
-  }));
+  // Uporaba nastane iz procesnih korakov, ne iz seznama, ki bi ga clovek
+  // vzdrzeval ob njih. Kar je bilo v rabi, je ze zapisano tam, kjer se je
+  // delalo; podvojen seznam bi bil samo se eno mesto, ki se lahko razide.
+  const zdaj=[];
   uporabaPoKorakih(oznaka,zdaj);
   const zdajIdji=new Set(zdaj.map(r=>r.id));
   const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
@@ -4700,11 +4635,22 @@ function openDNDetail(id){
         return`<tr><td>Suha snov (Lod)</td><td>${ss!=null?ss.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':'—'}${stat?`<div style="font-size:.68rem;color:var(--muted)">${stat}</div>`:''}</td></tr>`;})()}
     </table>
 
-    ${(()=>{const u=dnOpremaZaDokument(d.oznaka);
+    ${(()=>{
+      // Naprave, ne vsaka posamezna uporaba: ista tehtnica v osmih korakih je
+      // ena naprava, ne osem vrstic. Kje natanko je bila v rabi, pove korak.
+      const u=dnOpremaZaDokument(d.oznaka);
       if(!u.length)return'';
+      const po=new Map();
+      u.forEach(x=>{
+        const t=po.get(x.opremaId)||{koraki:new Set(),minute:0};
+        if(x.namen)t.koraki.add(x.namen);
+        t.minute+=(x.minute||0);
+        po.set(x.opremaId,t);
+      });
       return`<div class="slabel">Uporabljena oprema</div>
-      <table class="mini-table">${u.map(x=>
-        `<tr><td>${opremaNaziv(x.opremaId)}</td><td>${x.namen||'—'}</td></tr>`).join('')}</table>`;})()}
+      <table class="mini-table">${[...po].map(([id,t])=>
+        `<tr><td>${opremaNaziv(id)}</td><td>${[...t.koraki].join(', ')||'—'}${
+          t.minute?` <span style="color:var(--muted)">· ${fmtTrajanje(t.minute)}</span>`:''}</td></tr>`).join('')}</table>`;})()}
 
     <div class="slabel">Alkoholna tinktura</div>
     <table class="mini-table">

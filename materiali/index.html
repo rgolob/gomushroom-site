@@ -3915,15 +3915,9 @@ function dnPojdiNa(dnId,kam){
   const kljuc=meDnKljuc(d);
   closeSheet('dnDetailOverlay');
   if(kam==='bilanca'){
-    switchTab('bilanca');
-    // Ce za serijo se ni dogodkov, je v izbirniku ni; povemo, namesto da bi
-    // uporabnik gledal tujo serijo.
-    const obstaja=bilancaDogodki.some(x=>bilKey(x.tinktura,x.batch)===kljuc);
-    if(!obstaja){toast('Za to serijo v bilanci še ni dogodkov');return;}
-    bilSelectedKey=kljuc;
-    const sel=document.getElementById('bilBatchSel');
-    if(sel)sel.value=kljuc;
-    renderBilanca();
+    // Vedno bilanca TEGA naloga, tudi ce je se prazna - sicer bi se odprla
+    // zadnja izbrana, torej tuja serija.
+    odpriBilancoSerije(kljuc);
     return;
   }
   bilSelectedKey=kljuc;
@@ -7941,7 +7935,16 @@ function renderBilancaSelect(){
     if(!combos[k])combos[k]={tinktura:d.tinktura,batch:d.batch,last:d.ts||''};
     if((d.ts||'')>combos[k].last)combos[k].last=d.ts;
   });
-  const list=Object.entries(combos).sort((a,b)=>b[1].last.localeCompare(a[1].last));
+  // Serija delovnega naloga je v bilanci prisotna, brz ko nalog obstaja - tudi
+  // preden je vpisan prvi dogodek. Sicer se iz koraka ne bi imelo kam priti in
+  // bilance za nov nalog ne bi bilo mogoce zaceti.
+  workOrders.forEach(d=>{
+    const t=(d.vrstaGobe||'').trim(),bt=(d.serijaAlc||'').trim();
+    if(!bt)return;
+    const k=bilKey(t,bt);
+    if(!combos[k])combos[k]={tinktura:t,batch:bt,last:d.datum||'',prazna:true};
+  });
+  const list=Object.entries(combos).sort((a,b)=>String(b[1].last).localeCompare(String(a[1].last)));
   if(!list.length){
     sel.innerHTML='<option value="">— ni podatkov, dodaj dogodek —</option>';
     bilSelectedKey='';
@@ -7954,7 +7957,8 @@ function renderBilancaSelect(){
   // stvar, le zapisani na dveh mestih.
   const opt=([k,v])=>{
     const dn=workOrders.find(d=>meDnKljuc(d)===k);
-    const oznaka=dn?`${dn.oznaka||'DN'} · ${v.tinktura} ${v.batch}`:`${v.tinktura} — ${v.batch}`;
+    const oznaka=(dn?`${dn.oznaka||'DN'} · ${v.tinktura} ${v.batch}`:`${v.tinktura} — ${v.batch}`)
+      +(v.prazna?' · brez dogodkov':'');
     return `<option value="${k}"${k===keep?' selected':''}>${oznaka}</option>`;
   };
   const zNalogom=list.filter(([k])=>workOrders.some(d=>meDnKljuc(d)===k));
@@ -8006,15 +8010,38 @@ function bilNetoOdseki(kljuc){
 function shraniInOdpriBilanco(){
   const kljuc=bilKljucIzObrazca();
   if(!kljuc.split('|||')[1]){toast('⚠ Vpiši oznako serije, da najdem bilanco');return;}
+  const zeShranjen=!!editingDNId;
   saveDN();
-  if(document.getElementById('dnOverlay')?.classList.contains('open'))return;
+  // Shranjevanje zapre list; ce je odprt, ni uspelo in je ze povedalo, zakaj.
+  if(!document.getElementById('dnOverlay')?.classList.contains('open')){
+    odpriBilancoSerije(kljuc);
+    return;
+  }
+  // Nov nalog mora najprej obstajati - bilanca brez naloga ne bi imela oznake,
+  // na katero bi se vezala.
+  if(!zeShranjen)return;
+  // Pri ze shranjenem nalogu pa te manjkajoc podatek ne sme zadrzati: v bilanco
+  // gres pogosto prav zato, ker ga se ni. Povemo, kaj to stane.
+  if(!confirm('Naloga ni bilo mogoče shraniti.\n\nOdprem bilanco brez shranjevanja? Spremembe, ki jih nisi shranil, bodo izgubljene.'))return;
+  closeSheet('dnOverlay');
+  odpriBilancoSerije(kljuc);
+}
+
+// Bilanca serije se odpre tudi, kadar dogodkov se ni: serija delovnega naloga
+// je v izbirniku prisotna, brz ko nalog obstaja, in vnos prvega dogodka ima
+// tinkturo in batch ze izpolnjena. Tako se bilanca za nov nalog zacne tam, kjer
+// se je clovek ustavil, namesto da bi jo iskal.
+function odpriBilancoSerije(kljuc){
   bilSelectedKey=kljuc;
   switchTab('bilanca');
-  const sel=document.getElementById('bilBatchSel');
-  if(sel)sel.value=kljuc;
-  renderBilanca();
+  // switchTab izrise izbirnik, ta pa obdrzi izbrano serijo, ker je zdaj v
+  // seznamu tudi brez dogodkov.
+  if(bilSelectedKey!==kljuc){
+    bilSelectedKey=kljuc;
+    renderBilancaSelect();
+  }
   if(!bilancaDogodki.some(x=>bilKey(x.tinktura,x.batch)===kljuc))
-    toast('Za to serijo v bilanci še ni dogodkov — dodaj prvega');
+    toast('Bilanca te serije je še prazna — dodaj prvi dogodek');
 }
 
 // ── BILANCA KOT REZULTAT KORAKA ────────────────────────────────────────────

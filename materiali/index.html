@@ -8247,14 +8247,16 @@ function sbToOpUp(r){return{
   bilKljuc:r.bil_kljuc||'',minute:r.minute||0,od:r.cas_od||null,doo:r.cas_do||null,
 };}
 let _opUpOpozorilo=false;
+// Skozi sbPushZapis, ne naravnost v sbUpsert: ce v bazi manjka kaksen novejsi
+// stolpec (bil_kljuc, minute, cas_od, cas_do so prisli s casom delovanja iz
+// bilance), gre zapis skozi brez njega. Prej je zaradi enega manjkajocega
+// stolpca odpovedala cela vrstica in uporaba opreme ni prisla v bazo nikoli -
+// tabela je bila tam, videti pa je bilo, kot da je ni.
 async function sbPushOpUp(u){
-  try{await sbUpsert('gm_dn_oprema_uporaba',opUpToSb(u));setSyncStatus('✓');}
-  catch(e){
-    sinkNapaka('sbPushOpUp',e);
-    if(!_opUpOpozorilo){
-      _opUpOpozorilo=true;
-      toast('⚠ Uporaba opreme ostaja lokalna — v Supabase manjka tabela gm_dn_oprema_uporaba');
-    }
+  if(await sbPushZapis('gm_dn_oprema_uporaba',opUpToSb(u),'sbPushOpUp'))return;
+  if(!_opUpOpozorilo){
+    _opUpOpozorilo=true;
+    toast('⚠ Uporaba opreme ostaja lokalna — poglej klicaj v glavi');
   }
 }
 // Converters zapis GLY <-> Supabase (tabela gm_dn_gly_zapisi)

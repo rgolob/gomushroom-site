@@ -2561,7 +2561,7 @@ const DN_PREDLOGA_KORAKOV=[
       izracun:pa=>{const v=parseNum(pa.c_etoh_vv);return v>0?round(volToMas(v),1):null;}},
    ]},
   {st:'1.1', korak:'uz_1', naziv:'Ultrazvočna sonikacija — 1.', faza:'OF',
-   naprave:['uz_kopel','termometer'],
+   naprave:['uz_ekstraktor','uz_kopel','termometer'],
    polja:[
      {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
      {k:'moc',tip:'meritev',napis:'P',enota:'%'},
@@ -2570,7 +2570,7 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
    ]},
   {st:'1.1', korak:'uz_2', naziv:'Ultrazvočna sonikacija — 2.', faza:'OF',
-   naprave:['uz_kopel','termometer'],
+   naprave:['uz_ekstraktor','uz_kopel','termometer'],
    polja:[
      {k:'t_uz',tip:'meritev',napis:'t UZ',enota:'min'},
      {k:'moc',tip:'meritev',napis:'P',enota:'%'},
@@ -6386,7 +6386,13 @@ function katLabel(kat){return KAT_OPREME[kat]||KAT_OPREME.oprema;}
 const VRSTE_OPREME={
   tehtnica:     {naziv:'⚖️ Tehtnica',vodi:'meritev',              ugani:/tehtnic|vaga|kern|mettler|precisa/i},
   susilnik:     {naziv:'🔥 Halogenski sušilnik',vodi:'meritev',   ugani:/sušilni|susilni|halogen|hr ?83|moisture/i},
-  uz_kopel:     {naziv:'〰️ Ultrazvočna kopel',vodi:'ure',     ugani:/ultrazvo|ultrazvo|uz kopel|sonic/i},
+  // Sonotroda v kozarcu in kopel, v kateri kozarec stoji, sta razlicni napravi:
+  // prva je procesna, druga vecinoma za ciscenje. Vzorca sta zato ozka - kar se
+  // ne ujame z nobenim, ostane brez vrste, kar je bolj posteno od ugibanja.
+  uz_ekstraktor:{naziv:'🔊 Ultrazvočni ekstraktor',vodi:'ure',
+                 ugani:/ultrazvo[čc]n\w* *(ekstrakt|sond|sonotrod|homogeniz|proces)|uz[- ]?(sond|ekstrakt)|sonotrod|ultrasonic *(probe|processor|homogeniz)/i},
+  uz_kopel:     {naziv:'〰️ Ultrazvočna kopel',vodi:'ure',
+                 ugani:/ultrazvo[čc]n\w* *kopel|uz[- ]?kopel|ultrasonic *(bath|cleaner)|[čc]istiln\w* *kopel/i},
   stiskalnica:  {naziv:'🗜️ Stiskalnica',           ugani:/stiskal|presa|press/i},
   rotavapor:    {naziv:'🌀 Rotavapor',vodi:'ure',             ugani:/rotavap|rotacij|büchi|buchi|re-?52/i},
   chiller:      {naziv:'❄️ Chiller',vodi:'ure',               ugani:/chiller|hladil|kriostat/i},

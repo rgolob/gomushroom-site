@@ -255,6 +255,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .opd-ure{font-size:.68rem;font-weight:400;color:var(--muted)}
 .opd-prazno{font-size:.68rem;color:var(--muted);line-height:1.4;padding:0 .55rem .45rem}
 .opd-sporno{color:var(--danger);font-weight:600}
+/* Pot do dnevnika v obrazcu opreme: pove vsoto, podrobnosti so en dotik stran. */
+.opdnevnik-gumb{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;
+  border:1px solid var(--border);border-radius:var(--rs);background:var(--parchment);
+  padding:.45rem .55rem;margin-bottom:.6rem;cursor:pointer;font-family:'Jost',sans-serif;
+  font-size:.74rem;color:var(--ink)}
+.opdnevnik-gumb .opd-ure{margin-left:auto}
+.opd-pusc{color:var(--muted);font-size:1rem;line-height:1}
+.opdnevnik-prazno{font-size:.68rem;color:var(--muted);line-height:1.4;
+  border:1px solid var(--border);border-radius:var(--rs);background:var(--parchment);
+  padding:.45rem .55rem;margin-bottom:.6rem}
+/* Glava dnevnika: kaj je naprava in koliko je vsega, preden pride seznam. */
+.dnv-glava{margin-bottom:.5rem}
+.dnv-naprava{font-size:.7rem;color:var(--muted)}
+.dnv-vsota{display:flex;flex-wrap:wrap;gap:.15rem .7rem;font-size:.72rem;
+  color:var(--muted);margin-top:.2rem}
+.mini-table tr.sporna td{background:rgba(139,58,42,.06)}
 .opdnevnik .mini-table{margin:0;padding:0 .55rem .45rem}
 .mini-table{width:100%;border-collapse:collapse;font-size:.72rem;margin:.4rem 0}
 .mini-table th{text-align:left;padding:.2rem .35rem;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -501,6 +517,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   <button class="nitem" id="nav-etanol" onclick="switchTab('etanol',this)"><span class="nicon">🧪</span>Etanol</button>
   <button class="nitem" id="nav-vec" onclick="openVecMenu()"><span class="nicon">⋯</span>Več</button>
 </nav>
+
+<!-- SHEET: DNEVNIK DELA NAPRAVE -->
+<!-- Svoj list, ker je dnevnik zapis za branje; obrazec opreme je za urejanje. -->
+<div class="overlay" id="dnevnikOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="dnevnikNaslov">Dnevnik dela</span>
+      <button class="shclose" onclick="closeSheet('dnevnikOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div id="dnevnikVsebina"></div>
+    </div>
+  </div>
+</div>
 
 <!-- SHEET: VEC -->
 <div class="overlay" id="vecOverlay">
@@ -6625,9 +6656,7 @@ function odpriIzUrl(){
   const o=najdiOpremo(kljuc);
   if(!o){toast('⚠ Naprava z oznako '+kljuc+' ne obstaja');return;}
   switchTab('oprema');
-  _opDnevnikOdprt=true;
   openOpremaSheet(o.id);
-  _opDnevnikOdprt=false;
   // Naslov pocistimo, da osvezitev ne odpre kartice znova.
   history.replaceState(null,'',location.pathname);
 }
@@ -6942,7 +6971,7 @@ function renderDnevniki(){
     const vrsta=golo&&golo!==(o.naziv||'').trim().toLowerCase()?vrs:'';
     const meta=[vrsta,nalogi,p.zadnja?'nazadnje '+fmtDate(p.zadnja):''].filter(Boolean).join(' · ');
     return`<div class="dn-card">
-      <div class="dn-header" onclick="openOpremaSheetZDnevnikom('${o.id}')">
+      <div class="dn-header" onclick="odpriDnevnik('${o.id}')">
         <div class="dn-info">
           <div class="dn-name">${o.naziv||'—'} <span style="font-size:.75rem;color:var(--muted)">${o.model||''}</span></div>
           <div class="dn-meta">${meta}</div>
@@ -6957,14 +6986,6 @@ function renderDnevniki(){
   }).join('');
 }
 
-// Iz pregleda se kartica naprave odpre z ze odprtim dnevnikom - po njem si
-// prisel.
-function openOpremaSheetZDnevnikom(id){
-  _opDnevnikOdprt=true;
-  openOpremaSheet(id);
-  _opDnevnikOdprt=false;
-}
-
 // Obratna smer vezi: na cem je naprava delala. Ob vzdrzevanju ali reklamaciji
 // je to prvo vprasanje in doslej nanj ni bilo odgovora.
 // 1 uporaba, 2 uporabi, 3-4 uporabe, 5+ uporab.
@@ -6974,41 +6995,65 @@ function sklonUporab(n){
   return `${n} ${beseda}`;
 }
 
-function renderOpUporaba(id){
-  const el=document.getElementById('opUporabaBlok');
-  if(!el)return;
-  // Dnevnik dela: vsaka uporaba svoja vrstica, z neto casom, kjer ga imamo.
-  // Ure so podlaga za servisne intervale, zato jih sestejemo tudi skupaj.
-  const uporabe=id?opremaUporaba.filter(u=>u.opremaId===id):[];
-  const o=id?oprema.find(x=>x.id===id):null;
-  // Nova naprava zapisov se nima. Skriti razdelek pomeni, da ga clovek isce in
-  // ne najde - in ne izve, zakaj ga ni. Zato prazen dnevnik pokazemo in
-  // povemo, od kod se napolni. Skrijemo ga samo pri drobnem inventarju, ki ni
-  // naprava, in pri neshranjeni napravi, ki se nima kaj pokazati.
-  if(!o||o.kat==='inventar'){el.innerHTML='';return;}
-  const jeMerilo=vrstaVodi(o.vrsta)==='meritev';
-  if(!uporabe.length){
-    const brezVrste=!o.vrsta
-      ?' Napravi še ni določena vrsta — dokler ni, korak ne ve, da naj zabeleži uporabo.'
-      :'';
-    el.innerHTML=`<details class="opdnevnik">
-      <summary>🕘 Dnevnik dela <span class="opd-ure">brez zapisov</span></summary>
-      <div class="opd-prazno">Napolni se sam: iz bilance, ko na njej izbereš to napravo,
-      in ob shranjevanju delovnega naloga, če jo imenuje kakšen procesni korak.
-      Vpišeš jo lahko tudi ročno pod „Uporabljena oprema“ na nalogu.${brezVrste}</div>
-    </details>`;
-    return;
-  }
+// ── DNEVNIK DELA NAPRAVE ───────────────────────────────────────────────────
+// Dnevnik je zapis za branje, obrazec opreme pa je za urejanje - s Shrani in
+// Preklici. Brati ga sredi obrazca je vabilo, da med listanjem po nesreci kaj
+// spremenis, zato ima svoj list. V obrazcu ostane samo pot do njega, ki ze
+// nosi vsoto.
+
+// Vrstice ene naprave, urejene od najnovejse. Datum pade z naloga, ce ga
+// vrstica nima - pri nalogu za nazaj ure pogosto niso vpisane.
+function dnevnikVrstice(id){
   const kljucDatuma=u=>{
     if(u.od)return String(u.od).slice(0,10);
     const dn=workOrders.find(d=>d.oznaka===u.dokument);
     return dn?.datum||'';
   };
-  const urejene=[...uporabe].sort((a,b)=>(kljucDatuma(b)||'').localeCompare(kljucDatuma(a)||''));
-  // Neto pride iz bilance (odseki dela brez premorov), bruto iz trajanja
-  // koraka. Sesteti ju v eno stevilko bi dalo vsoti natancnost, ki je nima.
-  const neto=uporabe.filter(u=>u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
-  const bruto=uporabe.filter(u=>!u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
+  const uporabe=id?opremaUporaba.filter(u=>u.opremaId===id):[];
+  return {kljucDatuma,
+    urejene:[...uporabe].sort((a,b)=>(kljucDatuma(b)||'').localeCompare(kljucDatuma(a)||''))};
+}
+
+// V obrazcu opreme samo pot do dnevnika: koliko je zapisov in koliko ur oz.
+// uporab. Kdor hoce podrobnosti, jih odpre; kdor ureja napravo, ga ne motijo.
+function renderOpUporaba(id){
+  const el=document.getElementById('opUporabaBlok');
+  if(!el)return;
+  const o=id?oprema.find(x=>x.id===id):null;
+  if(!o||o.kat==='inventar'){el.innerHTML='';return;}
+  const p=dnevnikPovzetek(o);
+  if(!p.uporabe.length){
+    const brezVrste=!o.vrsta
+      ?' Napravi še ni določena vrsta — dokler ni, korak ne ve, da naj zabeleži uporabo.'
+      :'';
+    el.innerHTML=`<div class="opdnevnik-prazno">🕘 <strong>Dnevnik dela</strong> — brez zapisov.
+      Napolni se sam: iz bilance, ko na njej izbereš to napravo, in ob shranjevanju
+      delovnega naloga, če jo imenuje kakšen procesni korak.${brezVrste}</div>`;
+    return;
+  }
+  const vsota=[p.neto?`${fmtTrajanje(p.neto)} neto`:'',
+               p.bruto?`${fmtTrajanje(p.bruto)} bruto`:''].filter(Boolean).join(' · ')
+    ||sklonUporab(p.uporabe.length);
+  el.innerHTML=`<button type="button" class="opdnevnik-gumb" onclick="odpriDnevnik('${o.id}')">
+    <span>🕘 <strong>Dnevnik dela</strong> <span class="opd-st">${p.uporabe.length}</span></span>
+    <span class="opd-ure">${p.sporne?`<span class="opd-sporno">⚠ ${sklonUporab(p.sporne)} izven umerjanja</span>`:vsota}</span>
+    <span class="opd-pusc">›</span>
+  </button>`;
+}
+
+function odpriDnevnik(id){
+  const o=oprema.find(x=>x.id===id);
+  if(!o){toast('Naprava ne obstaja');return;}
+  const el=document.getElementById('dnevnikVsebina');
+  const naslov=document.getElementById('dnevnikNaslov');
+  if(naslov)naslov.textContent=o.naziv||'Dnevnik dela';
+  if(el)el.innerHTML=dnevnikHtml(o);
+  openSheet('dnevnikOverlay');
+}
+
+function dnevnikHtml(o){
+  const {kljucDatuma,urejene}=dnevnikVrstice(o.id);
+  const jeMerilo=vrstaVodi(o.vrsta)==='meritev';
   // Pri merilu ura ne pove nicesar, pove pa umerjanje: ce je bila meritev
   // opravljena po izteku roka, so stevilke iz tiste serije vprasljive. To je
   // edini razlog, zaradi katerega merilo sploh potrebuje dnevnik.
@@ -7018,38 +7063,37 @@ function renderOpUporaba(id){
     const d=kljucDatuma(u);
     return !!d&&d>rok;
   };
-  const sporne=urejene.filter(izvenRoka);
-  const vrstice=urejene.slice(0,15).map(u=>{
+  const p=dnevnikPovzetek(o);
+  if(!urejene.length){
+    return `<div class="empty"><div class="ei">🕘</div><div class="et">Brez zapisov</div>
+      <div class="es">Vrstica nastane, ko napravo imenuje procesni korak ali ko jo izbereš v bilanci.</div></div>`;
+  }
+  // Neto pride iz bilance (odseki dela brez premorov), bruto iz trajanja
+  // koraka. Sesteti ju v eno stevilko bi dalo vsoti natancnost, ki je nima.
+  const glava=[
+    `<div class="dnv-glava">`,
+    `<div class="dnv-naprava">${vrstaLabel(o.vrsta)||katLabel(o.kat)}${o.model?' · '+o.model:''}${o.invSt?' · '+o.invSt:''}</div>`,
+    `<div class="dnv-vsota">`,
+      p.neto?`<span><strong>${fmtTrajanje(p.neto)}</strong> neto</span>`:'',
+      p.bruto?`<span><strong>${fmtTrajanje(p.bruto)}</strong> bruto</span>`:'',
+      `<span>${sklonUporab(urejene.length)}</span>`,
+      p.sporne?`<span class="opd-sporno">⚠ ${sklonUporab(p.sporne)} izven umerjanja</span>`:'',
+      rok?`<span>umerjanje velja do ${fmtDate(rok)}</span>`:'',
+    `</div></div>`,
+  ].join('');
+  const vrstice=urejene.map(u=>{
     const oznaka=u.dokument||(u.bilKljuc?u.bilKljuc.split('|||').filter(Boolean).join(' · '):'—');
     const d=kljucDatuma(u);
-    const zadnji=jeMerilo
+    const desno=jeMerilo
       ?(izvenRoka(u)?'<span class="opd-sporno">⚠ izven umerjanja</span>':'')
       :(u.minute?fmtTrajanje(u.minute)+(u.bilKljuc?' neto':' bruto'):'—');
-    return`<tr>
+    return`<tr${izvenRoka(u)?' class="sporna"':''}>
       <td>${oznaka}</td>
       <td>${d?fmtDate(d):'—'}${u.namen?` · ${u.namen}`:''}</td>
-      <td class="num">${zadnji}</td></tr>`;
+      <td class="num">${desno}</td></tr>`;
   }).join('');
-  const skupaj=jeMerilo
-    ? (sporne.length
-        ? `<span class="opd-sporno">⚠ ${sklonUporab(sporne.length)} po izteku umerjanja</span>`
-        : sklonUporab(uporabe.length))
-    : [neto?`<strong>${fmtTrajanje(neto)}</strong> neto`:'',
-       bruto?`<strong>${fmtTrajanje(bruto)}</strong> bruto`:''].filter(Boolean).join(' · ');
-  // Zaprt naslov mora povedati, kaj je v njem - sicer je zlaganje skoda in ne
-  // korist. Ure so tisto, zaradi cesar clovek dnevnik odpre, zato stojijo ze
-  // v naslovu in jih ni treba iskati.
-  el.innerHTML=`<details class="opdnevnik"${_opDnevnikOdprt?' open':''}>
-    <summary>🕘 Dnevnik dela <span class="opd-st">${uporabe.length}</span>
-      <span class="opd-ure">${skupaj||'brez ur'}</span></summary>
-    <table class="mini-table">${vrstice}</table>
-    ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}
-  </details>`;
+  return glava+`<table class="mini-table">${vrstice}</table>`;
 }
-
-// Ko kartico odpre skenirana koda, je clovek pri napravi in ga zanima prav
-// dnevnik - takrat naj bo ze odprt.
-let _opDnevnikOdprt=false;
 
 // Vrsta se za stare zapise predlaga iz naziva, a se ne vsili: dokler je clovek
 // ne potrdi s shranjevanjem, je to le predlog, in namig pod poljem to pove.

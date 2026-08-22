@@ -2531,7 +2531,11 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Maksimalna dosežena temperatura med ekstrakcijo ni presegla 55 °C.'},
    ]},
   {st:'1.2', korak:'stiskanje_of', naziv:'Stiskanje organske faze — matični ekstrakt', faza:'OF',
-   naprave:['stiskalnica','tehtnica'],
+   // Rubrika nosi tri mase, zato je na prvem mestu tehtnica: ce se izkaze, da
+   // je bila neumerjena, so vprasljive prav te stevilke. Stiskalnica stevilke
+   // ne da - v nalog jo zapise razdelek Uporabljena oprema, kjer je zaradi
+   // ciscenja in stika z izdelkom tudi njeno pravo mesto.
+   naprave:['tehtnica','stiskalnica'],
    polja:[
      {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
       opis:'Stiskanje in filtracija preko 400 mesh ~37 µm najlonske filtrirne tkanine.'},

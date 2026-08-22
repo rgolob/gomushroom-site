@@ -1673,11 +1673,19 @@ function meBilancaVolPct(kljuc){
 // Preracun lahko tece brez naloga (prosti preracun), vezan na proizvodni DN
 // ali na R&D nalog. Pri R&D uradno ne nastane produkt, porabljeni etanol pa se
 // vseeno knjizi, zato ima R&D lastno stevilcenje in je tu izbirljiv enakovredno.
+// POZOR NA ENOTE. Surovina se kupuje, hrani in v delovni nalog vpisuje v
+// KILOGRAMIH - tako je vodena zaloga in tako pise na kartici naloga. Preracun
+// maticnega ekstrakta pa dela v gramih, ker je razmerje podano v mL/g. R&D
+// nalog ima maso ze v gramih.
+//
+// Zato je masa tu vedno v GRAMIH: pretvorimo enkrat, na tem mestu, in nizje
+// nihce vec ne ugiba. Prej je sla vrednost iz naloga v polje naravnost in bila
+// tisockrat premajhna - 1,5 kg gobe je racunalo kot 1,5 g.
 function meNalog(id){
   if(!id)return null;
   const dn=workOrders.find(d=>d.id===id);
   if(dn)return {vir:'dn',id:dn.id,oznaka:dn.oznaka||'DN',
-    tinktura:dn.vrstaGobe||'',serija:dn.serijaAlc||'',masaGobe:dn.masaGobe||0};
+    tinktura:dn.vrstaGobe||'',serija:dn.serijaAlc||'',masaGobe:round((dn.masaGobe||0)*1000,1)};
   const rd=rdNalogi.find(r=>r.id===id);
   if(rd)return {vir:'rd',id:rd.id,oznaka:rd.oznaka||'R&D',
     tinktura:rd.surovina||'',serija:rd.serijaS||'',masaGobe:rd.masaS||0};
@@ -2278,7 +2286,8 @@ function odpriPreracunME(korakId){
     sel.value=editingDNId;
     onMeDnChange();
   } else {
-    const masa=dnSerijeRows.reduce((v,r)=>v+(parseNum(r.masa)||0),0);
+    // Vrstice serij so v kilogramih, polje preracuna v gramih.
+    const masa=round(dnSerijeRows.reduce((v,r)=>v+(parseNum(r.masa)||0),0)*1000,1);
     if(masa>0)document.getElementById('meMasaGobe').value=String(masa).replace('.',',');
     const serija=(document.getElementById('dnSerijaAlc')?.value||'').trim();
     const info=document.getElementById('meDnInfo');
@@ -4199,6 +4208,38 @@ function sbToKorak(r){
   };
 }
 
+// ── Ure naprav iz korakov ─────────────────────────────────────────────────
+// Rotavapor, crpalka in chiller ze dobijo NETO cas iz bilance, ki loci odseke
+// dela od premorov. UZ sonda, grelna kopel in tlacni ekstraktor tam ne
+// nastopajo, ceprav so ravno tisti, ki tecejo po vec ur - njihov cas je v
+// koraku, a kot BRUTO: od zacetka do konca, vkljucno z rokovanjem.
+//
+// Za servisne intervale je precenitev varna smer, mora pa biti vidno, katera
+// stevilka je katera - sicer bi vsota izgledala natancnejsa, kot je.
+// Bilanca ima prednost: kjer neto cas ze obstaja, bruto ne sme pripisovati se
+// enkrat istega dela.
+function urePoKorakih(oznaka,zdaj){
+  const izBilance=new Set(
+    opremaUporaba.filter(u=>u.bilKljuc&&u.minute).map(u=>u.opremaId));
+  for(const k of dnKorakiRows){
+    if(!k.opremaId||napravaVodi(k.opremaId)!=='ure')continue;
+    if(izBilance.has(k.opremaId))continue;
+    const ure=korakUre(k);
+    if(ure==null)continue;
+    const minute=Math.round(ure*60);
+    if(!minute)continue;
+    // Ce je naprava ze na seznamu uporabljene opreme, ji cas samo dopisemo -
+    // dve vrstici za isto delo bi uro sesteli dvakrat.
+    const obstoj=zdaj.find(r=>r.opremaId===k.opremaId&&!r.minute);
+    const vrstica=obstoj||{id:uid(),dokument:oznaka,opremaId:k.opremaId,namen:''};
+    vrstica.namen=vrstica.namen||k.naziv||'';
+    vrstica.minute=(vrstica.minute||0)+minute;
+    vrstica.od=vrstica.od||k.zacetek||null;
+    vrstica.doo=k.konec||vrstica.doo||null;
+    if(!obstoj)zdaj.push(vrstica);
+  }
+}
+
 // Uporabo shranimo kot razliko: kar je uporabnik odstranil, izbrisemo tudi v
 // bazi, sicer bi odstranjena naprava ostala v zapisniku.
 async function shraniDNOpremo(oznaka){
@@ -4207,6 +4248,7 @@ async function shraniDNOpremo(oznaka){
   const zdaj=dnOpremaRows.filter(r=>r.opremaId).map(r=>({
     id:r.id||uid(),dokument:oznaka,opremaId:r.opremaId,namen:(r.namen||'').trim(),
   }));
+  urePoKorakih(oznaka,zdaj);
   const zdajIdji=new Set(zdaj.map(r=>r.id));
   const zaBrisanje=prej.filter(u=>!zdajIdji.has(u.id));
   // Vrstice iz bilance nosijo isti dokument, a jih ta obrazec ne ureja - filter
@@ -5156,7 +5198,7 @@ async function genZapisnikProizvodnje(dnId){
 
   const serije=(d.serije||[]).filter(r=>r.serija||r.masa);
   const surVrstica=(serija,masa)=>`<tr><td>${esc(serija||'—')}</td>
-      <td>${esc(dobaviteljSerije(serija)||'—')}</td><td class="num">${stev(masa)} g</td></tr>`;
+      <td>${esc(dobaviteljSerije(serija)||'—')}</td><td class="num">${stev(masa)} kg</td></tr>`;
   const surovinaVrstice=serije.length
     ? serije.map(r=>surVrstica(r.serija,r.masa)).join('')
     : surVrstica(d.serijaGobe,d.masaGobe);
@@ -6253,26 +6295,42 @@ function katLabel(kat){return KAT_OPREME[kat]||KAT_OPREME.oprema;}
 // "ugani" so vzorci za zapise, ki so starejsi od te delitve: obrazec predlaga
 // vrsto iz naziva, potrdi pa jo clovek ob shranjevanju.
 const VRSTE_OPREME={
-  tehtnica:     {naziv:'⚖️ Tehtnica',              ugani:/tehtnic|vaga|kern|mettler|precisa/i},
-  susilnik:     {naziv:'🔥 Halogenski sušilnik',   ugani:/sušilni|susilni|halogen|hr ?83|moisture/i},
-  uz_kopel:     {naziv:'〰️ Ultrazvočna kopel',     ugani:/ultrazvo|ultrazvo|uz kopel|sonic/i},
+  tehtnica:     {naziv:'⚖️ Tehtnica',vodi:'meritev',              ugani:/tehtnic|vaga|kern|mettler|precisa/i},
+  susilnik:     {naziv:'🔥 Halogenski sušilnik',vodi:'meritev',   ugani:/sušilni|susilni|halogen|hr ?83|moisture/i},
+  uz_kopel:     {naziv:'〰️ Ultrazvočna kopel',vodi:'ure',     ugani:/ultrazvo|ultrazvo|uz kopel|sonic/i},
   stiskalnica:  {naziv:'🗜️ Stiskalnica',           ugani:/stiskal|presa|press/i},
-  rotavapor:    {naziv:'🌀 Rotavapor',             ugani:/rotavap|rotacij|büchi|buchi|re-?52/i},
-  chiller:      {naziv:'❄️ Chiller',               ugani:/chiller|hladil|kriostat/i},
-  vakuum:       {naziv:'💨 Vakuumska črpalka',     ugani:/vakuum|črpalk|crpalk|pump/i},
-  tlacni:       {naziv:'♨️ Tlačni ekstraktor',     ugani:/tlačn|tlacn|avtoklav|autoklav|ekspres/i},
-  grelnik:      {naziv:'🍲 Grelna kopel / kotel',  ugani:/grel|kopel|kotel|termostat|plošč/i},
-  mesalo:       {naziv:'🥄 Mešalo',                ugani:/mešal|mesal|stirrer|homogeniz/i},
-  mlin:         {naziv:'🌾 Mlin',                  ugani:/mlin|mill|drobil/i},
+  rotavapor:    {naziv:'🌀 Rotavapor',vodi:'ure',             ugani:/rotavap|rotacij|büchi|buchi|re-?52/i},
+  chiller:      {naziv:'❄️ Chiller',vodi:'ure',               ugani:/chiller|hladil|kriostat/i},
+  vakuum:       {naziv:'💨 Vakuumska črpalka',vodi:'ure',     ugani:/vakuum|črpalk|crpalk|pump/i},
+  tlacni:       {naziv:'♨️ Tlačni ekstraktor',vodi:'ure',     ugani:/tlačn|tlacn|avtoklav|autoklav|ekspres/i},
+  grelnik:      {naziv:'🍲 Grelna kopel / kotel',vodi:'ure',  ugani:/grel|kopel|kotel|termostat|plošč/i},
+  mesalo:       {naziv:'🥄 Mešalo',vodi:'ure',                ugani:/mešal|mesal|stirrer|homogeniz/i},
+  mlin:         {naziv:'🌾 Mlin',vodi:'ure',                  ugani:/mlin|mill|drobil/i},
   polnilnik:    {naziv:'💧 Polnilna postaja',      ugani:/polniln|polnjenj|dozir/i},
   flowhood:     {naziv:'🌬️ Flowhood / HEPA',       ugani:/flowhood|hepa|laminar|komora/i},
-  alkoholometer:{naziv:'🍸 Alkoholometer',         ugani:/alkoholo|alkometer|areometer|refrakto/i},
-  termometer:   {naziv:'🌡️ Termometer',            ugani:/termome|temperatur/i},
-  ph:           {naziv:'🧪 pH meter',              ugani:/ph ?met|ph ?mer/i},
+  alkoholometer:{naziv:'🍸 Alkoholometer',vodi:'meritev',         ugani:/alkoholo|alkometer|areometer|refrakto/i},
+  termometer:   {naziv:'🌡️ Termometer',vodi:'meritev',            ugani:/termome|temperatur/i},
+  ph:           {naziv:'🧪 pH meter',vodi:'meritev',              ugani:/ph ?met|ph ?mer/i},
   hladilnik:    {naziv:'🧊 Hladilnik / zamrzovalnik', ugani:/hladilnik|zamrzoval|freezer/i},
   drugo:        {naziv:'⚙️ Drugo'},
 };
 function vrstaLabel(v){return VRSTE_OPREME[v]?.naziv||'';}
+
+// Naprava je lahko pomembna na dva razlicna nacina in to ni ista stvar:
+//   'ure'     - se obrablja (rotavapor, crpalka, UZ sonda). Zanima nas vsota
+//               ur zaradi servisnih intervalov.
+//   'meritev' - postavi stevilko v zapisnik (tehtnica, halogenski susilnik).
+//               Ure ne pomenijo nic; steje, ali je bilo umerjanje na dan
+//               uporabe veljavno.
+// Stiskalnica ni ne eno ne drugo: steje za higieno in vzdrzevanje, zato
+// zadostuje zapis v razdelku Uporabljena oprema. Belezi ji "ure" iz trajanja
+// koraka bi bila stevilka brez pomena - in slabse kot nic, ker bi bila videti
+// kot podatek.
+function vrstaVodi(vrsta){return VRSTE_OPREME[vrsta]?.vodi||'';}
+function napravaVodi(opremaId){
+  const o=oprema.find(x=>x.id===opremaId);
+  return o?vrstaVodi(o.vrsta):'';
+}
 
 // Predlog za zapis brez vrste. Naziv in model sta edino, kar imamo; ce se nic
 // ne ujema, ne ugibamo naprej - prazno polje je bolj posteno od napacne vrste.
@@ -6720,17 +6778,22 @@ function renderOpUporaba(id){
     return dn?.datum||'';
   };
   const urejene=[...uporabe].sort((a,b)=>(kljucDatuma(b)||'').localeCompare(kljucDatuma(a)||''));
-  const skupajMin=uporabe.reduce((s,u)=>s+(u.minute||0),0);
+  // Neto pride iz bilance (odseki dela brez premorov), bruto iz trajanja
+  // koraka. Sesteti ju v eno stevilko bi dalo vsoti natancnost, ki je nima.
+  const neto=uporabe.filter(u=>u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
+  const bruto=uporabe.filter(u=>!u.bilKljuc).reduce((s,u)=>s+(u.minute||0),0);
   const vrstice=urejene.slice(0,15).map(u=>{
     const oznaka=u.dokument||(u.bilKljuc?u.bilKljuc.split('|||').filter(Boolean).join(' · '):'—');
     const d=kljucDatuma(u);
     return`<tr>
       <td>${oznaka}</td>
       <td>${d?fmtDate(d):'—'}${u.namen?` · ${u.namen}`:''}</td>
-      <td class="num">${u.minute?fmtTrajanje(u.minute):'—'}</td></tr>`;
+      <td class="num">${u.minute?fmtTrajanje(u.minute)+(u.bilKljuc?' neto':' bruto'):'—'}</td></tr>`;
   }).join('');
+  const skupaj=[neto?`<strong>${fmtTrajanje(neto)}</strong> neto`:'',
+                bruto?`<strong>${fmtTrajanje(bruto)}</strong> bruto`:''].filter(Boolean).join(' · ');
   el.innerHTML=`<div class="slabel">Dnevnik dela (${uporabe.length})</div>
-    ${skupajMin?`<div style="font-size:.72rem;color:var(--muted);margin:-.2rem 0 .35rem">Skupaj <strong>${fmtTrajanje(skupajMin)}</strong> neto</div>`:''}
+    ${skupaj?`<div style="font-size:.72rem;color:var(--muted);margin:-.2rem 0 .35rem">Skupaj ${skupaj}</div>`:''}
     <table class="mini-table">${vrstice}</table>
     ${urejene.length>15?`<div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">… in še ${urejene.length-15}</div>`:''}`;
 }
@@ -7467,7 +7530,7 @@ function renderBilanca(){
     const gz=glyZapisi();
     const zapis=gz['bil:'+bilSelectedKey]||(dn?gz['dn:'+dn.id]:null);
     const kosi=[];
-    if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} g gobe`:''}`);
+    if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} kg gobe`:''}`);
     else kosi.push('<span>Za to serijo ni delovnega naloga.</span>');
     if(zapis)kosi.push(`<span style="color:#5a3a6b">🧴 zapis GLY</span>${zapis.doseceno?` · doseženo ${round(zapis.doseceno.pctTopilo,1)} % v topilu`:' · brez dejanskih količin'}`);
     // Preracuna se odpreta za trenutno izbrano serijo - povezava deluje v obe

@@ -29,6 +29,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .hbtns{display:flex;gap:.3rem;align-items:center}
 .hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:var(--cream);padding:.3rem .6rem;border-radius:6px;font-family:'Jost',sans-serif;font-size:.7rem;cursor:pointer;white-space:nowrap}
 .sync-status{font-size:.65rem;color:rgba(255,255,255,.5);min-width:60px;text-align:right}
+/* Klicaj, ki ima razlog, se da tapniti - sicer je le znak, da nekaj ni v redu,
+   brez moznosti izvedeti, kaj. */
+.sync-status.klik{cursor:pointer;font-size:1rem;color:#e8b64c;padding:0 .2rem}
 
 /* ── SCROLL BODY ── */
 .scroll-body{padding:.75rem .75rem calc(var(--sab)+85px);max-width:680px;margin:0 auto;padding-top:calc(46px + .75rem)}
@@ -4227,6 +4230,10 @@ async function shraniDNKorake(oznaka){
 function korakToSb(k){return{
   id:k.id,dokument:k.dokument,zaporedje:k.zaporedje,korak:k.korak,
   naziv:k.naziv||null,faza:k.faza||null,oprema_id:k.opremaId||null,
+  // Datum se hrani posebej: korak, ki ima datum brez ur - nalog za nazaj je
+  // tak skoraj vedno - ga sicer ob ponovnem branju izgubi, ker ga casa ne
+  // moreta nositi. Pri merilu je datum bistvo dnevnika uporabe.
+  datum:k.datum||null,
   zacetek:k.zacetek?new Date(k.zacetek).toISOString():null,
   konec:k.konec?new Date(k.konec).toISOString():null,
   izvajalec:k.izvajalec||null,parametri:k.parametri||{},
@@ -4238,7 +4245,8 @@ function sbToKorak(r){
   return{
     id:r.id,dokument:r.dokument,zaporedje:r.zaporedje||0,korak:r.korak,
     naziv:r.naziv||'',faza:r.faza||'',opremaId:r.oprema_id||'',
-    zacetek:lok(r.zacetek),konec:lok(r.konec),datum:lok(r.zacetek||r.konec).slice(0,10),
+    zacetek:lok(r.zacetek),konec:lok(r.konec),
+    datum:r.datum||lok(r.zacetek||r.konec).slice(0,10),
     izvajalec:r.izvajalec||'',parametri:r.parametri||{},
     status:r.status||'nacrtovan',opomba:r.opomba||'',
     spremenil:r.spremenil||'',spremenjen:r.spremenjen||'',
@@ -4827,8 +4835,7 @@ async function deleteDN(id){
     await sbDel('gm_dn_work_orders',id);
     toast('Nalog izbrisan');
   }catch(e){
-    console.error('deleteDN sb',e);
-    setSyncStatus('⚠');
+    sinkNapaka('brisanje naloga',e);
     toast('⚠ Napaka pri brisanju iz baze – poskusi znova');
   }
 }
@@ -5012,8 +5019,7 @@ async function deleteEtanol(id){
     await sbDel('gm_dn_etanol',id);
     toast('Vnos izbrisan');
   }catch(err){
-    console.error('deleteEt sb',err);
-    setSyncStatus('⚠');
+    sinkNapaka('brisanje vnosa etanola',err);
     toast('⚠ Napaka pri brisanju iz baze – poskusi znova');
   }
 }
@@ -6277,8 +6283,7 @@ async function deleteMaterjal(id){
     await sbDel('gm_dn_materiali',id);
     toast('Vnos izbrisan');
   }catch(err){
-    console.error('deleteMat sb',err);
-    setSyncStatus('⚠');
+    sinkNapaka('brisanje materiala',err);
     toast('⚠ Napaka pri brisanju iz baze – poskusi znova');
   }
 }
@@ -8168,7 +8173,33 @@ function sbToBil(r){return{
 };}
 
 // Sync helpers
-function setSyncStatus(msg){const el=document.getElementById('syncStatus');if(el)el.textContent=msg;}
+// Klicaj brez razloga je enak molku: vidis, da nekaj ni slo skozi, ne izves
+// pa, kaj. Zadnjo napako zato zadrzimo in jo pokazemo ob dotiku.
+let _zadnjaSinkNapaka=null;
+function setSyncStatus(msg){
+  if(msg==='✓')_zadnjaSinkNapaka=null;
+  const el=document.getElementById('syncStatus');
+  if(!el)return;
+  el.textContent=msg;
+  const napaka=msg==='⚠'&&_zadnjaSinkNapaka;
+  el.title=napaka?`${_zadnjaSinkNapaka.kaj}: ${_zadnjaSinkNapaka.sporocilo}`:'';
+  el.classList.toggle('klik',!!napaka);
+  el.onclick=napaka?pokaziSinkNapako:null;
+  el.setAttribute('role',napaka?'button':'');
+}
+function sinkNapaka(kaj,e){
+  _zadnjaSinkNapaka={kaj,sporocilo:String(e?.message||e||'neznana napaka').slice(0,300),
+                     cas:new Date().toISOString()};
+  console.error(kaj,e);
+  setSyncStatus('⚠');
+}
+function pokaziSinkNapako(){
+  const n=_zadnjaSinkNapaka;
+  if(!n){toast('Sinhronizacija je v redu');return;}
+  const ura=n.cas.slice(11,16);
+  alert(`Sinhronizacija ni uspela\n\nKje: ${n.kaj}\nOb: ${ura}\n\n${n.sporocilo}`
+    +`\n\nPodatki so shranjeni lokalno in se bodo poslali ob naslednjem uspesnem zapisu.`);
+}
 // Ce v bazi manjka kaksen novejsi stolpec, zapis vseeno sinhroniziramo brez
 // njega - sicer bi tiho odpovedala sinhronizacija celega zapisa. Ime stolpca
 // preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem novem polju.
@@ -8183,7 +8214,9 @@ async function sbPushZapis(tabela,zapis,oznaka){
       const brez={...zapis};manjka.forEach(k=>delete brez[k]);
       try{
         await sbUpsert(tabela,brez);
-        setSyncStatus('⚠');
+        // Zapis je sel skozi, a okrnjen. Klicaj mora povedati, cesa manjka.
+        sinkNapaka(`${tabela} — manjkajoc stolpec`,
+          new Error(`V Supabase ni stolpca ${manjka.join(', ')}. Zapis je shranjen brez njega.`));
         const kljuc='_opozoriloStolpci_'+tabela;
         if(!window[kljuc]){
           window[kljuc]=true;
@@ -8192,7 +8225,7 @@ async function sbPushZapis(tabela,zapis,oznaka){
         return true;
       }catch(e2){console.error(oznaka+' (brez '+manjka.join(',')+')',e2);}
     }
-    setSyncStatus('⚠');console.error(oznaka,e);
+    sinkNapaka(oznaka,e);
     return false;
   }
 }
@@ -8217,7 +8250,7 @@ let _opUpOpozorilo=false;
 async function sbPushOpUp(u){
   try{await sbUpsert('gm_dn_oprema_uporaba',opUpToSb(u));setSyncStatus('✓');}
   catch(e){
-    setSyncStatus('⚠');console.error('sbPushOpUp',e);
+    sinkNapaka('sbPushOpUp',e);
     if(!_opUpOpozorilo){
       _opUpOpozorilo=true;
       toast('⚠ Uporaba opreme ostaja lokalna — v Supabase manjka tabela gm_dn_oprema_uporaba');
@@ -8241,7 +8274,7 @@ function sbToGly(r){return{
 // odpoved sinhronizacije je hujsa od kratkega opozorila.
 async function sbPushGly(z){
   try{await sbUpsert('gm_dn_gly_zapisi',glyToSb(z));setSyncStatus('✓');}
-  catch(e){setSyncStatus('⚠');console.error('sbPushGly',e);toast('⚠ Zapis GLY ni sinhroniziran: '+String(e.message).slice(0,90));}
+  catch(e){sinkNapaka('sbPushGly',e);toast('⚠ Zapis GLY ni sinhroniziran: '+String(e.message).slice(0,90));}
 }
 
 async function sbPushRD(r){
@@ -8253,7 +8286,8 @@ async function sbPushRD(r){
       try{
         const {oznaka,...brezOznake}=rdToSb(r);
         await sbUpsert('gm_dn_rd',brezOznake);
-        setSyncStatus('⚠');
+        sinkNapaka('gm_dn_rd — manjkajoc stolpec',
+          new Error('V Supabase ni stolpca oznaka. R&D nalog je shranjen brez nje.'));
         if(!window._rdOznakaOpozorilo){
           window._rdOznakaOpozorilo=true;
           toast('⚠ V Supabase manjka stolpec gm_dn_rd.oznaka — oznake se ne sinhronizirajo');
@@ -8261,7 +8295,7 @@ async function sbPushRD(r){
         return;
       }catch(e2){console.error('sbPushRD (brez oznake)',e2);}
     }
-    setSyncStatus('⚠');console.error('sbPushRD',e);
+    sinkNapaka('sbPushRD',e);
   }
 }
 // Tabela gm_dn_mat_tipi je nova. Ce je se ni, lastni tipi ostanejo lokalni -
@@ -8273,8 +8307,7 @@ async function sbPushMatTipi(){
     await sbUpsert('gm_dn_mat_tipi',matTipi.map(t=>({id:t.tip,ime:t.ime,enota:t.enota,kat:t.kat,kapaciteta:t.kapaciteta||null})));
     setSyncStatus('✓');
   }catch(e){
-    setSyncStatus('⚠');
-    console.error('sbPushMatTipi',e);
+    sinkNapaka('sbPushMatTipi',e);
     if(!_matTipiOpozorilo){
       _matTipiOpozorilo=true;
       toast('⚠ Lastni materiali ostajajo lokalni — v Supabase manjka tabela gm_dn_mat_tipi');
@@ -8282,7 +8315,7 @@ async function sbPushMatTipi(){
   }
 }
 
-async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){setSyncStatus('⚠');console.error('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
+async function sbPushBilanca(d){try{await sbUpsert('gm_dn_bilanca',bilToSb(d));setSyncStatus('✓');}catch(e){sinkNapaka('sbPushBilanca',e);toast('⚠ '+e.message.slice(0,120));}}
 
 // Stran za obnovo bere localStorage neposredno, zato deluje tudi takrat, ko
 // aplikacija na zaslonu ze kaze streznisko kopijo. Odpremo jo v novem zavihku,
@@ -8332,9 +8365,8 @@ async function migrirajVSupabase(){
     setSyncStatus('✓');
     toast(`✓ Sinhronizirano: ${lWo.length} DN, ${lEt.length} et, ${lMat.length} mat, ${lOp.length} op, ${lRd.length} R&D, ${lBil.length} bilanca`);
   }catch(e){
-    setSyncStatus('⚠');
+    sinkNapaka('migracija v Supabase',e);
     toast('❌ Napaka: '+e.message);
-    console.error('migrirajVSupabase',e);
   }
 }
 

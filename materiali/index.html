@@ -173,6 +173,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-izpis-p{display:inline-flex;align-items:baseline;gap:.25rem;font-size:.58rem;color:var(--muted)}
 .korak-izpis-p b{font-size:.72rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .korak-izpis-p .izvor{color:var(--accent);font-weight:600}
+/* Cilj: kaj je treba doseci. Loceno od dosezenega, da se ne bere kot meritev. */
+.korak-cilj{border-left:2px solid var(--accent);padding-left:.45rem;margin:.3rem 0 .35rem}
+.korak-cilj .korak-izpis-p b{color:var(--accent)}
 .korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
   border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
   font-family:'Jost',sans-serif;min-height:26px}
@@ -2461,10 +2464,10 @@ function prevzemiPreracunVKorak(){
   if(!k)return;
   const stevilo=id=>{const v=parseNum(document.getElementById(id)?.value||'0');
     return v>0?String(round(v,1)).replace('.',','):null;};
-  const v=stevilo('meVme'),m=stevilo('meMme');
-  if(!v&&!m)return;
+  const m=stevilo('meMme');
+  if(!m)return;
   k.parametri=k.parametri||{};
-  if(v)k.parametri.v_me=v;
+  // Volumna ne prevzemamo: izpelje se iz dejanskega zatehtka, ne iz nacrta.
   // Preracun da POTREBNO maso, ne stehtane. Prej se je vpisala kot m_me in je
   // v zapisniku izgledala kot meritev, ceprav je nihce ni stehtal.
   if(m)k.parametri.m_me_potreben=m;
@@ -2675,24 +2678,42 @@ const DN_PREDLOGA_KORAKOV=[
    naprave:['tehtnica'],
    opis:'Preračun pove, koliko matičnega ekstrakta je treba dati na stran. Zatehtaj in vpiši dejansko maso — od izračunane sme odstopati največ 1 %.',
    polja:[
-     // Prvo je dejanski zatehtek, ker je to tisto, kar clovek naredi in vpise.
-     // Izracunana masa stoji ob njem kot majhna stevilka: je cilj, ne meritev,
-     // in v zapisniku ne sme biti videti kot da je bila stehtana.
-     {k:'m_me',tip:'meritev',napis:'m ME zatehtano',enota:'g'},
-     {k:'m_me_potreben',tip:'izracun',napis:'potrebno',enota:'g',
-      opis:'Iz preračuna matičnega ekstrakta.',
+     // Cilj stoji takoj za gumbom preracuna, ker je to prvo, kar clovek
+     // potrebuje: koliko natehtati, kaksen volumen je to in koliko AAE nosi.
+     // Volumen in AAE se izpeljeta iz mase, da ju ni treba prevzemati posebej.
+     {k:'m_me_potreben',tip:'izracun',cilj:true,napis:'natehtaj',enota:'g',
       izracun:pa=>{const v=parseNum(pa.m_me_potreben);return v>0?round(v,1):null;}},
+     {k:'v_me_potreben',tip:'izracun',cilj:true,napis:'V',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me_potreben),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c),1):null;}},
+     {k:'v_aae_potreben',tip:'izracun',cilj:true,napis:'AAE',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me_potreben),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c)*c/100,1):null;}},
+     // Sele nato polje za dejanski zatehtek - to je tisto, kar clovek naredi.
+     {k:'m_me',tip:'meritev',napis:'m ME zatehtano',enota:'g'},
      {k:'odstopanje_me',tip:'izracun',napis:'odstopanje',enota:'%',
       izracun:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
         return (c>0&&d>0)?round((d-c)/c*100,2):null;}},
-     {k:'zatehtek_ok',tip:'ccp',napis:'Zatehtek matičnega ekstrakta',meja:'± 1 % od izračunanega',
+     // Presoja stoji POD poljem, v katerem se vpise zatehtek - najprej stehtas,
+     // sele nato presodis. Drugod je presoja nad meritvami, ker jih pogojuje.
+     {k:'zatehtek_ok',tip:'ccp',podMeritvami:true,
+      napis:'Zatehtek matičnega ekstrakta',meja:'± 1 % od izračunanega',
       opis:'Odstopanje nad 1 % pomeni drugačno razmerje v končni tinkturi, kot ga je dal preračun.',
       namig:pa=>{const c=parseNum(pa.m_me_potreben),d=parseNum(pa.m_me);
         if(!(c>0)||!(d>0))return {besedilo:'vpiši zatehtek'};
         const o=round((d-c)/c*100,2);
         return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=1};}},
-     {k:'v_me',tip:'meritev',napis:'V ME',enota:'mL'},
-     {k:'v_aae_of',tip:'meritev',napis:'V AAE v OF',enota:'mL'},
+     // Volumna se izracunata iz stehtane mase in izmerjene koncentracije
+     // topila; vpisovati ju bi pomenilo isto stvar povedati dvakrat in tvegati,
+     // da se razideta. Gostota je gostota etanolne raztopine te koncentracije.
+     {k:'c_etoh_me',tip:'iz_naloga',napis:'C EtOH',enota:'% v/v',tiho:true,
+      vir:()=>parseNum(document.getElementById('dnPctEtOH')?.value)||null},
+     {k:'v_me',tip:'izracun',napis:'V ME',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c),1):null;}},
+     {k:'v_aae_of',tip:'izracun',napis:'V AAE v OF',enota:'mL',
+      izracun:pa=>{const m=parseNum(pa.m_me),c=parseNum(pa.c_etoh_me);
+        return (m>0&&c>0)?round(m/etohDensity(c)*c/100,1):null;}},
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
    naprave:['rotavapor','vakuum','chiller'],
@@ -3334,7 +3355,12 @@ function korakRubrike(k){
 
     // "tiho" pomeni: vrednost gre v zapisnik, na zaslon pa ne - rubrika tik nad
     // korakom jo ze pokaze in dvojni izpis bi bral kot dva podatka.
-    const izracuni=vp.filter(x=>x.tip==='izracun'&&!x.tiho).map(x=>
+    const izracuni=vp.filter(x=>x.tip==='izracun'&&!x.tiho&&!x.cilj).map(x=>
+      izpis(x,x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null,false)).join('');
+
+    // Cilj je tisto, kar je treba doseci - stoji nad vnosom, ne pod njim.
+    // Doseceno pa pod njim, skupaj z odstopanjem.
+    const cilji=vp.filter(x=>x.cilj&&!x.tiho).map(x=>
       izpis(x,x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null,false)).join('');
 
     // Iz naloga: samo za branje. Ce je vpisano v nalogu, se tu ne vprasa znova.
@@ -3349,8 +3375,11 @@ function korakRubrike(k){
                oninput="onDNKorakParam(${idx},'${x.k}',this.value)">
       </div>`).join('');
 
-    // Presoja stoji nad meritvami, ker zadrzuje zakljucek koraka.
-    const ccp=vp.filter(x=>x.tip==='ccp').map(x=>{
+    // Presoja praviloma stoji nad meritvami, ker jih pogojuje - filtrat mora
+    // biti bister, preden se sploh splaca tehtati. Kjer pa je presoja sodba O
+    // meritvi (zatehtek matičnega ekstrakta), stoji pod njo: najprej stehtas,
+    // sele nato presodis.
+    const ccpVse=x=>{
       const izid=k.parametri?.[x.k+'__presoja']||'';
       // Nekatere kriticne tocke se presodijo po meritvi (vlaznost 9,21 % ob
       // meji < 12 %), druge so cista presoja (filtrat bister). Prve
@@ -3374,7 +3403,9 @@ function korakRubrike(k){
           </span>
         </div>
         ${x.opis?`<div class="korak-opis">${x.opis}</div>`:''}
-      </div>`;}).join('');
+      </div>`;};
+    const ccp=vp.filter(x=>x.tip==='ccp'&&!x.podMeritvami).map(ccpVse).join('');
+    const ccpPod=vp.filter(x=>x.tip==='ccp'&&x.podMeritvami).map(ccpVse).join('');
 
     const izbire=vp.filter(x=>x.tip==='izbira').map(x=>`
       <div class="korak-izbira">
@@ -3399,10 +3430,12 @@ function korakRubrike(k){
       ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunGly('${k.id}')">🧮 Odpri glicerinski preračun</button>`:''}
       ${t.opis?`<div class="korak-opis">${t.opis}</div>`:''}
+      ${cilji?`<div class="korak-izpis korak-cilj">${cilji}</div>`:''}
       ${ccp}${izbire}
       ${t.vsebina?`<div class="korak-premik" data-vsebina="${t.vsebina.join('|')}"></div>`:''}
-      ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       ${meritve?`<div class="korak-grid">${meritve}</div>`:''}
+      ${ccpPod}
+      ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       <div class="korak-grid" style="grid-template-columns:${napravaPolje?'1fr 1fr':'1fr'}">
         ${napravaPolje}
         <div class="korak-f">

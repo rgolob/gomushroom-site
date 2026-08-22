@@ -176,6 +176,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* Cilj: kaj je treba doseci. Loceno od dosezenega, da se ne bere kot meritev. */
 .korak-cilj{border-left:2px solid var(--accent);padding-left:.45rem;margin:.3rem 0 .35rem}
 .korak-cilj .korak-izpis-p b{color:var(--accent)}
+/* Cas, ki ga pove bilanca - ne vpisujemo ga, zato ni polj. */
+.korak-cas-bil{font-size:.66rem;color:var(--muted);background:var(--parchment);
+  border:1px solid var(--border);border-radius:var(--rs);padding:.3rem .45rem;margin-bottom:.3rem}
+.korak-cas-bil strong{color:var(--ink)}
 .korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
   border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
   font-family:'Jost',sans-serif;min-height:26px}
@@ -2716,11 +2720,30 @@ const DN_PREDLOGA_KORAKOV=[
         return (m>0&&c>0)?round(m/etohDensity(c)*c/100,1):null;}},
    ]},
   {st:'1.4', korak:'koncentriranje_of', naziv:'Koncentriranje organske faze — OF', faza:'OF',
-   naprave:['rotavapor','vakuum','chiller'],
+   naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'OF',
+   opis:'Rezultat tega koraka je bilanca organske faze — masa in koncentracija etanola. Tehtanje na koncu jo potrdi.',
    polja:[
+     // Iz bilance, ne iz vnosa: masa in AAE sta vsota dogodkov faze OF, enako
+     // kot v preglednici bilance. Vpisovati ju znova bi pomenilo dve resnici.
+     {k:'m_of_bil',tip:'iz_naloga',cilj:true,napis:'iz bilance',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'OF')?.m??null},
+     {k:'c_of_bil',tip:'iz_naloga',cilj:true,napis:'C EtOH',enota:'% m/m',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'OF')?.mm??null},
+     {k:'aae_of_bil',tip:'iz_naloga',cilj:true,napis:'AAE',enota:'g',
+      vir:()=>bilFazaVsota(bilKljucIzObrazca(),'OF')?.aae??null},
      {k:'p_mbar',tip:'meritev',napis:'P',enota:'mbar'},
      {k:'m_ss',tip:'meritev',napis:'m suhe snovi',enota:'g'},
-     {k:'m_of',tip:'meritev',napis:'m OF',enota:'g'},
+     {k:'m_of',tip:'meritev',napis:'m OF stehtano',enota:'g'},
+     // Tehtanje potrjuje bilanco. Meje ne postavljamo, dokler je ne poznas -
+     // odstopanje pokazemo, presodis pa ti.
+     {k:'of_ok',tip:'ccp',podMeritvami:true,
+      napis:'Masa OF se ujema z bilanco',
+      opis:'Tehtanje potrdi, kar je izračunala bilanca. Večje odstopanje pomeni, da kakšen dogodek ni zabeležen ali je narobe uvrščen.',
+      namig:pa=>{const c=parseNum(pa.m_of_bil),d=parseNum(pa.m_of);
+        if(!(c>0))return {besedilo:'bilanca še brez OF'};
+        if(!(d>0))return {besedilo:'stehtaj'};
+        const o=round((d-c)/c*100,2);
+        return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=2};}},
    ]},
   {st:'2',   korak:'hve', naziv:'Vroča vodna ekstrakcija — HVE', faza:'VF',
    naprave:['grelnik','stiskalnica','tehtnica'],
@@ -3009,6 +3032,8 @@ function korakCCPNeustreza(k){
 
 // Trajanje v urah; brez obeh casov ni znano.
 function korakUre(k){
+  const bil=korakCasIzBilance(k);
+  if(bil)return bil.ure;
   if(!k.zacetek||!k.konec)return null;
   const a=new Date(k.zacetek).getTime(),b=new Date(k.konec).getTime();
   if(!isFinite(a)||!isFinite(b)||b<=a)return null;
@@ -3167,6 +3192,10 @@ function paramiKoraka(kljuc){
 // nosi tudi takrat, ko formule ni vec pri roki.
 function zapisiIzracune(k){
   const t=predlogaZaKorak(k.korak);
+  // Cas iz bilance zapisemo med case koraka: izpis zapisnika tece brez
+  // obrazca, tam pa bilance ne moremo vprasati po seriji.
+  const bil=korakCasIzBilance(k);
+  if(bil)k={...k,datum:bil.od.slice(0,10),zacetek:bil.od,konec:bil.konec};
   const polja=poljaKoraka(t);
   const izr=polja.filter(x=>x.tip==='izracun');
   const viri=polja.filter(x=>x.tip==='iz_naloga');
@@ -3360,11 +3389,16 @@ function korakRubrike(k){
 
     // Cilj je tisto, kar je treba doseci - stoji nad vnosom, ne pod njim.
     // Doseceno pa pod njim, skupaj z odstopanjem.
+    // Cilj je lahko izracun ali vrednost, ki jo pove drug zapis (bilanca);
+    // vrednost zato beremo po tipu polja, ne le prek izracuna.
+    const ciljVrednost=x=>x.tip==='iz_naloga'
+      ? vrednostIzNaloga(x)
+      : (x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null);
     const cilji=vp.filter(x=>x.cilj&&!x.tiho).map(x=>
-      izpis(x,x.izracun?x.izracun(paramiZViri(k,t),paramiKoraka):null,false)).join('');
+      izpis(x,ciljVrednost(x),x.tip==='iz_naloga')).join('');
 
     // Iz naloga: samo za branje. Ce je vpisano v nalogu, se tu ne vprasa znova.
-    const izNaloga=vp.filter(x=>x.tip==='iz_naloga'&&!x.tiho).map(x=>
+    const izNaloga=vp.filter(x=>x.tip==='iz_naloga'&&!x.tiho&&!x.cilj).map(x=>
       izpis(x,vrednostIzNaloga(x),true)).join('');
 
     const meritve=vp.filter(x=>x.tip==='meritev').map(x=>`
@@ -3429,6 +3463,8 @@ function korakRubrike(k){
         onclick="odpriPreracunME('${k.id}')">🧮 Odpri preračun matičnega ekstrakta</button>`:''}
       ${t.akcija==='gly'?`<button type="button" class="korak-akcija"
         onclick="odpriPreracunGly('${k.id}')">🧮 Odpri glicerinski preračun</button>`:''}
+      ${t.akcija==='bilanca'?`<button type="button" class="korak-akcija"
+        onclick="shraniInOdpriBilanco()">⚖️ Shrani nalog in odpri bilanco</button>`:''}
       ${t.opis?`<div class="korak-opis">${t.opis}</div>`:''}
       ${cilji?`<div class="korak-izpis korak-cilj">${cilji}</div>`:''}
       ${ccp}${izbire}
@@ -3472,6 +3508,23 @@ function korakKartica(k){
                 onclick="nastaviKorakCas(${idx},'${kaj}')">⏱</button>
       </div>
     </div>`;
+  // Kjer cas pove bilanca, ga ne vpisujemo: faza tece od prvega vhoda do
+  // izhoda oz. korekcije in to je zapisano ze tam.
+  const bilCas=korakCasIzBilance(k);
+  const casBlok=bilCas
+    ? `<div class="korak-cas-bil">⚖️ Iz bilance:
+        <strong>${bilCas.od.slice(8,10)}.${bilCas.od.slice(5,7)}. ${bilCas.od.slice(11,16)}</strong>
+        – <strong>${bilCas.konec.slice(8,10)}.${bilCas.konec.slice(5,7)}. ${bilCas.konec.slice(11,16)}</strong>
+        · ${fmtUre(bilCas.ure)}</div>`
+    : `<div class="korak-cas">
+        <div class="korak-f">
+          <label>Datum</label>
+          <input type="date" value="${korakDatum(k)}" onchange="onDNKorakCas(${idx},'datum',this.value)">
+        </div>
+        ${ura('od','Od')}${ura('do','Do')}
+      </div>
+      ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}`;
+
   const odprt=korakJeOdprt(k);
   const povz=korakPovzetek(k);
   return `<div class="korak${preskocen?' presk':''}">
@@ -3486,14 +3539,7 @@ function korakKartica(k){
       </select>
     </div>
     ${!odprt?(povz?`<div class="korak-zlozen">${povz}</div>`:''):preskocen?'':`
-    <div class="korak-cas">
-      <div class="korak-f">
-        <label>Datum</label>
-        <input type="date" value="${korakDatum(k)}" onchange="onDNKorakCas(${idx},'datum',this.value)">
-      </div>
-      ${ura('od','Od')}${ura('do','Do')}
-    </div>
-    ${ure!=null?`<div class="korak-ure">${fmtUre(ure)}</div>`:''}
+    ${casBlok}
     ${imaPodkorake(k)
       // Vsebina skupine so podkoraki; opomba nadrejenega pripada celoti, zato
       // stoji za njimi, ne pred.
@@ -7926,6 +7972,75 @@ function bilNetoOdseki(kljuc){
     odprt:zacetek!==null,
   };
 }
+// Iz koraka v bilanco: nalog najprej shranimo, sicer bi odhod z lista pobrisal
+// vpisano. Ce shranjevanje ne uspe (manjka oznaka, premalo etanola), list
+// ostane odprt in nikamor ne gremo.
+function shraniInOdpriBilanco(){
+  const kljuc=bilKljucIzObrazca();
+  if(!kljuc.split('|||')[1]){toast('⚠ Vpiši oznako serije, da najdem bilanco');return;}
+  saveDN();
+  if(document.getElementById('dnOverlay')?.classList.contains('open'))return;
+  bilSelectedKey=kljuc;
+  switchTab('bilanca');
+  const sel=document.getElementById('bilBatchSel');
+  if(sel)sel.value=kljuc;
+  renderBilanca();
+  if(!bilancaDogodki.some(x=>bilKey(x.tinktura,x.batch)===kljuc))
+    toast('Za to serijo v bilanci še ni dogodkov — dodaj prvega');
+}
+
+// ── BILANCA KOT REZULTAT KORAKA ────────────────────────────────────────────
+// Koncentriranje organske faze JE bilanca: rezultat je kolicina organske faze
+// s svojo koncentracijo etanola, tehtanje na koncu pa to potrdi. Zato korak
+// teh stevilk ne sprasuje, ampak jih prebere.
+function bilKljucIzObrazca(){
+  const t=(document.getElementById('dnVrstaGobe')?.value||'').trim();
+  const b=(document.getElementById('dnSerijaAlc')?.value||'').trim();
+  return t+'|||'+b;
+}
+function bilFazaDogodki(kljuc,faza){
+  return bilancaDogodki
+    .filter(d=>bilKey(d.tinktura,d.batch)===kljuc&&bilIncluded(d)&&(d.faza||'')===faza)
+    .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
+}
+// Masa, AAE in koncentracija faze - isti sestevek kot v preglednici bilance.
+function bilFazaVsota(kljuc,faza){
+  const ev=bilFazaDogodki(kljuc,faza);
+  if(!ev.length)return null;
+  const m=ev.reduce((s,d)=>s+(d.m||0),0);
+  const aae=ev.reduce((s,d)=>s+(d.mAae||0),0);
+  return {m:round(m,1),aae:round(aae,1),mm:m?round(aae/m*100,1):0};
+}
+// Trajanje faze: od prvega vhoda do zadnjega izhoda, regenerata ali korekcije.
+// To ni isto kot neto cas naprave - ta se sesteva po odsekih in ga bilanca ze
+// zapise v dnevnik dela; tu gre za to, koliko casa je faza tekla.
+function bilFazaCas(kljuc,faza){
+  const ev=bilFazaDogodki(kljuc,faza).filter(d=>bilTsMs(d.ts));
+  if(!ev.length)return null;
+  const prvi=ev.find(d=>d.status==='V');
+  const zadnji=[...ev].reverse().find(d=>d.status==='I'||d.status==='R'||d.status==='Corr');
+  if(!prvi||!zadnji)return null;
+  const od=bilTsMs(prvi.ts),doo=bilTsMs(zadnji.ts);
+  if(!(doo>od))return null;
+  const lok=ms=>{const d=new Date(ms);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    return d.toISOString().slice(0,16);};
+  return {od:lok(od),konec:lok(doo),ure:(doo-od)/3600000};
+}
+// Kljuc serije za korak: pri odprtem nalogu iz obrazca, sicer iz shranjenega
+// naloga - izpis zapisnika tece brez obrazca.
+function korakKljucSerije(k){
+  if(document.getElementById('dnOverlay')?.classList.contains('open'))
+    return bilKljucIzObrazca();
+  const d=workOrders.find(x=>x.oznaka===k.dokument);
+  return d?meDnKljuc(d):'';
+}
+function korakCasIzBilance(k){
+  const faza=predlogaZaKorak(k.korak).casIzBilance;
+  if(!faza)return null;
+  const kljuc=korakKljucSerije(k);
+  return kljuc?bilFazaCas(kljuc,faza):null;
+}
+
 // ── OPREMA V BILANCI ───────────────────────────────────────────────────────
 // Izbereš rotavapor, ki je serijo koncentriral; njegovi spremljevalci se
 // pripnejo sami. Neto cas se izracuna iz dogodkov in zapise na vsako napravo,

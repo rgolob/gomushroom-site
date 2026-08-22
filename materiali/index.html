@@ -171,6 +171,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-ccp-gumbi button.izbran{border-color:#3a6b4a;background:rgba(58,107,74,.15);color:#2a5a3a;font-weight:600}
 .korak-ccp-gumbi button.izbran.ne{border-color:#8b3a2a;background:rgba(139,58,42,.15);color:#8b3a2a}
 .korak-opis{font-size:.58rem;color:var(--muted);line-height:1.35;margin-top:.2rem}
+/* Zakaj korak ne bo dal ur. Tiho preskakovanje je bilo tisto, zaradi cesar se
+   dnevnik ni pojavil in se ni vedelo, zakaj. */
+.korak-namig{font-size:.56rem;color:#8b5a2a;line-height:1.35;margin-top:.15rem}
 .korak-izbira{margin-bottom:.28rem}
 .korak-izbira-napis{font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
   color:var(--muted);margin-bottom:.15rem}
@@ -3153,6 +3156,22 @@ function renderDNKorakiRows(){
   dnPremakniBloke();
 }
 
+// Dnevnik dela naprave nastane iz koraka samo, ce sta izpolnjena oba pogoja:
+// naprava je take vrste, da se ji vodijo ure, in korak ima cas od-do. Doslej je
+// bil preskok tih - vpisal si napravo, ure pa se niso nikjer pojavile in nisi
+// izvedel, zakaj. Zato tu povemo, cesa manjka.
+function uraNamig(k){
+  if(!k.opremaId)return '';
+  const o=oprema.find(x=>x.id===k.opremaId);
+  if(!o)return '';
+  if(!o.vrsta)
+    return `<div class="korak-namig">Napravi ni določena vrsta — ure se ji ne vodijo.</div>`;
+  if(vrstaVodi(o.vrsta)!=='ure')return '';
+  if(korakUre(k)==null)
+    return `<div class="korak-namig">Za dnevnik dela manjka čas od–do.</div>`;
+  return '';
+}
+
 // Rubrike enega koraka. Podkorak jih izrise enako kot samostojen korak -
 // razlikuje se le v tem, da nima svojega casa in statusa.
 function korakRubrike(k){
@@ -3232,6 +3251,7 @@ function korakRubrike(k){
         <div class="korak-f">
           <label>Naprava</label>
           <select onchange="onDNKorakChange(${idx},'opremaId',this.value)">${opts}</select>
+          ${uraNamig(k)}
         </div>`;
     return `
       ${t.akcija==='me'?`<button type="button" class="korak-akcija"
@@ -4421,6 +4441,13 @@ function saveDN(){
   renderDNStats();renderDN();
   renderEtStats();renderMateriali();
   toast('✓ DN shranjen · etanol rezerviran');
+  // Nalog za nazaj se pogosto izpolni brez ur: naprava je vpisana, cas pa ne,
+  // in dnevnik dela ostane prazen. Povemo, pri katerem koraku in zakaj, da se
+  // ne isce, cesar ni.
+  const brezUr=dnKorakiRows.filter(k=>k.opremaId&&korakUre(k)==null
+    &&napravaVodi(k.opremaId)==='ure');
+  if(brezUr.length)setTimeout(()=>toast(
+    `⏱ Brez časa od–do: ${brezUr.map(k=>k.naziv).join(', ')} — ure naprave niso zabeležene`),2400);
 }
 
 // ── DN DETAIL ──

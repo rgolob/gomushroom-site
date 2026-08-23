@@ -8047,50 +8047,48 @@ function renderBilancaSelect(){
 }
 
 // ── NETO ČAS DELOVANJA ─────────────────────────────────────────────────────
-// Rotavapor tece, dokler je serija v njem in destilat kaplja. I in R sta oba
-// izhod destilata in ju loci le koncentracija: nizka gre v izgubo (I), visoka
-// je regenerat (R) in se vrne v naslednjo ekstrakcijo. Po crki se torej ne da
-// reci, ali se je zagon koncal - to pove sele cas.
+// Pravilo je preprosto: vhod (V) vedno zacne, odvzem (R ali I) vedno zakljuci.
+// I in R sta oba izhod destilata in ju loci le koncentracija - nizka gre v
+// izgubo (I), visoka je regenerat (R) in se vrne v naslednjo ekstrakcijo - za
+// cas pa sta enakovredna.
 //
-// Odsek zato tece od prvega vhoda do zadnjega odvzema destilata pred premorom:
-//   - odvzem (I ali R) je vsakic mozen konec zagona,
-//   - ce v PREMOR_MIN po njem pride nov vhod, je bilo to dolivanje med vretjem
-//     in zagon tece naprej,
-//   - ce mine vec, je naprava stala: odsek se zapre pri tistem odvzemu, novi
-//     vhod pa zacne novega.
+// Zacetke in zakljucke parimo po vrsti: vsak vhod ceka na svoj odvzem, prvi
+// vhod na prvi odvzem. Dva vhoda zaporedoma sta zato dva zagona, ne eden -
+// prav ta zagon je prej izpadel, ker sem zaporedne vhode zdruzeval:
 //
-// Corr je knjigovodski popravek in ne pomeni, da je naprava tekla; niti je ne
-// ustavi. Vec zaporednih vhodov ne zacne novega odseka.
+//   V 19:35 ─────────────── R 21:53
+//                V 21:58 ─────────────── R 01:13
+//                V 21:59 ──────────────────────── I 02:48
 //
-// Vhod brez odvzema za njim se ne steje: zagon je se v teku in koncnega casa
-// ni. Vrnemo ga posebej, da lahko vmesnik to pove namesto da bi molcal.
-const PREMOR_MIN=60;   // premor, po katerem je naprava stala (minute)
+// Cas nato merimo kot uniti odsekov, ne kot njihovo vsoto: naprava ne more
+// teci dvakrat hkrati, prekrivajoci se zagoni pa so ista bucka. Zgoraj to
+// pomeni 19:35-21:53 in 21:58-02:48, torej 7 h 08 min v dveh odsekih.
+//
+// Corr je knjigovodski popravek in casa niti ne zacne niti ne zakljuci.
+//
+// Vhod, ki svojega odvzema se nima, se ne steje: zagon je v teku in koncnega
+// casa ni. Vrnemo ga posebej, da lahko vmesnik to pove namesto da bi molcal.
 function bilNetoOdseki(kljuc){
   const dogodki=bilancaDogodki
     .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts)
       &&(d.status==='V'||d.status==='I'||d.status==='R'))
     .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
-  const odseki=[];
-  let zacetek=null;      // zacetek odprtega odseka
-  let zadnjiOdvzem=null; // zadnji odvzem destilata v njem - mozen konec
-  const zapri=()=>{
-    if(zacetek!==null&&zadnjiOdvzem!==null)odseki.push({od:zacetek,do:zadnjiOdvzem});
-    zacetek=null;zadnjiOdvzem=null;
-  };
+  const cakajoci=[];   // vhodi, ki svojega odvzema se nimajo
+  const pari=[];
   for(const d of dogodki){
     const t=bilTsMs(d.ts);
-    if(d.status==='V'){
-      // Dolivanje po odvzemu: zagon tece naprej, ce je premor kratek.
-      if(zadnjiOdvzem!==null&&t-zadnjiOdvzem>PREMOR_MIN*60000)zapri();
-      if(zacetek===null)zacetek=t;
-      else zadnjiOdvzem=null;
-      continue;
-    }
-    if(zacetek===null)continue;   // odvzem brez vhoda: nimamo zacetka
-    zadnjiOdvzem=t;
+    if(d.status==='V'){cakajoci.push(t);continue;}
+    if(!cakajoci.length)continue;   // odvzem brez vhoda: nimamo zacetka
+    pari.push({od:cakajoci.shift(),do:t});
   }
-  const odprt=zacetek!==null&&zadnjiOdvzem===null;
-  zapri();
+  // Unija: prekrivajoci se zagoni so ena in ista naprava v pogonu.
+  const odseki=[];
+  for(const o of pari.sort((a,b)=>a.od-b.od)){
+    const zadnji=odseki[odseki.length-1];
+    if(zadnji&&o.od<=zadnji.do){if(o.do>zadnji.do)zadnji.do=o.do;}
+    else odseki.push({od:o.od,do:o.do});
+  }
+  const odprt=cakajoci.length>0;
   const minute=odseki.reduce((s,o)=>s+Math.max(0,o.do-o.od),0)/60000;
   return {
     odseki,

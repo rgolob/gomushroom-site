@@ -7204,6 +7204,12 @@ function sklonUporab(n){
   const beseda=(d===1)?'uporaba':(d===2)?'uporabi':(d===3||d===4)?'uporabe':'uporab';
   return `${n} ${beseda}`;
 }
+// 1 odsek, 2 odseka, 3-4 odseki, 5+ odsekov.
+function sklonOdsekov(n){
+  const d=n%100;
+  const beseda=(d===1)?'odsek':(d===2)?'odseka':(d===3||d===4)?'odseki':'odsekov';
+  return `${n} ${beseda}`;
+}
 
 // ── PREVERJANJE / UMERJANJE MERILA ─────────────────────────────────────────
 // Ko rok potece, se z merilom ne sme meriti. Namesto tihe rdece opombe v
@@ -8042,12 +8048,17 @@ function renderBilancaSelect(){
 
 // ── NETO ČAS DELOVANJA ─────────────────────────────────────────────────────
 // Bilanca je proces koncentriranja in rotavapor tece ves cas, ko je serija v
-// njem. Neto cas je vsota odsekov od vhoda (V) do izhoda (I) ali regenerata
-// (R); Corr je knjigovodski popravek in ne pomeni, da je naprava tekla.
+// njem. Odsek se zato zacne z vhodom (V) in konca sele z izhodom (I) - takrat
+// serija zapusti napravo.
 //
-// Odseke sestavljamo s hojo po dogodkih v casovnem zaporedju: prvi V odpre
-// odsek, prvi I ali R ga zapre. Vec zaporednih V ne zacne novega odseka -
-// dolivanje med vretjem ni nov zagon in bi drugace cas steli dvakrat.
+// Odvzem regenerata (R) naprave NE ustavi: iz predloge odlijes destilat, serija
+// pa ostane v bucki in vretje tece naprej. Prej je R odsek zaprl in ure med
+// odvzemom in izhodom so izpadle - pri seriji z odvzemom ob 01:13 in izhodom ob
+// 02:48 je manjkala ura in pol.
+//
+// Vec zaporednih V ne zacne novega odseka - dolivanje med vretjem ni nov zagon
+// in bi drugace cas steli dvakrat. Corr je knjigovodski popravek in ne pomeni,
+// da je naprava tekla.
 //
 // Odsek, ki ostane odprt (vhod brez izhoda), se ne steje: serija je se v teku
 // in koncni cas se ne obstaja. Vrnemo ga posebej, da lahko vmesnik to pove
@@ -8059,7 +8070,7 @@ function bilNetoOdseki(kljuc){
   const odseki=[];let zacetek=null;
   for(const d of dogodki){
     if(d.status==='V'){ if(zacetek===null)zacetek=bilTsMs(d.ts); continue; }
-    if(d.status==='R'||d.status==='I'){
+    if(d.status==='I'){
       if(zacetek===null)continue;      // izhod brez vhoda: nimamo zacetka
       odseki.push({od:zacetek,do:bilTsMs(d.ts)});
       zacetek=null;
@@ -8188,8 +8199,12 @@ function renderBilOprema(){
   const izbrani=new Set(vpisane.map(u=>u.opremaId));
   const naVoljo=oprema.filter(o=>o.kat!=='inventar'&&(o.status!=='neaktivna'||izbrani.has(o.id)));
 
+  // Odprt odsek je zdaj pogostejsi, ker odvzem regenerata odseka ne zapre.
+  // Sesteti cas takrat ne pove vsega in mora to sam povedati.
   const casOpis=cas.minute
-    ?`<strong>${fmtTrajanje(cas.minute)}</strong> neto${cas.odseki.length>1?` · ${cas.odseki.length} odseki`:''}`
+    ?`<strong>${fmtTrajanje(cas.minute)}</strong> neto`
+      +(cas.odseki.length>1?` · ${sklonOdsekov(cas.odseki.length)}`:'')
+      +(cas.odprt?' · <span class="dim">zadnji vhod še brez izhoda — ta čas ni vštet</span>':'')
     :cas.odprt?'<span class="dim">serija je še v teku — vhod brez izhoda</span>'
     :'<span class="dim">brez neto časa — vpiši vhod in izhod s časom</span>';
 

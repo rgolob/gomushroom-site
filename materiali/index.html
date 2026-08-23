@@ -469,10 +469,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
     <div id="bilNalogInfo"></div>
-    <div id="bilOpremaBlok"></div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
     <div id="bilStatusSums"></div>
+    <!-- Oprema se vpise enkrat na serijo, dogodki pa ves cas. Zato je spodaj:
+         kar se bere in dopolnjuje sproti, ne sme biti pod tistim, kar stoji. -->
+    <div id="bilOpremaBlok"></div>
   </div>
 
   <!-- PRERACUNI VIEW -->
@@ -8406,13 +8408,17 @@ function renderBilanca(){
     if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} kg gobe`:''}`);
     else kosi.push('<span>Za to serijo ni delovnega naloga.</span>');
     if(zapis)kosi.push(`<span style="color:#5a3a6b">🧴 zapis GLY</span>${zapis.doseceno?` · doseženo ${round(zapis.doseceno.pctTopilo,1)} % v topilu`:' · brez dejanskih količin'}`);
-    // Preracuna se odpreta za trenutno izbrano serijo - povezava deluje v obe
-    // smeri, ne le iz preracuna v bilanco.
+    // Pot nazaj. Iz naloga v bilanco se pride z gumbom v koraku, nazaj pa je
+    // bilo doslej treba skozi zavihek in seznam - pri delu se to ponovi
+    // desetkrat. Preracuna se odpreta za trenutno izbrano serijo, tako da
+    // povezava drzi v obe smeri.
+    const cip='border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)';
     nalogBox.innerHTML=`
       <div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .35rem;display:flex;gap:.8rem;flex-wrap:wrap">${kosi.join('')}</div>
       <div style="display:flex;gap:.35rem;flex-wrap:wrap;padding:0 0 .55rem">
-        <button type="button" onclick="openMeSheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧮 ME za to serijo</button>
-        <button type="button" onclick="openGlySheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧴 GLY za to serijo</button>
+        ${dn?`<button type="button" onclick="openDNDetail('${dn.id}')" style="${cip};border-color:rgba(42,90,139,.45);background:rgba(42,90,139,.1)">📋 Nazaj na nalog</button>`:''}
+        <button type="button" onclick="openMeSheet()" style="${cip}">🧮 ME za to serijo</button>
+        <button type="button" onclick="openGlySheet()" style="${cip}">🧴 GLY za to serijo</button>
       </div>`;
   }
 
@@ -8681,7 +8687,17 @@ function openBilancaSheet(id){
       document.getElementById('bilTinktura').value=t||'';
       document.getElementById('bilBatch').value=b||'';
     }
-    document.getElementById('bilFaza').value='OF';
+    // Faza se med serijo skoraj ne spreminja: vpisujes deset dogodkov OF
+    // zapored. Prevzamemo jo iz zadnjega zapisa te bilance, da je ni treba
+    // nastaviti vsakic znova; ce se je faza premaknila, jo enkrat popravis.
+    //
+    // Statusa ne prevzamemo - ta se izmenjuje (vhod, odvzem, vhod) in bi bil
+    // podedovan "I" tiho napacen tam, kjer se najbolj steje.
+    const zadnji=bilSelectedKey
+      ?bilancaDogodki.filter(d=>bilDogodekKljuc(d)===bilSelectedKey)
+        .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts)).pop()
+      :null;
+    document.getElementById('bilFaza').value=zadnji?.faza||'OF';
     document.getElementById('bilStatus').value='V';
     const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
     document.getElementById('bilTs').value=now.toISOString().slice(0,16);

@@ -946,10 +946,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="field"><label>Status</label>
         <select id="bilStatus" onchange="calcBil()">
-          <option value="V">V</option>
-          <option value="R">R</option>
-          <option value="I">I</option>
-          <option value="Corr">Corr</option>
+          <option value="V">V — vhod</option>
+          <option value="R">R — regenerat (visoka konc.)</option>
+          <option value="I">I — izguba (nizka konc.)</option>
+          <option value="Corr">Corr — popravek</option>
         </select>
       </div>
       <div class="frow">
@@ -8047,42 +8047,57 @@ function renderBilancaSelect(){
 }
 
 // ── NETO ČAS DELOVANJA ─────────────────────────────────────────────────────
-// Bilanca je proces koncentriranja in rotavapor tece ves cas, ko je serija v
-// njem. Odsek se zato zacne z vhodom (V) in konca sele z izhodom (I) - takrat
-// serija zapusti napravo.
+// Rotavapor tece, dokler je serija v njem in destilat kaplja. I in R sta oba
+// izhod destilata in ju loci le koncentracija: nizka gre v izgubo (I), visoka
+// je regenerat (R) in se vrne v naslednjo ekstrakcijo. Po crki se torej ne da
+// reci, ali se je zagon koncal - to pove sele cas.
 //
-// Odvzem regenerata (R) naprave NE ustavi: iz predloge odlijes destilat, serija
-// pa ostane v bucki in vretje tece naprej. Prej je R odsek zaprl in ure med
-// odvzemom in izhodom so izpadle - pri seriji z odvzemom ob 01:13 in izhodom ob
-// 02:48 je manjkala ura in pol.
+// Odsek zato tece od prvega vhoda do zadnjega odvzema destilata pred premorom:
+//   - odvzem (I ali R) je vsakic mozen konec zagona,
+//   - ce v PREMOR_MIN po njem pride nov vhod, je bilo to dolivanje med vretjem
+//     in zagon tece naprej,
+//   - ce mine vec, je naprava stala: odsek se zapre pri tistem odvzemu, novi
+//     vhod pa zacne novega.
 //
-// Vec zaporednih V ne zacne novega odseka - dolivanje med vretjem ni nov zagon
-// in bi drugace cas steli dvakrat. Corr je knjigovodski popravek in ne pomeni,
-// da je naprava tekla.
+// Corr je knjigovodski popravek in ne pomeni, da je naprava tekla; niti je ne
+// ustavi. Vec zaporednih vhodov ne zacne novega odseka.
 //
-// Odsek, ki ostane odprt (vhod brez izhoda), se ne steje: serija je se v teku
-// in koncni cas se ne obstaja. Vrnemo ga posebej, da lahko vmesnik to pove
-// namesto da bi molcal.
+// Vhod brez odvzema za njim se ne steje: zagon je se v teku in koncnega casa
+// ni. Vrnemo ga posebej, da lahko vmesnik to pove namesto da bi molcal.
+const PREMOR_MIN=60;   // premor, po katerem je naprava stala (minute)
 function bilNetoOdseki(kljuc){
   const dogodki=bilancaDogodki
-    .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts))
+    .filter(d=>bilDogodekKljuc(d)===kljuc&&bilIncluded(d)&&bilTsMs(d.ts)
+      &&(d.status==='V'||d.status==='I'||d.status==='R'))
     .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts));
-  const odseki=[];let zacetek=null;
+  const odseki=[];
+  let zacetek=null;      // zacetek odprtega odseka
+  let zadnjiOdvzem=null; // zadnji odvzem destilata v njem - mozen konec
+  const zapri=()=>{
+    if(zacetek!==null&&zadnjiOdvzem!==null)odseki.push({od:zacetek,do:zadnjiOdvzem});
+    zacetek=null;zadnjiOdvzem=null;
+  };
   for(const d of dogodki){
-    if(d.status==='V'){ if(zacetek===null)zacetek=bilTsMs(d.ts); continue; }
-    if(d.status==='I'){
-      if(zacetek===null)continue;      // izhod brez vhoda: nimamo zacetka
-      odseki.push({od:zacetek,do:bilTsMs(d.ts)});
-      zacetek=null;
+    const t=bilTsMs(d.ts);
+    if(d.status==='V'){
+      // Dolivanje po odvzemu: zagon tece naprej, ce je premor kratek.
+      if(zadnjiOdvzem!==null&&t-zadnjiOdvzem>PREMOR_MIN*60000)zapri();
+      if(zacetek===null)zacetek=t;
+      else zadnjiOdvzem=null;
+      continue;
     }
+    if(zacetek===null)continue;   // odvzem brez vhoda: nimamo zacetka
+    zadnjiOdvzem=t;
   }
+  const odprt=zacetek!==null&&zadnjiOdvzem===null;
+  zapri();
   const minute=odseki.reduce((s,o)=>s+Math.max(0,o.do-o.od),0)/60000;
   return {
     odseki,
     minute:Math.round(minute),
     od:odseki.length?odseki[0].od:null,
     do:odseki.length?odseki[odseki.length-1].do:null,
-    odprt:zacetek!==null,
+    odprt,
   };
 }
 // Iz koraka v bilanco: nalog najprej shranimo, sicer bi odhod z lista pobrisal

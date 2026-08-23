@@ -946,7 +946,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="field"><label>Status</label>
         <select id="bilStatus" onchange="calcBil()">
-          <option value="V">V — vhod</option>
+          <option value="V">V — vhod (zažene zagon)</option>
+          <option value="Vr">Vr — vračilo / dodatek</option>
           <option value="R">R — regenerat (visoka konc.)</option>
           <option value="I">I — izguba (nizka konc.)</option>
           <option value="Corr">Corr — popravek</option>
@@ -8066,6 +8067,11 @@ function renderBilancaSelect(){
 //
 // Corr je knjigovodski popravek in casa niti ne zacne niti ne zakljuci.
 //
+// Vracilo (Vr) tudi ne. Masa pride v fazo, naprava pa se ob tem ne zazene:
+// maticni ekstrakt, ki smo ga v prejsnjem koraku dali na stran, se vrne nazaj,
+// prav tako C vitamin in lecitin, raztopljena v dodatnem topilu. Ko bi to
+// steli kot vhod, bi zagon cakal na odvzem, ki ga nikoli ne bo.
+//
 // Vhod, ki svojega odvzema se nima, se ne steje: zagon je v teku in koncnega
 // casa ni. Vrnemo ga posebej, da lahko vmesnik to pove namesto da bi molcal.
 function bilNetoOdseki(kljuc){
@@ -8407,7 +8413,7 @@ function renderBilanca(){
     }).join('')}
   </table>`;
 
-  const statusOrder=['V','R','I','Corr'];
+  const statusOrder=['V','Vr','R','I','Corr'];
   const statusSums={};
   events.filter(bilIncluded).forEach(d=>{
     const st=d.status||'—';
@@ -8428,7 +8434,7 @@ function renderBilanca(){
 
 function bilSignedM(mRaw,status){
   const abs=Math.abs(mRaw);
-  if(status==='V')return abs;
+  if(status==='V'||status==='Vr')return abs;
   if(status==='R'||status==='I')return -abs;
   return mRaw; // Corr: ohrani predznak, kot je vnesen (korekcija je lahko v obe smeri)
 }

@@ -469,10 +469,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <select id="bilBatchSel" onchange="onBilBatchChange()"></select>
     </div>
     <div id="bilNalogInfo"></div>
-    <div id="bilOpremaBlok"></div>
     <div id="bilFazaGrids"></div>
     <div id="bilEventList"></div>
     <div id="bilStatusSums"></div>
+    <!-- Oprema se vpise enkrat na serijo, dogodki pa ves cas. Zato je spodaj:
+         kar se bere in dopolnjuje sproti, ne sme biti pod tistim, kar stoji. -->
+    <div id="bilOpremaBlok"></div>
   </div>
 
   <!-- PRERACUNI VIEW -->
@@ -2754,18 +2756,28 @@ const DN_PREDLOGA_KORAKOV=[
         const o=round((d-c)/c*100,2);
         return {besedilo:`${o>0?'+':''}${String(o).replace('.',',')} %`,ok:Math.abs(o)<=2};}},
    ]},
+  // Pogaca iz stiskanja organske faze gre v vodo - lahko takoj, lahko dan
+  // kasneje. Vsak korak ima zato svoj datum in uro, ekstrakcija in stiskanje
+  // pa sta loceni opravili: prvo pove pogoje, drugo kaj je iz njih prislo ven.
   {st:'2',   korak:'hve', naziv:'Vroča vodna ekstrakcija — HVE', faza:'VF',
-   naprave:['grelnik','stiskalnica','tehtnica'],
+   naprave:['grelnik','termometer','tehtnica'],
    polja:[
-     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'80–90'},
-     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'300'},
      {k:'m_pogace',tip:'meritev',napis:'m pogače',enota:'g'},
      {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
+     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'80–90'},
+     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'300'},
+   ]},
+  {st:'2.1', korak:'stiskanje_hve', naziv:'Stiskanje in ločitev vodne faze — HVE', faza:'VF',
+   // Enako kot pri organski fazi: tri mase, zato je tehtnica na prvem mestu.
+   naprave:['tehtnica','stiskalnica'],
+   polja:[
      {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
       opis:'Stiskanje in filtracija skozi 300 mesh ~48 µm najlonsko filtrno tkanino.'},
      {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
+     {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
+     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
    ]},
-  {st:'2.1', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
+  {st:'2.2', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'VF',
    opis:'Kot pri organski fazi: rezultat pove bilanca, tehtanje ga potrdi.',
    polja:[
@@ -2795,18 +2807,26 @@ const DN_PREDLOGA_KORAKOV=[
         const of=parseNum(drugi('koncentriranje_of').m_of);
         return round((v*etohDensity(30)-of)/2,1);}},
    ]},
+  // Pogaca iz stiskanja HVE gre naprej v tlacni ekstraktor - ista razdelitev
+  // kot pri vodni fazi.
   {st:'3',   korak:'te', naziv:'Tlačna ekstrakcija — TE', faza:'TE',
-   naprave:['tlacni','stiskalnica','tehtnica'],
+   naprave:['tlacni','termometer','tehtnica'],
    polja:[
-     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'115–130'},
-     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'150'},
      {k:'m_pogace',tip:'meritev',napis:'m pogače',enota:'g'},
      {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
+     {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'115–130'},
+     {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'150'},
+   ]},
+  {st:'3.1', korak:'stiskanje_te', naziv:'Stiskanje in ločitev vodne faze — TE', faza:'TE',
+   naprave:['tehtnica','stiskalnica'],
+   polja:[
      {k:'filtrat_ok',tip:'ccp',napis:'Filtrat bister, brez vidnih delcev',
       opis:'Stiskanje in filtracija skozi 400 mesh ~37 µm najlonsko filtrsko tkanino.'},
-     {k:'m_te',tip:'meritev',napis:'m TE ekstrakta',enota:'g'},
+     {k:'m_te',tip:'meritev',napis:'Σm TE ekstrakta',enota:'g'},
+     {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
+     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
    ]},
-  {st:'3.1', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
+  {st:'3.2', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'TE',
    opis:'Kot pri organski in vodni fazi: rezultat pove bilanca, tehtanje ga potrdi.',
    polja:[
@@ -2959,6 +2979,45 @@ function korakiIzPredloge(){
     opremaId:privzetaNaprava(t),datum:'',zacetek:'',konec:'',izvajalec:'',
     parametri:{},status:'nacrtovan',opomba:''
   }));
+}
+
+// Predloga se s casom dopolni. Ze zaceti nalog mora nove korake dobiti, sicer
+// bi jih bilo mogoce izpolniti sele pri naslednji seriji - serija, ki tece
+// zdaj, pa je prav tista, zaradi katere se predloga popravlja.
+//
+// Vrstni red narekuje predloga; korak, ki ga v njej ni vec (starejsa razlicica
+// naloga), ostane na koncu, da vpisano ne izgine.
+function korakiZDopolnitvijo(oznaka){
+  const shranjeni=korakiZaDokument(oznaka);
+  if(!shranjeni.length)return korakiIzPredloge();
+  const poKljucu=new Map(shranjeni.map(k=>[k.korak,k]));
+  const izpredloge=korakiIzPredloge();
+  const vrsta=izpredloge.map(nov=>poKljucu.get(nov.korak)||nov);
+  const vPredlogi=new Set(izpredloge.map(k=>k.korak));
+  const ostanki=shranjeni.filter(k=>!vPredlogi.has(k.korak));
+  return [...vrsta,...ostanki].map((k,i)=>({...k,zaporedje:i+1,
+    parametri:{...(k.parametri||{})}}));
+}
+
+// Stiskanje se je odcepilo od ekstrakcije, vpisano pa mora ostati tam, kjer ga
+// clovek isce. Vrednosti prenesemo v novi korak samo, kadar je se prazen -
+// izvirnika ne brisemo, da se ob morebitni vrnitvi nic ne izgubi.
+const KORAKI_PRESELJENA_POLJA=[
+  {iz:'hve',v:'stiskanje_hve',polja:['filtrat_ok','m_hve']},
+  {iz:'te', v:'stiskanje_te', polja:['filtrat_ok','m_te']},
+];
+function preseliPoljaKorakov(vrstice){
+  KORAKI_PRESELJENA_POLJA.forEach(({iz,v,polja})=>{
+    const stari=vrstice.find(k=>k.korak===iz),novi=vrstice.find(k=>k.korak===v);
+    if(!stari||!novi)return;
+    polja.forEach(p=>{
+      const vrednost=stari.parametri?.[p];
+      if(vrednost===undefined||vrednost===''||vrednost===null)return;
+      if(novi.parametri[p]!==undefined&&novi.parametri[p]!=='')return;
+      novi.parametri[p]=vrednost;
+    });
+  });
+  return vrstice;
 }
 
 // ── Katero napravo korak poklice ──────────────────────────────────────────
@@ -4100,7 +4159,7 @@ function openDNSheet(id){
   }
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
-  dnKorakiRows=id?korakiZaDokument(d?.oznaka).map(k=>({...k,parametri:{...(k.parametri||{})}})):korakiIzPredloge();
+  dnKorakiRows=id?preseliPoljaKorakov(korakiZDopolnitvijo(d?.oznaka)):korakiIzPredloge();
   renderDNSerijeRows();
   renderDNKorakiRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
@@ -8349,13 +8408,17 @@ function renderBilanca(){
     if(dn)kosi.push(`<span style="color:#2a5a8b">📋 ${dn.oznaka||'DN'}</span>${dn.masaGobe>0?` · ${dn.masaGobe} kg gobe`:''}`);
     else kosi.push('<span>Za to serijo ni delovnega naloga.</span>');
     if(zapis)kosi.push(`<span style="color:#5a3a6b">🧴 zapis GLY</span>${zapis.doseceno?` · doseženo ${round(zapis.doseceno.pctTopilo,1)} % v topilu`:' · brez dejanskih količin'}`);
-    // Preracuna se odpreta za trenutno izbrano serijo - povezava deluje v obe
-    // smeri, ne le iz preracuna v bilanco.
+    // Pot nazaj. Iz naloga v bilanco se pride z gumbom v koraku, nazaj pa je
+    // bilo doslej treba skozi zavihek in seznam - pri delu se to ponovi
+    // desetkrat. Preracuna se odpreta za trenutno izbrano serijo, tako da
+    // povezava drzi v obe smeri.
+    const cip='border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)';
     nalogBox.innerHTML=`
       <div style="font-size:.7rem;color:var(--muted);padding:.1rem 0 .35rem;display:flex;gap:.8rem;flex-wrap:wrap">${kosi.join('')}</div>
       <div style="display:flex;gap:.35rem;flex-wrap:wrap;padding:0 0 .55rem">
-        <button type="button" onclick="openMeSheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧮 ME za to serijo</button>
-        <button type="button" onclick="openGlySheet()" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.26rem .7rem;font-family:inherit;font-size:.7rem;cursor:pointer;color:var(--ink)">🧴 GLY za to serijo</button>
+        ${dn?`<button type="button" onclick="openDNDetail('${dn.id}')" style="${cip};border-color:rgba(42,90,139,.45);background:rgba(42,90,139,.1)">📋 Nazaj na nalog</button>`:''}
+        <button type="button" onclick="openMeSheet()" style="${cip}">🧮 ME za to serijo</button>
+        <button type="button" onclick="openGlySheet()" style="${cip}">🧴 GLY za to serijo</button>
       </div>`;
   }
 
@@ -8624,7 +8687,17 @@ function openBilancaSheet(id){
       document.getElementById('bilTinktura').value=t||'';
       document.getElementById('bilBatch').value=b||'';
     }
-    document.getElementById('bilFaza').value='OF';
+    // Faza se med serijo skoraj ne spreminja: vpisujes deset dogodkov OF
+    // zapored. Prevzamemo jo iz zadnjega zapisa te bilance, da je ni treba
+    // nastaviti vsakic znova; ce se je faza premaknila, jo enkrat popravis.
+    //
+    // Statusa ne prevzamemo - ta se izmenjuje (vhod, odvzem, vhod) in bi bil
+    // podedovan "I" tiho napacen tam, kjer se najbolj steje.
+    const zadnji=bilSelectedKey
+      ?bilancaDogodki.filter(d=>bilDogodekKljuc(d)===bilSelectedKey)
+        .sort((a,b)=>bilTsMs(a.ts)-bilTsMs(b.ts)).pop()
+      :null;
+    document.getElementById('bilFaza').value=zadnji?.faza||'OF';
     document.getElementById('bilStatus').value='V';
     const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
     document.getElementById('bilTs').value=now.toISOString().slice(0,16);

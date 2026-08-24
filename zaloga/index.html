@@ -1902,6 +1902,13 @@ function onOrderCountryChange(){
 
 const CH={malo:{label:'Maloprodaja',icon:'🛒',cls:'ch-malo',short:'MP'},velo:{label:'Veleprodaja',icon:'🏪',cls:'ch-velo',short:'VP'},dar:{label:'Podaritev',icon:'🎁',cls:'ch-dar',short:'DAR'},int:{label:'Interni',icon:'🔬',cls:'ch-int',short:'INT'},wp:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},stripe:{label:'Splet',icon:'🌐',cls:'ch-velo',short:'WP'},kom:{label:'Komisija',icon:'🤝',cls:'ch-kom',short:'KOM'}};
 
+// Spletna prodaja pride po dveh poteh in ima zato dva kanala: 'wp' iz trgovine
+// in 'stripe' iz placila s kartico. Za vse, kar sledi - obvestila kupcu, status
+// narocila, sledenje posiljki - sta ista stvar. Loceno naslavljanje enega samega
+// je bilo mesto tihe napake: Stripe narocila niso dobila ne obvestila ne
+// posodobljenega statusa, ker jih je pogoj spregledal.
+function jeSpletniKanal(kanal){return kanal==='wp'||kanal==='stripe';}
+
 function parseNum(v){if(v===null||v===undefined)return 0;return parseFloat(String(v).replace(',','.'))||0;}
 function todayISO(){return new Date().toISOString().slice(0,10);}
 function fmtDateSl(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}. ${m}. ${y}`;}
@@ -9889,7 +9896,7 @@ async function sendInvoiceEmail(invId){
 
   const st=inv.invStatus||'caka';
   const isPaid=st==='placano'||st==='predano';
-  const isWP=g?.channel==='wp';
+  const isWP=jeSpletniKanal(g?.channel);
   // Tuj kupec dobi sporocilo v anglescini - enako pravilo kot za racun.
   const drz=inv.country||g?.country;
   const lang=racunJezik(drz);
@@ -10389,7 +10396,7 @@ async function cycleInvStatus(invId){
   // oddaji, ko je številka v roki - kasneje se je ne išče več. Prazen vnos
   // pomeni brez sledenja; obstoječega ne povozi, da se ob popravljanju statusa
   // ne izgubi.
-  if(i.invStatus==='predano'&&saleGroups.find(x=>x.id===i.groupId)?.channel==='wp'){
+  if(i.invStatus==='predano'&&jeSpletniKanal(saleGroups.find(x=>x.id===i.groupId)?.channel)){
     const vpis=prompt('Prilepi povezavo za sledenje (prazno = brez):',i.sledenje||'');
     if(vpis!==null)i.sledenje=vpis.trim();
   }
@@ -10404,10 +10411,10 @@ async function cycleInvStatus(invId){
   // vprasanje samo odpremo - zapreti ga je mogoce brez posledic.
   if(i.invStatus==='predano'&&matTipiEmb.length)openSkatlaSheet(invId);
 
-  // Posodobi gm_orders status če je WP naročilo
+  // Posodobi gm_orders status, če je spletno naročilo
   if(i.invStatus==='predano' || i.invStatus==='placano'){
     const g=saleGroups.find(x=>x.id===i.groupId);
-    if(g?.channel==='wp'){
+    if(jeSpletniKanal(g?.channel)){
       const newOrderStatus=i.invStatus==='predano'?'shipped':'paid';
       fetch(`${SB_URL}/rest/v1/gm_orders?invoice_id=eq.${g.id}`,{
         method:'PATCH',headers:SB_HEADERS,
@@ -10421,10 +10428,10 @@ async function cycleInvStatus(invId){
     }
   }
 
-  // Avtomatsko pošiljanje samo za WP kanal
+  // Avtomatsko pošiljanje samo za spletno prodajo
   const _g=saleGroups.find(x=>x.id===i.groupId);
   const autoKey={placano:'autoEmailPlacano',predano:'autoEmailPredano'};
-  if(_g?.channel==='wp'&&autoKey[i.invStatus]&&getZS(autoKey[i.invStatus])&&i.email){
+  if(jeSpletniKanal(_g?.channel)&&autoKey[i.invStatus]&&getZS(autoKey[i.invStatus])&&i.email){
     sendInvoiceEmail(i.id);
   }
 }

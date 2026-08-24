@@ -2019,7 +2019,8 @@ function sbInvoiceToApp(i){
     date:i.date, total:i.total||0,
     groupId:i.group_id, extInvoice:i.ext_invoice, extDelivery:i.ext_delivery,
     invStatus:i.inv_status||'placano',
-    emailSent:i.email_sent||null
+    emailSent:i.email_sent||null,
+    sledenje:i.sledenje||''
   };
 }
 
@@ -2235,6 +2236,11 @@ async function sbInsertBrezCountry(table,data,upsert){
   }
 }
 
+// Nov stolpec v Supabase ne sme podreti celega zapisa. Ce ga se ni, ga
+// izpustimo in zapis gre skozi brez njega - racun se shrani, manjka le tisto
+// polje. Enkrat na sejo povemo, kaj manjka, da se ne isce vzroka drugje.
+const _manjkaStolpec={};
+
 async function sbSaveGroup(g){
   // Upsert group
   await sbInsertBrezCountry('gm_sale_groups',{
@@ -2408,15 +2414,29 @@ window.listBatches=function(productName){
 
 // Shrani račun
 async function sbSaveInvoice(inv){
-  await sbInsertBrezCountry('gm_invoices',{
+  const zapis={
     id:inv.id, num:inv.num, channel:inv.channel,
     buyer:inv.buyer||null, email:inv.email||null, phone:inv.phone||null,
     address:inv.address||null, street:inv.street||null, post:inv.post||null, country:inv.country||'SI',
     date:inv.date||null, total:inv.total||0,
     group_id:inv.groupId||null, ext_invoice:inv.extInvoice||null, ext_delivery:inv.extDelivery||null,
     inv_status:inv.invStatus||'placano',
-    email_sent:inv.emailSent||null
-  }, true);
+    email_sent:inv.emailSent||null,
+    sledenje:inv.sledenje||null
+  };
+  // Dva stolpca sta lahko mlajsa od baze: country in sledenje. Vsak se izpusti
+  // posebej, da odsotnost enega ne odnese racuna in ne skrije drugega.
+  try{
+    await sbInsertBrezCountry('gm_invoices',zapis,true);
+  }catch(e){
+    if(!/sledenje/i.test(String(e.message||e)))throw e;
+    if(!_manjkaStolpec.sledenje){
+      _manjkaStolpec.sledenje=true;
+      toast('⚠ Sledenje se ne shranjuje — v Supabase manjka stolpec sledenje');
+    }
+    const {sledenje,...brez}=zapis;
+    await sbInsertBrezCountry('gm_invoices',brez,true);
+  }
 }
 
 // Posodobi števce
@@ -5605,6 +5625,8 @@ function renderInvoices(){
             ${i.date?`<span>${i.date.split('-').reverse().join('.')}</span>`:''}
             ${i.extInvoice?`<span>R: ${i.extInvoice}</span>`:''}
             ${i.extDelivery?`<span>D: ${i.extDelivery}</span>`:''}
+            ${i.sledenje?`<a href="${sledenjeUrl(i.sledenje)}" target="_blank" rel="noopener"
+              onclick="event.stopPropagation()" style="color:#2a5a8b;text-decoration:none">📮 sledenje</a>`:''}
           </div>
         </div>
         <div class="sg-right">
@@ -5631,6 +5653,16 @@ function renderInvoices(){
     `<button onclick="invPage=${p};renderInvoices()" style="padding:.3rem .6rem;border-radius:6px;border:1px solid var(--border);background:${p===invPage?'var(--ink)':'white'};color:${p===invPage?'var(--cream)':'var(--ink)'};font-family:'Jost',sans-serif;font-size:.75rem;cursor:pointer">${p+1}</button>`
   ).join('');
 }
+// Prilepis lahko celo povezavo ali samo stevilko posiljke. Iz gole stevilke
+// sestavimo povezavo na sledenje Poste Slovenije, da kupcu ni treba nikamor
+// prepisovati; ce si prilepil povezavo, ostane taka, kot je.
+function sledenjeUrl(v){
+  const s=String(v||'').trim();
+  if(!s)return '';
+  if(/^https?:\/\//i.test(s))return s;
+  return 'https://sledenje.posta.si/?id='+encodeURIComponent(s);
+}
+
 function toggleInvoiceCard(id){
   if(expandedInvoices.has(id))expandedInvoices.delete(id);else expandedInvoices.add(id);
   renderInvoices();
@@ -9963,6 +9995,9 @@ async function sendInvoiceEmail(invId){
       <strong style="font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;display:block;margin-bottom:.25rem">${L('Dostava na naslov','Delivery address')}</strong>
       ${g?.street||''}, ${g?.post||''} ${g?.city||''}${tujina?', '+drzavaIme(drz,lang):''}
     </div>
+    ${inv.sledenje?`<div style="text-align:center;margin-bottom:1.25rem">
+      <a href="${sledenjeUrl(inv.sledenje)}" style="display:inline-block;background:#2b0b39;color:#fff;text-decoration:none;padding:.7rem 1.4rem;border-radius:999px;font-size:.85rem;font-weight:500">${L('📮 Sledi pošiljki','📮 Track your parcel')}</a>
+    </div>`:''}
     <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:1.25rem">
       <thead><tr style="background:#f7f3ee">
         <th style="padding:.45rem .6rem;text-align:left;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9a8f82;border-bottom:2px solid #ede6d6">${L('Artikel','Item')}</th>
@@ -10350,6 +10385,16 @@ async function cycleInvStatus(invId){
     const cycle={caka:'placano',placano:'predano'};
     i.invStatus=cycle[cur]||'caka';
   }
+  // Spletno naročilo gre na pošto in kupec pričakuje sledenje. Vprašamo ob
+  // oddaji, ko je številka v roki - kasneje se je ne išče več. Prazen vnos
+  // pomeni brez sledenja; obstoječega ne povozi, da se ob popravljanju statusa
+  // ne izgubi.
+  if(i.invStatus==='predano'&&saleGroups.find(x=>x.id===i.groupId)?.channel==='wp'){
+    const vpis=prompt('Prilepi povezavo za sledenje (prazno = brez):',i.sledenje||'');
+    if(vpis!==null)i.sledenje=vpis.trim();
+  }
+  if(i.invStatus!=='predano')i.sledenje='';
+
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
   save();renderInvoices();renderInvStats();
   sbSaveInvoice(i).catch(e=>console.warn('sbSaveInvoice failed:',e));

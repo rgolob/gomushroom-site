@@ -1,3 +1,14 @@
+# Ocene izdelkov se pred objavo vpisejo v strukturirane podatke strani. Sicer
+# jih doda sele JavaScript po nalaganju, iskalnik pa ta prehod opravi zamaknjeno
+# in nezanesljivo - zvezdice je zato dobil samo Reishi.
+#
+# "|| true": ce Supabase ni dosegljiv, gredo strani v objavo z dosedanjimi
+# ocenami. Neosvezena stevilka je manjse zlo od padle objave.
+#
+# Mapa za objavo tu ni navedena in ostane taka, kot je nastavljena v Netlifyju.
+[build]
+  command = "node doc/osvezi-ocene.mjs || true"
+
 [[redirects]]
   from = "/favicon.ico"
   to = "/assets/favicon-32.png"

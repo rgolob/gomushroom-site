@@ -177,6 +177,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .inv-status-caka{background:rgba(175,132,85,.15);color:#7a5a2a}
 .inv-status-placano{background:rgba(58,107,74,.15);color:#3a6b4a}
 .inv-status-predano{background:rgba(42,90,139,.15);color:#2a5a8b}
+.dostava-gumb{flex:1;padding:.6rem .4rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.78rem;background:white;color:var(--ink);cursor:pointer}
+.dostava-gumb.izbran{background:var(--ink);color:var(--cream);border-color:var(--ink)}
 
 /* ORDER */
 .ch-selector-h{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
@@ -472,7 +474,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           </div>
           <div style="flex:2;min-width:180px">
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Ulica</div>
-            <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address">
+            <input id="orderStreet" placeholder="Ulica in hišna št." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="street-address" oninput="dostavaPoNaslovu()">
           </div>
           <div style="min-width:130px">
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Pošta</div>
@@ -482,6 +484,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Država</div>
             <select id="orderCountry" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border);border-radius:var(--rs);font-family:'Jost',sans-serif;font-size:.9rem;background:white;color:var(--ink);outline:none" autocomplete="country" onchange="onOrderCountryChange();renderOrderSummary()"></select>
             <div id="orderCountryHint" style="display:none;font-size:.7rem;color:#8b5a2a;margin-top:.2rem">Račun bo izpisan v angleščini</div>
+          </div>
+          <div style="min-width:150px">
+            <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Predaja</div>
+            <div style="display:flex;gap:.3rem">
+              <button type="button" id="orderDostavaPrevzem" onclick="nastaviDostavo('prevzem')" class="dostava-gumb">🏪 Osebno</button>
+              <button type="button" id="orderDostavaPosta" onclick="nastaviDostavo('posta')" class="dostava-gumb">📮 Po pošti</button>
+            </div>
           </div>
           <div>
             <div style="font-size:.68rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Datum</div>
@@ -1746,6 +1755,22 @@ const LOW_DEFAULT=10;
 let products=[],batches=[],saleGroups=[],invoices=[],invCounters={malo:0,velo:0,dar:0,int:0};
 let editingBatchId=null,editingProductId=null,editingGroupId=null;
 let orderChannel='malo',orderTier=null;
+// Nacin predaje: 'posta' ali 'prevzem'. Dokler ga ne izberes sam, sledi
+// vpisanemu naslovu - enako, kot je aplikacija sklepala doslej, le da je zdaj
+// vidno in popravljivo.
+let orderDostava='prevzem',_dostavaRocno=false;
+function osveziDostavoGumbe(){
+  const p=document.getElementById('orderDostavaPrevzem');
+  const q=document.getElementById('orderDostavaPosta');
+  if(p)p.classList.toggle('izbran',orderDostava==='prevzem');
+  if(q)q.classList.toggle('izbran',orderDostava==='posta');
+}
+function nastaviDostavo(nacin){_dostavaRocno=true;orderDostava=nacin;osveziDostavoGumbe();}
+function dostavaPoNaslovu(){
+  if(_dostavaRocno)return;
+  orderDostava=(document.getElementById('orderStreet')?.value.trim())?'posta':'prevzem';
+  osveziDostavoGumbe();
+}
 let expandedBatches=new Set();
 let currentTab='zaloga';
 
@@ -2002,7 +2027,7 @@ function sbGroupToApp(g, lines, lineBatches){
   return {
     id:g.id, buyer:g.buyer, email:g.email, phone:g.phone, vat:g.vat,
     address:g.address, street:g.street, post:g.post,
-    date:g.date, channel:g.channel,
+    date:g.date, channel:g.channel, dostava:g.dostava||'',
     discount:g.discount||0, discountAmt:g.discount_amt||0, fullTotal:g.full_total||0,
     shippingFee:g.shipping_fee||0,
     extInvoice:g.ext_invoice, extDelivery:g.ext_delivery, country:g.country||'SI',
@@ -2250,16 +2275,29 @@ const _manjkaStolpec={};
 
 async function sbSaveGroup(g){
   // Upsert group
-  await sbInsertBrezCountry('gm_sale_groups',{
+  const zapis={
     id:g.id, buyer:g.buyer||null, email:g.email||null, phone:g.phone||null, vat:g.vat||null,
     address:g.address||null, street:g.street||null, post:g.post||null, country:g.country||'SI',
-    date:g.date||null, channel:g.channel||null,
+    date:g.date||null, channel:g.channel||null, dostava:g.dostava||null,
     discount:g.discount||0, discount_amt:g.discountAmt||0, full_total:g.fullTotal||0,
     ext_invoice:g.extInvoice||null, ext_delivery:g.extDelivery||null,
     note:g.note||null, invoice_num:g.invoiceNum||null, invoice_id:g.invoiceId||null,
     delivery_num:g.deliveryNum||null,
     total:g.total||0, qty:g.qty||0, status:g.status||'active'
-  }, true);
+  };
+  // Stolpec dostava je mlajsi od baze. Dokler ga ni, gre prodaja skozi brez
+  // njega - prodaje ne sme zadrzati manjkajoc podatek o nacinu predaje.
+  try{
+    await sbInsertBrezCountry('gm_sale_groups',zapis,true);
+  }catch(e){
+    if(!/dostava/i.test(String(e.message||e)))throw e;
+    if(!_manjkaStolpec.dostava){
+      _manjkaStolpec.dostava=true;
+      toast('⚠ Način predaje se ne shranjuje — v Supabase manjka stolpec dostava');
+    }
+    const {dostava,...brez}=zapis;
+    await sbInsertBrezCountry('gm_sale_groups',brez,true);
+  }
   // Briši stare vrstice in vpiši nove — samo če lines niso prazni
   if((g.lines||[]).length>0){
   try{await sbDelete('gm_sale_lines',{group_id:g.id});}catch{}
@@ -4260,6 +4298,8 @@ function checkOrderChannelStock(productId){
 
 function orderSelectChannel(ch){
   orderChannel=ch;orderTier=null;
+  // Spletno narocilo gre vedno po posti - kupec ga ni prisel iskat v delavnico.
+  if(!_dostavaRocno&&jeSpletniKanal(ch)){orderDostava='posta';osveziDostavoGumbe();}
   Object.keys(CH).forEach(k=>{const el=document.getElementById('och-'+k);if(el)el.className='ch-opt-h'+(k===ch?' sel-'+k:'');});
   const isVelo=ch==='velo';
   const isKom=ch==='kom';
@@ -4508,6 +4548,7 @@ function clearOrder(){
   // prodajo.
   const _fp=document.getElementById('orderFinalPrice');if(_fp)_fp.value='';
   document.getElementById('orderVat').value='';document.getElementById('orderStreet').value='';document.getElementById('orderPost').value='';
+  orderDostava='prevzem';_dostavaRocno=false;osveziDostavoGumbe();
   const _dr=document.getElementById('orderCountry');if(_dr)_dr.value='SI';onOrderCountryChange();
   document.getElementById('orderExtInvoice').value='';document.getElementById('orderExtDelivery').value='';
   document.getElementById('orderNote').value='';
@@ -4816,7 +4857,7 @@ if(!Object.keys(pendingBatchAlloc).length){
     invoices.unshift({id:invoiceId,num:invoiceNum,channel:ch,buyer,email,phone,address:fullAddress,street,post,country,date,total:grandTotal,groupId,extInvoice,extDelivery,invStatus});
   }
   const deliveryNum=(ch==='kom'||ch==='velo')?nextDobNum(date):null;
-  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,country,date,channel:ch,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
+  const group={id:groupId,buyer,email,phone,vat,address:fullAddress,street,post,country,date,channel:ch,dostava:orderDostava,discount,discountAmt,fullTotal,extInvoice,extDelivery,note:(tier?'Razred '+tier.label+' · ':'')+orderNoteVal,invoiceNum,invoiceId,deliveryNum,
     lines:lines.map(l=>({productId:l.p.id,productName:l.p.name,alc:l.alc,gly:l.gly,bulk:!!l.bulk,alcPrice:l.alcP,glyPrice:l.glyP,lineTotal:l.lineTotal,
       batchBreakdown:(pendingBatchAlloc[l.p.id]||[]).filter(x=>x.alc||x.gly)})),
     total:grandTotal,qty:totalQty};
@@ -5647,7 +5688,7 @@ function renderInvoices(){
         <div style="margin-left:auto;display:flex;gap:.35rem">
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨</button>
           ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
-          ${(i.street||i.address)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
+          ${jePosiljka(i)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
           ${jePosiljka(i)||i.sledenje?`<button class="tbtn" title="Sledenje pošiljki" onclick="urediSledenje('${i.id}')">📮${i.sledenje?' ✓':''}</button>`:''}
           ${matTipiEmb.length?`<button class="tbtn" title="Embalaža za to odpremo" onclick="openSkatlaSheet('${i.id}')">📦${_skatlaZapisi[skatlaZapisId(i.id)]?' ✓':''}</button>`:''}
           <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
@@ -5672,8 +5713,19 @@ function sledenjeUrl(v){
   return 'https://sledenje.posta.si/?id='+encodeURIComponent(s);
 }
 
-// Racun z naslovom je posiljka. Isto merilo kot pri nalepki za posiljko.
-function jePosiljka(i){return !!(i&&(i.street||i.address));}
+// ── OSEBNI PREVZEM ALI PO POSTI ────────────────────────────────────────────
+// Naslov o nacinu predaje ne pove vsega: veleprodajni kupec ima naslov na
+// racunu, pa vseeno pride po blago sam. Zato se nacin izbere ob prodaji in je
+// od tam naprej podatek, ne domneva.
+//
+// Zapisi izpred te izbire nacina nimajo. Zanje ostane staro merilo - naslov -
+// da stari racuni ne izgubijo ne nalepke ne sledenja.
+function jePosiljka(i){
+  if(!i)return false;
+  const g=saleGroups.find(x=>x.id===i.groupId);
+  if(g&&g.dostava)return g.dostava==='posta';
+  return !!(i.street||i.address);
+}
 
 // Sledenje je pogosto v roki sele po oznaki "Predano" - stevilko dobis, ko
 // posiljko oddas. Zato isto vprasanje dosezes tudi iz kartice racuna in ni

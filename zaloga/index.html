@@ -5648,6 +5648,7 @@ function renderInvoices(){
           <button class="tbtn" onclick="reprintInvoice('${i.groupId}')">🖨</button>
           ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
           ${(i.street||i.address)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
+          ${jePosiljka(i)||i.sledenje?`<button class="tbtn" title="Sledenje pošiljki" onclick="urediSledenje('${i.id}')">📮${i.sledenje?' ✓':''}</button>`:''}
           ${matTipiEmb.length?`<button class="tbtn" title="Embalaža za to odpremo" onclick="openSkatlaSheet('${i.id}')">📦${_skatlaZapisi[skatlaZapisId(i.id)]?' ✓':''}</button>`:''}
           <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
@@ -5662,12 +5663,33 @@ function renderInvoices(){
 }
 // Prilepis lahko celo povezavo ali samo stevilko posiljke. Iz gole stevilke
 // sestavimo povezavo na sledenje Poste Slovenije, da kupcu ni treba nikamor
-// prepisovati; ce si prilepil povezavo, ostane taka, kot je.
+// prepisovati; ce si prilepil povezavo - GLS ali katero koli drugo - ostane
+// taka, kot je.
 function sledenjeUrl(v){
   const s=String(v||'').trim();
   if(!s)return '';
   if(/^https?:\/\//i.test(s))return s;
   return 'https://sledenje.posta.si/?id='+encodeURIComponent(s);
+}
+
+// Racun z naslovom je posiljka. Isto merilo kot pri nalepki za posiljko.
+function jePosiljka(i){return !!(i&&(i.street||i.address));}
+
+// Sledenje je pogosto v roki sele po oznaki "Predano" - stevilko dobis, ko
+// posiljko oddas. Zato isto vprasanje dosezes tudi iz kartice racuna in ni
+// ujeto v en sam trenutek.
+function vprasajZaSledenje(i){
+  const vpis=prompt('Prilepi povezavo ali številko za sledenje (prazno = brez):',i.sledenje||'');
+  if(vpis===null)return false;
+  i.sledenje=vpis.trim();
+  return true;
+}
+function urediSledenje(invId){
+  const i=invoices.find(x=>x.id===invId);if(!i)return;
+  if(!vprasajZaSledenje(i))return;
+  save();renderInvoices();
+  sbSaveInvoice(i).catch(e=>console.warn('sbSaveInvoice failed:',e));
+  toast(i.sledenje?'📮 Sledenje shranjeno':'📮 Sledenje odstranjeno');
 }
 
 function toggleInvoiceCard(id){
@@ -10392,14 +10414,15 @@ async function cycleInvStatus(invId){
     const cycle={caka:'placano',placano:'predano'};
     i.invStatus=cycle[cur]||'caka';
   }
-  // Spletno naročilo gre na pošto in kupec pričakuje sledenje. Vprašamo ob
-  // oddaji, ko je številka v roki - kasneje se je ne išče več. Prazen vnos
-  // pomeni brez sledenja; obstoječega ne povozi, da se ob popravljanju statusa
-  // ne izgubi.
-  if(i.invStatus==='predano'&&jeSpletniKanal(saleGroups.find(x=>x.id===i.groupId)?.channel)){
-    const vpis=prompt('Prilepi povezavo za sledenje (prazno = brez):',i.sledenje||'');
-    if(vpis!==null)i.sledenje=vpis.trim();
-  }
+  // Sledenje ni lastnost spletnega narocila, ampak posiljke: po posti gre lahko
+  // tudi veleprodaja, komisija ali darilo. Merilo je zato naslov za dostavo -
+  // isti signal, po katerem se ze ponudi nalepka za posiljko. Kar dobi nalepko,
+  // gre po posti; kar gre po posti, ima lahko sledenje.
+  //
+  // Vprasamo ob oddaji, ko je stevilka v roki. Prazen vnos pomeni brez sledenja
+  // in statusa ne zadrzi; preklic obstojecega ne povozi, da se ob popravljanju
+  // statusa ne izgubi.
+  if(i.invStatus==='predano'&&jePosiljka(i))vprasajZaSledenje(i);
   if(i.invStatus!=='predano')i.sledenje='';
 
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};

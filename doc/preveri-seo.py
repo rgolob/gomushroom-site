@@ -1,4 +1,4 @@
-import tomllib, re, glob, os, sys, xml.etree.ElementTree as ET
+import tomllib, re, json, glob, os, sys, xml.etree.ElementTree as ET
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))
 n=0
 def t(c,o,d=''):
@@ -52,7 +52,30 @@ for u in locs:
     if naslov.strip().startswith('GoMushroom'): slabnaslov.append((u,naslov))
 t(not slabnaslov,'naslovi izdelkov se zacnejo z izdelkom, ne z znamko',slabnaslov)
 
-# 7. robots.txt ne sme nicesar zapirati.
+# 7. Lastnost mora pripadati svojemu tipu. Semrush je nasel inLanguage na
+#    Product - ta lastnost sodi na CreativeWork (Article, WebPage, Collection),
+#    ne na izdelek. Jezik strani povesta <html lang> in hreflang, zato na
+#    Productu ni izgube.
+SAMO_CREATIVEWORK={'inLanguage','articleBody','wordCount','headline','datePublished',
+                   'dateModified','author','articleSection'}
+CREATIVEWORK={'Article','NewsArticle','BlogPosting','WebPage','CollectionPage',
+              'ItemPage','AboutPage','FAQPage','TechArticle','Report'}
+napacne=[]
+for u in locs:
+    h=open('.'+u+'index.html',encoding='utf-8').read()
+    for m in re.findall(r'<script type="application/ld\+json">(.*?)</script>',h,re.S):
+        try: d=json.loads(m)
+        except json.JSONDecodeError as e:
+            napacne.append((u,'neveljaven JSON: '+str(e)[:60])); continue
+        for node in (d.get('@graph') or [d]):
+            if not isinstance(node,dict): continue
+            tip=node.get('@type')
+            if tip in CREATIVEWORK: continue
+            for p in SAMO_CREATIVEWORK & set(node):
+                napacne.append((u,f'{p} na {tip}'))
+t(not napacne,'lastnosti pripadajo svojemu tipu v strukturiranih podatkih',napacne)
+
+# 8. robots.txt ne sme nicesar zapirati.
 rt=open('robots.txt',encoding='utf-8').read()
 t('Disallow: /' not in rt.replace('Disallow: /\n','X') or 'Disallow:' not in rt,
   'robots.txt ne zapira spletisca',rt.strip().replace('\n',' | '))

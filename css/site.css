@@ -83,6 +83,10 @@ header{
   padding-bottom:12px;
   position:relative;
   gap:14px;
+  /* Glava ima min-height:66px, vrstica z vsebino pa je bila visoka 60 px.
+     Presezek je padel ves pod vsebino, zato je bilo vse skupaj 3 px nad
+     sredino traku. Vrstica zato zapolni glavo in se v njej poravna. */
+  min-height:66px;
 }
 
 /* Logo */

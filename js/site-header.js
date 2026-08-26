@@ -192,7 +192,7 @@ ${flagEn}
       <div class="brand">
         <a href="${homeUrl}" id="site-logo" class="brand">
           <img src="/assets/logo-h168.webp"
-               srcset="/assets/logo-h168.webp 168w, /assets/logo-horizontal.webp 1536w"
+               srcset="/assets/logo-h168.webp 168w, /assets/logo-h242.webp 242w, /assets/logo-h363.webp 363w"
                sizes="121px"
                alt="GoMushroom" width="121" height="42" fetchpriority="high">
         </a>

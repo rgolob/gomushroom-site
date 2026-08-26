@@ -184,45 +184,59 @@
   const refs = Array.from(document.querySelectorAll('.card.ref'));
   if(!refs.length) return;
 
+  // Kartica je <article> in vsebuje povezave. Vloge button ARIA na <article> ne
+  // dovoli, gumb pa tudi ne sme vsebovati drugih interaktivnih elementov - zato
+  // je bila prejsnja resitev napacna v dvoje. Kartica ostane article, preklop
+  // pa dobi svoj gumb; brez njega tipkovnica do podrobnosti sploh ne bi imela
+  // poti, ker klik na kartico sam po sebi ni dosegljiv s tipkovnico.
+  function stanje(card, odprt){
+    card.classList.toggle('is-open', odprt);
+    card.removeAttribute('aria-expanded');   // na article ta stanje ne sodi
+    const g = card.querySelector('.ref-toggle');
+    if(g) g.setAttribute('aria-expanded', String(odprt));
+  }
+
   function closeAll(except){
-    refs.forEach(c=>{
-      if(c !== except){
-        c.classList.remove('is-open');
-        c.setAttribute('aria-expanded','false');
-      }
-    });
+    refs.forEach(c=>{ if(c !== except) stanje(c, false); });
   }
 
   function toggle(card){
     const open = card.classList.contains('is-open');
     if(open){
-      card.classList.remove('is-open');
-      card.setAttribute('aria-expanded','false');
+      stanje(card, false);
     } else {
       closeAll(card);
-      card.classList.add('is-open');
-      card.setAttribute('aria-expanded','true');
+      stanje(card, true);
       if(window.innerWidth < 900){
         card.scrollIntoView({behavior:'smooth', block:'center'});
       }
     }
   }
 
+  const jeEn = (document.documentElement.lang || '').startsWith('en');
+
   refs.forEach(card=>{
     card.addEventListener('click', e=>{
       const t = (e.target.tagName || '').toLowerCase();
-      if(t === 'a') return;
+      if(t === 'a' || (e.target.closest && e.target.closest('.ref-toggle'))) return;
       toggle(card);
     });
 
-    card.setAttribute('tabindex','0');
-    card.setAttribute('role','button');
-    card.addEventListener('keydown', e=>{
-      if(e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        toggle(card);
-      }
-    });
+    // Gumb pove, kaj odpira, in na kaj se nanasa. Ime kartice vzamemo iz
+    // naslovne vrstice, da se oznaka ne podvaja v kodi.
+    const panel = card.querySelector('.detail-panel');
+    if(panel && !panel.id) panel.id = (card.id || 'ref') + '-podrobnosti';
+    const ime = (card.querySelector('.topbar')?.textContent || '').trim();
+    const gumb = document.createElement('button');
+    gumb.type = 'button';
+    gumb.className = 'ref-toggle sr-only';
+    gumb.setAttribute('aria-expanded', 'false');
+    if(panel) gumb.setAttribute('aria-controls', panel.id);
+    gumb.textContent = jeEn ? ('Show details: ' + ime) : ('Prikaži podrobnosti: ' + ime);
+    gumb.addEventListener('click', ()=>toggle(card));
+    card.insertBefore(gumb, card.firstChild);
+
+    card.removeAttribute('aria-expanded');
   });
 })();
 

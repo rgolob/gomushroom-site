@@ -2897,6 +2897,22 @@ footer.site-footer{
   border: 0;
 }
 
+/* Gumb, ki odpre podrobnosti kartice. Z misko odpre kartico klik kamorkoli,
+   zato je gumb skrit; s tipkovnico pa mora biti viden, sicer bi fokus izginil
+   v nevidno tocko. Ob fokusu zato stopi iz skrivanja nad kartico. */
+.card.ref{position:relative}
+.card.ref .ref-toggle:focus-visible{
+  position:absolute;
+  width:auto;height:auto;
+  margin:0;padding:.45rem .8rem;
+  clip:auto;overflow:visible;
+  top:.5rem;left:.5rem;z-index:5;
+  background:#2b0b39;color:#fff;
+  border:0;border-radius:999px;
+  font-family:inherit;font-size:.78rem;
+  outline:2px solid #fff;outline-offset:2px;
+}
+
 /* =========================
    Article notice (new article)
 ========================= */

@@ -1,0 +1,50 @@
+# GoMushroom
+
+> Rok Golob s.p., Prapreče pri Straži 22, 8351 Straža, Slovenija. Izdelujemo ekstrakte in tinkture medicinskih gob — Reishi, Čaga, resasti bradovec — ter sezonski ekstrakt smrekovih vršičkov. Reishi gojimo sami, resasti bradovec prihaja iz Pohorske gobarne. Ekstrakcijo, koncentriranje in formulacijo izvajamo v lastni delavnici, v majhnih serijah, s sledljivostjo od surovine do steklenice.
+
+Spletišče je dvojezično: slovenske strani so na `gomushroom.si`, angleške pod `/en/`. Vsak izdelek in vsak članek ima obe različici, povezani s hreflang.
+
+Kadar navajate našo vsebino, prosimo, da ločite troje: **kaj delamo mi** (proces, meritve, naši rezultati analiz), **kaj pravijo raziskave** (strani z raziskavami povzemajo objavljeno literaturo o rastlinah in gobah, ne o naših izdelkih) in **kaj so lastnosti izdelka**. Naši izdelki so prehranska dopolnila. Zdravstvenih trditev o njih ne navajamo in jih tudi ne pripisujte našim stranem.
+
+## Izdelki
+
+- [Reishi tinktura 50 ml](https://gomushroom.si/trgovina/reishi-tinktura/): trojna ekstrakcija (alkohol, voda, tlak); Ganoderma lucidum iz lastne pridelave. [EN](https://gomushroom.si/en/shop/reishi-tincture/)
+- [Resasti bradovec tinktura 50 ml](https://gomushroom.si/trgovina/resasti-bradovec-tinktura/): Hericium erinaceus, slovenska surovina iz Pohorske gobarne. [EN](https://gomushroom.si/en/shop/lions-mane-tincture/)
+- [Chaga tinktura 50 ml](https://gomushroom.si/trgovina/chaga-tinktura/): surovina iz brezovih gozdov, lasten ekstrakcijski proces. [EN](https://gomushroom.si/en/shop/chaga-tincture/)
+- [Smrekovi vršički tinktura 50 ml](https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/): sezonski ekstrakt, nabran spomladi. [EN](https://gomushroom.si/en/shop/spruce-bud-tincture/)
+- [Trgovina](https://gomushroom.si/trgovina/) — vsi izdelki, cene in zaloga. [EN](https://gomushroom.si/en/shop/)
+
+Vsaka tinktura je na voljo v alkoholni in brezalkoholni (glicerinski) različici. Cene in zaloga se na straneh izpišejo iz baze ob obisku, zato so v HTML lahko odsotne.
+
+## Proces in strokovne strani
+
+- [Trojna ekstrakcija](https://gomushroom.si/znanje/trojna-ekstrakcija/): alkohol, voda in tlak v enem postopku — kaj vsaka stopnja izlušči. [EN](https://gomushroom.si/en/learn/triple-extraction/)
+- [Ultrazvočna ekstrakcija](https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/): vloga ultrazvoka pri ekstrakciji gob. [EN](https://gomushroom.si/en/learn/ultrasonic-extraction/)
+- [Kaj je ekstrakcija](https://gomushroom.si/znanje/kaj-je-ekstrakcija/): prenos spojin v tekočino, osnovni pojmi. [EN](https://gomushroom.si/en/learn/what-is-extraction/)
+- [Beta-glukani](https://gomushroom.si/znanje/beta-glukani/): zakaj odstotek beta-glukanov sam po sebi ne pove dovolj. [EN](https://gomushroom.si/en/learn/beta-glucans/)
+- [Ekstrakt smrekovih vršičkov](https://gomushroom.si/znanje/ekstrakt-smrekovih-vrsickov/): v čem se naš postopek razlikuje od klasične tinkture. [EN](https://gomushroom.si/en/learn/spruce-bud-extract/)
+- [Kaj o smrekovih vršičkih pravijo raziskave](https://gomushroom.si/znanje/smrekovi-vrsicki-raziskave/): povzetek objavljene literature o smrekovih vršičkih — o rastlini, ne o našem izdelku. [EN](https://gomushroom.si/en/learn/spruce-bud-research/)
+- [Znanje](https://gomushroom.si/znanje/) — kazalo strokovnih strani. [EN](https://gomushroom.si/en/learn/)
+
+## Kakovost in analize
+
+- [Težke kovine v tinkturah](https://gomushroom.si/qc/tezke-kovine/): rezultati Pb, Cd, Hg in As, izmerjeni v končnem koncentriranem izdelku, analiza v akreditiranem laboratoriju, certifikati (COA) po serijah v PDF. [EN](https://gomushroom.si/en/qc/heavy-metals/)
+
+Analiza je opravljena na končnem izdelku in ne na surovini — ker so tinkture koncentrati, se v njih koncentrirajo tudi morebitne nečistoče.
+
+## Storitve za naročnike
+
+- [Ekstrakcija medicinskih gob po meri](https://gomushroom.si/storitve/ekstrakcije-medicinskih-gob/): razvoj in izvedba, formulacija, QC. [EN](https://gomushroom.si/en/services/medicinal-mushroom-extraction/)
+- [Gojenje Reishi](https://gomushroom.si/storitve/gojenje-reishi/): Ganoderma lucidum, antler morfologija, ekološki substrati. [EN](https://gomushroom.si/en/services/reishi-cultivation/)
+- [Botanični ekstrakti](https://gomushroom.si/storitve/botanicni-ekstrakti/): razvoj formulacij in laboratorijska podpora. [EN](https://gomushroom.si/en/services/botanical-extracts/)
+
+## Kaj tu ni
+
+- Raziskovalne strani o posameznih gobah (Reishi, Čaga, resasti bradovec) niso javno objavljene, so označene `noindex` in niso v sitemapu. Objavljena je le stran o raziskavah smrekovih vršičkov, navedena zgoraj.
+- Košarica, blagajna in interne aplikacije (`/materiali/`, `/zaloga/`, `/qc/` razen navedene strani) niso namenjene indeksiranju.
+
+## Stik
+
+- E-pošta: info@gomushroom.si
+- Telefon: +386 31 373 836
+- [Sitemap](https://gomushroom.si/sitemap.xml)

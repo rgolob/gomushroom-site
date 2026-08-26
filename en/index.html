@@ -33,7 +33,9 @@
   <link rel="icon" href="/assets/favicon-192.png" sizes="192x192" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/favicon-180.png" />
 
-  <link rel="preload" as="image" href="/assets/rotovap.webp" />
+  <link rel="preload" as="image" href="/assets/rotovap-388.webp"
+        imagesrcset="/assets/rotovap-388.webp 388w, /assets/rotovap.webp 680w"
+        imagesizes="(max-width:900px) 50vw, 320px" />
   <link rel="stylesheet" href="/css/site.css" />
 
   <script type="application/ld+json">
@@ -344,7 +346,10 @@
 
           <figure class="g-item" data-title="Rotavapor" data-text="Device description…">
             <button class="g-close" type="button" aria-label="Close">×</button>
-            <img src="/assets/rotovap.webp" alt="Rotavapor">
+            <img src="/assets/rotovap-388.webp"
+                 srcset="/assets/rotovap-388.webp 388w, /assets/rotovap.webp 680w"
+                 sizes="(max-width:900px) 50vw, 320px"
+                 alt="Rotavapor" width="680" height="906">
             <div class="g-overlay"><div class="box">
               <h4>Rotavapor</h4>
               <p>A rotavap allows us to concentrate extracts (remove solvent) at low temperatures,

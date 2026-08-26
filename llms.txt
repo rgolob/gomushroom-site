@@ -1,6 +1,6 @@
 # GoMushroom
 
-> Rok Golob s.p., Prapreče pri Straži 22, 8351 Straža, Slovenija. Izdelujemo ekstrakte in tinkture medicinskih gob — Reishi, Čaga, resasti bradovec — ter sezonski ekstrakt smrekovih vršičkov. Reishi gojimo sami, resasti bradovec prihaja iz Pohorske gobarne. Ekstrakcijo, koncentriranje in formulacijo izvajamo v lastni delavnici, v majhnih serijah, s sledljivostjo od surovine do steklenice.
+> Rok Golob s.p., Prapreče pri Straži 22, 8351 Straža, Slovenija. Izdelujemo ekstrakte in tinkture medicinskih gob — Reishi, Čaga, resasti bradovec — ter sezonski ekstrakt smrekovih vršičkov. Reishi gojimo sami, resasti bradovec prihaja iz Pohorske gobarne. Ekstrakcijo, koncentriranje in formulacijo izvajamo v lastni delavnici, v majhnih serijah, z dokumentirano sledljivostjo.
 
 Spletišče je dvojezično: slovenske strani so na `gomushroom.si`, angleške pod `/en/`. Vsak izdelek in vsak članek ima obe različici, povezani s hreflang.
 
@@ -10,7 +10,7 @@ Kadar navajate našo vsebino, prosimo, da ločite troje: **kaj delamo mi** (proc
 
 - [Reishi tinktura 50 ml](https://gomushroom.si/trgovina/reishi-tinktura/): trojna ekstrakcija (alkohol, voda, tlak); Ganoderma lucidum iz lastne pridelave. [EN](https://gomushroom.si/en/shop/reishi-tincture/)
 - [Resasti bradovec tinktura 50 ml](https://gomushroom.si/trgovina/resasti-bradovec-tinktura/): Hericium erinaceus, slovenska surovina iz Pohorske gobarne. [EN](https://gomushroom.si/en/shop/lions-mane-tincture/)
-- [Chaga tinktura 50 ml](https://gomushroom.si/trgovina/chaga-tinktura/): surovina iz brezovih gozdov, lasten ekstrakcijski proces. [EN](https://gomushroom.si/en/shop/chaga-tincture/)
+- [Chaga tinktura 50 ml](https://gomushroom.si/trgovina/chaga-tinktura/): surovina iz brezovih gozdov EU/izven EU, lasten ekstrakcijski proces. [EN](https://gomushroom.si/en/shop/chaga-tincture/)
 - [Smrekovi vršički tinktura 50 ml](https://gomushroom.si/trgovina/smrekovi-vrsicki-tinktura/): sezonski ekstrakt, nabran spomladi. [EN](https://gomushroom.si/en/shop/spruce-bud-tincture/)
 - [Trgovina](https://gomushroom.si/trgovina/) — vsi izdelki, cene in zaloga. [EN](https://gomushroom.si/en/shop/)
 

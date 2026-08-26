@@ -76,7 +76,11 @@ header{
 .nav{
   display:flex;
   align-items:center;
-  padding:12px 0;
+  /* Samo navpicno. Kratka oblika je povozila vodoravni odmik iz .wrap, zato se
+     je logotip dotikal roba zaslona, vsebina strani pod njim pa je bila
+     odmaknjena - glava in vsebina nista bili poravnani. */
+  padding-top:12px;
+  padding-bottom:12px;
   position:relative;
   gap:14px;
 }
@@ -185,7 +189,10 @@ nav a:hover::after{width:100%}
   cursor:pointer;
   padding:0;
   flex:0 0 auto;
-  margin: 0 10px 0 0;
+  /* Brez desnega roba: odmik od roba zaslona da .wrap, enako kot logotipu na
+     drugi strani. Teh 10 px je gumb potiskalo navznoter in glava je bila
+     nesimetricna - levo 14 px, desno 24 px. */
+  margin:0;
 }
 
 .nav-toggle:active{transform:translateY(1px)}
@@ -1548,15 +1555,17 @@ body.gallery-open .gallery-backdrop{display:block}
   .arrow{display:none}
   .dots{bottom:10px}
 
-  .nav{padding:10px 0}
+  .nav{padding-top:10px;padding-bottom:10px}
   .brand img{height:34px;width:auto}
   .nav-toggle{display:inline-flex;align-items:center;justify-content:center}
 
   #site-header nav{
     position:absolute;
     top:100%;
-    left:-14px;
-    right:-14px;
+    /* Cez rob zaslona: -14 px je meni raztegnilo na 440 px pri 412 px zaslonu
+       in stran je dobila vodoravno drsenje. Meni sega od roba do roba. */
+    left:0;
+    right:0;
     display:none;
     flex-direction:column;
     gap:8px;

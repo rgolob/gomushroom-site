@@ -329,6 +329,11 @@ function renderShopGrid(products) {
   const grid = document.querySelector('.shop-grid');
   if (!grid) return;
 
+  // Mreza ze nosi staticni seznam izdelkov iz HTML. Ce baza ne odgovori ali
+  // vrne prazno, ga pustimo pri miru: seznam brez cen je bolje kot prazna
+  // trgovina. Povozimo ga sele takrat, ko imamo kaj boljsega.
+  if (!products.length) return;
+
   grid.innerHTML = products.map(p => {
     const alcVariant = p.variants.find(v => v.type === 'alc');
     const glyVariant = p.variants.find(v => v.type === 'gly');
@@ -505,6 +510,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderShopGrid(products);
     renderActiveDiscountBanner();
   } catch(e) {
+    // Staticne kartice ostanejo na mestu - izdelki in povezave so vidni tudi
+    // takrat, ko Supabase ni dosegljiv.
     console.error('Shop error:', e);
   }
 });

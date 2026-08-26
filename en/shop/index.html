@@ -77,30 +77,78 @@
       <div id="shop-discount-banner" style="display:none"></div>
 
       <section class="shop-grid" aria-label="Products">
-        <div class="shop-skeleton" aria-hidden="true">
-          <div class="shop-skeleton__img"></div>
-          <div class="shop-skeleton__body">
-            <div class="shop-skeleton__line shop-skeleton__line--title"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--meta"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--btn"></div>
+        <!-- Izdelke izrise shop.js iz baze in ta seznam povozi. Tu stoji zato,
+             ker je bila mreza v HTML prazna: iskalnik in bralnik brez
+             JavaScripta nista videla nobenega izdelka ne povezave nanj.
+             Cene, zaloge in ocen tu ni - ti se spreminjajo in bi zastareli. -->
+        <article class="shop-product">
+          <div class="shop-product-img-wrap">
+            <a class="shop-product-img-link" href="/en/shop/reishi-tincture/">
+              <div class="shop-product-image">
+                <img src="/assets/shop/reishi-tinktura-50ml-gomushroom-shop.webp" alt="Reishi" width="400" height="400" loading="lazy">
+              </div>
+            </a>
           </div>
-        </div>
-        <div class="shop-skeleton" aria-hidden="true">
-          <div class="shop-skeleton__img"></div>
-          <div class="shop-skeleton__body">
-            <div class="shop-skeleton__line shop-skeleton__line--title"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--meta"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--btn"></div>
+          <div class="shop-product-content">
+            <a class="shop-product-text-link" href="/en/shop/reishi-tincture/">
+              <p class="product-species">Ganoderma lucidum</p>
+              <h2>Reishi</h2>
+              <p class="shop-product-desc">For an evening ritual and a calmer end to the day.</p>
+              <div class="shop-product-chips"><span class="shop-product-chip">Evening ritual</span><span class="shop-product-chip">Calming</span></div>
+            </a>
           </div>
-        </div>
-        <div class="shop-skeleton" aria-hidden="true">
-          <div class="shop-skeleton__img"></div>
-          <div class="shop-skeleton__body">
-            <div class="shop-skeleton__line shop-skeleton__line--title"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--meta"></div>
-            <div class="shop-skeleton__line shop-skeleton__line--btn"></div>
+        </article>
+        <article class="shop-product">
+          <div class="shop-product-img-wrap">
+            <a class="shop-product-img-link" href="/en/shop/lions-mane-tincture/">
+              <div class="shop-product-image">
+                <img src="/assets/shop/resasti-bradovec-tinktura-50ml-gomushroom-shop.webp" alt="Lion's Mane" width="400" height="400" loading="lazy">
+              </div>
+            </a>
           </div>
-        </div>
+          <div class="shop-product-content">
+            <a class="shop-product-text-link" href="/en/shop/lions-mane-tincture/">
+              <p class="product-species">Hericium erinaceus</p>
+              <h2>Lion's Mane</h2>
+              <p class="shop-product-desc">For mental routine and demanding days.</p>
+              <div class="shop-product-chips"><span class="shop-product-chip">Focus</span><span class="shop-product-chip">Mental routine</span></div>
+            </a>
+          </div>
+        </article>
+        <article class="shop-product">
+          <div class="shop-product-img-wrap">
+            <a class="shop-product-img-link" href="/en/shop/chaga-tincture/">
+              <div class="shop-product-image">
+                <img src="/assets/shop/chaga-tinktura-50ml-gomushroom-shop.webp" alt="Chaga" width="400" height="400" loading="lazy">
+              </div>
+            </a>
+          </div>
+          <div class="shop-product-content">
+            <a class="shop-product-text-link" href="/en/shop/chaga-tincture/">
+              <p class="product-species">Inonotus obliquus</p>
+              <h2>Chaga</h2>
+              <p class="shop-product-desc">For demanding days and challenging periods.</p>
+              <div class="shop-product-chips"><span class="shop-product-chip">Daily routine</span><span class="shop-product-chip">Traditional use</span></div>
+            </a>
+          </div>
+        </article>
+        <article class="shop-product">
+          <div class="shop-product-img-wrap">
+            <a class="shop-product-img-link" href="/en/shop/spruce-bud-tincture/">
+              <div class="shop-product-image">
+                <img src="/assets/shop/smrekovi-vrsicki-tinktura-50ml-gomushroom-shop.webp" alt="Spruce Bud Tincture" width="400" height="400" loading="lazy">
+              </div>
+            </a>
+          </div>
+          <div class="shop-product-content">
+            <a class="shop-product-text-link" href="/en/shop/spruce-bud-tincture/">
+              <p class="product-species">Picea abies</p>
+              <h2>Spruce Bud Tincture</h2>
+              <p class="shop-product-desc">From local tradition into a modern extract.</p>
+              <div class="shop-product-chips"><span class="shop-product-chip">Young buds</span><span class="shop-product-chip">Traditional use</span></div>
+            </a>
+          </div>
+        </article>
       </section>
 
       <section class="shop-manifesto">

@@ -75,7 +75,18 @@ for u in locs:
                 napacne.append((u,f'{p} na {tip}'))
 t(not napacne,'lastnosti pripadajo svojemu tipu v strukturiranih podatkih',napacne)
 
-# 8. robots.txt ne sme nicesar zapirati.
+# 8. Trgovina mora v HTML nasteti vse izdelke. Mreza jih izrise iz baze, zato je
+#    bila prazna - iskalnik in bralnik brez JavaScripta nista videla nobenega
+#    izdelka. Staticni seznam se zlahka razide s sitemapom, ko pride nov izdelek.
+for trgovina in ('/trgovina/','/en/shop/'):
+    h=open('.'+trgovina+'index.html',encoding='utf-8').read()
+    mreza=re.search(r'<section class="shop-grid".*?</section>',h,re.S)
+    povezave={m for m in re.findall(r'href="(/[^"]+/)"',mreza.group(0))} if mreza else set()
+    pricakovane={u for u in locs if u.startswith(trgovina) and u!=trgovina}
+    t(povezave==pricakovane,f'{trgovina} nasteje vse izdelke iz sitemapa',
+      f'manjka {sorted(pricakovane-povezave)}, odvec {sorted(povezave-pricakovane)}')
+
+# 9. robots.txt ne sme nicesar zapirati.
 rt=open('robots.txt',encoding='utf-8').read()
 t('Disallow: /' not in rt.replace('Disallow: /\n','X') or 'Disallow:' not in rt,
   'robots.txt ne zapira spletisca',rt.strip().replace('\n',' | '))

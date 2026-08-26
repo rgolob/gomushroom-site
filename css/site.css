@@ -3005,3 +3005,11 @@ footer.site-footer{
   }
 }
 
+
+
+/* Trgovina: kartica v HTML nosi nogo brez cene in brez delujocega gumba, da
+   ima kartica ze pred odzivom baze koncno visino. Brez tega je na telefonu
+   poskocila za 30 px, cela stran pa za 162 px. Prigasena je zato, ker gumb
+   takrat se ne dela - videti mora kot cakanje, ne kot pokvarjen gumb. */
+.shop-product-foot--caka{opacity:.45;pointer-events:none}
+.shop-product-rating--caka{visibility:hidden}

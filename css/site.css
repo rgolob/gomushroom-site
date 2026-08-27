@@ -265,23 +265,38 @@ nav a:hover::after{width:100%}
 .dots{
   position:absolute;
   left:50%;
-  bottom:14px;
+  bottom:7px;
   transform:translateX(-50%);
   display:flex;
-  gap:8px;
+  gap:2px;
   z-index:3;
 }
 
+/* Pika ostane 10px, gumb pod njo pa meri 24x24 - toliko zahteva merilo za
+   zadetljivost s prstom. Zato je gumb prazen, krogec nariše ::before. Razmik
+   2px poskrbi, da si sosednji tarči 24px ne segata v polje. */
 .dot{
+  width:24px;
+  height:24px;
+  padding:0;
+  border:none;
+  background:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.dot::before{
+  content:'';
   width:10px;
   height:10px;
   border-radius:999px;
   border:1px solid rgba(0,0,0,.25);
   background:rgba(255,255,255,.65);
-  cursor:pointer;
 }
 
-.dot.active{background:#fff;}
+.dot.active::before{background:#fff;}
 
 .arrow{
   position:absolute;
@@ -552,7 +567,7 @@ h3{
   .hero-badges{gap:10px;margin-top:18px;}
   .hero-badge{font-size:13px;padding:5px 10px;}
   .kicker{font-size:11px;letter-spacing:.16em;}
-  .dots{bottom:10px;}
+  .dots{bottom:3px;}
   .hero-species{font-size:12px;letter-spacing:.06em;margin:0 0 12px;}
 }
 
@@ -1557,7 +1572,7 @@ body.gallery-open .gallery-backdrop{display:block}
   #znanje-kontakt{padding:20px 0;}
   .headline{padding:18px 16px}
   .arrow{display:none}
-  .dots{bottom:10px}
+  .dots{bottom:3px}
 
   .nav{padding-top:10px;padding-bottom:10px}
   .brand img{height:34px;width:auto}

@@ -1237,6 +1237,14 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>Odstranjeno topilo (g)</label><input id="glyOdstranjeno" type="text" inputmode="decimal" placeholder="npr. 2806" oninput="calcGly()"></div>
           <div class="field"><label>Vol % EtOH v destilatu</label><input id="glyDestVol" type="text" inputmode="decimal" placeholder="npr. 29" oninput="calcGly()"></div>
         </div>
+        <div class="frow">
+          <div class="field"><label>Vol % EtOH v začetni tinkturi</label><input id="glyVol0" type="text" inputmode="decimal" placeholder="iz delovnega naloga" oninput="calcGly()"></div>
+          <div class="field"></div>
+        </div>
+        <div style="font-size:.62rem;color:var(--muted);line-height:1.4;margin:.1rem 0 0">
+          Moč začetne tinkture je edini podatek, s katerim se da vodo ločiti od etanola,
+          ki je morda še ostal v buči. Brez nje app privzame, da je uparjen ves alkohol.
+        </div>
         <div id="glyOdstrIzpis"></div>
       </div>
 
@@ -1914,21 +1922,35 @@ const GLY_PRIVZETO={ciljPct:75,rhoGly:1.261,rhoW:0.998,kPct:0.8,rhoExt:1.2,
 // povrnitev zapisa, da se seznam polj ne podvaja na treh mestih.
 const GLY_POLJA={
   glySerija:'serija',glyCilj:'ciljPct',glyM0:'m0',glyRho0:'rho0',glyLod:'lodPct',
-  glyVodaZe:'vodaZe',glyOdstranjeno:'odstranjeno',glyDestVol:'destVolPct',
+  glyVodaZe:'vodaZe',glyOdstranjeno:'odstranjeno',glyDestVol:'destVolPct',glyVol0:'vol0Pct',
   glyCVitPct:'cVitPct',glyCVitZePct:'cVitZePct',glyLecPct:'lecPct',glyLecZePct:'lecZePct',
   glyCVitVoda:'cVitVoda',glyLecVoda:'lecVoda',glyLecGly:'lecGly',
   glyRhoGly:'rhoGly',glyRhoW:'rhoW',glyK:'kPct',glyRhoExt:'rhoExt',
   glyDejGly:'dejGly',glyDejVoda:'dejVoda',glyDejCVit:'dejCVit',glyDejLec:'dejLec',
 };
 
+// Etanol, ki je ostal v buci: kar ga je bilo v zacetni tinkturi, minus kar ga
+// je odslo z destilatom. Brez podatka o moci zacetne tinkture tega ni mogoce
+// izracunati - takrat vrnemo null in racunamo, kot da je uparjen ves.
+// Suha snov ni topilo, zato v oba deleza vstopa samo masa topila.
+function glyEtOHOstanek(o){
+  if(!(o.odstranjeno>0)||!(o.m0>0)||!(o.vol0Pct>0)||!(o.destVolPct>0))return null;
+  const topilo=o.m0-o.m0*o.lodPct/100;
+  const mEt0=topilo*volToMas(o.vol0Pct)/100;
+  const mAae=o.odstranjeno*volToMas(o.destVolPct)/100;
+  return mEt0-mAae;
+}
+
 // Voda, ki ostane ob suhi snovi po uparjanju. Te vrednosti ni mogoce vedeti
-// vnaprej - dobis jo sele iz mase odstranjenega topila: kar ostane, je suha
-// snov in voda. Zato je tudi ni smiselno vnasati rocno, dokler uparjanja ni.
+// vnaprej - dobis jo sele iz mase odstranjenega topila: kar ostane v buci, je
+// suha snov, voda in morebitni preostali etanol. Zato je tudi ni smiselno
+// vnasati rocno, dokler uparjanja ni.
 function glyVodaOstanek(o){
   if(!(o.odstranjeno>0)||!(o.m0>0))return null;
   const mExt=o.m0*o.lodPct/100;
   const mOst=o.m0-o.odstranjeno;
-  const mVode=mOst-mExt;
+  const mEtOst=glyEtOHOstanek(o);
+  const mVode=mOst-mExt-Math.max(0,mEtOst||0);
   return mVode>=0?round(mVode,2):null;
 }
 
@@ -1953,20 +1975,30 @@ function glyRacun(o){
   const vodaDodati=voda-o.vodaZe;
 
   // ── Korak pred pripravo: odstranjevanje topila ──
-  // Suha snov se pri uparjanju ne spremeni, zato je voda, ki ostane, razlika
-  // med ostankom in suho snovjo. Iz mase destilata in njegove koncentracije
-  // dobimo m AAE, iz tega pa kontrolno moc zacetne tinkture BREZ suhe snovi -
-  // suha snov namrec ni topilo in ne sme v imenovalec.
+  // Suha snov se pri uparjanju ne spremeni, zato je v buci ostala suha snov,
+  // voda in morebitni preostali etanol. Iz mase destilata in njegove
+  // koncentracije dobimo m AAE, iz tega pa kontrolno moc zacetne tinkture BREZ
+  // suhe snovi - suha snov namrec ni topilo in ne sme v imenovalec.
+  // Sele bilanca etanola (mEt0 - mAae) locí vodo od preostalega alkohola; brez
+  // vnesene moci zacetne tinkture je "ostanek - suha snov" zgornja meja vode.
   const odstr=o.odstranjeno>0?(()=>{
     const mOst=o.m0-o.odstranjeno;
-    const mVode=mOst-mExt;
     const masPct=o.destVolPct>0?volToMas(o.destVolPct):0;
     const mAae=o.odstranjeno*masPct/100;
     const topilo=o.m0-mExt;
     const mmKont=topilo>0?mAae/topilo*100:0;
+    const mEtOst=glyEtOHOstanek(o);
+    const znanVol0=mEtOst!=null;
     return {
       pctOdstr:o.m0>0?o.odstranjeno/o.m0*100:0,
-      mOst,mVode,mSs:mExt,mAae,mmKont,
+      mOst,mSs:mExt,mAae,mmKont,znanVol0,mEtOst,
+      mEt0:znanVol0?topilo*volToMas(o.vol0Pct)/100:0,
+      mVodeZgornja:mOst-mExt,
+      mVode:mOst-mExt-Math.max(0,mEtOst||0),
+      // Rahlo negativen ostanek etanola je le merilna napaka (moc tinkture in
+      // moc destilata sta obe merjeni); opozorimo sele, ko razlike ni vec moc
+      // razloziti z zaokrozevanjem.
+      mEtTol:-Math.max(2,mAae*0.02),
       volKont:mmKont>0?masToVol(round(mmKont,3)):0,
     };
   })():null;
@@ -2036,7 +2068,7 @@ function openGlySheet(){
   document.getElementById('glyRazNacin').value=s.razNacin||'dodaj';
   set('glyM0',s.m0??'');set('glyRho0',s.rho0??'');set('glyLod',s.lodPct??'');
   set('glyVodaZe',s.vodaZe??'');
-  set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');
+  set('glyOdstranjeno',s.odstranjeno??'');set('glyDestVol',s.destVolPct??'');set('glyVol0',s.vol0Pct??'');
   // Dejansko dodano in opomba sta vezana na konkretno serijo, zato ju ne
   // prenasamo iz zadnjega preracuna - napolnita se sele ob izbiri naloga.
   _glyVodaRocna=false;
@@ -2218,7 +2250,7 @@ function calcGly(){
     razNacin:document.getElementById('glyRazNacin').value,
     ciljPct:num('glyCilj',GLY_PRIVZETO.ciljPct),
     m0:num('glyM0'),rho0:num('glyRho0'),lodPct:num('glyLod'),vodaZe:num('glyVodaZe'),
-    odstranjeno:num('glyOdstranjeno'),destVolPct:num('glyDestVol'),
+    odstranjeno:num('glyOdstranjeno'),destVolPct:num('glyDestVol'),vol0Pct:num('glyVol0'),
     dejGly:num('glyDejGly'),dejVoda:num('glyDejVoda'),
     dejCVit:num('glyDejCVit'),dejLec:num('glyDejLec'),
     opomba:document.getElementById('glyOpomba').value.trim(),
@@ -2277,10 +2309,18 @@ function calcGly(){
       ${vrstica('Odstranjeno',n(o2.pctOdstr,1),'%')}
       ${vrstica('m ost. — ostanek po uparjanju',n(o2.mOst),'g')}
       ${vrstica('m ss — suha snov',n(o2.mSs,1),'g')}
-      ${vrstica('m vode — voda v ostanku',n(o2.mVode,1),'g',true)}
+      ${o2.znanVol0?`
+        ${vrstica('m EtOH₀ — etanol v začetni tinkturi',n(o2.mEt0,1),'g')}
+        ${vrstica('m EtOH ost. — etanol, ostal v buči',n(Math.max(0,o2.mEtOst),1),'g')}
+        ${o2.mEtOst<o2.mEtTol?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Z destilatom je odšlo ${n(-o2.mEtOst,1)} g etanola več, kot ga je bilo v začetni tinkturi — preveri vol % destilata oz. vol % začetne tinkture.</div>`:''}
+        ${vrstica('m vode — voda v ostanku',n(o2.mVode,1),'g',true)}`
+      :`
+        ${vrstica('m vode — voda + morebitni preostali etanol',n(o2.mVode,1),'g',true)}
+        <div style="font-size:.68rem;color:var(--muted);padding:.3rem 0;line-height:1.4">To je <strong>zgornja meja</strong> vode: če je v buči ostal še kaj etanola, je vode za toliko manj. Vnesi vol % začetne tinkture, da ju app loči.</div>`}
       ${o2.mVode<0?`<div style="font-size:.72rem;color:#c0392b;padding:.4rem 0">⚠ Suhe snovi je več kot ostanka — preveri Lod oz. maso odstranjenega topila.</div>`:`${Math.abs(o.vodaZe-o2.mVode)<0.01?`<div style="font-size:.68rem;color:#3a6b4a;padding:.3rem 0">✓ prevzeto kot „voda že prisotna"</div>`:`<div style="padding:.35rem 0"><button type="button" onclick="glyUporabiVodo(${round(o2.mVode,2)})" style="border:1px solid rgba(175,132,85,.45);background:rgba(175,132,85,.1);border-radius:999px;padding:.28rem .7rem;font-family:inherit;font-size:.72rem;cursor:pointer;color:var(--ink)">↓ uporabi kot „voda že prisotna" (zdaj ${n(o.vodaZe)} g)</button></div>`}`}
       ${vrstica('m AAE — absolutni alkohol v destilatu',n(o2.mAae,1),'g')}
-      ${vrstica('Kontrola — moč začetne tinkture',n(o2.mmKont,2)+' m% / '+n(o2.volKont,1),'vol %')}
+      ${vrstica('Kontrola — moč začetne tinkture, če je uparjen ves alkohol',n(o2.mmKont,2)+' m% / '+n(o2.volKont,1),'vol %')}
+      ${o2.znanVol0&&o2.volKont>0&&o2.mEtOst>=o2.mEtTol?`<div style="font-size:.68rem;color:var(--muted);padding:.3rem 0;line-height:1.4">Vnesena moč je ${pct(o.vol0Pct)} vol %. ${o2.mEtOst>1?`Razlika pomeni, da je v buči ostalo ${n(o2.mEtOst,1)} g etanola.`:'Ujema se — alkohol je praktično ves uparjen.'}</div>`:''}
     </div>`;
   }
 

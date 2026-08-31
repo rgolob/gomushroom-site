@@ -1260,7 +1260,7 @@ async function sendStripeConfirmationEmail(order, calc) {
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
           <tr>
             <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle">
-              <img src="https://gomushroom.si/assets/logo-email.jpg" alt="GoMushroom" width="128" height="44" style="display:block;height:44px;width:128px">
+              <img src="https://gomushroom.si/assets/logo-email.png" alt="GoMushroom" width="127" height="44" style="display:block;height:44px;width:127px;border:0;outline:none;text-decoration:none">
             </td>
             <td bgcolor="#f7f3ee" style="background:#f7f3ee;vertical-align:middle;text-align:right;white-space:nowrap;padding-left:.75rem">
               <div style="font-size:.95rem;font-weight:500;color:#1a1209">${ES.email.headerTitle}</div>
@@ -1493,7 +1493,7 @@ async function sendConfirmationEmail(order, rf, calc) {
     <div style="background:#f7f3ee;padding:1.5rem;border-bottom:2px solid #af8455">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <img src="https://gomushroom.si/assets/logo-horizontal.webp" alt="GoMushroom" width="160" height="55" style="display:block;width:160px;height:auto;margin-bottom:.35rem;background-color:#f7f3ee">
+          <img src="https://gomushroom.si/assets/logo-email.png" alt="GoMushroom" width="159" height="55" style="display:block;width:159px;height:55px;margin-bottom:.35rem;border:0;outline:none;text-decoration:none">
           <div style="font-size:.72rem;color:#9a8f82">Rok Golob s.p. · gomushroom.si</div>
         </div>
         <div style="text-align:right">

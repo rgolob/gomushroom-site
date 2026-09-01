@@ -784,8 +784,13 @@ document.addEventListener('click', function (e) {
       const avg = rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length;
       const full = Math.round(avg);
       const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
-      const label = rows.length === 1 ? 'oceno' : rows.length < 5 ? 'ocene' : 'ocen';
-      mount.innerHTML = `<span class="stars">${stars}</span><span class="avg">${avg.toFixed(1)}</span><span class="count">${rows.length} ${label} strank</span>`;
+      // Isti razdelek stoji na slovenski in angleski naslovnici, stevilke so
+      // iste, napis pa ne sme biti.
+      const en = document.documentElement.lang === 'en';
+      const napis = en
+        ? `${rows.length} customer ${rows.length === 1 ? 'review' : 'reviews'}`
+        : `${rows.length} ${rows.length === 1 ? 'oceno' : rows.length < 5 ? 'ocene' : 'ocen'} strank`;
+      mount.innerHTML = `<span class="stars">${stars}</span><span class="avg">${avg.toFixed(1)}</span><span class="count">${napis}</span>`;
       mount.classList.add('is-visible');
     })
     .catch(() => {});

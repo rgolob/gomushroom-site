@@ -135,7 +135,7 @@ const EN_DETAIL_PATHS = {
 };
 
 // Pravo angleško ime izdelka (gm_products.name je samo v slovenscini)
-const EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane", 'smrekovi-vrsicki': 'Spruce Buds' };
+const EN_PRODUCT_NAMES = { 'bradovec': "Lion's Mane", 'smrekovi-vrsicki': 'Spruce Bud' };
 function displayProductName(p) {
   return LANG === 'en' ? (EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
 }

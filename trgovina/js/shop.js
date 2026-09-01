@@ -140,6 +140,23 @@ function displayProductName(p) {
   return LANG === 'en' ? (EN_PRODUCT_NAMES[p.slug] || p.name) : p.name;
 }
 
+// Nalepka na steklenicki je fotografirana v obeh jezikih, pot do slike pa je v
+// bazi ena sama in slovenska. V EN trgovini jo zamenjamo z angleskim parom.
+const EN_SLIKE = {
+  'reishi-tinktura': 'reishi-tincture',
+  'chaga-tinktura': 'chaga-tincture',
+  'resasti-bradovec-tinktura': 'lions-mane-tincture',
+  'smrekovi-vrsicki-tinktura': 'spruce-bud-tincture'
+};
+function slikaIzdelka(p) {
+  const pot = p.image || '';
+  if (LANG !== 'en' || !pot) return pot;
+  for (const [sl, en] of Object.entries(EN_SLIKE)) {
+    if (pot.includes(sl)) return pot.replace(sl, en);
+  }
+  return pot;
+}
+
 // Izdelki, ki (za zdaj) niso na voljo v EN trgovini
 const EN_HIDDEN_PRODUCTS = [];
 
@@ -352,7 +369,7 @@ function renderShopGrid(products) {
         <div class="shop-product-img-wrap">
           <a class="shop-product-img-link" href="${detailUrl || SHOP_HOME}">
             <div class="shop-product-image">
-              <img src="${p.image ? p.image.replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${displayProductName(p)}" width="400" height="400" loading="lazy" onerror="this.src='${p.image || '/assets/placeholder.webp'}'">
+              <img src="${slikaIzdelka(p) ? slikaIzdelka(p).replace(/\.webp$/, '-shop.webp') : '/assets/placeholder.webp'}" alt="${displayProductName(p)}" width="400" height="400" loading="lazy" onerror="this.src='${slikaIzdelka(p) || '/assets/placeholder.webp'}'">
               ${maxDiscount > 0 ? `<span class="gm-discount-badge">−${maxDiscount}%</span>` : ''}
             </div>
           </a>
@@ -392,7 +409,7 @@ function renderShopGrid(products) {
               data-slug="${p.slug}" data-name="${p.name}"
               data-variant="${defaultVariant.type}" data-variant-label="${SHOP_STR.variantName[defaultVariant.type] || defaultVariant.name}"
               data-price="${discPrice.toFixed(2)}" data-sku="${defaultVariant.sku || ''}"
-              data-image="${p.image || ''}"
+              data-image="${slikaIzdelka(p) || ''}"
               ${!defaultVariant.in_stock ? 'disabled' : ''}>
               ${defaultVariant.in_stock ? SHOP_STR.add : SHOP_STR.outOfStock}
             </button>
@@ -462,7 +479,7 @@ function bindVariantPickers(products) {
       if (product.image) {
         const imgEl = card.querySelector('.shop-product-image img');
         if (imgEl) {
-          const base = product.image.replace(/\.webp$/, '');
+          const base = slikaIzdelka(product).replace(/\.webp$/, '');
           const variantImg = type === 'gly' ? `${base}-gly-shop.webp` : `${base}-shop.webp`;
           const fallbackImg = `${base}-shop.webp`;
           imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = fallbackImg; };

@@ -101,7 +101,7 @@ function gmShowBanner() {
     color: #f0ebe3;
     padding: 1rem 1.25rem;
     box-shadow: 0 -4px 24px rgba(0,0,0,.25);
-    font-family: 'Jost', sans-serif;
+    font-family: 'Jost', sans-serif, 'Apple Color Emoji', 'Noto Color Emoji';
     font-size: .82rem;
     line-height: 1.5;
   `;

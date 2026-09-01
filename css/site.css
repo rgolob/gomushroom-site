@@ -19,11 +19,22 @@ section { scroll-margin-top: 80px; }
 
 *{box-sizing:border-box}
 
+/* Emojiji: na Applovih napravah se uporabi njihova pisava, ki je ze na
+   napravi, drugod pa nasa okrnjena Noto namesto Segoe oziroma sistemske.
+   unicode-range je omejen na znake, ki jih stran res uporablja, zato se
+   datoteka prenese samo takrat, ko je zares potrebna - na Applu nikoli. */
+@font-face {
+  font-family:'Noto Color Emoji';
+  src:url('/assets/fonts/noto-emoji.woff2') format('woff2');
+  font-display:swap;
+  unicode-range:U+200D, U+23F0, U+23F3, U+26A0-26A1, U+2705, U+270D, U+2744, U+FE0F, U+1F30D, U+1F331, U+1F33F, U+1F343-1F344, U+1F36A, U+1F36F, U+1F381, U+1F3E6, U+1F3F7, U+1F449, U+1F4B0, U+1F4C4, U+1F4CA-1F4CB, U+1F4DC, U+1F4E6, U+1F4F8, U+1F50E, U+1F52C, U+1F69A, U+1F6D2, U+1F6E1, U+1F7EB, U+1F9EA-1F9EB;
+}
+
 html,body{
   margin:0;
   background:var(--bg);
   color:var(--fg);
-  font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Noto Color Emoji';
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;

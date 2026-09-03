@@ -196,6 +196,10 @@
         .then(function (o) {
           if (!o.ok) throw new Error(o.d && o.d.error ? o.d.error : 'Prijava ni uspela');
 
+          // Ce je naslov ze prijavljen in njegova koda ne zivi vec, sporocila
+          // ni bilo — takrat ne smemo trditi, da je koda na poti.
+          var brezSporocila = !!(o.d && o.d.zePrijavljen);
+
           zapisi(KLJUC_PRIJAVLJEN, String(Date.now()));
           // E-naslova ne posiljamo v GA4 — samo, od kod je prijava prisla.
           sledi('newsletter_signup', { source: 'first_purchase_popup' });
@@ -205,18 +209,30 @@
             if (ev.key === 'Escape') { ovoj.classList.remove('je-odprt'); setTimeout(function () { ovoj.remove(); }, 300); }
           });
 
-          ovoj.querySelector('#gm-nl-vsebina').innerHTML =
-            '<div class="gm-nl-hvala">' +
-              '<div class="gm-nl-ikona">&#x2709;&#xFE0F;</div>' +
-              '<h2 class="gm-nl-naslov">Hvala za prijavo.</h2>' +
-              '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda za ' + pct +
-                ' % popusta je že na poti v vaš e-poštni predal.</p>' +
-            '</div>';
+          ovoj.querySelector('#gm-nl-vsebina').innerHTML = brezSporocila
+            ? '<div class="gm-nl-hvala">' +
+                '<div class="gm-nl-ikona">&#x2714;&#xFE0F;</div>' +
+                '<h2 class="gm-nl-naslov">Ta naslov je že prijavljen.</h2>' +
+                '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda, ki ste jo prejeli, ' +
+                  'je bila že uporabljena ali je potekla. Pišite nam na ' +
+                  '<a href="mailto:info@gomushroom.si" style="color:inherit">info@gomushroom.si</a> ' +
+                  'in pogledamo, kaj se da narediti.</p>' +
+              '</div>'
+            : '<div class="gm-nl-hvala">' +
+                '<div class="gm-nl-ikona">&#x2709;&#xFE0F;</div>' +
+                '<h2 class="gm-nl-naslov">Hvala za prijavo.</h2>' +
+                '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda za ' + pct +
+                  ' % popusta je že na poti v vaš e-poštni predal.</p>' +
+              '</div>';
 
-          setTimeout(function () {
-            ovoj.classList.remove('je-odprt');
-            setTimeout(function () { ovoj.remove(); }, 300);
-          }, 4000);
+          // Zahvala se sama umakne; sporocilo o ze prijavljenem naslovu pa ne,
+          // ker vsebuje e-naslov, ki si ga mora clovek prepisati.
+          if (!brezSporocila) {
+            setTimeout(function () {
+              ovoj.classList.remove('je-odprt');
+              setTimeout(function () { ovoj.remove(); }, 300);
+            }, 4000);
+          }
         })
         .catch(function (err) {
           gumb.disabled = false;

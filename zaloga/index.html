@@ -5199,6 +5199,16 @@ function renderSales(){
           </div>
           <div class="sg-meta">
             <span class="ch-pill ${ch.cls}">${ch.icon} ${ch.label}${g.discount?` –${g.discount}%`:''}</span>
+            ${/* Nacin dostave je bil doslej zakopan sredi opombe v drobnem
+                  sivem tisku, zato po potrditvi ni bilo videti, kaj si izbral.
+                  Zdaj stoji kot svoja oznaka, v svoji barvi. */''}
+            ${(()=>{
+              const nk=dostavaIzOpombe(g.note);
+              if(!nk)return '';
+              const d=DOSTAVA_NACINI[nk];
+              const znesek=nk==='placana'&&g.shippingFee>0?` ${Number(g.shippingFee).toFixed(2)} €`:'';
+              return `<span style="font-size:.62rem;font-weight:600;letter-spacing:.04em;padding:.15rem .45rem;border-radius:8px;border:1px solid ${d.barva}55;color:${d.barva};background:${d.barva}14">🚚 ${d.oznaka}${znesek}</span>`;
+            })()}
             ${g.note?`<span style="font-size:.68rem;color:var(--muted)">${g.note}</span>`:''}
           </div>`:`<div class="sg-meta"><span class="ch-pill ${ch.cls}" style="font-size:.6rem;padding:.1rem .4rem">${ch.icon}</span><span style="font-size:.72rem;color:var(--muted)">${prodSummary}</span></div>`}
         </div>
@@ -5231,6 +5241,7 @@ function renderSales(){
             if(!partner)return '';
             return `<button class="tbtn" style="background:rgba(60,107,74,.25);color:#3a6b4a;border-color:rgba(60,107,74,.5)" onclick="sendToPartner('${g.id}','${partner.id}')" title="Pošlji zalogo partnerju ${partner.name}">🤝 ${partner.name}</button>`;
           })()}
+          ${!isStorno&&(g.channel==='wp'||g.channel==='stripe')?`<button class="tbtn" title="Popravi način dostave" onclick="spremeniDostavo('${g.id}')">🚚</button>`:''}
           ${!isStorno?`<button class="tbtn" onclick="openEditGroup('${g.id}')">✎</button>`:''}
           ${!isStorno&&!hasInvoice&&g.channel==='kom'?`<button class="tbtn" style="background:rgba(139,58,42,.15);color:#8b3a2a;border-color:rgba(139,58,42,.3)" onclick="vrniKomisijo('${g.id}')">↩ Vrni blago</button>`:''}
           ${/* Komisija ima svojo pot nazaj - vrnitev blaga - dokler racun ni izdan.
@@ -8293,6 +8304,128 @@ function renderNarocila() {
   }).join('');
 }
 
+// ── Nacin dostave ──────────────────────────────────────────────────────────
+// Tri moznosti, ki se razlikujejo samo v enem: ali je nastal strosek postnine.
+//
+//   lastni prevzem   posiljke ni bilo        strosek se NE obracuna
+//   dostava          stranka je placala      prihodek od postnine
+//   brezplacna       posiljko sem placal jaz strosek se obracuna
+//
+// Poslednji dve sta si na oko podobni, v porocilu o dobicku pa nista: pri
+// brezplacni dostavi renderPorocilo pristeje strosek (freeShipN x postnina),
+// pri lastnem prevzemu ne.
+const DOSTAVA_NACINI = {
+  prevzem:    { note: 'lastni prevzem',                              oznaka: 'Lastni prevzem',      barva: '#6f6a75' },
+  placana:    { note: 'dostava',                                     oznaka: 'Poštnino plačala stranka', barva: '#3a6b4a' },
+  brezplacna: { note: 'brezplačna dostava (poštnino castil prodajalec)', oznaka: 'Brezplačna dostava', barva: '#b8791f' },
+};
+
+// Iz shranjene opombe ugotovi nacin. Vrstni red je pomemben: "brezplacna
+// dostava ..." vsebuje tudi besedo "dostava", zato jo moramo preveriti prej.
+function dostavaIzOpombe(note) {
+  const n = String(note || '');
+  if (n.includes(DOSTAVA_NACINI.brezplacna.note)) return 'brezplacna';
+  if (n.includes(DOSTAVA_NACINI.prevzem.note))    return 'prevzem';
+  if (n.includes(DOSTAVA_NACINI.placana.note))    return 'placana';
+  return null;
+}
+
+function zapriDostavaSheet(){
+  const el = document.getElementById('dostavaOverlay');
+  if (el) el.remove();
+}
+
+// Vrne {shippingFee, note, kljuc} ali null ob preklicu.
+function vprasajZaDostavo(shranjenaPostnina, kupec, trenutni) {
+  return new Promise(resolve => {
+    zapriDostavaSheet();
+    const el = document.createElement('div');
+    el.id = 'dostavaOverlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(26,18,9,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+
+    const moznost = (kljuc, naslov, opis) => `
+      <button class="dost-opt" data-kljuc="${kljuc}" style="
+        display:block;width:100%;text-align:left;padding:.8rem .9rem;margin-bottom:.5rem;
+        border:1px solid ${trenutni===kljuc?'var(--ink)':'var(--border)'};border-radius:10px;
+        background:${trenutni===kljuc?'rgba(43,10,57,.06)':'white'};cursor:pointer;
+        font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji'">
+        <div style="font-size:.92rem;font-weight:600;color:var(--ink)">${naslov}${trenutni===kljuc?' ·  trenutno':''}</div>
+        <div style="font-size:.72rem;color:var(--muted);line-height:1.45;margin-top:.15rem">${opis}</div>
+      </button>`;
+
+    el.innerHTML = `
+      <div style="background:var(--cream);border-radius:16px 16px 0 0;padding:1.25rem 1.25rem calc(var(--sab)+1.25rem);width:100%;max-width:520px;max-height:92vh;overflow-y:auto">
+        <div style="font-family:'Cormorant Garamond',serif,'Apple Color Emoji','Noto Color Emoji';font-size:1.1rem;margin-bottom:.2rem">🚚 Kako je šlo naročilo do stranke?</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:.9rem">
+          ${kupec ? kupec + ' · ' : ''}poštnina na naročilu ${shranjenaPostnina.toFixed(2)} €
+        </div>
+
+        ${moznost('prevzem', 'Lastni prevzem', 'Stranka je prišla po izdelek ali sem ji ga osebno dostavil. Pošti nisem plačal nič, zato se strošek poštnine ne obračuna.')}
+        ${moznost('placana', 'Dostava — poštnino je plačala stranka', 'Poslano po pošti, poštnino je poravnala stranka. Šteje kot prihodek od poštnine.')}
+        ${moznost('brezplacna', 'Dostava — poštnino sem plačal sam', 'Poslano po pošti, stranki brezplačno. Strošek poštnine se odšteje od dobička.')}
+
+        <div id="dostZnesek" style="display:none;margin:.2rem 0 .8rem">
+          <label style="display:block;font-size:.68rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem">Znesek poštnine (€)</label>
+          <input id="dostZnesekVnos" type="text" inputmode="decimal" value="${shranjenaPostnina.toFixed(2)}"
+            style="padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:1rem;width:100%;box-sizing:border-box">
+          <button id="dostPotrdi" style="width:100%;margin-top:.6rem;padding:.65rem;border:none;border-radius:8px;background:var(--ink);color:white;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer">Potrdi</button>
+        </div>
+
+        <button id="dostPreklic" style="width:100%;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:white;font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';cursor:pointer">Prekliči</button>
+      </div>`;
+
+    document.body.appendChild(el);
+
+    const koncaj = v => { zapriDostavaSheet(); resolve(v); };
+
+    el.querySelectorAll('.dost-opt').forEach(g => g.addEventListener('click', () => {
+      const kljuc = g.dataset.kljuc;
+      if (kljuc === 'placana') {
+        // Znesek vprasamo samo takrat, ko je res prihodek - drugace je polje
+        // le dodaten klik brez pomena.
+        el.querySelectorAll('.dost-opt').forEach(x => x.style.display = 'none');
+        el.querySelector('#dostZnesek').style.display = '';
+        el.querySelector('#dostZnesekVnos').focus();
+        return;
+      }
+      koncaj({ shippingFee: 0, note: DOSTAVA_NACINI[kljuc].note, kljuc });
+    }));
+
+    el.querySelector('#dostPotrdi').addEventListener('click', () => {
+      const v = parseFloat(String(el.querySelector('#dostZnesekVnos').value).replace(',', '.'));
+      koncaj({ shippingFee: isNaN(v) ? shranjenaPostnina : v, note: DOSTAVA_NACINI.placana.note, kljuc: 'placana' });
+    });
+    el.querySelector('#dostPreklic').addEventListener('click', () => koncaj(null));
+    el.addEventListener('click', e => { if (e.target === el) koncaj(null); });
+  });
+}
+
+// Popravek za nazaj. Zamenja samo tisti del opombe, ki govori o dostavi -
+// naslov in ostalo v opombi ostaneta nedotaknjena.
+async function spremeniDostavo(groupId) {
+  const g = saleGroups.find(x => x.id === groupId);
+  if (!g) return;
+
+  const trenutni = dostavaIzOpombe(g.note);
+  const izbira = await vprasajZaDostavo(parseFloat(g.shippingFee) || 0, g.buyer, trenutni);
+  if (!izbira) return;
+
+  const stara = trenutni ? DOSTAVA_NACINI[trenutni].note : null;
+  g.note = stara
+    ? String(g.note || '').replace(stara, izbira.note)
+    : [String(g.note || '').trim(), izbira.note].filter(Boolean).join(' · ');
+  g.shippingFee = izbira.shippingFee;
+
+  try {
+    await sbSaveGroup(g);
+    save();
+    renderSales();
+    toast('✓ Način dostave popravljen');
+  } catch (e) {
+    alert('Ni bilo mogoče shraniti: ' + e.message);
+  }
+}
+
 async function potrdiNarocilo(orderId) {
   try {
   const narocilo = _narocila.find(n => n.id === orderId);
@@ -8315,21 +8448,15 @@ async function potrdiNarocilo(orderId) {
   // treba ročno vnašati zneska - le pravilno označiti, ali je šlo za
   // lastni prevzem (brez ikakršnega stroška) ali castena/brezplačna
   // dostava (šteje v samodejni izračun stroška poštnine).
+  // Prej so bila to tri zaporedna confirm/prompt okna. Problem ni bil v
+  // logiki, ampak v tem, da mozganosti nisi videl skupaj in da po kliku ni
+  // bilo nikjer zapisano, kaj si izbral. Zdaj je eno okno s tremi gumbi, ob
+  // vsakem pa pise, kaj pomeni za dobicek.
   const shranjenaPostnina = parseFloat(narocilo.shipping) || 0;
-  const lastniPrevzem = confirm(`Poštnina na naročilu: ${shranjenaPostnina.toFixed(2)} €.\n\nJe šlo za lastni prevzem (brez poštnine)?`);
-  let shippingFee = 0;
-  let dostavaNote = 'lastni prevzem';
-  if (!lastniPrevzem) {
-    const strankaPlacalaPostnino = confirm('Dostava. Je poštnino plačala stranka (si prejel plačilo zanjo)?\n\nV redu = da, stranka je plačala poštnino.\nPrekliči = ne, poštnino sem castil/plačal sam.');
-    if (strankaPlacalaPostnino) {
-      const vnos = prompt('Znesek poštnine (€):', shranjenaPostnina.toFixed(2));
-      shippingFee = vnos === null ? shranjenaPostnina : (parseFloat(vnos.replace(',', '.')) || 0);
-      dostavaNote = 'dostava';
-    } else {
-      shippingFee = 0;
-      dostavaNote = 'brezplačna dostava (poštnino castil prodajalec)';
-    }
-  }
+  const izbira = await vprasajZaDostavo(shranjenaPostnina, narocilo.name);
+  if (!izbira) return;   // preklic
+  const shippingFee = izbira.shippingFee;
+  const dostavaNote = izbira.note;
 
     let items = narocilo.items || [];
 

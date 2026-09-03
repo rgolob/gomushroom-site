@@ -493,6 +493,25 @@ a.article-card p{
   color: #6a6670;
 }
 
+/* Dve fotografiji drug ob drugem; na ozkih zaslonih se postavita druga pod drugo. */
+.article-figure-pair{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 28px 0;
+  max-width: 680px;
+}
+
+.article-figure-pair .article-figure{
+  margin: 0;
+}
+
+@media (max-width: 620px){
+  .article-figure-pair{
+    grid-template-columns: 1fr;
+  }
+}
+
 .figcaption-steps{
   display: block;
   margin-top: 6px;

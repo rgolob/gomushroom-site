@@ -39,8 +39,6 @@ let settings = {
   popusti: [],
   casovniPopust: { vrednost: 0, od: '', do: '', aktiven: false }
 };
-let reviewCoupons = [];
-
 // Enkratne kode iz e-novic (gm_coupons) so vezane na e-naslov, zato jih
 // brskalnik ne sme brati — sicer bi si vsak lahko izpisal seznam veljavnih.
 // Vsako vneseno kodo zato posebej vprašamo strežnik in odgovor si zapomnimo,
@@ -49,7 +47,6 @@ const enkratneKode = {};   // KODA -> { velja, pct, sporocilo }
 
 async function preveriEnkratnoKodo(koda) {
   if (koda in enkratneKode) return enkratneKode[koda];
-  if (!/^GM-[A-Z0-9]{4,12}$/.test(koda)) return (enkratneKode[koda] = { velja: false });
   try {
     const r = await fetch('/.netlify/functions/validate-coupon', {
       method: 'POST',
@@ -71,9 +68,11 @@ async function preveriEnkratnoKodo(koda) {
 
 async function loadSettings() {
   try {
-    const [r, rc] = await Promise.all([
-      fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS }),
-      fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&coupon_code=not.is.null&select=coupon_code,coupon_pct`, { headers: SB_HEADERS })
+    // Kuponov ne beremo vec iz baze: seznam vseh veljavnih kod je bil s tem
+    // javno dostopen vsakomur s publishable kljucem. Vsako vneseno kodo zdaj
+    // posebej vprasamo validate-coupon.
+    const [r] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS })
     ]);
     if (r.ok) {
       const rows = await r.json();
@@ -82,7 +81,6 @@ async function loadSettings() {
         catch { settings[row.key] = row.value; }
       });
     }
-    if (rc.ok) reviewCoupons = await rc.json();
   } catch(e) { console.warn('Nastavitve: fallback', e); }
 }
 
@@ -113,10 +111,6 @@ function izracunajPopust(skupaj, kolicina, kodaVnesena) {
       : p.tip === 'kolicina'
       ? (CP_LANG === 'en' ? `${p.min}+ pcs` : `${p.min}+ kosov`)
       : (CP_LANG === 'en' ? `Over ${p.min} €` : `Nad ${p.min} €`) });
-  }
-  for (const rc of reviewCoupons) {
-    if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
-      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: CP_LANG === 'en' ? `Code ${rc.coupon_code}` : `Koda ${rc.coupon_code}` });
   }
   for (const k of vneseneKode) {
     const e = enkratneKode[k];
@@ -260,7 +254,7 @@ function bindKupon() {
         if (!p.aktiven || p.tip !== 'koda') return false;
         const ruleKode = (p.kode?.length ? p.kode : p.kod ? [p.kod] : []).filter(Boolean);
         return ruleKode.includes(k);
-      }) || reviewCoupons.some(rc => rc.coupon_code && rc.coupon_code.toUpperCase() === k);
+      });
 
     // Kod, ki jih lokalno ne poznamo, ne zavrnemo na slepo — enkratne kode iz
     // e-novic pozna samo strežnik. Med čakanjem gumb pove, da preverjamo.

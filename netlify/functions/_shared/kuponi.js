@@ -32,6 +32,33 @@ const SPOROCILA = {
   'ni-prvi-nakup': 'Ta koda velja samo za prvo naročilo.',
 };
 
+// ── Kode iz recenzij (gm_reviews) ──────────────────────────────────────────
+// Zaloga jih ob potrditvi recenzije zapise v gm_reviews.coupon_code v obliki
+// REVIEW-XXXXXX. Doslej jih je kosarica brala naravnost iz tabele, kar pomeni,
+// da si je vsakdo lahko izpisal seznam vseh veljavnih kod. Zato jih odslej
+// bere samo streznik, prek te funkcije.
+const OBLIKA_RECENZIJE = /^REVIEW-[A-Z0-9]{4,12}$/;
+
+async function stanjeKodeRecenzije(koda) {
+  const iskana = String(koda || '').trim().toUpperCase();
+  if (!OBLIKA_RECENZIJE.test(iskana)) return { najdena: false };
+
+  const vrstice = await sbGet(
+    `gm_reviews?status=eq.approved&coupon_code=eq.${encodeURIComponent(iskana)}` +
+    `&select=coupon_code,coupon_pct&limit=1`
+  );
+  if (!vrstice.length) return { najdena: false };
+
+  // Te kode nimajo ne roka ne oznake porabe — take so bile od zacetka in tega
+  // popravek ne spreminja, da ne bi razveljavil ze razdeljenih kuponov.
+  return {
+    najdena: true,
+    velja: true,
+    kupon: { code: vrstice[0].coupon_code, pct: Number(vrstice[0].coupon_pct) || 10 },
+    vrsta: 'recenzija',
+  };
+}
+
 // Vrne { najdena, velja, razlog?, kupon? }.
 // Brez e-naslova preveri le obstoj, porabljenost in veljavnost — toliko, da
 // kosarica lahko pokaze znesek, preden naslov sploh poznamo. Z naslovom
@@ -101,4 +128,15 @@ async function sprostiKodo(kuponId, orderId) {
   if (!r.ok) throw new Error(`gm_coupons PATCH (sprostitev): ${r.status} ${await r.text()}`);
 }
 
-module.exports = { stanjeKode, porabiKodo, sprostiKodo, SPOROCILA, OBLIKA_KODE };
+// Ena vstopna tocka za obe vrsti kod, da klicatelju ni treba vedeti, od kod
+// katera prihaja.
+async function stanjeKateregakoli(koda, email) {
+  const enkratna = await stanjeKode(koda, email);
+  if (enkratna.najdena) return { ...enkratna, vrsta: 'enkratna' };
+  return stanjeKodeRecenzije(koda);
+}
+
+module.exports = {
+  stanjeKode, stanjeKodeRecenzije, stanjeKateregakoli,
+  porabiKodo, sprostiKodo, SPOROCILA, OBLIKA_KODE,
+};

@@ -14,7 +14,7 @@
 // Dokoncno besedo ima create-order, ki isti pregled ponovi s tem, kar je res
 // v narocilu. Ta funkcija je za prikaz, ne za obrambo.
 
-const { stanjeKode, SPOROCILA } = require('./_shared/kuponi');
+const { stanjeKateregakoli, SPOROCILA } = require('./_shared/kuponi');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': 'https://gomushroom.si',
@@ -28,7 +28,7 @@ exports.handler = async (event) => {
 
   try {
     const vhod = JSON.parse(event.body || '{}');
-    const stanje = await stanjeKode(vhod.code, vhod.email);
+    const stanje = await stanjeKateregakoli(vhod.code, vhod.email);
 
     if (!stanje.najdena) {
       return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ velja: false, znana: false }) };

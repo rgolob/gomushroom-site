@@ -2505,6 +2505,19 @@ async function sbSaveCounters(){
 const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+// Klici na send-email nosijo zeton prijavljene seje. Funkcija brez prijave
+// posilja samo kupcu obstojecega narocila ali na nas lastni naslov; zaloga
+// mora pisati tudi drugim (kuponi za recenzije, racuni, dobavnice), zato se
+// mora izkazati. Brez tega bi bila funkcija odprt rele za kogarkoli.
+function mailGlava(){
+  const h={'Content-Type':'application/json'};
+  try{
+    const z=(JSON.parse(localStorage.getItem('gm_sb_session')||'{}')||{}).access_token;
+    if(z)h.Authorization='Bearer '+z;
+  }catch(e){}
+  return h;
+}
 // ── Prijava v Supabase ──
 // Modul vpisuje zeton v isti objekt glave, ki ga aplikacija podaja vsakemu
 // zahtevku, zato klicnih mest ni treba spreminjati. Brez seje ostane v glavi
@@ -8725,7 +8738,7 @@ async function sendCouponEmail(rec, couponCode, validDays, validDo) {
 
   await fetch('/.netlify/functions/send-email', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: mailGlava(),
     body: JSON.stringify({ to: rec.email, subject: L('Vaša kupon koda — GoMushroom','Your coupon code — GoMushroom'), html })
   });
 }
@@ -8788,7 +8801,7 @@ async function sendRejectionEmail(rec, razlog) {
   try {
     await fetch('/.netlify/functions/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: mailGlava(),
       body: JSON.stringify({ to: rec.email, subject: L('Vaša recenzija — GoMushroom','Your review — GoMushroom'), html })
     });
   } catch(e) { console.warn('Zavrnitev email napaka:', e); }
@@ -10042,7 +10055,7 @@ async function sendInvoiceEmail(invId){
     toast('📧 Pošiljam…');
     try{
       const r=await fetch('/.netlify/functions/send-email',{
-        method:'POST',headers:{'Content-Type':'application/json'},
+        method:'POST',headers:mailGlava(),
         body:JSON.stringify({to:email,subject:L('Naročilo se pripravlja — GoMushroom','Your order is being prepared — GoMushroom'),html:wpPlacanoHtml})
       });
       if(!r.ok)throw new Error();
@@ -10115,7 +10128,7 @@ async function sendInvoiceEmail(invId){
     toast('📧 Pošiljam…');
     try{
       const r=await fetch('/.netlify/functions/send-email',{
-        method:'POST',headers:{'Content-Type':'application/json'},
+        method:'POST',headers:mailGlava(),
         body:JSON.stringify({to:email,subject:L('Vaše naročilo je na poti — GoMushroom','Your order is on its way — GoMushroom'),html:wpPredanoHtml})
       });
       if(!r.ok)throw new Error();
@@ -10325,7 +10338,7 @@ Rok`);
   try{
     const r=await fetch('/.netlify/functions/send-email',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:mailGlava(),
       body:JSON.stringify({
         from:'GoMushroom <info@gomushroom.si>',
         to:email,
@@ -10892,7 +10905,7 @@ async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){
     const filename=(group.deliveryNum||'dobavnica')+'.pdf';
     const res=await fetch('/.netlify/functions/send-email',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:mailGlava(),
       body:JSON.stringify({
         to:group.email,
         subject:`Dobavnica ${group.deliveryNum||''} – GoMushroom`,
@@ -10964,9 +10977,11 @@ async function publishArticle(id, paths) {
   const btn = document.querySelector(`#article-${id} button`);
   if (btn) { btn.textContent = '⏳ Objavljam…'; btn.disabled = true; }
   try {
+    // Zeton seje: publish-article pise v repozitorij prek GitHub zetona, zato
+    // ne sme sprejeti klica od kogarkoli z interneta.
     const r = await fetch('/.netlify/functions/publish-article', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: mailGlava(),
       body: JSON.stringify({ paths })
     });
     const data = await r.json();

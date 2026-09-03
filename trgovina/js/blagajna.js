@@ -662,6 +662,43 @@ let settings = {
 };
 let reviewCoupons = [];
 
+// Enkratna koda iz e-novic (gm_coupons). Vezana je na e-naslov, zato jo tu, ko
+// naslov končno poznamo, preverimo skupaj z njim — sicer bi kupec za neujemanje
+// izvedel šele ob oddaji naročila, po plačilu.
+let enkratniKupon = null;      // { koda, pct } ali null
+let enkratniKuponNapaka = '';  // sporočilo, če koda obstaja, a ne velja
+let zadnjePreverjeno = '';     // "koda|naslov", da ne sprašujemo v krogu
+
+async function preveriEnkratnoKodo() {
+  const koda = (sessionStorage.getItem('gm_kupon') || '')
+    .split(',').map(k => k.trim().toUpperCase())
+    .find(k => /^GM-[A-Z0-9]{4,12}$/.test(k)) || '';
+  const email = (document.getElementById('c-email')?.value || '').trim().toLowerCase();
+
+  if (!koda) { enkratniKupon = null; enkratniKuponNapaka = ''; zadnjePreverjeno = ''; return false; }
+
+  const kljuc = koda + '|' + email;
+  if (kljuc === zadnjePreverjeno) return false;
+  zadnjePreverjeno = kljuc;
+
+  try {
+    const r = await fetch('/.netlify/functions/validate-coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: koda, email: email || undefined })
+    });
+    const d = await r.json();
+    enkratniKupon = d.velja ? { koda, pct: Number(d.pct) || 0 } : null;
+    enkratniKuponNapaka = (!d.velja && d.znana) ? (d.sporocilo || '') : '';
+  } catch (e) {
+    // Ob izpadu omrežja ne trdimo ničesar; create-order kodo preveri znova.
+    enkratniKupon = null;
+    enkratniKuponNapaka = '';
+    zadnjePreverjeno = '';
+  }
+  return true;
+}
+
 async function loadSettings() {
   try {
     const [r, rc] = await Promise.all([
@@ -755,6 +792,8 @@ function izracunajPopust(skupaj, kolicina, koda) {
     if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
       ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: BJ_STR.codeDiscount(rc.coupon_code) });
   }
+  if (enkratniKupon && vneseneKode.includes(enkratniKupon.koda))
+    ujemajoci.push({ vrednost: enkratniKupon.pct, opis: BJ_STR.codeDiscount(enkratniKupon.koda) });
   if (!ujemajoci.length) return { pct: 0, ujemajoci: [] };
   let pct = settings.sestevajPopuste
     ? ujemajoci.reduce((s, p) => s + p.vrednost, 0)
@@ -809,6 +848,21 @@ function renderSummary() {
     document.getElementById('order-discount-amt').textContent = `−${fmt(popustZnesek)}`;
   } else {
     discRow.style.display = 'none';
+  }
+
+  // Če je koda znana, a ne velja (potekla, že porabljena, izdana na drug
+  // naslov), to povemo tu — ne šele po plačilu.
+  let opozorilo = document.getElementById('order-coupon-warn');
+  if (enkratniKuponNapaka) {
+    if (!opozorilo) {
+      opozorilo = document.createElement('p');
+      opozorilo.id = 'order-coupon-warn';
+      opozorilo.style.cssText = 'margin:.5rem 0 0;font-size:.78rem;line-height:1.5;color:#c0392b';
+      discRow.parentNode.insertBefore(opozorilo, discRow.nextSibling);
+    }
+    opozorilo.textContent = enkratniKuponNapaka;
+  } else if (opozorilo) {
+    opozorilo.remove();
   }
 
   window._orderCalc = { bruto, pct, ujemajoci, popustZnesek, zneskPoPopustu, postnina, skupaj, kolicina, koda, country };
@@ -1592,6 +1646,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // na omrežje - loadSettings() spodaj ga nato dopolni z živo poštnino/popusti.
   renderSummary();
   await loadSettings();
+
+  // Enkratno kodo preverimo ob prihodu in ob vsaki spremembi e-naslova — na
+  // kodo, vezano na naslov, kupca opozorimo, dokler še lahko kaj spremeni.
+  const emailEl = document.getElementById('c-email');
+  if (emailEl) {
+    emailEl.addEventListener('change', async () => {
+      if (await preveriEnkratnoKodo()) renderSummary();
+    });
+  }
+  preveriEnkratnoKodo().then(spremenjeno => { if (spremenjeno) renderSummary(); });
 
   // Obravnava Stripe redirect (npr. Revolut Pay)
   const urlParams = new URLSearchParams(window.location.search);

@@ -95,6 +95,7 @@ label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0
 .gumb--nevaren{background:var(--napaka);border-color:var(--napaka)}
 .gumb[disabled]{opacity:.5;cursor:default}
 .iskanje{max-width:280px}
+.opomba{margin:5px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
 
 .sporocilo{padding:11px 14px;border-radius:10px;font-size:13.5px;margin-bottom:14px}
 .sporocilo--ok{background:rgba(58,107,74,.1);color:var(--ok)}
@@ -155,6 +156,7 @@ label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0
       <button class="zavihek" role="tab" data-zavihek="narocniki" aria-selected="true">Naročniki</button>
       <button class="zavihek" role="tab" data-zavihek="kode" aria-selected="false">Kode</button>
       <button class="zavihek" role="tab" data-zavihek="kampanje" aria-selected="false">Kampanje</button>
+      <button class="zavihek" role="tab" data-zavihek="nastavitve" aria-selected="false">Nastavitve</button>
     </div>
 
     <!-- ── Naročniki ────────────────────────────────────────────────── -->
@@ -279,6 +281,56 @@ label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0
 
       </div>
     </section>
+
+    <!-- ── Nastavitve ───────────────────────────────────────────────── -->
+    <section id="p-nastavitve" class="skrito">
+      <div class="kartica" style="max-width:560px">
+        <h2>Popup na spletni strani</h2>
+        <div id="n-sporocilo" class="sporocilo skrito"></div>
+
+        <div class="polje">
+          <label style="display:flex;align-items:center;gap:9px;font-size:14px;color:var(--fg);text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="n-aktiven" style="width:18px;height:18px">
+            Popup je vklopljen
+          </label>
+          <p class="opomba">Izklop takoj ustavi prikazovanje na strani. Že izdane kode ostanejo veljavne.</p>
+        </div>
+
+        <div class="polje">
+          <label for="n-pct">Odstotek popusta</label>
+          <input id="n-pct" type="number" min="1" max="50" step="1">
+          <p class="opomba">Velja za kode, izdane odslej. Starih ne spremeni.</p>
+        </div>
+
+        <div class="polje">
+          <label for="n-dni">Veljavnost kode (dni)</label>
+          <input id="n-dni" type="number" min="1" max="365" step="1">
+          <p class="opomba">Koliko časa po prijavi je koda uporabna.</p>
+        </div>
+
+        <div class="polje">
+          <label for="n-zamik">Prikaži po (sekundah)</label>
+          <input id="n-zamik" type="number" min="0" max="300" step="1">
+        </div>
+
+        <div class="polje">
+          <label for="n-scroll">Ali prej, po prevrtenih (%)</label>
+          <input id="n-scroll" type="number" min="1" max="100" step="1">
+          <p class="opomba">Kar se zgodi prej. Prezgodnji prikaz Google šteje za vsiljiv vmesnik, zato ne bi šel pod 15 sekund.</p>
+        </div>
+
+        <div class="polje">
+          <label for="n-ponovno">Po zaprtju miruje (dni)</label>
+          <input id="n-ponovno" type="number" min="1" max="365" step="1">
+          <p class="opomba">Kdor popup zapre, ga toliko časa ne vidi več.</p>
+        </div>
+
+        <div class="polje" style="display:flex;gap:8px;margin-top:18px">
+          <button class="gumb gumb--tih" id="n-ponastavi">Razveljavi</button>
+          <button class="gumb" id="n-shrani" style="flex:1">Shrani</button>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -294,6 +346,14 @@ const SB_HDR = { 'Content-Type': 'application/json', apikey: SB_KEY, Authorizati
 const PAKET = 100;
 
 let narocniki = [], kode = [], kampanje = [], narociliSo = new Set();
+
+// Nastavitve popupa. Ista imena polj kot v gm_settings.enovicePopup, ki jih
+// bere js/newsletter-popup.js in netlify/functions/newsletter-signup.
+const NASTAVITVE_PRIVZETO = {
+  aktiven: true, pct: 10, veljavnostDni: 90,
+  zamikSek: 25, scrollPct: 45, ponovnoCezDni: 7,
+};
+let nastavitve = { ...NASTAVITVE_PRIVZETO };
 
 // ── Pomožne ────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -349,6 +409,15 @@ async function naloziVse() {
     sbGet('gm_campaigns?select=subject,started_at,sent_count,recipients&order=started_at.desc&limit=50').catch(() => []),
   ]);
   narocniki = n; kode = k; kampanje = c;
+
+  try {
+    const vrstice = await sbGet('gm_settings?key=eq.enovicePopup&select=value');
+    if (vrstice.length) {
+      const v = vrstice[0].value;
+      nastavitve = { ...NASTAVITVE_PRIVZETO, ...(typeof v === 'string' ? JSON.parse(v) : v) };
+    }
+  } catch (e) { console.warn('Nastavitve: privzete', e); }
+  izrisiNastavitve();
 
   // Kdo je ze naročal, potrebujemo za izbiro "samo tisti, ki še niso naročili".
   // Beremo samo stolpec email; RLS to dovoli prijavljenim.
@@ -458,6 +527,81 @@ function izrisiKampanje() {
       <td>${datum(c.started_at)}</td>
       <td class="stevilka">${c.sent_count} / ${c.recipients}</td>
     </tr>`).join('') : '<tr><td colspan="3" class="prazno">Še ni poslanih kampanj.</td></tr>';
+}
+
+// ── Nastavitve ─────────────────────────────────────────────────────────────
+const POLJA_NASTAVITEV = {
+  'n-aktiven':  'aktiven',
+  'n-pct':      'pct',
+  'n-dni':      'veljavnostDni',
+  'n-zamik':    'zamikSek',
+  'n-scroll':   'scrollPct',
+  'n-ponovno':  'ponovnoCezDni',
+};
+
+function izrisiNastavitve() {
+  for (const [id, kljuc] of Object.entries(POLJA_NASTAVITEV)) {
+    const el = $(id);
+    if (!el) continue;
+    if (el.type === 'checkbox') el.checked = !!nastavitve[kljuc];
+    else el.value = Number(nastavitve[kljuc]);
+  }
+}
+
+async function shraniNastavitve() {
+  const el = $('n-sporocilo'), gumb = $('n-shrani');
+  const nove = { ...nastavitve };
+
+  for (const [id, kljuc] of Object.entries(POLJA_NASTAVITEV)) {
+    const polje = $(id);
+    if (polje.type === 'checkbox') { nove[kljuc] = polje.checked; continue; }
+    const v = Number(polje.value);
+    if (!Number.isFinite(v) || v < 0) {
+      pokaziSporocilo(el, 'Vse številke morajo biti veljavne in nenegativne.', 'napaka');
+      polje.focus();
+      return;
+    }
+    nove[kljuc] = v;
+  }
+
+  // Odstotek nad 50 bi presegel maxPopust v trgovini in bi bil tiho odrezan;
+  // bolje povedati zdaj kot pustiti razliko med tem, kar tu pise, in tem, kar
+  // kupec dobi.
+  if (nove.pct < 1 || nove.pct > 50) {
+    pokaziSporocilo(el, 'Odstotek mora biti med 1 in 50 — trgovina višjega ne uveljavi.', 'napaka');
+    $('n-pct').focus();
+    return;
+  }
+  if (nove.veljavnostDni < 1) {
+    pokaziSporocilo(el, 'Veljavnost mora biti vsaj en dan.', 'napaka');
+    $('n-dni').focus();
+    return;
+  }
+  if (nove.scrollPct < 1 || nove.scrollPct > 100) {
+    pokaziSporocilo(el, 'Odstotek pomika mora biti med 1 in 100.', 'napaka');
+    $('n-scroll').focus();
+    return;
+  }
+
+  gumb.disabled = true; gumb.textContent = 'Shranjujem …';
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/gm_settings`, {
+      method: 'POST',
+      headers: { ...SB_HDR, Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        key: 'enovicePopup',
+        value: JSON.stringify(nove),
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+    nastavitve = nove;
+    pokaziSporocilo(el, 'Shranjeno. Sprememba velja takoj, brez objave nove različice strani.', 'ok');
+  } catch (e) {
+    pokaziSporocilo(el, 'Ni bilo mogoče shraniti: ' + e.message, 'napaka');
+  } finally {
+    gumb.disabled = false; gumb.textContent = 'Shrani';
+  }
 }
 
 // ── Izvoz ──────────────────────────────────────────────────────────────────
@@ -646,7 +790,7 @@ async function posljiKampanjo() {
 function preklopiZavihek(ime) {
   document.querySelectorAll('.zavihek').forEach(z =>
     z.setAttribute('aria-selected', String(z.dataset.zavihek === ime)));
-  ['narocniki', 'kode', 'kampanje'].forEach(i =>
+  ['narocniki', 'kode', 'kampanje', 'nastavitve'].forEach(i =>
     $('p-' + i).classList.toggle('skrito', i !== ime));
 }
 
@@ -697,6 +841,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('k-prejemniki').addEventListener('change', osveziStevilo);
   $('k-poslji-test').addEventListener('click', posljiPoskus);
   $('k-poslji').addEventListener('click', posljiKampanjo);
+
+  $('n-shrani').addEventListener('click', shraniNastavitve);
+  $('n-ponastavi').addEventListener('click', () => {
+    izrisiNastavitve();
+    $('n-sporocilo').classList.add('skrito');
+  });
 
   if (GMAuth.prijavljen()) await zazeni();
 });

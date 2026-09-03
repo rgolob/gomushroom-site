@@ -660,7 +660,6 @@ let settings = {
   popusti: [],
   casovniPopust: { vrednost: 0, od: '', do: '', aktiven: false }
 };
-let reviewCoupons = [];
 
 // Enkratna koda iz e-novic (gm_coupons). Vezana je na e-naslov, zato jo tu, ko
 // naslov končno poznamo, preverimo skupaj z njim — sicer bi kupec za neujemanje
@@ -670,9 +669,16 @@ let enkratniKuponNapaka = '';  // sporočilo, če koda obstaja, a ne velja
 let zadnjePreverjeno = '';     // "koda|naslov", da ne sprašujemo v krogu
 
 async function preveriEnkratnoKodo() {
+  // Strezniku posljemo prvo kodo, ki je ne poznamo iz gm_settings — to je
+  // lahko enkratna koda iz e-novic ali kupon iz recenzije; obe pozna samo
+  // validate-coupon.
+  const lokalne = new Set();
+  for (const p of (settings.popusti || [])) {
+    for (const k of (p.kode?.length ? p.kode : p.kod ? [p.kod] : [])) lokalne.add(String(k).toUpperCase());
+  }
   const koda = (sessionStorage.getItem('gm_kupon') || '')
-    .split(',').map(k => k.trim().toUpperCase())
-    .find(k => /^GM-[A-Z0-9]{4,12}$/.test(k)) || '';
+    .split(',').map(k => k.trim().toUpperCase()).filter(Boolean)
+    .find(k => !lokalne.has(k)) || '';
   const email = (document.getElementById('c-email')?.value || '').trim().toLowerCase();
 
   if (!koda) { enkratniKupon = null; enkratniKuponNapaka = ''; zadnjePreverjeno = ''; return false; }
@@ -701,9 +707,11 @@ async function preveriEnkratnoKodo() {
 
 async function loadSettings() {
   try {
-    const [r, rc] = await Promise.all([
-      fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS }),
-      fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&coupon_code=not.is.null&select=coupon_code,coupon_pct`, { headers: SB_HEADERS })
+    // Kuponov ne beremo vec iz baze: seznam vseh veljavnih kod je bil s tem
+    // javno dostopen vsakomur s publishable kljucem. Vneseno kodo zdaj
+    // preveri validate-coupon, ki odgovori samo o njej.
+    const [r] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/gm_settings?select=*`, { headers: SB_HEADERS })
     ]);
     if (r.ok) {
       const rows = await r.json();
@@ -712,7 +720,6 @@ async function loadSettings() {
         catch { settings[row.key] = row.value; }
       });
     }
-    if (rc.ok) reviewCoupons = await rc.json();
   } catch(e) { console.warn('Settings fallback', e); }
 }
 
@@ -794,10 +801,6 @@ function izracunajPopust(skupaj, kolicina, koda) {
     if (p.tip === 'kolicina' && kolicina >= (p.min || 0)) ok = true;
     if (p.tip === 'znesek' && skupaj >= (p.min || 0)) ok = true;
     if (ok) ujemajoci.push({ vrednost: p.vrednost, opis: p.tip === 'koda' ? BJ_STR.codeDiscount(matchedKod) : p.tip === 'kolicina' ? BJ_STR.qtyDiscount(p.min) : BJ_STR.amountDiscount(p.min) });
-  }
-  for (const rc of reviewCoupons) {
-    if (rc.coupon_code && vneseneKode.includes(rc.coupon_code.toUpperCase()))
-      ujemajoci.push({ vrednost: rc.coupon_pct || 10, opis: BJ_STR.codeDiscount(rc.coupon_code) });
   }
   if (enkratniKupon && vneseneKode.includes(enkratniKupon.koda))
     ujemajoci.push({ vrednost: enkratniKupon.pct, opis: BJ_STR.codeDiscount(enkratniKupon.koda) });
@@ -1389,11 +1392,13 @@ async function sendStripeConfirmationEmail(order, calc) {
         orderId: order.id,
       }),
     });
-    // Obvestilo lastniku
+    // Obvestilo lastniku. orderId je obvezen: send-email brez prijave
+    // posilja samo na naslov s tistega narocila ali na nas lastni naslov,
+    // sicer bi bila funkcija odprt rele za kogarkoli z interneta.
     const ownerHtml = `<b>Novo naročilo (Stripe)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${Number(calc.skupaj).toFixed(2)} €<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
     fetch('/.netlify/functions/send-email', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${Number(calc.skupaj).toFixed(2)} €`, html: ownerHtml })
+      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${Number(calc.skupaj).toFixed(2)} €`, html: ownerHtml, orderId: order.id })
     }).catch(()=>{});
   } catch(e) { console.warn('Email failed:', e); }
 }
@@ -1618,11 +1623,13 @@ async function sendConfirmationEmail(order, rf, calc) {
         orderId: order.id,
       })
     });
-    // Obvestilo lastniku
+    // Obvestilo lastniku. orderId je obvezen: send-email brez prijave
+    // posilja samo na naslov s tistega narocila ali na nas lastni naslov,
+    // sicer bi bila funkcija odprt rele za kogarkoli z interneta.
     const ownerHtml = `<b>Novo naročilo (bančno nakazilo)</b>${isTujina(order.country)?` <span style="color:#c0392b">🌍 ${order.country}</span>`:''}<br><br>Stranka: ${order.name} (${order.email})<br>Skupaj: ${calc.skupaj.toFixed(2)} €<br>Referenca: ${order.rf_reference||'—'}<br><br>${(order.items||[]).map(i=>`${i.name} ×${i.quantity}`).join('<br>')}`;
     fetch('/.netlify/functions/send-email', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${calc.skupaj.toFixed(2)} €`, html: ownerHtml })
+      body: JSON.stringify({ to: 'info@gomushroom.si', subject: `🛒 Novo naročilo – ${order.name} – ${calc.skupaj.toFixed(2)} €`, html: ownerHtml, orderId: order.id })
     }).catch(()=>{});
   } catch(e) { console.warn('Email failed:', e); }
 }

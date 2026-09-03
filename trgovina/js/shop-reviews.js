@@ -73,7 +73,7 @@ async function init() {
   const mount = document.getElementById('gm-trgovina-recenzije');
   if (!mount) return;
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&order=created_at.desc&limit=100`, { headers: SB_HEADERS });
+    const r = await fetch(`${SB_URL}/rest/v1/gm_reviews?status=eq.approved&select=rating,title,body,title_en,body_en,name,product_id,product_name,created_at&order=created_at.desc&limit=100`, { headers: SB_HEADERS });
     if (!r.ok) return;
     const all = await r.json();
     // Izloči IG akcije (niso prava recenzija izdelka) in prazne

@@ -269,7 +269,7 @@ function showMsg(el,txt,type){el.textContent=txt;el.className='gmr-msg '+type;}
 
 async function loadReviews(slug){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&order=created_at.desc&limit=20`,{headers:SB_H});
+    const r=await fetch(`${SB_URL}/rest/v1/gm_reviews?product_id=eq.${slug}&status=eq.approved&select=rating,title,body,title_en,body_en,name,created_at&order=created_at.desc&limit=20`,{headers:SB_H});
     if(!r.ok)return;
     const rows=await r.json();
     renderReviews(rows);

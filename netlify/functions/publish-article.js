@@ -1,9 +1,17 @@
+// Ta funkcija s tokenom GITHUB_TOKEN pise v repozitorij: objavi clanek,
+// spremeni noindex v index in doda vnose v published-articles.json. Doslej
+// klicatelja ni preverila, zato je lahko kdorkoli z interneta objavljal
+// karkoli od nasteteega. CORS tega ne prepreci — omejuje samo brskalnike.
+// Odslej mora klicatelj priloziti zeton prijavljene seje (zaloga ga poslje
+// prek mailGlava()).
+const { preveriPrijavo, zetonIzZahtevka } = require('./_shared/prijava');
+
 const OWNER = 'rgolob';
 const REPO = 'gomushroom-site';
 
 const HEADERS = {
   'Access-Control-Allow-Origin': 'https://gomushroom.si',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
@@ -115,7 +123,15 @@ exports.handler = async (event) => {
   if (!token) return { statusCode: 500, headers: HEADERS, body: JSON.stringify({ error: 'GITHUB_TOKEN ni nastavljen' }) };
 
   try {
-    const { paths } = JSON.parse(event.body);
+    const telo = JSON.parse(event.body || '{}');
+
+    try {
+      await preveriPrijavo(zetonIzZahtevka(event, telo));
+    } catch (e) {
+      return { statusCode: 401, headers: HEADERS, body: JSON.stringify({ error: e.message }) };
+    }
+
+    const { paths } = telo;
     if (!Array.isArray(paths) || !paths.length) throw new Error('paths mora biti array');
 
     const results = [];

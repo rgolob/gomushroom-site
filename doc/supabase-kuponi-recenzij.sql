@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Kuponske kode recenzij niso vec javno berljive
+-- gm_reviews: brskalnik ne bere vec kuponskih kod in e-naslovov
 -- ═══════════════════════════════════════════════════════════════════════════
 --
 -- PREDPOGOJ: objavljena mora biti nova razlicica trgovine (cart-page.js,
@@ -14,37 +14,64 @@
 --
 -- s publishable kljucem, ki je javno viden v izvorni kodi trgovine. Isti
 -- zahtevek je lahko poslal kdorkoli in dobil seznam VSEH veljavnih kuponskih
--- kod — tudi tistih, ki so bile izdane imenskim kupcem za njihovo recenzijo.
+-- kod. Ob tem je bil javno berljiv tudi stolpec email — torej e-naslovi vseh,
+-- ki so kdaj oddali recenzijo.
 --
--- Popravek
--- ────────
--- Brskalnik kod ne bere vec. Vsako vneseno kodo posebej vprasa
--- netlify/functions/validate-coupon, ki odgovori samo o njej in nikoli ne vrne
--- seznama. Tu zapremo se pot v bazo.
+-- Zakaj prvi poskus ni prijel
+-- ───────────────────────────
+-- Najprej smo poskusili samo
 --
--- Zakaj samo dva stolpca in ne cela tabela: trgovina mora recenzije se naprej
--- prikazovati. Faza 2 nas je naucila, da politika omeji vrstice, grant pa
--- stolpce — tu potrebujemo prav slednje.
+--   revoke select (coupon_code, coupon_pct) on gm_reviews from anon;
+--
+-- kar ni spremenilo nicesar. V Postgresu stolpcni revoke ne odvzame pravice,
+-- podeljene na ravni cele tabele: dokler ima vloga SELECT na tabeli, velja za
+-- vse stolpce in stolpcni revoke je brez ucinka. Pravico je zato treba
+-- odvzeti na tabeli in jo nato podeliti samo stolpcem, ki so res potrebni.
 
--- ── 1. Zapremo stolpca ─────────────────────────────────────────────────────
-revoke select (coupon_code, coupon_pct) on gm_reviews from anon;
+-- ── 1. Odvzamemo bralno pravico na tabeli ──────────────────────────────────
+revoke select on gm_reviews from anon;
 
--- Vstavljanje nove recenzije ostane: obrazec ob oddaji zapise coupon_pct.
--- Ce bi tudi to zaprli, oddaja recenzije ne bi vec delovala.
+-- ── 2. Podelimo jo samo stolpcem, ki jih trgovina res bere ─────────────────
+-- status je zraven, ker trgovina po njem filtrira (status=eq.approved),
+-- created_at pa, ker po njem razvrsca. Filtriranje in razvrscanje zahtevata
+-- bralno pravico na tistem stolpcu.
+--
+-- Zunaj ostanejo: coupon_code, coupon_pct, coupon_sent, email, id, lang,
+-- rejection_reason.
+grant select (
+  product_id,
+  product_name,
+  rating,
+  title,
+  body,
+  title_en,
+  body_en,
+  name,
+  status,
+  created_at
+) on gm_reviews to anon;
 
--- ── 2. Preveri ─────────────────────────────────────────────────────────────
--- Anon sme brati vse razen obeh kuponskih stolpcev.
-select column_name, privilege_type
+-- Vstavljanje ostane nedotaknjeno: obrazec ob oddaji recenzije zapise tudi
+-- email in coupon_pct. Pisati sme naprej, brati teh dveh ne more vec.
+
+-- ── 3. Preveri ─────────────────────────────────────────────────────────────
+select column_name
   from information_schema.column_privileges
  where table_name = 'gm_reviews' and grantee = 'anon' and privilege_type = 'SELECT'
  order by column_name;
--- V izpisu NE sme biti coupon_code in coupon_pct.
+--
+-- Pricakovano natanko teh deset:
+--   body, body_en, created_at, name, product_id, product_name,
+--   rating, status, title, title_en
+--
+-- Ce je v izpisu se vedno coupon_code, coupon_pct ali email, revoke ni prijel.
 
--- ── 3. Zadnji preizkus ─────────────────────────────────────────────────────
--- Ta zahtevek s publishable kljucem mora odslej vrniti napako, ne seznama:
+-- ── 4. Zadnji preizkus na zivi strani ──────────────────────────────────────
+-- Ta zahtevek mora odslej vrniti napako, ne seznama:
 --
 --   curl "https://rjscfndegqxuefffsedf.supabase.co/rest/v1/gm_reviews\
 --   ?status=eq.approved&select=coupon_code" \
 --     -H "apikey: <publishable>" -H "Authorization: Bearer <publishable>"
 --
--- Recenzije na strani izdelka pa se morajo se naprej prikazovati.
+-- Recenzije na strani izdelka pa se morajo se naprej prikazovati in koda
+-- REVIEW-... mora v kosarici se naprej dati popust.

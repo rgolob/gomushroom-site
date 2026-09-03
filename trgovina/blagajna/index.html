@@ -242,6 +242,18 @@
           <label for="c-note">Opomba (neobvezno)</label>
           <textarea id="c-note" rows="2" placeholder="Posebne želje, navodila za dostavo…" style="resize:vertical"></textarea>
         </div>
+
+        <!-- Privolitev za e-novice. Locena od pogojev poslovanja in prazna:
+             zdruzena ali vnaprej odkljukana privolitev po GDPR ne velja. -->
+        <div class="checkout-field" style="margin-top:.25rem">
+          <label for="c-enovice" style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;font-weight:400">
+            <input type="checkbox" id="c-enovice" style="width:18px;height:18px;margin-top:.1rem;flex:0 0 auto">
+            <span style="font-size:.82rem;line-height:1.5;color:rgba(43,11,57,.7)">
+              Želim prejemati GoMushroom e-novice — občasno vsebine o gobah, ekstrakciji in novostih.
+              Odjava je mogoča kadarkoli.
+            </span>
+          </label>
+        </div>
       </div>
 
     </div>
@@ -304,7 +316,9 @@
         </div>
 
         <p style="font-size:.72rem;color:rgba(43,11,57,.4);text-align:center;margin:.75rem 0 0;line-height:1.6">
-          S klikom potrjuješ naročilo in se strinjaš s pogoji poslovanja.
+          S klikom potrjuješ naročilo in se strinjaš s
+          <a href="#" onclick="gmShowLegal('pogoji-poslovanja');return false"
+             style="color:inherit;text-decoration:underline">pogoji poslovanja</a>.
         </p>
       </div>
     </div>

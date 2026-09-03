@@ -199,6 +199,30 @@ exports.handler = async (event) => {
     const email = String(vhod.email || '').trim().toLowerCase().slice(0, 160);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Neveljaven e-naslov');
 
+    // ── Prijava z blagajne ─────────────────────────────────────────────────
+    // Kupec sredi nakupa je odkljukal "obveščaj me". Kode mu ne izdamo: za
+    // prvi nakup je prepozna, hkrati pa bi ga vabila, naj naročilo opusti in
+    // ga odda znova s popustom. Zato ga samo vpišemo — brez kode in brez
+    // sporočila, saj potrditev naročila že dobi.
+    if (String(vhod.source || '') === 'checkout') {
+      const ze = await sbGet(`gm_newsletter?email=eq.${encodeURIComponent(email)}&select=id&limit=1`);
+      if (ze.length) {
+        return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, zePrijavljen: true }) };
+      }
+      const vpisB = await sbPost('gm_newsletter', {
+        email,
+        lang: 'sl',
+        source: 'checkout',
+        consent_text: String(vhod.consentText || '').slice(0, 500) || null,
+        consent_ip: (event.headers['x-nf-client-connection-ip']
+          || String(event.headers['x-forwarded-for'] || '').split(',')[0].trim()
+          || null),
+      }, 'return=minimal');
+      if (!vpisB.ok && !vpisB.besedilo.includes('23505'))
+        throw new Error(`gm_newsletter: ${vpisB.status} ${vpisB.besedilo}`);
+      return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, brezKode: true }) };
+    }
+
     const nastavitve = await naloziNastavitve();
     if (!nastavitve.aktiven) throw new Error('Prijava trenutno ni mogoča');
 

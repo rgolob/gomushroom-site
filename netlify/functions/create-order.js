@@ -16,6 +16,7 @@
 // kolikor smo izračunali sami.
 
 const { randomUUID } = require('crypto');
+const { stanjeKode, porabiKodo, sprostiKodo, SPOROCILA } = require('./_shared/kuponi');
 
 const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
 
@@ -102,9 +103,13 @@ async function naloziKuponeRecenzij() {
 // ── Popust ─────────────────────────────────────────────────────────────────
 // Ista pravila kot izracunajPopust() v trgovini, le da opisov ne sestavljamo —
 // v naročilo se shrani samo odstotek, opisi so stvar prikaza.
-function izracunajPopust(nastavitve, kuponiRecenzij, bruto, kolicina, koda) {
+function izracunajPopust(nastavitve, kuponiRecenzij, bruto, kolicina, koda, enkratniPct = 0) {
   const danes = new Date().toISOString().split('T')[0];
   const odstotki = [];
+
+  // Enkratna koda iz e-novic (gm_coupons). Veljavnost, ujemanje naslova in
+  // "samo prvi nakup" so preverjeni ze prej, tu vstopi samo odstotek.
+  if (enkratniPct > 0) odstotki.push(enkratniPct);
 
   const c = nastavitve.casovniPopust;
   if (c?.aktiven && c.vrednost > 0 && (!c.od || danes >= c.od) && (!c.do || danes <= c.do))
@@ -288,10 +293,26 @@ exports.handler = async (event) => {
       ovrednotiKosarico(vhod.items),
     ]);
 
+    // ── Enkratna koda iz e-novic ───────────────────────────────────────────
+    // Preverimo jo tu, s podatki iz naročila, in ne verjamemo temu, kar je o
+    // njej rekla blagajna. Neveljavne kode ne zavrnemo z napako — kupec je
+    // morda vpisal več kod naenkrat in ostale so lahko v redu. Ta enostavno
+    // ne prispeva popusta.
+    let enkratni = null;
+    for (const k of String(koda || '').split(',').map(s => s.trim()).filter(Boolean)) {
+      const stanje = await stanjeKode(k, kupec.email);
+      if (stanje.najdena && stanje.velja) { enkratni = stanje.kupon; break; }
+      if (stanje.najdena && !stanje.velja)
+        console.warn('create-order: koda zavrnjena —', k, stanje.razlog, SPOROCILA[stanje.razlog] || '');
+    }
+
     // ── Izračun, enak kot renderSummary() v trgovini ───────────────────────
     const bruto = na2(artikli.reduce((s, a) => s + a.price * a.quantity, 0));
     const kolicina = artikli.reduce((s, a) => s + a.quantity, 0);
-    const pct = izracunajPopust(nastavitve, kuponiRecenzij, bruto, kolicina, koda);
+    const pct = izracunajPopust(
+      nastavitve, kuponiRecenzij, bruto, kolicina, koda,
+      enkratni ? Number(enkratni.pct) || 0 : 0
+    );
     const popustZnesek = na2(bruto * pct / 100);
     const poPopustu = na2(bruto - popustZnesek);
 
@@ -357,12 +378,30 @@ exports.handler = async (event) => {
       is_test: isTest,
     };
 
+    // Kodo porabimo tik pred vstavitvijo naročila. Pogoj used_at=is.null v
+    // porabiKodo poskrbi, da je pri dveh sočasnih naročilih uspešno samo eno.
+    // Če prehiti drugo, naročila vseeno ne zavrnemo — plačilo je na tej točki
+    // že opravljeno in kupca ne smemo pustiti brez naročila zaradi kupona.
+    if (enkratni) {
+      const porabljena = await porabiKodo(enkratni.id, orderId);
+      if (!porabljena)
+        console.error('create-order: koda', enkratni.code, 'je bila porabljena vmes; naročilo', orderId, 'je vseeno dobilo popust');
+    }
+
     const r = await fetch(`${SB_URL}/rest/v1/gm_orders`, {
       method: 'POST',
       headers: { ...sbHeaders(), 'Prefer': 'return=minimal' },
       body: JSON.stringify(vrstica),
     });
-    if (!r.ok) throw new Error(`Naročila ni bilo mogoče shraniti: ${r.status} ${await r.text()}`);
+    if (!r.ok) {
+      // Naročila ni — kode ne smemo pustiti porabljene, sicer bi jo kupec
+      // izgubil zaradi naše napake.
+      if (enkratni) {
+        try { await sprostiKodo(enkratni.id, orderId); }
+        catch (e) { console.error('create-order: kode', enkratni.code, 'ni bilo mogoče sprostiti:', e); }
+      }
+      throw new Error(`Naročila ni bilo mogoče shraniti: ${r.status} ${await r.text()}`);
+    }
 
     // Trgovina iz tega sestavi potrditveno sporočilo in prikaz uspeha, zato so
     // vsi zneski, ki jih kupec vidi, izračunani tu — ne v brskalniku.

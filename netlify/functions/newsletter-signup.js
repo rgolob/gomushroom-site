@@ -65,9 +65,19 @@ function novaKoda() {
   return `GM-${s}`;
 }
 
+// Ali je ta naslov pri nas že kdaj naročal. Preklicana, opuščena in testna
+// naročila ne štejejo — isto pravilo kot v _shared/kuponi.js.
+async function jeZeNarocal(email) {
+  const vrstice = await sbGet(
+    `gm_orders?email=eq.${encodeURIComponent(email)}` +
+    `&status=not.in.(cancelled,abandoned)&is_test=is.false&select=id&limit=1`
+  );
+  return vrstice.length > 0;
+}
+
 // Unikat na upper(code) je v bazi; tu samo omejimo, kolikokrat poskusimo, da
 // ob nepričakovanem trku ne bi vrteli v neskončnost.
-async function shraniKodo(email, pct, veljaDo, poskusov = 5) {
+async function shraniKodo(email, pct, veljaDo, samoPrviNakup, poskusov = 5) {
   for (let i = 0; i < poskusov; i++) {
     const koda = novaKoda();
     const { ok, status, besedilo } = await sbPost('gm_coupons', {
@@ -75,6 +85,7 @@ async function shraniKodo(email, pct, veljaDo, poskusov = 5) {
       pct,
       email,
       expires_at: veljaDo,
+      first_purchase_only: samoPrviNakup,
     });
     if (ok) return koda;
     // 23505 = unique_violation; karkoli drugega je prava napaka.
@@ -92,7 +103,7 @@ function datumSl(iso) {
 // ── Sporočilo ──────────────────────────────────────────────────────────────
 // Enak videz kot potrditev naročila: logotip iz assets/logo-email.png, tabele
 // namesto flexboxa in vgrajeni slogi, ker Outlook drugega ne razume.
-function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton }) {
+function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton, samoPrviNakup }) {
   const odjava = `https://gomushroom.si/odjava/?t=${odjavaZeton}`;
   return `<!doctype html>
 <html lang="sl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -111,7 +122,7 @@ function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton }) {
             Vaša koda za ${pct} % popusta
           </h1>
           <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#4a4453;">
-            Hvala za prijavo na GoMushroom e-novice. Spodnjo kodo vnesite v košarici pri prvem naročilu.
+            Hvala za prijavo na GoMushroom e-novice. Spodnjo kodo vnesite v košarici${samoPrviNakup ? ' pri prvem naročilu' : ''}.
           </p>
         </td></tr>
 
@@ -126,7 +137,7 @@ function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton }) {
 
         <tr><td style="padding:18px 32px 0;">
           <p style="margin:0 0 6px;font-size:14px;line-height:1.65;color:#4a4453;">
-            Koda velja do <strong>${datumSl(veljaDo)}</strong>, za eno naročilo, in samo za ta e-naslov.
+            Koda velja do <strong>${datumSl(veljaDo)}</strong>, za eno naročilo, in samo za ta e-naslov${samoPrviNakup ? ' — pri prvem nakupu' : ''}.
           </p>
         </td></tr>
 
@@ -205,7 +216,13 @@ exports.handler = async (event) => {
       };
     }
 
-    const koda = await shraniKodo(email, pct, veljaDo);
+    // Obstoječemu kupcu ne izdamo kode, ki mu ne bi delala. Popup obljublja
+    // popust "za prvi nakup", ampak kdor je že naročal in se prijavi na
+    // e-novice, bi sicer dobil mrtvo kodo in bi nam pisal. Koda je zanj enako
+    // enkratna in enako vezana na njegov naslov — le omejitve na prvi nakup
+    // nima.
+    const samoPrviNakup = !(await jeZeNarocal(email));
+    const koda = await shraniKodo(email, pct, veljaDo, samoPrviNakup);
 
     const vpis = await sbPost('gm_newsletter', {
       email,
@@ -224,7 +241,7 @@ exports.handler = async (event) => {
       catch { return ''; }
     })();
 
-    await posljiSporocilo(email, sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton: zeton }));
+    await posljiSporocilo(email, sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton: zeton, samoPrviNakup }));
 
     return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: true, pct }) };
 

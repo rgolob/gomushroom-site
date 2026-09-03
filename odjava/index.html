@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Odjava z e-novic | GoMushroom</title>
+  <!-- Stran je dosegljiva samo prek povezave v e-pošti in nima kaj iskati v
+       iskalnikih; follow pusti povezave do ostale strani žive. -->
+  <meta name="robots" content="noindex,follow"/>
+  <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png"/>
+  <link rel="apple-touch-icon" href="/assets/favicon-180.png"/>
+  <link rel="stylesheet" href="/css/site.css"/>
+  <style>
+    .odjava{max-width:520px;margin:0 auto;padding:56px 20px 72px;text-align:center}
+    .odjava h1{font-size:26px;line-height:1.2;letter-spacing:var(--ls-h2);color:var(--brand);margin:0 0 14px}
+    .odjava p{font-size:15px;line-height:1.65;color:var(--muted);margin:0 0 18px}
+    .odjava .ikona{font-size:36px;line-height:1;margin-bottom:14px}
+    .odjava .btn{margin-top:6px}
+    .odjava-skrito{display:none}
+  </style>
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <section class="odjava">
+
+      <div id="stanje-caka">
+        <div class="ikona">&#x23F3;</div>
+        <h1>Odjavljam …</h1>
+        <p>Trenutek, prosim.</p>
+      </div>
+
+      <div id="stanje-uspeh" class="odjava-skrito">
+        <div class="ikona">&#x2714;&#xFE0F;</div>
+        <h1>Odjavljeni ste.</h1>
+        <p>Na ta naslov vam ne bomo več pošiljali e-novic. Če ste že prejeli kodo za popust,
+           ta ostane veljavna do izteka.</p>
+        <a href="/" class="btn brand">Na domačo stran</a>
+      </div>
+
+      <div id="stanje-napaka" class="odjava-skrito">
+        <div class="ikona">&#x2757;</div>
+        <h1>Povezava ne deluje</h1>
+        <p>Povezava je nepopolna ali pretečena. Napišite nam na
+           <a href="mailto:info@gomushroom.si">info@gomushroom.si</a> in vas odjavimo ročno.</p>
+        <a href="/" class="btn brand">Na domačo stran</a>
+      </div>
+
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script>
+  (function () {
+    var zeton = new URLSearchParams(location.search).get('t') || '';
+
+    function pokazi(id) {
+      ['stanje-caka', 'stanje-uspeh', 'stanje-napaka'].forEach(function (i) {
+        document.getElementById(i).classList.toggle('odjava-skrito', i !== id);
+      });
+    }
+
+    if (!zeton) { pokazi('stanje-napaka'); return; }
+
+    // Odjavo sprozimo takoj, brez gumba za potrditev. Clovek je nanjo kliknil
+    // namenoma in vsak dodaten korak je le ovira — pravilo pa je, da mora biti
+    // odjava enako lahka kot prijava.
+    fetch('/.netlify/functions/newsletter-unsubscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: zeton })
+    })
+      .then(function (r) { pokazi(r.ok ? 'stanje-uspeh' : 'stanje-napaka'); })
+      .catch(function () { pokazi('stanje-napaka'); });
+  })();
+  </script>
+
+  <script defer src="/js/site-header.js"></script>
+  <script defer src="/js/site-footer.js"></script>
+</body>
+</html>

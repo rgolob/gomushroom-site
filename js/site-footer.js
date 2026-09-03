@@ -124,7 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // lang="sl-SI" - zato predpona in ne enakost.
   if (document.documentElement.lang.toLowerCase().startsWith("sl") &&
       !path.startsWith("/trgovina/kosarica") &&
-      !path.startsWith("/trgovina/blagajna")) {
+      !path.startsWith("/trgovina/blagajna") &&
+      // Kdor se ravnokar odjavlja, ne potrebuje vabila k prijavi.
+      !path.startsWith("/odjava")) {
     loadScriptOnce("/js/newsletter-popup.js");
   }
 });

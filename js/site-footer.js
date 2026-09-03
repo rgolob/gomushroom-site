@@ -110,12 +110,21 @@ document.addEventListener("DOMContentLoaded", () => {
     loadScriptOnce("/js/meta-pixel.js");
   }
 
-  // GA4 ecommerce. Angleska trgovina zivi na /en/shop/ in uporablja iste
-  // skripte (shop.js, product-page.js, cart-page.js, blagajna.js), ki evente
-  // posiljajo prek `typeof gmAddToCart === 'function'` - brez analytics.js ta
-  // pogoj tiho odpove in celotna EN trgovina ostane brez sledenja.
-  if (path === "/trgovina" || path.startsWith("/trgovina/") ||
-      path === "/en/shop"  || path.startsWith("/en/shop/")) {
-    loadScriptOnce("/js/analytics.js");
+  // GA4. Doslej se je nalozil samo v trgovini, ker so ga potrebovali le
+  // ecommerce eventi. Odkar dogodke posilja tudi popup za e-novice, ki se
+  // prikaze predvsem na domaci strani in clankih, mora biti povsod - sicer
+  // gmTrack tam ne obstaja in dogodki tiho izginejo. Sama datoteka je majhna
+  // in brez privolitve ne posilja nicesar.
+  loadScriptOnce("/js/analytics.js");
+
+  // Popup za e-novice zaenkrat samo na slovenski strani. Sam preveri se, ali
+  // je obiskovalec ze prijavljen, ali ga je zaprl in ali je odgovoril na
+  // piskotno pasico; tu izlocimo le kosarico in blagajno, kjer bi motil nakup.
+  // Vecina slovenskih strani ima lang="sl", nekatere (med njimi domaca) pa
+  // lang="sl-SI" - zato predpona in ne enakost.
+  if (document.documentElement.lang.toLowerCase().startsWith("sl") &&
+      !path.startsWith("/trgovina/kosarica") &&
+      !path.startsWith("/trgovina/blagajna")) {
+    loadScriptOnce("/js/newsletter-popup.js");
   }
 });

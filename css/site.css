@@ -3025,3 +3025,100 @@ footer.site-footer{
    takrat se ne dela - videti mora kot cakanje, ne kot pokvarjen gumb. */
 .shop-product-foot--caka{opacity:.45;pointer-events:none}
 .shop-product-rating--caka{visibility:hidden}
+
+/* ── Popup za e-novice ─────────────────────────────────────────────────────
+   Piskotna pasica sedi na z-index 9999, pravni predal na 9000. Popup gre
+   pod oboje: dokler obiskovalec ni odgovoril na piskotke, se sploh ne
+   prikaze, ce pa medtem odpre pravni predal, mora ta biti zgoraj. */
+.gm-nl{
+  position:fixed; inset:0; z-index:8800;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+  background:rgba(16,19,17,.42);
+  opacity:0; transition:opacity .28s ease;
+}
+.gm-nl.je-odprt{opacity:1}
+
+.gm-nl-okno{
+  position:relative;
+  width:min(420px,100%);
+  max-height:calc(100dvh - 40px);
+  overflow-y:auto;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:30px 28px 24px;
+  box-shadow:0 24px 70px rgba(16,19,17,.22);
+  transform:translateY(12px) scale(.985);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);
+}
+.gm-nl.je-odprt .gm-nl-okno{transform:none}
+
+/* 44x44 je najmanjsa tarca, ki jo prst zanesljivo zadene; krizec sam ostane
+   majhen, poveca se le obcutljivo obmocje okoli njega. */
+.gm-nl-zapri{
+  position:absolute; top:8px; right:8px;
+  width:44px; height:44px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border:none; background:none; cursor:pointer;
+  color:var(--muted); font-size:22px; line-height:1;
+  border-radius:999px;
+}
+.gm-nl-zapri:hover{background:rgba(16,19,17,.05); color:var(--fg)}
+
+.gm-nl-naslov{
+  margin:0 24px 10px 0;
+  font-size:22px; font-weight:700;
+  line-height:var(--lh-title); letter-spacing:var(--ls-h2);
+  color:var(--brand);
+}
+.gm-nl-besedilo{
+  margin:0 0 18px;
+  font-size:14.5px; line-height:1.6; color:var(--muted);
+}
+
+.gm-nl-vrsta{display:flex; flex-direction:column; gap:10px}
+
+.gm-nl-vnos{
+  width:100%; padding:13px 14px;
+  border:1px solid var(--line); border-radius:12px;
+  font:inherit; font-size:15px; color:var(--fg); background:#fff;
+}
+.gm-nl-vnos:focus{outline:2px solid var(--brand); outline-offset:1px; border-color:transparent}
+.gm-nl-vnos[aria-invalid="true"]{border-color:#c0392b}
+
+.gm-nl-gumb{
+  width:100%; justify-content:center;
+  font-size:14px; letter-spacing:.04em; text-transform:uppercase;
+  cursor:pointer;
+}
+.gm-nl-gumb[disabled]{opacity:.55; cursor:default; transform:none}
+
+.gm-nl-napaka{
+  margin:8px 0 0; font-size:13px; line-height:1.5; color:#c0392b;
+}
+
+.gm-nl-drobno{
+  margin:14px 0 0;
+  font-size:11.5px; line-height:1.55; color:var(--muted);
+}
+.gm-nl-drobno a{color:var(--muted); text-decoration:underline}
+
+/* Medu skrit za robote; ne sme biti display:none, ker to nekateri preskocijo. */
+.gm-nl-med{
+  position:absolute; left:-9999px; width:1px; height:1px; opacity:0;
+}
+
+.gm-nl-hvala{text-align:center; padding:6px 0 2px}
+.gm-nl-hvala .gm-nl-ikona{font-size:34px; line-height:1; margin-bottom:12px}
+.gm-nl-hvala .gm-nl-naslov{margin-right:0}
+
+@media (max-width:520px){
+  .gm-nl{padding:14px; align-items:flex-end}
+  .gm-nl-okno{padding:26px 20px 20px; border-radius:16px}
+  .gm-nl-naslov{font-size:20px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .gm-nl, .gm-nl-okno{transition:none}
+}

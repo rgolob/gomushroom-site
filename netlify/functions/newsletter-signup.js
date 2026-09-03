@@ -105,6 +105,9 @@ function datumSl(iso) {
 // namesto flexboxa in vgrajeni slogi, ker Outlook drugega ne razume.
 function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton, samoPrviNakup }) {
   const odjava = `https://gomushroom.si/odjava/?t=${odjavaZeton}`;
+  // nl=1 pove strani, da je obiskovalec ze narocnik, zato mu popupa ne
+  // pokazemo — tudi ce pride z naprave, kjer se ni nikoli prijavil. Skripta
+  // oznako takoj pobrise iz naslova.
   return `<!doctype html>
 <html lang="sl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f2ec;">
@@ -142,7 +145,7 @@ function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton, samoPrviNakup }) {
         </td></tr>
 
         <tr><td align="center" style="padding:22px 32px 4px;">
-          <a href="https://gomushroom.si/trgovina/"
+          <a href="https://gomushroom.si/trgovina/?nl=1"
              style="display:inline-block;background:#2b0b39;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px;">
             V trgovino
           </a>
@@ -203,16 +206,46 @@ exports.handler = async (event) => {
     const dni = Number(nastavitve.veljavnostDni) || 90;
     const veljaDo = new Date(Date.now() + dni * 86400000).toISOString();
 
-    // Kdor je že prijavljen, ne dobi druge kode — sicer bi z istim naslovom
-    // lahko poljubno pogosto obnavljal popust.
+    // ── Že prijavljen naslov ───────────────────────────────────────────────
+    // Nove kode ne izdamo — sicer bi si vsak z istim naslovom vsakih nekaj
+    // mesecev natočil svež popust. Ampak tudi molčati ne smemo: človek je
+    // pravkar kliknil "pridobi popust" in pričakuje sporočilo.
+    //
+    // Zato: če njegova koda še živi, mu jo pošljemo znova (isto kodo, ne
+    // nove — morda je sporočilo izgubil ali pristalo med nezaželeno pošto).
+    // Če je porabljena ali potekla, mu to povemo v popupu in ne pošljemo
+    // ničesar.
     const obstojeci = await sbGet(
-      `gm_newsletter?email=eq.${encodeURIComponent(email)}&select=id&limit=1`
+      `gm_newsletter?email=eq.${encodeURIComponent(email)}&select=id,unsubscribe_token&limit=1`
     );
     if (obstojeci.length) {
+      const zive = await sbGet(
+        `gm_coupons?email=eq.${encodeURIComponent(email)}&used_at=is.null` +
+        `&expires_at=gt.${encodeURIComponent(new Date().toISOString())}` +
+        `&select=code,pct,expires_at,first_purchase_only&order=issued_at.desc&limit=1`
+      );
+
+      if (!zive.length) {
+        return {
+          statusCode: 200,
+          headers: HEADERS,
+          body: JSON.stringify({ ok: true, zePrijavljen: true }),
+        };
+      }
+
+      const k = zive[0];
+      await posljiSporocilo(email, sestaviSporocilo({
+        koda: k.code,
+        pct: Number(k.pct) || pct,
+        veljaDo: k.expires_at,
+        odjavaZeton: obstojeci[0].unsubscribe_token || '',
+        samoPrviNakup: k.first_purchase_only,
+      }));
+
       return {
         statusCode: 200,
         headers: HEADERS,
-        body: JSON.stringify({ ok: true, ponovna: true }),
+        body: JSON.stringify({ ok: true, ponovnoPoslano: true, pct: Number(k.pct) || pct }),
       };
     }
 

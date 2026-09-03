@@ -23,6 +23,8 @@
 
   var KLJUC_ZAPRT = 'gm_nl_zaprt';
   var KLJUC_PRIJAVLJEN = 'gm_nl_prijavljen';
+  var KLJUC_KUPIL = 'gm_nl_kupil';         // zapise blagajna po uspesnem narocilu
+  var KLJUC_ODJAVLJEN = 'gm_nl_odjavljen'; // zapise stran za odjavo
 
   var PRIVZETO = {
     aktiven: true, pct: 10, veljavnostDni: 90,
@@ -48,9 +50,27 @@
   }
 
   // ── Ali se sme prikazati ─────────────────────────────────────────────────
+  // Naslovnik, ki pride po povezavi iz nasega sporocila, je ocitno ze
+  // prijavljen — tudi ce je to njegova druga naprava, kjer o njem se nic ne
+  // vemo. Oznako si zapomnimo in jo takoj pobrisemo iz naslova, da ne konca
+  // v deljenih povezavah in med naslovi, ki jih obisce iskalnik.
+  function zabeleziOznakoIzSporocila() {
+    try {
+      var p = new URLSearchParams(location.search);
+      if (p.get('nl') !== '1') return;
+      zapisi(KLJUC_PRIJAVLJEN, String(Date.now()));
+      p.delete('nl');
+      var q = p.toString();
+      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+    } catch (e) {}
+  }
+
   function sePrikaze(nastavitve) {
     if (!nastavitve.aktiven) return false;
     if (preberi(KLJUC_PRIJAVLJEN)) return false;
+    if (preberi(KLJUC_KUPIL)) return false;
+    // Kdor se je pravkar odjavil, si vabila k prijavi gotovo ne zeli videti.
+    if (preberi(KLJUC_ODJAVLJEN)) return false;
 
     var zaprt = Number(preberi(KLJUC_ZAPRT) || 0);
     if (zaprt) {
@@ -196,6 +216,10 @@
         .then(function (o) {
           if (!o.ok) throw new Error(o.d && o.d.error ? o.d.error : 'Prijava ni uspela');
 
+          // Ce je naslov ze prijavljen in njegova koda ne zivi vec, sporocila
+          // ni bilo — takrat ne smemo trditi, da je koda na poti.
+          var brezSporocila = !!(o.d && o.d.zePrijavljen);
+
           zapisi(KLJUC_PRIJAVLJEN, String(Date.now()));
           // E-naslova ne posiljamo v GA4 — samo, od kod je prijava prisla.
           sledi('newsletter_signup', { source: 'first_purchase_popup' });
@@ -205,18 +229,30 @@
             if (ev.key === 'Escape') { ovoj.classList.remove('je-odprt'); setTimeout(function () { ovoj.remove(); }, 300); }
           });
 
-          ovoj.querySelector('#gm-nl-vsebina').innerHTML =
-            '<div class="gm-nl-hvala">' +
-              '<div class="gm-nl-ikona">&#x2709;&#xFE0F;</div>' +
-              '<h2 class="gm-nl-naslov">Hvala za prijavo.</h2>' +
-              '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda za ' + pct +
-                ' % popusta je že na poti v vaš e-poštni predal.</p>' +
-            '</div>';
+          ovoj.querySelector('#gm-nl-vsebina').innerHTML = brezSporocila
+            ? '<div class="gm-nl-hvala">' +
+                '<div class="gm-nl-ikona">&#x2714;&#xFE0F;</div>' +
+                '<h2 class="gm-nl-naslov">Ta naslov je že prijavljen.</h2>' +
+                '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda, ki ste jo prejeli, ' +
+                  'je bila že uporabljena ali je potekla. Pišite nam na ' +
+                  '<a href="mailto:info@gomushroom.si" style="color:inherit">info@gomushroom.si</a> ' +
+                  'in pogledamo, kaj se da narediti.</p>' +
+              '</div>'
+            : '<div class="gm-nl-hvala">' +
+                '<div class="gm-nl-ikona">&#x2709;&#xFE0F;</div>' +
+                '<h2 class="gm-nl-naslov">Hvala za prijavo.</h2>' +
+                '<p class="gm-nl-besedilo" style="margin-bottom:0">Koda za ' + pct +
+                  ' % popusta je že na poti v vaš e-poštni predal.</p>' +
+              '</div>';
 
-          setTimeout(function () {
-            ovoj.classList.remove('je-odprt');
-            setTimeout(function () { ovoj.remove(); }, 300);
-          }, 4000);
+          // Zahvala se sama umakne; sporocilo o ze prijavljenem naslovu pa ne,
+          // ker vsebuje e-naslov, ki si ga mora clovek prepisati.
+          if (!brezSporocila) {
+            setTimeout(function () {
+              ovoj.classList.remove('je-odprt');
+              setTimeout(function () { ovoj.remove(); }, 300);
+            }, 4000);
+          }
         })
         .catch(function (err) {
           gumb.disabled = false;
@@ -269,6 +305,7 @@
   function zacni() {
     // Domaca stran ima lang="sl-SI", vecina ostalih lang="sl" — zato predpona.
     if (String(document.documentElement.lang || '').toLowerCase().indexOf('sl') !== 0) return;
+    zabeleziOznakoIzSporocila();   // pred preverjanjem, da takoj ucinkuje
     if (jeNakupovalnaPot()) return;
     if (!sePrikaze(PRIVZETO)) return;  // hitri izhod, brez klica na bazo
 

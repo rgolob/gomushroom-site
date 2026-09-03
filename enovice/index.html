@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>E-novice | GoMushroom</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#2b0a39; --accent:#b18556;
+  --bg:#f4f2ee; --card:#fff; --line:#e4e0d9;
+  --fg:#1a1520; --muted:#6f6a75;
+  --ok:#3a6b4a; --opozorilo:#b8791f; --napaka:#b3402f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:'Jost',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji';
+  font-size:15px; line-height:1.55;
+}
+a{color:var(--brand)}
+.ovoj{max-width:1080px;margin:0 auto;padding:0 16px 60px}
+
+/* ── Glava ─────────────────────────────────────────────────────────── */
+.glava{
+  position:sticky; top:0; z-index:20;
+  background:rgba(244,242,238,.94); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); margin-bottom:22px;
+}
+.glava .ovoj{display:flex;align-items:center;gap:14px;padding-top:14px;padding-bottom:14px}
+.glava h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.glava .kdo{margin-left:auto;font-size:13px;color:var(--muted)}
+
+.zavihki{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+.zavihek{
+  padding:9px 16px;border:1px solid var(--line);border-radius:999px;
+  background:var(--card);font:inherit;font-size:14px;font-weight:600;
+  color:var(--muted);cursor:pointer;
+}
+.zavihek[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* ── Kartice in tabele ─────────────────────────────────────────────── */
+.kartica{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.kartica + .kartica{margin-top:16px}
+.kartica h2{margin:0 0 14px;font-size:16px;font-weight:700}
+
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.stat div{
+  flex:1 1 130px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;
+}
+.stat b{display:block;font-size:24px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+.orodja{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+
+.tabela-ovoj{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.stevilka{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:#faf9f7}
+.prazno{padding:26px 10px;text-align:center;color:var(--muted)}
+
+.znacka{
+  display:inline-block;padding:2px 9px;border-radius:999px;
+  font-size:11.5px;font-weight:600;letter-spacing:.02em;
+}
+.znacka--ok{background:rgba(58,107,74,.12);color:var(--ok)}
+.znacka--caka{background:rgba(43,10,57,.08);color:var(--brand)}
+.znacka--siva{background:rgba(0,0,0,.05);color:var(--muted)}
+.znacka--opozorilo{background:rgba(184,121,31,.14);color:var(--opozorilo)}
+.znacka--napaka{background:rgba(179,64,47,.12);color:var(--napaka)}
+
+/* ── Kontrole ──────────────────────────────────────────────────────── */
+input,select,textarea,button{font:inherit;color:inherit}
+input[type=text],input[type=email],input[type=password],input[type=url],select,textarea{
+  padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;width:100%;
+}
+textarea{resize:vertical;min-height:150px;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:transparent}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 5px}
+.polje + .polje{margin-top:13px}
+.gumb{
+  padding:10px 18px;border:1px solid var(--brand);border-radius:10px;
+  background:var(--brand);color:#fff;font-weight:600;font-size:14px;cursor:pointer;
+}
+.gumb--tih{background:#fff;color:var(--brand)}
+.gumb--nevaren{background:var(--napaka);border-color:var(--napaka)}
+.gumb[disabled]{opacity:.5;cursor:default}
+.iskanje{max-width:280px}
+
+.sporocilo{padding:11px 14px;border-radius:10px;font-size:13.5px;margin-bottom:14px}
+.sporocilo--ok{background:rgba(58,107,74,.1);color:var(--ok)}
+.sporocilo--napaka{background:rgba(179,64,47,.1);color:var(--napaka)}
+.sporocilo--info{background:rgba(43,10,57,.06);color:var(--brand)}
+
+.mreza2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:820px){.mreza2{grid-template-columns:1fr}}
+
+.predogled{
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f5f2ec;
+}
+.predogled iframe{display:block;width:100%;height:520px;border:0;background:#f5f2ec}
+
+.napredek{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin:10px 0 6px}
+.napredek i{display:block;height:100%;background:var(--brand);width:0;transition:width .25s}
+
+/* ── Prijava ───────────────────────────────────────────────────────── */
+.prijava{max-width:340px;margin:12vh auto;text-align:center}
+.prijava .kartica{text-align:left}
+.skrito{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ── Prijava ──────────────────────────────────────────────────────── -->
+<div id="zaslon-prijava" class="prijava">
+  <div class="kartica">
+    <h2>E-novice</h2>
+    <div class="polje">
+      <label for="p-email">E-naslov</label>
+      <input id="p-email" type="email" autocomplete="username">
+    </div>
+    <div class="polje">
+      <label for="p-geslo">Geslo</label>
+      <input id="p-geslo" type="password" autocomplete="current-password">
+    </div>
+    <div class="polje">
+      <button class="gumb" id="p-gumb" style="width:100%">Prijava</button>
+    </div>
+    <p id="p-napaka" class="sporocilo sporocilo--napaka skrito" style="margin:12px 0 0"></p>
+  </div>
+</div>
+
+<!-- ── Aplikacija ───────────────────────────────────────────────────── -->
+<div id="zaslon-app" class="skrito">
+
+  <header class="glava">
+    <div class="ovoj">
+      <h1>E-novice</h1>
+      <span class="kdo" id="kdo"></span>
+      <button class="gumb gumb--tih" id="odjava-gumb" style="padding:6px 12px;font-size:13px">Odjava</button>
+    </div>
+  </header>
+
+  <div class="ovoj">
+    <div class="zavihki" role="tablist">
+      <button class="zavihek" role="tab" data-zavihek="narocniki" aria-selected="true">Naročniki</button>
+      <button class="zavihek" role="tab" data-zavihek="kode" aria-selected="false">Kode</button>
+      <button class="zavihek" role="tab" data-zavihek="kampanje" aria-selected="false">Kampanje</button>
+    </div>
+
+    <!-- ── Naročniki ────────────────────────────────────────────────── -->
+    <section id="p-narocniki">
+      <div class="stat" id="stat-narocniki"></div>
+      <div class="kartica">
+        <div class="orodja">
+          <input type="text" class="iskanje" id="isci-narocnike" placeholder="Išči po e-naslovu …">
+          <select id="filter-narocniki" style="width:auto">
+            <option value="aktivni">Samo aktivni</option>
+            <option value="vsi">Vsi</option>
+            <option value="odjavljeni">Samo odjavljeni</option>
+          </select>
+          <button class="gumb gumb--tih" id="izvoz-narocniki">Izvozi CSV</button>
+        </div>
+        <div class="tabela-ovoj">
+          <table>
+            <thead><tr>
+              <th>E-naslov</th><th>Prijavljen</th><th>Vir</th><th>Stanje</th><th>Koda</th>
+            </tr></thead>
+            <tbody id="tabela-narocniki"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Kode ─────────────────────────────────────────────────────── -->
+    <section id="p-kode" class="skrito">
+      <div class="stat" id="stat-kode"></div>
+      <div class="kartica">
+        <div class="orodja">
+          <input type="text" class="iskanje" id="isci-kode" placeholder="Išči po kodi ali e-naslovu …">
+          <select id="filter-kode" style="width:auto">
+            <option value="vse">Vse</option>
+            <option value="neuporabljene">Neuporabljene</option>
+            <option value="porabljene">Porabljene</option>
+            <option value="potekle">Potekle</option>
+          </select>
+          <button class="gumb gumb--tih" id="izvoz-kode">Izvozi CSV</button>
+        </div>
+        <div class="tabela-ovoj">
+          <table>
+            <thead><tr>
+              <th>Koda</th><th>E-naslov</th><th class="stevilka">Popust</th>
+              <th>Izdana</th><th>Velja do</th><th>Stanje</th><th>Omejitev</th>
+            </tr></thead>
+            <tbody id="tabela-kode"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Kampanje ─────────────────────────────────────────────────── -->
+    <section id="p-kampanje" class="skrito">
+      <div class="mreza2">
+
+        <div class="kartica">
+          <h2>Nova kampanja</h2>
+          <div id="k-sporocilo" class="sporocilo skrito"></div>
+
+          <div class="polje">
+            <label for="k-zadeva">Zadeva sporočila</label>
+            <input id="k-zadeva" type="text" maxlength="200" placeholder="npr. Novo: tinktura smrekovih vršičkov">
+          </div>
+          <div class="polje">
+            <label for="k-naslov">Naslov v sporočilu</label>
+            <input id="k-naslov" type="text" maxlength="200" placeholder="npr. Sezona smrekovih vršičkov">
+          </div>
+          <div class="polje">
+            <label for="k-besedilo">Besedilo — prazna vrstica loči odstavka</label>
+            <textarea id="k-besedilo" maxlength="20000" placeholder="Prvi odstavek.&#10;&#10;Drugi odstavek."></textarea>
+          </div>
+          <div class="polje">
+            <label for="k-gumb-besedilo">Gumb (neobvezno)</label>
+            <input id="k-gumb-besedilo" type="text" maxlength="60" placeholder="npr. Poglej v trgovini">
+          </div>
+          <div class="polje">
+            <label for="k-gumb-url">Povezava gumba</label>
+            <input id="k-gumb-url" type="url" maxlength="500" placeholder="https://gomushroom.si/trgovina/">
+          </div>
+
+          <div class="polje">
+            <label for="k-prejemniki">Komu</label>
+            <select id="k-prejemniki">
+              <option value="aktivni">Vsi aktivni naročniki</option>
+              <option value="neporabljena">Samo tisti z neporabljeno kodo</option>
+              <option value="brez-nakupa">Samo tisti, ki še niso naročili</option>
+            </select>
+            <p style="margin:7px 0 0;font-size:12.5px;color:var(--muted)" id="k-stevilo">—</p>
+          </div>
+
+          <div class="polje" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+            <div style="flex:1 1 200px">
+              <label for="k-test">Poskusno pošiljanje na</label>
+              <input id="k-test" type="email" placeholder="tvoj@naslov.si">
+            </div>
+            <button class="gumb gumb--tih" id="k-poslji-test">Pošlji poskus</button>
+          </div>
+
+          <div class="napredek skrito" id="k-napredek"><i></i></div>
+          <p style="margin:0 0 12px;font-size:12.5px;color:var(--muted)" id="k-napredek-txt"></p>
+
+          <button class="gumb" id="k-poslji" style="width:100%">Pošlji kampanjo</button>
+        </div>
+
+        <div>
+          <div class="kartica">
+            <h2>Predogled</h2>
+            <div class="predogled"><iframe id="k-predogled" title="Predogled sporočila"></iframe></div>
+          </div>
+
+          <div class="kartica">
+            <h2>Poslane kampanje</h2>
+            <div class="tabela-ovoj">
+              <table>
+                <thead><tr><th>Zadeva</th><th>Poslano</th><th class="stevilka">Prejemnikov</th></tr></thead>
+                <tbody id="tabela-kampanje"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/js/gm-auth.js"></script>
+<script>
+'use strict';
+
+const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+const SB_HDR = { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+// Resendova omejitev za en paket; ista stevilka je v newsletter-campaign.js.
+const PAKET = 100;
+
+let narocniki = [], kode = [], kampanje = [], narociliSo = new Set();
+
+// ── Pomožne ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const ubezi = s => String(s ?? '').replace(/[&<>"]/g, z => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[z]));
+
+function datum(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+}
+
+async function sbGet(pot) {
+  const r = await fetch(`${SB_URL}/rest/v1/${pot}`, { headers: SB_HDR });
+  if (!r.ok) throw new Error(`${pot}: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+function pokaziSporocilo(el, besedilo, vrsta) {
+  el.className = 'sporocilo sporocilo--' + (vrsta || 'info');
+  el.textContent = besedilo;
+  el.classList.remove('skrito');
+}
+
+// ── Prijava ────────────────────────────────────────────────────────────────
+async function prijaviSe() {
+  const gumb = $('p-gumb'), napaka = $('p-napaka');
+  const email = $('p-email').value.trim(), geslo = $('p-geslo').value;
+  if (!email || !geslo) { pokaziSporocilo(napaka, 'Vpišite e-naslov in geslo.', 'napaka'); return; }
+
+  gumb.disabled = true; gumb.textContent = 'Prijavljam …';
+  napaka.classList.add('skrito');
+  try {
+    await GMAuth.prijava(email, geslo);
+    await zazeni();
+  } catch (e) {
+    // "Email not confirmed" je pogosta ovira ob prvi nastavitvi in ni isto kot
+    // napacno geslo — zato je ne prevajamo v "napacno geslo".
+    const m = String(e.message || '');
+    pokaziSporocilo(napaka,
+      /not confirmed/i.test(m) ? 'E-naslov v Supabase ni potrjen.'
+      : e.status === 400 ? 'Napačen e-naslov ali geslo.'
+      : 'Prijava ni uspela: ' + m, 'napaka');
+  } finally {
+    gumb.disabled = false; gumb.textContent = 'Prijava';
+  }
+}
+
+// ── Nalaganje ──────────────────────────────────────────────────────────────
+async function naloziVse() {
+  const [n, k, c] = await Promise.all([
+    sbGet('gm_newsletter?select=email,lang,source,subscribed_at,unsubscribed_at&order=subscribed_at.desc'),
+    sbGet('gm_coupons?select=code,pct,email,expires_at,used_at,issued_at,first_purchase_only,source&order=issued_at.desc'),
+    sbGet('gm_campaigns?select=subject,started_at,sent_count,recipients&order=started_at.desc&limit=50').catch(() => []),
+  ]);
+  narocniki = n; kode = k; kampanje = c;
+
+  // Kdo je ze naročal, potrebujemo za izbiro "samo tisti, ki še niso naročili".
+  // Beremo samo stolpec email; RLS to dovoli prijavljenim.
+  try {
+    const nar = await sbGet('gm_orders?select=email&status=not.in.(cancelled,abandoned)&is_test=is.false');
+    narociliSo = new Set(nar.map(o => String(o.email || '').toLowerCase()));
+  } catch (e) { narociliSo = new Set(); }
+
+  izrisiNarocnike(); izrisiKode(); izrisiKampanje(); osveziStevilo();
+}
+
+// ── Naročniki ──────────────────────────────────────────────────────────────
+function kodaZa(email) {
+  const e = String(email || '').toLowerCase();
+  return kode.find(k => String(k.email || '').toLowerCase() === e) || null;
+}
+
+function stanjeKode(k) {
+  if (!k) return { oznaka: 'brez kode', razred: 'siva' };
+  if (k.used_at) return { oznaka: 'porabljena', razred: 'ok' };
+  if (new Date(k.expires_at) < new Date()) return { oznaka: 'potekla', razred: 'napaka' };
+  return { oznaka: 'neuporabljena', razred: 'caka' };
+}
+
+function filtriraniNarocniki() {
+  const isci = $('isci-narocnike').value.trim().toLowerCase();
+  const f = $('filter-narocniki').value;
+  return narocniki.filter(n => {
+    if (f === 'aktivni' && n.unsubscribed_at) return false;
+    if (f === 'odjavljeni' && !n.unsubscribed_at) return false;
+    return !isci || String(n.email).toLowerCase().includes(isci);
+  });
+}
+
+function izrisiNarocnike() {
+  const vrstice = filtriraniNarocniki();
+  const aktivni = narocniki.filter(n => !n.unsubscribed_at).length;
+
+  $('stat-narocniki').innerHTML = `
+    <div><b>${aktivni}</b><span>aktivnih naročnikov</span></div>
+    <div><b>${narocniki.length - aktivni}</b><span>odjavljenih</span></div>
+    <div><b>${narocniki.length}</b><span>skupaj prijav</span></div>`;
+
+  $('tabela-narocniki').innerHTML = vrstice.length ? vrstice.map(n => {
+    const k = kodaZa(n.email), s = stanjeKode(k);
+    return `<tr>
+      <td>${ubezi(n.email)}</td>
+      <td>${datum(n.subscribed_at)}</td>
+      <td>${ubezi(n.source || '—')}</td>
+      <td>${n.unsubscribed_at
+        ? `<span class="znacka znacka--siva">odjavljen ${datum(n.unsubscribed_at)}</span>`
+        : '<span class="znacka znacka--ok">aktiven</span>'}</td>
+      <td>${k ? `${ubezi(k.code)} <span class="znacka znacka--${s.razred}">${s.oznaka}</span>`
+              : '<span class="znacka znacka--siva">brez kode</span>'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" class="prazno">Ni zadetkov.</td></tr>';
+}
+
+// ── Kode ───────────────────────────────────────────────────────────────────
+function filtriraneKode() {
+  const isci = $('isci-kode').value.trim().toLowerCase();
+  const f = $('filter-kode').value;
+  const zdaj = new Date();
+  return kode.filter(k => {
+    const potekla = new Date(k.expires_at) < zdaj;
+    if (f === 'neuporabljene' && (k.used_at || potekla)) return false;
+    if (f === 'porabljene' && !k.used_at) return false;
+    if (f === 'potekle' && (k.used_at || !potekla)) return false;
+    if (!isci) return true;
+    return String(k.code).toLowerCase().includes(isci) || String(k.email).toLowerCase().includes(isci);
+  });
+}
+
+function izrisiKode() {
+  const vrstice = filtriraneKode();
+  const zdaj = new Date();
+  const porabljene = kode.filter(k => k.used_at).length;
+  const potekle = kode.filter(k => !k.used_at && new Date(k.expires_at) < zdaj).length;
+  const zive = kode.length - porabljene - potekle;
+
+  $('stat-kode').innerHTML = `
+    <div><b>${kode.length}</b><span>izdanih kod</span></div>
+    <div><b>${porabljene}</b><span>porabljenih</span></div>
+    <div><b>${zive}</b><span>še veljavnih</span></div>
+    <div><b>${potekle}</b><span>poteklih</span></div>`;
+
+  $('tabela-kode').innerHTML = vrstice.length ? vrstice.map(k => {
+    const s = stanjeKode(k);
+    return `<tr>
+      <td><strong>${ubezi(k.code)}</strong></td>
+      <td>${ubezi(k.email)}</td>
+      <td class="stevilka">${Number(k.pct) || 0} %</td>
+      <td>${datum(k.issued_at)}</td>
+      <td>${datum(k.expires_at)}</td>
+      <td><span class="znacka znacka--${s.razred}">${s.oznaka}</span></td>
+      <td>${k.first_purchase_only
+        ? '<span class="znacka znacka--opozorilo">samo prvi nakup</span>'
+        : '<span class="znacka znacka--siva">brez omejitve</span>'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" class="prazno">Ni zadetkov.</td></tr>';
+}
+
+function izrisiKampanje() {
+  $('tabela-kampanje').innerHTML = kampanje.length ? kampanje.map(c => `
+    <tr>
+      <td>${ubezi(c.subject)}</td>
+      <td>${datum(c.started_at)}</td>
+      <td class="stevilka">${c.sent_count} / ${c.recipients}</td>
+    </tr>`).join('') : '<tr><td colspan="3" class="prazno">Še ni poslanih kampanj.</td></tr>';
+}
+
+// ── Izvoz ──────────────────────────────────────────────────────────────────
+function izvozi(imeDatoteke, glave, vrstice) {
+  // Podpičje in BOM, ker Excel v slovenskem okolju drugače vse stlači v en
+  // stolpec in polomi šumnike.
+  const vsebina = '﻿' + [glave, ...vrstice]
+    .map(v => v.map(p => `"${String(p ?? '').replace(/"/g, '""')}"`).join(';'))
+    .join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([vsebina], { type: 'text/csv;charset=utf-8' }));
+  a.download = imeDatoteke;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ── Kampanje ───────────────────────────────────────────────────────────────
+function izbraniPrejemniki() {
+  const nacin = $('k-prejemniki').value;
+  const zdaj = new Date();
+  return narocniki
+    .filter(n => !n.unsubscribed_at)
+    .filter(n => {
+      const e = String(n.email).toLowerCase();
+      if (nacin === 'neporabljena') {
+        const k = kodaZa(e);
+        return !!k && !k.used_at && new Date(k.expires_at) >= zdaj;
+      }
+      if (nacin === 'brez-nakupa') return !narociliSo.has(e);
+      return true;
+    })
+    .map(n => n.email);
+}
+
+function osveziStevilo() {
+  const n = izbraniPrejemniki().length;
+  $('k-stevilo').textContent = n === 0 ? 'Nobenega prejemnika.'
+    : `${n} ${n === 1 ? 'prejemnik' : n === 2 ? 'prejemnika' : n < 5 ? 'prejemniki' : 'prejemnikov'}` +
+      ` · ${Math.ceil(n / PAKET)} ${Math.ceil(n / PAKET) === 1 ? 'paket' : 'paketov'}`;
+}
+
+function podatkiKampanje() {
+  return {
+    zadeva: $('k-zadeva').value.trim(),
+    naslov: $('k-naslov').value.trim(),
+    besedilo: $('k-besedilo').value.trim(),
+    gumbBesedilo: $('k-gumb-besedilo').value.trim(),
+    gumbUrl: $('k-gumb-url').value.trim(),
+  };
+}
+
+// Predogled sestavimo v brskalniku po istih pravilih kot funkcija, da vidiš,
+// kaj bo prejemnik dobil, ne da bi karkoli poslal.
+function osveziPredogled() {
+  const d = podatkiKampanje();
+  const odstavki = d.besedilo.split(/\n\s*\n/).map(o => o.trim()).filter(Boolean)
+    .map(o => `<p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#4a4453;">${ubezi(o).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+  const url = /^https?:\/\//i.test(d.gumbUrl) ? d.gumbUrl : '';
+  const gumb = (url && d.gumbBesedilo)
+    ? `<tr><td align="center" style="padding:14px 32px 4px;"><a href="#" style="display:inline-block;background:#2b0b39;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px;">${ubezi(d.gumbBesedilo)}</a></td></tr>`
+    : '';
+
+  $('k-predogled').srcdoc = `<!doctype html><html><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#f5f2ec;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;padding:22px 10px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#fff;border-radius:14px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#2b0b39;">
+        <tr><td align="center" style="padding:26px 24px 6px;">
+          <img src="/assets/logo-email.png" width="159" height="55" alt="GoMushroom" style="display:block;border:0">
+        </td></tr>
+        <tr><td style="padding:12px 30px 0;">
+          <h1 style="margin:0 0 12px;font-size:21px;line-height:1.3;">${ubezi(d.naslov) || '<span style="color:#c4c0c9">Naslov sporočila</span>'}</h1>
+          ${odstavki || '<p style="color:#c4c0c9;font-size:15px">Besedilo sporočila …</p>'}
+        </td></tr>
+        ${gumb}
+        <tr><td style="padding:22px 30px 26px;">
+          <p style="margin:0;font-size:12px;line-height:1.6;color:#8b8794;border-top:1px solid #ece8e1;padding-top:16px;">
+            To sporočilo ste prejeli, ker ste se prijavili na GoMushroom e-novice. <a href="#" style="color:#8b8794">Odjava</a> je mogoča kadarkoli.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+async function klicKampanje(telo) {
+  const st = GMAuth.stanje();
+  if (!st.prijavljen) throw new Error('Seja je potekla — prijavite se znova.');
+  const zeton = JSON.parse(localStorage.getItem('gm_sb_session') || '{}').access_token;
+
+  const r = await fetch('/.netlify/functions/newsletter-campaign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...telo, zeton }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || `Napaka ${r.status}`);
+  return d;
+}
+
+async function posljiPoskus() {
+  const el = $('k-sporocilo'), gumb = $('k-poslji-test');
+  const d = podatkiKampanje();
+  const test = $('k-test').value.trim();
+
+  if (!d.zadeva || !d.naslov || !d.besedilo) { pokaziSporocilo(el, 'Izpolnite zadevo, naslov in besedilo.', 'napaka'); return; }
+  if (!test) { pokaziSporocilo(el, 'Vpišite naslov za poskusno pošiljanje.', 'napaka'); return; }
+
+  gumb.disabled = true; gumb.textContent = 'Pošiljam …';
+  try {
+    await klicKampanje({ ...d, nacin: 'test', test });
+    pokaziSporocilo(el, `Poskusno sporočilo je odšlo na ${test}.`, 'ok');
+  } catch (e) {
+    pokaziSporocilo(el, e.message, 'napaka');
+  } finally {
+    gumb.disabled = false; gumb.textContent = 'Pošlji poskus';
+  }
+}
+
+async function posljiKampanjo() {
+  const el = $('k-sporocilo'), gumb = $('k-poslji');
+  const d = podatkiKampanje();
+  const prejemniki = izbraniPrejemniki();
+
+  if (!d.zadeva || !d.naslov || !d.besedilo) { pokaziSporocilo(el, 'Izpolnite zadevo, naslov in besedilo.', 'napaka'); return; }
+  if (!prejemniki.length) { pokaziSporocilo(el, 'Izbira ne zajame nobenega naročnika.', 'napaka'); return; }
+  if (!confirm(`Pošiljam kampanjo "${d.zadeva}" na ${prejemniki.length} naslovov.\n\nTega ni mogoče preklicati. Nadaljujem?`)) return;
+
+  const napredek = $('k-napredek'), crta = napredek.querySelector('i'), txt = $('k-napredek-txt');
+  napredek.classList.remove('skrito');
+  gumb.disabled = true; gumb.textContent = 'Pošiljam …';
+  el.classList.add('skrito');
+
+  let poslanih = 0, izlocenih = 0, napak = 0;
+  const zacetek = new Date().toISOString();
+
+  try {
+    for (let i = 0; i < prejemniki.length; i += PAKET) {
+      const paket = prejemniki.slice(i, i + PAKET);
+      try {
+        const o = await klicKampanje({ ...d, nacin: 'poslji', prejemniki: paket });
+        poslanih += o.poslanih || 0;
+        izlocenih += o.izloceni || 0;
+      } catch (e) {
+        napak += paket.length;
+        console.error('Paket ni šel:', e);
+      }
+      const opravljeno = Math.min(i + PAKET, prejemniki.length);
+      crta.style.width = Math.round(opravljeno / prejemniki.length * 100) + '%';
+      txt.textContent = `${opravljeno} / ${prejemniki.length} · poslanih ${poslanih}` +
+        (izlocenih ? `, izločenih ${izlocenih}` : '') + (napak ? `, neuspelih ${napak}` : '');
+    }
+
+    // Zabeležimo, kaj smo poslali. Neuspeh tu ne sme pokvariti pošiljanja —
+    // sporočila so takrat že odšla.
+    try {
+      await fetch(`${SB_URL}/rest/v1/gm_campaigns`, {
+        method: 'POST',
+        headers: { ...SB_HDR, Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          subject: d.zadeva, title: d.naslov, body: d.besedilo,
+          button_label: d.gumbBesedilo || null, button_url: d.gumbUrl || null,
+          sent_by: GMAuth.stanje().email, sent_count: poslanih, failed_count: napak,
+          recipients: prejemniki.length, filter: $('k-prejemniki').value,
+          started_at: zacetek, finished_at: new Date().toISOString(),
+        }),
+      });
+    } catch (e) { console.warn('Kampanje ni bilo mogoče zabeležiti:', e); }
+
+    pokaziSporocilo(el,
+      napak ? `Poslano ${poslanih} od ${prejemniki.length}. Neuspelih ${napak} — poglej konzolo.`
+            : `Kampanja je odšla na ${poslanih} naslovov.`,
+      napak ? 'napaka' : 'ok');
+
+    kampanje = await sbGet('gm_campaigns?select=subject,started_at,sent_count,recipients&order=started_at.desc&limit=50').catch(() => kampanje);
+    izrisiKampanje();
+
+  } finally {
+    gumb.disabled = false; gumb.textContent = 'Pošlji kampanjo';
+  }
+}
+
+// ── Zagon ──────────────────────────────────────────────────────────────────
+function preklopiZavihek(ime) {
+  document.querySelectorAll('.zavihek').forEach(z =>
+    z.setAttribute('aria-selected', String(z.dataset.zavihek === ime)));
+  ['narocniki', 'kode', 'kampanje'].forEach(i =>
+    $('p-' + i).classList.toggle('skrito', i !== ime));
+}
+
+async function zazeni() {
+  $('zaslon-prijava').classList.add('skrito');
+  $('zaslon-app').classList.remove('skrito');
+  $('kdo').textContent = GMAuth.stanje().email;
+  osveziPredogled();
+  try {
+    await naloziVse();
+  } catch (e) {
+    alert('Podatkov ni bilo mogoče naložiti: ' + e.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await GMAuth.init({ url: SB_URL, anonKey: SB_KEY, headers: SB_HDR }).catch(() => {});
+
+  $('p-gumb').addEventListener('click', prijaviSe);
+  $('p-geslo').addEventListener('keydown', e => { if (e.key === 'Enter') prijaviSe(); });
+  $('odjava-gumb').addEventListener('click', async () => { await GMAuth.odjava(); location.reload(); });
+
+  document.querySelectorAll('.zavihek').forEach(z =>
+    z.addEventListener('click', () => preklopiZavihek(z.dataset.zavihek)));
+
+  $('isci-narocnike').addEventListener('input', izrisiNarocnike);
+  $('filter-narocniki').addEventListener('change', izrisiNarocnike);
+  $('isci-kode').addEventListener('input', izrisiKode);
+  $('filter-kode').addEventListener('change', izrisiKode);
+
+  $('izvoz-narocniki').addEventListener('click', () => izvozi('gomushroom-narocniki.csv',
+    ['E-naslov', 'Prijavljen', 'Vir', 'Odjavljen', 'Koda', 'Stanje kode'],
+    filtriraniNarocniki().map(n => {
+      const k = kodaZa(n.email);
+      return [n.email, datum(n.subscribed_at), n.source || '',
+              n.unsubscribed_at ? datum(n.unsubscribed_at) : '',
+              k ? k.code : '', stanjeKode(k).oznaka];
+    })));
+
+  $('izvoz-kode').addEventListener('click', () => izvozi('gomushroom-kode.csv',
+    ['Koda', 'E-naslov', 'Popust %', 'Izdana', 'Velja do', 'Stanje', 'Samo prvi nakup'],
+    filtriraneKode().map(k => [k.code, k.email, Number(k.pct) || 0,
+      datum(k.issued_at), datum(k.expires_at), stanjeKode(k).oznaka,
+      k.first_purchase_only ? 'da' : 'ne'])));
+
+  ['k-zadeva', 'k-naslov', 'k-besedilo', 'k-gumb-besedilo', 'k-gumb-url'].forEach(id =>
+    $(id).addEventListener('input', osveziPredogled));
+  $('k-prejemniki').addEventListener('change', osveziStevilo);
+  $('k-poslji-test').addEventListener('click', posljiPoskus);
+  $('k-poslji').addEventListener('click', posljiKampanjo);
+
+  if (GMAuth.prijavljen()) await zazeni();
+});
+</script>
+</body>
+</html>

@@ -769,6 +769,13 @@ function fmt(v) {
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
 // ── Popusti ───────────────────────────────────────────────
+// Kdor je pravkar placal, ne potrebuje vec vabila "10 % za vas prvi nakup".
+// Oznaka velja samo v tem brskalniku - anonimnega obiskovalca drugace ne
+// prepoznamo - a pokrije najbolj mozec primer: kupca, ki se vrne na stran.
+function oznaciNakup() {
+  try { localStorage.setItem('gm_nl_kupil', String(Date.now())); } catch (e) {}
+}
+
 function izracunajPopust(skupaj, kolicina, koda) {
   const danes = todayStr();
   const ujemajoci = [];
@@ -1205,6 +1212,7 @@ async function saveStripeOrder(paymentIntentId) {
   localStorage.setItem('gomushroom_cart', '[]');
   try { saveCart([]); } catch(e) {}
   sessionStorage.removeItem('gm_kupon');
+  oznaciNakup();
 }
 
 async function sendStripeConfirmationEmail(order, calc) {
@@ -1510,6 +1518,7 @@ async function placeOrder() {
     sessionStorage.setItem('gm_cart_backup', JSON.stringify(cart));
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
+    oznaciNakup();
 
   } catch(e) {
     console.error('Order error:', e);

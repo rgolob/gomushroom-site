@@ -23,6 +23,8 @@
 
   var KLJUC_ZAPRT = 'gm_nl_zaprt';
   var KLJUC_PRIJAVLJEN = 'gm_nl_prijavljen';
+  var KLJUC_KUPIL = 'gm_nl_kupil';         // zapise blagajna po uspesnem narocilu
+  var KLJUC_ODJAVLJEN = 'gm_nl_odjavljen'; // zapise stran za odjavo
 
   var PRIVZETO = {
     aktiven: true, pct: 10, veljavnostDni: 90,
@@ -48,9 +50,27 @@
   }
 
   // ── Ali se sme prikazati ─────────────────────────────────────────────────
+  // Naslovnik, ki pride po povezavi iz nasega sporocila, je ocitno ze
+  // prijavljen — tudi ce je to njegova druga naprava, kjer o njem se nic ne
+  // vemo. Oznako si zapomnimo in jo takoj pobrisemo iz naslova, da ne konca
+  // v deljenih povezavah in med naslovi, ki jih obisce iskalnik.
+  function zabeleziOznakoIzSporocila() {
+    try {
+      var p = new URLSearchParams(location.search);
+      if (p.get('nl') !== '1') return;
+      zapisi(KLJUC_PRIJAVLJEN, String(Date.now()));
+      p.delete('nl');
+      var q = p.toString();
+      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+    } catch (e) {}
+  }
+
   function sePrikaze(nastavitve) {
     if (!nastavitve.aktiven) return false;
     if (preberi(KLJUC_PRIJAVLJEN)) return false;
+    if (preberi(KLJUC_KUPIL)) return false;
+    // Kdor se je pravkar odjavil, si vabila k prijavi gotovo ne zeli videti.
+    if (preberi(KLJUC_ODJAVLJEN)) return false;
 
     var zaprt = Number(preberi(KLJUC_ZAPRT) || 0);
     if (zaprt) {
@@ -285,6 +305,7 @@
   function zacni() {
     // Domaca stran ima lang="sl-SI", vecina ostalih lang="sl" — zato predpona.
     if (String(document.documentElement.lang || '').toLowerCase().indexOf('sl') !== 0) return;
+    zabeleziOznakoIzSporocila();   // pred preverjanjem, da takoj ucinkuje
     if (jeNakupovalnaPot()) return;
     if (!sePrikaze(PRIVZETO)) return;  // hitri izhod, brez klica na bazo
 

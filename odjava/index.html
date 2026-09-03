@@ -72,7 +72,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: zeton })
     })
-      .then(function (r) { pokazi(r.ok ? 'stanje-uspeh' : 'stanje-napaka'); })
+      .then(function (r) {
+        pokazi(r.ok ? 'stanje-uspeh' : 'stanje-napaka');
+        // Kdor se je pravkar odjavil, naj popupa za prijavo ne vidi vec —
+        // niti ko se vrne na katerokoli drugo stran.
+        if (r.ok) { try { localStorage.setItem('gm_nl_odjavljen', String(Date.now())); } catch (e) {} }
+      })
       .catch(function () { pokazi('stanje-napaka'); });
   })();
   </script>

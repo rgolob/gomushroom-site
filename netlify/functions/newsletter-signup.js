@@ -105,6 +105,9 @@ function datumSl(iso) {
 // namesto flexboxa in vgrajeni slogi, ker Outlook drugega ne razume.
 function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton, samoPrviNakup }) {
   const odjava = `https://gomushroom.si/odjava/?t=${odjavaZeton}`;
+  // nl=1 pove strani, da je obiskovalec ze narocnik, zato mu popupa ne
+  // pokazemo — tudi ce pride z naprave, kjer se ni nikoli prijavil. Skripta
+  // oznako takoj pobrise iz naslova.
   return `<!doctype html>
 <html lang="sl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f5f2ec;">
@@ -142,7 +145,7 @@ function sestaviSporocilo({ koda, pct, veljaDo, odjavaZeton, samoPrviNakup }) {
         </td></tr>
 
         <tr><td align="center" style="padding:22px 32px 4px;">
-          <a href="https://gomushroom.si/trgovina/"
+          <a href="https://gomushroom.si/trgovina/?nl=1"
              style="display:inline-block;background:#2b0b39;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px;">
             V trgovino
           </a>

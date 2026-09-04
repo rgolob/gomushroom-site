@@ -1375,6 +1375,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <input id="mesVolumen" type="text" inputmode="decimal" placeholder="npr. 4" oninput="mesanjeIzracun()"></div>
         <div class="field"><label>Jakost (vol %)</label>
           <input id="mesPct" type="text" inputmode="decimal" placeholder="npr. 70" oninput="mesanjeIzracun()"></div>
+        <div class="field"><label>Kontrola pri (°C)</label>
+          <input id="mesTemp" type="text" inputmode="decimal" placeholder="20" oninput="mesanjeIzracun()"></div>
       </div>
       <div id="mesIzid"></div>
       <div class="btnrow" style="margin-top:.7rem">
@@ -1728,6 +1730,24 @@ function oimlVolIzMasni(A){return A*oimlGostota(A,20)/OIML_RHO_ET20*100;}
 // po skali -> dejanska gostota pri t (steklo se malo razteza) -> masni delez,
 // ki to gostoto da pri t -> vol% pri 20 C.
 const OIML_GAMA_STEKLO=25e-6;            // razteznost stekla areometra, 1/K
+
+// Obratno od oimlPravaVolPct: kaj bo alkoholometer POKAZAL, ce ima raztopina
+// pri 20 C jakost prava in jo meris pri temperaturi t. Rabimo za kontrolo
+// zmesi — po mesanju izmeris in primerjas s to vrednostjo.
+function oimlOdcitekPri(prava,t){
+  if(!(prava>0)||prava>100)return null;
+  if(!(t>=-20&&t<=40))return null;
+  let lo=0,hi=100;
+  for(let i=0;i<60;i++){
+    const m=(lo+hi)/2;
+    const v=oimlPravaVolPct(m,t);
+    if(v===null){hi=m;continue;}
+    if(v<prava)lo=m; else hi=m;
+  }
+  const o=(lo+hi)/2;
+  return (o>0&&o<=100)?o:null;
+}
+
 function oimlPravaVolPct(odcitek,t){
   if(!(odcitek>0)||odcitek>100)return null;
   if(!(t>=-20&&t<=40))return null;
@@ -2017,6 +2037,22 @@ function mesanjeIzracun(){
   // ko hoces tocno doloceno kombinacijo.
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
+  // Masa se pri mesanju ohrani, zato je masa zmesi kar masa cilja.
+  const masaZmesi=ciljV*etohDensity(ciljPct);
+
+  // Kontrola po mesanju: kaj mora alkoholometer pokazati pri dani temperaturi.
+  const tVpis=String(document.getElementById('mesTemp').value||'').trim();
+  let tKontrola=20,tNeveljavna=false;
+  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));
+    if(isFinite(b))tKontrola=b; else tNeveljavna=true;}
+  const odcitek=tNeveljavna?null:oimlOdcitekPri(ciljPct,tKontrola);
+  const kontrola=tNeveljavna
+    ? '<div style="color:var(--danger)">Kontrolne temperature ne razumem.</div>'
+    : odcitek===null
+      ? '<div style="color:var(--danger)">Kontrolna temperatura mora biti med −20 in 40 °C.</div>'
+      : `<div>Po mešanju mora alkoholometer pri ${tKontrola.toLocaleString('sl-SI')} °C pokazati
+           <strong>≈ ${odcitek.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>
+           <span style="opacity:.8">(steklen alkoholometer bere na kakšno desetinko natančno)</span></div>`;
 
   el.innerHTML=`
     <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">Predlog</div>
@@ -2026,13 +2062,15 @@ function mesanjeIzracun(){
           <span>${htmlEsc(x.vir.ime)}
             <span style="color:var(--muted)">${x.vir.pct.toLocaleString('sl-SI')} %</span>
             ${x.vir.voda?'':etZnacka(x.vir.pct)}</span>
-          <span style="text-align:right;font-weight:700">${stev(x.kol)} L</span>`).join('')}
+          <span style="text-align:right"><strong>${stev(x.kol*etohDensity(x.vir.pct))} kg</strong>
+            <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
       </div>`:''}
-      ${pred.ok&&pred.cisto?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">
-        Nič ne mešaš — ta posoda je že prave jakosti.
-      </div>`:pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">
-        Zliješ ${stev(vliteje)} L, dobiš ${stev(ciljV)} L pri ${ciljPct.toLocaleString('sl-SI')} vol %
-        — zmes se skrči za ${stev(vliteje-ciljV)} L.
+      ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
+        ${pred.cisto?'Nič ne mešaš — ta posoda je že prave jakosti.'
+          :`Zliješ ${stev(vliteje)} L, dobiš <strong>${stev(ciljV)} L</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
+             — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
+        <div>Masa zmesi: <strong>${stev(masaZmesi)} kg</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>
+        ${kontrola}
       </div>`:`<div style="font-size:.68rem;color:var(--danger);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.5">
         ⚠ Z zalogo, ki jo imaš, tega ni mogoče zmešati — zmanjka ${pred.manjka} etanola.
         ${pred.raba.length?'Zgoraj je toliko, kolikor bi šlo.':''}
@@ -2051,7 +2089,8 @@ function mesanjeIzracun(){
         <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
           ${vrstice.map(({v,kol})=>`
           <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
-          <span style="text-align:right;font-weight:700">${stev(kol)} L</span>`).join('')}
+          <span style="text-align:right"><strong>${stev(kol*etohDensity(v.pct))} kg</strong>
+            <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(kol)} L</div></span>`).join('')}
         </div>
         ${r.cisto?'<div style="font-size:.66rem;color:var(--muted);margin-top:.25rem">Nič ne mešaš — jakost je že prava.</div>':''}
         ${r.cisto?'':`<div style="font-size:.66rem;color:var(--muted);margin-top:.3rem;padding-top:.25rem;border-top:1px solid var(--border)">

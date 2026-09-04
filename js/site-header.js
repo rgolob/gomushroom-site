@@ -6,20 +6,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const isEn = path.startsWith("/en/");
   const showCart = path.startsWith("/trgovina/") || path.startsWith("/en/shop/");
 
+  // V trgovini stoji v desnem sklopu kosarica; gumb za trgovino bi bil ob njej
+  // druga enaka ikona in bi zmedel. Tam zato ostane navadna povezava v meniju,
+  // drugod pa gumb (in povezave v meniju ni, da ni dvakrat iste stvari).
+  const shopLink = isEn
+    ? `<a href="/en/shop/">Shop</a>`
+    : `<a href="/trgovina/">Trgovina</a>`;
+
   const navItems = isEn
     ? `
       <a href="/en/learn/">Learn</a>
       <a href="/en/qc/heavy-metals/">Quality</a>
       <a href="/en/#services">Services</a>
       <a href="/en/#about" id="nav-about" aria-expanded="false" role="button">About</a>
-      <a href="/en/shop/">Shop</a>
+      ${showCart ? shopLink : ""}
     `
     : `
       <a href="/znanje/">Znanje</a>
       <a href="/qc/tezke-kovine/">Kakovost</a>
       <a href="/#storitve">Storitve</a>
       <a href="/#o-meni" id="nav-about" aria-expanded="false" role="button">O&nbsp;meni</a>
-      <a href="/trgovina/">Trgovina</a>
+      ${showCart ? shopLink : ""}
     `;
 
   const homeUrl = isEn ? "/en/" : "/";
@@ -152,6 +159,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return 0;
   }
 
+  // Trgovina kot gumb, ne kot ena od povezav v vrsti: to je edina povezava,
+  // po kateri kdo kaj kupi, in med sedmimi enakimi besedami se je izgubila.
+  const shopHtml = showCart ? "" : `
+        <a class="nav-shop" href="${isEn ? '/en/shop/' : '/trgovina/'}">
+          <svg class="nav-shop-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 7h15l-1.5 8.5H8L6 4H3"></path>
+            <circle cx="9" cy="20" r="1.5"></circle>
+            <circle cx="18" cy="20" r="1.5"></circle>
+          </svg>
+          <span class="nav-shop-txt">${isEn ? 'Shop' : 'Trgovina'}</span>
+        </a>`;
+
   const cartHtml = showCart ? `
         <a class="cart-link" href="${isEn ? '/en/shop/cart/' : '/trgovina/kosarica/'}" aria-label="${isEn ? 'Cart' : 'Košarica'}">
           <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -203,6 +222,7 @@ ${flagEn}
       </nav>
 
       <div class="nav-actions" aria-label="Jezik in meni">
+${shopHtml}
 ${cartHtml}
 ${langSwitchHtml}
 

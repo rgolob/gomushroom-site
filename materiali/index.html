@@ -5531,8 +5531,10 @@ async function genEtanolPorocilo(){
   if(od){
     vsiChronological.forEach(e=>{
       if(e.datum>=od) return;
+      // Prej je odstevalo samo izhod_dn, zato so porabe R&D izpadle iz
+      // zacetnega stanja in kartica je zacela previsoko.
       if(etJeVhodTip(e.tip)) zalogaPred+=e.lAAE||0;
-      else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
+      else zalogaPred-=e.lAAE||0;
     });
   }
   if(od) vsi=vsi.filter(e=>e.datum>=od);
@@ -5547,7 +5549,19 @@ async function genEtanolPorocilo(){
 
     const tipLabel=etTipLabel(e.tip);
     const dn=e.tip==='izhod_dn'?workOrders.find(x=>x.oznaka===e.dokument):null;
-    const opis=dn?`${e.dokument} · ${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}`:e.dokument||'—';
+    let opis=dn?`${e.dokument} · ${dn.vrstaGobe}${dn.serijaAlc?' · '+dn.serijaAlc:''}`:e.dokument||'—';
+    // Izhod naloga je en sam znesek, sestavljen pa je iz razlicnih usod
+    // alkohola. Za trosarinsko evidenco je bistveno, koliko je slo v tinkture
+    // (obdavceno), koliko v izgube in koliko ostane vezanega v polizdelku,
+    // zato razdelitev izpisemo pod vrstico.
+    if(e.tip==='izhod_dn'){
+      const deli=[];
+      if((e.aaeTinkture||0)>0)deli.push(`tinkture ${e.aaeTinkture.toFixed(4)}`);
+      if((e.aaeEtanolGly||0)>0)deli.push(`v glicerinu ${e.aaeEtanolGly.toFixed(4)}`);
+      if((e.aaePolizdelek||0)>0)deli.push(`polizdelek ${e.aaePolizdelek.toFixed(4)}`);
+      if((e.aaeIzgube||0)>0)deli.push(`izgube ${e.aaeIzgube.toFixed(4)}`);
+      if(deli.length)opis+=`<div style="font-size:.68rem;color:#8a7f70;margin-top:.1rem">${deli.join(' · ')} L AAE</div>`;
+    }
 
     return`<tr style="border-bottom:1px solid #ede6d6;font-size:.8rem">
       <td style="padding:.3rem .5rem;white-space:nowrap">${fmtDate(e.datum)}</td>
@@ -5561,7 +5575,23 @@ async function genEtanolPorocilo(){
 
   const zalogaKonec=tekocaZaloga;
   const skupajVhod=vsi.filter(e=>etJeVhodTip(e.tip)).reduce((s,e)=>s+(e.lAAE||0),0);
-  const skupajIzhod=vsi.filter(e=>e.tip!=='nabava'&&e.tip!=='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
+  const skupajIzhod=vsi.filter(e=>!etJeVhodTip(e.tip)).reduce((s,e)=>s+(e.lAAE||0),0);
+
+  // Razclenitev izhodov po usodi alkohola. Za trosarino steje samo tisto, kar
+  // je slo v tinkture; ostalo je bodisi izgubljeno, vezano v glicerinu ali pa
+  // caka v polizdelku, kjer trosarina se ni zapadla.
+  const sestej=(polje)=>round(vsi.filter(e=>e.tip==='izhod_dn')
+    .reduce((s,e)=>s+(e[polje]||0),0),4);
+  const izTinkture=sestej('aaeTinkture');
+  const izGly=sestej('aaeEtanolGly');
+  const izPoliz=sestej('aaePolizdelek');
+  const izIzgube=sestej('aaeIzgube');
+  const sproscenoIzPoliz=round(vsi.filter(e=>e.tip==='polizdelek')
+    .reduce((s,e)=>s+(e.lAAE||0),0),4);
+  // Koliko ostane vezanega v polizdelkih na koncu obdobja — po vseh nalogih,
+  // ne le tistih iz tega obdobja, ker polizdelek lahko lezi tudi cez mejo.
+  const vezanoVPoliz=round(workOrders.reduce((s,d)=>
+    s+Math.max(0,(d.aaePolizdelek||0)-(d.aaePolizdelekSproscen||0)),0),4);
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Materialna kartica etanola</title>
@@ -5606,6 +5636,29 @@ th.num{text-align:right}
   <div class="kpi"><div class="kpi-label">Skupaj izhod</div><div class="kpi-val" style="color:#8b3a2a">−${skupajIzhod.toFixed(4)} L</div></div>
   <div class="kpi"><div class="kpi-label">Zaloga AAE</div><div class="kpi-val" style="color:${zalogaKonec>=0?'#1a4a2a':'#8b3a2a'}">${zalogaKonec.toFixed(4)} L</div></div>
 </div>
+
+${(izTinkture||izGly||izPoliz||izIzgube||vezanoVPoliz||sproscenoIzPoliz)?`
+<div style="border:1px solid #ede6d6;border-radius:4px;padding:.5rem .7rem;margin-bottom:1.25rem;font-size:.75rem">
+  <div style="font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;margin-bottom:.35rem">Kam je šel porabljeni alkohol</div>
+  <table style="font-size:.75rem">
+    <tr><td style="padding:.2rem .3rem">V tinkture <strong>— osnova za trošarino</strong></td>
+        <td style="padding:.2rem .3rem;text-align:right;font-weight:700">${izTinkture.toFixed(4)} L AAE</td></tr>
+    ${izGly?`<tr><td style="padding:.2rem .3rem">Vezan v glicerinskih tinkturah</td>
+        <td style="padding:.2rem .3rem;text-align:right">${izGly.toFixed(4)} L AAE</td></tr>`:''}
+    ${izPoliz?`<tr><td style="padding:.2rem .3rem">V polizdelke — trošarina odložena</td>
+        <td style="padding:.2rem .3rem;text-align:right">${izPoliz.toFixed(4)} L AAE</td></tr>`:''}
+    ${izIzgube?`<tr><td style="padding:.2rem .3rem">Procesne izgube</td>
+        <td style="padding:.2rem .3rem;text-align:right">${izIzgube.toFixed(4)} L AAE</td></tr>`:''}
+  </table>
+  ${sproscenoIzPoliz?`<div style="margin-top:.4rem;padding-top:.35rem;border-top:1px solid #ede6d6;color:#3a6b4a">
+    V obdobju se je iz polizdelkov v zalogo vrnilo <strong>+${sproscenoIzPoliz.toFixed(4)} L AAE</strong>
+    (v zgornjem seštevku vhodov). Trošarina zanj zapade pri nalogu, ki ga porabi.
+  </div>`:''}
+  ${vezanoVPoliz?`<div style="margin-top:.4rem;padding-top:.35rem;border-top:1px solid #ede6d6;color:#5a3a6b">
+    Na dan izpisa je v polizdelkih vezanega <strong>${vezanoVPoliz.toFixed(4)} L AAE</strong>,
+    za katerega trošarina še ni zapadla. Zapade, ko iz polizdelka nastane izdelek ali ko ga prodaš.
+  </div>`:''}
+</div>`:''}
 
 <table>
   <tr>

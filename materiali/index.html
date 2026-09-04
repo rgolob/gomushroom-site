@@ -1841,8 +1841,17 @@ function popisVrstica(v){
   // Temperatura je neobvezna. Brez nje privzamemo, da si meril pri 20 C, in
   // odcitek vzamemo takoj. Sicer ga popravimo na jakost pri 20 C — masa se s
   // temperaturo ne spreminja, zato vpliva samo na koncentracijo.
+  // parseNum vrne 0, kadar ne zna prebrati. Pri temperaturi je 0 veljavna
+  // vrednost, zato bi se tipkarska napaka tiho brala kot 0 °C in dala mocno
+  // napacen popravek. Zato tu beremo strogo.
   const tVpis=String(v.temp||'').trim();
-  const t=tVpis?parseNum(tVpis):20;
+  let t=20,neveljavnaTemp=false;
+  if(tVpis){
+    const prebrano=parseFloat(tVpis.replace(',','.'));
+    if(isFinite(prebrano))t=prebrano; else neveljavnaTemp=true;
+  }
+  if(neveljavnaTemp)return {neveljavnaTemp:true};
+
   let pct=odcitek,popravljeno=false,izvenObmocja=false;
   if(tVpis&&Math.abs(t-20)>0.05){
     const prava=oimlPravaVolPct(odcitek,t);
@@ -1889,6 +1898,10 @@ function popisIzracun(){
     const el=document.getElementById('popisVr'+i);
     if(!el)return;
     if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in odčitek…</span>';return;}
+    if(r.neveljavnaTemp){
+      el.innerHTML='<span style="color:var(--danger)">Temperature ne razumem — vpiši število, npr. 26,5</span>';
+      return;
+    }
     if(r.izvenObmocja){
       el.innerHTML='<span style="color:var(--danger)">Temperatura mora biti med −20 in 40 °C</span>';
       return;

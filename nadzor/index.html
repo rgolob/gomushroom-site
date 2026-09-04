@@ -52,6 +52,42 @@ body{
 
 .mreza{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 
+/* ── Aplikacija s podzasloni ───────────────────────────────────────────────
+   Vsaka aplikacija je svoja kartica: zgoraj vhod vanjo, spodaj bliznjice do
+   posameznih zaslonov. Naslovi tipa /zaloga/#porocilo aplikacijo odprejo
+   naravnost na tistem zaslonu. */
+.app{
+  background:var(--card);border:1px solid var(--rob);border-radius:16px;
+  padding:15px 16px 14px;margin:0 0 12px;
+}
+.app-vhod{
+  display:flex;align-items:center;gap:12px;
+  color:var(--tekst);text-decoration:none;
+  padding:2px 0 12px;border-bottom:1px solid var(--rob);
+}
+.app-vhod:hover .ime{color:var(--zlato)}
+.app-vhod:focus-visible{outline:2px solid var(--zlato);outline-offset:3px;border-radius:8px}
+.app-vhod .znak{font-size:25px;line-height:1;flex:0 0 auto}
+.app-vhod .ime{font-size:16.5px;font-weight:600;line-height:1.25;transition:color .15s}
+.app-vhod .opis{font-size:11.5px;color:var(--tiho);line-height:1.4;margin-top:2px}
+.app-vhod .pusc{margin-left:auto;color:var(--tiho);font-size:15px;flex:0 0 auto}
+
+.cipi{display:flex;flex-wrap:wrap;gap:6px;padding-top:12px}
+.cip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 11px;border:1px solid var(--rob);border-radius:999px;
+  background:#1f160d;color:var(--tekst);text-decoration:none;
+  font-size:12.5px;line-height:1.2;white-space:nowrap;
+  transition:border-color .15s, background .15s, color .15s;
+}
+.cip:hover{border-color:var(--zlato);background:#2b2015}
+.cip:focus-visible{outline:2px solid var(--zlato);outline-offset:2px}
+.cip .zn{font-size:13px;line-height:1}
+
+/* Diagnostika in obnove niso vsakodnevni zasloni — naj bodo tise. */
+.cip--orodje{background:transparent;border-style:dashed;color:var(--tiho)}
+.cip--orodje:hover{color:var(--tekst)}
+
 .ploscica{
   display:flex;align-items:center;gap:12px;
   padding:15px 16px;
@@ -85,6 +121,9 @@ body{
   .ploscica{flex-direction:column;align-items:flex-start;gap:8px;padding:13px}
   .ploscica .opis{display:none}
   .mreza--drobno{grid-template-columns:1fr 1fr}
+  .app{padding:13px 13px 12px}
+  .app-vhod .opis{display:none}
+  .cip{font-size:12px;padding:6px 10px}
 }
 </style>
 </head>
@@ -100,28 +139,67 @@ body{
   <!-- ── Aplikacije ─────────────────────────────────────────────────────── -->
   <section class="razdelek">
     <h2>Aplikacije</h2>
-    <div class="mreza">
-      <a class="ploscica" href="/zaloga/">
+
+    <div class="app">
+      <a class="app-vhod" href="/zaloga/">
         <span class="znak">&#x1F4E6;</span>
         <span class="besede">
           <span class="ime">Zaloga</span>
           <span class="opis">Prodaja, naročila, računi, dokumenti, stranke</span>
         </span>
+        <span class="pusc" aria-hidden="true">&rsaquo;</span>
       </a>
-      <a class="ploscica" href="/materiali/">
+      <div class="cipi">
+        <a class="cip" href="/zaloga/#zaloga"><span class="zn">&#x1F4E6;</span>Zaloga</a>
+        <a class="cip" href="/zaloga/#prodaja"><span class="zn">&#x1F6D2;</span>Prodaja</a>
+        <a class="cip" href="/zaloga/#serije"><span class="zn">&#x1F3F7;&#xFE0F;</span>Serije</a>
+        <a class="cip" href="/zaloga/#dokumenti"><span class="zn">&#x1F9FE;</span>Dokumenti</a>
+        <a class="cip" href="/zaloga/#stranke"><span class="zn">&#x1F465;</span>Stranke</a>
+        <a class="cip" href="/zaloga/#recenzije"><span class="zn">&#x2B50;</span>Recenzije</a>
+        <a class="cip" href="/zaloga/#osnutki"><span class="zn">&#x1F4DD;</span>Osnutki</a>
+        <a class="cip" href="/zaloga/#porocilo"><span class="zn">&#x1F4CA;</span>Poročilo</a>
+        <a class="cip cip--orodje" href="/zaloga/diagnoza.html"><span class="zn">&#x1FA7A;</span>Diagnoza</a>
+        <a class="cip cip--orodje" href="/zaloga/diagnoza-rls.html"><span class="zn">&#x1F510;</span>Diagnoza dostopa</a>
+      </div>
+    </div>
+
+    <div class="app">
+      <a class="app-vhod" href="/materiali/">
         <span class="znak">&#x1F9EA;</span>
         <span class="besede">
           <span class="ime">Materiali</span>
-          <span class="opis">Surovine, serije, delovni nalogi, bilance</span>
+          <span class="opis">Surovine, delovni nalogi, bilance, oprema</span>
         </span>
+        <span class="pusc" aria-hidden="true">&rsaquo;</span>
       </a>
-      <a class="ploscica" href="/marketing/">
+      <div class="cipi">
+        <a class="cip" href="/materiali/#dn"><span class="zn">&#x1F4CB;</span>Nalogi</a>
+        <a class="cip" href="/materiali/#bilanca"><span class="zn">&#x2696;&#xFE0F;</span>Bilanca</a>
+        <a class="cip" href="/materiali/#preracuni"><span class="zn">&#x1F9EE;</span>Preračuni</a>
+        <a class="cip" href="/materiali/#etanol"><span class="zn">&#x1F9EA;</span>Etanol</a>
+        <a class="cip" href="/materiali/#materiali"><span class="zn">&#x1F4E6;</span>Materiali</a>
+        <a class="cip" href="/materiali/#oprema"><span class="zn">&#x1F527;</span>Oprema</a>
+        <a class="cip" href="/materiali/#dnevniki"><span class="zn">&#x1F558;</span>Dnevniki dela</a>
+        <a class="cip" href="/materiali/#rd"><span class="zn">&#x1F52C;</span>R&amp;D</a>
+        <a class="cip cip--orodje" href="/materiali/obnovi.html"><span class="zn">&#x267B;&#xFE0F;</span>Obnova podatkov</a>
+      </div>
+    </div>
+
+    <div class="app">
+      <a class="app-vhod" href="/marketing/">
         <span class="znak">&#x2709;&#xFE0F;</span>
         <span class="besede">
           <span class="ime">Marketing</span>
           <span class="opis">Naročniki, kuponske kode, kampanje</span>
         </span>
+        <span class="pusc" aria-hidden="true">&rsaquo;</span>
       </a>
+      <div class="cipi">
+        <a class="cip" href="/marketing/#narocniki"><span class="zn">&#x1F4E7;</span>Naročniki</a>
+        <a class="cip" href="/marketing/#kode"><span class="zn">&#x1F39F;&#xFE0F;</span>Kode</a>
+        <a class="cip" href="/marketing/#kampanje"><span class="zn">&#x1F4E3;</span>Kampanje</a>
+        <a class="cip" href="/marketing/#nastavitve"><span class="zn">&#x2699;&#xFE0F;</span>Nastavitve</a>
+      </div>
     </div>
   </section>
 
@@ -226,26 +304,28 @@ body{
     </div>
   </section>
 
-  <!-- ── Orodja ─────────────────────────────────────────────────────────── -->
+  <!-- ── Orodja ─────────────────────────────────────────────────────────────
+       Diagnoza in obnova sta pri svojih aplikacijah zgoraj; tu ostane samo,
+       kar ne pripada nobeni. -->
   <section class="razdelek">
-    <h2>Orodja in diagnostika</h2>
+    <h2>Datoteke strani</h2>
     <div class="mreza mreza--drobno">
-      <a class="ploscica" href="/zaloga/diagnoza.html">
-        <span class="znak">&#x1FA7A;</span><span class="besede"><span class="ime">Diagnoza</span></span>
-      </a>
-      <a class="ploscica" href="/zaloga/diagnoza-rls.html">
-        <span class="znak">&#x1F510;</span><span class="besede"><span class="ime">Diagnoza dostopa</span></span>
-      </a>
-      <a class="ploscica" href="/materiali/obnovi.html">
-        <span class="znak">&#x267B;&#xFE0F;</span><span class="besede"><span class="ime">Obnova podatkov</span></span>
-      </a>
       <a class="ploscica" href="/sitemap.xml">
         <span class="znak">&#x1F5FA;&#xFE0F;</span><span class="besede"><span class="ime">Sitemap</span></span>
+      </a>
+      <a class="ploscica" href="/robots.txt">
+        <span class="znak">&#x1F916;</span><span class="besede"><span class="ime">robots.txt</span></span>
+      </a>
+      <a class="ploscica" href="/odjava/">
+        <span class="znak">&#x1F44B;</span><span class="besede"><span class="ime">Odjava z e-novic</span></span>
       </a>
     </div>
   </section>
 
   <p class="noga">
+    Bližnjice do posameznih zaslonov odprejo aplikacijo naravnost na tistem
+    zaslonu (npr. <code>/zaloga/#porocilo</code>) — tudi njih si lahko shraniš
+    med zaznamke.
     Stran je <strong>noindex, nofollow</strong> in nanjo ne kaže nobena povezava —
     dodaj si jo med zaznamke ali na domači zaslon.
     Aplikacije so zaščitene s prijavo v Supabase; ta seznam je le bližnjica, ne dostop.

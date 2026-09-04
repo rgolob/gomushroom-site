@@ -9469,5 +9469,57 @@ async function migrateOpombaToDoabvitelj(){
   }catch(e){console.error('migrateOpombaToDoabvitelj',e);}
 }
 </script>
+
+<!-- ── Globoke povezave (#zaslon) ────────────────────────────────────────────
+     Aplikacija je enostranska, zato je bil zaslon doslej samo notranje stanje:
+     naslov se ni spremenil in nanj ni bilo mogoce kazati. Nadzorna plosca na
+     /nadzor/ pa mora znati odpreti dolocen zaslon neposredno.
+
+     Zato switchTab ovijemo: ob vsakem preklopu zapisemo #zaslon v naslov (z
+     replaceState, da se zgodovina brskalnika ne polni), ob nalaganju in ob
+     rocni spremembi naslova pa preklopimo na zaslon iz naslova.
+
+     Preklop pocakamo, da izgine prijavni zaslon - render funkcije potrebujejo
+     sejo in bi brez nje odpovedale. -->
+<script>
+(function () {
+  'use strict';
+  var ZASLONI = ['materiali', 'dn', 'etanol', 'oprema', 'dnevniki', 'rd', 'bilanca', 'preracuni'];
+  var izvirni = window.switchTab;
+  if (typeof izvirni !== 'function') return;
+
+  window.switchTab = function (id, el) {
+    izvirni(id, el);
+    if (ZASLONI.indexOf(id) === -1) return;
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  };
+
+  function izNaslova() {
+    var id = String(location.hash || '').replace(/^#/, '');
+    if (ZASLONI.indexOf(id) === -1) return;
+    try { izvirni(id); } catch (e) { console.warn('Zaslona ' + id + ' ni bilo mogoce odpreti:', e); }
+  }
+
+  // Prijavni zaslon prekriva aplikacijo, dokler se uporabnik ne prijavi.
+  // Cakamo najvec pol minute, da ob dolgi odsotnosti ne vrtimo v prazno.
+  function poPrijavi(opravi) {
+    var ls = document.getElementById('loginScreen');
+    if (!ls || ls.style.display === 'none' || !ls.offsetParent) { opravi(); return; }
+    var konec = Date.now() + 30000;
+    var ura = setInterval(function () {
+      var e = document.getElementById('loginScreen');
+      var skrit = !e || e.style.display === 'none' || !e.offsetParent;
+      if (skrit || Date.now() > konec) { clearInterval(ura); if (skrit) opravi(); }
+    }, 300);
+  }
+
+  function zacni() { poPrijavi(izNaslova); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', zacni);
+  else zacni();
+
+  window.addEventListener('hashchange', izNaslova);
+})();
+</script>
 </body>
 </html>

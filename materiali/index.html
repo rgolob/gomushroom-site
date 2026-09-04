@@ -503,6 +503,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <small>Odstranjevanje topila, glicerin in voda, zapis dejansko dodanega</small></span>
       <span class="calc-arrow">›</span>
     </button>
+    <button class="calc-card" onclick="openPopisSheet()">
+      <span class="calc-ico">⚗️</span>
+      <span class="calc-txt"><strong>Popis etanola</strong>
+        <small>Vpišeš maso in vol %, dobiš volumen, AAE in skupno koncentracijo</small></span>
+      <span class="calc-arrow">›</span>
+    </button>
     <div id="preracuniZapisi"></div>
   </div>
 
@@ -1333,6 +1339,32 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: PRERACUN MATICNEGA EKSTRAKTA -->
+<!-- POPIS ETANOLA — pripomocek, nic se ne knjizi.
+     Posodo stehtas in znas njeno vol %, volumna pa ne vidis. Iz mase in
+     koncentracije dobis gostoto, iz nje volumen in AAE. -->
+<div class="overlay" id="popisOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">⚗️ Popis etanola</span>
+      <button class="shclose" onclick="closeSheet('popisOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Pripomoček za pregled zaloge — vpisano ostane shranjeno v tem brskalniku,
+        v knjigo etanola pa se ne knjiži nič.
+      </div>
+      <div id="popisVrstice"></div>
+      <button class="bcancel" style="width:100%;margin:.4rem 0 .7rem" onclick="popisDodaj()">+ Dodaj posodo</button>
+      <div id="popisIzid"></div>
+      <div class="btnrow" style="margin-top:.7rem">
+        <button class="bcancel" onclick="popisPocisti()">Počisti</button>
+        <button class="bsave" onclick="closeSheet('popisOverlay')">Zapri</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="meOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1699,6 +1731,136 @@ const ETOH_DENSITY=[
   [99.0,0.79432],[99.1,0.79384],[99.2,0.79336],[99.3,0.79287],[99.4,0.79237],[99.5,0.79188],[99.6,0.79137],[99.7,0.79087],[99.8,0.79038],[99.9,0.78987],
   [100.0,0.78934]
 ];
+// ── POPIS ETANOLA ──────────────────────────────────────────────────────────
+// Pripomocek za rocni pregled zaloge. Posodo stehtas in poznas njeno vol %,
+// volumna pa ne vidis — iz mase in koncentracije ga izracunamo prek gostote.
+// Nic se ne knjizi; zaloga v knjigi etanola ostane nedotaknjena.
+const POPIS_KLJUC='gm_popis_etanola';
+let popisVrstice=[];
+
+function popisNalozi(){
+  try{const s=localStorage.getItem(POPIS_KLJUC);popisVrstice=s?JSON.parse(s):[];}
+  catch(e){popisVrstice=[];}
+  if(!Array.isArray(popisVrstice)||!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:''}];
+}
+function popisShrani(){
+  try{localStorage.setItem(POPIS_KLJUC,JSON.stringify(popisVrstice));}catch(e){}
+}
+
+function openPopisSheet(){
+  popisNalozi();
+  popisIzrisi();
+  openSheet('popisOverlay');
+}
+
+function popisDodaj(){popisVrstice.push({opis:'',masa:'',pct:''});popisShrani();popisIzrisi();}
+function popisBrisi(i){
+  popisVrstice.splice(i,1);
+  if(!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:''}];
+  popisShrani();popisIzrisi();
+}
+function popisPocisti(){
+  if(!confirm('Počistim ves popis?'))return;
+  popisVrstice=[{opis:'',masa:'',pct:''}];popisShrani();popisIzrisi();
+}
+function popisSprememba(i,polje,vrednost){
+  popisVrstice[i][polje]=vrednost;
+  popisShrani();
+  popisIzracun();
+}
+
+// Ena posoda: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
+function popisVrstica(v){
+  const masa=parseNum(v.masa);           // kg
+  const pct=parseNum(v.pct);             // vol %
+  if(!(masa>0)||!(pct>0)||pct>100)return null;
+  const gostota=etohDensity(pct);        // kg/L (enako kot g/mL)
+  const volumen=round(masa/gostota,4);   // L raztopine
+  const aae=round(volumen*pct/100,4);    // L absolutnega etanola
+  return {masa,pct,gostota,volumen,aae};
+}
+
+function popisIzrisi(){
+  const el=document.getElementById('popisVrstice');
+  if(!el)return;
+  el.innerHTML=popisVrstice.map((v,i)=>`
+    <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
+      <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
+        <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka posode (neobvezno)"
+          oninput="popisSprememba(${i},'opis',this.value)"
+          style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">
+        <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
+      </div>
+      <div class="frow" style="margin-bottom:.35rem">
+        <div class="field"><label>Masa (kg)</label>
+          <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 2,000"
+            oninput="popisSprememba(${i},'masa',this.value)"></div>
+        <div class="field"><label>Koncentracija (vol %)</label>
+          <input value="${(v.pct||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 96,25"
+            oninput="popisSprememba(${i},'pct',this.value)"></div>
+      </div>
+      <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
+    </div>`).join('');
+  popisIzracun();
+}
+
+function popisIzracun(){
+  let masaSk=0,volSk=0,aaeSk=0,steviloOk=0;
+  popisVrstice.forEach((v,i)=>{
+    const r=popisVrstica(v);
+    const el=document.getElementById('popisVr'+i);
+    if(!el)return;
+    if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in koncentracijo…</span>';return;}
+    masaSk+=r.masa;volSk+=r.volumen;aaeSk+=r.aae;steviloOk++;
+    el.innerHTML=`ρ ${r.gostota.toFixed(4)} kg/L · <strong>${r.volumen.toFixed(3)} L</strong>
+      · <strong style="color:var(--accent)">${r.aae.toFixed(4)} L AAE</strong>`;
+  });
+
+  const izid=document.getElementById('popisIzid');
+  if(!izid)return;
+  if(!steviloOk){izid.innerHTML='';return;}
+
+  masaSk=round(masaSk,4);volSk=round(volSk,4);aaeSk=round(aaeSk,4);
+  // Skupna koncentracija iz sestevkov, da se stevilke ujemajo med sabo:
+  // volumen x koncentracija / 100 = AAE.
+  const skupniPct=volSk>0?round(aaeSk/volSk*100,2):0;
+
+  // Ce bi vse zlil v eno posodo, bi bil volumen nekoliko manjsi od sestevka —
+  // etanol in voda se ob mesanju skrcita. Masa in AAE se ohranita, zato
+  // pravo koncentracijo zmesi dobimo prek mase.
+  const masaEtanola=round(aaeSk*0.78927,4);
+  const masniPct=masaSk>0?round(masaEtanola/masaSk*100,3):0;
+  const zmesPct=masniPct>0?masToVol(masniPct):0;
+  const zmesVol=zmesPct>0?round(masaSk/etohDensity(zmesPct),4):0;
+
+  const vKnjigi=round(calcEtZaloga(),4);
+  const razlika=round(aaeSk-vKnjigi,4);
+
+  izid.innerHTML=`
+    <div style="border:1px solid var(--accent);border-radius:8px;padding:.6rem .7rem;background:rgba(175,132,85,.08)">
+      <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">
+        Skupaj — ${steviloOk} ${steviloOk===1?'posoda':steviloOk===2?'posodi':'posod'}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem">
+        <span>Masa</span><span style="text-align:right;font-weight:700">${masaSk.toFixed(3)} kg</span>
+        <span>Volumen</span><span style="text-align:right;font-weight:700">${volSk.toFixed(3)} L</span>
+        <span>Skupna koncentracija</span><span style="text-align:right;font-weight:700">${skupniPct.toFixed(2)} vol %</span>
+        <span style="color:var(--accent)">Absolutni etanol</span>
+        <span style="text-align:right;font-weight:700;color:var(--accent)">${aaeSk.toFixed(4)} L AAE</span>
+      </div>
+      ${steviloOk>1?`<div style="font-size:.65rem;color:var(--muted);line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
+        Zliti v eno posodo: <strong>${zmesVol.toFixed(3)} L pri ${zmesPct.toFixed(2)} vol %</strong>
+        (${masniPct.toFixed(2)} mas %). Volumen je manjši od seštevka, ker se etanol in voda ob mešanju skrčita —
+        masa in AAE se ohranita.
+      </div>`:''}
+      <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
+        V knjigi etanola: <strong>${vKnjigi.toFixed(4)} L AAE</strong> ·
+        razlika <strong style="color:${Math.abs(razlika)<0.05?'var(--success)':'var(--danger)'}">${razlika>=0?'+':''}${razlika.toFixed(4)} L AAE</strong>
+        <div style="color:var(--muted);font-size:.65rem">Popis se nikamor ne knjiži — če razlika ni sprejemljiva, jo uredi z vnosom v knjigo etanola.</div>
+      </div>
+    </div>`;
+}
+
 function etohDensity(volPct){
   for(let i=0;i<ETOH_DENSITY.length-1;i++){
     const [p0,d0]=ETOH_DENSITY[i],[p1,d1]=ETOH_DENSITY[i+1];

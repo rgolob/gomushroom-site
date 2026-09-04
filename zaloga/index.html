@@ -1793,12 +1793,22 @@ function moji(n){for(const[k,v]of Object.entries(EMOJI))if(n&&n.includes(k))retu
 // ob odpremi knjizimo porabo skatle. Zapis gre v isto tabelo kot rocni vnosi,
 // zato ga je pozneje mogoce urediti ali izbrisati kot vsak drug vnos.
 let matTipiEmb=[];
+// Zakaj tipov ni. Tabela gm_dn_mat_tipi je pod RLS in jo sme brati samo
+// prijavljen uporabnik, racuni pa se izrisejo tudi iz lokalne kopije — ob
+// pretecen seji je torej videti, kot da je vse v redu, le embalaze ni.
+// Zato si razlog zapomnimo in ga ob kliku povemo.
+let matTipiNapaka='';
 async function loadMatTipi(){
   try{
     const r=await sbFetch('gm_dn_mat_tipi','kat=eq.embalaza&order=kapaciteta.asc');
     matTipiEmb=(r||[]).map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kapaciteta:t.kapaciteta||0,cena:0}));
+    matTipiNapaka=matTipiEmb.length?'':'prazno';
     await loadCeneEmbalaze();
-  }catch(e){matTipiEmb=[];console.warn('loadMatTipi',e);}
+  }catch(e){
+    matTipiEmb=[];
+    matTipiNapaka=(e&&e.message)||'napaka';
+    console.warn('loadMatTipi',e);
+  }
 }
 
 // Cena na enoto se racuna enako kot matCenaEnote() v aplikaciji materiali:
@@ -3366,7 +3376,13 @@ async function appInit(){
   document.getElementById('invDateTo').value=_initRange.to;
   loadCustomers();
   sbLoadSettings().catch(()=>{});
-  loadMatTipi().then(loadSkatlaZapisi).then(()=>{if(currentTab==='dokumenti')renderInvoices();}).catch(()=>{});
+  // Vsak clen lovi svojo napako: prej je spodletel loadSkatlaZapisi pobral s
+  // sabo tudi ponovni izris in kljukice ob embalazi se niso pokazale do
+  // naslednjega preklopa zavihka.
+  loadMatTipi()
+    .then(()=>loadSkatlaZapisi().catch(e=>console.warn('loadSkatlaZapisi',e)))
+    .then(()=>{if(currentTab==='dokumenti')renderInvoices();})
+    .catch(e=>console.warn('embalaza init',e));
   try{
     // Zapomni si lokalne vrstice pred Supabase prepisom
     const _localLines={};
@@ -5726,7 +5742,7 @@ function renderInvoices(){
           ${i.email?`<button class="tbtn" onclick="sendInvoiceEmail('${i.id}')">📧</button>`:''}
           ${jePosiljka(i)?`<button class="tbtn" title="Nalepka za pošiljko" onclick="printInvoiceLabel('${i.id}')">🏷</button>`:''}
           ${jePosiljka(i)||i.sledenje?`<button class="tbtn" title="Sledenje pošiljki" onclick="urediSledenje('${i.id}')">📮${i.sledenje?' ✓':''}</button>`:''}
-          ${matTipiEmb.length?`<button class="tbtn" title="Embalaža za to odpremo" onclick="openSkatlaSheet('${i.id}')">📦${_skatlaZapisi[skatlaZapisId(i.id)]?' ✓':''}</button>`:''}
+          <button class="tbtn" title="Embalaža za to odpremo" onclick="openSkatlaSheet('${i.id}')">📦${_skatlaZapisi[skatlaZapisId(i.id)]?' ✓':''}</button>
           <button class="tbtn" onclick="openEditInvoice('${i.id}')">€ ✎</button>
           <button class="tbtn del" onclick="deleteInvoice('${i.id}')">✕</button>
         </div>
@@ -10532,11 +10548,21 @@ Rok`);
 // ── SKATLA OB ODPREMI ──
 let _skatlaInvId=null;
 
-function openSkatlaSheet(invId){
+async function openSkatlaSheet(invId){
   const i=invoices.find(x=>x.id===invId);
   if(!i){toast('Račun ni najden');return;}
+  // Gumba nekoc sploh nismo izrisali, ce tipov embalaze ni bilo. To je
+  // pomenilo, da je moznost ob pretecen seji ali kratkem izpadu omrezja tiho
+  // izginila in ni bilo videti, zakaj. Rajsi poskusimo se enkrat in povemo.
   if(!matTipiEmb.length){
-    toast('Ni vpisane embalaže — dodaj jo v aplikaciji materiali');
+    toast('⟳ Nalagam embalažo…');
+    await loadMatTipi();
+    if(matTipiEmb.length)renderInvoices();
+  }
+  if(!matTipiEmb.length){
+    toast(matTipiNapaka==='prazno'
+      ? 'Ni vpisane embalaže — dodaj jo v aplikaciji materiali'
+      : 'Embalaže ni bilo mogoče prebrati — preveri prijavo in povezavo');
     return;
   }
   _skatlaInvId=invId;

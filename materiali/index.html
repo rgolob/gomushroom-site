@@ -660,7 +660,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <option value="Smrekovi vršički">Smrekovi vršički</option>
           </select>
         </div>
-        <div class="field"><label>Namen (auto)</label>
+        <div class="field"><label id="dnNamenLabel">Namen (auto)</label>
           <input id="dnNamen" type="text" readonly style="background:var(--parchment);font-size:16px" placeholder="—">
         </div>
       </div>
@@ -809,6 +809,17 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Cena alc (€/kom)</label><input id="dnCenaAlc" type="text" placeholder="0,00" inputmode="decimal"></div>
         <div class="field"><label>Cena gly (€/kom)</label><input id="dnCenaGly" type="text" placeholder="0,00" inputmode="decimal"></div>
       </div>
+      </div></details>
+      <!-- Razvojni nalog nosi svojo zgodbo: zakaj si poskus delal, kaj si
+           naredil in kaj je iz tega prislo. Pri rednem nalogu tega ni — tam je
+           namen samodejen ("Ekstrakcija Reishi") in poteka ni treba opisovati. -->
+      <details class="dnsec" id="dnsecRd" style="display:none" open>
+      <summary>🔬 Razvojni zapis <span class="dnsum" id="dnsumRd"></span></summary>
+      <div class="dnsec-body">
+      <div class="field"><label>Delo</label>
+        <textarea id="dnDelo" style="min-height:110px" placeholder="Kaj si delal — postopek, parametri, opažanja med potekom…" oninput="dnOsveziPovzetke()"></textarea></div>
+      <div class="field"><label>Zaključek</label>
+        <textarea id="dnZakljucek" style="min-height:90px" placeholder="Kaj je iz tega prišlo — rezultat, sklep, kaj naprej…" oninput="dnOsveziPovzetke()"></textarea></div>
       </div></details>
       <details class="dnsec" id="dnsecKonec">
       <summary>✔️ Opomba in zaključek <span class="dnsum" id="dnsumKonec"></span></summary>
@@ -1615,6 +1626,10 @@ function parseDate(v){
   return v;
 }
 function parseNum(v){return parseFloat(String(v).replace(',','.'))||0;}
+// Prosto besedilo gre ponekod naravnost v innerHTML; brez tega bi znak < v
+// zapisu razbil izpis.
+function htmlEsc(v){return String(v==null?'':v)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function round(v,n=3){return Math.round(v*Math.pow(10,n))/Math.pow(10,n);}
 // Za prikaz decimalnih kolicin (bulk v litrih) - z vejico, brez odvecnih nicel.
 function fmtNum(v,n=3){return String(round(v,n)).replace('.',',');}
@@ -1841,8 +1856,17 @@ function popisVrstica(v){
   // Temperatura je neobvezna. Brez nje privzamemo, da si meril pri 20 C, in
   // odcitek vzamemo takoj. Sicer ga popravimo na jakost pri 20 C — masa se s
   // temperaturo ne spreminja, zato vpliva samo na koncentracijo.
+  // parseNum vrne 0, kadar ne zna prebrati. Pri temperaturi je 0 veljavna
+  // vrednost, zato bi se tipkarska napaka tiho brala kot 0 °C in dala mocno
+  // napacen popravek. Zato tu beremo strogo.
   const tVpis=String(v.temp||'').trim();
-  const t=tVpis?parseNum(tVpis):20;
+  let t=20,neveljavnaTemp=false;
+  if(tVpis){
+    const prebrano=parseFloat(tVpis.replace(',','.'));
+    if(isFinite(prebrano))t=prebrano; else neveljavnaTemp=true;
+  }
+  if(neveljavnaTemp)return {neveljavnaTemp:true};
+
   let pct=odcitek,popravljeno=false,izvenObmocja=false;
   if(tVpis&&Math.abs(t-20)>0.05){
     const prava=oimlPravaVolPct(odcitek,t);
@@ -1889,6 +1913,10 @@ function popisIzracun(){
     const el=document.getElementById('popisVr'+i);
     if(!el)return;
     if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in odčitek…</span>';return;}
+    if(r.neveljavnaTemp){
+      el.innerHTML='<span style="color:var(--danger)">Temperature ne razumem — vpiši število, npr. 26,5</span>';
+      return;
+    }
     if(r.izvenObmocja){
       el.innerHTML='<span style="color:var(--danger)">Temperatura mora biti med −20 in 40 °C</span>';
       return;
@@ -3942,6 +3970,14 @@ function dnOsveziPovzetke(){
     dnPisiPovzetek('Bil','ni podatkov');
   }
 
+  // Razvojni zapis: povzetek pove, kateri del zgodbe je ze napisan.
+  const delo=(document.getElementById('dnDelo')?.value||'').trim();
+  const zakljucek=(document.getElementById('dnZakljucek')?.value||'').trim();
+  if(delo&&zakljucek)dnPisiPovzetek('Rd','delo in zaključek','ok');
+  else if(delo)dnPisiPovzetek('Rd','delo · brez zaključka','warn');
+  else if(zakljucek)dnPisiPovzetek('Rd','zaključek · brez opisa dela','warn');
+  else dnPisiPovzetek('Rd','ni vnosa');
+
   const cenaA=parseNum(document.getElementById('dnCenaAlc')?.value||'0');
   const cenaG=parseNum(document.getElementById('dnCenaGly')?.value||'0');
   dnPisiPovzetek('Cene',(cenaA||cenaG)?`${cenaA?fmtNum(cenaA,2)+' €':'—'} / ${cenaG?fmtNum(cenaG,2)+' €':'—'}`:'ni vneseno');
@@ -4460,6 +4496,9 @@ function openDNSheet(id){
   document.getElementById('dnCenaAlc').value=d?.cenaAlc||settings.cenaAlc||31.9;
   document.getElementById('dnCenaGly').value=d?.cenaGly||settings.cenaGly||33.9;
   document.getElementById('dnOpomba').value=d?.opomba||'';
+  document.getElementById('dnDelo').value=d?.delo||'';
+  document.getElementById('dnZakljucek').value=d?.zakljucek||'';
+  dnPrikaziRdZapis(!!d?.jeRd);
   document.getElementById('dnSerijaAlc').value=d?.serijaAlc||'';
   document.getElementById('dnPredvidenZakljucek').value=d?.predvidenZakljucek||'';
   document.getElementById('dnDatumZakljucka').value=d?.datumZakljucka||'';
@@ -4503,6 +4542,21 @@ function onDnVrstaChange(){
   const samodejna=el.value===''||/^(DN|RD)-\d{2}-\d{3}$/.test(el.value.trim().toUpperCase());
   if(samodejna)el.value=rd?nextRDNum():nextDNNum();
   el.placeholder=rd?'RD-26-001':'DN-26-001';
+  dnPrikaziRdZapis(rd);
+}
+
+// Pri razvojnem nalogu je namen bistvo poskusa, zato je prosto besedilo; pri
+// rednem ostane samodejen, da se ne pise vsakic isto.
+function dnPrikaziRdZapis(rd){
+  const sek=document.getElementById('dnsecRd');
+  if(sek)sek.style.display=rd?'':'none';
+  const namen=document.getElementById('dnNamen');
+  const oznaka=document.getElementById('dnNamenLabel');
+  if(!namen)return;
+  namen.readOnly=!rd;
+  namen.style.background=rd?'':'var(--parchment)';
+  if(oznaka)oznaka.textContent=rd?'Namen poskusa':'Namen (auto)';
+  namen.placeholder=rd?'Zakaj si poskus delal…':'—';
 }
 
 function nextDNNum(){
@@ -4928,7 +4982,10 @@ function onDNMasaChange(idx,val){
 function updateDNNamen(){
   const g=document.getElementById('dnVrstaGobe').value;
   onDnSuhaSnovInput();
-  document.getElementById('dnNamen').value='Ekstrakcija '+g;
+  // Pri razvojnem nalogu je namen vpisal uporabnik — sprememba vrste gobe ga
+  // ne sme izbrisati.
+  if(document.getElementById('dnVrsta').value!=='rd')
+    document.getElementById('dnNamen').value='Ekstrakcija '+g;
   renderDNSerijeRows();
 }
 
@@ -4983,6 +5040,8 @@ function saveDN(){
     cenaAlc:parseNum(document.getElementById('dnCenaAlc').value),
     cenaGly:parseNum(document.getElementById('dnCenaGly').value),
     opomba:document.getElementById('dnOpomba').value.trim(),
+    delo:document.getElementById('dnDelo').value.trim(),
+    zakljucek:document.getElementById('dnZakljucek').value.trim(),
     datumZakljucka:document.getElementById('dnDatumZakljucka').value||'',
     status:'odprt',
     ustvarjen:new Date().toISOString(),
@@ -5099,9 +5158,20 @@ function openDNDetail(id){
       <div class="stat-card"><div class="stat-label">Status</div><div class="status-badge status-${d.status}" style="display:inline-block;margin-top:.3rem">${d.status==='odprt'?'Odprt':d.status==='zakljucen'?'Zaključen':'Prenesen → Zaloga'}</div></div>
     </div>
 
+    ${d.jeRd&&(d.delo||d.zakljucek)?`
+    <div class="slabel">Razvojni zapis</div>
+    <div style="border:1px solid rgba(90,58,107,.3);border-radius:8px;padding:.55rem .7rem;margin-bottom:.6rem;background:rgba(90,58,107,.05)">
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:.15rem">Namen</div>
+      <div style="font-size:.78rem;margin-bottom:.5rem">${htmlEsc(d.namen||'—')}</div>
+      ${d.delo?`<div style="font-size:.68rem;color:var(--muted);margin-bottom:.15rem">Delo</div>
+        <div style="font-size:.78rem;line-height:1.5;white-space:pre-wrap;margin-bottom:.5rem">${htmlEsc(d.delo)}</div>`:''}
+      ${d.zakljucek?`<div style="font-size:.68rem;color:var(--muted);margin-bottom:.15rem">Zaključek</div>
+        <div style="font-size:.78rem;line-height:1.5;white-space:pre-wrap">${htmlEsc(d.zakljucek)}</div>`:''}
+    </div>`:''}
+
     <div class="slabel">Surovine</div>
     <table class="mini-table">
-      <tr><td>Namen</td><td>${d.namen}</td></tr>
+      ${d.jeRd&&(d.delo||d.zakljucek)?'':`<tr><td>Namen</td><td>${htmlEsc(d.namen)}</td></tr>`}
       <tr><td>Serija gobe</td><td>${dnSerijeOznaka(d)}</td></tr>
       <tr><td>Masa gobe</td><td>${d.masaGobe} kg</td></tr>
       <tr><td>Masa EtOH</td><td>${d.masaEtOH} kg</td></tr>
@@ -9210,6 +9280,7 @@ async function sbDel(tbl,id){
 // Converters DN ↔ Supabase
 function dnToSb(d){return{
   id:d.id,oznaka:d.oznaka,je_rd:!!d.jeRd,datum:d.datum||null,namen:d.namen||null,
+  delo:d.delo||null,zakljucek:d.zakljucek||null,
   vrsta_gobe:d.vrstaGobe||null,serija_gobe:d.serijaGobe||null,masa_gobe:d.masaGobe||null,
   // Nalog lahko porabi vec serij gobe. Brez tega stolpca je v bazi ostala samo
   // prva serija in razbitje se je ob branju iz Supabase izgubilo.
@@ -9242,6 +9313,7 @@ function dnToSb(d){return{
 };}
 function sbToDn(r){return{
   id:r.id,oznaka:r.oznaka,jeRd:!!r.je_rd,datum:r.datum,namen:r.namen,
+  delo:r.delo||'',zakljucek:r.zakljucek||'',
   vrstaGobe:r.vrsta_gobe,serijaGobe:r.serija_gobe||'',masaGobe:r.masa_gobe||0,
   serije:Array.isArray(r.serije)?r.serije:[],
   serijaAlc:r.serija_alc||'',stekAlc:r.stek_alc||'bela',

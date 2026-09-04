@@ -6171,7 +6171,7 @@ body.a4 .label .frame{position:absolute;top:50%;left:50%;width:138.5mm;height:95
 body.a4 .sheet::before,body.a4 .sheet::after{content:'';position:absolute;border:0;border-top:.3mm dashed #bbb;left:0;right:0;top:148.5mm}
 body.a4 .sheet::after{border-top:0;border-left:.3mm dashed #bbb;top:0;bottom:0;left:105mm;right:auto}
 
-.toolbar,.namig{display:none}
+.toolbar,.namig,.zapri-vrstica{display:none}
 @media screen{
   body{padding:1rem;background:#eee}
   .sheet{background:transparent}
@@ -6185,8 +6185,41 @@ body.a4 .sheet::after{border-top:0;border-left:.3mm dashed #bbb;top:0;bottom:0;l
   .toolbar button{padding:.55rem 1.1rem;font-size:.82rem;cursor:pointer;border:1px solid #ccc;background:#fff;color:#111;border-radius:8px;font-family:inherit}
   .toolbar button.on{background:#111;color:#fff;border-color:#111}
   .toolbar .print{background:#111;color:#fff;border-color:#111;font-weight:700}
+  .toolbar .zapri{font-weight:700}
   .count{position:fixed;top:.75rem;left:.75rem;font-size:.78rem;color:#555;font-family:Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji';background:#fff;padding:.4rem .8rem;border-radius:8px;border:1px solid #ddd}
-  .namig{display:block;max-width:210mm;margin:0 auto .9rem;font-family:Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji';font-size:.75rem;line-height:1.5;color:#6a5a50;background:#fff8e6;border:1px solid #e8d9b0;border-radius:8px;padding:.55rem .8rem}
+  /* Zgornji rob namiga je pod lebdeco orodno vrstico in stevcem — brez tega
+     jima je namig lezal pod njima in je bil na telefonu napol zakrit. */
+  .namig{display:block;max-width:210mm;margin:3.4rem auto .9rem;font-family:Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji';font-size:.75rem;line-height:1.5;color:#6a5a50;background:#fff8e6;border:1px solid #e8d9b0;border-radius:8px;padding:.55rem .8rem}
+
+  /* Izhod. Na iPhonu, ko je aplikacija dodana na domaci zaslon, ni ne
+     Safarijevih vrstic ne gumba nazaj — brez tega je edini izhod iz nalepke
+     zapiranje cele aplikacije. Zgoraj v orodni vrstici je vedno pri roki,
+     spodaj pa se enkrat velik, ko nalepko pregledas do konca.
+     Namenoma ni position:fixed: stran nima oznake viewport, zato jo telefon
+     razpostavi na 980 px in bi "fixed" pristal krepko pod vidnim delom. */
+  .zapri-vrstica{display:block;max-width:210mm;margin:1.5rem auto 0}
+  .zapri-vrstica button{display:block;width:100%;
+    padding:.85rem;font-size:.9rem;font-weight:700;cursor:pointer;
+    border:1px solid #111;background:#fff;color:#111;border-radius:10px;
+    font-family:Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji'}
+}`;
+
+// ── Izhod iz okna za tisk ──────────────────────────────────────────────────
+// Okna za tisk odpre aplikacija z window.open, zato jih navadno lahko tudi
+// sama zapre. Na iPhonu, ko je aplikacija dodana na domaci zaslon, pa se
+// stran odpre kar v istem oknu: window.close() tam ne stori nicesar, gumba
+// nazaj ni in edini izhod je zapiranje cele aplikacije. Zato poskusimo po
+// vrsti — zapri okno, sicer nazaj po zgodovini, sicer naravnost v aplikacijo.
+const ZAPRI_SKRIPTA=`
+function gmZapri(){
+  var odsel=false;
+  addEventListener('pagehide',function(){odsel=true;});
+  try{window.close();}catch(e){}
+  setTimeout(function(){
+    if(odsel)return;
+    try{if(history.length>1)history.back();}catch(e){}
+    setTimeout(function(){if(!odsel)location.replace('/zaloga/');},500);
+  },250);
 }`;
 
 // Okno z nalepkami je about:blank, zato se na njegov localStorage ni mogoce
@@ -6221,12 +6254,14 @@ function nalepkeStran(nalepke,naslov,stevec){
   <button id="bA4" onclick="nalepkaFormat('a4')">A4 — štiri na list</button>
   <button id="bA6" onclick="nalepkaFormat('a6')">A6 — ena na list</button>
   <button class="print" onclick="window.print()">🖨 Natisni / PDF</button>
+  <button class="zapri" onclick="gmZapri()">✕ Zapri</button>
 </div>
 <div class="namig">V oknu za tisk nastavi <strong>Merilo 100 %</strong> in <strong>Robovi: brez</strong>.
 Prilagajanje velikosti („Fit to page&#34;) natis pomanjša za nekaj milimetrov in nalepke se ne poravnajo z izsekom.</div>
 ${stevec?`<div class="count">${stevec}</div>`:''}
 ${pole.join('')}
-<script>window.__nalepkaFormat=${JSON.stringify(zacetni)};${NALEPKA_SKRIPTA}<\/script>
+<div class="zapri-vrstica"><button onclick="gmZapri()">✕ Zapri nalepko</button></div>
+<script>window.__nalepkaFormat=${JSON.stringify(zacetni)};${ZAPRI_SKRIPTA}${NALEPKA_SKRIPTA}<\/script>
 </body></html>`;
 }
 
@@ -6477,8 +6512,9 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 <div class="actions">
   <button class="btn btn-print" onclick="window.print()">🖨 Natisni</button>
   <button class="btn btn-pdf" onclick="window.print()">📄 Shrani / Natisni</button>
-  <button class="btn btn-close" onclick="window.close()">✕ Zapri</button>
+  <button class="btn btn-close" onclick="gmZapri()">✕ Zapri</button>
 </div>
+<script>${ZAPRI_SKRIPTA}<\/script>
 </body></html>`;
 }
 
@@ -6777,9 +6813,10 @@ ${qrImgTag?`<div class="qr-section">
   <button class="btn btn-print" onclick="window.print()">${T.natisni}</button>
   <button class="btn btn-pdf" data-title="${invNum||'Racun'}" onclick="document.title=this.getAttribute('data-title');window.print()">${T.shraniPdf}</button>
   ${emailBtn}
-  <button class="btn btn-close" onclick="window.close()">${T.zapri}</button>
+  <button class="btn btn-close" onclick="gmZapri()">${T.zapri}</button>
 </div>
 
+<script>${ZAPRI_SKRIPTA}<\/script>
 </body></html>`;
 }
 // Load QR library — use kjua which reliably returns canvas

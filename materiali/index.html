@@ -1849,6 +1849,19 @@ const ETOH_DENSITY=[
 // ohranita. Iz dveh masnih bilanc dobimo tocno resitev, ki hkrati zadene
 // jakost in koncni volumen.
 //
+// Etanol nad to mejo je uporaben za ekstrakcijo; kar je pod njo, caka na
+// regeneracijo oziroma koncentriranje. Ce se meja kdaj premakne, se popravi tu.
+const ET_MEJA_UPORABE=70;
+function etStatus(pct){
+  return pct>=ET_MEJA_UPORABE
+    ?{oznaka:'za uporabo',barva:'#3a6b4a',ozadje:'rgba(58,107,74,.12)'}
+    :{oznaka:'za regeneracijo',barva:'#8b5a2a',ozadje:'rgba(139,90,42,.12)'};
+}
+function etZnacka(pct){
+  const s=etStatus(pct);
+  return `<span style="display:inline-block;font-size:.6rem;padding:.05rem .4rem;border-radius:999px;background:${s.ozadje};color:${s.barva};white-space:nowrap">${s.oznaka}</span>`;
+}
+
 // Na liter raztopine: koliko kilogramov je etanola in koliko vode.
 function etSestava(volPct){
   const skupna=etohDensity(volPct);              // kg/L pri 20 C
@@ -1868,6 +1881,58 @@ function etMesaj(ciljV,ciljPct,pctA,pctB){
   const xb=(a.etanol*W-a.voda*E)/det;
   if(xa<-1e-9||xb<-1e-9)return null;
   return {xa:Math.max(0,xa),xb:Math.max(0,xb)};
+}
+
+// Predlog mesanja iz vec virov. Vrstni red ni poljuben:
+//   sibki — od najbolj razredcenega navzgor, da se porabi, kar caka na
+//           regeneracijo; voda gre na konec, ker je zadnja izbira, ne prva
+//           (po jakosti bi bila sicer prva),
+//   mocni — od najsibkejsega navzgor, da mocnejsi ostane za takrat, ko ga
+//           bo res treba.
+// Ko vira zmanjka, ga porabimo do konca in preostanek cilja resujemo z
+// naslednjim. Racunamo z masama etanola in vode, ki se ohranita.
+function etPredlogMesanja(ciljV,ciljPct,viri){
+  const c=etSestava(ciljPct);
+  let E=ciljV*c.etanol,W=ciljV*c.voda;
+  const kopija=v=>({...v,ostane:v.naVoljo});
+
+  // Ce ze imas posodo prave jakosti, ni kaj mesati. Brez tega bi tak vir izpadel
+  // iz obeh skupin (ni ne sibkejsi ne mocnejsi od cilja) in predlog bi po nepotrebnem
+  // javil, da cilja ni mogoce doseci.
+  const tocno=viri.filter(v=>Math.abs(v.pct-ciljPct)<1e-9&&!v.voda)
+    .sort((a,b)=>b.naVoljo-a.naVoljo)[0];
+  if(tocno)return {ok:tocno.naVoljo>=ciljV-1e-9,cisto:true,
+    raba:[{vir:tocno,kol:Math.min(ciljV,tocno.naVoljo)}],manjka:'te jakosti'};
+  const sibki=viri.filter(v=>v.pct<ciljPct-1e-9).map(kopija)
+    .sort((a,b)=>(a.voda?1:0)-(b.voda?1:0)||a.pct-b.pct);
+  const mocni=viri.filter(v=>v.pct>ciljPct+1e-9).map(kopija).sort((a,b)=>a.pct-b.pct);
+
+  const raba=[];
+  const dodaj=(v,kol)=>{
+    if(kol<=1e-9)return;
+    const s=etSestava(v.pct);
+    E-=kol*s.etanol;W-=kol*s.voda;v.ostane-=kol;
+    const o=raba.find(r=>r.vir===v);
+    if(o)o.kol+=kol; else raba.push({vir:v,kol});
+  };
+
+  let is=0,im=0;
+  for(let k=0;k<60;k++){
+    if(E<=1e-9&&W<=1e-9)return {ok:true,raba};
+    if(im>=mocni.length)return {ok:false,raba,manjka:'močnejšega'};
+    if(is>=sibki.length)return {ok:false,raba,manjka:'šibkejšega'};
+    const M=mocni[im],S=sibki[is];
+    const m=etSestava(M.pct),s=etSestava(S.pct);
+    const det=m.etanol*s.voda-s.etanol*m.voda;
+    if(Math.abs(det)<1e-12){im++;continue;}
+    const xM=(E*s.voda-W*s.etanol)/det;
+    const xS=(m.etanol*W-m.voda*E)/det;
+    if(xM<-1e-9){im++;continue;}
+    if(xS<-1e-9){is++;continue;}
+    if(xS<=S.ostane+1e-9&&xM<=M.ostane+1e-9){dodaj(M,xM);dodaj(S,xS);return {ok:true,raba};}
+    if(xS>S.ostane+1e-9){dodaj(S,S.ostane);is++;} else {dodaj(M,M.ostane);im++;}
+  }
+  return {ok:false,raba,manjka:'rešitve'};
 }
 
 function openMesanjeSheet(){
@@ -1936,16 +2001,46 @@ function mesanjeIzracun(){
   });
   resitve.length=0;resitve.push(...brezPodvojenih);
 
-  // Najprej izvedljive, nato tiste brez vode, nato tiste, ki porabijo najmanj
-  // mocnega etanola — to je isto kot "porabi cim vec razredcenega".
-  resitve.sort((a,b)=>(b.dovolj-a.dovolj)||(a.vode-b.vode)||(a.vMocnejsi-b.vMocnejsi));
+  // Isto nacelo kot pri predlogu: najprej izvedljive, nato tiste brez vode,
+  // nato tiste z najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat,
+  // ko ga bo res treba), nato tiste z najbolj razredcenim sibkim virom, in
+  // sele na koncu tiste, ki porabijo najmanj mocnega.
+  resitve.sort((a,b)=>(b.dovolj-a.dovolj)||(a.vode-b.vode)
+    ||(a.mocnejsi.pct-b.mocnejsi.pct)||(a.sibkejsi.pct-b.sibkejsi.pct)
+    ||(a.vMocnejsi-b.vMocnejsi));
 
   const zVodo=resitve.find(r=>r.sibkejsi.voda);
   const stev=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3});
 
+  // Predlog: porabi najbolj razredceno in najsibkejsega uporabnega, po potrebi
+  // cez vec virov. To je obicajno tisto, kar hoces — pari spodaj so za primer,
+  // ko hoces tocno doloceno kombinacijo.
+  const pred=etPredlogMesanja(ciljV,ciljPct,viri);
+  const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
+
   el.innerHTML=`
-    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
-      ${resitve.length} ${resitve.length===1?'možnost':resitve.length===2?'možnosti':'možnosti'}
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">Predlog</div>
+    <div style="border:1px solid var(--accent);border-radius:8px;padding:.55rem .65rem;margin-bottom:.7rem;background:rgba(175,132,85,.08)">
+      ${pred.raba.length?`<div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;align-items:center">
+        ${pred.raba.map(x=>`
+          <span>${htmlEsc(x.vir.ime)}
+            <span style="color:var(--muted)">${x.vir.pct.toLocaleString('sl-SI')} %</span>
+            ${x.vir.voda?'':etZnacka(x.vir.pct)}</span>
+          <span style="text-align:right;font-weight:700">${stev(x.kol)} L</span>`).join('')}
+      </div>`:''}
+      ${pred.ok&&pred.cisto?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">
+        Nič ne mešaš — ta posoda je že prave jakosti.
+      </div>`:pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">
+        Zliješ ${stev(vliteje)} L, dobiš ${stev(ciljV)} L pri ${ciljPct.toLocaleString('sl-SI')} vol %
+        — zmes se skrči za ${stev(vliteje-ciljV)} L.
+      </div>`:`<div style="font-size:.68rem;color:var(--danger);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.5">
+        ⚠ Z zalogo, ki jo imaš, tega ni mogoče zmešati — zmanjka ${pred.manjka} etanola.
+        ${pred.raba.length?'Zgoraj je toliko, kolikor bi šlo.':''}
+      </div>`}
+    </div>
+
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
+      Druge kombinacije — po dva vira
     </div>
     ${resitve.map(r=>{
       const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
@@ -2092,7 +2187,8 @@ function popisIzracun(){
         ${r.odcitek.toFixed(2)} % pri ${r.t.toFixed(1)} °C →
         <strong>${r.pct.toFixed(2)} vol % pri 20 °C</strong></div>`:''}
       ρ ${r.gostota.toFixed(4)} kg/L · <strong>${r.volumen.toFixed(3)} L</strong>
-      · <strong style="color:var(--accent)">${r.aae.toFixed(4)} L AAE</strong>`;
+      · <strong style="color:var(--accent)">${r.aae.toFixed(4)} L AAE</strong>
+      · ${etZnacka(r.pct)}`;
   });
 
   const izid=document.getElementById('popisIzid');

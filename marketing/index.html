@@ -787,17 +787,29 @@ async function posljiKampanjo() {
 }
 
 // ── Zagon ──────────────────────────────────────────────────────────────────
-function preklopiZavihek(ime) {
+const ZAVIHKI = ['narocniki', 'kode', 'kampanje', 'nastavitve'];
+
+// Ime zavihka zapisemo v naslov, da je mogoce priti naravnost na dolocenega
+// (npr. /marketing/#kode) — stikalna plosca se sklicuje prav na te naslove.
+function preklopiZavihek(ime, zNaslova) {
+  if (ZAVIHKI.indexOf(ime) === -1) return;
   document.querySelectorAll('.zavihek').forEach(z =>
     z.setAttribute('aria-selected', String(z.dataset.zavihek === ime)));
-  ['narocniki', 'kode', 'kampanje', 'nastavitve'].forEach(i =>
-    $('p-' + i).classList.toggle('skrito', i !== ime));
+  ZAVIHKI.forEach(i => $('p-' + i).classList.toggle('skrito', i !== ime));
+  if (zNaslova) return;
+  try { history.replaceState(null, '', '#' + ime); } catch (e) {}
+}
+
+function zavihekIzNaslova() {
+  const ime = String(location.hash || '').replace(/^#/, '');
+  if (ZAVIHKI.indexOf(ime) !== -1) preklopiZavihek(ime, true);
 }
 
 async function zazeni() {
   $('zaslon-prijava').classList.add('skrito');
   $('zaslon-app').classList.remove('skrito');
   $('kdo').textContent = GMAuth.stanje().email;
+  zavihekIzNaslova();
   osveziPredogled();
   try {
     await naloziVse();
@@ -815,6 +827,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelectorAll('.zavihek').forEach(z =>
     z.addEventListener('click', () => preklopiZavihek(z.dataset.zavihek)));
+  window.addEventListener('hashchange', zavihekIzNaslova);
 
   $('isci-narocnike').addEventListener('input', izrisiNarocnike);
   $('filter-narocniki').addEventListener('change', izrisiNarocnike);

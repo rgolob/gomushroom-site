@@ -1353,6 +1353,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
         Pripomoček za pregled zaloge — vpisano ostane shranjeno v tem brskalniku,
         v knjigo etanola pa se ne knjiži nič.
+        <div style="margin-top:.3rem">
+          Alkoholometer je umerjen pri 20 °C. Če si meril pri drugi temperaturi, jo vpiši
+          in odčitek se popravi po tabeli OIML R 22. Če polje pustiš prazno, se vzame 20 °C.
+        </div>
       </div>
       <div id="popisVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .7rem" onclick="popisDodaj()">+ Dodaj posodo</button>
@@ -1628,6 +1632,65 @@ function save(){
 }
 
 // ── TABELA GOSTOTE EtOH/H2O po volumskem % (20°C, g/mL) ──
+// ── OIML R 22: gostota zmesi etanola in vode ───────────────────────────────
+// Mednarodna alkoholometricna tabela (OIML R 22, 1975), ki jo je prevzela tudi
+// EU. Polinom po masnem delezu in temperaturi, veljaven med -20 in +40 C.
+//
+// Rabimo jo samo za temperaturno kompenzacijo pri popisu: steklen alkoholometer
+// je umerjen pri 20 C in pri drugi temperaturi pokaze napacno vrednost. Vse
+// ostalo v aplikaciji se naprej racuna iz tabele ETOH_DENSITY spodaj — obe se
+// ujemata do 0,000125 g/mL, kar je na ravni zaokrozevanja tabele.
+//
+// Preverjeno: voda pri 20 C = 998,2012 kg/m3, cist etanol pri 20 C = 789,2391,
+// voda pri 4 C = 999,9688 — vse ustreza referencnim vrednostim.
+const OIML_KOEF=[
+  [1.285617841998974e3,-3.903285426e4],
+  [7.442971530188783,-7.420201433430137e3,2.234460334e5],
+  [-5.411227621436812e-1,-4.414153236817392e1,1.852373922069467e4,-5.478461354e5],
+  [2.458043105903461,1.080435942856230e2,-2.605562982188164e4,7.470172998e5],
+  [-4.672147440794683,-1.422753946421155e2,2.248646550400788e4,-6.138381234e5],
+  [4.810060584300675,1.096355666577570e2,-1.210164659068747e4,3.062874042e5],
+  [-2.895696483903638,-5.029988758547014e1,3.924090430035045e3,-8.829278388e4],
+  [-1.515784836987210e-6,1.022992966719220,1.353034988843029e1,-7.047478054272792e2,1.352215441e4],
+  [6.515031360099368e-6,-2.002561813734156e-1,-2.170575700536993,7.196353469546523e1,-1.668103923e3],
+  [1.345612883493354e-8,-8.763058573471110e-6,1.876837790289664e-2,2.517399633803461e-1,-1.046914743455169e1,3.891238958e2],
+  [-2.788074354782409e-8,4.075376675622027e-6,-6.802995733503803e-4,-1.193013005057010e-2,1.693433461530087e-1,-1.929769495e2],
+  [-9.9739231e-11,7.1693540e-9,-3.8957702e-7,3.6130013e-5,-5.2682542e-3,-2.0618513e-1,9.982012300e2],
+];
+function oimlPoly(k,v){return k.reduce((a,c)=>a*v+c,0);}
+// Gostota v kg/m3 pri masnem delezu etanola (0-1) in temperaturi v C.
+function oimlGostota(masniDelez,t){
+  return oimlPoly(OIML_KOEF.map(vrstica=>oimlPoly(vrstica,t-20)),masniDelez);
+}
+const OIML_RHO_ET20=oimlGostota(1,20);   // cist etanol pri 20 C
+
+// Gostota pada z narascajocim delezem etanola, zato je bisekcija obrnjena.
+function oimlMasniIzVol(volPct){
+  const cilj=volPct/100;let lo=0,hi=1;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;
+    if(m*oimlGostota(m,20)/OIML_RHO_ET20<cilj)lo=m;else hi=m;}
+  return (lo+hi)/2;
+}
+function oimlVolIzMasni(A){return A*oimlGostota(A,20)/OIML_RHO_ET20*100;}
+
+// Steklen alkoholometer je umerjen pri 20 C: njegova skala prevaja gostoto v
+// vol% po zvezi za 20 C. Pri drugi temperaturi se potopi glede na DEJANSKO
+// gostoto, zato odcitek ni prava jakost. Nazaj gremo tako: odcitek -> gostota
+// po skali -> dejanska gostota pri t (steklo se malo razteza) -> masni delez,
+// ki to gostoto da pri t -> vol% pri 20 C.
+const OIML_GAMA_STEKLO=25e-6;            // razteznost stekla areometra, 1/K
+function oimlPravaVolPct(odcitek,t){
+  if(!(odcitek>0)||odcitek>100)return null;
+  if(!(t>=-20&&t<=40))return null;
+  const rhoSkala=oimlGostota(oimlMasniIzVol(odcitek),20);
+  const rhoDejanska=rhoSkala*(1+OIML_GAMA_STEKLO*(t-20));
+  let lo=0,hi=1;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;
+    if(oimlGostota(m,t)>rhoDejanska)lo=m;else hi=m;}
+  const v=oimlVolIzMasni((lo+hi)/2);
+  return (v>=0&&v<=100)?v:null;
+}
+
 const ETOH_DENSITY=[
   [0.0,0.99823],[0.1,0.99808],[0.2,0.99793],[0.3,0.99778],[0.4,0.99763],[0.5,0.99749],[0.6,0.99734],[0.7,0.99719],[0.8,0.99704],[0.9,0.9969],
   [1.0,0.99675],[1.1,0.9966],[1.2,0.99645],[1.3,0.99631],[1.4,0.99616],[1.5,0.99601],[1.6,0.99587],[1.7,0.99572],[1.8,0.99557],[1.9,0.99543],
@@ -1741,7 +1804,7 @@ let popisVrstice=[];
 function popisNalozi(){
   try{const s=localStorage.getItem(POPIS_KLJUC);popisVrstice=s?JSON.parse(s):[];}
   catch(e){popisVrstice=[];}
-  if(!Array.isArray(popisVrstice)||!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:''}];
+  if(!Array.isArray(popisVrstice)||!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:'',temp:''}];
 }
 function popisShrani(){
   try{localStorage.setItem(POPIS_KLJUC,JSON.stringify(popisVrstice));}catch(e){}
@@ -1753,15 +1816,15 @@ function openPopisSheet(){
   openSheet('popisOverlay');
 }
 
-function popisDodaj(){popisVrstice.push({opis:'',masa:'',pct:''});popisShrani();popisIzrisi();}
+function popisDodaj(){popisVrstice.push({opis:'',masa:'',pct:'',temp:''});popisShrani();popisIzrisi();}
 function popisBrisi(i){
   popisVrstice.splice(i,1);
-  if(!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:''}];
+  if(!popisVrstice.length)popisVrstice=[{opis:'',masa:'',pct:'',temp:''}];
   popisShrani();popisIzrisi();
 }
 function popisPocisti(){
   if(!confirm('Počistim ves popis?'))return;
-  popisVrstice=[{opis:'',masa:'',pct:''}];popisShrani();popisIzrisi();
+  popisVrstice=[{opis:'',masa:'',pct:'',temp:''}];popisShrani();popisIzrisi();
 }
 function popisSprememba(i,polje,vrednost){
   popisVrstice[i][polje]=vrednost;
@@ -1772,12 +1835,24 @@ function popisSprememba(i,polje,vrednost){
 // Ena posoda: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
 function popisVrstica(v){
   const masa=parseNum(v.masa);           // kg
-  const pct=parseNum(v.pct);             // vol %
-  if(!(masa>0)||!(pct>0)||pct>100)return null;
-  const gostota=etohDensity(pct);        // kg/L (enako kot g/mL)
-  const volumen=round(masa/gostota,4);   // L raztopine
+  const odcitek=parseNum(v.pct);         // vol %, kot kaze alkoholometer
+  if(!(masa>0)||!(odcitek>0)||odcitek>100)return null;
+
+  // Temperatura je neobvezna. Brez nje privzamemo, da si meril pri 20 C, in
+  // odcitek vzamemo takoj. Sicer ga popravimo na jakost pri 20 C — masa se s
+  // temperaturo ne spreminja, zato vpliva samo na koncentracijo.
+  const tVpis=String(v.temp||'').trim();
+  const t=tVpis?parseNum(tVpis):20;
+  let pct=odcitek,popravljeno=false,izvenObmocja=false;
+  if(tVpis&&Math.abs(t-20)>0.05){
+    const prava=oimlPravaVolPct(odcitek,t);
+    if(prava===null)izvenObmocja=true; else {pct=round(prava,2);popravljeno=true;}
+  }
+
+  const gostota=etohDensity(pct);        // kg/L (enako kot g/mL) pri 20 C
+  const volumen=round(masa/gostota,4);   // L raztopine pri 20 C
   const aae=round(volumen*pct/100,4);    // L absolutnega etanola
-  return {masa,pct,gostota,volumen,aae};
+  return {masa,odcitek,t,pct,gostota,volumen,aae,popravljeno,izvenObmocja};
 }
 
 function popisIzrisi(){
@@ -1795,9 +1870,12 @@ function popisIzrisi(){
         <div class="field"><label>Masa (kg)</label>
           <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 2,000"
             oninput="popisSprememba(${i},'masa',this.value)"></div>
-        <div class="field"><label>Koncentracija (vol %)</label>
+        <div class="field"><label>Odčitek (vol %)</label>
           <input value="${(v.pct||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 96,25"
             oninput="popisSprememba(${i},'pct',this.value)"></div>
+        <div class="field"><label>Temp. (°C)</label>
+          <input value="${(v.temp||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="20"
+            oninput="popisSprememba(${i},'temp',this.value)"></div>
       </div>
       <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
     </div>`).join('');
@@ -1810,9 +1888,16 @@ function popisIzracun(){
     const r=popisVrstica(v);
     const el=document.getElementById('popisVr'+i);
     if(!el)return;
-    if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in koncentracijo…</span>';return;}
+    if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in odčitek…</span>';return;}
+    if(r.izvenObmocja){
+      el.innerHTML='<span style="color:var(--danger)">Temperatura mora biti med −20 in 40 °C</span>';
+      return;
+    }
     masaSk+=r.masa;volSk+=r.volumen;aaeSk+=r.aae;steviloOk++;
-    el.innerHTML=`ρ ${r.gostota.toFixed(4)} kg/L · <strong>${r.volumen.toFixed(3)} L</strong>
+    el.innerHTML=`${r.popravljeno?`<div style="color:#5a3a6b;margin-bottom:.1rem">
+        ${r.odcitek.toFixed(2)} % pri ${r.t.toFixed(1)} °C →
+        <strong>${r.pct.toFixed(2)} vol % pri 20 °C</strong></div>`:''}
+      ρ ${r.gostota.toFixed(4)} kg/L · <strong>${r.volumen.toFixed(3)} L</strong>
       · <strong style="color:var(--accent)">${r.aae.toFixed(4)} L AAE</strong>`;
   });
 
@@ -9319,31 +9404,41 @@ function pokaziSinkNapako(){
 // Ce v bazi manjka kaksen novejsi stolpec, zapis vseeno sinhroniziramo brez
 // njega - sicer bi tiho odpovedala sinhronizacija celega zapisa. Ime stolpca
 // preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem novem polju.
+// PostgREST v napaki PGRST204 imenuje samo PRVI manjkajoci stolpec. Ko nova
+// razlicica prinese vec stolpcev naenkrat in SQL se ni bil pognan, en sam
+// ponovni poskus ne zadosca — odstranis prvega, drugi spet odpove in ves
+// zapis pade. Zato odstranjujemo v zanki, dokler jih ne zmanjka.
+const SB_NAJVEC_POSKUSOV=8;
 async function sbPushZapis(tabela,zapis,oznaka){
-  try{await sbUpsert(tabela,zapis);setSyncStatus('✓');return true;}
-  catch(e){
-    const sporocilo=String(e.message||'');
-    const manjka=/PGRST204|Could not find the/i.test(sporocilo)
-      ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in zapis)
-      :[];
-    if(manjka.length){
-      const brez={...zapis};manjka.forEach(k=>delete brez[k]);
-      try{
-        await sbUpsert(tabela,brez);
+  let telo={...zapis};
+  const izpusceni=[];
+  for(let poskus=0;poskus<SB_NAJVEC_POSKUSOV;poskus++){
+    try{
+      await sbUpsert(tabela,telo);
+      setSyncStatus('✓');
+      if(izpusceni.length){
         // Zapis je sel skozi, a okrnjen. Klicaj mora povedati, cesa manjka.
         sinkNapaka(`${tabela} — manjkajoc stolpec`,
-          new Error(`V Supabase ni stolpca ${manjka.join(', ')}. Zapis je shranjen brez njega.`));
+          new Error(`V Supabase ni stolpcev ${izpusceni.join(', ')}. Zapis je shranjen brez njih.`));
         const kljuc='_opozoriloStolpci_'+tabela;
         if(!window[kljuc]){
           window[kljuc]=true;
-          toast(`⚠ V Supabase manjka stolpec ${tabela}.${manjka.join(' / ')} — ta podatek se ne sinhronizira`);
+          toast(`⚠ V Supabase manjka stolpec ${tabela}.${izpusceni.join(' / ')} — ta podatek se ne sinhronizira`);
         }
-        return true;
-      }catch(e2){console.error(oznaka+' (brez '+manjka.join(',')+')',e2);}
+      }
+      return true;
+    }catch(e){
+      const sporocilo=String(e.message||'');
+      const manjka=/PGRST204|Could not find the/i.test(sporocilo)
+        ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in telo)
+        :[];
+      if(!manjka.length){sinkNapaka(oznaka,e);return false;}
+      manjka.forEach(k=>{delete telo[k];izpusceni.push(k);});
+      console.warn(`${oznaka}: v ${tabela} ni stolpca ${manjka.join(', ')} — poskus brez njega`);
     }
-    sinkNapaka(oznaka,e);
-    return false;
   }
+  sinkNapaka(oznaka,new Error(`Preveč manjkajočih stolpcev v ${tabela}: ${izpusceni.join(', ')}`));
+  return false;
 }
 async function sbPushDN(d){await sbPushZapis('gm_dn_work_orders',dnToSb(d),'sbPushDN');}
 async function sbPushEt(e){await sbPushZapis('gm_dn_etanol',etToSb(e),'sbPushEt');}

@@ -779,6 +779,23 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 // Kdor je pravkar placal, ne potrebuje vec vabila "10 % za vas prvi nakup".
 // Oznaka velja samo v tem brskalniku - anonimnega obiskovalca drugace ne
 // prepoznamo - a pokrije najbolj mozec primer: kupca, ki se vrne na stran.
+// Kupec je na blagajni odkljukal "obvescaj me". Prijavo oddamo sele, ko je
+// narocilo uspesno - ce nakup pade, ga nismo vpisali na seznam brez povoda.
+// Kode ne izda; za prvi nakup je prepozna, hkrati pa bi ga vabila, naj
+// narocilo opusti in ga odda znova s popustom.
+const ENOVICE_PRIVOLITEV = 'Želim prejemati GoMushroom e-novice — občasno vsebine o gobah, ' +
+  'ekstrakciji in novostih. Odjava je mogoča kadarkoli.';
+
+function prijaviNaEnovice(email) {
+  const polje = document.getElementById('c-enovice');
+  if (!polje || !polje.checked || !email) return;
+  fetch('/.netlify/functions/newsletter-signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, source: 'checkout', consentText: ENOVICE_PRIVOLITEV }),
+  }).catch(e => console.warn('Prijava na e-novice ni uspela:', e));
+}
+
 function oznaciNakup() {
   try { localStorage.setItem('gm_nl_kupil', String(Date.now())); } catch (e) {}
 }
@@ -1216,6 +1233,7 @@ async function saveStripeOrder(paymentIntentId) {
   try { saveCart([]); } catch(e) {}
   sessionStorage.removeItem('gm_kupon');
   oznaciNakup();
+  prijaviNaEnovice(order.email);
 }
 
 async function sendStripeConfirmationEmail(order, calc) {
@@ -1524,6 +1542,7 @@ async function placeOrder() {
     localStorage.setItem('gomushroom_cart', '[]'); try { saveCart([]); } catch(e) {}
     sessionStorage.removeItem('gm_kupon');
     oznaciNakup();
+    prijaviNaEnovice(order.email);
 
   } catch(e) {
     console.error('Order error:', e);

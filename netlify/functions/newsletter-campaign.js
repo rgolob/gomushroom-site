@@ -1,6 +1,6 @@
 // ── Pošiljanje kampanje e-novic ────────────────────────────────────────────
 //
-// Klice jo samo vmesnik /enovice/, in sicer po paketih: brskalnik ima dostop
+// Klice jo samo vmesnik /marketing/, in sicer po paketih: brskalnik ima dostop
 // do gm_newsletter (prek prijave), zato prejemnike izbere sam in jih poslje
 // po največ 100 naenkrat. Tako se izognemo desetsekundni omejitvi funkcije in
 // lahko sproti kazemo napredek.

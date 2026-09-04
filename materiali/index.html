@@ -9319,31 +9319,41 @@ function pokaziSinkNapako(){
 // Ce v bazi manjka kaksen novejsi stolpec, zapis vseeno sinhroniziramo brez
 // njega - sicer bi tiho odpovedala sinhronizacija celega zapisa. Ime stolpca
 // preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem novem polju.
+// PostgREST v napaki PGRST204 imenuje samo PRVI manjkajoci stolpec. Ko nova
+// razlicica prinese vec stolpcev naenkrat in SQL se ni bil pognan, en sam
+// ponovni poskus ne zadosca — odstranis prvega, drugi spet odpove in ves
+// zapis pade. Zato odstranjujemo v zanki, dokler jih ne zmanjka.
+const SB_NAJVEC_POSKUSOV=8;
 async function sbPushZapis(tabela,zapis,oznaka){
-  try{await sbUpsert(tabela,zapis);setSyncStatus('✓');return true;}
-  catch(e){
-    const sporocilo=String(e.message||'');
-    const manjka=/PGRST204|Could not find the/i.test(sporocilo)
-      ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in zapis)
-      :[];
-    if(manjka.length){
-      const brez={...zapis};manjka.forEach(k=>delete brez[k]);
-      try{
-        await sbUpsert(tabela,brez);
+  let telo={...zapis};
+  const izpusceni=[];
+  for(let poskus=0;poskus<SB_NAJVEC_POSKUSOV;poskus++){
+    try{
+      await sbUpsert(tabela,telo);
+      setSyncStatus('✓');
+      if(izpusceni.length){
         // Zapis je sel skozi, a okrnjen. Klicaj mora povedati, cesa manjka.
         sinkNapaka(`${tabela} — manjkajoc stolpec`,
-          new Error(`V Supabase ni stolpca ${manjka.join(', ')}. Zapis je shranjen brez njega.`));
+          new Error(`V Supabase ni stolpcev ${izpusceni.join(', ')}. Zapis je shranjen brez njih.`));
         const kljuc='_opozoriloStolpci_'+tabela;
         if(!window[kljuc]){
           window[kljuc]=true;
-          toast(`⚠ V Supabase manjka stolpec ${tabela}.${manjka.join(' / ')} — ta podatek se ne sinhronizira`);
+          toast(`⚠ V Supabase manjka stolpec ${tabela}.${izpusceni.join(' / ')} — ta podatek se ne sinhronizira`);
         }
-        return true;
-      }catch(e2){console.error(oznaka+' (brez '+manjka.join(',')+')',e2);}
+      }
+      return true;
+    }catch(e){
+      const sporocilo=String(e.message||'');
+      const manjka=/PGRST204|Could not find the/i.test(sporocilo)
+        ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in telo)
+        :[];
+      if(!manjka.length){sinkNapaka(oznaka,e);return false;}
+      manjka.forEach(k=>{delete telo[k];izpusceni.push(k);});
+      console.warn(`${oznaka}: v ${tabela} ni stolpca ${manjka.join(', ')} — poskus brez njega`);
     }
-    sinkNapaka(oznaka,e);
-    return false;
   }
+  sinkNapaka(oznaka,new Error(`Preveč manjkajočih stolpcev v ${tabela}: ${izpusceni.join(', ')}`));
+  return false;
 }
 async function sbPushDN(d){await sbPushZapis('gm_dn_work_orders',dnToSb(d),'sbPushDN');}
 async function sbPushEt(e){await sbPushZapis('gm_dn_etanol',etToSb(e),'sbPushEt');}

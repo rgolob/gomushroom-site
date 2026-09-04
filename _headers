@@ -1,2 +1,12 @@
 /meta-feed.xml
   Content-Type: application/xml; charset=utf-8
+
+# Manifesti aplikacij. Brskalniki jih vecinoma poberejo tudi kot
+# application/json, a to je vrsta, ki jo predpisuje standard.
+/*/manifest.json
+  Content-Type: application/manifest+json; charset=utf-8
+
+# Ikone za domaci zaslon se spremenijo redko, a doc/ikone.py jih prepise pod
+# istim imenom, zato brez vecnega predpomnjenja — teden dni je dovolj.
+/*/ikona-*.png
+  Cache-Control: public, max-age=604800

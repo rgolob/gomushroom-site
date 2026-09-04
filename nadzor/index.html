@@ -6,8 +6,17 @@
 <title>Nadzorna plošča | GoMushroom</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#1a1209">
+
+<!-- Domaci zaslon: ko je plosca dodana nanj, se odpre brez Safarijevih vrstic.
+     apple-touch-icon mora biti PNG — iOS SVG spregleda in namesto ikone
+     postavi posnetek strani. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nadzor">
+<link rel="manifest" href="./manifest.json">
 <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
-<link rel="apple-touch-icon" href="/assets/favicon-180.png">
+<link rel="apple-touch-icon" href="./ikona-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
@@ -17,6 +26,7 @@
   --tekst:#f0ebe3; --tiho:#a2937e; --zlato:#af8455;
   --ok:#6ba97d; --napaka:#c9705c;
   --sab:env(safe-area-inset-bottom,0px);
+  --sat:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -26,7 +36,9 @@ body{
   font-size:15px; line-height:1.5;
   -webkit-font-smoothing:antialiased;
 }
-.ovoj{max-width:900px;margin:0 auto;padding:26px 18px calc(var(--sab) + 40px)}
+/* Na domacem zaslonu je vrstica s stanjem prosojna in stran sega podnjo,
+   zato zgoraj pustimo prostor zanjo. V brskalniku je --sat nic. */
+.ovoj{max-width:900px;margin:0 auto;padding:calc(var(--sat) + 26px) 18px calc(var(--sab) + 40px)}
 
 /* ── Glava ─────────────────────────────────────────────────────────────── */
 .glava{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
@@ -115,7 +127,7 @@ body{
 .noga a{color:var(--tiho)}
 
 @media (max-width:520px){
-  .ovoj{padding:20px 14px calc(var(--sab) + 32px)}
+  .ovoj{padding:calc(var(--sat) + 20px) 14px calc(var(--sab) + 32px)}
   .glava h1{font-size:26px}
   .mreza{grid-template-columns:1fr 1fr;gap:8px}
   .ploscica{flex-direction:column;align-items:flex-start;gap:8px;padding:13px}

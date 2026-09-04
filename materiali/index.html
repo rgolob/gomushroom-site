@@ -509,6 +509,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <small>Vpišeš maso in vol %, dobiš volumen, AAE in skupno koncentracijo</small></span>
       <span class="calc-arrow">›</span>
     </button>
+    <button class="calc-card" onclick="openMesanjeSheet()">
+      <span class="calc-ico">🧫</span>
+      <span class="calc-txt"><strong>Mešanje etanola</strong>
+        <small>Koliko česa zliti za želeni volumen in jakost — iz popisanih posod</small></span>
+      <span class="calc-arrow">›</span>
+    </button>
     <div id="preracuniZapisi"></div>
   </div>
 
@@ -1350,6 +1356,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- SHEET: PRERACUN MATICNEGA EKSTRAKTA -->
+<!-- MESANJE ETANOLA — pripomocek, nic se ne knjizi.
+     Vire jemlje iz popisa, ker so tam ze vpisane posode in njihove jakosti. -->
+<div class="overlay" id="mesanjeOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">🧫 Mešanje etanola</span>
+      <button class="shclose" onclick="closeSheet('mesanjeOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Vire bere iz <strong>Popisa etanola</strong>. Voda je vedno na voljo, a je
+        na dnu seznama — če isto dosežeš z bolj razredčeno posodo, je bolje porabiti njo.
+      </div>
+      <div class="frow">
+        <div class="field"><label>Želim (L)</label>
+          <input id="mesVolumen" type="text" inputmode="decimal" placeholder="npr. 4" oninput="mesanjeIzracun()"></div>
+        <div class="field"><label>Jakost (vol %)</label>
+          <input id="mesPct" type="text" inputmode="decimal" placeholder="npr. 70" oninput="mesanjeIzracun()"></div>
+      </div>
+      <div id="mesIzid"></div>
+      <div class="btnrow" style="margin-top:.7rem">
+        <button class="bsave" onclick="closeSheet('mesanjeOverlay')">Zapri</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- POPIS ETANOLA — pripomocek, nic se ne knjizi.
      Posodo stehtas in znas njeno vol %, volumna pa ne vidis. Iz mase in
      koncentracije dobis gostoto, iz nje volumen in AAE. -->
@@ -1809,6 +1843,138 @@ const ETOH_DENSITY=[
   [99.0,0.79432],[99.1,0.79384],[99.2,0.79336],[99.3,0.79287],[99.4,0.79237],[99.5,0.79188],[99.6,0.79137],[99.7,0.79087],[99.8,0.79038],[99.9,0.78987],
   [100.0,0.78934]
 ];
+// ── MESANJE ETANOLA ────────────────────────────────────────────────────────
+// Racunamo po masi, ne po volumnu. Etanol in voda se ob mesanju skrcita, zato
+// vsota vlitih litrov ni volumen zmesi — masa etanola in masa vode pa se
+// ohranita. Iz dveh masnih bilanc dobimo tocno resitev, ki hkrati zadene
+// jakost in koncni volumen.
+//
+// Na liter raztopine: koliko kilogramov je etanola in koliko vode.
+function etSestava(volPct){
+  const skupna=etohDensity(volPct);              // kg/L pri 20 C
+  const etanol=volPct/100*(OIML_RHO_ET20/1000);  // kg absolutnega etanola
+  return {skupna,etanol,voda:skupna-etanol};
+}
+
+// Koliko litrov vira A in vira B je treba zliti za ciljV litrov pri ciljPct.
+// Negativna kolicina pomeni, da s tem parom cilja ni mogoce doseci.
+function etMesaj(ciljV,ciljPct,pctA,pctB){
+  const c=etSestava(ciljPct);
+  const E=ciljV*c.etanol,W=ciljV*c.voda;
+  const a=etSestava(pctA),b=etSestava(pctB);
+  const det=a.etanol*b.voda-b.etanol*a.voda;
+  if(Math.abs(det)<1e-12)return null;            // enaki jakosti — ni resljivo
+  const xa=(E*b.voda-W*b.etanol)/det;
+  const xb=(a.etanol*W-a.voda*E)/det;
+  if(xa<-1e-9||xb<-1e-9)return null;
+  return {xa:Math.max(0,xa),xb:Math.max(0,xb)};
+}
+
+function openMesanjeSheet(){
+  popisNalozi();
+  mesanjeIzracun();
+  openSheet('mesanjeOverlay');
+}
+
+// Viri: posode iz popisa in voda. Voda nima omejitve, a jo pri razvrscanju
+// postavimo nazaj — smisel je porabiti razredceno, ne dolivati sveze vode.
+function mesanjeViri(){
+  const viri=[];
+  popisVrstice.forEach((v,i)=>{
+    const r=popisVrstica(v);
+    if(!r||r.neveljavnaTemp||r.izvenObmocja)return;
+    viri.push({ime:(v.opis||'').trim()||`Posoda ${i+1}`,pct:r.pct,naVoljo:r.volumen,voda:false});
+  });
+  viri.push({ime:'Voda',pct:0,naVoljo:Infinity,voda:true});
+  return viri;
+}
+
+function mesanjeIzracun(){
+  const el=document.getElementById('mesIzid');
+  if(!el)return;
+  const ciljV=parseNum(document.getElementById('mesVolumen').value||'0');
+  const ciljPct=parseNum(document.getElementById('mesPct').value||'0');
+  if(!(ciljV>0)||!(ciljPct>0)||ciljPct>100){
+    el.innerHTML='<div style="font-size:.72rem;color:var(--muted)">Vpiši želeni volumen in jakost…</div>';
+    return;
+  }
+
+  const viri=mesanjeViri();
+  if(viri.length<2){
+    el.innerHTML='<div style="font-size:.72rem;color:var(--danger)">V popisu ni nobene posode — najprej vpiši, kaj imaš.</div>';
+    return;
+  }
+
+  const resitve=[];
+  for(let i=0;i<viri.length;i++)for(let j=i+1;j<viri.length;j++){
+    const A=viri[i],B=viri[j];
+    const mocnejsi=A.pct>=B.pct?A:B, sibkejsi=A.pct>=B.pct?B:A;
+    if(!(mocnejsi.pct>ciljPct-1e-9&&sibkejsi.pct<ciljPct+1e-9))continue;
+    const r=etMesaj(ciljV,ciljPct,mocnejsi.pct,sibkejsi.pct);
+    if(!r)continue;
+    const dovolj=r.xa<=mocnejsi.naVoljo+1e-6&&r.xb<=sibkejsi.naVoljo+1e-6;
+    resitve.push({mocnejsi,sibkejsi,vMocnejsi:r.xa,vSibkejsi:r.xb,dovolj,
+                  vode:sibkejsi.voda?r.xb:0});
+  }
+
+  if(!resitve.length){
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5">
+      S temi viri ${ciljPct.toLocaleString('sl-SI')} vol % ni mogoče doseči —
+      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>`;
+    return;
+  }
+
+  // Ce je cilj enak jakosti vira, izracun vrne "ta vir + 0,000 L necesa
+  // drugega" za vsak par posebej. To je isti nasvet, napisan veckrat, zato
+  // pustimo eno vrstico na vir.
+  const videni=new Set();
+  const brezPodvojenih=resitve.filter(r=>{
+    if(r.vSibkejsi>=0.0005&&r.vMocnejsi>=0.0005)return true;
+    const sam=r.vSibkejsi<0.0005?r.mocnejsi.ime:r.sibkejsi.ime;
+    if(videni.has(sam))return false;
+    videni.add(sam);r.cisto=sam;return true;
+  });
+  resitve.length=0;resitve.push(...brezPodvojenih);
+
+  // Najprej izvedljive, nato tiste brez vode, nato tiste, ki porabijo najmanj
+  // mocnega etanola — to je isto kot "porabi cim vec razredcenega".
+  resitve.sort((a,b)=>(b.dovolj-a.dovolj)||(a.vode-b.vode)||(a.vMocnejsi-b.vMocnejsi));
+
+  const zVodo=resitve.find(r=>r.sibkejsi.voda);
+  const stev=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3});
+
+  el.innerHTML=`
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
+      ${resitve.length} ${resitve.length===1?'možnost':resitve.length===2?'možnosti':'možnosti'}
+    </div>
+    ${resitve.map(r=>{
+      const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
+      const vrstice=r.cisto
+        ? [r.vSibkejsi<0.0005?r.mocnejsi:r.sibkejsi].map(v=>({v,kol:ciljV}))
+        : [{v:r.mocnejsi,kol:r.vMocnejsi},{v:r.sibkejsi,kol:r.vSibkejsi}];
+      return `<div style="border:1px solid ${r.dovolj?'var(--border)':'rgba(139,58,42,.35)'};border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem;${r.dovolj?'':'background:rgba(139,58,42,.04)'}">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
+          ${vrstice.map(({v,kol})=>`
+          <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
+          <span style="text-align:right;font-weight:700">${stev(kol)} L</span>`).join('')}
+        </div>
+        ${r.cisto?'<div style="font-size:.66rem;color:var(--muted);margin-top:.25rem">Nič ne mešaš — jakost je že prava.</div>':''}
+        ${r.cisto?'':`<div style="font-size:.66rem;color:var(--muted);margin-top:.3rem;padding-top:.25rem;border-top:1px solid var(--border)">
+          Zliješ ${stev(r.vMocnejsi+r.vSibkejsi)} L, dobiš ${stev(ciljV)} L pri ${ciljPct.toLocaleString('sl-SI')} vol %
+          — zmes se skrči za ${stev(r.vMocnejsi+r.vSibkejsi-ciljV)} L.
+        </div>`}
+        ${prihranek>0.0005?`<div style="font-size:.66rem;color:var(--success);margin-top:.15rem">
+          Prihraniš ${stev(prihranek)} L močnega etanola v primerjavi z dolivanjem vode.</div>`:''}
+        ${!r.dovolj?`<div style="font-size:.66rem;color:var(--danger);margin-top:.15rem">
+          ⚠ Ni dovolj zaloge${r.mocnejsi.naVoljo<r.vMocnejsi?` — ${htmlEsc(r.mocnejsi.ime)} ima ${stev(r.mocnejsi.naVoljo)} L`:''}${r.sibkejsi.naVoljo<r.vSibkejsi?` — ${htmlEsc(r.sibkejsi.ime)} ima ${stev(r.sibkejsi.naVoljo)} L`:''}.</div>`:''}
+      </div>`;
+    }).join('')}
+    <div style="font-size:.65rem;color:var(--muted);line-height:1.5">
+      Računano po masi etanola in vode, ki se pri mešanju ohranita — zato je
+      volumen zmesi manjši od vsote vlitega, jakost pa točna.
+    </div>`;
+}
+
 // ── POPIS ETANOLA ──────────────────────────────────────────────────────────
 // Pripomocek za rocni pregled zaloge. Posodo stehtas in poznas njeno vol %,
 // volumna pa ne vidis — iz mase in koncentracije ga izracunamo prek gostote.

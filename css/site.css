@@ -527,13 +527,16 @@ h3{
 }
 .hero-cta-btn--primary:hover{color:#fff;box-shadow:0 6px 22px rgba(43,10,57,.4)}
 
+/* Temno polnilo, ne svetlo: hero ima dve sliki in na svetlejsi se je bel
+   prosojen gumb izgubil. Temna podlaga z belo obrobo drzi na obeh. */
 .hero-cta-btn--ghost{
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.55);
+  background:rgba(43,10,57,.42);
+  border:1px solid rgba(255,255,255,.72);
   color:#fff;
-  backdrop-filter:blur(2px);
+  backdrop-filter:blur(3px);
+  box-shadow:0 3px 12px rgba(0,0,0,.22);
 }
-.hero-cta-btn--ghost:hover{background:rgba(255,255,255,.22);color:#fff}
+.hero-cta-btn--ghost:hover{background:rgba(43,10,57,.58);color:#fff}
 
 .hero-cta-ico{
   width:18px;height:18px;
@@ -610,7 +613,9 @@ h3{
 }
 
 .hero--home::after{
-  background:radial-gradient(75% 120% at 50% 45%, rgba(43,10,57,.80) 0%, rgba(43,10,57,.52) 45%, rgba(43,10,57,.18) 75%, rgba(43,10,57,0) 100%);
+  background:
+    linear-gradient(to bottom, rgba(43,10,57,0) 38%, rgba(43,10,57,.26) 72%, rgba(43,10,57,.40) 100%),
+    radial-gradient(75% 120% at 50% 45%, rgba(43,10,57,.80) 0%, rgba(43,10,57,.52) 45%, rgba(43,10,57,.18) 75%, rgba(43,10,57,0) 100%);
 }
 
 .hero--home .inner{

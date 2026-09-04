@@ -35,12 +35,32 @@ const SB_URL='https://rjscfndegqxuefffsedf.supabase.co';
 const SB_KEY='sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
 // Zasebne: samo prijavljeni. Deljene: trgovina brez prijave in zaloga s
 // prijavo - tam mora brati oboje. Javne bere trgovina.
+//
+// Seznam mora ustrezati tistemu, kar aplikaciji res bereta. Ko je manjkal
+// gm_dn_mat_tipi, je iz zaloge tiho izginil gumb za embalazo, diagnoza pa je
+// kazala, da je vse v redu - tabele, ki je ni na seznamu, ne preveri nihce.
 const ZASEBNE=['gm_dn_work_orders','gm_dn_etanol','gm_dn_materiali','gm_dn_oprema',
-               'gm_dn_rd','gm_dn_bilanca','gm_customers','gm_invoices',
-               'gm_sale_groups','gm_batches','gm_data','gm_expenses','partner_data'];
-const DELJENE=['gm_products','gm_product_variants','gm_settings','gm_reviews','gm_orders'];
+               'gm_dn_rd','gm_dn_bilanca','gm_dn_gly_zapisi','gm_dn_mat_tipi',
+               'gm_dn_koraki','gm_dn_oprema_uporaba','gm_dn_umerjanja',
+               'gm_customers','gm_invoices','gm_orders',
+               'gm_sale_groups','gm_sale_lines','gm_sale_line_batches',
+               'gm_batches','gm_inv_counters','gm_tiers',
+               'gm_data','gm_expenses','partner_data'];
+const DELJENE=['gm_products','gm_product_variants','gm_settings','gm_reviews'];
 const JAVNE=['gm_odprti_nalogi','gm_variant_stock_status'];
 const TABELE=[...ZASEBNE,...DELJENE,...JAVNE];
+
+// gm_orders je zasebna namenoma: narocilo sestavi streznik s tajnim kljucem,
+// brskalnik nad njo nima bralne pravice. Prej je bila med deljenimi in je
+// diagnoza njeno pravilno stanje javljala kot napako.
+
+// Pri gm_reviews trgovina ne sme brati vseh stolpcev - kuponske kode in
+// e-naslovi so zunaj (doc/supabase-kuponi-recenzij.sql). "select=*" je tam
+// namenoma zavrnjen, zato bi preizkus z njim vsakic lazno javil 401. Vprasamo
+// natanko po stolpcih, ki jih trgovina res bere.
+const IZBOR={
+  gm_reviews:'product_id,product_name,rating,title,body,title_en,body_en,name,status,created_at',
+};
 
 function seja(){try{return JSON.parse(localStorage.getItem('gm_sb_session')||'null');}catch(e){return null;}}
 
@@ -50,7 +70,7 @@ function seja(){try{return JSON.parse(localStorage.getItem('gm_sb_session')||'nu
 // "200 in nic vrstic" ter "401" bistvena in ju je treba lociti.
 async function preveri(tabela,zeton){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/${tabela}?select=*&limit=1`,{
+    const r=await fetch(`${SB_URL}/rest/v1/${tabela}?select=${IZBOR[tabela]||'*'}&limit=1`,{
       headers:{apikey:SB_KEY,Authorization:'Bearer '+zeton},
     });
     if(!r.ok){
@@ -113,9 +133,15 @@ async function tek(){
   const slabeDeljene=izidi.filter(x=>DELJENE.includes(x.t)&&!(x.a.stanje==='ok'&&x.b.stanje==='ok'));
   if(slabeDeljene.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Deljene tabele, ki jih ne bere oboje:</strong> ${sez(slabeDeljene.map(x=>x.t))}<br>
     <span class="dim">Trgovina jih mora brati brez prijave, zaloga pa s prijavo. Popravi z razdelkom 2c v <code>doc/supabase-rls-faza1.sql</code>.</span></div>`);
-  const slabeJavne=izidi.filter(x=>JAVNE.includes(x.t)&&x.a.stanje!=='ok');
+  // Javne so poglede in so lahko povsem upraviceno prazne - gm_odprti_nalogi
+  // ne vrne nicesar, kadar ni nobenega odprtega naloga. Za napako steje samo
+  // zavrnitev; prazen pogled omenimo posebej in blaze.
+  const slabeJavne=izidi.filter(x=>JAVNE.includes(x.t)&&x.a.stanje==='err');
   if(slabeJavne.length)deli.push(`<div style="margin-top:.55rem"><strong class="err">Trgovina ne bere:</strong> ${sez(slabeJavne.map(x=>x.t))}<br>
     <span class="dim">Brez tega v trgovini izgine podatek o naslednji seriji ali zalogi.</span></div>`);
+  const prazneJavne=izidi.filter(x=>JAVNE.includes(x.t)&&x.a.stanje==='nic');
+  if(prazneJavne.length)deli.push(`<div style="margin-top:.55rem"><strong class="dim">Javni pogled brez vrstic:</strong> ${sez(prazneJavne.map(x=>x.t))}<br>
+    <span class="dim">Branje deluje, le vrstic ni. Pri <code>gm_odprti_nalogi</code> je to pričakovano, kadar ni odprtega naloga.</span></div>`);
 
   const vseDobro=sk.zaklenjene.length&&!sk.odprte.length&&!sk.anonOnly.length&&!sk.nihce.length&&!slabeDeljene.length&&!slabeJavne.length;
   el.innerHTML=`<div class="izid ${vseDobro?'dobro':'slabo'}">${deli.join('')}</div>`;

@@ -5178,7 +5178,7 @@ async function deleteDN(id){
 function calcEtZaloga(){
   let aae=0;
   etanolKnjiga.forEach(e=>{
-    if(e.tip==='nabava'||e.tip==='regeneracija') aae+=e.lAAE||0;
+    if(etJeVhodTip(e.tip)) aae+=e.lAAE||0;
     else aae-=e.lAAE||0;
   });
   return Math.max(0,round(aae,4));
@@ -5208,22 +5208,72 @@ function renderEtStats(){
   // Polizdelki: etanol, ki je odsel iz cisterne, a trosarina zanj se ni
   // zapadla. Beremo z nalogov, ne iz knjige etanola - knjiga hrani samo
   // sestevek izhoda, tu pa je treba vedeti, kateri nalog kaj drzi.
-  const poliz=workOrders.filter(d=>(d.aaePolizdelek||0)>0);
   const el=document.getElementById('etPolizdelki');
   if(el){
+    const poliz=workOrders.filter(d=>polizdelekOstanek(d)>0.00005);
     if(!poliz.length){el.style.display='none';}
     else{
-      const skupaj=poliz.reduce((s,d)=>s+(d.aaePolizdelek||0),0);
+      const skupaj=poliz.reduce((s,d)=>s+polizdelekOstanek(d),0);
       const trosarina=skupaj/100*settings.trosarinaEUR;
       el.style.display='';
       el.innerHTML=`<strong>V polizdelkih: ${skupaj.toFixed(4)} L AAE</strong>
         · trošarina odložena ≈ ${trosarina.toFixed(2)} €
-        <div style="color:var(--muted);margin-top:.15rem">${poliz.map(d=>
-          `${d.oznaka||'brez oznake'}: ${(d.aaePolizdelek||0).toFixed(4)} L${d.polizdelekOpis?' — '+d.polizdelekOpis:''}`
-        ).join('<br>')}</div>
-        <div style="color:var(--muted);margin-top:.25rem">Zapade ob prodaji ali predelavi v končni izdelek.</div>`;
+        <div style="margin-top:.3rem">${poliz.map(d=>{
+          const ost=polizdelekOstanek(d);
+          const spr=d.aaePolizdelekSproscen||0;
+          return `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
+            <span style="flex:1;min-width:0;color:var(--muted)">${d.oznaka||'brez oznake'}:
+              <strong style="color:#5a3a6b">${ost.toFixed(4)} L</strong>${d.polizdelekOpis?' — '+d.polizdelekOpis:''}
+              ${spr>0?`<span style="font-size:.62rem"> (že sproščeno ${spr.toFixed(4)} L)</span>`:''}</span>
+            <button onclick="sprostiPolizdelek('${d.id}')" style="flex:0 0 auto;font-size:.62rem;padding:.2rem .5rem;border:1px solid rgba(90,58,107,.4);border-radius:6px;background:white;cursor:pointer;color:#5a3a6b">↩ Sprosti</button>
+          </div>`;
+        }).join('')}</div>
+        <div style="color:var(--muted);margin-top:.25rem">„Sprosti" vrne etanol v zalogo, ko polizdelek predelaš — nato ga porabi nov nalog in trošarina zapade tam.</div>`;
     }
   }
+}
+
+// Koliko AAE je v polizdelku se ostalo. Vpisana kolicina minus tisto, kar je
+// ze slo nazaj v zalogo.
+function polizdelekOstanek(d){
+  return round((d.aaePolizdelek||0)-(d.aaePolizdelekSproscen||0),4);
+}
+
+// Etanol iz polizdelka nazaj v zalogo. Brez tega bi bil vpis v polizdelek
+// slepa ulica: alkohol bi bil odpisan iz cisterne in ga nov nalog ne bi imel
+// od kod porabiti. Knjizba je vhod, simetricna izhodu ob razvojnem nalogu.
+function sprostiPolizdelek(id){
+  const d=workOrders.find(x=>x.id===id);if(!d)return;
+  const ostanek=polizdelekOstanek(d);
+  if(!(ostanek>0)){toast('V tem polizdelku ni več etanola');return;}
+  const vnos=prompt(
+    `Koliko L AAE sprostiš iz polizdelka ${d.oznaka||''}?\n`+
+    `${d.polizdelekOpis?d.polizdelekOpis+'\n':''}Na voljo: ${ostanek.toFixed(4)} L AAE`,
+    String(ostanek.toFixed(4)).replace('.',','));
+  if(vnos===null)return;
+  const aae=parseNum(vnos);
+  if(!(aae>0)){toast('⚠ Vnesi količino');return;}
+  if(aae>ostanek+0.00005){toast(`⚠ Največ ${ostanek.toFixed(4)} L AAE`);return;}
+
+  // Polizdelek ni cist etanol, njegove jakosti pa ne vodimo — vpisuje se
+  // naravnost v AAE. Zato zapisemo kolicino kot AAE pri 100 %, kar je edino
+  // stevilo, ki ga zares poznamo; zaloga tako ali tako sesteva samo lAAE.
+  const newEt={
+    id:uid(),
+    datum:todayISO(),
+    tip:'polizdelek',
+    dokument:d.oznaka||'',
+    opomba:`Sproščeno iz polizdelka${d.polizdelekOpis?' — '+d.polizdelekOpis:''}`,
+    kolicina:round(aae,4),pct:100,gostota:etohDensity(100),
+    lAAE:round(aae,4),
+  };
+  etanolKnjiga.push(newEt);
+  d.aaePolizdelekSproscen=round((d.aaePolizdelekSproscen||0)+aae,4);
+  save();
+  sbPushEt(newEt);
+  sbPushDN(d);
+  renderEtStats();renderEtanol();renderDN();
+  toast(`✓ +${aae.toFixed(4)} L AAE nazaj v zalogo`);
 }
 
 // ── RENDER ETANOL ──
@@ -5232,6 +5282,10 @@ function renderEtStats(){
 const ET_TIPI={
   nabava:{oznaka:'Nabava',vhod:true},
   regeneracija:{oznaka:'Regeneriran',vhod:true},
+  // Etanol se vrne iz polizdelka, ko ga zacnes predelovati v izdelek. Ob
+  // razvojnem nalogu je odsel iz cisterne v polizdelek; brez te vrste bi
+  // tam obtical in ga novi nalog ne bi imel od kod porabiti.
+  polizdelek:{oznaka:'Iz polizdelka',vhod:true},
   izhod_dn:{oznaka:'Ekstrakcija',vhod:false},
   'poraba-rd':{oznaka:'R&D',vhod:false},
 };
@@ -5247,6 +5301,7 @@ const ET_FILTRI=[
   {id:'vsi',label:'Vsi',velja:()=>true},
   {id:'nabava',label:'↑ Nabave',velja:e=>e.tip==='nabava'},
   {id:'regeneracija',label:'♻️ Regenerirani',velja:e=>e.tip==='regeneracija'},
+  {id:'polizdelek',label:'↩ Iz polizdelkov',velja:e=>e.tip==='polizdelek'},
   {id:'izhod_dn',label:'🍄 Ekstrakcije',velja:e=>e.tip==='izhod_dn'},
   {id:'poraba-rd',label:'🔬 R&D',velja:e=>e.tip==='poraba-rd'},
 ];
@@ -5304,9 +5359,9 @@ function renderEtanol(){
   }
 
   el.innerHTML=page.map(e=>{
-    const isIn=e.tip==='nabava'||e.tip==='regeneracija';
+    const isIn=etJeVhodTip(e.tip);
     const tipLabel=etTipLabel(e.tip);
-    const tipCls=e.tip==='nabava'?'eth-nabava':e.tip==='regeneracija'?'eth-reg':'eth-izhod';
+    const tipCls=e.tip==='nabava'?'eth-nabava':etJeVhodTip(e.tip)?'eth-reg':'eth-izhod';
     const isDN=e.tip==='izhod_dn';
     // Za DN izhode poiščemo DN podatke
     const dn=isDN?workOrders.find(x=>x.oznaka===e.dokument):null;
@@ -5476,7 +5531,7 @@ async function genEtanolPorocilo(){
   if(od){
     vsiChronological.forEach(e=>{
       if(e.datum>=od) return;
-      if(e.tip==='nabava'||e.tip==='regeneracija') zalogaPred+=e.lAAE||0;
+      if(etJeVhodTip(e.tip)) zalogaPred+=e.lAAE||0;
       else if(e.tip==='izhod_dn') zalogaPred-=e.lAAE||0;
     });
   }
@@ -5485,7 +5540,7 @@ async function genEtanolPorocilo(){
 
   let tekocaZaloga=zalogaPred;
   const rows=vsi.map(e=>{
-    const isIn=e.tip==='nabava'||e.tip==='regeneracija';
+    const isIn=etJeVhodTip(e.tip);
     const aae=e.lAAE||0;
     if(isIn) tekocaZaloga=round(tekocaZaloga+aae,4);
     else tekocaZaloga=round(tekocaZaloga-aae,4);
@@ -5505,7 +5560,7 @@ async function genEtanolPorocilo(){
   }).join('');
 
   const zalogaKonec=tekocaZaloga;
-  const skupajVhod=vsi.filter(e=>e.tip==='nabava'||e.tip==='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
+  const skupajVhod=vsi.filter(e=>etJeVhodTip(e.tip)).reduce((s,e)=>s+(e.lAAE||0),0);
   const skupajIzhod=vsi.filter(e=>e.tip!=='nabava'&&e.tip!=='regeneracija').reduce((s,e)=>s+(e.lAAE||0),0);
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -5988,7 +6043,10 @@ async function dnIztrzek(d){
 // popoln, ga tu samo prikazemo: vnos in urejanje ostaneta na svojem zavihku,
 // zato se knjigi ne moreta raziti.
 const ET_TIP='__etanol';
-function etJeVhod(e){return e.tip==='nabava'||e.tip==='regeneracija';}
+// Eno samo pravilo za vse: kaj je vhod, pove ET_TIPI. Prej je bilo prepisano
+// na sestih mestih in nova vhodna vrsta bi se od zaloge odstela namesto
+// pristela — natanko to je predvidevala opomba pri odstranjenem 'vrnjen'.
+function etJeVhod(e){return etJeVhodTip(e.tip);}
 function etKotMaterial(e){
   return {
     _et:true, _etTip:e.tip,
@@ -8873,6 +8931,7 @@ function dnToSb(d){return{
   masa_glicerina:d.masaGlicerina||0,
   vit_c_gly:d.vitCGly||0,lecitin_gly:d.lecitinGly||0,etanol_gly:d.etanolGly||0,
   izgube:d.izgube||0,aae_polizdelek:d.aaePolizdelek||0,polizdelek_opis:d.polizdelekOpis||null,
+  aae_polizdelek_sproscen:d.aaePolizdelekSproscen||0,
   aae_tinkture:d.aaeTinkture||0,vol_tinkture:d.volTinkture||0,
   masa_etoh:d.masaEtOH||0,pct_etoh:d.pctEtOH||96.25,gostota:d.gostota||null,
   vol_l:d.volL||0,vol_pct:d.volPct||null,l_aae:d.lAAE||0,
@@ -8899,6 +8958,7 @@ function sbToDn(r){return{
   masaGlicerina:r.masa_glicerina||0,
   vitCGly:r.vit_c_gly||0,lecitinGly:r.lecitin_gly||0,etanolGly:r.etanol_gly||0,
   izgube:r.izgube||0,aaePolizdelek:r.aae_polizdelek||0,polizdelekOpis:r.polizdelek_opis||'',
+  aaePolizdelekSproscen:r.aae_polizdelek_sproscen||0,
   aaeTinkture:r.aae_tinkture||0,volTinkture:r.vol_tinkture||0,
   masaEtOH:r.masa_etoh||0,pctEtOH:r.pct_etoh||96.25,gostota:r.gostota||0,
   volL:r.vol_l||0,volPct:r.vol_pct||0,lAAE:r.l_aae||0,

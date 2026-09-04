@@ -520,24 +520,30 @@ h3{
 .hero-cta-btn:hover{text-decoration:none;transform:translateY(-1px)}
 .hero-cta-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
+/* Zlata, ne vijolicna. Zatemnitev hero slike je vijolicna (rgba(43,10,57)),
+   zato je bil vijolicen gumb tako rekoc iste barve kot podlaga in ni mogel
+   izstopiti — ne svetlejsi ne temnejsi. Poudarna barva strani proti tej
+   podlagi poci: 5,3 : 1 s temnim besedilom, kar je nad pragom WCAG AA. */
 .hero-cta-btn--primary{
-  background:linear-gradient(135deg,var(--brand),#3d0f52);
-  color:#fff;
-  box-shadow:0 4px 16px rgba(43,10,57,.32);
+  background:linear-gradient(135deg,var(--accent),#9b6f45);
+  color:var(--brand);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
 }
-.hero-cta-btn--primary:hover{color:#fff;box-shadow:0 6px 22px rgba(43,10,57,.4)}
+.hero-cta-btn--primary:hover{color:var(--brand);box-shadow:0 8px 26px rgba(0,0,0,.42)}
+.hero-cta-btn--primary .hero-cta-ico{stroke:var(--brand)}
 
-/* Polno svetlo polnilo, brez prosojnosti. Hero se izmenjuje med dvema slikama;
-   vsak prosojen gumb je odvisen od tega, kaj je pod njim, in se na svetlejsi
-   sliki izgubi. Poln gumb je enak na obeh. Isto razmerje kot .btn.ghost drugod
-   po strani: svetla ploskev, temno besedilo. */
+/* Drugi gumb je obrobljen, ne poln: polna bela ploskev je bila najsvetlejsa
+   stvar na zaslonu in je vlekla pogled bolj kot glavni gumb. Polnilo je temno
+   in dovolj gosto, da ne pusti slike skozi — prosojno svetlo se je na svetlejsi
+   sliki izgubilo. */
 .hero-cta-btn--ghost{
-  background:#fff;
-  border:1px solid rgba(255,255,255,.9);
-  color:#2b0a39;
-  box-shadow:0 4px 16px rgba(0,0,0,.28);
+  background:rgba(20,6,28,.55);
+  border:1px solid rgba(255,255,255,.85);
+  color:#fff;
+  backdrop-filter:blur(4px);
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
 }
-.hero-cta-btn--ghost:hover{background:#f5f0e8;color:#2b0a39}
+.hero-cta-btn--ghost:hover{background:rgba(20,6,28,.7);color:#fff}
 
 .hero-cta-ico{
   width:18px;height:18px;

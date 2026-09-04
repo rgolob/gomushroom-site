@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nadzorna plošča | GoMushroom</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1a1209">
+<link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1a1209; --card:#241a10; --rob:#3a2c1d;
+  --tekst:#f0ebe3; --tiho:#a2937e; --zlato:#af8455;
+  --ok:#6ba97d; --napaka:#c9705c;
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--tekst); min-height:100dvh;
+  font-family:'Jost',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif,'Apple Color Emoji','Noto Color Emoji';
+  font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.ovoj{max-width:900px;margin:0 auto;padding:26px 18px calc(var(--sab) + 40px)}
+
+/* ── Glava ─────────────────────────────────────────────────────────────── */
+.glava{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.glava h1{
+  margin:0;font-family:'Cormorant Garamond',serif;
+  font-size:30px;font-weight:600;letter-spacing:.01em;
+}
+.ura{font-size:13px;color:var(--tiho);font-variant-numeric:tabular-nums}
+.stanje{
+  margin:0 0 26px;font-size:13px;color:var(--tiho);
+  display:flex;align-items:center;gap:7px;
+}
+.pika{width:7px;height:7px;border-radius:999px;background:var(--tiho);flex:0 0 auto}
+.pika--ok{background:var(--ok)}
+.pika--ne{background:var(--napaka)}
+
+/* ── Razdelki ──────────────────────────────────────────────────────────── */
+.razdelek{margin:0 0 26px}
+.razdelek h2{
+  margin:0 0 11px;font-size:11px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--tiho);
+}
+
+.mreza{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+
+.ploscica{
+  display:flex;align-items:center;gap:12px;
+  padding:15px 16px;
+  background:var(--card);border:1px solid var(--rob);border-radius:14px;
+  color:var(--tekst);text-decoration:none;
+  transition:border-color .15s, transform .15s, background .15s;
+}
+.ploscica:hover{border-color:var(--zlato);background:#2b2015;transform:translateY(-1px)}
+.ploscica:focus-visible{outline:2px solid var(--zlato);outline-offset:2px}
+.ploscica .znak{font-size:23px;line-height:1;flex:0 0 auto}
+.ploscica .besede{min-width:0}
+.ploscica .ime{font-size:15px;font-weight:600;line-height:1.25}
+.ploscica .opis{font-size:11.5px;color:var(--tiho);line-height:1.4;margin-top:2px}
+
+/* Zunanje storitve so nizje, ker niso nase in jih odpiramo redkeje. */
+.mreza--drobno{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.mreza--drobno .ploscica{padding:11px 13px;gap:9px}
+.mreza--drobno .znak{font-size:17px}
+.mreza--drobno .ime{font-size:13.5px;font-weight:500}
+
+.noga{
+  margin-top:34px;padding-top:16px;border-top:1px solid var(--rob);
+  font-size:11.5px;color:var(--tiho);line-height:1.6;
+}
+.noga a{color:var(--tiho)}
+
+@media (max-width:520px){
+  .ovoj{padding:20px 14px calc(var(--sab) + 32px)}
+  .glava h1{font-size:26px}
+  .mreza{grid-template-columns:1fr 1fr;gap:8px}
+  .ploscica{flex-direction:column;align-items:flex-start;gap:8px;padding:13px}
+  .ploscica .opis{display:none}
+  .mreza--drobno{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="ovoj">
+
+  <div class="glava">
+    <h1>GoMushroom</h1>
+    <span class="ura" id="ura"></span>
+  </div>
+  <p class="stanje" id="stanje"><span class="pika"></span>Preverjam prijavo …</p>
+
+  <!-- ── Aplikacije ─────────────────────────────────────────────────────── -->
+  <section class="razdelek">
+    <h2>Aplikacije</h2>
+    <div class="mreza">
+      <a class="ploscica" href="/zaloga/">
+        <span class="znak">&#x1F4E6;</span>
+        <span class="besede">
+          <span class="ime">Zaloga</span>
+          <span class="opis">Prodaja, naročila, računi, dokumenti, stranke</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/materiali/">
+        <span class="znak">&#x1F9EA;</span>
+        <span class="besede">
+          <span class="ime">Materiali</span>
+          <span class="opis">Surovine, serije, delovni nalogi, bilance</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/marketing/">
+        <span class="znak">&#x2709;&#xFE0F;</span>
+        <span class="besede">
+          <span class="ime">Marketing</span>
+          <span class="opis">Naročniki, kuponske kode, kampanje</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Trgovina ───────────────────────────────────────────────────────── -->
+  <section class="razdelek">
+    <h2>Trgovina</h2>
+    <div class="mreza">
+      <a class="ploscica" href="/trgovina/">
+        <span class="znak">&#x1F6D2;</span>
+        <span class="besede">
+          <span class="ime">Trgovina</span>
+          <span class="opis">Kot jo vidi kupec</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/trgovina/kosarica/">
+        <span class="znak">&#x1F9FE;</span>
+        <span class="besede">
+          <span class="ime">Košarica</span>
+          <span class="opis">Preizkus kuponske kode</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/en/shop/">
+        <span class="znak">&#x1F310;</span>
+        <span class="besede">
+          <span class="ime">Shop (EN)</span>
+          <span class="opis">Angleška trgovina</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Spletna stran ──────────────────────────────────────────────────── -->
+  <section class="razdelek">
+    <h2>Spletna stran</h2>
+    <div class="mreza">
+      <a class="ploscica" href="/">
+        <span class="znak">&#x1F3E0;</span>
+        <span class="besede">
+          <span class="ime">Domov</span>
+          <span class="opis">Slovenska stran</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/en/">
+        <span class="znak">&#x1F1EC;&#x1F1E7;</span>
+        <span class="besede">
+          <span class="ime">Home (EN)</span>
+          <span class="opis">Angleška stran</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/znanje/">
+        <span class="znak">&#x1F4D6;</span>
+        <span class="besede">
+          <span class="ime">Znanje</span>
+          <span class="opis">Članki in raziskave</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/storitve/gojenje-reishi/">
+        <span class="znak">&#x1F344;&zwj;&#x1F7EB;</span>
+        <span class="besede">
+          <span class="ime">Gojenje Reishi</span>
+          <span class="opis">Storitve</span>
+        </span>
+      </a>
+      <a class="ploscica" href="/qc/tezke-kovine/">
+        <span class="znak">&#x1F6E1;&#xFE0F;</span>
+        <span class="besede">
+          <span class="ime">Težke kovine</span>
+          <span class="opis">Objavljene analize</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Zunanje storitve ───────────────────────────────────────────────── -->
+  <section class="razdelek">
+    <h2>Zunanje storitve</h2>
+    <div class="mreza mreza--drobno">
+      <a class="ploscica" href="https://supabase.com/dashboard/project/rjscfndegqxuefffsedf" target="_blank" rel="noopener">
+        <span class="znak">&#x1F5C4;&#xFE0F;</span><span class="besede"><span class="ime">Supabase</span></span>
+      </a>
+      <a class="ploscica" href="https://app.netlify.com/" target="_blank" rel="noopener">
+        <span class="znak">&#x1F680;</span><span class="besede"><span class="ime">Netlify</span></span>
+      </a>
+      <a class="ploscica" href="https://github.com/rgolob/gomushroom-site" target="_blank" rel="noopener">
+        <span class="znak">&#x1F4BE;</span><span class="besede"><span class="ime">GitHub</span></span>
+      </a>
+      <a class="ploscica" href="https://search.google.com/search-console" target="_blank" rel="noopener">
+        <span class="znak">&#x1F50D;</span><span class="besede"><span class="ime">Search Console</span></span>
+      </a>
+      <a class="ploscica" href="https://analytics.google.com/" target="_blank" rel="noopener">
+        <span class="znak">&#x1F4C8;</span><span class="besede"><span class="ime">Analytics</span></span>
+      </a>
+      <a class="ploscica" href="https://resend.com/emails" target="_blank" rel="noopener">
+        <span class="znak">&#x1F4EC;</span><span class="besede"><span class="ime">Resend</span></span>
+      </a>
+      <a class="ploscica" href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">
+        <span class="znak">&#x1F4B3;</span><span class="besede"><span class="ime">Stripe</span></span>
+      </a>
+      <a class="ploscica" href="https://business.facebook.com/events_manager2" target="_blank" rel="noopener">
+        <span class="znak">&#x1F4CA;</span><span class="besede"><span class="ime">Meta Events</span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Orodja ─────────────────────────────────────────────────────────── -->
+  <section class="razdelek">
+    <h2>Orodja in diagnostika</h2>
+    <div class="mreza mreza--drobno">
+      <a class="ploscica" href="/zaloga/diagnoza.html">
+        <span class="znak">&#x1FA7A;</span><span class="besede"><span class="ime">Diagnoza</span></span>
+      </a>
+      <a class="ploscica" href="/zaloga/diagnoza-rls.html">
+        <span class="znak">&#x1F510;</span><span class="besede"><span class="ime">Diagnoza dostopa</span></span>
+      </a>
+      <a class="ploscica" href="/materiali/obnovi.html">
+        <span class="znak">&#x267B;&#xFE0F;</span><span class="besede"><span class="ime">Obnova podatkov</span></span>
+      </a>
+      <a class="ploscica" href="/sitemap.xml">
+        <span class="znak">&#x1F5FA;&#xFE0F;</span><span class="besede"><span class="ime">Sitemap</span></span>
+      </a>
+    </div>
+  </section>
+
+  <p class="noga">
+    Stran je <strong>noindex, nofollow</strong> in nanjo ne kaže nobena povezava —
+    dodaj si jo med zaznamke ali na domači zaslon.
+    Aplikacije so zaščitene s prijavo v Supabase; ta seznam je le bližnjica, ne dostop.
+  </p>
+
+</div>
+
+<script src="/js/gm-auth.js"></script>
+<script>
+'use strict';
+
+const SB_URL = 'https://rjscfndegqxuefffsedf.supabase.co';
+const SB_KEY = 'sb_publishable_uehiNqcxrZNZb7dF6wnYcA_Xqxf3eqa';
+const SB_HDR = { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+function osveziUro() {
+  const d = new Date();
+  const dnevi = ['nedelja','ponedeljek','torek','sreda','četrtek','petek','sobota'];
+  document.getElementById('ura').textContent =
+    `${dnevi[d.getDay()]}, ${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} · ` +
+    `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// Prijava je skupna vsem trem aplikacijam, zato jo pokaze tudi ta stran —
+// da se ne odpre aplikacija in te sele tam ustavi prijavni zaslon.
+function pokaziStanje() {
+  const el = document.getElementById('stanje');
+  let st = { prijavljen: false, email: '' };
+  try { st = GMAuth.stanje(); } catch (e) {}
+
+  el.innerHTML = st.prijavljen
+    ? `<span class="pika pika--ok"></span>Prijavljen kot ${st.email}`
+    : `<span class="pika pika--ne"></span>Nisi prijavljen — aplikacija bo najprej vprašala za geslo`;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  osveziUro();
+  setInterval(osveziUro, 30000);
+  try {
+    await GMAuth.init({ url: SB_URL, anonKey: SB_KEY, headers: SB_HDR });
+  } catch (e) { /* brez seje samo pokazemo, da nisi prijavljen */ }
+  pokaziStanje();
+});
+</script>
+</body>
+</html>

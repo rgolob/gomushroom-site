@@ -18,7 +18,7 @@
 -- aplikaciji po tabeli OIML R 22 — shranjeni ne bi bili nic bolj resnicni,
 -- razsli pa bi se, ce se popravek kdaj izboljsa.
 
-create table if not exists gm_etanol_posode (
+create table if not exists gm_etanol_zaloga (
   id           text primary key,
   oznaka       text,
   masa         numeric not null default 0,   -- kg
@@ -29,43 +29,43 @@ create table if not exists gm_etanol_posode (
   ustvarjeno   timestamptz not null default now()
 );
 
-comment on table gm_etanol_posode is
+comment on table gm_etanol_zaloga is
   'Posode z etanolom: kar je bilo izmerjeno. Prava jakost pri 20 C, volumen '
   'in AAE se racunajo v aplikaciji po OIML R 22.';
-comment on column gm_etanol_posode.odcitek is
+comment on column gm_etanol_zaloga.odcitek is
   'Odcitek alkoholometra pri temperaturi merjenja, ne jakost pri 20 C.';
 
 -- ── Dostop ─────────────────────────────────────────────────────────────────
 -- Enako kot ostale tabele aplikacije: bere in pise samo prijavljen uporabnik.
-alter table gm_etanol_posode enable row level security;
+alter table gm_etanol_zaloga enable row level security;
 
 do $$
 declare pol text;
 begin
   for pol in select policyname from pg_policies
-              where schemaname='public' and tablename='gm_etanol_posode' loop
-    execute format('drop policy %I on gm_etanol_posode', pol);
+              where schemaname='public' and tablename='gm_etanol_zaloga' loop
+    execute format('drop policy %I on gm_etanol_zaloga', pol);
   end loop;
 end $$;
 
-create policy gm_auth_all on gm_etanol_posode
+create policy gm_auth_all on gm_etanol_zaloga
   for all to authenticated using (true) with check (true);
 
-revoke all on gm_etanol_posode from anon;
+revoke all on gm_etanol_zaloga from anon;
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
 select column_name, data_type
   from information_schema.columns
- where table_name = 'gm_etanol_posode'
+ where table_name = 'gm_etanol_zaloga'
  order by ordinal_position;
 
 select policyname, cmd, roles
   from pg_policies
- where tablename = 'gm_etanol_posode';
+ where tablename = 'gm_etanol_zaloga';
 --
 -- Pricakovano: osem stolpcev in ena politika gm_auth_all za {authenticated}.
 
 -- ── Pregled zaloge ─────────────────────────────────────────────────────────
 --   select oznaka, masa, odcitek, temperatura, posodobljeno
---     from gm_etanol_posode
+--     from gm_etanol_zaloga
 --    order by odcitek desc;

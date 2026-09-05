@@ -1380,7 +1380,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="frow">
         <div class="field"><label>Želim</label>
-          <input id="mesVolumen" type="text" inputmode="decimal" placeholder="npr. 4" oninput="mesanjeIzracun()"></div>
+          <input id="mesVolumen" type="text" inputmode="decimal" placeholder="npr. 4" oninput="mesCiljSprememba()"></div>
         <div class="field"><label>Enota</label>
           <select id="mesEnota" onchange="mesEnotaSprememba()">
             <option value="L">litrov</option>
@@ -1389,7 +1389,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="frow">
         <div class="field"><label>Jakost (vol %)</label>
-          <input id="mesPct" type="text" inputmode="decimal" placeholder="npr. 70" oninput="mesanjeIzracun()"></div>
+          <input id="mesPct" type="text" inputmode="decimal" placeholder="npr. 70" oninput="mesCiljSprememba()"></div>
         <div class="field"><label>Kontrola pri (°C)</label>
           <input id="mesTemp" type="text" inputmode="decimal" placeholder="20" oninput="mesanjeIzracun()"></div>
       </div>
@@ -1397,6 +1397,9 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div id="mesNalogNamig"></div>
       <div id="mesOpozorilo"></div>
       <div id="mesIzid"></div>
+      <!-- Kontrola po mesanju stoji zunaj #mesIzid: v njej se tipka, #mesIzid pa
+           se ob vsaki spremembi cilja izrise znova in bi polju vzel fokus. -->
+      <div id="mesKontrolaBox"></div>
       <div class="btnrow" style="margin-top:.7rem">
         <button class="bsave" onclick="closeSheet('mesanjeOverlay')">Zapri</button>
       </div>
@@ -2025,9 +2028,10 @@ async function potrdiMesanje(){
   const odsteti=pred.raba.filter(x=>!x.vir.voda&&x.vir.vrsticaId);
   if(!odsteti.length){toast('V predlogu ni kanistra iz popisa');return;}
 
+  // Odsteje se natehtano, ce si ga vpisal — popis mora voditi resnico, ne nacrta.
   const opis=odsteti.map(x=>{
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
-    const masa=x.kol*etohDensity(x.vir.pct);          // kg
+    const masa=mesRabaMasa(x);                        // kg
     const ostane=gVKg(v?.masa)-masa;
     return `${x.vir.ime}: −${kgVG(masa)} g → ostane ${kgVG(ostane)} g`;
   }).join('\n');
@@ -2038,8 +2042,7 @@ async function potrdiMesanje(){
   const zaNalog=mesZaDN?mesZaNalog(cilj.ciljV,cilj.ciljPct):null;
   const nalogVrstica=zaNalog
     ? `\n\nV delovni nalog zapišem:\n${kgVG(zaNalog.masa)} g pri ${
-        String(zaNalog.pct).replace('.',',')} vol % (20 °C)${
-        zaNalog.izmerjeno?' — izmerjeno':' — načrtovano, ker meritve zmesi še ni'}.`
+        String(zaNalog.pct).replace('.',',')} vol % (20 °C) — ${zaNalog.vir}.`
     : '';
 
   // Najprej glavno vprasanje, sele nato stransko: ce mesanja ne potrdis, te
@@ -2058,7 +2061,7 @@ async function potrdiMesanje(){
   for(const x of odsteti){
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
     if(!v)continue;
-    const nova=Math.max(0,gVKg(v.masa)-x.kol*etohDensity(x.vir.pct));
+    const nova=Math.max(0,gVKg(v.masa)-mesRabaMasa(x));
     v.masa=kgVG(nova);
     await popisVBazo(v);
   }
@@ -2108,71 +2111,181 @@ function mesKontrolaNalozi(){
 function mesKontrolaSprememba(polje,vrednost){
   mesKontrola[polje]=vrednost;
   try{localStorage.setItem(MES_KLJUC,JSON.stringify(mesKontrola));}catch(e){}
-  mesanjeIzracun();
+  // Samo izid, ne cel obrazec: sicer bi se polje, v katero tipkas, izrisalo
+  // znova in ti vzelo fokus — po prvi crki bi tipkovnica padla dol.
+  mesKontrolaIzidIzrisi();
 }
 
-function mesanjeKontrolaHtml(ciljV,ciljPct){
-  const val=v=>String(v||'').replace(/"/g,'&quot;');
+// Prava jakost zmesi pri 20 C iz tega, kar si izmeril.
+function mesKontrolaStanje(){
   const masa=gVKg(mesKontrola.masa);      // v obrazcu grami
   const odcitek=parseNum(mesKontrola.pct);
+  if(!(masa>0)||!(odcitek>0)||odcitek>100)return null;
+  const tVpis=String(mesKontrola.temp||'').trim();
+  let t=20,slabaT=false;
+  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))t=b;else slabaT=true;}
+  const prava=slabaT?null:(Math.abs(t-20)<=0.05?odcitek:oimlPravaVolPct(odcitek,t));
+  return {masa,odcitek,t,slabaT,prava};
+}
 
-  let izid='';
-  if(masa>0&&odcitek>0&&odcitek<=100){
-    const tVpis=String(mesKontrola.temp||'').trim();
-    let t=20,slabaT=false;
-    if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))t=b;else slabaT=true;}
-    const prava=slabaT?null:(Math.abs(t-20)<=0.05?odcitek:oimlPravaVolPct(odcitek,t));
-    if(prava===null){
-      izid=`<div style="font-size:.7rem;color:var(--danger);margin-top:.5rem">
-        ${slabaT?'Temperature ne razumem.':'Temperatura mora biti med −20 in 40 °C.'}</div>`;
-    }else{
-      const gostota=etohDensity(prava);
-      const volumen=round(masa/gostota,4);
-      const aae=round(volumen*prava/100,4);
-      const dV=round(volumen-ciljV,4);
-      const dPct=round(prava-ciljPct,2);
-      const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
-      const znak=v=>v>=0?'+':'−';
-      const barva=(v,meja)=>Math.abs(v)<=meja?'var(--success)':'var(--danger)';
-      izid=`
-        <div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;margin-top:.55rem;padding-top:.45rem;border-top:1px solid var(--border)">
-          ${Math.abs(t-20)>0.05&&!slabaT?`<span style="color:var(--muted)">Odčitek ${st(odcitek,2)} % pri ${t.toLocaleString('sl-SI')} °C</span>
-          <span style="text-align:right;color:#5a3a6b;font-weight:600">${st(prava,2)} vol % pri 20 °C</span>`:''}
-          <span>Dejanska jakost</span>
-          <span style="text-align:right;font-weight:700">${st(prava,2)} vol %</span>
-          <span style="color:var(--muted)">Odstopanje od ${ciljPct.toLocaleString('sl-SI')} %</span>
-          <span style="text-align:right;font-weight:600;color:${barva(dPct,0.5)}">${znak(dPct)}${st(Math.abs(dPct),2)} vol %</span>
-          <span>Volumen</span>
-          <span style="text-align:right;font-weight:700">${st(volumen)} L</span>
-          <span style="color:var(--muted)">Odstopanje od ${st(ciljV)} L</span>
-          <span style="text-align:right;font-weight:600;color:${barva(dV,0.02)}">${znak(dV)}${st(Math.abs(dV))} L</span>
-          <span style="color:var(--accent)">Absolutni etanol</span>
-          <span style="text-align:right;font-weight:700;color:var(--accent)">${st(aae,4)} L AAE</span>
-        </div>`;
+// ── Popravek zmesi ─────────────────────────────────────────────────────────
+// V praksi zmes ne pade natanko na cilj: tehtnica, odcitek na desetinko, kaj
+// ostane v vrcu. Ker etanola iz zmesi ne moremo vzeti nazaj, je popravek vedno
+// dolivanje — navzgor mocnejsega od cilja, navzdol bolj razredcenega ali vode.
+// Masa in voda se ohranita, zato je resitev ena sama:
+//   x = M0 (w_cilj - w_zmes) / (w_vir - w_cilj)      [w = masni delez]
+function etPopravek(masa,jakost,ciljPct,viri){
+  if(!(masa>0)||!(jakost>0)||!(ciljPct>0))return null;
+  const w0=volToMas(jakost)/100,wc=volToMas(ciljPct)/100;
+  const razlika=round(jakost-ciljPct,2);
+  if(Math.abs(razlika)<0.05)return {smer:'ok',razlika};
+  const smer=wc>w0?'gor':'dol';
+  const opcije=[];
+  viri.forEach(v=>{
+    const ws=volToMas(v.pct)/100;
+    if(smer==='gor'?!(ws>wc+1e-9):!(ws<wc-1e-9))return;
+    const x=masa*(wc-w0)/(ws-wc);
+    if(!(x>1e-6)||!isFinite(x))return;
+    const naVoljo=v.voda?Infinity:v.naVoljo*etohDensity(v.pct);
+    if(x>naVoljo+1e-9)return;
+    opcije.push({vir:v,dodaj:x,koncna:masa+x});
+  });
+  // Isti red kot pri mesanju: navzgor najsibkejsi nad ciljem, da mocnejsi
+  // ostane; navzdol najbolj razredceno, da se porabi. Voda cisto na koncu.
+  opcije.sort((a,b)=>(a.vir.voda?1:0)-(b.vir.voda?1:0)||a.vir.pct-b.vir.pct);
+  return {smer,razlika,opcije};
+}
+
+// Dolil sem: iz kanistra odstejemo, zmesi maso pristejemo. Odcitek pobrisemo —
+// po dolivanju je stara meritev neresnicna in jo je treba ponoviti.
+async function potrdiDolivanje(kljuc,dodajKg){
+  const v=mesanjeViri().find(x=>mesKljuc(x)===kljuc);
+  if(!v){toast('Vira ni več v popisu');return;}
+  const dodaj=Number(dodajKg);
+  if(!(dodaj>0))return;
+  if(!confirm(`Dolil sem ${kgVG(dodaj)} g — ${v.ime}?\n\n`+
+    (v.voda?'Voda se nikjer ne odšteva.':'Toliko se odšteje iz kanistra.')+
+    '\nZmes nato ponovno izmeri.'))return;
+
+  if(!v.voda&&v.vrsticaId){
+    const vrstica=popisVrstice.find(p=>p.id===v.vrsticaId);
+    if(vrstica){
+      vrstica.masa=kgVG(Math.max(0,gVKg(vrstica.masa)-dodaj));
+      popisVLokalno();
+      await popisVBazo(vrstica);
     }
   }
+  mesKontrola.masa=kgVG(gVKg(mesKontrola.masa)+dodaj);
+  mesKontrola.pct='';mesKontrola.temp='';
+  try{localStorage.setItem(MES_KLJUC,JSON.stringify(mesKontrola));}catch(e){}
+  mesanjeIzracun();
+  mesKontrolaIzrisi(true);
+  toast('✓ Dolito · zdaj zmes ponovno izmeri');
+}
 
-  return `
-    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
-      Ko zmešaš — kontrola
+// Okvir z vnosnimi polji se izrise enkrat, izid pa ob vsaki spremembi.
+function mesKontrolaIzrisi(znova){
+  const box=document.getElementById('mesKontrolaBox');
+  if(!box)return;
+  if(znova||!box.querySelector('input')){
+    const val=v=>String(v||'').replace(/"/g,'&quot;');
+    box.innerHTML=`
+      <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
+        Ko zmešaš — kontrola in popravek
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem;margin-bottom:.8rem">
+        <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.45rem">
+          Stehtaj zmes in jo izmeri. Iz mase in prave jakosti dobiš volumen in AAE,
+          ter — če si zgrešil — koliko in česa dolij.
+        </div>
+        <div class="frow">
+          <div class="field"><label>Končna masa (g)</label>
+            <input value="${val(mesKontrola.masa)}" type="text" inputmode="decimal" placeholder="npr. 3542"
+              oninput="mesKontrolaSprememba('masa',this.value)"></div>
+          <div class="field"><label>Odčitek (vol %)</label>
+            <input value="${val(mesKontrola.pct)}" type="text" inputmode="decimal" placeholder="npr. 72,1"
+              oninput="mesKontrolaSprememba('pct',this.value)"></div>
+          <div class="field"><label>Temp. (°C)</label>
+            <input value="${val(mesKontrola.temp)}" type="text" inputmode="decimal" placeholder="20"
+              oninput="mesKontrolaSprememba('temp',this.value)"></div>
+        </div>
+        <div id="mesKontrolaIzid"></div>
+      </div>`;
+  }
+  mesKontrolaIzidIzrisi();
+}
+
+function mesKontrolaIzidIzrisi(){
+  const el=document.getElementById('mesKontrolaIzid');
+  if(!el)return;
+  const s=mesKontrolaStanje();
+  if(!s){el.innerHTML='';return;}
+  if(s.prava===null){
+    el.innerHTML=`<div style="font-size:.7rem;color:var(--danger);margin-top:.5rem">
+      ${s.slabaT?'Temperature ne razumem.':'Temperatura mora biti med −20 in 40 °C.'}</div>`;
+    return;
+  }
+  const {ciljV,ciljPct}=mesCilj();
+  const gostota=etohDensity(s.prava);
+  const volumen=round(s.masa/gostota,4);
+  const aae=round(volumen*s.prava/100,4);
+  const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
+  const znak=v=>v>=0?'+':'−';
+  const barva=(v,meja)=>Math.abs(v)<=meja?'var(--success)':'var(--danger)';
+  const imamoCilj=ciljPct>0&&ciljV>0;
+  const dV=imamoCilj?round(volumen-ciljV,4):0;
+  const dPct=imamoCilj?round(s.prava-ciljPct,2):0;
+
+  const pop=imamoCilj?etPopravek(s.masa,s.prava,ciljPct,
+    mesanjeViri().filter(v=>!mesIzkljuceni.has(mesKljuc(v)))):null;
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;margin-top:.55rem;padding-top:.45rem;border-top:1px solid var(--border)">
+      ${Math.abs(s.t-20)>0.05?`<span style="color:var(--muted)">Odčitek ${st(s.odcitek,2)} % pri ${s.t.toLocaleString('sl-SI')} °C</span>
+      <span style="text-align:right;color:#5a3a6b;font-weight:600">${st(s.prava,2)} vol % pri 20 °C</span>`:''}
+      <span>Dejanska jakost</span>
+      <span style="text-align:right;font-weight:700">${st(s.prava,2)} vol %</span>
+      ${imamoCilj?`<span style="color:var(--muted)">Odstopanje od ${ciljPct.toLocaleString('sl-SI')} %</span>
+      <span style="text-align:right;font-weight:600;color:${barva(dPct,0.5)}">${znak(dPct)}${st(Math.abs(dPct),2)} vol %</span>`:''}
+      <span>Volumen</span>
+      <span style="text-align:right;font-weight:700">${st(volumen)} L</span>
+      ${imamoCilj?`<span style="color:var(--muted)">Odstopanje od ${st(ciljV)} L</span>
+      <span style="text-align:right;font-weight:600;color:${barva(dV,0.02)}">${znak(dV)}${st(Math.abs(dV))} L</span>`:''}
+      <span style="color:var(--accent)">Absolutni etanol</span>
+      <span style="text-align:right;font-weight:700;color:var(--accent)">${st(aae,4)} L AAE</span>
     </div>
-    <div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem">
-      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.45rem">
-        Stehtaj zmes in jo izmeri. Iz mase in prave jakosti dobiš volumen in AAE
-        ter vidiš, koliko si zgrešil.
+    ${popravekHtml(pop,ciljPct,s)}`;
+}
+
+function popravekHtml(pop,ciljPct,s){
+  if(!pop)return '';
+  if(pop.smer==='ok')return `<div style="font-size:.68rem;color:var(--success);margin-top:.5rem;padding-top:.4rem;border-top:1px solid var(--border)">
+    ✓ Jakost je na cilju — popravek ni potreben.</div>`;
+  const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
+  const uvod=pop.smer==='gor'
+    ? `Zmes je <strong>${st(Math.abs(pop.razlika),2)} vol % pod ciljem</strong>. Dolij močnejšega:`
+    : `Zmes je <strong>${st(Math.abs(pop.razlika),2)} vol % nad ciljem</strong>. Dolij bolj razredčenega:`;
+  if(!pop.opcije.length)return `<div style="font-size:.68rem;color:var(--danger);margin-top:.5rem;padding-top:.4rem;border-top:1px solid var(--border)">
+    ${uvod}<div style="margin-top:.2rem">Med kanistri ni ničesar, s čimer bi to popravil — ${
+      pop.smer==='gor'?'potrebuješ etanol nad':'potrebuješ topilo pod'} ${ciljPct.toLocaleString('sl-SI')} %${
+      pop.smer==='gor'?', in dovolj ga mora biti':''}.</div></div>`;
+  return `
+    <div style="font-size:.68rem;line-height:1.5;margin-top:.5rem;padding-top:.4rem;border-top:1px solid var(--border)">
+      ${uvod}
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.3rem .5rem;align-items:center;margin-top:.35rem">
+        ${pop.opcije.slice(0,3).map(o=>`
+          <span>${htmlEsc(o.vir.ime)} <span style="color:var(--muted)">${o.vir.pct.toLocaleString('sl-SI')} %</span>
+            <div style="color:var(--muted);font-size:.64rem">dobiš ${kgVG(o.koncna)} g pri ${ciljPct.toLocaleString('sl-SI')} vol %</div></span>
+          <span style="text-align:right">
+            <button onclick="potrdiDolivanje('${jsNiz(mesKljuc(o.vir))}',${o.dodaj.toFixed(6)})"
+              style="border:1px solid var(--accent);background:rgba(175,132,85,.12);border-radius:6px;
+                     padding:.25rem .5rem;cursor:pointer;font-family:inherit;font-size:.72rem;color:inherit;white-space:nowrap">
+              + ${kgVG(o.dodaj)} g</button></span>`).join('')}
       </div>
-      <div class="frow">
-        <div class="field"><label>Končna masa (g)</label>
-          <input value="${val(mesKontrola.masa)}" type="text" inputmode="decimal" placeholder="npr. 3542"
-            oninput="mesKontrolaSprememba('masa',this.value)"></div>
-        <div class="field"><label>Odčitek (vol %)</label>
-          <input value="${val(mesKontrola.pct)}" type="text" inputmode="decimal" placeholder="npr. 72,1"
-            oninput="mesKontrolaSprememba('pct',this.value)"></div>
-        <div class="field"><label>Temp. (°C)</label>
-          <input value="${val(mesKontrola.temp)}" type="text" inputmode="decimal" placeholder="20"
-            oninput="mesKontrolaSprememba('temp',this.value)"></div>
+      <div style="color:var(--muted);font-size:.64rem;margin-top:.35rem">
+        Klik na količino pomeni „dolil sem": odšteje se iz kanistra, masa zmesi
+        naraste, odčitek pa se pobriše — po dolivanju zmes ponovno izmeri.
       </div>
-      ${izid}
     </div>`;
 }
 
@@ -2256,16 +2369,12 @@ function mesNalogNamig(){
 // Jakost je vedno pri 20 C — nalog racuna z gostoto pri 20 C in odcitek pri
 // 26 C bi bil tam tiha napaka.
 function mesZaNalog(ciljV,ciljPct){
-  const masa=gVKg(mesKontrola.masa);
-  const odcitek=parseNum(mesKontrola.pct);
-  if(masa>0&&odcitek>0&&odcitek<=100){
-    const tVpis=String(mesKontrola.temp||'').trim();
-    let t=20,slaba=false;
-    if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))t=b;else slaba=true;}
-    const prava=slaba?null:(Math.abs(t-20)<=0.05?odcitek:oimlPravaVolPct(odcitek,t));
-    if(prava!==null)return {masa,pct:round(prava,2),izmerjeno:true,t};
-  }
-  return {masa:ciljV*etohDensity(ciljPct),pct:round(ciljPct,2),izmerjeno:false};
+  const s=mesKontrolaStanje();
+  if(s&&s.prava!==null)return {masa:s.masa,pct:round(s.prava,2),vir:'izmerjeno'};
+  // Brez meritve je natehtano blizje resnici od nacrta.
+  const n=mesNatehtanoStanje();
+  if(n&&n.spremenjeno&&n.volPct>0)return {masa:n.masa,pct:n.volPct,vir:'iz natehtanega'};
+  return {masa:ciljV*etohDensity(ciljPct),pct:round(ciljPct,2),vir:'načrtovano'};
 }
 
 function mesCilj(){
@@ -2281,6 +2390,8 @@ async function openMesanjeSheet(){
   mesZaDN=false;
   mesNalogNamig();
   mesIzkljuceni.clear();   // odmisljeni viri veljajo za en izracun, ne za vedno
+  mesNatehtano={};
+  mesKontrolaIzrisi(true); // polja naj pokazejo, kar je shranjeno
   const e=document.getElementById('mesEnota');
   if(e&&settings.mesEnota)e.value=settings.mesEnota;
   const g=document.getElementById('mesSarzaGumb');
@@ -2332,6 +2443,67 @@ function mesanjeViri(){
 // izracun; zaloge ne spremeni in se ob zaprtju obrazca pozabi.
 let mesIzkljuceni=new Set();
 function mesKljuc(v){return v.voda?'voda':(v.vrsticaId||v.ime);}
+
+// Natehtano namesto nacrtovanega
+// ──────────────────────────────
+// Na tehtnici ne zadenes 2387,9 g — nalijes 2390 ali 2380 in nehas. Zato je
+// kolicina v predlogu vnosno polje: prepises, kar si res natehtal, in racun
+// pove, kaj je iz tega res nastalo. Iz kanistrov se odsteje isto, sicer bi
+// popis vodil nacrt, ne resnice.
+let mesNatehtano={};
+function mesNatehtanoSprememba(k,v){
+  mesNatehtano[k]=v;
+  mesNatehtanoIzrisi();   // samo izid, da polje ne izgubi fokusa
+}
+function mesNatehtanoPocisti(){mesNatehtano={};mesanjeIzracun();}
+// Cilj se je spremenil — s tem tudi nacrt, zato prejsnje natehtano ni vec od
+// cesa odstopanje.
+function mesCiljSprememba(){mesNatehtano={};mesanjeIzracun();}
+
+// Masa, ki jo za ta vir res upostevamo: natehtana, ce si jo vpisal.
+function mesRabaMasa(x){
+  const k=mesKljuc(x.vir);
+  const vpis=String(mesNatehtano[k]==null?'':mesNatehtano[k]).trim();
+  if(vpis!=='')return gVKg(vpis);
+  return x.kol*etohDensity(x.vir.pct);
+}
+
+// Kaj iz natehtanega zares nastane. Masa etanola in vode se ohranita, zato
+// gremo cez masne deleze — volumen se skrci, jakost pa je tocna.
+function mesNatehtanoStanje(){
+  const pred=_mesZadnjiPredlog;
+  if(!pred||!pred.raba.length)return null;
+  let masa=0,etanol=0,spremenjeno=false;
+  pred.raba.forEach(x=>{
+    const nacrt=x.kol*etohDensity(x.vir.pct);
+    const m=mesRabaMasa(x);
+    if(Math.abs(m-nacrt)>1e-6)spremenjeno=true;
+    masa+=m;etanol+=m*volToMas(x.vir.pct)/100;
+  });
+  if(!(masa>0))return null;
+  const volPct=round(masToVol(etanol/masa*100),2);
+  return {masa,volPct,spremenjeno,
+          vol:volPct>0?round(masa/etohDensity(volPct),4):0};
+}
+
+function mesNatehtanoIzrisi(){
+  const el=document.getElementById('mesNatehtanoIzid');
+  if(!el)return;
+  const s=mesNatehtanoStanje();
+  const {ciljPct}=mesCilj();
+  if(!s||!s.spremenjeno){el.innerHTML='';return;}
+  const d=ciljPct>0?round(s.volPct-ciljPct,2):null;
+  const barva=d===null?'var(--muted)':(Math.abs(d)<=0.5?'var(--success)':'var(--danger)');
+  el.innerHTML=`<div style="margin-top:.25rem;padding-top:.25rem;border-top:1px dashed rgba(175,132,85,.4)">
+    Iz natehtanega: <strong>${kgVG(s.masa)} g</strong> pri
+    <strong style="color:${barva}">${s.volPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} vol %</strong>
+    ${d===null?'':`<span style="color:${barva}">(${d>=0?'+':'−'}${Math.abs(d).toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`}
+    · ${s.vol.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3})} L
+    <button onclick="mesNatehtanoPocisti()" style="border:0;background:none;cursor:pointer;color:var(--accent);
+      font-family:inherit;font-size:.64rem;text-decoration:underline;padding:0 .2rem">↺ nazaj na načrt</button>
+    <div style="color:var(--muted);font-size:.64rem">Toliko se bo odštelo iz kanistrov. Po zlitju zmes vseeno izmeri — spodaj.</div>
+  </div>`;
+}
 function jsNiz(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
   .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function mesIzkljuci(k){mesIzkljuceni.add(k);mesVsePrikazane=false;mesanjeIzracun();}
@@ -2362,6 +2534,7 @@ function mesIzkljuceniHtml(izkljuceni){
 function mesanjeIzracun(){
   const el=document.getElementById('mesIzid');
   if(!el)return;
+  mesKontrolaIzrisi();   // tudi kadar spodaj kaj vrne prej
   const vpis=parseNum(document.getElementById('mesVolumen').value||'0');
   const ciljPct=parseNum(document.getElementById('mesPct').value||'0');
   const ciljV=mesCiljV(vpis,ciljPct);
@@ -2480,13 +2653,24 @@ function mesanjeIzracun(){
       Predlog${izkljuceni.length?` — brez ${izkljuceni.length} ${izkljuceni.length===1?'vira':'virov'}`:''}</div>
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.55rem .65rem;margin-bottom:.7rem;background:rgba(175,132,85,.08)">
       ${pred.raba.length?`<div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;align-items:center">
-        ${pred.raba.map(x=>`
+        ${pred.raba.map(x=>{
+          const k=mesKljuc(x.vir);
+          const vpis=String(mesNatehtano[k]==null?'':mesNatehtano[k]).trim();
+          const nacrt=kgVG(x.kol*etohDensity(x.vir.pct));
+          return `
           <span style="display:flex;align-items:center;flex-wrap:wrap">${htmlEsc(x.vir.ime)}
             <span style="color:var(--muted);margin:0 .3rem">${x.vir.pct.toLocaleString('sl-SI')} %</span>
             ${x.vir.voda?'':etZnacka(x.vir.pct)}${mesIzkljuciGumb(x.vir)}</span>
-          <span style="text-align:right"><strong>${kgVG(x.kol*etohDensity(x.vir.pct))} g</strong>
-            <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
-      </div>`:''}
+          <span style="text-align:right;white-space:nowrap">
+            <input value="${(vpis||nacrt).replace(/"/g,'&quot;')}" type="text" inputmode="decimal"
+              oninput="mesNatehtanoSprememba('${jsNiz(k)}',this.value)"
+              style="width:5.6rem;text-align:right;font-weight:700;font-family:inherit;font-size:.78rem;
+                     padding:.15rem .3rem;border:1px solid ${vpis?'var(--accent)':'var(--border)'};border-radius:5px;
+                     background:${vpis?'rgba(175,132,85,.12)':'white'}"> g
+            <div style="font-size:.66rem;font-weight:400;color:var(--muted)">načrt ${nacrt} g · ${stev(x.kol)} L</div></span>`;
+        }).join('')}
+      </div>
+      <div id="mesNatehtanoIzid" style="font-size:.68rem;line-height:1.5"></div>`:''}
       ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
         ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
           :`Zliješ ${stev(vliteje)} L, dobiš <strong>${ciljOpis}</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
@@ -2550,7 +2734,9 @@ function mesanjeIzracun(){
       volumen zmesi manjši od vsote vlitega, jakost pa točna.
     </div>
 
-    ${mesanjeKontrolaHtml(ciljV,ciljPct)}`;
+    `;
+  mesNatehtanoIzrisi();
+  mesKontrolaIzrisi();
 }
 
 // ── POPIS ETANOLA ──────────────────────────────────────────────────────────

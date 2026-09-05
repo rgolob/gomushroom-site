@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Popis etanola: posode v bazi, ne samo v brskalniku
+-- Popis etanola: kanistri v bazi, ne samo v brskalniku
 -- ═══════════════════════════════════════════════════════════════════════════
 --
 -- ZAZENI PRED objavo nove razlicice aplikacije materiali.
@@ -9,7 +9,7 @@
 -- Popis je doslej zivel v localStorage. To pomeni: ce brskalnik pocisti
 -- podatke, je popis izgubljen, in na drugem racunalniku ga sploh ni. Za
 -- pripomocek je bilo to dovolj, za evidenco zaloge pa ne — zlasti odkar se
--- ob mesanju iz posod odsteva in mora stanje drzati.
+-- ob mesanju iz kanistrov odsteva in mora stanje drzati.
 --
 -- Kaj hranimo
 -- ───────────
@@ -30,7 +30,7 @@ create table if not exists gm_etanol_zaloga (
 );
 
 comment on table gm_etanol_zaloga is
-  'Posode z etanolom: kar je bilo izmerjeno. Prava jakost pri 20 C, volumen '
+  'Kanistri z etanolom: kar je bilo izmerjeno. Prava jakost pri 20 C, volumen '
   'in AAE se racunajo v aplikaciji po OIML R 22.';
 comment on column gm_etanol_zaloga.odcitek is
   'Odcitek alkoholometra pri temperaturi merjenja, ne jakost pri 20 C.';

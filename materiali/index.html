@@ -512,7 +512,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="calc-card" onclick="openMesanjeSheet()">
       <span class="calc-ico">🧫</span>
       <span class="calc-txt"><strong>Mešanje etanola</strong>
-        <small>Koliko česa zliti za želeni volumen in jakost — iz popisanih posod</small></span>
+        <small>Koliko česa zliti za želeni volumen in jakost — iz popisanih kanistrov</small></span>
       <span class="calc-arrow">›</span>
     </button>
     <div id="preracuniZapisi"></div>
@@ -1357,7 +1357,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 
 <!-- SHEET: PRERACUN MATICNEGA EKSTRAKTA -->
 <!-- MESANJE ETANOLA — pripomocek, nic se ne knjizi.
-     Vire jemlje iz popisa, ker so tam ze vpisane posode in njihove jakosti. -->
+     Vire jemlje iz popisa, ker so tam ze vpisani kanistri in njihove jakosti. -->
 <div class="overlay" id="mesanjeOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1368,7 +1368,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="shbody">
       <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
         Vire bere iz <strong>Popisa etanola</strong>. Voda je vedno na voljo, a je
-        na dnu seznama — če isto dosežeš z bolj razredčeno posodo, je bolje porabiti njo.
+        na dnu seznama — če isto dosežeš z bolj razredčenim kanistrom, je bolje porabiti njega.
       </div>
       <div class="frow">
         <div class="field"><label>Želim (L)</label>
@@ -1388,7 +1388,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 </div>
 
 <!-- POPIS ETANOLA — pripomocek, nic se ne knjizi.
-     Posodo stehtas in znas njeno vol %, volumna pa ne vidis. Iz mase in
+     Kanister stehtas in znas njegov vol %, volumna pa ne vidis. Iz mase in
      koncentracije dobis gostoto, iz nje volumen in AAE. -->
 <div class="overlay" id="popisOverlay">
   <div class="sheet">
@@ -1407,8 +1407,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
       </div>
       <div id="popisVrstice"></div>
-      <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj posodo</button>
-      <button class="bcancel" style="width:100%;margin:0 0 .7rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="regeneriraj()">♻️ Regeneriral sem — izprazni posode za regeneracijo</button>
+      <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj kanister</button>
+      <button class="bcancel" style="width:100%;margin:0 0 .7rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="regeneriraj()">♻️ Regeneriral sem — izprazni kanistre za regeneracijo</button>
       <div id="popisIzid"></div>
       <div class="btnrow" style="margin-top:.7rem">
         <button class="bcancel" onclick="popisPocisti()">Počisti</button>
@@ -1918,7 +1918,7 @@ function etPredlogMesanja(ciljV,ciljPct,viri){
   let E=ciljV*c.etanol,W=ciljV*c.voda;
   const kopija=v=>({...v,ostane:v.naVoljo});
 
-  // Ce ze imas posodo prave jakosti, ni kaj mesati. Brez tega bi tak vir izpadel
+  // Ce ze imas kanister prave jakosti, ni kaj mesati. Brez tega bi tak vir izpadel
   // iz obeh skupin (ni ne sibkejsi ne mocnejsi od cilja) in predlog bi po nepotrebnem
   // javil, da cilja ni mogoce doseci.
   const tocno=viri.filter(v=>Math.abs(v.pct-ciljPct)<1e-9&&!v.voda)
@@ -1962,9 +1962,9 @@ function mesanjeVec(){mesVsePrikazane=true;mesanjeIzracun();}
 function mesanjeManj(){mesVsePrikazane=false;mesanjeIzracun();}
 
 // ── Potrditev mesanja ──────────────────────────────────────────────────────
-// Dokler se ni potrjeno, je predlog samo predlog. Ob potrditvi iz vsake posode
+// Dokler se ni potrjeno, je predlog samo predlog. Ob potrditvi iz vsakega kanistra
 // odstejemo maso, ki si jo vzel — sicer bi popis kazal etanol, ki ga ni vec.
-// Zmes lahko pristane kot nova posoda; ce jo porabis takoj, je ni treba.
+// Zmes lahko pristane kot nov kanister; ce jo porabis takoj, je ni treba.
 let _mesZadnjiPredlog=null;
 
 async function potrdiMesanje(){
@@ -1972,7 +1972,7 @@ async function potrdiMesanje(){
   if(!pred||!pred.ok||!pred.raba.length){toast('Ni predloga za potrditev');return;}
 
   const odsteti=pred.raba.filter(x=>!x.vir.voda&&x.vir.vrsticaId);
-  if(!odsteti.length){toast('V predlogu ni posode iz popisa');return;}
+  if(!odsteti.length){toast('V predlogu ni kanistra iz popisa');return;}
 
   const opis=odsteti.map(x=>{
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
@@ -1988,7 +1988,7 @@ async function potrdiMesanje(){
   const zmesMasa=parseNum(mesKontrola.masa);
   const zmesPct=parseNum(mesKontrola.pct);
   const dodaj=zmesMasa>0&&zmesPct>0&&confirm(
-    `Naj zmes dodam kot novo posodo?\n\n${zmesMasa.toFixed(3)} kg pri odčitku ${zmesPct} %\n\n`+
+    `Naj zmes dodam kot nov kanister?\n\n${zmesMasa.toFixed(3)} kg pri odčitku ${zmesPct} %\n\n`+
     'Prekliči, če jo porabiš takoj in je ni treba voditi.');
 
   for(const x of odsteti){
@@ -2008,14 +2008,14 @@ async function potrdiMesanje(){
     await popisVBazo(nova);
   }
 
-  // Prazne posode ne brisemo same od sebe — morda jo bos dolil. Le povemo.
+  // Praznih kanistrov ne brisemo same od sebe — morda ga bos dolil. Le povemo.
   popisVLokalno();
   mesanjeIzracun();
   const prazne=odsteti.filter(x=>{
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
     return v&&parseNum(v.masa)<0.0005;
   }).length;
-  toast(`✓ Popis posodobljen${dodaj?' · zmes dodana':''}${prazne?` · ${prazne} ${sklon(prazne,POSODA)} praznih`:''}`);
+  toast(`✓ Popis posodobljen${dodaj?' · zmes dodana':''}${prazne?` · praznih: ${prazne}`:''}`);
 }
 
 // ── Kontrola po mesanju ────────────────────────────────────────────────────
@@ -2108,14 +2108,14 @@ async function openMesanjeSheet(){
   mesanjeIzracun();
 }
 
-// Viri: posode iz popisa in voda. Voda nima omejitve, a jo pri razvrscanju
+// Viri: kanistri iz popisa in voda. Voda nima omejitve, a jo pri razvrscanju
 // postavimo nazaj — smisel je porabiti razredceno, ne dolivati sveze vode.
 function mesanjeViri(){
   const viri=[];
   popisVrstice.forEach((v,i)=>{
     const r=popisVrstica(v);
     if(!r||r.neveljavnaTemp||r.izvenObmocja)return;
-    viri.push({ime:(v.opis||'').trim()||`Posoda ${i+1}`,pct:r.pct,naVoljo:r.volumen,
+    viri.push({ime:(v.opis||'').trim()||`Kanister ${i+1}`,pct:r.pct,naVoljo:r.volumen,
                voda:false,vrsticaId:v.id});
   });
   viri.push({ime:'Voda',pct:0,naVoljo:Infinity,voda:true});
@@ -2136,12 +2136,12 @@ function mesanjeIzracun(){
   const opoz=document.getElementById('mesOpozorilo');
   if(opoz)opoz.innerHTML=popisSinkNapaka
     ? `<div style="font-size:.68rem;color:var(--danger);line-height:1.5;margin-bottom:.5rem;padding:.4rem .55rem;border:1px solid rgba(139,58,42,.3);border-radius:6px">
-         ⚠ Posod ni bilo mogoče prebrati iz baze — prikazana je zadnja kopija iz tega brskalnika.
+         ⚠ Kanistrov ni bilo mogoče prebrati iz baze — prikazana je zadnja kopija iz tega brskalnika.
          Preveri prijavo, preden kaj odšteješ.</div>` : '';
 
   const viri=mesanjeViri();
   if(viri.length<2){
-    el.innerHTML='<div style="font-size:.72rem;color:var(--danger)">V popisu ni nobene posode — najprej vpiši, kaj imaš.</div>';
+    el.innerHTML='<div style="font-size:.72rem;color:var(--danger)">V popisu ni nobenega kanistra — najprej vpiši, kaj imaš.</div>';
     return;
   }
 
@@ -2227,7 +2227,7 @@ function mesanjeIzracun(){
             <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
       </div>`:''}
       ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
-        ${pred.cisto?'Nič ne mešaš — ta posoda je že prave jakosti.'
+        ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
           :`Zliješ ${stev(vliteje)} L, dobiš <strong>${stev(ciljV)} L</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
              — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
         <div>Masa zmesi: <strong>${stev(masaZmesi)} kg</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>
@@ -2265,7 +2265,7 @@ function mesanjeIzracun(){
       </div>`;
     }).join('')}
     ${pred.ok&&!pred.cisto&&pred.raba.some(x=>x.vir.vrsticaId)?`<button class="bsave" style="width:100%;margin:0 0 .8rem" onclick="potrdiMesanje()">
-      ✓ Sem zmešal — odštej iz posod
+      ✓ Sem zmešal — odštej iz kanistrov
     </button>`:''}
 
     ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
@@ -2287,7 +2287,7 @@ function mesanjeIzracun(){
 // Pripomocek za rocni pregled zaloge. Posodo stehtas in poznas njeno vol %,
 // volumna pa ne vidis — iz mase in koncentracije ga izracunamo prek gostote.
 // Nic se ne knjizi; zaloga v knjigi etanola ostane nedotaknjena.
-// Popis ni vec samo pripomocek v brskalniku: posode so v gm_etanol_zaloga, ker
+// Popis ni vec samo pripomocek v brskalniku: kanistri so v gm_etanol_zaloga, ker
 // se ob mesanju iz njih odsteva in mora stanje drzati tudi, ce brskalnik
 // pocisti podatke ali ce delas na drugem racunalniku. localStorage ostaja kot
 // kopija — da je popis viden takoj in da se ne izgubi ob izpadu omrezja.
@@ -2297,8 +2297,8 @@ let popisSinkNapaka='';
 
 function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:''};}
 
-// Slovenscina ima stiri oblike: 1 posoda, 2 posodi, 3-4 posode, 5+ posod.
-// Koda je prej poznala samo prvi dve in pisala "4 posod".
+// Slovenscina ima stiri oblike: 1 kanister, 2 kanistra, 3-4 kanistri,
+// 5+ kanistrov. Koda je prej poznala samo prvi dve in pisala "4 posod".
 function sklon(n,oblike){
   const o=Math.abs(n)%100;
   if(o===1)return oblike[0];
@@ -2306,7 +2306,10 @@ function sklon(n,oblike){
   if(o===3||o===4)return oblike[2];
   return oblike[3];
 }
-const POSODA=['posoda','posodi','posode','posod'];
+// Imenovalnik in tozilnik: 1 kanister, 2 kanistra, 3-4 kanistri/kanistre,
+// 5+ kanistrov.
+const KANISTER=['kanister','kanistra','kanistri','kanistrov'];
+const KANISTER_TOZ=['kanister','kanistra','kanistre','kanistrov'];
 const MOZNOST=['možnost','možnosti','možnosti','možnosti'];
 
 function popisIzLokalnega(){
@@ -2344,9 +2347,9 @@ function popisVLokalno(){
   try{localStorage.setItem(POPIS_KLJUC,JSON.stringify(popisVrstice));}catch(e){}
 }
 
-// Vrstica je posoda, brz ko ima jakost — masa je lahko tudi nic, ker je prazna
-// posoda se vedno posoda in mora biti taka zapisana tudi v bazi. Prej je pogoj
-// zahteval maso in jakost, zato se posoda, ki jo je mesanje izpraznilo, ni
+// Vrstica je kanister, brz ko ima jakost — masa je lahko tudi nic, ker je prazen
+// kanister se vedno kanister in mora biti tak zapisan tudi v bazi. Prej je pogoj
+// zahteval maso in jakost, zato se kanister, ki ga je mesanje izpraznilo, ni
 // zapisala: lokalno je bila na nic, v bazi pa se vedno polna.
 function popisJePolna(v){return parseNum(v.pct)>0;}
 
@@ -2368,14 +2371,14 @@ function popisShrani(vrstica){
 
 // ── Regeneracija ───────────────────────────────────────────────────────────
 // Ko nabereš 15-20 L topila za regeneracijo, ga predelaš in tista zaloga s
-// seznama izgine — namesto nje pride ena posoda regenerata. Rocno praznjenje
+// seznama izgine — namesto nje pride en kanister regenerata. Rocno praznjenje
 // desetih vrstic je zamudno in se zlahka zmotis, zato en korak.
 async function regeneriraj(){
   const kandidati=popisVrstice
     .map((v,i)=>({v,i,r:popisVrstica(v)}))
     .filter(x=>x.r&&!x.r.neveljavnaTemp&&!x.r.izvenObmocja&&x.r.pct<ET_MEJA_UPORABE);
 
-  if(!kandidati.length){toast('Ni posod za regeneracijo');return;}
+  if(!kandidati.length){toast('Ni kanistrov za regeneracijo');return;}
 
   const aae=round(kandidati.reduce((s,x)=>s+x.r.aae,0),4);
   const masa=round(kandidati.reduce((s,x)=>s+x.r.masa,0),3);
@@ -2383,11 +2386,11 @@ async function regeneriraj(){
     `${(x.v.opis||'').trim()||'brez oznake'} — ${x.r.masa.toFixed(3)} kg pri ${x.r.pct.toLocaleString('sl-SI')} %`
   ).join('\n');
 
-  if(!confirm(`Regeneriram ${kandidati.length} ${sklon(kandidati.length,POSODA)}?\n\n${seznam}\n\n`+
+  if(!confirm(`Regeneriram ${kandidati.length} ${sklon(kandidati.length,KANISTER_TOZ)}?\n\n${seznam}\n\n`+
               `Skupaj ${masa.toFixed(3)} kg · ${aae.toFixed(4)} L AAE\n\n`+
-              'Te posode se izpraznijo.'))return;
+              'Ti kanistri se izpraznijo.'))return;
 
-  // Regenerat je nova posoda. Ce ga se nimas stehtanega, posode vseeno
+  // Regenerat je nov kanister. Ce ga se nimas stehtanega, kanistre vseeno
   // izpraznimo — ostalo dodas pozneje rocno.
   const vnos=prompt(
     'Regenerat — masa (kg), odčitek (vol %) in temperatura (°C),\n'+
@@ -2401,9 +2404,9 @@ async function regeneriraj(){
   if(deli.length>=2){
     const m=parseNum(deli[0]),p=parseNum(deli[1]);
     if(m>0&&p>0&&p<=100)regenerat={masa:m,pct:p,temp:deli[2]||''};
-    else {toast('⚠ Mase ali odčitka nisem razumel — posode ostanejo nedotaknjene');return;}
+    else {toast('⚠ Mase ali odčitka nisem razumel — kanistri ostanejo nedotaknjeni');return;}
   }else if(deli.length===1){
-    toast('⚠ Potrebujem maso in odčitek — posode ostanejo nedotaknjene');return;
+    toast('⚠ Potrebujem maso in odčitek — kanistri ostanejo nedotaknjeni');return;
   }
 
   for(const x of kandidati){
@@ -2422,7 +2425,7 @@ async function regeneriraj(){
 
   popisVLokalno();
   popisIzrisi();
-  toast(`✓ Izpraznjenih ${kandidati.length} ${sklon(kandidati.length,POSODA)}${regenerat?' · regenerat dodan':''}`);
+  toast(`✓ Izpraznil sem ${kandidati.length} ${sklon(kandidati.length,KANISTER_TOZ)}${regenerat?' · regenerat dodan':''}`);
 }
 
 async function openPopisSheet(){
@@ -2436,14 +2439,14 @@ async function openPopisSheet(){
 function popisDodaj(){popisVrstice.push(popisPrazna());popisShrani();popisIzrisi();}
 function popisBrisi(i){
   const v=popisVrstice[i];
-  if(popisJePolna(v)&&!confirm(`Izbrišem posodo ${(v.opis||'').trim()||'brez oznake'}?`))return;
+  if(popisJePolna(v)&&!confirm(`Izbrišem kanister ${(v.opis||'').trim()||'brez oznake'}?`))return;
   popisVrstice.splice(i,1);
   if(v&&v.id)sbDel('gm_etanol_zaloga',v.id).catch(e=>console.warn('popisBrisi',e));
   if(!popisVrstice.length)popisVrstice=[popisPrazna()];
   popisShrani();popisIzrisi();
 }
 function popisPocisti(){
-  if(!confirm('Počistim ves popis? Posode se izbrišejo tudi iz baze.'))return;
+  if(!confirm('Počistim ves popis? Kanistri se izbrišejo tudi iz baze.'))return;
   popisVrstice.filter(v=>v.id).forEach(v=>
     sbDel('gm_etanol_zaloga',v.id).catch(e=>console.warn('popisPocisti',e)));
   popisVrstice=[popisPrazna()];popisShrani();popisIzrisi();
@@ -2460,7 +2463,7 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
-// Ena posoda: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
+// En kanister: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
 function popisVrstica(v){
   const masa=parseNum(v.masa);           // kg
   const odcitek=parseNum(v.pct);         // vol %, kot kaze alkoholometer
@@ -2498,7 +2501,7 @@ function popisIzrisi(){
   el.innerHTML=popisVrstice.map((v,i)=>`
     <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
-        <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka posode (neobvezno)"
+        <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka kanistra (neobvezno)"
           oninput="popisSprememba(${i},'opis',this.value)"
           style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">
         <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
@@ -2558,7 +2561,7 @@ function popisIzracun(){
   // volumen x koncentracija / 100 = AAE.
   const skupniPct=volSk>0?round(aaeSk/volSk*100,2):0;
 
-  // Ce bi vse zlil v eno posodo, bi bil volumen nekoliko manjsi od sestevka —
+  // Ce bi vse zlil v en kanister, bi bil volumen nekoliko manjsi od sestevka —
   // etanol in voda se ob mesanju skrcita. Masa in AAE se ohranita, zato
   // pravo koncentracijo zmesi dobimo prek mase.
   const masaEtanola=round(aaeSk*0.78927,4);
@@ -2572,7 +2575,7 @@ function popisIzracun(){
   izid.innerHTML=`
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.6rem .7rem;background:rgba(175,132,85,.08)">
       <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">
-        Skupaj — ${steviloOk} ${sklon(steviloOk,POSODA)}
+        Skupaj — ${steviloOk} ${sklon(steviloOk,KANISTER)}
       </div>
       ${(skup.uporabno.n&&skup.regeneracija.n)?`
       <div style="display:grid;grid-template-columns:1fr auto auto;gap:.2rem .6rem;font-size:.75rem;margin-bottom:.45rem;padding-bottom:.4rem;border-bottom:1px solid rgba(175,132,85,.3)">
@@ -2591,7 +2594,7 @@ function popisIzracun(){
         <span style="text-align:right;font-weight:700;color:var(--accent)">${aaeSk.toFixed(4)} L AAE</span>
       </div>
       ${steviloOk>1?`<div style="font-size:.65rem;color:var(--muted);line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
-        Zliti v eno posodo: <strong>${zmesVol.toFixed(3)} L pri ${zmesPct.toFixed(2)} vol %</strong>
+        Zliti v en kanister: <strong>${zmesVol.toFixed(3)} L pri ${zmesPct.toFixed(2)} vol %</strong>
         (${masniPct.toFixed(2)} mas %). Volumen je manjši od seštevka, ker se etanol in voda ob mešanju skrčita —
         masa in AAE se ohranita.
       </div>`:''}

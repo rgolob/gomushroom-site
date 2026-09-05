@@ -93,3 +93,35 @@ comment on column gm_etanol_zaloga.tara is
 select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_etanol_zaloga' and column_name = 'tara';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Dopolnitev: bruto in tip kanistra
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- Zakaj hranimo bruto in ne samo neto
+-- ───────────────────────────────────
+-- Na tehtnici je bruto. Ce vpises neto, si odstevanje opravil ti in v zapisu
+-- ostane samo rezultat: ko se tara popravi (kanistre stehtas prazne), je vsak
+-- neto napacen in ga ni iz cesa popraviti. Z zapisanim brutom se neto preracuna
+-- sam. Isto nacelo kot pri alkoholometru, kjer hranimo odcitek in temperaturo,
+-- ne popravljene jakosti.
+--
+-- masa ostaja neto in je se naprej tisto, s cimer se racuna zaloga — le da je
+-- izpeljana, kadar sta bruto in tara znana.
+
+alter table gm_etanol_zaloga
+  add column if not exists bruto numeric,
+  add column if not exists tip   text;
+
+comment on column gm_etanol_zaloga.bruto is
+  'Masa polnega kanistra v kg, kot jo kaze tehtnica. Neobvezno; ce je vpisana, '
+  'je masa (neto) izpeljana kot bruto minus tara.';
+comment on column gm_etanol_zaloga.tip is
+  'Tip kanistra (10l, 2_5l, 1l). Tara se vzame iz nastavitev za ta tip, zato '
+  'popravek tare velja za vse kanistre istega tipa.';
+
+-- ── Preveri ────────────────────────────────────────────────────────────────
+select column_name, data_type
+  from information_schema.columns
+ where table_name = 'gm_etanol_zaloga' and column_name in ('bruto','tip','tara')
+ order by column_name;

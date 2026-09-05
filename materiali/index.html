@@ -1406,14 +1406,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           in odčitek se popravi po tabeli OIML R 22. Če polje pustiš prazno, se vzame 20 °C.
         </div>
       </div>
-      <!-- Kanistri so enega tipa, zato tara enkrat namesto pri vsaki vrstici.
-           Ko kaksnega stehtas praznega, mu taro popravis kar na njegovi vrstici. -->
-      <div class="frow" style="align-items:flex-end;margin-bottom:.7rem">
-        <div class="field"><label>Privzeta tara — prazen kanister (g)</label>
-          <input id="popisPrivzetaTara" type="text" inputmode="decimal" placeholder="npr. 500"
-            oninput="popisPrivzetoTaroShrani(this.value)"></div>
-        <div class="field" style="flex:0 0 auto">
-          <button class="bcancel" style="white-space:nowrap" onclick="popisTaroNaVse()">Uporabi za vse brez tare</button></div>
+      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Tehtnica kaže bruto, zato vpiši bruto — neto se izračuna iz tare tipa.
+        Ko kanister stehtaš praznega in taro popraviš, se neto preračuna vsem
+        kanistrom tega tipa. Neto vpiši sam le, kadar tare ne poznaš.
       </div>
       <div id="popisVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj kanister</button>
@@ -2304,7 +2300,12 @@ const POPIS_KLJUC='gm_popis_etanola';
 let popisVrstice=[];
 let popisSinkNapaka='';
 
-function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:'',tara:popisPrivzetaTara()};}
+function popisPrazna(){
+  const tip=settings.zadnjiTipKanistra||'10l';
+  const t=taraTipa(tip);
+  return {id:uid(),opis:'',masa:'',pct:'',temp:'',tip,
+          tara:t==null?'':String(t),bruto:''};
+}
 
 // Vse tehtnice v delavnici kazejo grame, zato se mase vpisujejo v gramih —
 // prepises, kar vidis na zaslonu, brez pretvarjanja. Decimalna vejica je
@@ -2356,6 +2357,8 @@ async function popisNaloziIzBaze(){
       pct:x.odcitek==null?'':String(x.odcitek).replace('.',','),
       temp:x.temperatura==null?'':String(x.temperatura).replace('.',','),
       tara:x.tara==null?'':kgVG(x.tara),
+      bruto:x.bruto==null?'':kgVG(x.bruto),
+      tip:x.tip||'',
       posodobljeno:x.posodobljeno||null,
     }));
 
@@ -2398,6 +2401,7 @@ function popisJePolna(v){return parseNum(v.pct)>0;}
 
 function popisVBazo(v){
   if(!popisJePolna(v))return Promise.resolve();
+  popisOsveziNeto(v);
   v.posodobljeno=new Date().toISOString();
   const t=String(v.temp||'').trim();
   return sbUpsert('gm_etanol_zaloga',{
@@ -2405,6 +2409,8 @@ function popisVBazo(v){
     masa:gVKg(v.masa),odcitek:parseNum(v.pct),
     temperatura:t?parseNum(t):null,
     tara:String(v.tara||'').trim()?gVKg(v.tara):null,
+    bruto:String(v.bruto||'').trim()?gVKg(v.bruto):null,
+    tip:v.tip||null,
     posodobljeno:new Date().toISOString(),
   }).catch(e=>{popisSinkNapaka=e.message||'napaka';console.warn('popisVBazo',e);});
 }
@@ -2508,31 +2514,86 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
-// Privzeta tara velja za nove vrstice; posamezen kanister jo lahko povozi.
-function popisPrivzetaTara(){return String(settings.taraKanistra||'');}
-function popisPrivzetoTaroShrani(v){
-  settings.taraKanistra=String(v||'').trim();
+// Tipi kanistrov. Tara je vezana na tip, ne na posamezen kanister: na kanto
+// pises vsebino, ne inventarne stevilke, zato kanister nima stalne identitete
+// — kanistri istega tipa pa tehtajo prakticno enako. Ko kaksnega stehtas
+// praznega, popravis taro tipa in velja za vse takoj.
+const KANISTER_TIPI=[
+  {id:'10l',  ime:'HDPE 10 L',  tara:500},
+  {id:'2_5l', ime:'HDPE 2,5 L', tara:205},
+  {id:'1l',   ime:'HDPE 1 L',   tara:null},   // se ni stehtan
+];
+function tipKanistra(id){return KANISTER_TIPI.find(t=>t.id===id)||null;}
+function taraTipa(id){
+  const shranjene=settings.tareKanistrov||{};
+  if(Object.prototype.hasOwnProperty.call(shranjene,id))return shranjene[id];
+  const t=tipKanistra(id);
+  return t?t.tara:null;
+}
+function taroTipaShrani(id,grami){
+  settings.tareKanistrov={...(settings.tareKanistrov||{})};
+  settings.tareKanistrov[id]=parseNum(grami)>0?parseNum(grami):null;
   try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
 }
-function popisTaroNaVse(){
-  const t=popisPrivzetaTara();
-  if(!(parseNum(t)>0)){toast('Najprej vpiši privzeto taro');return;}
-  const brez=popisVrstice.filter(v=>!String(v.tara||'').trim());
-  if(!brez.length){toast('Vsi kanistri že imajo taro');return;}
-  brez.forEach(v=>{v.tara=t;popisVBazo(v);});
-  popisVLokalno();popisIzrisi();
-  toast(`✓ Tara ${t} g dodana ${brez.length} ${sklon(brez.length,KANISTER_TOZ)}`);
+
+// Neto je izpeljan, kadar je bruto znan — takrat popravek tare popravi tudi
+// neto. Sicer velja to, kar je vpisano v masi.
+function popisNetoG(v){
+  const bruto=parseNum(v.bruto),tara=parseNum(v.tara);
+  if(bruto>0&&tara>=0)return Math.round(Math.max(0,bruto-tara)*10)/10;
+  return parseNum(v.masa);
+}
+function popisOsveziNeto(v){
+  if(parseNum(v.bruto)>0)v.masa=String(popisNetoG(v)).replace('.',',');
 }
 
-// Bruto s tehtnice minus tara je neto. Bruto ne shranjujemo — je samo vhod.
-function popisBruto(i,vrednost){
+// Privzeta tara velja za nove vrstice; posamezen kanister jo lahko povozi.
+// Izbira tipa napolni taro; sprememba tare velja za tip, torej za vse
+// kanistre te vrste — in kjer je bruto znan, se jim neto preracuna sam.
+function popisTipSprememba(i,tip){
   const v=popisVrstice[i];
-  const tara=parseNum(v.tara),bruto=parseNum(vrednost);   // grami
-  if(!(tara>0)||!(bruto>0))return;
-  const neto=Math.round(Math.max(0,bruto-tara)*10)/10;
-  v.masa=String(neto).replace('.',',');
+  v.tip=tip;
+  settings.zadnjiTipKanistra=tip;
+  const t=taraTipa(tip);
+  v.tara=t==null?'':String(t);
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  popisVBazo(v);
+}
+
+function popisTaraSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.tara=vrednost;
+  if(v.tip)taroTipaShrani(v.tip,vrednost);
+  // Popravek tare velja za ves tip: vsem kanistrom te vrste z znanim brutom
+  // se neto preracuna, sicer bi ostali na starem odstevanju.
+  const zadeti=[];
+  popisVrstice.forEach(x=>{
+    if(x!==v&&x.tip&&x.tip===v.tip){x.tara=vrednost;popisOsveziNeto(x);zadeti.push(x);}
+  });
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>{popisVBazo(v);zadeti.forEach(popisVBazo);},500);
+}
+
+function popisBrutoSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.bruto=vrednost;
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
+}
+
+// Neto vpises samo, kadar brutu ne pridemo do konca (npr. litrski kanister,
+// ki mu tare se ne poznas). Takrat bruto pobrisemo, da si ne nasprotujeta.
+function popisNetoSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.masa=vrednost;
+  v.bruto='';
   popisVLokalno();
-  popisIzrisi();
+  popisIzracun();
   clearTimeout(_popisCakalnik);
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
@@ -2581,8 +2642,6 @@ function popisVrstica(v){
 function popisIzrisi(){
   const el=document.getElementById('popisVrstice');
   if(!el)return;
-  const pt=document.getElementById('popisPrivzetaTara');
-  if(pt&&document.activeElement!==pt)pt.value=popisPrivzetaTara();
   el.innerHTML=popisVrstice.map((v,i)=>`
     <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
@@ -2592,27 +2651,31 @@ function popisIzrisi(){
         <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
       </div>
       <div class="frow" style="margin-bottom:.35rem">
-        <div class="field"><label>Masa (g)</label>
-          <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 2000"
-            oninput="popisSprememba(${i},'masa',this.value)"></div>
+        <div class="field"><label>Tip kanistra</label>
+          <select onchange="popisTipSprememba(${i},this.value)">
+            <option value=""${v.tip?'':' selected'}>— brez —</option>
+            ${KANISTER_TIPI.map(t=>`<option value="${t.id}"${v.tip===t.id?' selected':''}>${t.ime}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>Tara (g)</label>
+          <input value="${(v.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="—"
+            oninput="popisTaraSprememba(${i},this.value)"></div>
+      </div>
+      <div class="frow" style="margin-bottom:.35rem">
+        <div class="field"><label>Bruto s tehtnice (g)</label>
+          <input value="${(v.bruto||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="${parseNum(v.tara)>0?'npr. 8500':'najprej tara'}"
+            oninput="popisBrutoSprememba(${i},this.value)"></div>
+        <div class="field"><label>Neto (g)${parseNum(v.bruto)>0?' <span style="font-weight:400;text-transform:none;letter-spacing:0">— izračunan</span>':''}</label>
+          <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 8000"
+            ${parseNum(v.bruto)>0?'readonly style="background:var(--parchment)"':''}
+            oninput="popisNetoSprememba(${i},this.value)"></div>
+      </div>
+      <div class="frow" style="margin-bottom:.35rem">
         <div class="field"><label>Odčitek (vol %)</label>
           <input value="${(v.pct||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 96,25"
             oninput="popisSprememba(${i},'pct',this.value)"></div>
         <div class="field"><label>Temp. (°C)</label>
           <input value="${(v.temp||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="20"
             oninput="popisSprememba(${i},'temp',this.value)"></div>
-      </div>
-      <!-- Tara je zapisana enkrat; potem vpises bruto s tehtnice in neto se
-           izracuna. Shranjuje se neto — bruto bi se ob vsakem dolivanju
-           razsel z realnostjo. -->
-      <div class="frow" style="margin-bottom:.35rem">
-        <div class="field"><label>Tara — prazen (g)</label>
-          <input value="${(v.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="—"
-            oninput="popisSprememba(${i},'tara',this.value)"></div>
-        <div class="field"><label>Bruto s tehtnice (g)</label>
-          <input id="popisBruto${i}" type="text" inputmode="decimal" placeholder="${parseNum(v.tara)>0?'preračuna neto':'najprej taro'}"
-            ${parseNum(v.tara)>0?'':'disabled style="background:var(--parchment)"'}
-            oninput="popisBruto(${i},this.value)"></div>
       </div>
       <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
       ${v.posodobljeno?`<div style="font-size:.64rem;color:var(--muted);margin-top:.15rem">Nazadnje posodobljen ${popisDatum(v.posodobljeno)}</div>`:''}

@@ -125,3 +125,77 @@ select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_etanol_zaloga' and column_name in ('bruto','tip','tara')
  order by column_name;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Dopolnitev: register kanistrov (tara pri kanistru, ne pri tipu)
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- Zakaj
+-- ─────
+-- Doslej je tara pripadala TIPU: vsi desetlitrski naj bi tehtali 500 g. Ne
+-- tehtajo. Med njimi je eden 445 g — 55 g razlike gre naravnost v neto maso
+-- topila in nihce je ne opazi. Zato se vsak kanister oznaci, stehta praznega
+-- in tara ostane pri njem.
+--
+-- Register je locen od popisa, ker kanister zivi dlje od svoje vsebine: enkrat
+-- ga stehtas, potem ga samo se izberes. Popis se nanj sklicuje prek stolpca
+-- kanister; ce popravis taro v registru, se neto preracuna vsem njegovim
+-- vpisom, ker je bruto shranjen.
+
+create table if not exists gm_kanistri (
+  id           text primary key,
+  oznaka       text not null,
+  tara         numeric,                     -- kg; prazno = se ni stehtan
+  tip          text,                        -- 10l, 2_5l, 1l — samo za predlog tare
+  stehtana     boolean not null default false,
+  opomba       text,
+  posodobljeno timestamptz not null default now(),
+  ustvarjeno   timestamptz not null default now()
+);
+
+comment on table gm_kanistri is
+  'Oznaceni kanistri in njihove tare. Tara pripada kanistru, ne tipu — razlike '
+  'med enakimi kanistri gredo naravnost v neto maso topila.';
+comment on column gm_kanistri.stehtana is
+  'true = kanister je bil stehtan prazen; false = tara je ocena po tipu.';
+
+alter table gm_kanistri enable row level security;
+
+do $$
+declare pol text;
+begin
+  for pol in select policyname from pg_policies
+              where schemaname='public' and tablename='gm_kanistri' loop
+    execute format('drop policy %I on gm_kanistri', pol);
+  end loop;
+end $$;
+
+create policy gm_auth_all on gm_kanistri
+  for all to authenticated using (true) with check (true);
+
+revoke all on gm_kanistri from anon;
+
+-- Popis se sklicuje na kanister iz registra.
+alter table gm_etanol_zaloga
+  add column if not exists kanister text;
+
+comment on column gm_etanol_zaloga.kanister is
+  'Id kanistra iz gm_kanistri. Ce je vpisan, se tara vzame iz registra in '
+  'popravek tare velja samo za ta kanister.';
+
+-- ── Preveri ────────────────────────────────────────────────────────────────
+select column_name, data_type
+  from information_schema.columns
+ where table_name = 'gm_kanistri'
+ order by ordinal_position;
+
+select policyname, cmd, roles
+  from pg_policies
+ where tablename = 'gm_kanistri';
+
+select column_name
+  from information_schema.columns
+ where table_name = 'gm_etanol_zaloga' and column_name = 'kanister';
+--
+-- Pricakovano: osem stolpcev gm_kanistri, ena politika gm_auth_all za
+-- {authenticated} in stolpec kanister v gm_etanol_zaloga.

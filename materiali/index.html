@@ -1406,6 +1406,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           in odčitek se popravi po tabeli OIML R 22. Če polje pustiš prazno, se vzame 20 °C.
         </div>
       </div>
+      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Tehtnica kaže bruto, zato vpiši bruto — neto se izračuna iz tare tipa.
+        Ko kanister stehtaš praznega in taro popraviš, se neto preračuna vsem
+        kanistrom tega tipa. Neto vpiši sam le, kadar tare ne poznaš.
+      </div>
       <div id="popisVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj kanister</button>
       <button class="bcancel" style="width:100%;margin:0 0 .7rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="regeneriraj()">♻️ Regeneriral sem — izprazni kanistre za regeneracijo</button>
@@ -1976,32 +1981,32 @@ async function potrdiMesanje(){
 
   const opis=odsteti.map(x=>{
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
-    const masa=x.kol*etohDensity(x.vir.pct);
-    const ostane=parseNum(v?.masa)-masa;
-    return `${x.vir.ime}: −${masa.toFixed(3)} kg → ostane ${ostane.toFixed(3)} kg`;
+    const masa=x.kol*etohDensity(x.vir.pct);          // kg
+    const ostane=gVKg(v?.masa)-masa;
+    return `${x.vir.ime}: −${kgVG(masa)} g → ostane ${kgVG(ostane)} g`;
   }).join('\n');
 
   // Najprej glavno vprasanje, sele nato stransko: ce mesanja ne potrdis, te
   // vprasanje o zmesi ne zanima.
   if(!confirm(`Potrdim mešanje?\n\n${opis}\n\nDejanje spremeni popis.`))return;
 
-  const zmesMasa=parseNum(mesKontrola.masa);
+  const zmesMasa=gVKg(mesKontrola.masa);  // kg
   const zmesPct=parseNum(mesKontrola.pct);
   const dodaj=zmesMasa>0&&zmesPct>0&&confirm(
-    `Naj zmes dodam kot nov kanister?\n\n${zmesMasa.toFixed(3)} kg pri odčitku ${zmesPct} %\n\n`+
+    `Naj zmes dodam kot nov kanister?\n\n${kgVG(zmesMasa)} g pri odčitku ${zmesPct} %\n\n`+
     'Prekliči, če jo porabiš takoj in je ni treba voditi.');
 
   for(const x of odsteti){
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
     if(!v)continue;
-    const nova=round(Math.max(0,parseNum(v.masa)-x.kol*etohDensity(x.vir.pct)),4);
-    v.masa=String(nova).replace('.',',');
+    const nova=Math.max(0,gVKg(v.masa)-x.kol*etohDensity(x.vir.pct));
+    v.masa=kgVG(nova);
     await popisVBazo(v);
   }
 
   if(dodaj){
     const nova={id:uid(),opis:'Zmes '+new Date().toLocaleDateString('sl-SI'),
-      masa:String(round(zmesMasa,4)).replace('.',','),
+      masa:kgVG(zmesMasa),
       pct:String(round(zmesPct,2)).replace('.',','),
       temp:String(mesKontrola.temp||'').trim()};
     popisVrstice.push(nova);
@@ -2013,7 +2018,7 @@ async function potrdiMesanje(){
   mesanjeIzracun();
   const prazne=odsteti.filter(x=>{
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
-    return v&&parseNum(v.masa)<0.0005;
+    return v&&gVKg(v.masa)<0.0005;
   }).length;
   toast(`✓ Popis posodobljen${dodaj?' · zmes dodana':''}${prazne?` · praznih: ${prazne}`:''}`);
 }
@@ -2035,7 +2040,7 @@ function mesKontrolaSprememba(polje,vrednost){
 
 function mesanjeKontrolaHtml(ciljV,ciljPct){
   const val=v=>String(v||'').replace(/"/g,'&quot;');
-  const masa=parseNum(mesKontrola.masa);
+  const masa=gVKg(mesKontrola.masa);      // v obrazcu grami
   const odcitek=parseNum(mesKontrola.pct);
 
   let izid='';
@@ -2084,8 +2089,8 @@ function mesanjeKontrolaHtml(ciljV,ciljPct){
         ter vidiš, koliko si zgrešil.
       </div>
       <div class="frow">
-        <div class="field"><label>Končna masa (kg)</label>
-          <input value="${val(mesKontrola.masa)}" type="text" inputmode="decimal" placeholder="npr. 3,542"
+        <div class="field"><label>Končna masa (g)</label>
+          <input value="${val(mesKontrola.masa)}" type="text" inputmode="decimal" placeholder="npr. 3542"
             oninput="mesKontrolaSprememba('masa',this.value)"></div>
         <div class="field"><label>Odčitek (vol %)</label>
           <input value="${val(mesKontrola.pct)}" type="text" inputmode="decimal" placeholder="npr. 72,1"
@@ -2223,14 +2228,14 @@ function mesanjeIzracun(){
           <span>${htmlEsc(x.vir.ime)}
             <span style="color:var(--muted)">${x.vir.pct.toLocaleString('sl-SI')} %</span>
             ${x.vir.voda?'':etZnacka(x.vir.pct)}</span>
-          <span style="text-align:right"><strong>${stev(x.kol*etohDensity(x.vir.pct))} kg</strong>
+          <span style="text-align:right"><strong>${kgVG(x.kol*etohDensity(x.vir.pct))} g</strong>
             <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
       </div>`:''}
       ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
         ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
           :`Zliješ ${stev(vliteje)} L, dobiš <strong>${stev(ciljV)} L</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
              — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
-        <div>Masa zmesi: <strong>${stev(masaZmesi)} kg</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>
+        <div>Masa zmesi: <strong>${kgVG(masaZmesi)} g</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>
         ${kontrola}
       </div>`:`<div style="font-size:.68rem;color:var(--danger);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.5">
         ⚠ Z zalogo, ki jo imaš, tega ni mogoče zmešati — zmanjka ${pred.manjka} etanola.
@@ -2250,7 +2255,7 @@ function mesanjeIzracun(){
         <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
           ${vrstice.map(({v,kol})=>`
           <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
-          <span style="text-align:right"><strong>${stev(kol*etohDensity(v.pct))} kg</strong>
+          <span style="text-align:right"><strong>${kgVG(kol*etohDensity(v.pct))} g</strong>
             <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(kol)} L</div></span>`).join('')}
         </div>
         ${r.cisto?'<div style="font-size:.66rem;color:var(--muted);margin-top:.25rem">Nič ne mešaš — jakost je že prava.</div>':''}
@@ -2295,7 +2300,25 @@ const POPIS_KLJUC='gm_popis_etanola';
 let popisVrstice=[];
 let popisSinkNapaka='';
 
-function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:''};}
+function popisPrazna(){
+  const tip=settings.zadnjiTipKanistra||'10l';
+  const t=taraTipa(tip);
+  return {id:uid(),opis:'',masa:'',pct:'',temp:'',tip,
+          tara:t==null?'':String(t),bruto:''};
+}
+
+// Vse tehtnice v delavnici kazejo grame, zato se mase vpisujejo v gramih —
+// prepises, kar vidis na zaslonu, brez pretvarjanja. Decimalna vejica je
+// najnevarnejsa napaka v popisu: 1,57 namesto 15,7 je povsem verjetna masa
+// kanistra in je nihce ne opazi. V gramih te vejice ni.
+//
+// V bazi in v vseh izracunih masa ostaja v KILOGRAMIH, ker je gostota kg/L.
+// Pretvorba je samo tu, na robu — polja v obrazcu so grami, vse ostalo kg.
+function gVKg(grami){return parseNum(grami)/1000;}
+function kgVG(kg){
+  const g=Math.round(Number(kg||0)*1000*10)/10;   // desetinka grama je dovolj
+  return String(g).replace('.',',');
+}
 
 // Slovenscina ima stiri oblike: 1 kanister, 2 kanistra, 3-4 kanistri,
 // 5+ kanistrov. Koda je prej poznala samo prvi dve in pisala "4 posod".
@@ -2330,9 +2353,13 @@ async function popisNaloziIzBaze(){
     const r=await sbFetch('gm_etanol_zaloga','select=*&order=odcitek.desc');
     const izBaze=(r||[]).map(x=>({
       id:x.id,opis:x.oznaka||'',
-      masa:x.masa==null?'':String(x.masa).replace('.',','),
+      masa:x.masa==null?'':kgVG(x.masa),
       pct:x.odcitek==null?'':String(x.odcitek).replace('.',','),
       temp:x.temperatura==null?'':String(x.temperatura).replace('.',','),
+      tara:x.tara==null?'':kgVG(x.tara),
+      bruto:x.bruto==null?'':kgVG(x.bruto),
+      tip:x.tip||'',
+      posodobljeno:x.posodobljeno||null,
     }));
 
     // Prvic po vpeljavi tabele je ta prazna, lokalno pa ze imas popisane
@@ -2374,11 +2401,16 @@ function popisJePolna(v){return parseNum(v.pct)>0;}
 
 function popisVBazo(v){
   if(!popisJePolna(v))return Promise.resolve();
+  popisOsveziNeto(v);
+  v.posodobljeno=new Date().toISOString();
   const t=String(v.temp||'').trim();
   return sbUpsert('gm_etanol_zaloga',{
     id:v.id,oznaka:(v.opis||'').trim()||null,
-    masa:parseNum(v.masa),odcitek:parseNum(v.pct),
+    masa:gVKg(v.masa),odcitek:parseNum(v.pct),
     temperatura:t?parseNum(t):null,
+    tara:String(v.tara||'').trim()?gVKg(v.tara):null,
+    bruto:String(v.bruto||'').trim()?gVKg(v.bruto):null,
+    tip:v.tip||null,
     posodobljeno:new Date().toISOString(),
   }).catch(e=>{popisSinkNapaka=e.message||'napaka';console.warn('popisVBazo',e);});
 }
@@ -2402,19 +2434,19 @@ async function regeneriraj(){
   const aae=round(kandidati.reduce((s,x)=>s+x.r.aae,0),4);
   const masa=round(kandidati.reduce((s,x)=>s+x.r.masa,0),3);
   const seznam=kandidati.map(x=>
-    `${(x.v.opis||'').trim()||'brez oznake'} — ${x.r.masa.toFixed(3)} kg pri ${x.r.pct.toLocaleString('sl-SI')} %`
+    `${(x.v.opis||'').trim()||'brez oznake'} — ${kgVG(x.r.masa)} g pri ${x.r.pct.toLocaleString('sl-SI')} %`
   ).join('\n');
 
   if(!confirm(`Regeneriram ${kandidati.length} ${sklon(kandidati.length,KANISTER_TOZ)}?\n\n${seznam}\n\n`+
-              `Skupaj ${masa.toFixed(3)} kg · ${aae.toFixed(4)} L AAE\n\n`+
+              `Skupaj ${kgVG(masa)} g · ${aae.toFixed(4)} L AAE\n\n`+
               'Ti kanistri se izpraznijo.'))return;
 
   // Regenerat je nov kanister. Ce ga se nimas stehtanega, kanistre vseeno
   // izpraznimo — ostalo dodas pozneje rocno.
   const vnos=prompt(
-    'Regenerat — masa (kg), odčitek (vol %) in temperatura (°C),\n'+
+    'Regenerat — masa (g), odčitek (vol %) in temperatura (°C),\n'+
     'ločeno z vejico. Pusti prazno, če ga boš vpisal pozneje.\n\n'+
-    'npr.  14,2 ; 93,5 ; 21',
+    'npr.  14200 ; 93,5 ; 21',
     '');
   if(vnos===null)return;
 
@@ -2435,7 +2467,7 @@ async function regeneriraj(){
 
   if(regenerat){
     const nova={id:uid(),opis:'Regenerat '+new Date().toLocaleDateString('sl-SI'),
-      masa:String(round(regenerat.masa,4)).replace('.',','),
+      masa:String(Math.round(regenerat.masa*10)/10).replace('.',','),
       pct:String(round(regenerat.pct,2)).replace('.',','),
       temp:regenerat.temp};
     popisVrstice.push(nova);
@@ -2482,9 +2514,102 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
+// Tipi kanistrov. Tara je vezana na tip, ne na posamezen kanister: na kanto
+// pises vsebino, ne inventarne stevilke, zato kanister nima stalne identitete
+// — kanistri istega tipa pa tehtajo prakticno enako. Ko kaksnega stehtas
+// praznega, popravis taro tipa in velja za vse takoj.
+const KANISTER_TIPI=[
+  {id:'10l',  ime:'HDPE 10 L',  tara:500},
+  {id:'2_5l', ime:'HDPE 2,5 L', tara:205},
+  {id:'1l',   ime:'HDPE 1 L',   tara:null},   // se ni stehtan
+];
+function tipKanistra(id){return KANISTER_TIPI.find(t=>t.id===id)||null;}
+function taraTipa(id){
+  const shranjene=settings.tareKanistrov||{};
+  if(Object.prototype.hasOwnProperty.call(shranjene,id))return shranjene[id];
+  const t=tipKanistra(id);
+  return t?t.tara:null;
+}
+function taroTipaShrani(id,grami){
+  settings.tareKanistrov={...(settings.tareKanistrov||{})};
+  settings.tareKanistrov[id]=parseNum(grami)>0?parseNum(grami):null;
+  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
+}
+
+// Neto je izpeljan, kadar je bruto znan — takrat popravek tare popravi tudi
+// neto. Sicer velja to, kar je vpisano v masi.
+function popisNetoG(v){
+  const bruto=parseNum(v.bruto),tara=parseNum(v.tara);
+  if(bruto>0&&tara>=0)return Math.round(Math.max(0,bruto-tara)*10)/10;
+  return parseNum(v.masa);
+}
+function popisOsveziNeto(v){
+  if(parseNum(v.bruto)>0)v.masa=String(popisNetoG(v)).replace('.',',');
+}
+
+// Privzeta tara velja za nove vrstice; posamezen kanister jo lahko povozi.
+// Izbira tipa napolni taro; sprememba tare velja za tip, torej za vse
+// kanistre te vrste — in kjer je bruto znan, se jim neto preracuna sam.
+function popisTipSprememba(i,tip){
+  const v=popisVrstice[i];
+  v.tip=tip;
+  settings.zadnjiTipKanistra=tip;
+  const t=taraTipa(tip);
+  v.tara=t==null?'':String(t);
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  popisVBazo(v);
+}
+
+function popisTaraSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.tara=vrednost;
+  if(v.tip)taroTipaShrani(v.tip,vrednost);
+  // Popravek tare velja za ves tip: vsem kanistrom te vrste z znanim brutom
+  // se neto preracuna, sicer bi ostali na starem odstevanju.
+  const zadeti=[];
+  popisVrstice.forEach(x=>{
+    if(x!==v&&x.tip&&x.tip===v.tip){x.tara=vrednost;popisOsveziNeto(x);zadeti.push(x);}
+  });
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>{popisVBazo(v);zadeti.forEach(popisVBazo);},500);
+}
+
+function popisBrutoSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.bruto=vrednost;
+  popisOsveziNeto(v);
+  popisVLokalno();popisIzrisi();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
+}
+
+// Neto vpises samo, kadar brutu ne pridemo do konca (npr. litrski kanister,
+// ki mu tare se ne poznas). Takrat bruto pobrisemo, da si ne nasprotujeta.
+function popisNetoSprememba(i,vrednost){
+  const v=popisVrstice[i];
+  v.masa=vrednost;
+  v.bruto='';
+  popisVLokalno();
+  popisIzracun();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
+}
+
+function popisDatum(iso){
+  try{
+    const d=new Date(iso);
+    const dni=Math.floor((Date.now()-d.getTime())/86400000);
+    const datum=d.toLocaleDateString('sl-SI',{day:'numeric',month:'numeric',year:'numeric'});
+    return dni<=0?`danes`:dni===1?`včeraj`:dni<30?`${datum} · pred ${dni} dnevi`:datum;
+  }catch(e){return '';}
+}
+
 // En kanister: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
 function popisVrstica(v){
-  const masa=parseNum(v.masa);           // kg
+  const masa=gVKg(v.masa);               // v obrazcu grami, tu kg
   const odcitek=parseNum(v.pct);         // vol %, kot kaze alkoholometer
   if(!(masa>0)||!(odcitek>0)||odcitek>100)return null;
 
@@ -2526,9 +2651,25 @@ function popisIzrisi(){
         <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
       </div>
       <div class="frow" style="margin-bottom:.35rem">
-        <div class="field"><label>Masa (kg)</label>
-          <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 2,000"
-            oninput="popisSprememba(${i},'masa',this.value)"></div>
+        <div class="field"><label>Tip kanistra</label>
+          <select onchange="popisTipSprememba(${i},this.value)">
+            <option value=""${v.tip?'':' selected'}>— brez —</option>
+            ${KANISTER_TIPI.map(t=>`<option value="${t.id}"${v.tip===t.id?' selected':''}>${t.ime}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>Tara (g)</label>
+          <input value="${(v.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="—"
+            oninput="popisTaraSprememba(${i},this.value)"></div>
+      </div>
+      <div class="frow" style="margin-bottom:.35rem">
+        <div class="field"><label>Bruto s tehtnice (g)</label>
+          <input value="${(v.bruto||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="${parseNum(v.tara)>0?'npr. 8500':'najprej tara'}"
+            oninput="popisBrutoSprememba(${i},this.value)"></div>
+        <div class="field"><label>Neto (g)${parseNum(v.bruto)>0?' <span style="font-weight:400;text-transform:none;letter-spacing:0">— izračunan</span>':''}</label>
+          <input value="${(v.masa||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 8000"
+            ${parseNum(v.bruto)>0?'readonly style="background:var(--parchment)"':''}
+            oninput="popisNetoSprememba(${i},this.value)"></div>
+      </div>
+      <div class="frow" style="margin-bottom:.35rem">
         <div class="field"><label>Odčitek (vol %)</label>
           <input value="${(v.pct||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 96,25"
             oninput="popisSprememba(${i},'pct',this.value)"></div>
@@ -2537,6 +2678,7 @@ function popisIzrisi(){
             oninput="popisSprememba(${i},'temp',this.value)"></div>
       </div>
       <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
+      ${v.posodobljeno?`<div style="font-size:.64rem;color:var(--muted);margin-top:.15rem">Nazadnje posodobljen ${popisDatum(v.posodobljeno)}</div>`:''}
     </div>`).join('');
   popisIzracun();
 }
@@ -2600,12 +2742,24 @@ function popisIzracun(){
   // prestroga (0,05 L od 23 L je 0,2 %), odstotna sama pa pri majhni
   // preohlapna — zato zadosca, da je izpolnjena katerakoli.
   const razlikaVRedu=Math.abs(razlika)<=0.05||(razlikaPct!==null&&Math.abs(razlikaPct)<=0.5);
+
+  // Popis je star toliko kot njegov najstarejsi vpis: en sveze stehtan kanister
+  // ne pomeni, da so ostali se resnicni.
+  const zigi=popisVrstice.filter(popisJePolna).map(v=>v.posodobljeno).filter(Boolean);
+  let starost='';
+  if(zigi.length){
+    const najstarejsi=zigi.slice().sort()[0];
+    const dni=Math.floor((Date.now()-new Date(najstarejsi).getTime())/86400000);
+    const manjka=popisVrstice.filter(popisJePolna).length-zigi.length;
+    starost=` · najstarejši vpis ${popisDatum(najstarejsi)}`+
+            (dni>30?' ⚠':'')+(manjka?` · ${manjka} brez datuma`:'');
+  }
   const barvaRazlike=razlikaVRedu?'var(--success)':'var(--danger)';
 
   izid.innerHTML=`
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.6rem .7rem;background:rgba(175,132,85,.08)">
       <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">
-        Skupaj — ${steviloOk} ${sklon(steviloOk,KANISTER)}
+        Skupaj — ${steviloOk} ${sklon(steviloOk,KANISTER)}${starost}
       </div>
       ${(skup.uporabno.n&&skup.regeneracija.n)?`
       <div style="display:grid;grid-template-columns:1fr auto auto;gap:.2rem .6rem;font-size:.75rem;margin-bottom:.45rem;padding-bottom:.4rem;border-bottom:1px solid rgba(175,132,85,.3)">

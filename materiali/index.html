@@ -702,6 +702,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
             <div class="field"><label>Gostota (auto iz vol%)</label><input id="dnGostota" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
             <div class="field"><label>Volumen EtOH (L)</label><input id="dnVolume" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
           </div>
+          <button type="button" class="bcancel" style="width:100%;margin:.1rem 0 .2rem;font-size:.74rem"
+            onclick="openMesanjeIzDN()">🧫 Pripravi topilo — mešanje iz kanistrov</button>
+          <div style="font-size:.64rem;color:var(--muted);line-height:1.45;margin-bottom:.3rem">
+            Odpre izračun mešanja s tem ciljem. Ko zmes potrdiš, se masa in jakost
+            pri 20 °C zapišeta sem, iz kanistrov pa se odšteje porabljeno.
+          </div>
         </div>
         <div class="slabel-alc">🥃 Alkoholna tinktura</div>
         <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;margin:0 0 .35rem;cursor:pointer">
@@ -1388,6 +1394,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <input id="mesTemp" type="text" inputmode="decimal" placeholder="20" oninput="mesanjeIzracun()"></div>
       </div>
       <button class="bcancel" id="mesSarzaGumb" style="width:100%;margin:.45rem 0 .2rem;font-size:.72rem" onclick="mesSarza()"></button>
+      <div id="mesNalogNamig"></div>
       <div id="mesOpozorilo"></div>
       <div id="mesIzid"></div>
       <div class="btnrow" style="margin-top:.7rem">
@@ -2025,13 +2032,26 @@ async function potrdiMesanje(){
     return `${x.vir.ime}: −${kgVG(masa)} g → ostane ${kgVG(ostane)} g`;
   }).join('\n');
 
+  // Kadar mesas za delovni nalog, naj bo v istem vprasanju tudi to, kar bo
+  // vanj zapisano — sicer bi potrdil eno in dobil se nekaj zraven.
+  const cilj=mesCilj();
+  const zaNalog=mesZaDN?mesZaNalog(cilj.ciljV,cilj.ciljPct):null;
+  const nalogVrstica=zaNalog
+    ? `\n\nV delovni nalog zapišem:\n${kgVG(zaNalog.masa)} g pri ${
+        String(zaNalog.pct).replace('.',',')} vol % (20 °C)${
+        zaNalog.izmerjeno?' — izmerjeno':' — načrtovano, ker meritve zmesi še ni'}.`
+    : '';
+
   // Najprej glavno vprasanje, sele nato stransko: ce mesanja ne potrdis, te
   // vprasanje o zmesi ne zanima.
-  if(!confirm(`Potrdim mešanje?\n\n${opis}\n\nDejanje spremeni popis.`))return;
+  if(!confirm(`Potrdim mešanje?\n\n${opis}${nalogVrstica}\n\nDejanje spremeni popis.`))return;
 
   const zmesMasa=gVKg(mesKontrola.masa);  // kg
   const zmesPct=parseNum(mesKontrola.pct);
-  const dodaj=zmesMasa>0&&zmesPct>0&&confirm(
+  // Za nalog zmesi ne vpisujemo nazaj v popis — porabi jo ekstrakcija, ne
+  // skladisce. Sicer bi bila v zalogi dvakrat: kot topilo v nalogu in kot
+  // kanister.
+  const dodaj=!mesZaDN&&zmesMasa>0&&zmesPct>0&&confirm(
     `Naj zmes dodam kot nov kanister?\n\n${kgVG(zmesMasa)} g pri odčitku ${zmesPct} %\n\n`+
     'Prekliči, če jo porabiš takoj in je ni treba voditi.');
 
@@ -2059,7 +2079,21 @@ async function potrdiMesanje(){
     const v=popisVrstice.find(p=>p.id===x.vir.vrsticaId);
     return v&&gVKg(v.masa)<0.0005;
   }).length;
-  toast(`✓ Popis posodobljen${dodaj?' · zmes dodana':''}${prazne?` · praznih: ${prazne}`:''}`);
+
+  // Sele zdaj v nalog: ce bi zapisali pred odstevanjem in bi to padlo, bi imel
+  // nalog topilo, ki v popisu se stoji.
+  let vNalog=false;
+  if(zaNalog){
+    const m=dnPolje('dnMasaEtOH'),p=dnPolje('dnPctEtOH');
+    if(m&&p){
+      m.value=String(round(zaNalog.masa,3)).replace('.',',');   // nalog vodi kg
+      p.value=String(zaNalog.pct).replace('.',',');
+      if(typeof calcDN==='function')calcDN();
+      vNalog=true;
+      closeSheet('mesanjeOverlay');   // nazaj v nalog, da vidis vpisano
+    }
+  }
+  toast(`✓ Popis posodobljen${vNalog?' · zapisano v nalog':''}${dodaj?' · zmes dodana':''}${prazne?` · praznih: ${prazne}`:''}`);
 }
 
 // ── Kontrola po mesanju ────────────────────────────────────────────────────
@@ -2180,10 +2214,72 @@ function mesSarza(){
   mesanjeIzracun();
 }
 
+// Mesanje za delovni nalog
+// ────────────────────────
+// Topilo se ne meša na pamet, ampak za konkretno serijo. Iz naloga odpres
+// izracun s ciljem, ki je v nalogu ze vpisan; ko zmes potrdis, gresta masa in
+// jakost nazaj v nalog, iz kanistrov pa se odsteje porabljeno. Tako je ista
+// stevilka na enem mestu — in ne prepisana na roke, kjer se izgubi decimalka.
+let mesZaDN=false;
+
+function dnPolje(id){return document.getElementById(id);}
+
+async function openMesanjeIzDN(){
+  const caka=openMesanjeSheet();   // ne cakamo: cilj napolnimo takoj
+  mesZaDN=true;
+  const enota=dnPolje('mesEnota');
+  if(enota)enota.value='kg';       // nalog vodi maso, ne volumna
+  const masa=parseNum(dnPolje('dnMasaEtOH')?.value);   // kg
+  const pct=parseNum(dnPolje('dnPctEtOH')?.value);
+  if(masa>0)dnPolje('mesVolumen').value=String(round(masa,3)).replace('.',',');
+  if(pct>0)dnPolje('mesPct').value=String(pct).replace('.',',');
+  mesPlaceholder();
+  mesNalogNamig();
+  mesanjeIzracun();
+  await caka;
+  mesNalogNamig();
+}
+
+function mesNalogNamig(){
+  const el=dnPolje('mesNalogNamig');
+  if(!el)return;
+  if(!mesZaDN){el.innerHTML='';return;}
+  const oznaka=(dnPolje('dnOznaka')?.value||'').trim();
+  el.innerHTML=`<div style="font-size:.68rem;line-height:1.5;margin-bottom:.5rem;padding:.4rem .55rem;
+      border:1px solid var(--accent);border-radius:6px;background:rgba(175,132,85,.1)">
+      Mešaš za delovni nalog${oznaka?` <strong>${htmlEsc(oznaka)}</strong>`:''}. Ob potrditvi se masa in
+      jakost pri 20 °C zapišeta vanj, iz kanistrov pa se odšteje porabljeno.
+      <div style="color:var(--muted);margin-top:.15rem">Odštevanje velja takoj, nalog pa shrani kot običajno.</div></div>`;
+}
+
+// Kaj gre v nalog: izmerjeno, ce si zmes stehtal in izmeril, sicer nacrtovano.
+// Jakost je vedno pri 20 C — nalog racuna z gostoto pri 20 C in odcitek pri
+// 26 C bi bil tam tiha napaka.
+function mesZaNalog(ciljV,ciljPct){
+  const masa=gVKg(mesKontrola.masa);
+  const odcitek=parseNum(mesKontrola.pct);
+  if(masa>0&&odcitek>0&&odcitek<=100){
+    const tVpis=String(mesKontrola.temp||'').trim();
+    let t=20,slaba=false;
+    if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))t=b;else slaba=true;}
+    const prava=slaba?null:(Math.abs(t-20)<=0.05?odcitek:oimlPravaVolPct(odcitek,t));
+    if(prava!==null)return {masa,pct:round(prava,2),izmerjeno:true,t};
+  }
+  return {masa:ciljV*etohDensity(ciljPct),pct:round(ciljPct,2),izmerjeno:false};
+}
+
+function mesCilj(){
+  const vpis=parseNum(dnPolje('mesVolumen')?.value||'0');
+  const ciljPct=parseNum(dnPolje('mesPct')?.value||'0');
+  return {ciljV:mesCiljV(vpis,ciljPct),ciljPct};
+}
+
 async function openMesanjeSheet(){
   popisNalozi();
   mesKontrolaNalozi();
   mesVsePrikazane=false;
+  mesZaDN=false;
+  mesNalogNamig();
   mesIzkljuceni.clear();   // odmisljeni viri veljajo za en izracun, ne za vedno
   const e=document.getElementById('mesEnota');
   if(e&&settings.mesEnota)e.value=settings.mesEnota;
@@ -2439,7 +2535,7 @@ function mesanjeIzracun(){
       </div>`;
     }).join('')}
     ${pred.ok&&!pred.cisto&&pred.raba.some(x=>x.vir.vrsticaId)?`<button class="bsave" style="width:100%;margin:0 0 .8rem" onclick="potrdiMesanje()">
-      ✓ Sem zmešal — odštej iz kanistrov
+      ✓ Sem zmešal — odštej ${mesZaDN?'in zapiši v nalog':'iz kanistrov'}
     </button>`:''}
 
     ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
@@ -5397,7 +5493,12 @@ function renderPreracuni(){
 
 // ── SHEET ──
 function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
-function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+// Ce pod zaprtim listom stoji se en (mesanje nad delovnim nalogom, dnevnik nad
+// opremo), mora ozadje ostati zaklenjeno — sicer stran pod listom spet odplava.
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow=document.querySelector('.overlay.open')?'hidden':'';
+}
 
 // Vrstica filtrov se vodoravno pomika, zato mora izbrani gumb sam prilesti v
 // vidno polje - sicer po izbiri ali ponovnem izrisu ni videti, kaj je izbrano.

@@ -2588,8 +2588,19 @@ function popisIzracun(){
   const zmesPct=masniPct>0?masToVol(masniPct):0;
   const zmesVol=zmesPct>0?round(masaSk/etohDensity(zmesPct),4):0;
 
+  // Primerjamo samo uporabni etanol. Knjiga vodi tisto, kar je v cisterni na
+  // voljo za ekstrakcijo; topilo za regeneracijo je iz nje ze odsteto kot
+  // izguba, zato bi ga na strani popisa steli dvakrat in razlika bi bila
+  // navidezno prevelika.
   const vKnjigi=round(calcEtZaloga(),4);
-  const razlika=round(aaeSk-vKnjigi,4);
+  const uporabnoAae=round(skup.uporabno.aae,4);
+  const razlika=round(uporabnoAae-vKnjigi,4);
+  const razlikaPct=vKnjigi>0.0001?round(razlika/vKnjigi*100,2):null;
+  // Ena sodba za obe stevilki. Absolutna meja sama je pri veliki zalogi
+  // prestroga (0,05 L od 23 L je 0,2 %), odstotna sama pa pri majhni
+  // preohlapna — zato zadosca, da je izpolnjena katerakoli.
+  const razlikaVRedu=Math.abs(razlika)<=0.05||(razlikaPct!==null&&Math.abs(razlikaPct)<=0.5);
+  const barvaRazlike=razlikaVRedu?'var(--success)':'var(--danger)';
 
   izid.innerHTML=`
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.6rem .7rem;background:rgba(175,132,85,.08)">
@@ -2618,9 +2629,11 @@ function popisIzracun(){
         masa in AAE se ohranita.
       </div>`:''}
       <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
-        V knjigi etanola: <strong>${vKnjigi.toFixed(4)} L AAE</strong> ·
-        razlika <strong style="color:${Math.abs(razlika)<0.05?'var(--success)':'var(--danger)'}">${razlika>=0?'+':''}${razlika.toFixed(4)} L AAE</strong>
-        <div style="color:var(--muted);font-size:.65rem">Popis se nikamor ne knjiži — če razlika ni sprejemljiva, jo uredi z vnosom v knjigo etanola.</div>
+        Popisano za uporabo: <strong>${uporabnoAae.toFixed(4)} L AAE</strong> ·
+        v knjigi: <strong>${vKnjigi.toFixed(4)} L AAE</strong><br>
+        razlika <strong style="color:${barvaRazlike}">${razlika>=0?'+':''}${razlika.toFixed(4)} L AAE</strong>${
+          razlikaPct===null?'':` · <strong style="color:${barvaRazlike}">${razlikaPct>=0?'+':''}${razlikaPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>`}
+        <div style="color:var(--muted);font-size:.65rem">${skup.regeneracija.n?`Etanol za regeneracijo (${skup.regeneracija.aae.toFixed(4)} L AAE) v primerjavo ne šteje — knjiga ga je odpisala že ob porabi. `:''}Popis se nikamor ne knjiži — če razlika ni sprejemljiva, jo uredi z vnosom v knjigo etanola.</div>
       </div>
     </div>`;
 }

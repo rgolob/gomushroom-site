@@ -2181,15 +2181,21 @@ function mesanjeIzracun(){
   });
   resitve.length=0;resitve.push(...brezPodvojenih);
 
-  // Isto nacelo kot pri predlogu: najprej izvedljive, nato tiste brez vode,
-  // nato tiste z najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat,
-  // ko ga bo res treba), nato tiste z najbolj razredcenim sibkim virom, in
-  // sele na koncu tiste, ki porabijo najmanj mocnega.
-  resitve.sort((a,b)=>(b.dovolj-a.dovolj)||(a.vode-b.vode)
+  // Kombinacije, ki jih ni iz cesa zmesati, ne kazemo. Moznost, ki je ne mores
+  // izvesti, ni moznost — je samo pot do razocaranja pri tehtnici, in ce jih je
+  // vec, pokopljejo tiste, ki so res na voljo. Predlog zgoraj zna cez vec virov
+  // in ostane, tudi kadar noben par ne zadosca.
+  const izvedljive=resitve.filter(r=>r.dovolj);
+
+  // Isto nacelo kot pri predlogu: najprej tiste brez vode, nato tiste z
+  // najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat, ko ga bo res
+  // treba), nato tiste z najbolj razredcenim sibkim virom, in sele na koncu
+  // tiste, ki porabijo najmanj mocnega.
+  izvedljive.sort((a,b)=>(a.vode-b.vode)
     ||(a.mocnejsi.pct-b.mocnejsi.pct)||(a.sibkejsi.pct-b.sibkejsi.pct)
     ||(a.vMocnejsi-b.vMocnejsi));
 
-  const zVodo=resitve.find(r=>r.sibkejsi.voda);
+  const zVodo=izvedljive.find(r=>r.sibkejsi.voda);
   const stev=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3});
 
   // Predlog: porabi najbolj razredceno in najsibkejsega uporabnega, po potrebi
@@ -2197,8 +2203,8 @@ function mesanjeIzracun(){
   // ko hoces tocno doloceno kombinacijo.
   // Predlog steje kot prva moznost, zato spodaj privzeto se dve — skupaj tri.
   // Ves seznam je bil predolg in je pokopal tisto, kar naj bi bilo v ospredju.
-  const prikazane=mesVsePrikazane?resitve:resitve.slice(0,2);
-  const skritih=mesVsePrikazane?0:Math.max(0,resitve.length-prikazane.length);
+  const prikazane=mesVsePrikazane?izvedljive:izvedljive.slice(0,2);
+  const skritih=mesVsePrikazane?0:Math.max(0,izvedljive.length-prikazane.length);
 
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   _mesZadnjiPredlog=pred;
@@ -2245,13 +2251,16 @@ function mesanjeIzracun(){
 
     ${prikazane.length?`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
       Druge kombinacije — po dva vira
+    </div>`:pred.ok?`<div style="font-size:.66rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+      Iz samo dveh virov tega ni mogoče zmešati — v nobenem kanistru ni dovolj.
+      Predlog zgoraj zato jemlje iz več kanistrov.
     </div>`:''}
     ${prikazane.map(r=>{
       const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
       const vrstice=r.cisto
         ? [r.vSibkejsi<0.0005?r.mocnejsi:r.sibkejsi].map(v=>({v,kol:ciljV}))
         : [{v:r.mocnejsi,kol:r.vMocnejsi},{v:r.sibkejsi,kol:r.vSibkejsi}];
-      return `<div style="border:1px solid ${r.dovolj?'var(--border)':'rgba(139,58,42,.35)'};border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem;${r.dovolj?'':'background:rgba(139,58,42,.04)'}">
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem">
         <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
           ${vrstice.map(({v,kol})=>`
           <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
@@ -2265,8 +2274,6 @@ function mesanjeIzracun(){
         </div>`}
         ${prihranek>0.0005?`<div style="font-size:.66rem;color:var(--success);margin-top:.15rem">
           Prihraniš ${stev(prihranek)} L močnega etanola v primerjavi z dolivanjem vode.</div>`:''}
-        ${!r.dovolj?`<div style="font-size:.66rem;color:var(--danger);margin-top:.15rem">
-          ⚠ Ni dovolj zaloge${r.mocnejsi.naVoljo<r.vMocnejsi?` — ${htmlEsc(r.mocnejsi.ime)} ima ${stev(r.mocnejsi.naVoljo)} L`:''}${r.sibkejsi.naVoljo<r.vSibkejsi?` — ${htmlEsc(r.sibkejsi.ime)} ima ${stev(r.sibkejsi.naVoljo)} L`:''}.</div>`:''}
       </div>`;
     }).join('')}
     ${pred.ok&&!pred.cisto&&pred.raba.some(x=>x.vir.vrsticaId)?`<button class="bsave" style="width:100%;margin:0 0 .8rem" onclick="potrdiMesanje()">
@@ -2276,7 +2283,7 @@ function mesanjeIzracun(){
     ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
       Pokaži še ${skritih} ${sklon(skritih,MOZNOST)}
     </button>`:''}
-    ${mesVsePrikazane&&resitve.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
+    ${mesVsePrikazane&&izvedljive.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
       Pokaži manj
     </button>`:''}
 

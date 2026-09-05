@@ -1410,6 +1410,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 <!-- POPIS ETANOLA — pripomocek, nic se ne knjizi.
      Kanister stehtas in znas njegov vol %, volumna pa ne vidis. Iz mase in
      koncentracije dobis gostoto, iz nje volumen in AAE. -->
+<!-- Register kanistrov. Odpre se nad popisom, ker se tam uporablja; tara pa
+     pripada kanistru in ne popisu, zato je seznam svoj. -->
+<div class="overlay" id="kanistriOverlay" style="z-index:210">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">📇 Kanistri in tare</span>
+      <button class="shclose" onclick="closeSheet('kanistriOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Vsak kanister označi (K1, K2 …) in ga enkrat stehtaj praznega. Tara ostane
+        pri njem, zato je v popisu dovolj, da ga izbereš.
+        <div style="margin-top:.3rem">
+          Tare po tipu so samo ocena: med desetlitrskimi je eden 445 g in drugi 500 —
+          teh 55 g gre naravnost v neto maso topila.
+        </div>
+      </div>
+      <div id="kanistriOpozorilo"></div>
+      <div id="kanistriVrstice"></div>
+      <button class="bcancel" style="width:100%;margin:.4rem 0 .7rem" onclick="kanistriDodaj()">+ Dodaj kanister</button>
+      <div class="btnrow" style="margin-top:.2rem">
+        <button class="bsave" onclick="closeSheet('kanistriOverlay')">Zapri</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="popisOverlay">
   <div class="sheet">
     <div class="shandle"></div>
@@ -1427,10 +1455,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         </div>
       </div>
       <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
-        Tehtnica kaže bruto, zato vpiši bruto — neto se izračuna iz tare tipa.
-        Ko kanister stehtaš praznega in taro popraviš, se neto preračuna vsem
-        kanistrom tega tipa. Neto vpiši sam le, kadar tare ne poznaš.
+        Tehtnica kaže bruto, zato vpiši bruto — neto se izračuna iz tare izbranega
+        kanistra. Ko ga stehtaš praznega in taro popraviš, se neto preračuna vsem
+        njegovim vpisom. Neto vpiši sam le, kadar tare ne poznaš.
       </div>
+      <button class="bcancel" style="width:100%;margin:0 0 .6rem;font-size:.72rem" onclick="openKanistriSheet()">
+        📇 Kanistri in tare — register
+      </button>
       <div id="popisVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj kanister</button>
       <button class="bcancel" style="width:100%;margin:0 0 .7rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="regeneriraj()">♻️ Regeneriral sem — izprazni kanistre za regeneracijo</button>
@@ -2752,10 +2783,21 @@ let popisVrstice=[];
 let popisSinkNapaka='';
 
 function popisPrazna(){
-  const tip=settings.zadnjiTipKanistra||'10l';
-  const t=taraTipa(tip);
-  return {id:uid(),opis:'',masa:'',pct:'',temp:'',tip,
-          tara:t==null?'':String(t),bruto:''};
+  return {id:uid(),opis:'',masa:'',pct:'',temp:'',tip:'',
+          kanister:'',tara:'',bruto:''};
+}
+
+// Tara je najtisja napaka v popisu: ce je ocenjena, je neto napacen za razliko,
+// pa nic ne izgleda narobe. Zato povemo, od kod je.
+function popisTaraNamig(v){
+  const k=kanisterPo(v.kanister);
+  if(k&&!k.stehtana&&parseNum(v.tara)>0)return `
+    <div style="font-size:.64rem;color:#8b5a2a;line-height:1.4;margin:-.15rem 0 .35rem">
+      Tara je ocena po tipu — ko kanister stehtaš praznega, jo popravi tukaj.</div>`;
+  if(!k&&parseNum(v.tara)>0)return `
+    <div style="font-size:.64rem;color:var(--muted);line-height:1.4;margin:-.15rem 0 .35rem">
+      Tara ni vezana na kanister. Izberi kanister iz registra, da velja tudi naslednjič.</div>`;
+  return '';
 }
 
 // Vse tehtnice v delavnici kazejo grame, zato se mase vpisujejo v gramih —
@@ -2842,7 +2884,7 @@ async function popisNaloziIzBaze(){
       temp:x.temperatura==null?'':String(x.temperatura).replace('.',','),
       tara:x.tara==null?'':kgVG(x.tara),
       bruto:x.bruto==null?'':kgVG(x.bruto),
-      tip:x.tip||'',
+      tip:x.tip||'',kanister:x.kanister||'',
       posodobljeno:x.posodobljeno||null,
     }));
 
@@ -2894,7 +2936,7 @@ function popisVBazo(v){
     temperatura:t?parseNum(t):null,
     tara:String(v.tara||'').trim()?gVKg(v.tara):null,
     bruto:String(v.bruto||'').trim()?gVKg(v.bruto):null,
-    tip:v.tip||null,
+    tip:v.tip||null,kanister:v.kanister||null,
     posodobljeno:new Date().toISOString(),
   }).catch(e=>{popisSinkNapaka=e.message||'napaka';console.warn('popisVBazo',e);});
 }
@@ -2965,8 +3007,10 @@ async function regeneriraj(){
 
 async function openPopisSheet(){
   popisNalozi();
+  kanistriIzLokalnega();   // register napolni izbirnik kanistrov
   popisIzrisi();
   openSheet('popisOverlay');
+  await kanistriNaloziIzBaze();
   await popisNaloziIzBaze();
   popisIzrisi();
 }
@@ -2998,26 +3042,188 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
-// Tipi kanistrov. Tara je vezana na tip, ne na posamezen kanister: na kanto
-// pises vsebino, ne inventarne stevilke, zato kanister nima stalne identitete
-// — kanistri istega tipa pa tehtajo prakticno enako. Ko kaksnega stehtas
-// praznega, popravis taro tipa in velja za vse takoj.
+// ── REGISTER KANISTROV ─────────────────────────────────────────────────────
+// Tara pripada posameznemu kanistru, ne tipu. Videti je, kot da bi kanistri
+// istega tipa tehtali enako, a ne: med desetlitrskimi je eden 445 g in drugi
+// 500. Tistih 55 g gre naravnost v neto maso topila in nihce jih ne opazi.
+// Zato vsakega oznacis, stehtas praznega in tara ostane pri njem.
+//
+// Register zivi loceno od popisa, ker kanister zivi dlje od svoje vsebine:
+// enkrat ga stehtas, potem ga samo se izberes. Ker je bruto shranjen, popravek
+// tare preracuna neto vsem njegovim vpisom.
 const KANISTER_TIPI=[
-  {id:'10l',  ime:'HDPE 10 L',  tara:500},
+  {id:'10l',  ime:'HDPE 10 L',  tara:500},   // ocene, dokler kanistra ne stehtas
   {id:'2_5l', ime:'HDPE 2,5 L', tara:205},
-  {id:'1l',   ime:'HDPE 1 L',   tara:null},   // se ni stehtan
+  {id:'1l',   ime:'HDPE 1 L',   tara:null},
 ];
 function tipKanistra(id){return KANISTER_TIPI.find(t=>t.id===id)||null;}
-function taraTipa(id){
-  const shranjene=settings.tareKanistrov||{};
-  if(Object.prototype.hasOwnProperty.call(shranjene,id))return shranjene[id];
-  const t=tipKanistra(id);
-  return t?t.tara:null;
+
+const KANISTRI_KLJUC='gm_kanistri';
+let kanistri=[];              // {id,oznaka,tara(g, niz),tip,stehtana}
+let kanistriSinkNapaka='';
+
+function kanisterPo(id){return kanistri.find(k=>k.id===id)||null;}
+function taraKanistra(id){
+  const k=kanisterPo(id);
+  return k?String(k.tara||''):'';
 }
-function taroTipaShrani(id,grami){
-  settings.tareKanistrov={...(settings.tareKanistrov||{})};
-  settings.tareKanistrov[id]=parseNum(grami)>0?parseNum(grami):null;
-  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
+
+function kanistriIzLokalnega(){
+  try{const s=localStorage.getItem(KANISTRI_KLJUC);kanistri=s?JSON.parse(s):[];}
+  catch(e){kanistri=[];}
+  if(!Array.isArray(kanistri))kanistri=[];
+  kanistri.forEach(k=>{if(!k.id)k.id=uid();});
+}
+function kanistriVLokalno(){
+  try{localStorage.setItem(KANISTRI_KLJUC,JSON.stringify(kanistri));}catch(e){}
+}
+async function kanistriNaloziIzBaze(){
+  try{
+    const r=await sbFetch('gm_kanistri','select=*&order=oznaka.asc');
+    const izBaze=(r||[]).map(x=>({
+      id:x.id,oznaka:x.oznaka||'',
+      tara:x.tara==null?'':kgVG(x.tara),
+      tip:x.tip||'',stehtana:!!x.stehtana,opomba:x.opomba||'',
+    }));
+    // Prvic je baza prazna, lokalno pa so morda ze vpisani — takrat jih
+    // preselimo, ne povozimo (isto nacelo kot pri popisu).
+    if(!izBaze.length&&kanistri.length){
+      for(const k of kanistri)await kanistriVBazo(k);
+      kanistriSinkNapaka='';
+      return;
+    }
+    kanistri=izBaze;kanistriSinkNapaka='';kanistriVLokalno();
+  }catch(e){
+    kanistriSinkNapaka=e.message||'napaka';
+    console.warn('kanistriNaloziIzBaze',e);
+  }
+}
+function kanistriBrisiIzBaze(id){
+  return sbDel('gm_kanistri',id).catch(e=>console.warn('kanistriBrisi',e));
+}
+
+async function openKanistriSheet(){
+  kanistriIzLokalnega();
+  if(!kanistri.length)kanistriDodajTiho();
+  kanistriIzrisi();
+  openSheet('kanistriOverlay');
+  await kanistriNaloziIzBaze();
+  if(!kanistri.length)kanistriDodajTiho();
+  kanistriIzrisi();
+}
+
+// Nov kanister dobi oceno po tipu, da je z njim mogoce takoj racunati — a je
+// oznacena kot ocena, dokler ga ne stehtas praznega.
+function kanistriDodajTiho(){
+  const st=kanistri.length+1;
+  const t=tipKanistra('10l');
+  kanistri.push({id:uid(),oznaka:`K${st}`,tip:'10l',stehtana:false,
+                 tara:t&&t.tara!=null?String(t.tara):''});
+}
+function kanistriDodaj(){kanistriDodajTiho();kanistriVLokalno();kanistriIzrisi();}
+
+let _kanistriCakalnik=null;
+function kanistriSprememba(i,polje,vrednost){
+  const k=kanistri[i];
+  if(!k)return;
+  k[polje]=vrednost;
+  if(polje==='tara')k.stehtana=parseNum(vrednost)>0;
+  if(polje==='tip'&&parseNum(k.tara)<=0){
+    const t=tipKanistra(vrednost);
+    if(t&&t.tara!=null){k.tara=String(t.tara);k.stehtana=false;}
+  }
+  kanistriVLokalno();
+  // Popravek tare mora takoj veljati za vse vpise tega kanistra v popisu,
+  // sicer bi neto ostal na stari, napacni odbitni masi.
+  const zadeti=[];
+  if(polje==='tara'){
+    popisVrstice.forEach(v=>{
+      if(v.kanister===k.id){v.tara=vrednost;popisOsveziNeto(v);zadeti.push(v);}
+    });
+    if(zadeti.length){popisVLokalno();popisIzracun();}
+  }
+  if(polje==='tip')kanistriIzrisi();
+  else{
+    // Samo oznaka stanja, da polje pod prsti ne izgubi fokusa.
+    const st=document.getElementById('kanStatus'+i);
+    if(st)st.innerHTML=kanistriStatusHtml(k,popisVrstice.filter(v=>v.kanister===k.id).length);
+  }
+  clearTimeout(_kanistriCakalnik);
+  _kanistriCakalnik=setTimeout(()=>{
+    kanistriVBazo(k);zadeti.forEach(popisVBazo);
+  },500);
+}
+
+function kanistriBrisi(i){
+  const k=kanistri[i];
+  if(!k)return;
+  const vRabi=popisVrstice.filter(v=>v.kanister===k.id).length;
+  if(!confirm(`Izbrišem kanister ${k.oznaka||'brez oznake'}?`+
+    (vRabi?`\n\nUporabljen je v popisu (${vRabi}×) — tam ostane vpisana tara, `+
+           'a se ne bo več popravljala z registrom.':'')))return;
+  kanistri.splice(i,1);
+  popisVrstice.forEach(v=>{if(v.kanister===k.id)v.kanister='';});
+  popisVLokalno();
+  kanistriVLokalno();kanistriIzrisi();popisIzrisi();
+  kanistriBrisiIzBaze(k.id);
+}
+
+function kanistriStatusHtml(k,vRabi){
+  return `<span style="color:${k.stehtana?'var(--success)':'#8b5a2a'}">${
+    k.stehtana?'✓ stehtan prazen':'tara je ocena — stehtaj ga, ko bo prazen'}</span>`+
+    (vRabi?`<span style="color:var(--muted)"> · v popisu ${vRabi}×</span>`:'');
+}
+
+function kanistriIzrisi(){
+  const el=document.getElementById('kanistriVrstice');
+  if(!el)return;
+  const opoz=document.getElementById('kanistriOpozorilo');
+  if(opoz)opoz.innerHTML=kanistriSinkNapaka
+    ? `<div style="font-size:.68rem;color:var(--danger);line-height:1.5;margin-bottom:.5rem;padding:.4rem .55rem;
+           border:1px solid rgba(139,58,42,.3);border-radius:6px">
+         ⚠ Registra ni bilo mogoče prebrati iz baze — prikazana je kopija iz tega brskalnika.
+         Če stolpcev še ni, zaženi dopolnitev iz doc/supabase-etanol-zaloga.sql.</div>`:'';
+  el.innerHTML=kanistri.map((k,i)=>{
+    const vRabi=popisVrstice.filter(v=>v.kanister===k.id).length;
+    return `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
+      <div class="frow" style="margin-bottom:.3rem">
+        <div class="field"><label>Oznaka</label>
+          <input value="${(k.oznaka||'').replace(/"/g,'&quot;')}" placeholder="npr. K1"
+            oninput="kanistriSprememba(${i},'oznaka',this.value)"></div>
+        <div class="field"><label>Tara (g)</label>
+          <input value="${(k.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="npr. 445"
+            oninput="kanistriSprememba(${i},'tara',this.value)"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Tip</label>
+          <select onchange="kanistriSprememba(${i},'tip',this.value)">
+            <option value=""${k.tip?'':' selected'}>— brez —</option>
+            ${KANISTER_TIPI.map(t=>`<option value="${t.id}"${k.tip===t.id?' selected':''}>${t.ime}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>Opomba</label>
+          <input value="${(k.opomba||'').replace(/"/g,'&quot;')}" placeholder="neobvezno"
+            oninput="kanistriSprememba(${i},'opomba',this.value)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.35rem">
+        <span id="kanStatus${i}" style="font-size:.64rem">${kanistriStatusHtml(k,vRabi)}</span>
+        <button onclick="kanistriBrisi(${i})"
+          style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;
+                 padding:.2rem .45rem;cursor:pointer;color:var(--danger);font-size:.68rem">✕</button>
+      </div>
+    </div>`;
+  }).join('')||'<div style="font-size:.72rem;color:var(--muted)">Ni še nobenega kanistra.</div>';
+}
+
+function kanistriVBazo(k){
+  if(!String(k.oznaka||'').trim())return Promise.resolve();
+  return sbUpsert('gm_kanistri',{
+    id:k.id,oznaka:String(k.oznaka).trim(),
+    tara:String(k.tara||'').trim()?gVKg(k.tara):null,
+    tip:k.tip||null,stehtana:!!k.stehtana,
+    opomba:(k.opomba||'').trim()||null,
+    posodobljeno:new Date().toISOString(),
+  }).catch(e=>{kanistriSinkNapaka=e.message||'napaka';console.warn('kanistriVBazo',e);});
 }
 
 // Neto je izpeljan, kadar je bruto znan — takrat popravek tare popravi tudi
@@ -3031,34 +3237,44 @@ function popisOsveziNeto(v){
   if(parseNum(v.bruto)>0)v.masa=String(popisNetoG(v)).replace('.',',');
 }
 
-// Privzeta tara velja za nove vrstice; posamezen kanister jo lahko povozi.
-// Izbira tipa napolni taro; sprememba tare velja za tip, torej za vse
-// kanistre te vrste — in kjer je bruto znan, se jim neto preracuna sam.
-function popisTipSprememba(i,tip){
+// Izbira kanistra prinese s sabo njegovo taro in oznako — to je cela poanta
+// registra: kanister prepoznas, tare pa ti ni treba vsakic iskati.
+function popisKanisterSprememba(i,id){
   const v=popisVrstice[i];
-  v.tip=tip;
-  settings.zadnjiTipKanistra=tip;
-  const t=taraTipa(tip);
-  v.tara=t==null?'':String(t);
+  v.kanister=id;
+  const k=kanisterPo(id);
+  if(k){
+    v.tara=String(k.tara||'');
+    v.tip=k.tip||'';
+    if(!String(v.opis||'').trim())v.opis=k.oznaka;
+  }
   popisOsveziNeto(v);
   popisVLokalno();popisIzrisi();
   popisVBazo(v);
 }
 
+// Taro lahko popravis kar v popisu — takrat velja, da si kanister stehtal, in
+// gre popravek v register. Velja samo za ta kanister, ne za ves tip; ce ima
+// isti kanister vec vpisov, se jim neto preracuna.
 function popisTaraSprememba(i,vrednost){
   const v=popisVrstice[i];
   v.tara=vrednost;
-  if(v.tip)taroTipaShrani(v.tip,vrednost);
-  // Popravek tare velja za ves tip: vsem kanistrom te vrste z znanim brutom
-  // se neto preracuna, sicer bi ostali na starem odstevanju.
   const zadeti=[];
-  popisVrstice.forEach(x=>{
-    if(x!==v&&x.tip&&x.tip===v.tip){x.tara=vrednost;popisOsveziNeto(x);zadeti.push(x);}
-  });
+  const k=kanisterPo(v.kanister);
+  if(k){
+    k.tara=vrednost;k.stehtana=parseNum(vrednost)>0;
+    kanistriVLokalno();
+    popisVrstice.forEach(x=>{
+      if(x!==v&&x.kanister===k.id){x.tara=vrednost;popisOsveziNeto(x);zadeti.push(x);}
+    });
+  }
   popisOsveziNeto(v);
   popisVLokalno();popisIzrisi();
   clearTimeout(_popisCakalnik);
-  _popisCakalnik=setTimeout(()=>{popisVBazo(v);zadeti.forEach(popisVBazo);},500);
+  _popisCakalnik=setTimeout(()=>{
+    popisVBazo(v);zadeti.forEach(popisVBazo);
+    if(k)kanistriVBazo(k);
+  },500);
 }
 
 function popisBrutoSprememba(i,vrednost){
@@ -3175,15 +3391,17 @@ function popisIzrisi(){
         <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
       </div>
       <div class="frow" style="margin-bottom:.35rem">
-        <div class="field"><label>Tip kanistra</label>
-          <select onchange="popisTipSprememba(${i},this.value)">
-            <option value=""${v.tip?'':' selected'}>— brez —</option>
-            ${KANISTER_TIPI.map(t=>`<option value="${t.id}"${v.tip===t.id?' selected':''}>${t.ime}</option>`).join('')}
+        <div class="field"><label>Kanister</label>
+          <select onchange="popisKanisterSprememba(${i},this.value)">
+            <option value=""${v.kanister?'':' selected'}>— ni izbran —</option>
+            ${kanistri.map(k=>`<option value="${htmlEsc(k.id)}"${v.kanister===k.id?' selected':''}>${
+              htmlEsc(k.oznaka||'brez oznake')}${k.tara?` · ${k.tara} g`:' · brez tare'}</option>`).join('')}
           </select></div>
         <div class="field"><label>Tara (g)</label>
           <input value="${(v.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="—"
             oninput="popisTaraSprememba(${i},this.value)"></div>
       </div>
+      ${popisTaraNamig(v)}
       <div class="frow" style="margin-bottom:.35rem">
         <div class="field"><label>Bruto s tehtnice (g)</label>
           <input value="${(v.bruto||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="${parseNum(v.tara)>0?'npr. 8500':'najprej tara'}"

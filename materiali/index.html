@@ -2344,7 +2344,40 @@ function popisIzLokalnega(){
   if(!popisVrstice.length)popisVrstice=[popisPrazna()];
 }
 
-function popisNalozi(){popisIzLokalnega();}
+function popisNalozi(){popisIzLokalnega();popisZaprteNalozi();}
+
+// Zloženi kanistri
+// ────────────────
+// Z rastjo zaloge se popis razpotegne cez vec zaslonov in iskanje kanistra
+// postane listanje. Zaprt kanister pokaze samo to, po cemer ga isces: oznako,
+// neto maso in jakost. Kaj je odprto, je pogled in ne podatek — zato ostane v
+// brskalniku in v bazo ne gre.
+const POPIS_ZAPRTI_KLJUC='gm_popis_zaprti';
+let popisZaprti=new Set();
+
+function popisZaprteNalozi(){
+  try{
+    const s=JSON.parse(localStorage.getItem(POPIS_ZAPRTI_KLJUC)||'[]');
+    popisZaprti=new Set(Array.isArray(s)?s:[]);
+  }catch(e){popisZaprti=new Set();}
+}
+function popisZaprteShrani(){
+  // Izbrisani kanistri se ne smejo kopiciti v seznamu; sicer bi se lahko id
+  // nekoc ponovil in bi se nov kanister odprl zaprt.
+  const zivi=new Set(popisVrstice.map(v=>v.id));
+  popisZaprti=new Set([...popisZaprti].filter(id=>zivi.has(id)));
+  try{localStorage.setItem(POPIS_ZAPRTI_KLJUC,JSON.stringify([...popisZaprti]));}catch(e){}
+}
+function popisPreklopi(i){
+  const v=popisVrstice[i];if(!v)return;
+  if(popisZaprti.has(v.id))popisZaprti.delete(v.id);else popisZaprti.add(v.id);
+  popisZaprteShrani();popisIzrisi();
+}
+function popisPreklopiVse(){
+  const kaksenOdprt=popisVrstice.some(v=>!popisZaprti.has(v.id));
+  popisZaprti=kaksenOdprt?new Set(popisVrstice.map(v=>v.id)):new Set();
+  popisZaprteShrani();popisIzrisi();
+}
 
 // Iz baze beremo ob odprtju. Ce ne gre, ostane lokalna kopija in to povemo —
 // tiho delati naprej s starimi stevilkami bi bilo slabse od opozorila.
@@ -2639,12 +2672,52 @@ function popisVrstica(v){
   return {masa,odcitek,t,pct,gostota,volumen,aae,popravljeno,izvenObmocja};
 }
 
+// Zaprt kanister: samo tisto, po cemer ga prepoznas in kar te zanima na prvi
+// pogled — oznaka, neto masa in jakost (popravljena na 20 C, ce je znana
+// temperatura merjenja).
+function popisVrsticaZaprta(v,i){
+  const r=popisVrstica(v);
+  const napaka=r&&(r.neveljavnaTemp||r.izvenObmocja);
+  const jakost=r&&!napaka?r.pct:parseNum(v.pct);
+  const masaG=String(v.masa||'').trim();
+  const opis=(v.opis||'').trim();
+  return `
+    <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:.35rem">
+      <button onclick="popisPreklopi(${i})" aria-expanded="false"
+        style="width:100%;display:flex;align-items:center;gap:.45rem;background:none;border:0;
+               padding:.45rem .55rem;cursor:pointer;font-family:inherit;color:inherit;text-align:left">
+        <span style="flex:0 0 auto;color:var(--muted);font-size:.7rem">▸</span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.75rem">
+          ${opis?htmlEsc(opis):'<span style="color:var(--muted)">brez oznake</span>'}</span>
+        ${napaka?'<span style="flex:0 0 auto;color:var(--danger);font-size:.72rem">⚠</span>':''}
+        <span style="flex:0 0 auto;font-size:.75rem;font-weight:700;font-variant-numeric:tabular-nums">
+          ${masaG?htmlEsc(masaG)+' g':'—'}</span>
+        <span style="flex:0 0 auto;font-size:.75rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)">
+          ${jakost>0?fmtNum(jakost,2)+' %':'—'}</span>
+        ${jakost>0?etZnacka(jakost):''}
+      </button>
+    </div>`;
+}
+
 function popisIzrisi(){
   const el=document.getElementById('popisVrstice');
   if(!el)return;
-  el.innerHTML=popisVrstice.map((v,i)=>`
+  popisZaprteShrani();   // pocisti id-je izbrisanih kanistrov
+  const zaprtih=popisVrstice.filter(v=>popisZaprti.has(v.id)).length;
+  const vsiZaprti=zaprtih===popisVrstice.length;
+  const glava=popisVrstice.length>1?`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.4rem">
+      <span style="font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">
+        ${popisVrstice.length} ${sklon(popisVrstice.length,KANISTER)}${zaprtih&&!vsiZaprti?` · ${zaprtih} zloženih`:''}
+      </span>
+      <button class="bcancel" style="flex:0 0 auto;padding:.25rem .6rem;font-size:.68rem"
+        onclick="popisPreklopiVse()">${vsiZaprti?'▾ Razpri vse':'▸ Zloži vse'}</button>
+    </div>`:'';
+  el.innerHTML=glava+popisVrstice.map((v,i)=>popisZaprti.has(v.id)?popisVrsticaZaprta(v,i):`
     <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
+        <button onclick="popisPreklopi(${i})" aria-expanded="true" title="Zloži"
+          style="flex:0 0 auto;border:0;background:none;cursor:pointer;color:var(--muted);font-size:.7rem;padding:.25rem .15rem">▾</button>
         <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka kanistra (neobvezno)"
           oninput="popisSprememba(${i},'opis',this.value)"
           style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">
@@ -2691,20 +2764,22 @@ function popisIzracun(){
   const skup={uporabno:{masa:0,vol:0,aae:0,n:0},regeneracija:{masa:0,vol:0,aae:0,n:0}};
   popisVrstice.forEach((v,i)=>{
     const r=popisVrstica(v);
+    // Zlozen kanister nima izpisa, v sestevek pa mora steti enako kot odprt —
+    // zato se seje sesteva ne glede na to, ali je element na strani.
     const el=document.getElementById('popisVr'+i);
-    if(!el)return;
-    if(!r){el.innerHTML='<span style="color:var(--muted)">Vpiši maso in odčitek…</span>';return;}
+    if(!r){if(el)el.innerHTML='<span style="color:var(--muted)">Vpiši maso in odčitek…</span>';return;}
     if(r.neveljavnaTemp){
-      el.innerHTML='<span style="color:var(--danger)">Temperature ne razumem — vpiši število, npr. 26,5</span>';
+      if(el)el.innerHTML='<span style="color:var(--danger)">Temperature ne razumem — vpiši število, npr. 26,5</span>';
       return;
     }
     if(r.izvenObmocja){
-      el.innerHTML='<span style="color:var(--danger)">Temperatura mora biti med −20 in 40 °C</span>';
+      if(el)el.innerHTML='<span style="color:var(--danger)">Temperatura mora biti med −20 in 40 °C</span>';
       return;
     }
     masaSk+=r.masa;volSk+=r.volumen;aaeSk+=r.aae;steviloOk++;
     const sk=r.pct>=ET_MEJA_UPORABE?skup.uporabno:skup.regeneracija;
     sk.masa+=r.masa;sk.vol+=r.volumen;sk.aae+=r.aae;sk.n++;
+    if(!el)return;
     el.innerHTML=`${r.popravljeno?`<div style="color:#5a3a6b;margin-bottom:.1rem">
         ${r.odcitek.toFixed(2)} % pri ${r.t.toFixed(1)} °C →
         <strong>${r.pct.toFixed(2)} vol % pri 20 °C</strong></div>`:''}

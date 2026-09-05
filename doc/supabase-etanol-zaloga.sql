@@ -69,3 +69,27 @@ select policyname, cmd, roles
 --   select oznaka, masa, odcitek, temperatura, posodobljeno
 --     from gm_etanol_zaloga
 --    order by odcitek desc;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Dopolnitev: tara kanistra
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- Kanister stehtas poln, na tehtnici je torej bruto. Ce je masa praznega
+-- zapisana enkrat, ti ni treba vsakic odstevati na pamet — vpises bruto in
+-- neto se izracuna sam.
+--
+-- Masa v stolpcu masa ostaja NETO, torej etanol sam. Bruto se ne shranjuje:
+-- je le vhod za preracun in bi se ob vsakem dolivanju razsel z realnostjo,
+-- neto pa je tisto, s cimer se racuna zaloga.
+
+alter table gm_etanol_zaloga
+  add column if not exists tara numeric;
+
+comment on column gm_etanol_zaloga.tara is
+  'Masa praznega kanistra v kg. Neobvezno; ce je vpisana, lahko v aplikaciji '
+  'vpises bruto in neto se izracuna.';
+
+-- ── Preveri ────────────────────────────────────────────────────────────────
+select column_name, data_type
+  from information_schema.columns
+ where table_name = 'gm_etanol_zaloga' and column_name = 'tara';

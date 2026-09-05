@@ -2295,7 +2295,7 @@ const POPIS_KLJUC='gm_popis_etanola';
 let popisVrstice=[];
 let popisSinkNapaka='';
 
-function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:''};}
+function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:'',tara:''};}
 
 // Slovenscina ima stiri oblike: 1 kanister, 2 kanistra, 3-4 kanistri,
 // 5+ kanistrov. Koda je prej poznala samo prvi dve in pisala "4 posod".
@@ -2333,6 +2333,8 @@ async function popisNaloziIzBaze(){
       masa:x.masa==null?'':String(x.masa).replace('.',','),
       pct:x.odcitek==null?'':String(x.odcitek).replace('.',','),
       temp:x.temperatura==null?'':String(x.temperatura).replace('.',','),
+      tara:x.tara==null?'':String(x.tara).replace('.',','),
+      posodobljeno:x.posodobljeno||null,
     }));
 
     // Prvic po vpeljavi tabele je ta prazna, lokalno pa ze imas popisane
@@ -2374,11 +2376,13 @@ function popisJePolna(v){return parseNum(v.pct)>0;}
 
 function popisVBazo(v){
   if(!popisJePolna(v))return Promise.resolve();
+  v.posodobljeno=new Date().toISOString();
   const t=String(v.temp||'').trim();
   return sbUpsert('gm_etanol_zaloga',{
     id:v.id,oznaka:(v.opis||'').trim()||null,
     masa:parseNum(v.masa),odcitek:parseNum(v.pct),
     temperatura:t?parseNum(t):null,
+    tara:String(v.tara||'').trim()?parseNum(v.tara):null,
     posodobljeno:new Date().toISOString(),
   }).catch(e=>{popisSinkNapaka=e.message||'napaka';console.warn('popisVBazo',e);});
 }
@@ -2482,6 +2486,28 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
+// Bruto s tehtnice minus tara je neto. Bruto ne shranjujemo — je samo vhod.
+function popisBruto(i,vrednost){
+  const v=popisVrstice[i];
+  const tara=parseNum(v.tara),bruto=parseNum(vrednost);
+  if(!(tara>0)||!(bruto>0))return;
+  const neto=round(Math.max(0,bruto-tara),4);
+  v.masa=String(neto).replace('.',',');
+  popisVLokalno();
+  popisIzrisi();
+  clearTimeout(_popisCakalnik);
+  _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
+}
+
+function popisDatum(iso){
+  try{
+    const d=new Date(iso);
+    const dni=Math.floor((Date.now()-d.getTime())/86400000);
+    const datum=d.toLocaleDateString('sl-SI',{day:'numeric',month:'numeric',year:'numeric'});
+    return dni<=0?`danes`:dni===1?`včeraj`:dni<30?`${datum} · pred ${dni} dnevi`:datum;
+  }catch(e){return '';}
+}
+
 // En kanister: iz mase in vol % dobimo gostoto, iz nje volumen, iz volumna AAE.
 function popisVrstica(v){
   const masa=parseNum(v.masa);           // kg
@@ -2536,7 +2562,20 @@ function popisIzrisi(){
           <input value="${(v.temp||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="20"
             oninput="popisSprememba(${i},'temp',this.value)"></div>
       </div>
+      <!-- Tara je zapisana enkrat; potem vpises bruto s tehtnice in neto se
+           izracuna. Shranjuje se neto — bruto bi se ob vsakem dolivanju
+           razsel z realnostjo. -->
+      <div class="frow" style="margin-bottom:.35rem">
+        <div class="field"><label>Tara — prazen (kg)</label>
+          <input value="${(v.tara||'').replace(/"/g,'&quot;')}" type="text" inputmode="decimal" placeholder="—"
+            oninput="popisSprememba(${i},'tara',this.value)"></div>
+        <div class="field"><label>Bruto s tehtnice (kg)</label>
+          <input id="popisBruto${i}" type="text" inputmode="decimal" placeholder="${parseNum(v.tara)>0?'preračuna neto':'najprej taro'}"
+            ${parseNum(v.tara)>0?'':'disabled style="background:var(--parchment)"'}
+            oninput="popisBruto(${i},this.value)"></div>
+      </div>
       <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
+      ${v.posodobljeno?`<div style="font-size:.64rem;color:var(--muted);margin-top:.15rem">Nazadnje posodobljen ${popisDatum(v.posodobljeno)}</div>`:''}
     </div>`).join('');
   popisIzracun();
 }
@@ -2600,12 +2639,24 @@ function popisIzracun(){
   // prestroga (0,05 L od 23 L je 0,2 %), odstotna sama pa pri majhni
   // preohlapna — zato zadosca, da je izpolnjena katerakoli.
   const razlikaVRedu=Math.abs(razlika)<=0.05||(razlikaPct!==null&&Math.abs(razlikaPct)<=0.5);
+
+  // Popis je star toliko kot njegov najstarejsi vpis: en sveze stehtan kanister
+  // ne pomeni, da so ostali se resnicni.
+  const zigi=popisVrstice.filter(popisJePolna).map(v=>v.posodobljeno).filter(Boolean);
+  let starost='';
+  if(zigi.length){
+    const najstarejsi=zigi.slice().sort()[0];
+    const dni=Math.floor((Date.now()-new Date(najstarejsi).getTime())/86400000);
+    const manjka=popisVrstice.filter(popisJePolna).length-zigi.length;
+    starost=` · najstarejši vpis ${popisDatum(najstarejsi)}`+
+            (dni>30?' ⚠':'')+(manjka?` · ${manjka} brez datuma`:'');
+  }
   const barvaRazlike=razlikaVRedu?'var(--success)':'var(--danger)';
 
   izid.innerHTML=`
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.6rem .7rem;background:rgba(175,132,85,.08)">
       <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.4rem">
-        Skupaj — ${steviloOk} ${sklon(steviloOk,KANISTER)}
+        Skupaj — ${steviloOk} ${sklon(steviloOk,KANISTER)}${starost}
       </div>
       ${(skup.uporabno.n&&skup.regeneracija.n)?`
       <div style="display:grid;grid-template-columns:1fr auto auto;gap:.2rem .6rem;font-size:.75rem;margin-bottom:.45rem;padding-bottom:.4rem;border-bottom:1px solid rgba(175,132,85,.3)">

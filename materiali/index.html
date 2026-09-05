@@ -512,7 +512,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <button class="calc-card" onclick="openMesanjeSheet()">
       <span class="calc-ico">🧫</span>
       <span class="calc-txt"><strong>Mešanje etanola</strong>
-        <small>Koliko česa zliti za želeni volumen in jakost — iz popisanih kanistrov</small></span>
+        <small>Koliko česa zliti za želeno maso ali volumen pri dani jakosti — iz popisanih kanistrov</small></span>
       <span class="calc-arrow">›</span>
     </button>
     <div id="preracuniZapisi"></div>
@@ -1369,15 +1369,25 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
         Vire bere iz <strong>Popisa etanola</strong>. Voda je vedno na voljo, a je
         na dnu seznama — če isto dosežeš z bolj razredčenim kanistrom, je bolje porabiti njega.
+        Pri visokem cilju pa velja obratno: razredčeno terja preveč etanola nad ciljem,
+        zato ga takrat pusti pri miru — najmočnejši je najdragocenejši.
       </div>
       <div class="frow">
-        <div class="field"><label>Želim (L)</label>
+        <div class="field"><label>Želim</label>
           <input id="mesVolumen" type="text" inputmode="decimal" placeholder="npr. 4" oninput="mesanjeIzracun()"></div>
+        <div class="field"><label>Enota</label>
+          <select id="mesEnota" onchange="mesEnotaSprememba()">
+            <option value="L">litrov</option>
+            <option value="kg">kilogramov</option>
+          </select></div>
+      </div>
+      <div class="frow">
         <div class="field"><label>Jakost (vol %)</label>
           <input id="mesPct" type="text" inputmode="decimal" placeholder="npr. 70" oninput="mesanjeIzracun()"></div>
         <div class="field"><label>Kontrola pri (°C)</label>
           <input id="mesTemp" type="text" inputmode="decimal" placeholder="20" oninput="mesanjeIzracun()"></div>
       </div>
+      <button class="bcancel" id="mesSarzaGumb" style="width:100%;margin:.45rem 0 .2rem;font-size:.72rem" onclick="mesSarza()"></button>
       <div id="mesOpozorilo"></div>
       <div id="mesIzid"></div>
       <div class="btnrow" style="margin-top:.7rem">
@@ -1918,7 +1928,10 @@ function etMesaj(ciljV,ciljPct,pctA,pctB){
 //           bo res treba.
 // Ko vira zmanjka, ga porabimo do konca in preostanek cilja resujemo z
 // naslednjim. Racunamo z masama etanola in vode, ki se ohranita.
-function etPredlogMesanja(ciljV,ciljPct,viri){
+//
+// Kadar tako ne gre, poskusimo se enkrat z obratnim vrstnim redom sibkih —
+// glej etPredlogMesanja spodaj.
+function etPredlogPoskus(ciljV,ciljPct,viri,sibkiObratno){
   const c=etSestava(ciljPct);
   let E=ciljV*c.etanol,W=ciljV*c.voda;
   const kopija=v=>({...v,ostane:v.naVoljo});
@@ -1931,7 +1944,7 @@ function etPredlogMesanja(ciljV,ciljPct,viri){
   if(tocno)return {ok:tocno.naVoljo>=ciljV-1e-9,cisto:true,
     raba:[{vir:tocno,kol:Math.min(ciljV,tocno.naVoljo)}],manjka:'te jakosti'};
   const sibki=viri.filter(v=>v.pct<ciljPct-1e-9).map(kopija)
-    .sort((a,b)=>(a.voda?1:0)-(b.voda?1:0)||a.pct-b.pct);
+    .sort((a,b)=>(a.voda?1:0)-(b.voda?1:0)||(sibkiObratno?b.pct-a.pct:a.pct-b.pct));
   const mocni=viri.filter(v=>v.pct>ciljPct+1e-9).map(kopija).sort((a,b)=>a.pct-b.pct);
 
   const raba=[];
@@ -1960,6 +1973,32 @@ function etPredlogMesanja(ciljV,ciljPct,viri){
     if(xS>S.ostane+1e-9){dodaj(S,S.ostane);is++;} else {dodaj(M,M.ostane);im++;}
   }
   return {ok:false,raba,manjka:'rešitve'};
+}
+
+// Koliko etanola je v predlogu — merilo, kateri od dveh poskusov je prisel dlje.
+function etRabaAae(pred){
+  return pred.raba.reduce((s,x)=>s+x.kol*x.vir.pct/100,0);
+}
+
+// Porabiti razredceno je praviloma prav, a ne za vsako ceno.
+//
+// Pri visokem cilju (86 % za reishi) je omejitev etanol NAD ciljem: vsak liter
+// 18-odstotnega topila je treba nekje pokriti z mocnim, in tega presezka je
+// malo. Ce razredceno vlijemo prvo, ga zmanjka in serija ne gre — ceprav bi
+// slo, ce bi razredceno pustili pri miru. Pri nizjem cilju je presezka dovolj
+// in razredceno gre noter brez skode; takrat je prav, da se porabi, saj ostane
+// v zalogi tisto, kar je cilju blizje.
+//
+// Zato: najprej po obicajnem vrstnem redu (najbolj razredceno prvo). Ce tako ne
+// gre, se enkrat s sibkimi od cilju najblizjega navzdol — najmocnejsi etanol je
+// najdragocenejsi, ker je edini, ki do 86 % se sega.
+function etPredlogMesanja(ciljV,ciljPct,viri){
+  const prvi=etPredlogPoskus(ciljV,ciljPct,viri,false);
+  if(prvi.ok||prvi.cisto)return prvi;
+  const drugi=etPredlogPoskus(ciljV,ciljPct,viri,true);
+  if(drugi.ok)return {...drugi,varcno:true};
+  // Oba padeta: pokazemo tistega, ki je prisel dlje.
+  return etRabaAae(drugi)>etRabaAae(prvi)?{...drugi,varcno:true}:prvi;
 }
 
 let mesVsePrikazane=false;
@@ -2103,14 +2142,76 @@ function mesanjeKontrolaHtml(ciljV,ciljPct){
     </div>`;
 }
 
+// Najvecji reden odjem topila je sarza reishija: 40 kg pri 86 vol %. Po tem se
+// meri, ali je zaloga sploh se uporabna — ne po skupnem AAE. Etanol nad 86 % je
+// edini, ki tja se seze; razredcenega ni mogoce skoncentrirati brez destilacije,
+// zato je najmocnejsi kanister najdragocenejsi, tudi ce ga je malo.
+const SARZA={ime:'Reishi',kg:40,pct:86};
+
+// Vpises lahko volumen ali maso — tehtnica je pri roki, merilna posoda ne vedno.
+// Racuna se z volumnom, ker so tam vsi izracuni; masa se prevede prek gostote
+// pri ciljni jakosti.
+function mesEnota(){
+  const el=document.getElementById('mesEnota');
+  return el&&el.value==='kg'?'kg':'L';
+}
+function mesPlaceholder(){
+  const el=document.getElementById('mesVolumen');
+  if(el)el.placeholder=mesEnota()==='kg'?`npr. ${SARZA.kg}`:'npr. 4';
+}
+function mesEnotaSprememba(){
+  settings.mesEnota=mesEnota();
+  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
+  mesPlaceholder();
+  mesanjeIzracun();
+}
+function mesCiljV(vpis,ciljPct){
+  if(mesEnota()!=='kg')return vpis;
+  return ciljPct>0?vpis/etohDensity(ciljPct):0;
+}
+function mesSarza(){
+  const e=document.getElementById('mesEnota');
+  if(e)e.value='kg';
+  settings.mesEnota='kg';
+  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
+  document.getElementById('mesVolumen').value=String(SARZA.kg).replace('.',',');
+  document.getElementById('mesPct').value=String(SARZA.pct).replace('.',',');
+  mesPlaceholder();
+  mesanjeIzracun();
+}
+
 async function openMesanjeSheet(){
   popisNalozi();
   mesKontrolaNalozi();
   mesVsePrikazane=false;
+  mesIzkljuceni.clear();   // odmisljeni viri veljajo za en izracun, ne za vedno
+  const e=document.getElementById('mesEnota');
+  if(e&&settings.mesEnota)e.value=settings.mesEnota;
+  const g=document.getElementById('mesSarzaGumb');
+  if(g)g.textContent=`Šarža ${SARZA.ime} — ${SARZA.kg} kg pri ${String(SARZA.pct).replace('.',',')} %`;
+  mesPlaceholder();
   mesanjeIzracun();
   openSheet('mesanjeOverlay');
   await popisNaloziIzBaze();
   mesanjeIzracun();
+}
+
+// Koliko zmesi dane jakosti sploh se lahko narediš iz zaloge. Predlog je
+// deterministicen in izvedljivost pada z volumnom, zato je dovolj bisekcija po
+// njem — isti postopek, ki bo mesanje tudi predlagal, torej brez presenecenj.
+function etNajvecMozno(ciljPct,viri){
+  if(!(ciljPct>0))return 0;
+  // Zgornja meja: ves etanol iz zaloge, razredcen na ciljno jakost.
+  const aae=viri.filter(v=>!v.voda).reduce((s,v)=>s+v.naVoljo*v.pct/100,0);
+  let hi=aae/(ciljPct/100)*1.001;
+  if(!(hi>0))return 0;
+  if(etPredlogMesanja(hi,ciljPct,viri).ok)return hi;
+  let lo=0;
+  for(let k=0;k<40;k++){
+    const sredina=(lo+hi)/2;
+    if(etPredlogMesanja(sredina,ciljPct,viri).ok)lo=sredina; else hi=sredina;
+  }
+  return lo;
 }
 
 // Viri: kanistri iz popisa in voda. Voda nima omejitve, a jo pri razvrscanju
@@ -2127,13 +2228,49 @@ function mesanjeViri(){
   return viri;
 }
 
+// Izlocitev vira iz predloga
+// ──────────────────────────
+// Racun ne ve vsega: kanister je lahko zadaj v skladiscu, prihranjen za drugo
+// serijo ali pa ga preprosto noces odpirati. Zato ga lahko odmislis in predlog
+// se preracuna brez njega — vrneš ga z enim klikom. Izlocitev velja samo za ta
+// izracun; zaloge ne spremeni in se ob zaprtju obrazca pozabi.
+let mesIzkljuceni=new Set();
+function mesKljuc(v){return v.voda?'voda':(v.vrsticaId||v.ime);}
+function jsNiz(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+  .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function mesIzkljuci(k){mesIzkljuceni.add(k);mesVsePrikazane=false;mesanjeIzracun();}
+function mesVrni(k){mesIzkljuceni.delete(k);mesanjeIzracun();}
+function mesVrniVse(){mesIzkljuceni.clear();mesanjeIzracun();}
+
+// Gumb ob vrstici predloga: odmisli ta vir.
+function mesIzkljuciGumb(v){
+  return `<button onclick="mesIzkljuci('${jsNiz(mesKljuc(v))}')" title="Brez tega vira"
+    style="flex:0 0 auto;border:1px solid var(--border);background:none;border-radius:5px;
+           padding:.05rem .3rem;margin-left:.3rem;cursor:pointer;color:var(--muted);font-size:.62rem">✕</button>`;
+}
+
+// Kar si odmislil, mora ostati vidno — sicer bi se cez pet minut spraseval,
+// zakaj predlog trmasto obide poln kanister.
+function mesIzkljuceniHtml(izkljuceni){
+  if(!izkljuceni.length)return '';
+  return `<div style="font-size:.66rem;color:var(--muted);line-height:1.9;margin:-.35rem 0 .6rem">
+    Odmišljeno: ${izkljuceni.map(v=>`<button onclick="mesVrni('${jsNiz(mesKljuc(v))}')" title="Vrni med vire"
+      style="border:1px solid var(--border);background:none;border-radius:999px;padding:.1rem .45rem;
+             margin-right:.25rem;cursor:pointer;color:inherit;font-family:inherit;font-size:.66rem">
+      ${htmlEsc(v.ime)}${v.voda?'':` ${v.pct.toLocaleString('sl-SI')} %`} ↩</button>`).join('')}
+    ${izkljuceni.length>1?`<button onclick="mesVrniVse()" style="border:0;background:none;cursor:pointer;
+      color:var(--accent);font-family:inherit;font-size:.66rem;text-decoration:underline">vrni vse</button>`:''}
+  </div>`;
+}
+
 function mesanjeIzracun(){
   const el=document.getElementById('mesIzid');
   if(!el)return;
-  const ciljV=parseNum(document.getElementById('mesVolumen').value||'0');
+  const vpis=parseNum(document.getElementById('mesVolumen').value||'0');
   const ciljPct=parseNum(document.getElementById('mesPct').value||'0');
+  const ciljV=mesCiljV(vpis,ciljPct);
   if(!(ciljV>0)||!(ciljPct>0)||ciljPct>100){
-    el.innerHTML='<div style="font-size:.72rem;color:var(--muted)">Vpiši želeni volumen in jakost…</div>';
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--muted)">Vpiši želeno ${mesEnota()==='kg'?'maso':'količino'} in jakost…</div>`;
     return;
   }
   // Vsi izpisi nizje uporabljajo cilj, zato je ta pogoj nad njimi.
@@ -2144,9 +2281,16 @@ function mesanjeIzracun(){
          ⚠ Kanistrov ni bilo mogoče prebrati iz baze — prikazana je zadnja kopija iz tega brskalnika.
          Preveri prijavo, preden kaj odšteješ.</div>` : '';
 
-  const viri=mesanjeViri();
-  if(viri.length<2){
+  const vsiViri=mesanjeViri();
+  if(vsiViri.length<2){
     el.innerHTML='<div style="font-size:.72rem;color:var(--danger)">V popisu ni nobenega kanistra — najprej vpiši, kaj imaš.</div>';
+    return;
+  }
+  const viri=vsiViri.filter(v=>!mesIzkljuceni.has(mesKljuc(v)));
+  const izkljuceni=vsiViri.filter(v=>mesIzkljuceni.has(mesKljuc(v)));
+  if(viri.length<2){
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5;margin-bottom:.4rem">
+      Odmislil si preveč virov — za mešanje sta potrebna vsaj dva.</div>${mesIzkljuceniHtml(izkljuceni)}`;
     return;
   }
 
@@ -2163,9 +2307,9 @@ function mesanjeIzracun(){
   }
 
   if(!resitve.length){
-    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5">
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5;margin-bottom:.4rem">
       S temi viri ${ciljPct.toLocaleString('sl-SI')} vol % ni mogoče doseči —
-      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>`;
+      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>${mesIzkljuceniHtml(izkljuceni)}`;
     return;
   }
 
@@ -2181,15 +2325,21 @@ function mesanjeIzracun(){
   });
   resitve.length=0;resitve.push(...brezPodvojenih);
 
-  // Isto nacelo kot pri predlogu: najprej izvedljive, nato tiste brez vode,
-  // nato tiste z najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat,
-  // ko ga bo res treba), nato tiste z najbolj razredcenim sibkim virom, in
-  // sele na koncu tiste, ki porabijo najmanj mocnega.
-  resitve.sort((a,b)=>(b.dovolj-a.dovolj)||(a.vode-b.vode)
+  // Kombinacije, ki jih ni iz cesa zmesati, ne kazemo. Moznost, ki je ne mores
+  // izvesti, ni moznost — je samo pot do razocaranja pri tehtnici, in ce jih je
+  // vec, pokopljejo tiste, ki so res na voljo. Predlog zgoraj zna cez vec virov
+  // in ostane, tudi kadar noben par ne zadosca.
+  const izvedljive=resitve.filter(r=>r.dovolj);
+
+  // Isto nacelo kot pri predlogu: najprej tiste brez vode, nato tiste z
+  // najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat, ko ga bo res
+  // treba), nato tiste z najbolj razredcenim sibkim virom, in sele na koncu
+  // tiste, ki porabijo najmanj mocnega.
+  izvedljive.sort((a,b)=>(a.vode-b.vode)
     ||(a.mocnejsi.pct-b.mocnejsi.pct)||(a.sibkejsi.pct-b.sibkejsi.pct)
     ||(a.vMocnejsi-b.vMocnejsi));
 
-  const zVodo=resitve.find(r=>r.sibkejsi.voda);
+  const zVodo=izvedljive.find(r=>r.sibkejsi.voda);
   const stev=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3});
 
   // Predlog: porabi najbolj razredceno in najsibkejsega uporabnega, po potrebi
@@ -2197,14 +2347,23 @@ function mesanjeIzracun(){
   // ko hoces tocno doloceno kombinacijo.
   // Predlog steje kot prva moznost, zato spodaj privzeto se dve — skupaj tri.
   // Ves seznam je bil predolg in je pokopal tisto, kar naj bi bilo v ospredju.
-  const prikazane=mesVsePrikazane?resitve:resitve.slice(0,2);
-  const skritih=mesVsePrikazane?0:Math.max(0,resitve.length-prikazane.length);
+  const prikazane=mesVsePrikazane?izvedljive:izvedljive.slice(0,2);
+  const skritih=mesVsePrikazane?0:Math.max(0,izvedljive.length-prikazane.length);
 
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   _mesZadnjiPredlog=pred;
   const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
   // Masa se pri mesanju ohrani, zato je masa zmesi kar masa cilja.
   const masaZmesi=ciljV*etohDensity(ciljPct);
+  // Kadar si cilj zastavil v kilogramih, ga tako tudi izpisemo — volumen zraven
+  // v oklepaju, ker mesas po masi, kontroliras pa oboje.
+  const ciljOpis=mesEnota()==='kg'
+    ? `${kgVG(masaZmesi)} g <span style="font-weight:400;opacity:.8">(${stev(ciljV)} L)</span>`
+    : `${stev(ciljV)} L`;
+
+  // Ko cilja ni mogoce doseci, je edino uporabno vprasanje, koliko pa bi ga slo.
+  const najvec=pred.ok?0:etNajvecMozno(ciljPct,viri);
+  const najvecMasa=najvec*etohDensity(ciljPct);
 
   // Kontrola po mesanju: kaj mora alkoholometer pokazati pri dani temperaturi.
   const tVpis=String(document.getElementById('mesTemp').value||'').trim();
@@ -2221,37 +2380,49 @@ function mesanjeIzracun(){
            <span style="opacity:.8">(steklen alkoholometer bere na kakšno desetinko natančno)</span></div>`;
 
   el.innerHTML=`
-    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">Predlog</div>
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
+      Predlog${izkljuceni.length?` — brez ${izkljuceni.length} ${izkljuceni.length===1?'vira':'virov'}`:''}</div>
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.55rem .65rem;margin-bottom:.7rem;background:rgba(175,132,85,.08)">
       ${pred.raba.length?`<div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;align-items:center">
         ${pred.raba.map(x=>`
-          <span>${htmlEsc(x.vir.ime)}
-            <span style="color:var(--muted)">${x.vir.pct.toLocaleString('sl-SI')} %</span>
-            ${x.vir.voda?'':etZnacka(x.vir.pct)}</span>
+          <span style="display:flex;align-items:center;flex-wrap:wrap">${htmlEsc(x.vir.ime)}
+            <span style="color:var(--muted);margin:0 .3rem">${x.vir.pct.toLocaleString('sl-SI')} %</span>
+            ${x.vir.voda?'':etZnacka(x.vir.pct)}${mesIzkljuciGumb(x.vir)}</span>
           <span style="text-align:right"><strong>${kgVG(x.kol*etohDensity(x.vir.pct))} g</strong>
             <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
       </div>`:''}
       ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
         ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
-          :`Zliješ ${stev(vliteje)} L, dobiš <strong>${stev(ciljV)} L</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
+          :`Zliješ ${stev(vliteje)} L, dobiš <strong>${ciljOpis}</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
              — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
-        <div>Masa zmesi: <strong>${kgVG(masaZmesi)} g</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>
+        ${mesEnota()==='kg'?'':`<div>Masa zmesi: <strong>${kgVG(masaZmesi)} g</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>`}
         ${kontrola}
+        ${pred.varcno?`<div style="margin-top:.25rem;color:#8b5a2a">Najbolj razredčenega tokrat ne dolivam — z njim
+          ${ciljPct.toLocaleString('sl-SI')} % ne bi šlo, ker bi zmanjkalo etanola nad ciljem. Ostane za takrat,
+          ko bo cilj nižji.</div>`:''}
       </div>`:`<div style="font-size:.68rem;color:var(--danger);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.5">
         ⚠ Z zalogo, ki jo imaš, tega ni mogoče zmešati — zmanjka ${pred.manjka} etanola.
+        ${najvec>0.0005?`<div style="margin-top:.2rem">Največ, kar gre pri ${ciljPct.toLocaleString('sl-SI')} vol %, je
+          <strong>${kgVG(najvecMasa)} g</strong> (${stev(najvec)} L) — manjka ti
+          <strong>${kgVG(masaZmesi-najvecMasa)} g</strong>.</div>`:''}
         ${pred.raba.length?'Zgoraj je toliko, kolikor bi šlo.':''}
+        ${izkljuceni.length?'<div style="margin-top:.2rem">Morda bi šlo z odmišljenimi viri — spodaj jih lahko vrneš.</div>':''}
       </div>`}
     </div>
+    ${mesIzkljuceniHtml(izkljuceni)}
 
     ${prikazane.length?`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
       Druge kombinacije — po dva vira
+    </div>`:pred.ok?`<div style="font-size:.66rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+      Iz samo dveh virov tega ni mogoče zmešati — v nobenem kanistru ni dovolj.
+      Predlog zgoraj zato jemlje iz več kanistrov.
     </div>`:''}
     ${prikazane.map(r=>{
       const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
       const vrstice=r.cisto
         ? [r.vSibkejsi<0.0005?r.mocnejsi:r.sibkejsi].map(v=>({v,kol:ciljV}))
         : [{v:r.mocnejsi,kol:r.vMocnejsi},{v:r.sibkejsi,kol:r.vSibkejsi}];
-      return `<div style="border:1px solid ${r.dovolj?'var(--border)':'rgba(139,58,42,.35)'};border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem;${r.dovolj?'':'background:rgba(139,58,42,.04)'}">
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem">
         <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
           ${vrstice.map(({v,kol})=>`
           <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
@@ -2265,8 +2436,6 @@ function mesanjeIzracun(){
         </div>`}
         ${prihranek>0.0005?`<div style="font-size:.66rem;color:var(--success);margin-top:.15rem">
           Prihraniš ${stev(prihranek)} L močnega etanola v primerjavi z dolivanjem vode.</div>`:''}
-        ${!r.dovolj?`<div style="font-size:.66rem;color:var(--danger);margin-top:.15rem">
-          ⚠ Ni dovolj zaloge${r.mocnejsi.naVoljo<r.vMocnejsi?` — ${htmlEsc(r.mocnejsi.ime)} ima ${stev(r.mocnejsi.naVoljo)} L`:''}${r.sibkejsi.naVoljo<r.vSibkejsi?` — ${htmlEsc(r.sibkejsi.ime)} ima ${stev(r.sibkejsi.naVoljo)} L`:''}.</div>`:''}
       </div>`;
     }).join('')}
     ${pred.ok&&!pred.cisto&&pred.raba.some(x=>x.vir.vrsticaId)?`<button class="bsave" style="width:100%;margin:0 0 .8rem" onclick="potrdiMesanje()">
@@ -2276,7 +2445,7 @@ function mesanjeIzracun(){
     ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
       Pokaži še ${skritih} ${sklon(skritih,MOZNOST)}
     </button>`:''}
-    ${mesVsePrikazane&&resitve.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
+    ${mesVsePrikazane&&izvedljive.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
       Pokaži manj
     </button>`:''}
 
@@ -2805,6 +2974,14 @@ function popisIzracun(){
   const zmesPct=masniPct>0?masToVol(masniPct):0;
   const zmesVol=zmesPct>0?round(masaSk/etohDensity(zmesPct),4):0;
 
+  // Koliko sarz je se v zalogi. Skupni AAE tega ne pove: za 86 % steje samo
+  // etanol, ki je nad to mejo — razredcenega brez destilacije ni mogoce
+  // skoncentrirati, zato je najmocnejsi kanister najdragocenejsi, tudi ce ga je
+  // malo. Racunamo z istim predlogom, ki bo mesanje tudi izpeljal.
+  const sarzaV=etNajvecMozno(SARZA.pct,mesanjeViri());
+  const sarzaMasa=sarzaV*etohDensity(SARZA.pct);
+  const sarz=sarzaMasa/SARZA.kg;
+
   // Primerjamo samo uporabni etanol. Knjiga vodi tisto, kar je v cisterni na
   // voljo za ekstrakcijo; topilo za regeneracijo je iz nje ze odsteto kot
   // izguba, zato bi ga na strani popisa steli dvakrat in razlika bi bila
@@ -2857,6 +3034,14 @@ function popisIzracun(){
         (${masniPct.toFixed(2)} mas %). Volumen je manjši od seštevka, ker se etanol in voda ob mešanju skrčita —
         masa in AAE se ohranita.
       </div>`:''}
+      <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
+        Za šaržo ${SARZA.ime} (${SARZA.kg} kg pri ${String(SARZA.pct).replace('.',',')} %):
+        iz te zaloge največ <strong style="color:${sarz>=1?'var(--success)':'var(--danger)'}">${kgVG(sarzaMasa)} g</strong>
+        <span style="color:var(--muted)">(${sarzaV.toFixed(3)} L)</span> —
+        <strong style="color:${sarz>=1?'var(--success)':'var(--danger)'}">${sarz.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} šarže</strong>${
+          sarz<1?`, manjka ${kgVG(SARZA.kg-sarzaMasa)} g`:''}
+        <div style="color:var(--muted);font-size:.65rem">Mejo postavlja etanol nad ${String(SARZA.pct).replace('.',',')} %, ne skupni AAE — razredčenega brez destilacije ni mogoče skoncentrirati, zato je najmočnejši kanister najdragocenejši, tudi če ga je malo.</div>
+      </div>
       <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
         Popisano za uporabo: <strong>${uporabnoAae.toFixed(4)} L AAE</strong> ·
         v knjigi: <strong>${vKnjigi.toFixed(4)} L AAE</strong><br>

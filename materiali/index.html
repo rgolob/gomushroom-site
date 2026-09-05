@@ -2184,6 +2184,7 @@ async function openMesanjeSheet(){
   popisNalozi();
   mesKontrolaNalozi();
   mesVsePrikazane=false;
+  mesIzkljuceni.clear();   // odmisljeni viri veljajo za en izracun, ne za vedno
   const e=document.getElementById('mesEnota');
   if(e&&settings.mesEnota)e.value=settings.mesEnota;
   const g=document.getElementById('mesSarzaGumb');
@@ -2227,6 +2228,41 @@ function mesanjeViri(){
   return viri;
 }
 
+// Izlocitev vira iz predloga
+// ──────────────────────────
+// Racun ne ve vsega: kanister je lahko zadaj v skladiscu, prihranjen za drugo
+// serijo ali pa ga preprosto noces odpirati. Zato ga lahko odmislis in predlog
+// se preracuna brez njega — vrneš ga z enim klikom. Izlocitev velja samo za ta
+// izracun; zaloge ne spremeni in se ob zaprtju obrazca pozabi.
+let mesIzkljuceni=new Set();
+function mesKljuc(v){return v.voda?'voda':(v.vrsticaId||v.ime);}
+function jsNiz(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+  .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function mesIzkljuci(k){mesIzkljuceni.add(k);mesVsePrikazane=false;mesanjeIzracun();}
+function mesVrni(k){mesIzkljuceni.delete(k);mesanjeIzracun();}
+function mesVrniVse(){mesIzkljuceni.clear();mesanjeIzracun();}
+
+// Gumb ob vrstici predloga: odmisli ta vir.
+function mesIzkljuciGumb(v){
+  return `<button onclick="mesIzkljuci('${jsNiz(mesKljuc(v))}')" title="Brez tega vira"
+    style="flex:0 0 auto;border:1px solid var(--border);background:none;border-radius:5px;
+           padding:.05rem .3rem;margin-left:.3rem;cursor:pointer;color:var(--muted);font-size:.62rem">✕</button>`;
+}
+
+// Kar si odmislil, mora ostati vidno — sicer bi se cez pet minut spraseval,
+// zakaj predlog trmasto obide poln kanister.
+function mesIzkljuceniHtml(izkljuceni){
+  if(!izkljuceni.length)return '';
+  return `<div style="font-size:.66rem;color:var(--muted);line-height:1.9;margin:-.35rem 0 .6rem">
+    Odmišljeno: ${izkljuceni.map(v=>`<button onclick="mesVrni('${jsNiz(mesKljuc(v))}')" title="Vrni med vire"
+      style="border:1px solid var(--border);background:none;border-radius:999px;padding:.1rem .45rem;
+             margin-right:.25rem;cursor:pointer;color:inherit;font-family:inherit;font-size:.66rem">
+      ${htmlEsc(v.ime)}${v.voda?'':` ${v.pct.toLocaleString('sl-SI')} %`} ↩</button>`).join('')}
+    ${izkljuceni.length>1?`<button onclick="mesVrniVse()" style="border:0;background:none;cursor:pointer;
+      color:var(--accent);font-family:inherit;font-size:.66rem;text-decoration:underline">vrni vse</button>`:''}
+  </div>`;
+}
+
 function mesanjeIzracun(){
   const el=document.getElementById('mesIzid');
   if(!el)return;
@@ -2245,9 +2281,16 @@ function mesanjeIzracun(){
          ⚠ Kanistrov ni bilo mogoče prebrati iz baze — prikazana je zadnja kopija iz tega brskalnika.
          Preveri prijavo, preden kaj odšteješ.</div>` : '';
 
-  const viri=mesanjeViri();
-  if(viri.length<2){
+  const vsiViri=mesanjeViri();
+  if(vsiViri.length<2){
     el.innerHTML='<div style="font-size:.72rem;color:var(--danger)">V popisu ni nobenega kanistra — najprej vpiši, kaj imaš.</div>';
+    return;
+  }
+  const viri=vsiViri.filter(v=>!mesIzkljuceni.has(mesKljuc(v)));
+  const izkljuceni=vsiViri.filter(v=>mesIzkljuceni.has(mesKljuc(v)));
+  if(viri.length<2){
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5;margin-bottom:.4rem">
+      Odmislil si preveč virov — za mešanje sta potrebna vsaj dva.</div>${mesIzkljuceniHtml(izkljuceni)}`;
     return;
   }
 
@@ -2264,9 +2307,9 @@ function mesanjeIzracun(){
   }
 
   if(!resitve.length){
-    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5">
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5;margin-bottom:.4rem">
       S temi viri ${ciljPct.toLocaleString('sl-SI')} vol % ni mogoče doseči —
-      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>`;
+      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>${mesIzkljuceniHtml(izkljuceni)}`;
     return;
   }
 
@@ -2337,13 +2380,14 @@ function mesanjeIzracun(){
            <span style="opacity:.8">(steklen alkoholometer bere na kakšno desetinko natančno)</span></div>`;
 
   el.innerHTML=`
-    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">Predlog</div>
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
+      Predlog${izkljuceni.length?` — brez ${izkljuceni.length} ${izkljuceni.length===1?'vira':'virov'}`:''}</div>
     <div style="border:1px solid var(--accent);border-radius:8px;padding:.55rem .65rem;margin-bottom:.7rem;background:rgba(175,132,85,.08)">
       ${pred.raba.length?`<div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;align-items:center">
         ${pred.raba.map(x=>`
-          <span>${htmlEsc(x.vir.ime)}
-            <span style="color:var(--muted)">${x.vir.pct.toLocaleString('sl-SI')} %</span>
-            ${x.vir.voda?'':etZnacka(x.vir.pct)}</span>
+          <span style="display:flex;align-items:center;flex-wrap:wrap">${htmlEsc(x.vir.ime)}
+            <span style="color:var(--muted);margin:0 .3rem">${x.vir.pct.toLocaleString('sl-SI')} %</span>
+            ${x.vir.voda?'':etZnacka(x.vir.pct)}${mesIzkljuciGumb(x.vir)}</span>
           <span style="text-align:right"><strong>${kgVG(x.kol*etohDensity(x.vir.pct))} g</strong>
             <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(x.kol)} L</div></span>`).join('')}
       </div>`:''}
@@ -2362,8 +2406,10 @@ function mesanjeIzracun(){
           <strong>${kgVG(najvecMasa)} g</strong> (${stev(najvec)} L) — manjka ti
           <strong>${kgVG(masaZmesi-najvecMasa)} g</strong>.</div>`:''}
         ${pred.raba.length?'Zgoraj je toliko, kolikor bi šlo.':''}
+        ${izkljuceni.length?'<div style="margin-top:.2rem">Morda bi šlo z odmišljenimi viri — spodaj jih lahko vrneš.</div>':''}
       </div>`}
     </div>
+    ${mesIzkljuceniHtml(izkljuceni)}
 
     ${prikazane.length?`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
       Druge kombinacije — po dva vira

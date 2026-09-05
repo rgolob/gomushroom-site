@@ -1406,6 +1406,15 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           in odčitek se popravi po tabeli OIML R 22. Če polje pustiš prazno, se vzame 20 °C.
         </div>
       </div>
+      <!-- Kanistri so enega tipa, zato tara enkrat namesto pri vsaki vrstici.
+           Ko kaksnega stehtas praznega, mu taro popravis kar na njegovi vrstici. -->
+      <div class="frow" style="align-items:flex-end;margin-bottom:.7rem">
+        <div class="field"><label>Privzeta tara — prazen kanister (g)</label>
+          <input id="popisPrivzetaTara" type="text" inputmode="decimal" placeholder="npr. 500"
+            oninput="popisPrivzetoTaroShrani(this.value)"></div>
+        <div class="field" style="flex:0 0 auto">
+          <button class="bcancel" style="white-space:nowrap" onclick="popisTaroNaVse()">Uporabi za vse brez tare</button></div>
+      </div>
       <div id="popisVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .45rem" onclick="popisDodaj()">+ Dodaj kanister</button>
       <button class="bcancel" style="width:100%;margin:0 0 .7rem;color:#8b5a2a;border-color:rgba(139,90,42,.35)" onclick="regeneriraj()">♻️ Regeneriral sem — izprazni kanistre za regeneracijo</button>
@@ -2295,7 +2304,7 @@ const POPIS_KLJUC='gm_popis_etanola';
 let popisVrstice=[];
 let popisSinkNapaka='';
 
-function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:'',tara:''};}
+function popisPrazna(){return {id:uid(),opis:'',masa:'',pct:'',temp:'',tara:popisPrivzetaTara()};}
 
 // Vse tehtnice v delavnici kazejo grame, zato se mase vpisujejo v gramih —
 // prepises, kar vidis na zaslonu, brez pretvarjanja. Decimalna vejica je
@@ -2499,6 +2508,22 @@ function popisSprememba(i,polje,vrednost){
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
 }
 
+// Privzeta tara velja za nove vrstice; posamezen kanister jo lahko povozi.
+function popisPrivzetaTara(){return String(settings.taraKanistra||'');}
+function popisPrivzetoTaroShrani(v){
+  settings.taraKanistra=String(v||'').trim();
+  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
+}
+function popisTaroNaVse(){
+  const t=popisPrivzetaTara();
+  if(!(parseNum(t)>0)){toast('Najprej vpiši privzeto taro');return;}
+  const brez=popisVrstice.filter(v=>!String(v.tara||'').trim());
+  if(!brez.length){toast('Vsi kanistri že imajo taro');return;}
+  brez.forEach(v=>{v.tara=t;popisVBazo(v);});
+  popisVLokalno();popisIzrisi();
+  toast(`✓ Tara ${t} g dodana ${brez.length} ${sklon(brez.length,KANISTER_TOZ)}`);
+}
+
 // Bruto s tehtnice minus tara je neto. Bruto ne shranjujemo — je samo vhod.
 function popisBruto(i,vrednost){
   const v=popisVrstice[i];
@@ -2556,6 +2581,8 @@ function popisVrstica(v){
 function popisIzrisi(){
   const el=document.getElementById('popisVrstice');
   if(!el)return;
+  const pt=document.getElementById('popisPrivzetaTara');
+  if(pt&&document.activeElement!==pt)pt.value=popisPrivzetaTara();
   el.innerHTML=popisVrstice.map((v,i)=>`
     <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">

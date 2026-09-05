@@ -1955,8 +1955,94 @@ function etPredlogMesanja(ciljV,ciljPct,viri){
   return {ok:false,raba,manjka:'rešitve'};
 }
 
+let mesVsePrikazane=false;
+function mesanjeVec(){mesVsePrikazane=true;mesanjeIzracun();}
+function mesanjeManj(){mesVsePrikazane=false;mesanjeIzracun();}
+
+// ── Kontrola po mesanju ────────────────────────────────────────────────────
+// Zmes stehtas in izmeris. Iz mase in prave jakosti dobimo volumen in AAE,
+// nato primerjamo s tem, kar si hotel. Nic se ne knjizi.
+const MES_KLJUC='gm_mesanje_kontrola';
+let mesKontrola={masa:'',pct:'',temp:''};
+function mesKontrolaNalozi(){
+  try{const s=localStorage.getItem(MES_KLJUC);if(s)mesKontrola={...mesKontrola,...JSON.parse(s)};}
+  catch(e){}
+}
+function mesKontrolaSprememba(polje,vrednost){
+  mesKontrola[polje]=vrednost;
+  try{localStorage.setItem(MES_KLJUC,JSON.stringify(mesKontrola));}catch(e){}
+  mesanjeIzracun();
+}
+
+function mesanjeKontrolaHtml(ciljV,ciljPct){
+  const val=v=>String(v||'').replace(/"/g,'&quot;');
+  const masa=parseNum(mesKontrola.masa);
+  const odcitek=parseNum(mesKontrola.pct);
+
+  let izid='';
+  if(masa>0&&odcitek>0&&odcitek<=100){
+    const tVpis=String(mesKontrola.temp||'').trim();
+    let t=20,slabaT=false;
+    if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))t=b;else slabaT=true;}
+    const prava=slabaT?null:(Math.abs(t-20)<=0.05?odcitek:oimlPravaVolPct(odcitek,t));
+    if(prava===null){
+      izid=`<div style="font-size:.7rem;color:var(--danger);margin-top:.5rem">
+        ${slabaT?'Temperature ne razumem.':'Temperatura mora biti med −20 in 40 °C.'}</div>`;
+    }else{
+      const gostota=etohDensity(prava);
+      const volumen=round(masa/gostota,4);
+      const aae=round(volumen*prava/100,4);
+      const dV=round(volumen-ciljV,4);
+      const dPct=round(prava-ciljPct,2);
+      const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
+      const znak=v=>v>=0?'+':'−';
+      const barva=(v,meja)=>Math.abs(v)<=meja?'var(--success)':'var(--danger)';
+      izid=`
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.78rem;margin-top:.55rem;padding-top:.45rem;border-top:1px solid var(--border)">
+          ${Math.abs(t-20)>0.05&&!slabaT?`<span style="color:var(--muted)">Odčitek ${st(odcitek,2)} % pri ${t.toLocaleString('sl-SI')} °C</span>
+          <span style="text-align:right;color:#5a3a6b;font-weight:600">${st(prava,2)} vol % pri 20 °C</span>`:''}
+          <span>Dejanska jakost</span>
+          <span style="text-align:right;font-weight:700">${st(prava,2)} vol %</span>
+          <span style="color:var(--muted)">Odstopanje od ${ciljPct.toLocaleString('sl-SI')} %</span>
+          <span style="text-align:right;font-weight:600;color:${barva(dPct,0.5)}">${znak(dPct)}${st(Math.abs(dPct),2)} vol %</span>
+          <span>Volumen</span>
+          <span style="text-align:right;font-weight:700">${st(volumen)} L</span>
+          <span style="color:var(--muted)">Odstopanje od ${st(ciljV)} L</span>
+          <span style="text-align:right;font-weight:600;color:${barva(dV,0.02)}">${znak(dV)}${st(Math.abs(dV))} L</span>
+          <span style="color:var(--accent)">Absolutni etanol</span>
+          <span style="text-align:right;font-weight:700;color:var(--accent)">${st(aae,4)} L AAE</span>
+        </div>`;
+    }
+  }
+
+  return `
+    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
+      Ko zmešaš — kontrola
+    </div>
+    <div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem">
+      <div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.45rem">
+        Stehtaj zmes in jo izmeri. Iz mase in prave jakosti dobiš volumen in AAE
+        ter vidiš, koliko si zgrešil.
+      </div>
+      <div class="frow">
+        <div class="field"><label>Končna masa (kg)</label>
+          <input value="${val(mesKontrola.masa)}" type="text" inputmode="decimal" placeholder="npr. 3,542"
+            oninput="mesKontrolaSprememba('masa',this.value)"></div>
+        <div class="field"><label>Odčitek (vol %)</label>
+          <input value="${val(mesKontrola.pct)}" type="text" inputmode="decimal" placeholder="npr. 72,1"
+            oninput="mesKontrolaSprememba('pct',this.value)"></div>
+        <div class="field"><label>Temp. (°C)</label>
+          <input value="${val(mesKontrola.temp)}" type="text" inputmode="decimal" placeholder="20"
+            oninput="mesKontrolaSprememba('temp',this.value)"></div>
+      </div>
+      ${izid}
+    </div>`;
+}
+
 function openMesanjeSheet(){
   popisNalozi();
+  mesKontrolaNalozi();
+  mesVsePrikazane=false;
   mesanjeIzracun();
   openSheet('mesanjeOverlay');
 }
@@ -1983,6 +2069,7 @@ function mesanjeIzracun(){
     el.innerHTML='<div style="font-size:.72rem;color:var(--muted)">Vpiši želeni volumen in jakost…</div>';
     return;
   }
+  // Vsi izpisi nizje uporabljajo cilj, zato je ta pogoj nad njimi.
 
   const viri=mesanjeViri();
   if(viri.length<2){
@@ -2035,6 +2122,11 @@ function mesanjeIzracun(){
   // Predlog: porabi najbolj razredceno in najsibkejsega uporabnega, po potrebi
   // cez vec virov. To je obicajno tisto, kar hoces — pari spodaj so za primer,
   // ko hoces tocno doloceno kombinacijo.
+  // Predlog steje kot prva moznost, zato spodaj privzeto se dve — skupaj tri.
+  // Ves seznam je bil predolg in je pokopal tisto, kar naj bi bilo v ospredju.
+  const prikazane=mesVsePrikazane?resitve:resitve.slice(0,2);
+  const skritih=mesVsePrikazane?0:Math.max(0,resitve.length-prikazane.length);
+
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
   // Masa se pri mesanju ohrani, zato je masa zmesi kar masa cilja.
@@ -2077,10 +2169,10 @@ function mesanjeIzracun(){
       </div>`}
     </div>
 
-    <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
+    ${prikazane.length?`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
       Druge kombinacije — po dva vira
-    </div>
-    ${resitve.map(r=>{
+    </div>`:''}
+    ${prikazane.map(r=>{
       const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
       const vrstice=r.cisto
         ? [r.vSibkejsi<0.0005?r.mocnejsi:r.sibkejsi].map(v=>({v,kol:ciljV}))
@@ -2103,10 +2195,19 @@ function mesanjeIzracun(){
           ⚠ Ni dovolj zaloge${r.mocnejsi.naVoljo<r.vMocnejsi?` — ${htmlEsc(r.mocnejsi.ime)} ima ${stev(r.mocnejsi.naVoljo)} L`:''}${r.sibkejsi.naVoljo<r.vSibkejsi?` — ${htmlEsc(r.sibkejsi.ime)} ima ${stev(r.sibkejsi.naVoljo)} L`:''}.</div>`:''}
       </div>`;
     }).join('')}
-    <div style="font-size:.65rem;color:var(--muted);line-height:1.5">
+    ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
+      Pokaži še ${skritih} ${skritih===1?'možnost':skritih===2?'možnosti':'možnosti'}
+    </button>`:''}
+    ${mesVsePrikazane&&resitve.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
+      Pokaži manj
+    </button>`:''}
+
+    <div style="font-size:.65rem;color:var(--muted);line-height:1.5;margin-bottom:.8rem">
       Računano po masi etanola in vode, ki se pri mešanju ohranita — zato je
       volumen zmesi manjši od vsote vlitega, jakost pa točna.
-    </div>`;
+    </div>
+
+    ${mesanjeKontrolaHtml(ciljV,ciljPct)}`;
 }
 
 // ── POPIS ETANOLA ──────────────────────────────────────────────────────────

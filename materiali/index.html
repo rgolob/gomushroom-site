@@ -2328,13 +2328,32 @@ function popisNalozi(){popisIzLokalnega();}
 async function popisNaloziIzBaze(){
   try{
     const r=await sbFetch('gm_etanol_zaloga','select=*&order=odcitek.desc');
-    popisVrstice=(r||[]).map(x=>({
+    const izBaze=(r||[]).map(x=>({
       id:x.id,opis:x.oznaka||'',
       masa:x.masa==null?'':String(x.masa).replace('.',','),
       pct:x.odcitek==null?'':String(x.odcitek).replace('.',','),
       temp:x.temperatura==null?'':String(x.temperatura).replace('.',','),
     }));
-    if(!popisVrstice.length)popisVrstice=[popisPrazna()];
+
+    // Prvic po vpeljavi tabele je ta prazna, lokalno pa ze imas popisane
+    // kanistre. Brez tega bi jih prazna baza povozila in popis bi izginil —
+    // zato jih ob prvem branju preselimo v bazo namesto obratno.
+    if(!izBaze.length){
+      const lokalni=popisVrstice.filter(popisJePolna);
+      if(lokalni.length){
+        for(const v of lokalni)await popisVBazo(v);
+        popisSinkNapaka='';
+        popisVLokalno();
+        toast(`↑ ${lokalni.length} ${sklon(lokalni.length,KANISTER_TOZ)} preseljenih v bazo`);
+        return;
+      }
+      popisVrstice=[popisPrazna()];
+      popisSinkNapaka='';
+      popisVLokalno();
+      return;
+    }
+
+    popisVrstice=izBaze;
     popisSinkNapaka='';
     popisVLokalno();
   }catch(e){

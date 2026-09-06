@@ -1434,7 +1434,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div id="kanistriVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .7rem" onclick="kanistriDodaj()">+ Dodaj kanister</button>
       <div class="btnrow" style="margin-top:.2rem">
-        <button class="bsave" onclick="closeSheet('kanistriOverlay')">Zapri</button>
+        <button class="bcancel" onclick="closeSheet('kanistriOverlay')">Zapri</button>
+        <button class="bsave" onclick="kanistriShraniVse()">💾 Shrani</button>
+      </div>
+      <div style="font-size:.64rem;color:var(--muted);line-height:1.5;margin:.4rem 0 .2rem">
+        Vpisi se shranjujejo sproti; gumb je za gotovost — pove, koliko jih je
+        šlo v bazo, in če kaj ni, tudi zakaj.
       </div>
     </div>
   </div>
@@ -2792,13 +2797,24 @@ async function popisNaloziIzBaze(){
       return;
     }
 
-    popisVrstice=izBaze;
+    // Vrstica, ki je v bazi se ni (zacel si jo vpisovati in ji se nisi dal
+    // jakosti, zato se ni sla gor), je samo tukaj — branje iz baze je ne sme
+    // povoziti. Prazne predloge ne obdrzimo, sicer bi se kopicile.
+    const vBazi=new Set(izBaze.map(v=>v.id));
+    const samoLokalne=popisVrstice.filter(v=>!vBazi.has(v.id)&&popisNekajVpisano(v));
+    popisVrstice=izBaze.concat(samoLokalne);
     popisSinkNapaka='';
     popisVLokalno();
   }catch(e){
     popisSinkNapaka=e.message||'napaka';
     console.warn('popisNaloziIzBaze',e);
   }
+}
+
+// Je v vrstici sploh kaj vpisanega? Prazna predloga ni vredna ohranjanja.
+function popisNekajVpisano(v){
+  return ['opis','masa','pct','temp','bruto','kanister']
+    .some(p=>String(v[p]||'').trim()!=='');
 }
 
 function popisVLokalno(){
@@ -2971,14 +2987,18 @@ async function kanistriNaloziIzBaze(){
       tara:x.tara==null?'':kgVG(x.tara),
       tip:x.tip||'',stehtana:!!x.stehtana,opomba:x.opomba||'',
     }));
-    // Prvic je baza prazna, lokalno pa so morda ze vpisani — takrat jih
-    // preselimo, ne povozimo (isto nacelo kot pri popisu).
-    if(!izBaze.length&&kanistri.length){
-      for(const k of kanistri)await kanistriVBazo(k);
-      kanistriSinkNapaka='';
-      return;
-    }
-    kanistri=izBaze;kanistriSinkNapaka='';kanistriVLokalno();
+    // Kar je v tem brskalniku in ga v bazi se ni, se ne sme izgubiti. Dokler
+    // zapis ni sel skozi — nov kanister, izpad omrezja, zamik pri shranjevanju
+    // — je edini izvod tukaj. Zato ga obdrzimo in posljemo gor, ne obratno.
+    // Prej je branje iz baze seznam preprosto zamenjalo in kaksen nov kanister
+    // je izginil.
+    const vBazi=new Set(izBaze.map(k=>k.id));
+    const samoLokalni=kanistri.filter(k=>!vBazi.has(k.id));
+    kanistri=izBaze.concat(samoLokalni)
+      .sort((a,b)=>String(a.oznaka||'').localeCompare(String(b.oznaka||''),'sl'));
+    kanistriSinkNapaka='';
+    kanistriVLokalno();
+    for(const k of samoLokalni)await kanistriVBazo(k);
   }catch(e){
     kanistriSinkNapaka=e.message||'napaka';
     console.warn('kanistriNaloziIzBaze',e);
@@ -3038,11 +3058,12 @@ async function odpriPopisNaKanistru(kanisterId){
 
 async function openKanistriSheet(){
   kanistriIzLokalnega();
-  if(!kanistri.length)kanistriDodajTiho();
   kanistriIzrisi();
   openSheet('kanistriOverlay');
   await kanistriNaloziIzBaze();
-  if(!kanistri.length)kanistriDodajTiho();
+  // Prazno vrstico ponudimo sele, ko vemo, da je register res prazen. Prej je
+  // nastala ze pred branjem iz baze in se je podvojila s pravim K1 iz nje.
+  if(!kanistri.length){kanistriDodajTiho();kanistriVLokalno();}
   kanistriIzrisi();
 }
 
@@ -3054,7 +3075,30 @@ function kanistriDodajTiho(){
   kanistri.push({id:uid(),oznaka:`K${st}`,tip:'10l',stehtana:false,
                  tara:t&&t.tara!=null?String(t.tara):''});
 }
-function kanistriDodaj(){kanistriDodajTiho();kanistriVLokalno();kanistriIzrisi();}
+// Nov kanister gre v bazo takoj, ne sele ob prvem popravku — sicer bi zivel
+// samo v tem brskalniku, dokler se ga ne dotaknes.
+function kanistriDodaj(){
+  kanistriDodajTiho();
+  kanistriVLokalno();kanistriIzrisi();
+  kanistriVBazo(kanistri[kanistri.length-1]);
+}
+
+// Izrecno shranjevanje. Vpisi se sicer shranjujejo sproti, a ko vnasas vec
+// kanistrov zapored, hoces videti, da je slo — in ce ni, zakaj ne.
+async function kanistriShraniVse(){
+  const zaShranit=kanistri.filter(k=>String(k.oznaka||'').trim());
+  const brezOznake=kanistri.length-zaShranit.length;
+  kanistriVLokalno();
+  kanistriSinkNapaka='';
+  for(const k of zaShranit)await kanistriVBazo(k);
+  kanistriIzrisi();
+  if(kanistriSinkNapaka){
+    toast('⚠ Shranjeno v brskalnik; v bazo ni šlo — '+String(kanistriSinkNapaka).slice(0,60));
+    return;
+  }
+  toast(`✓ Shranjeno: ${zaShranit.length} ${sklon(zaShranit.length,KANISTER_TOZ)}`+
+        (brezOznake?` · ${brezOznake} brez oznake ni shranjenih`:''));
+}
 
 let _kanistriCakalnik=null;
 function kanistriSprememba(i,polje,vrednost){

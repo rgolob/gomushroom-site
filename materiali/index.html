@@ -3165,6 +3165,30 @@ function kanistriVBazo(k){
   }).catch(e=>{kanistriSinkNapaka=e.message||'napaka';console.warn('kanistriVBazo',e);});
 }
 
+// Etanol, ki je zapustil kanistre, a v knjigi se ni odpisan: odprti in
+// nezaknjizeni delovni nalogi ter poskusi. Prav ta je razlog, da knjiga kaze
+// vec od popisa — zato ga nastejemo namesto da bi razliko samo prikazali.
+function etNeknjizeno(){
+  const kosi=[];
+  (typeof workOrders!=='undefined'?workOrders:[]).forEach(d=>{
+    const aae=Number(d.lAAE||0);
+    if(!(aae>0))return;
+    const knjizen=(typeof etanolKnjiga!=='undefined'?etanolKnjiga:[])
+      .some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
+    if(knjizen)return;
+    kosi.push({kaj:d.oznaka||'Delovni nalog',
+               opis:(d.namen||d.vrstaGobe||'').trim(),aae,
+               status:d.status==='odprt'?'odprt':'ni knjižen'});
+  });
+  (typeof rdNalogi!=='undefined'?rdNalogi:[]).forEach(r=>{
+    const aae=Number(r.lAAE||0);
+    if(!(aae>0)||r.etanolKnjizen)return;
+    kosi.push({kaj:r.oznaka||'R&D',opis:(r.naziv||'').trim(),aae,
+               status:r.status==='odprt'?'odprt':'ni knjižen'});
+  });
+  return kosi.sort((a,b)=>b.aae-a.aae);
+}
+
 // Ime vrstice je oznaka kanistra iz registra, kadar je ta izbran — tako se
 // preimenovanje v registru pozna povsod in ime ne more zastareti. Prosto
 // besedilo ob njem je opomba (npr. "razredcen"), ne ime.
@@ -3454,6 +3478,16 @@ function popisIzracun(){
   // preohlapna — zato zadosca, da je izpolnjena katerakoli.
   const razlikaVRedu=Math.abs(razlika)<=0.05||(razlikaPct!==null&&Math.abs(razlikaPct)<=0.5);
 
+  // Kje je razlika
+  // ──────────────
+  // Knjiga odpise etanol sele, ko nalog knjizis. Med tem je ta etanol ze zunaj
+  // kanistrov — v maceraciji ali v poskusu — zato knjiga kaze vec od popisa.
+  // To ni napaka, ampak spisek: dokler nalogi niso knjizeni, mora razlika
+  // ustrezati njihovi vsoti, kar ostane, pa je zares nepojasnjeno.
+  const neknjizeno=etNeknjizeno();
+  const neknjizenoAae=round(neknjizeno.reduce((s,x)=>s+x.aae,0),4);
+  const nepojasnjeno=round(razlika+neknjizenoAae,4);
+
   // Popis je star toliko kot njegov najstarejsi vpis: en sveze stehtan kanister
   // ne pomeni, da so ostali se resnicni.
   const zigi=popisVrstice.filter(popisJePolna).map(v=>v.posodobljeno).filter(Boolean);
@@ -3505,6 +3539,26 @@ function popisIzracun(){
           razlikaPct===null?'':` · <strong style="color:${barvaRazlike}">${razlikaPct>=0?'+':''}${razlikaPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>`}
         <div style="color:var(--muted);font-size:.65rem">${skup.regeneracija.n?`Etanol za regeneracijo (${skup.regeneracija.aae.toFixed(4)} L AAE) v primerjavo ne šteje — knjiga ga je odpisala že ob porabi. `:''}Popis se nikamor ne knjiži — če razlika ni sprejemljiva, jo uredi z vnosom v knjigo etanola.</div>
       </div>
+      ${neknjizeno.length?`<div style="font-size:.68rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
+        <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.25rem">
+          Kje je razlika — etanol zunaj kanistrov
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem">
+          ${neknjizeno.map(x=>`
+            <span>${htmlEsc(x.kaj)}${x.opis?` <span style="color:var(--muted)">· ${htmlEsc(x.opis)}</span>`:''}
+              <span style="color:var(--muted);font-size:.62rem">(${x.status})</span></span>
+            <span style="text-align:right;font-variant-numeric:tabular-nums">${x.aae.toFixed(4)} L AAE</span>`).join('')}
+          <span style="padding-top:.2rem;border-top:1px solid rgba(175,132,85,.3)">Skupaj neknjiženo</span>
+          <span style="text-align:right;font-weight:700;padding-top:.2rem;border-top:1px solid rgba(175,132,85,.3);font-variant-numeric:tabular-nums">${neknjizenoAae.toFixed(4)} L AAE</span>
+          <span>Nepojasnjeno</span>
+          <span style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:${
+            Math.abs(nepojasnjeno)<=0.05?'var(--success)':'var(--danger)'}">${nepojasnjeno>=0?'+':''}${nepojasnjeno.toFixed(4)} L AAE</span>
+        </div>
+        <div style="color:var(--muted);font-size:.65rem;margin-top:.25rem">
+          Ti nalogi so etanol že vzeli iz kanistrov, knjiga pa ga odpiše šele ob knjiženju —
+          zato kaže več od popisa. Ko jih zaključiš in knjižiš, razlika izgine.
+        </div>
+      </div>`:''}
     </div>`;
 }
 

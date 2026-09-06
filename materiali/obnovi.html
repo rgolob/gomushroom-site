@@ -198,6 +198,9 @@ function rdToSb(r){return{
   masa_surovine:r.masaS||null,masa_etoh:r.masaEtOH||null,
   pct_etoh:r.pctEtOH||null,vol_etoh:r.volEtOH||null,l_aae:r.lAAE||null,
   izgube:r.izgube||null,opazanja:r.opazanja||null,
+  namen:r.namen||null,zakljucki:r.zakljucki||null,
+  masa_produkt:r.masaProdukt||null,pct_produkt:r.pctProdukt||null,
+  aae_produkt:r.aaeProdukt||null,aae_izgube:r.aaeIzgube||null,
   status:r.status||'odprt',datum_zakljucka:r.datumZakljucka||null,
   etanol_knjizen:r.etanolKnjizen||false,ustvarjen:r.ustvarjen||null
 };}
@@ -207,6 +210,9 @@ function sbToRd(r){return{
   masaS:r.masa_surovine||0,masaEtOH:r.masa_etoh||0,
   pctEtOH:r.pct_etoh||0,volEtOH:r.vol_etoh||0,lAAE:r.l_aae||0,
   izgube:r.izgube||0,opazanja:r.opazanja||'',
+  namen:r.namen||'',zakljucki:r.zakljucki||'',
+  masaProdukt:r.masa_produkt||0,pctProdukt:r.pct_produkt||0,
+  aaeProdukt:r.aae_produkt||0,aaeIzgube:r.aae_izgube||0,
   status:r.status||'odprt',datumZakljucka:r.datum_zakljucka||null,
   etanolKnjizen:r.etanol_knjizen||false,ustvarjen:r.ustvarjen||null
 };}
@@ -272,8 +278,20 @@ function prazno(v){
   if(typeof v==='object')return Object.keys(v).length===0;
   return false;
 }
+// Isti trenutek, zapisan drugace, ni razlika. Streznik vrne
+// '2026-08-12T10:00:00+00:00', lokalna kopija pa '2026-08-12T10:00:00.000Z' -
+// primerjava po nizu je zato vseh 39 bilancnih dogodkov trajno kazala kot
+// razlicne, tudi takoj po uspesnem prenosu. Svarilo "preveri, preden posljes"
+// je ob tem izgubilo pomen: kricalo je pri vsakem pregledu, zato ga clovek
+// preneha brati prav takrat, ko bi ga moral.
+const CASOVNI=/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}|$)/;
+function casovni(v){return typeof v==='string'&&CASOVNI.test(v);}
 function enaka(a,b){
   if(prazno(a)&&prazno(b))return true;
+  if(casovni(a)&&casovni(b)){
+    const x=Date.parse(a),y=Date.parse(b);
+    if(Number.isFinite(x)&&Number.isFinite(y))return x===y;
+  }
   if(typeof a==='number'||typeof b==='number'){
     const x=Number(a),y=Number(b);
     if(Number.isFinite(x)&&Number.isFinite(y))return Math.abs(x-y)<1e-9;

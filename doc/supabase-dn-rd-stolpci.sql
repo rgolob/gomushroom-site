@@ -33,12 +33,28 @@ alter table gm_dn_rd
 comment on column gm_dn_rd.etanol_knjizen is
   'true = poraba etanola za ta poskus je ze knjizena v knjigi etanola.';
 
+-- ── Zapis poskusa in razclenitev etanola ───────────────────────────────────
+-- Poskus etanola ne pokuri: vecina ga ostane v produktu. Do zdaj je nalog
+-- poznal samo porabo, zato je vsak poskus izgledal kot cista izguba.
+alter table gm_dn_rd
+  add column if not exists namen        text,
+  add column if not exists zakljucki    text,
+  add column if not exists masa_produkt numeric,
+  add column if not exists pct_produkt  numeric,
+  add column if not exists aae_produkt  numeric,
+  add column if not exists aae_izgube   numeric;
+
+comment on column gm_dn_rd.aae_produkt is
+  'L AAE, ki so ostali v produktu. Trosarinsko je poraba se vedno cela (l_aae).';
+comment on column gm_dn_rd.aae_izgube is
+  'L AAE, ki jih produkt ne nosi: l_aae - aae_produkt.';
+
 -- PostgREST drzi shemo v predpomnilniku; brez tega bi novi stolpci prijeli
 -- sele cez kaksno minuto.
 notify pgrst, 'reload schema';
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
--- Vrniti mora 17 vrstic (16 zgornjih + id).
+-- Vrniti mora 23 vrstic (16 + 6 spodnjih + id).
 select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_dn_rd'

@@ -7482,6 +7482,7 @@ function clearAll(){
   localStorage.removeItem('gm_dn_materiali');
   localStorage.removeItem('gm_dn_oprema');
   localStorage.removeItem('gm_dn_rd');
+  nesink={};nesinkShrani();
   save();
   renderDNStats();renderDN();renderEtStats();renderEtanol();if(currentTab==='rd')renderRD();
   toast('Vsi podatki izbrisani');
@@ -10949,6 +10950,9 @@ async function sbUpsert(tbl,data){
   if(!r.ok){const t=await r.text();throw new Error(`${tbl}:${t}`);}
 }
 async function sbDel(tbl,id){
+  // Zapis izginja namerno: oznaka "se ni sinhroniziran" ga ne sme vec varovati,
+  // sicer bi ga naslednje branje iz baze vrnilo nazaj.
+  nesinkOdstrani(tbl,id);
   const r=await fetch(`${SB_URL}/rest/v1/${tbl}?id=eq.${id}`,{method:'DELETE',headers:SB_HDR});
   if(!r.ok)throw new Error(`${tbl}:${r.status}`);
 }
@@ -11179,6 +11183,74 @@ function pokaziSinkNapako(){
   alert(`Sinhronizacija ni uspela\n\nKje: ${n.kaj}\nOb: ${ura}\n\n${n.sporocilo}`
     +`\n\nPodatki so shranjeni lokalno in se bodo poslali ob naslednjem uspesnem zapisu.`);
 }
+
+// ── ZAPISI, KI NA STREZNIK SE NISO PRISLI ───────────────────────────────────
+// Zapis, ki ga Supabase ni sprejel (manjkajoc stolpec, prekinjena povezava),
+// obstaja samo v tem brskalniku. loadFromSB je do zdaj pomnilnik preprosto
+// zamenjal s strezniskim stanjem — in tak zapis je izginil z edinega mesta, kjer
+// je bil; naslednji save() ga je pobrisal se iz localStorage. Tako so izginili
+// R&D nalogi, ko je gm_dn_rd.etanol_knjizen manjkal in je vsak sbPushRD tiho
+// padel.
+//
+// Zato si zapomnimo, kateri zapisi na streznik (se) niso prisli, in samo te ob
+// branju obdrzimo. Vsega, kar je lokalno in ni na strezniku, ne smemo obdrzati:
+// to bi ozivljalo zapise, ki jih je druga naprava namenoma izbrisala.
+const NESINK_KLJUC='gm_nesink';
+let nesink={};
+try{const v=JSON.parse(localStorage.getItem(NESINK_KLJUC)||'{}');if(v&&typeof v==='object')nesink=v;}
+catch(e){nesink={};}
+function nesinkShrani(){try{localStorage.setItem(NESINK_KLJUC,JSON.stringify(nesink));}catch(e){}}
+function nesinkDodaj(tabela,id){
+  if(!tabela||!id)return;
+  (nesink[tabela]=nesink[tabela]||{})[id]=new Date().toISOString();
+  nesinkShrani();
+}
+function nesinkOdstrani(tabela,id){
+  if(!tabela||!id||!nesink[tabela]||!(id in nesink[tabela]))return;
+  delete nesink[tabela][id];
+  if(!Object.keys(nesink[tabela]).length)delete nesink[tabela];
+  nesinkShrani();
+}
+function nesinkIma(tabela,id){return !!(nesink[tabela]&&nesink[tabela][id]);}
+function nesinkSteje(){
+  return Object.values(nesink).reduce((s,m)=>s+Object.keys(m||{}).length,0);
+}
+// Streznisko stanje je merodajno, dodamo pa zapise, ki nanj se niso prisli.
+function zdruziSStreznikom(tabela,strezniski,lokalni){
+  if(!Array.isArray(lokalni)||!lokalni.length)return strezniski;
+  const naStrezniku=new Set(strezniski.map(z=>z&&z.id));
+  const zadrzani=lokalni.filter(z=>z&&z.id&&!naStrezniku.has(z.id)&&nesinkIma(tabela,z.id));
+  if(!zadrzani.length)return strezniski;
+  console.warn(`loadFromSB: ${tabela} — ${zadrzani.length} zapisov je samo lokalnih, obdrzim jih`,
+               zadrzani.map(z=>z.id));
+  return strezniski.concat(zadrzani);
+}
+// Ko je vzrok odpravljen (npr. pognan SQL z manjkajocim stolpcem), naj gredo
+// cakajoci zapisi gor sami — brez tega bi cakali na to, da se jih uporabnik
+// spomni odpreti in shraniti.
+const NESINK_NAJVEC=60;
+async function nesinkPoskusiZnova(){
+  const skupine=[
+    ['gm_dn_work_orders',workOrders,sbPushDN],
+    ['gm_dn_etanol',etanolKnjiga,sbPushEt],
+    ['gm_dn_materiali',materiali,sbPushMat],
+    ['gm_dn_oprema',oprema,sbPushOp],
+    ['gm_dn_rd',rdNalogi,sbPushRD],
+    ['gm_dn_bilanca',bilancaDogodki,sbPushBilanca],
+  ];
+  let poslano=0,poskusov=0;
+  for(const [tabela,seznam,posiljatelj] of skupine){
+    for(const id of Object.keys(nesink[tabela]||{})){
+      if(poskusov++>=NESINK_NAJVEC)return poslano;
+      const zapis=(seznam||[]).find(z=>z&&z.id===id);
+      // Zapisa ni vec nikjer — oznaka nima vec cesa varovati.
+      if(!zapis){nesinkOdstrani(tabela,id);continue;}
+      try{await posiljatelj(zapis);}catch(e){console.warn('nesinkPoskusiZnova',tabela,id,e);}
+      if(!nesinkIma(tabela,id))poslano++;
+    }
+  }
+  return poslano;
+}
 // Ce v bazi manjka kaksen novejsi stolpec, zapis vseeno sinhroniziramo brez
 // njega - sicer bi tiho odpovedala sinhronizacija celega zapisa. Ime stolpca
 // preberemo iz napake, da seznama ni treba vzdrzevati ob vsakem novem polju.
@@ -11204,18 +11276,20 @@ async function sbPushZapis(tabela,zapis,oznaka){
           toast(`⚠ V Supabase manjka stolpec ${tabela}.${izpusceni.join(' / ')} — ta podatek se ne sinhronizira`);
         }
       }
+      nesinkOdstrani(tabela,zapis.id);
       return true;
     }catch(e){
       const sporocilo=String(e.message||'');
       const manjka=/PGRST204|Could not find the/i.test(sporocilo)
         ?[...sporocilo.matchAll(/'([a-z_]+)'/g)].map(m=>m[1]).filter(k=>k in telo)
         :[];
-      if(!manjka.length){sinkNapaka(oznaka,e);return false;}
+      if(!manjka.length){sinkNapaka(oznaka,e);nesinkDodaj(tabela,zapis.id);return false;}
       manjka.forEach(k=>{delete telo[k];izpusceni.push(k);});
       console.warn(`${oznaka}: v ${tabela} ni stolpca ${manjka.join(', ')} — poskus brez njega`);
     }
   }
   sinkNapaka(oznaka,new Error(`Preveč manjkajočih stolpcev v ${tabela}: ${izpusceni.join(', ')}`));
+  nesinkDodaj(tabela,zapis.id);
   return false;
 }
 async function sbPushDN(d){await sbPushZapis('gm_dn_work_orders',dnToSb(d),'sbPushDN');}
@@ -11287,7 +11361,14 @@ async function sbPushRD(r){
     // 'etanol_knjizen' in zapis ni sel skozi. Zdaj velja za vsak stolpec.
     const izpusceni=await sbUpsertProzno('gm_dn_rd',rdToSb(r));
     if(!izpusceni.length)setSyncStatus('✓');
-  }catch(e){sinkNapaka('sbPushRD',e);}
+    nesinkOdstrani('gm_dn_rd',r.id);
+  }catch(e){
+    // Tiha odpoved je bila tu najdrazja: nalog je ostal samo v brskalniku,
+    // naslednje branje iz baze pa ga je povozilo. Zdaj ga oznacimo in povemo.
+    sinkNapaka('sbPushRD',e);
+    nesinkDodaj('gm_dn_rd',r.id);
+    toast('⚠ R&D nalog ni shranjen v bazo — ostaja samo v tem brskalniku');
+  }
 }
 // Tabela gm_dn_mat_tipi je nova. Ce je se ni, lastni tipi ostanejo lokalni -
 // vnosi se vseeno shranijo, le ime in enota se na drugi napravi ne pokazeta.
@@ -11355,6 +11436,8 @@ async function migrirajVSupabase(){
       catch(e){console.warn('migracija uporabe opreme',e);toast('⚠ Uporaba opreme ni sinhronizirana — manjka tabela');}
     }
     await sbPushMatTipi();
+    // Vse lokalno je slo gor; nobena od oznak "se ni v bazi" ne velja vec.
+    nesink={};nesinkShrani();
     setSyncStatus('✓');
     toast(`✓ Sinhronizirano: ${lWo.length} DN, ${lEt.length} et, ${lMat.length} mat, ${lOp.length} op, ${lRd.length} R&D, ${lBil.length} bilanca`);
   }catch(e){
@@ -11393,12 +11476,14 @@ async function loadFromSB(){
       matTipi=mtipi.map(t=>({tip:t.id,ime:t.ime,enota:t.enota||'kom',kat:t.kat||'surovina',...(t.kapaciteta?{kapaciteta:t.kapaciteta}:{})}));
       localStorage.setItem('gm_dn_mat_tipi',JSON.stringify(matTipi));
     }
-    workOrders=wos.map(sbToDn);
-    etanolKnjiga=ets.map(sbToEt);
-    materiali=mats.map(sbToMat);
-    oprema=ops.map(sbToOp);
-    if(rds.length)rdNalogi=rds.map(sbToRd);
-    if(bils.length)bilancaDogodki=bils.map(sbToBil);
+    // Zamenjava s strezniskim stanjem, a brez zapisov, ki gor se niso prisli -
+    // ti obstajajo samo tukaj in bi jih prepis izbrisal z edinega mesta.
+    workOrders=zdruziSStreznikom('gm_dn_work_orders',wos.map(sbToDn),workOrders);
+    etanolKnjiga=zdruziSStreznikom('gm_dn_etanol',ets.map(sbToEt),etanolKnjiga);
+    materiali=zdruziSStreznikom('gm_dn_materiali',mats.map(sbToMat),materiali);
+    oprema=zdruziSStreznikom('gm_dn_oprema',ops.map(sbToOp),oprema);
+    if(rds.length)rdNalogi=zdruziSStreznikom('gm_dn_rd',rds.map(sbToRd),rdNalogi);
+    if(bils.length)bilancaDogodki=zdruziSStreznikom('gm_dn_bilanca',bils.map(sbToBil),bilancaDogodki);
     if(opup){
       opremaUporaba=opup.map(sbToOpUp);
       localStorage.setItem('gm_dn_oprema_uporaba',JSON.stringify(opremaUporaba));
@@ -11429,6 +11514,18 @@ async function loadFromSB(){
     if(currentTab==='rd')renderRD();
     if(currentTab==='bilanca')renderBilancaSelect();
     setSyncStatus('✓');
+    // Ce je vzrok medtem odpravljen (npr. pognan SQL z manjkajocim stolpcem),
+    // gredo cakajoci zapisi gor zdaj; kar ostane, mora uporabnik videti.
+    if(nesinkSteje()){
+      const poslano=await nesinkPoskusiZnova();
+      const ostalo=nesinkSteje();
+      if(poslano)toast(`✓ Naknadno shranjeno v bazo: ${poslano} ${sklon(poslano,['zapis','zapisa','zapisi','zapisov'])}`);
+      if(ostalo){
+        sinkNapaka('zapisi samo v tem brskalniku',
+          new Error(`${ostalo} zapisov ni v bazi. Odpri Nastavitve → Obnovi in jih poglej.`));
+        toast(`⚠ Samo v tem brskalniku: ${ostalo} ${sklon(ostalo,['zapis','zapisa','zapisi','zapisov'])}`);
+      }
+    }
   }catch(e){setSyncStatus('⚠ offline');console.error('loadFromSB',e);}
 }
 

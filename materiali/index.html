@@ -2476,37 +2476,58 @@ function mesRabaMasa(x){
 function mesNatehtanoStanje(){
   const pred=_mesZadnjiPredlog;
   if(!pred||!pred.raba.length)return null;
-  let masa=0,etanol=0,spremenjeno=false;
+  let masa=0,etanol=0,vliteje=0,spremenjeno=false;
   pred.raba.forEach(x=>{
     const nacrt=x.kol*etohDensity(x.vir.pct);
     const m=mesRabaMasa(x);
     if(Math.abs(m-nacrt)>1e-6)spremenjeno=true;
     masa+=m;etanol+=m*volToMas(x.vir.pct)/100;
+    vliteje+=m/etohDensity(x.vir.pct);
   });
   if(!(masa>0))return null;
   const volPct=round(masToVol(etanol/masa*100),2);
-  return {masa,volPct,spremenjeno,
+  return {masa,volPct,spremenjeno,vliteje:round(vliteje,4),
           vol:volPct>0?round(masa/etohDensity(volPct),4):0};
 }
 
+// Sproti sesteva, kar si res natehtal, in pove, kaj bi iz tega moralo nastati.
+// Teoreticno — potrditi ga je treba z alkoholometrom, zato je tu tudi odcitek,
+// ki ga mora pokazati. Racuna iz vpisanih mas, tudi kadar so enake nacrtu.
 function mesNatehtanoIzrisi(){
   const el=document.getElementById('mesNatehtanoIzid');
   if(!el)return;
   const s=mesNatehtanoStanje();
-  const {ciljPct}=mesCilj();
-  if(!s||!s.spremenjeno){el.innerHTML='';return;}
+  const {ciljV,ciljPct}=mesCilj();
+  if(!s){el.innerHTML='';return;}
+  const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
   const d=ciljPct>0?round(s.volPct-ciljPct,2):null;
-  const barva=d===null?'var(--muted)':(Math.abs(d)<=0.5?'var(--success)':'var(--danger)');
-  el.innerHTML=`<div style="margin-top:.25rem;padding-top:.25rem;border-top:1px dashed rgba(175,132,85,.4)">
-    Iz natehtanega: <strong>${kgVG(s.masa)} g</strong> pri
-    <strong style="color:${barva}">${s.volPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} vol %</strong>
-    ${d===null?'':`<span style="color:${barva}">(${d>=0?'+':'−'}${Math.abs(d).toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`}
-    · ${s.vol.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3})} L
-    <button onclick="mesNatehtanoPocisti()" style="border:0;background:none;cursor:pointer;color:var(--accent);
-      font-family:inherit;font-size:.64rem;text-decoration:underline;padding:0 .2rem">↺ nazaj na načrt</button>
-    <div style="color:var(--muted);font-size:.64rem">Toliko se bo odštelo iz kanistrov. Po zlitju zmes vseeno izmeri — spodaj.</div>
+  const barva=d===null?'var(--ink)':(Math.abs(d)<=0.1?'var(--success)':(Math.abs(d)<=0.5?'#8b5a2a':'var(--danger)'));
+  const dM=ciljV>0?s.masa-ciljV*etohDensity(ciljPct):null;   // kg, izpise se v gramih
+
+  // Kontrolna temperatura: kaj mora pokazati alkoholometer za TO jakost, ne za
+  // ciljno — meris zmes, ki si jo res naredil.
+  const tVpis=String(document.getElementById('mesTemp')?.value||'').trim();
+  let tK=20,slabaT=false;
+  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))tK=b;else slabaT=true;}
+  const odcitek=slabaT?null:oimlOdcitekPri(s.volPct,tK);
+
+  el.innerHTML=`<div style="margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(175,132,85,.35);line-height:1.6">
+    <div style="font-size:.78rem">Skupaj natehtano: <strong>${kgVG(s.masa)} g</strong>
+      <span style="color:var(--muted)">(${st(s.vol)} L)</span>${
+      dM===null||Math.abs(dM)<0.00005?'':` <span style="color:var(--muted)">${dM>=0?'+':'−'}${kgVG(Math.abs(dM))} g od cilja</span>`}</div>
+    <div style="font-size:.78rem">Teoretična jakost: <strong style="color:${barva}">${st(s.volPct,2)} vol %</strong>${
+      d===null?'':` <span style="color:${barva}">(${d>=0?'+':'−'}${st(Math.abs(d),2)} od cilja)</span>`}</div>
+    <div style="color:var(--muted)">Zliješ ${st(s.vliteje)} L, zmes se skrči za ${st(Math.max(0,s.vliteje-s.vol))} L.</div>
+    ${slabaT?'<div style="color:var(--danger)">Kontrolne temperature ne razumem.</div>'
+      :odcitek===null?'<div style="color:var(--danger)">Kontrolna temperatura mora biti med −20 in 40 °C.</div>'
+      :`<div>Alkoholometer mora pri ${tK.toLocaleString('sl-SI')} °C pokazati
+         <strong>≈ ${st(odcitek,2)} %</strong> — <span style="color:var(--muted)">to je izračun, potrdi ga z meritvijo spodaj.</span></div>`}
+    ${s.spremenjeno?`<div style="color:var(--muted)">Odšteje se natehtano, ne načrt.
+      <button onclick="mesNatehtanoPocisti()" style="border:0;background:none;cursor:pointer;color:var(--accent);
+        font-family:inherit;font-size:.66rem;text-decoration:underline;padding:0 .2rem">↺ nazaj na načrt</button></div>`:''}
   </div>`;
 }
+
 function jsNiz(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
   .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function mesIzkljuci(k){mesIzkljuceni.add(k);mesanjeIzracun();}
@@ -2579,32 +2600,10 @@ function mesanjeIzracun(){
 
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   _mesZadnjiPredlog=pred;
-  const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
-  // Masa se pri mesanju ohrani, zato je masa zmesi kar masa cilja.
+  // Masa cilja — potrebna samo se pri sporocilu, ko cilja ni mogoce doseci.
   const masaZmesi=ciljV*etohDensity(ciljPct);
-  // Kadar si cilj zastavil v kilogramih, ga tako tudi izpisemo — volumen zraven
-  // v oklepaju, ker mesas po masi, kontroliras pa oboje.
-  const ciljOpis=mesEnota()==='kg'
-    ? `${kgVG(masaZmesi)} g <span style="font-weight:400;opacity:.8">(${stev(ciljV)} L)</span>`
-    : `${stev(ciljV)} L`;
-
-  // Ko cilja ni mogoce doseci, je edino uporabno vprasanje, koliko pa bi ga slo.
   const najvec=pred.ok?0:etNajvecMozno(ciljPct,viri);
   const najvecMasa=najvec*etohDensity(ciljPct);
-
-  // Kontrola po mesanju: kaj mora alkoholometer pokazati pri dani temperaturi.
-  const tVpis=String(document.getElementById('mesTemp').value||'').trim();
-  let tKontrola=20,tNeveljavna=false;
-  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));
-    if(isFinite(b))tKontrola=b; else tNeveljavna=true;}
-  const odcitek=tNeveljavna?null:oimlOdcitekPri(ciljPct,tKontrola);
-  const kontrola=tNeveljavna
-    ? '<div style="color:var(--danger)">Kontrolne temperature ne razumem.</div>'
-    : odcitek===null
-      ? '<div style="color:var(--danger)">Kontrolna temperatura mora biti med −20 in 40 °C.</div>'
-      : `<div>Po mešanju mora alkoholometer pri ${tKontrola.toLocaleString('sl-SI')} °C pokazati
-           <strong>≈ ${odcitek.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>
-           <span style="opacity:.8">(steklen alkoholometer bere na kakšno desetinko natančno)</span></div>`;
 
   el.innerHTML=`
     <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
@@ -2629,12 +2628,8 @@ function mesanjeIzracun(){
         }).join('')}
       </div>
       <div id="mesNatehtanoIzid" style="font-size:.68rem;line-height:1.5"></div>`:''}
-      ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
-        ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
-          :`Zliješ ${stev(vliteje)} L, dobiš <strong>${ciljOpis}</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
-             — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
-        ${mesEnota()==='kg'?'':`<div>Masa zmesi: <strong>${kgVG(masaZmesi)} g</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>`}
-        ${kontrola}
+      ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;line-height:1.55">
+        ${pred.cisto?'<div style="padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">Nič ne mešaš — ta kanister je že prave jakosti.</div>':''}
         ${pred.varcno?`<div style="margin-top:.25rem;color:#8b5a2a">Najbolj razredčenega tokrat ne dolivam — z njim
           ${ciljPct.toLocaleString('sl-SI')} % ne bi šlo, ker bi zmanjkalo etanola nad ciljem. Ostane za takrat,
           ko bo cilj nižji.</div>`:''}

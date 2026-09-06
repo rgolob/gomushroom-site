@@ -10860,6 +10860,36 @@ async function sbDel(tbl,id){
   if(!r.ok)throw new Error(`${tbl}:${r.status}`);
 }
 
+// Manjkajoc stolpec ne sme pokopati celega zapisa
+// ───────────────────────────────────────────────
+// Kadar je baza starejsa od aplikacije, PostgREST vrne PGRST204 in poimenuje
+// stolpec, ki ga ne pozna — vendar vedno samo PRVEGA. Zato poskusimo znova brez
+// njega, in tako naprej, dokler zapis ne gre skozi. Bolje zapis brez enega
+// polja kot nic; kar smo izpustili, pa povemo, sicer bi se podatek tiho gubil.
+const _manjkajoci={};
+async function sbUpsertProzno(tbl,vrstica){
+  const podatki={...vrstica};
+  const izpusceni=[];
+  for(let k=0;k<12;k++){
+    try{await sbUpsert(tbl,podatki);break;}
+    catch(e){
+      const m=/Could not find the '([^']+)' column/.exec(e.message||'');
+      if(!m||!(m[1] in podatki)||k===11)throw e;
+      delete podatki[m[1]];izpusceni.push(m[1]);
+    }
+  }
+  if(izpusceni.length){
+    sinkNapaka(`${tbl} — manjkajoči stolpci`,
+      new Error(`V Supabase ni stolpcev: ${izpusceni.join(', ')}. Zapis je shranjen `+
+                'brez njih — zaženi ustrezno dopolnitev iz mape doc.'));
+    if(!_manjkajoci[tbl]){
+      _manjkajoci[tbl]=true;
+      toast(`⚠ ${tbl}: manjka ${izpusceni.join(', ')} — shranjeno brez tega`);
+    }
+  }
+  return izpusceni;
+}
+
 // Converters DN ↔ Supabase
 function dnToSb(d){return{
   id:d.id,oznaka:d.oznaka,je_rd:!!d.jeRd,datum:d.datum||null,namen:d.namen||null,
@@ -11159,25 +11189,12 @@ async function sbPushGly(z){
 }
 
 async function sbPushRD(r){
-  try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');return;}
-  catch(e){
-    // 'oznaka' je nov stolpec. Ce ga v bazi se ni, zapis vseeno sinhroniziramo
-    // brez njega - sicer bi tiho odpovedala sinhronizacija celega R&D naloga.
-    if(/oznaka/i.test(e.message||'')){
-      try{
-        const {oznaka,...brezOznake}=rdToSb(r);
-        await sbUpsert('gm_dn_rd',brezOznake);
-        sinkNapaka('gm_dn_rd — manjkajoc stolpec',
-          new Error('V Supabase ni stolpca oznaka. R&D nalog je shranjen brez nje.'));
-        if(!window._rdOznakaOpozorilo){
-          window._rdOznakaOpozorilo=true;
-          toast('⚠ V Supabase manjka stolpec gm_dn_rd.oznaka — oznake se ne sinhronizirajo');
-        }
-        return;
-      }catch(e2){console.error('sbPushRD (brez oznake)',e2);}
-    }
-    sinkNapaka('sbPushRD',e);
-  }
+  try{
+    // Prej smo lovili samo manjkajoco 'oznako'; enako se je zgodilo z
+    // 'etanol_knjizen' in zapis ni sel skozi. Zdaj velja za vsak stolpec.
+    const izpusceni=await sbUpsertProzno('gm_dn_rd',rdToSb(r));
+    if(!izpusceni.length)setSyncStatus('✓');
+  }catch(e){sinkNapaka('sbPushRD',e);}
 }
 // Tabela gm_dn_mat_tipi je nova. Ce je se ni, lastni tipi ostanejo lokalni -
 // vnosi se vseeno shranijo, le ime in enota se na drugi napravi ne pokazeta.

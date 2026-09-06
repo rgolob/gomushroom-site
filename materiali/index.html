@@ -1202,13 +1202,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Datum</label><input id="rdDatum" type="date"></div>
       </div>
       <div class="field"><label>Naziv eksperimenta</label><input id="rdNaziv" placeholder="npr. UZ ekstrakcija reishi"></div>
-      <div class="frow">
-        <div class="field"><label>Surovina</label><input id="rdSurovina" placeholder="npr. Reishi, smrekovi vrščki…"></div>
-        <div class="field"><label>Serija surovine</label><input id="rdSerijaS" placeholder="npr. R010131" autocapitalize="characters"></div>
-      </div>
-      <div class="field"><label>Masa surovine (g)</label><input id="rdMasaS" type="text" inputmode="decimal" placeholder="0,0"></div>
+
+      <details class="dnsec rdsec" id="rdsecSurovina">
+      <summary>🍄 Surovina <span class="dnsum" id="rdsumSurovina"></span></summary>
+      <div class="dnsec-body">
+        <div class="frow">
+          <div class="field"><label>Surovina</label><input id="rdSurovina" placeholder="npr. Reishi, smrekovi vrščki…" oninput="rdOsveziPovzetke()"></div>
+          <div class="field"><label>Serija surovine</label><input id="rdSerijaS" placeholder="npr. R010131" autocapitalize="characters" oninput="rdOsveziPovzetke()"></div>
+        </div>
+        <div class="field"><label>Masa surovine (g)</label><input id="rdMasaS" type="text" inputmode="decimal" placeholder="0,0" oninput="rdOsveziPovzetke()"></div>
+      </div></details>
+
+      <details class="dnsec rdsec" id="rdsecEtanol">
+      <summary>🥃 Etanol — poraba <span class="dnsum" id="rdsumEtanol"></span></summary>
+      <div class="dnsec-body">
       <div class="dn-block-alc">
-        <div class="slabel-alc">🥃 Etanol — poraba</div>
         <div class="frow">
           <div class="field"><label>Masa EtOH (kg)</label><input id="rdMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcRD()"></div>
           <div class="field"><label>% EtOH vol.</label><input id="rdPctEtOH" type="text" placeholder="npr. 70,0" inputmode="decimal" oninput="calcRD()"></div>
@@ -1221,8 +1229,34 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <div class="field"><label>L AAE</label><input id="rdLAAE" type="text" readonly style="background:rgba(175,132,85,.12);border-color:var(--accent)" placeholder="—"></div>
         </div>
       </div>
-      <div class="field"><label>Izgube med procesom (g)</label><input id="rdIzgube" type="text" inputmode="decimal" placeholder="0,0"></div>
-      <div class="field"><label>Opazanja</label><textarea id="rdOpazanja" style="min-height:90px" placeholder="Parametri, opažanja, rezultati…"></textarea></div>
+      </div></details>
+
+      <details class="dnsec rdsec" id="rdsecZapis" open>
+      <summary>📝 Zapis poskusa <span class="dnsum" id="rdsumZapis"></span></summary>
+      <div class="dnsec-body">
+        <div class="field"><label>Namen</label><textarea id="rdNamen" style="min-height:60px" placeholder="Kaj hočem izvedeti in zakaj…" oninput="rdOsveziPovzetke()"></textarea></div>
+        <div class="field"><label>Opažanja</label><textarea id="rdOpazanja" style="min-height:90px" placeholder="Parametri, potek, kaj sem videl…" oninput="rdOsveziPovzetke()"></textarea></div>
+        <div class="field"><label>Zaključki</label><textarea id="rdZakljucki" style="min-height:70px" placeholder="Kaj iz tega sledi, kaj naslednjič drugače…" oninput="rdOsveziPovzetke()"></textarea></div>
+      </div></details>
+
+      <details class="dnsec rdsec" id="rdsecIzid" open>
+      <summary>⚖️ Kam je šel etanol <span class="dnsum" id="rdsumIzid"></span></summary>
+      <div class="dnsec-body">
+        <!-- Poskus etanola ne pokuri; vecina ga ostane v produktu. Zato tu ne
+             sprasujemo po izgubah naravnost, ampak po produktu, ki ga clovek
+             stehta - izgube so tisto, kar ostane, in se ne dajo zatipkati mimo
+             bilance. Trosarinsko je poraba se vedno cela; to je razclenitev. -->
+        <div class="frow">
+          <div class="field"><label>Masa produkta (g)</label><input id="rdMasaProdukt" type="text" inputmode="decimal" placeholder="0,0" oninput="calcRD()"></div>
+          <div class="field"><label>% EtOH vol. v produktu</label><input id="rdPctProdukt" type="text" inputmode="decimal" placeholder="—" oninput="calcRD()"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Ostanek v produktu (L AAE)</label><input id="rdAaeProdukt" type="text" readonly style="background:rgba(58,107,74,.1)" placeholder="—"></div>
+          <div class="field"><label>Izgube (L AAE)</label><input id="rdAaeIzgube" type="text" readonly style="background:rgba(175,132,85,.1)" placeholder="—"></div>
+        </div>
+        <div id="rdBilancaIzid" style="font-size:.72rem;color:var(--muted);line-height:1.5;margin:.1rem 0 .5rem"></div>
+        <div class="field"><label>Izgube surovine med procesom (g)</label><input id="rdIzgube" type="text" inputmode="decimal" placeholder="0,0"></div>
+      </div></details>
     </div>
     <div class="shfoot">
       <button class="bcancel" onclick="closeSheet('rdOverlay')">Prekliči</button>
@@ -5727,7 +5761,9 @@ function dnOdpriSekcijo(s){
 }
 
 document.addEventListener('toggle',e=>{
-  if(e.target?.classList?.contains('dnsec'))dnShraniStanjeSekcij();
+  // Sklopi R&D obrazca nosijo isti razred zaradi videza, a svoje stanje.
+  const c=e.target?.classList;
+  if(c?.contains('dnsec')&&!c.contains('rdsec'))dnShraniStanjeSekcij();
 },true);
 
 function onDnBulkToggle(t){
@@ -9946,15 +9982,109 @@ function calcRD(){
   const volPct=parseNum(document.getElementById('rdPctEtOH').value);
   if(!masaKg||!volPct){
     ['rdGostota','rdVol','rdLAAE'].forEach(id=>document.getElementById(id).value='');
+  }else{
+    const gostota=etohDensity(volPct);
+    const volL=round(masaKg/gostota,3);
+    const aae=calcAAE(volL,volPct);
+    document.getElementById('rdGostota').value=gostota.toFixed(5)+' g/mL';
+    document.getElementById('rdVol').value=volL.toFixed(3)+' L';
+    document.getElementById('rdLAAE').value=aae.toFixed(4)+' L';
+  }
+  // Produkt nosi svoj % - v macerat gre alkohol, ven pride razredcen s tem, kar
+  // je goba oddala. Dokler ga clovek ne izmeri, ponudimo vhodni % kot namig, ne
+  // kot vrednost: privzeta stevilka bi se tiho prepisala v bilanco.
+  const pp=document.getElementById('rdPctProdukt');
+  if(pp)pp.placeholder=volPct?`npr. ${String(volPct).replace('.',',')}`:'—';
+  rdIzidIzracun();
+  rdOsveziPovzetke();
+}
+
+// Kam je sel etanol: kar je v produktu, je stehtano; izgube so ostanek bilance.
+// Vrne null, dokler produkt ni vpisan - takrat izgub ni mogoce poznati.
+function rdIzid(){
+  const poraba=parseNum(document.getElementById('rdLAAE').value);
+  const masaG=parseNum(document.getElementById('rdMasaProdukt').value);
+  const pct=parseNum(document.getElementById('rdPctProdukt').value);
+  if(!poraba||!masaG||!pct)return null;
+  const volL=round(gVKg(masaG)/etohDensity(pct),4);
+  const aae=calcAAE(volL,pct);
+  return {poraba,masaG,pct,volL,aae:round(aae,4),izgube:round(poraba-aae,4)};
+}
+function rdIzidIzracun(){
+  const i=rdIzid();
+  const prod=document.getElementById('rdAaeProdukt'),izg=document.getElementById('rdAaeIzgube'),
+        opis=document.getElementById('rdBilancaIzid');
+  if(!prod)return;
+  if(!i){
+    prod.value='';izg.value='';
+    opis.textContent=parseNum(document.getElementById('rdLAAE').value)
+      ?'Vpiši maso in % produkta, pa izračunam, koliko alkohola je ostalo v njem in koliko ga je šlo v izgubo.'
+      :'';
+    opis.style.color='var(--muted)';
     return;
   }
-  const gostota=etohDensity(volPct);
-  const volL=round(masaKg/gostota,3);
-  const aae=calcAAE(volL,volPct);
-  document.getElementById('rdGostota').value=gostota.toFixed(5)+' g/mL';
-  document.getElementById('rdVol').value=volL.toFixed(3)+' L';
-  document.getElementById('rdLAAE').value=aae.toFixed(4)+' L';
+  prod.value=fmtNum(i.aae,4)+' L';
+  izg.value=fmtNum(i.izgube,4)+' L';
+  const delez=i.aae/i.poraba*100;
+  if(i.izgube<-0.0001){
+    // Produkt ne more vsebovati vec alkohola, kot ga je vanj slo.
+    opis.textContent=`⚠ V produktu je ${fmtNum(i.aae,4)} L AAE, porabljeno pa je bilo ${fmtNum(i.poraba,4)} L. `
+      +`Preveri maso ali % produkta — ena od številk ne drži.`;
+    opis.style.color='var(--danger)';
+    return;
+  }
+  opis.textContent=`Od ${fmtNum(i.poraba,4)} L AAE ostane v produktu ${fmtNum(i.aae,4)} L `
+    +`(${fmtNum(delez,1)} %), v izgubo gre ${fmtNum(i.izgube,4)} L (${fmtNum(100-delez,1)} %). `
+    +`Trošarinsko je porabljeno vse — to je le razčlenitev, kam je šlo.`;
+  opis.style.color='var(--muted)';
 }
+
+// ── Sklopi obrazca R&D ──
+// Odprt obrazec je bil dolg zaslon in pol; oznaka, datum in naziv so edino,
+// kar mora biti vedno na vidiku. Ostalo je zlozeno, izbira pa se zapomni.
+const RD_SEKCIJE=['Surovina','Etanol','Zapis','Izid'];
+const RD_ODPRTO_KLJUC='gm_rd_odprto';
+function rdNastaviZacetnoStanje(){
+  let shranjeno={};
+  try{shranjeno=JSON.parse(localStorage.getItem(RD_ODPRTO_KLJUC)||'{}');}catch(e){}
+  const privzeto={Surovina:false,Etanol:false,Zapis:true,Izid:true};
+  for(const s of RD_SEKCIJE){
+    const el=document.getElementById('rdsec'+s);
+    if(el)el.open=(s in shranjeno)?!!shranjeno[s]:privzeto[s];
+  }
+}
+function rdShraniStanjeSekcij(){
+  const stanje={};
+  for(const s of RD_SEKCIJE){
+    const el=document.getElementById('rdsec'+s);
+    if(el)stanje[s]=el.open;
+  }
+  try{localStorage.setItem(RD_ODPRTO_KLJUC,JSON.stringify(stanje));}catch(e){}
+}
+// Zlozen sklop ne sme skriti tega, kar je v njem. V naslovu zato stoji povzetek.
+function rdOsveziPovzetke(){
+  const t=id=>(document.getElementById(id)?.value||'').trim();
+  const post=(id,besedilo,razred='')=>{
+    const el=document.getElementById('rdsum'+id);
+    if(!el)return;
+    el.textContent=besedilo;
+    el.className='dnsum'+(razred?' '+razred:'');
+  };
+  const masaS=parseNum(t('rdMasaS'));
+  post('Surovina',[t('rdSurovina'),t('rdSerijaS'),masaS?fmtNum(masaS,1)+' g':''].filter(Boolean).join(' · '));
+  const aae=parseNum(t('rdLAAE'));
+  post('Etanol',aae?`${t('rdMasaEtOH')} kg @ ${t('rdPctEtOH')} % · ${fmtNum(aae,4)} L AAE`:'ni vpisan',
+       aae?'':'warn');
+  const zapisani=['rdNamen','rdOpazanja','rdZakljucki'].filter(id=>t(id)).length;
+  post('Zapis',zapisani?`${zapisani}/3 izpolnjeno`:'prazno',zapisani===3?'ok':'');
+  const i=rdIzid();
+  post('Izid',i?(i.izgube<-0.0001?'preveri številke':`izgube ${fmtNum(i.izgube,4)} L AAE`)
+              :'ni razčlenjeno',
+       i?(i.izgube<-0.0001?'warn':'ok'):'');
+}
+document.addEventListener('toggle',e=>{
+  if(e.target?.classList?.contains('rdsec'))rdShraniStanjeSekcij();
+},true);
 
 function openRDSheet(id){
   editingRDId=id||null;
@@ -9969,10 +10099,17 @@ function openRDSheet(id){
   document.getElementById('rdMasaEtOH').value=r?.masaEtOH?String(r.masaEtOH).replace('.',','):'';
   document.getElementById('rdPctEtOH').value=r?.pctEtOH?String(r.pctEtOH).replace('.',','):'';
   document.getElementById('rdIzgube').value=r?.izgube?String(r.izgube).replace('.',','):'';
+  document.getElementById('rdNamen').value=r?.namen||'';
   document.getElementById('rdOpazanja').value=r?.opazanja||'';
+  document.getElementById('rdZakljucki').value=r?.zakljucki||'';
+  document.getElementById('rdMasaProdukt').value=r?.masaProdukt?String(r.masaProdukt).replace('.',','):'';
+  document.getElementById('rdPctProdukt').value=r?.pctProdukt?String(r.pctProdukt).replace('.',','):'';
   document.getElementById('rdGostota').value='';
   document.getElementById('rdVol').value='';
   document.getElementById('rdLAAE').value='';
+  // Zlozenega sklopa tu ne odpiramo, tudi ce ima vsebino: kaj je v njem, pove
+  // povzetek v naslovu, in obrazec ostane tak, kot ga je clovek pustil.
+  rdNastaviZacetnoStanje();
   calcRD();
   openSheet('rdOverlay');
 }
@@ -9986,6 +10123,12 @@ function saveRD(){
   const gostota=etohDensity(volPct);
   const volL=round(masaKg/gostota,3);
   const aae=calcAAE(volL,volPct);
+  const izid=rdIzid();
+  if(izid&&izid.izgube<-0.0001){
+    document.getElementById('rdsecIzid').open=true;
+    toast('⚠ V produktu je več alkohola, kot ga je bilo porabljeno — preveri maso ali %');
+    return;
+  }
   const r={
     id:editingRDId||uid(),
     oznaka:document.getElementById('rdOznaka').value.trim().toUpperCase()||nextRDNum(),
@@ -9996,7 +10139,13 @@ function saveRD(){
     masaS:parseNum(document.getElementById('rdMasaS').value)||0,
     masaEtOH:masaKg,pctEtOH:volPct,gostota,volEtOH:volL,lAAE:aae,
     izgube:parseNum(document.getElementById('rdIzgube').value)||0,
+    namen:document.getElementById('rdNamen').value.trim(),
     opazanja:document.getElementById('rdOpazanja').value.trim(),
+    zakljucki:document.getElementById('rdZakljucki').value.trim(),
+    masaProdukt:parseNum(document.getElementById('rdMasaProdukt').value)||0,
+    pctProdukt:parseNum(document.getElementById('rdPctProdukt').value)||0,
+    aaeProdukt:izid?izid.aae:0,
+    aaeIzgube:izid?izid.izgube:0,
     status:'odprt',
     datumZakljucka:null,
     etanolKnjizen:false,
@@ -10027,7 +10176,11 @@ function zakljuciRD(id){
     datum:todayISO(),
     tip:'poraba-rd',
     dokument:r.oznaka||r.naziv,
-    opomba:`R&D ${r.oznaka?r.oznaka+' · ':''}${r.naziv} · ${r.surovina||''}${r.serijaS?' · '+r.serijaS:''} · ${r.masaEtOH} kg @ ${r.pctEtOH} vol%`,
+    // Razclenitev zapisemo v knjigo, ne le v nalog: knjiga je tisto, kar se
+    // bere pri pregledu, in "poraba 3,05 L AAE" brez nje zveni, kot da je vse
+    // izhlapelo.
+    opomba:`R&D ${r.oznaka?r.oznaka+' · ':''}${r.naziv} · ${r.surovina||''}${r.serijaS?' · '+r.serijaS:''} · ${r.masaEtOH} kg @ ${r.pctEtOH} vol%`
+      +(r.aaeProdukt?` · v produktu ${fmtNum(r.aaeProdukt,4)} L AAE, izgube ${fmtNum(r.aaeIzgube||0,4)} L AAE`:''),
     masa:r.masaEtOH,pct:r.pctEtOH,gostota:r.gostota,
     kolicina:r.volEtOH,lAAE:r.lAAE,
     masPct:volToMas(r.pctEtOH),
@@ -10104,9 +10257,14 @@ function openRDDetail(id){
         <tr><td>Masa EtOH</td><td>${r.masaEtOH} kg @ ${r.pctEtOH} vol%</td></tr>
         <tr><td>Volumen EtOH</td><td>${r.volEtOH?.toFixed(3)||'—'} L</td></tr>
         <tr><td>L AAE</td><td style="font-weight:600;color:var(--danger)">${r.lAAE?.toFixed(4)||'—'} L</td></tr>
-        ${r.izgube?`<tr><td>Izgube</td><td>${r.izgube} g</td></tr>`:''}
+        ${r.izgube?`<tr><td>Izgube surovine</td><td>${r.izgube} g</td></tr>`:''}
+        ${r.masaProdukt?`<tr><td>Produkt</td><td>${fmtNum(r.masaProdukt,1)} g @ ${fmtNum(r.pctProdukt,1)} vol%</td></tr>`:''}
+        ${r.aaeProdukt?`<tr><td>Ostanek v produktu</td><td style="font-weight:600;color:var(--success)">${fmtNum(r.aaeProdukt,4)} L AAE</td></tr>
+        <tr><td>Izgube etanola</td><td>${fmtNum(r.aaeIzgube||0,4)} L AAE · ${fmtNum((r.aaeIzgube||0)/r.lAAE*100,1)} %</td></tr>`:''}
       </table>
-      ${r.opazanja?`<div class="slabel">Opazanja</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${r.opazanja}</div>`:''}
+      ${r.namen?`<div class="slabel">Namen</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.namen)}</div>`:''}
+      ${r.opazanja?`<div class="slabel">Opažanja</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.opazanja)}</div>`:''}
+      ${r.zakljucki?`<div class="slabel">Zaključki</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.zakljucki)}</div>`:''}
       ${zakljucen?`<div style="font-size:.72rem;color:var(--success);padding:.4rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);margin-top:.75rem">✓ Zaključeno ${fmtDate(r.datumZakljucka)} · Etanol knjižen</div>`:''}
       <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
         ${!zakljucen?`<button class="bsave" onclick="openRDSheet('${r.id}');closeSheet('rdDetailOverlay')">✎ Uredi</button>`:''}
@@ -11121,6 +11279,9 @@ function rdToSb(r){return{
   masa_surovine:r.masaS||null,masa_etoh:r.masaEtOH||null,
   pct_etoh:r.pctEtOH||null,vol_etoh:r.volEtOH||null,l_aae:r.lAAE||null,
   izgube:r.izgube||null,opazanja:r.opazanja||null,
+  namen:r.namen||null,zakljucki:r.zakljucki||null,
+  masa_produkt:r.masaProdukt||null,pct_produkt:r.pctProdukt||null,
+  aae_produkt:r.aaeProdukt||null,aae_izgube:r.aaeIzgube||null,
   status:r.status||'odprt',datum_zakljucka:r.datumZakljucka||null,
   etanol_knjizen:r.etanolKnjizen||false,
   ustvarjen:r.ustvarjen||null,
@@ -11131,6 +11292,9 @@ function sbToRd(r){return{
   masaS:r.masa_surovine||0,masaEtOH:r.masa_etoh||0,
   pctEtOH:r.pct_etoh||0,volEtOH:r.vol_etoh||0,lAAE:r.l_aae||0,
   izgube:r.izgube||0,opazanja:r.opazanja||'',
+  namen:r.namen||'',zakljucki:r.zakljucki||'',
+  masaProdukt:r.masa_produkt||0,pctProdukt:r.pct_produkt||0,
+  aaeProdukt:r.aae_produkt||0,aaeIzgube:r.aae_izgube||0,
   status:r.status||'odprt',datumZakljucka:r.datum_zakljucka||null,
   etanolKnjizen:r.etanol_knjizen||false,
   ustvarjen:r.ustvarjen||null,

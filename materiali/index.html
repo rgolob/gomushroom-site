@@ -1434,7 +1434,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <div id="kanistriVrstice"></div>
       <button class="bcancel" style="width:100%;margin:.4rem 0 .7rem" onclick="kanistriDodaj()">+ Dodaj kanister</button>
       <div class="btnrow" style="margin-top:.2rem">
-        <button class="bsave" onclick="closeSheet('kanistriOverlay')">Zapri</button>
+        <button class="bcancel" onclick="closeSheet('kanistriOverlay')">Zapri</button>
+        <button class="bsave" onclick="kanistriShraniVse()">💾 Shrani</button>
+      </div>
+      <div style="font-size:.64rem;color:var(--muted);line-height:1.5;margin:.4rem 0 .2rem">
+        Vpisi se shranjujejo sproti; gumb je za gotovost — pove, koliko jih je
+        šlo v bazo, in če kaj ni, tudi zakaj.
       </div>
     </div>
   </div>
@@ -2306,11 +2311,10 @@ function popravekHtml(pop,ciljPct,s){
     </div>`;
 }
 
-// Najvecji reden odjem topila je sarza reishija: 40 kg pri 86 vol %. Po tem se
-// meri, ali je zaloga sploh se uporabna — ne po skupnem AAE. Etanol nad 86 % je
-// edini, ki tja se seze; razredcenega ni mogoce skoncentrirati brez destilacije,
-// zato je najmocnejsi kanister najdragocenejsi, tudi ce ga je malo.
-const SARZA={ime:'Reishi',kg:40,pct:86};
+// Ekstrakcija tece pri 86 vol %; po tem se meri, ali je zaloga se uporabna —
+// ne po skupnem AAE. Etanol nad 86 % je edini, ki tja se seze, razredcenega pa
+// brez destilacije ni mogoce skoncentrirati.
+const ET_REF_PCT=86;
 
 // Vpises lahko volumen ali maso — tehtnica je pri roki, merilna posoda ne vedno.
 // Racuna se z volumnom, ker so tam vsi izracuni; masa se prevede prek gostote
@@ -2431,7 +2435,7 @@ function mesanjeViri(){
   popisVrstice.forEach((v,i)=>{
     const r=popisVrstica(v);
     if(!r||r.neveljavnaTemp||r.izvenObmocja)return;
-    viri.push({ime:(v.opis||'').trim()||`Kanister ${i+1}`,pct:r.pct,naVoljo:r.volumen,
+    viri.push({ime:popisIme(v,i),pct:r.pct,naVoljo:r.volumen,
                voda:false,vrsticaId:v.id});
   });
   viri.push({ime:'Voda',pct:0,naVoljo:Infinity,voda:true});
@@ -2793,13 +2797,24 @@ async function popisNaloziIzBaze(){
       return;
     }
 
-    popisVrstice=izBaze;
+    // Vrstica, ki je v bazi se ni (zacel si jo vpisovati in ji se nisi dal
+    // jakosti, zato se ni sla gor), je samo tukaj — branje iz baze je ne sme
+    // povoziti. Prazne predloge ne obdrzimo, sicer bi se kopicile.
+    const vBazi=new Set(izBaze.map(v=>v.id));
+    const samoLokalne=popisVrstice.filter(v=>!vBazi.has(v.id)&&popisNekajVpisano(v));
+    popisVrstice=izBaze.concat(samoLokalne);
     popisSinkNapaka='';
     popisVLokalno();
   }catch(e){
     popisSinkNapaka=e.message||'napaka';
     console.warn('popisNaloziIzBaze',e);
   }
+}
+
+// Je v vrstici sploh kaj vpisanega? Prazna predloga ni vredna ohranjanja.
+function popisNekajVpisano(v){
+  return ['opis','masa','pct','temp','bruto','kanister']
+    .some(p=>String(v[p]||'').trim()!=='');
 }
 
 function popisVLokalno(){
@@ -2818,7 +2833,7 @@ function popisVBazo(v){
   v.posodobljeno=new Date().toISOString();
   const t=String(v.temp||'').trim();
   return sbUpsert('gm_etanol_zaloga',{
-    id:v.id,oznaka:(v.opis||'').trim()||null,
+    id:v.id,oznaka:(v.opis||'').trim()||null,   // prosto besedilo; ime pride iz registra
     masa:gVKg(v.masa),odcitek:parseNum(v.pct),
     temperatura:t?parseNum(t):null,
     tara:String(v.tara||'').trim()?gVKg(v.tara):null,
@@ -2847,7 +2862,7 @@ async function regeneriraj(){
   const aae=round(kandidati.reduce((s,x)=>s+x.r.aae,0),4);
   const masa=round(kandidati.reduce((s,x)=>s+x.r.masa,0),3);
   const seznam=kandidati.map(x=>
-    `${(x.v.opis||'').trim()||'brez oznake'} — ${kgVG(x.r.masa)} g pri ${x.r.pct.toLocaleString('sl-SI')} %`
+    `${popisIme(x.v,x.i)} — ${kgVG(x.r.masa)} g pri ${x.r.pct.toLocaleString('sl-SI')} %`
   ).join('\n');
 
   if(!confirm(`Regeneriram ${kandidati.length} ${sklon(kandidati.length,KANISTER_TOZ)}?\n\n${seznam}\n\n`+
@@ -2905,7 +2920,7 @@ async function openPopisSheet(){
 function popisDodaj(){popisVrstice.push(popisPrazna());popisShrani();popisIzrisi();}
 function popisBrisi(i){
   const v=popisVrstice[i];
-  if(popisJePolna(v)&&!confirm(`Izbrišem kanister ${(v.opis||'').trim()||'brez oznake'}?`))return;
+  if(popisJePolna(v)&&!confirm(`Izbrišem kanister ${popisIme(v,i)}?`))return;
   popisVrstice.splice(i,1);
   if(v&&v.id)sbDel('gm_etanol_zaloga',v.id).catch(e=>console.warn('popisBrisi',e));
   if(!popisVrstice.length)popisVrstice=[popisPrazna()];
@@ -2972,14 +2987,18 @@ async function kanistriNaloziIzBaze(){
       tara:x.tara==null?'':kgVG(x.tara),
       tip:x.tip||'',stehtana:!!x.stehtana,opomba:x.opomba||'',
     }));
-    // Prvic je baza prazna, lokalno pa so morda ze vpisani — takrat jih
-    // preselimo, ne povozimo (isto nacelo kot pri popisu).
-    if(!izBaze.length&&kanistri.length){
-      for(const k of kanistri)await kanistriVBazo(k);
-      kanistriSinkNapaka='';
-      return;
-    }
-    kanistri=izBaze;kanistriSinkNapaka='';kanistriVLokalno();
+    // Kar je v tem brskalniku in ga v bazi se ni, se ne sme izgubiti. Dokler
+    // zapis ni sel skozi — nov kanister, izpad omrezja, zamik pri shranjevanju
+    // — je edini izvod tukaj. Zato ga obdrzimo in posljemo gor, ne obratno.
+    // Prej je branje iz baze seznam preprosto zamenjalo in kaksen nov kanister
+    // je izginil.
+    const vBazi=new Set(izBaze.map(k=>k.id));
+    const samoLokalni=kanistri.filter(k=>!vBazi.has(k.id));
+    kanistri=izBaze.concat(samoLokalni)
+      .sort((a,b)=>String(a.oznaka||'').localeCompare(String(b.oznaka||''),'sl'));
+    kanistriSinkNapaka='';
+    kanistriVLokalno();
+    for(const k of samoLokalni)await kanistriVBazo(k);
   }catch(e){
     kanistriSinkNapaka=e.message||'napaka';
     console.warn('kanistriNaloziIzBaze',e);
@@ -3039,11 +3058,12 @@ async function odpriPopisNaKanistru(kanisterId){
 
 async function openKanistriSheet(){
   kanistriIzLokalnega();
-  if(!kanistri.length)kanistriDodajTiho();
   kanistriIzrisi();
   openSheet('kanistriOverlay');
   await kanistriNaloziIzBaze();
-  if(!kanistri.length)kanistriDodajTiho();
+  // Prazno vrstico ponudimo sele, ko vemo, da je register res prazen. Prej je
+  // nastala ze pred branjem iz baze in se je podvojila s pravim K1 iz nje.
+  if(!kanistri.length){kanistriDodajTiho();kanistriVLokalno();}
   kanistriIzrisi();
 }
 
@@ -3055,7 +3075,30 @@ function kanistriDodajTiho(){
   kanistri.push({id:uid(),oznaka:`K${st}`,tip:'10l',stehtana:false,
                  tara:t&&t.tara!=null?String(t.tara):''});
 }
-function kanistriDodaj(){kanistriDodajTiho();kanistriVLokalno();kanistriIzrisi();}
+// Nov kanister gre v bazo takoj, ne sele ob prvem popravku — sicer bi zivel
+// samo v tem brskalniku, dokler se ga ne dotaknes.
+function kanistriDodaj(){
+  kanistriDodajTiho();
+  kanistriVLokalno();kanistriIzrisi();
+  kanistriVBazo(kanistri[kanistri.length-1]);
+}
+
+// Izrecno shranjevanje. Vpisi se sicer shranjujejo sproti, a ko vnasas vec
+// kanistrov zapored, hoces videti, da je slo — in ce ni, zakaj ne.
+async function kanistriShraniVse(){
+  const zaShranit=kanistri.filter(k=>String(k.oznaka||'').trim());
+  const brezOznake=kanistri.length-zaShranit.length;
+  kanistriVLokalno();
+  kanistriSinkNapaka='';
+  for(const k of zaShranit)await kanistriVBazo(k);
+  kanistriIzrisi();
+  if(kanistriSinkNapaka){
+    toast('⚠ Shranjeno v brskalnik; v bazo ni šlo — '+String(kanistriSinkNapaka).slice(0,60));
+    return;
+  }
+  toast(`✓ Shranjeno: ${zaShranit.length} ${sklon(zaShranit.length,KANISTER_TOZ)}`+
+        (brezOznake?` · ${brezOznake} brez oznake ni shranjenih`:''));
+}
 
 let _kanistriCakalnik=null;
 function kanistriSprememba(i,polje,vrednost){
@@ -3166,6 +3209,41 @@ function kanistriVBazo(k){
   }).catch(e=>{kanistriSinkNapaka=e.message||'napaka';console.warn('kanistriVBazo',e);});
 }
 
+// Etanol, ki je zapustil kanistre, a v knjigi se ni odpisan: odprti in
+// nezaknjizeni delovni nalogi ter poskusi. Prav ta je razlog, da knjiga kaze
+// vec od popisa — zato ga nastejemo namesto da bi razliko samo prikazali.
+function etNeknjizeno(){
+  const kosi=[];
+  (typeof workOrders!=='undefined'?workOrders:[]).forEach(d=>{
+    const aae=Number(d.lAAE||0);
+    if(!(aae>0))return;
+    const knjizen=(typeof etanolKnjiga!=='undefined'?etanolKnjiga:[])
+      .some(e=>e.tip==='izhod_dn'&&e.dokument===d.oznaka);
+    if(knjizen)return;
+    kosi.push({kaj:d.oznaka||'Delovni nalog',
+               opis:(d.namen||d.vrstaGobe||'').trim(),aae,
+               status:d.status==='odprt'?'odprt':'ni knjižen'});
+  });
+  (typeof rdNalogi!=='undefined'?rdNalogi:[]).forEach(r=>{
+    const aae=Number(r.lAAE||0);
+    if(!(aae>0)||r.etanolKnjizen)return;
+    kosi.push({kaj:r.oznaka||'R&D',opis:(r.naziv||'').trim(),aae,
+               status:r.status==='odprt'?'odprt':'ni knjižen'});
+  });
+  return kosi.sort((a,b)=>b.aae-a.aae);
+}
+
+// Ime vrstice je oznaka kanistra iz registra, kadar je ta izbran — tako se
+// preimenovanje v registru pozna povsod in ime ne more zastareti. Prosto
+// besedilo ob njem je opomba (npr. "razredcen"), ne ime.
+function popisIme(v,i){
+  const k=kanisterPo(v.kanister);
+  if(k&&String(k.oznaka||'').trim())return k.oznaka.trim();
+  const opis=String(v.opis||'').trim();
+  if(opis)return opis;
+  return i==null?'brez oznake':`Kanister ${i+1}`;
+}
+
 // Neto je izpeljan, kadar je bruto znan — takrat popravek tare popravi tudi
 // neto. Sicer velja to, kar je vpisano v masi.
 function popisNetoG(v){
@@ -3186,7 +3264,9 @@ function popisKanisterSprememba(i,id){
   if(k){
     v.tara=String(k.tara||'');
     v.tip=k.tip||'';
-    if(!String(v.opis||'').trim())v.opis=k.oznaka;
+    // Ce je bilo prosto besedilo samo ime kanistra, ga pocistimo — oznaka
+    // zdaj pride iz registra in bi se podvajala.
+    if(String(v.opis||'').trim()===String(k.oznaka||'').trim())v.opis='';
   }
   popisOsveziNeto(v);
   popisVLokalno();popisIzrisi();
@@ -3287,7 +3367,10 @@ function popisVrsticaZaprta(v,i){
   const napaka=r&&(r.neveljavnaTemp||r.izvenObmocja);
   const jakost=r&&!napaka?r.pct:parseNum(v.pct);
   const masaG=String(v.masa||'').trim();
-  const opis=(v.opis||'').trim();
+  const ime=popisIme(v,i);
+  // Ce je prosto besedilo isto kot oznaka (stari vpisi), ga ne ponavljamo.
+  let opomba=kanisterPo(v.kanister)?String(v.opis||'').trim():'';
+  if(opomba===ime)opomba='';
   return `
     <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:.35rem">
       <button onclick="popisPreklopi(${i})" aria-expanded="false"
@@ -3295,7 +3378,7 @@ function popisVrsticaZaprta(v,i){
                padding:.45rem .55rem;cursor:pointer;font-family:inherit;color:inherit;text-align:left">
         <span style="flex:0 0 auto;color:var(--muted);font-size:.7rem">▸</span>
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.75rem">
-          ${opis?htmlEsc(opis):'<span style="color:var(--muted)">brez oznake</span>'}</span>
+          ${htmlEsc(ime)}${opomba?` <span style="color:var(--muted);font-weight:400">· ${htmlEsc(opomba)}</span>`:''}</span>
         ${napaka?'<span style="flex:0 0 auto;color:var(--danger);font-size:.72rem">⚠</span>':''}
         <span style="flex:0 0 auto;font-size:.75rem;font-weight:700;font-variant-numeric:tabular-nums">
           ${masaG?htmlEsc(masaG)+' g':'—'}</span>
@@ -3325,9 +3408,14 @@ function popisIzrisi(){
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
         <button onclick="popisPreklopi(${i})" aria-expanded="true" title="Zloži"
           style="flex:0 0 auto;border:0;background:none;cursor:pointer;color:var(--muted);font-size:.7rem;padding:.25rem .15rem">▾</button>
-        <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka kanistra (neobvezno)"
+        ${v.kanister?`<span style="flex:1;min-width:0;display:flex;align-items:center;gap:.4rem">
+          <strong style="font-size:.82rem">${htmlEsc(popisIme(v,i))}</strong>
+          <input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="opomba (neobvezno)"
+            oninput="popisSprememba(${i},'opis',this.value)"
+            style="flex:1;min-width:0;padding:.3rem .45rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.72rem">
+        </span>`:`<input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka kanistra (neobvezno)"
           oninput="popisSprememba(${i},'opis',this.value)"
-          style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">
+          style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">`}
         <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
       </div>
       <div class="frow" style="margin-bottom:.35rem">
@@ -3418,9 +3506,8 @@ function popisIzracun(){
   // etanol, ki je nad to mejo — razredcenega brez destilacije ni mogoce
   // skoncentrirati, zato je najmocnejsi kanister najdragocenejsi, tudi ce ga je
   // malo. Racunamo z istim predlogom, ki bo mesanje tudi izpeljal.
-  const sarzaV=etNajvecMozno(SARZA.pct,mesanjeViri());
-  const sarzaMasa=sarzaV*etohDensity(SARZA.pct);
-  const sarz=sarzaMasa/SARZA.kg;
+  const refV=etNajvecMozno(ET_REF_PCT,mesanjeViri());
+  const refMasa=refV*etohDensity(ET_REF_PCT);
 
   // Primerjamo samo uporabni etanol. Knjiga vodi tisto, kar je v cisterni na
   // voljo za ekstrakcijo; topilo za regeneracijo je iz nje ze odsteto kot
@@ -3434,6 +3521,16 @@ function popisIzracun(){
   // prestroga (0,05 L od 23 L je 0,2 %), odstotna sama pa pri majhni
   // preohlapna — zato zadosca, da je izpolnjena katerakoli.
   const razlikaVRedu=Math.abs(razlika)<=0.05||(razlikaPct!==null&&Math.abs(razlikaPct)<=0.5);
+
+  // Kje je razlika
+  // ──────────────
+  // Knjiga odpise etanol sele, ko nalog knjizis. Med tem je ta etanol ze zunaj
+  // kanistrov — v maceraciji ali v poskusu — zato knjiga kaze vec od popisa.
+  // To ni napaka, ampak spisek: dokler nalogi niso knjizeni, mora razlika
+  // ustrezati njihovi vsoti, kar ostane, pa je zares nepojasnjeno.
+  const neknjizeno=etNeknjizeno();
+  const neknjizenoAae=round(neknjizeno.reduce((s,x)=>s+x.aae,0),4);
+  const nepojasnjeno=round(razlika+neknjizenoAae,4);
 
   // Popis je star toliko kot njegov najstarejsi vpis: en sveze stehtan kanister
   // ne pomeni, da so ostali se resnicni.
@@ -3475,12 +3572,9 @@ function popisIzracun(){
         masa in AAE se ohranita.
       </div>`:''}
       <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
-        Za šaržo ${SARZA.ime} (${SARZA.kg} kg pri ${String(SARZA.pct).replace('.',',')} %):
-        iz te zaloge največ <strong style="color:${sarz>=1?'var(--success)':'var(--danger)'}">${kgVG(sarzaMasa)} g</strong>
-        <span style="color:var(--muted)">(${sarzaV.toFixed(3)} L)</span> —
-        <strong style="color:${sarz>=1?'var(--success)':'var(--danger)'}">${sarz.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} šarže</strong>${
-          sarz<1?`, manjka ${kgVG(SARZA.kg-sarzaMasa)} g`:''}
-        <div style="color:var(--muted);font-size:.65rem">Mejo postavlja etanol nad ${String(SARZA.pct).replace('.',',')} %, ne skupni AAE — razredčenega brez destilacije ni mogoče skoncentrirati, zato je najmočnejši kanister najdragocenejši, tudi če ga je malo.</div>
+        Pri ${String(ET_REF_PCT).replace('.',',')} vol % iz te zaloge največ
+        <strong>${kgVG(refMasa)} g</strong> <span style="color:var(--muted)">(${refV.toFixed(3)} L)</span>
+        <div style="color:var(--muted);font-size:.65rem">Mejo postavlja etanol nad ${String(ET_REF_PCT).replace('.',',')} %, ne skupni AAE — razredčenega brez destilacije ni mogoče skoncentrirati, zato je najmočnejši kanister najdragocenejši, tudi če ga je malo.</div>
       </div>
       <div style="font-size:.7rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
         Popisano za uporabo: <strong>${uporabnoAae.toFixed(4)} L AAE</strong> ·
@@ -3489,6 +3583,26 @@ function popisIzracun(){
           razlikaPct===null?'':` · <strong style="color:${barvaRazlike}">${razlikaPct>=0?'+':''}${razlikaPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>`}
         <div style="color:var(--muted);font-size:.65rem">${skup.regeneracija.n?`Etanol za regeneracijo (${skup.regeneracija.aae.toFixed(4)} L AAE) v primerjavo ne šteje — knjiga ga je odpisala že ob porabi. `:''}Popis se nikamor ne knjiži — če razlika ni sprejemljiva, jo uredi z vnosom v knjigo etanola.</div>
       </div>
+      ${neknjizeno.length?`<div style="font-size:.68rem;line-height:1.5;margin-top:.45rem;padding-top:.4rem;border-top:1px solid rgba(175,132,85,.3)">
+        <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.25rem">
+          Kje je razlika — etanol zunaj kanistrov
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem">
+          ${neknjizeno.map(x=>`
+            <span>${htmlEsc(x.kaj)}${x.opis?` <span style="color:var(--muted)">· ${htmlEsc(x.opis)}</span>`:''}
+              <span style="color:var(--muted);font-size:.62rem">(${x.status})</span></span>
+            <span style="text-align:right;font-variant-numeric:tabular-nums">${x.aae.toFixed(4)} L AAE</span>`).join('')}
+          <span style="padding-top:.2rem;border-top:1px solid rgba(175,132,85,.3)">Skupaj neknjiženo</span>
+          <span style="text-align:right;font-weight:700;padding-top:.2rem;border-top:1px solid rgba(175,132,85,.3);font-variant-numeric:tabular-nums">${neknjizenoAae.toFixed(4)} L AAE</span>
+          <span>Nepojasnjeno</span>
+          <span style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:${
+            Math.abs(nepojasnjeno)<=0.05?'var(--success)':'var(--danger)'}">${nepojasnjeno>=0?'+':''}${nepojasnjeno.toFixed(4)} L AAE</span>
+        </div>
+        <div style="color:var(--muted);font-size:.65rem;margin-top:.25rem">
+          Ti nalogi so etanol že vzeli iz kanistrov, knjiga pa ga odpiše šele ob knjiženju —
+          zato kaže več od popisa. Ko jih zaključiš in knjižiš, razlika izgine.
+        </div>
+      </div>`:''}
     </div>`;
 }
 

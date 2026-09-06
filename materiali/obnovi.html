@@ -201,6 +201,9 @@ function rdToSb(r){return{
   namen:r.namen||null,zakljucki:r.zakljucki||null,
   masa_produkt:r.masaProdukt||null,pct_produkt:r.pctProdukt||null,
   aae_produkt:r.aaeProdukt||null,aae_izgube:r.aaeIzgube||null,
+  aae_polizdelek:r.aaePolizdelek||null,
+  aae_polizdelek_sproscen:r.aaePolizdelekSproscen||null,
+  aae_polizdelek_odpisan:r.aaePolizdelekOdpisan||null,
   status:r.status||'odprt',datum_zakljucka:r.datumZakljucka||null,
   etanol_knjizen:r.etanolKnjizen||false,ustvarjen:r.ustvarjen||null
 };}
@@ -213,6 +216,10 @@ function sbToRd(r){return{
   namen:r.namen||'',zakljucki:r.zakljucki||'',
   masaProdukt:r.masa_produkt||0,pctProdukt:r.pct_produkt||0,
   aaeProdukt:r.aae_produkt||0,aaeIzgube:r.aae_izgube||0,
+  aaePolizdelek:r.aae_polizdelek||0,
+  aaePolizdelekSproscen:r.aae_polizdelek_sproscen||0,
+  aaePolizdelekOdpisan:r.aae_polizdelek_odpisan||0,
+  aaePolizdelekOdpisan:r.aae_polizdelek_odpisan||0,
   status:r.status||'odprt',datumZakljucka:r.datum_zakljucka||null,
   etanolKnjizen:r.etanol_knjizen||false,ustvarjen:r.ustvarjen||null
 };}

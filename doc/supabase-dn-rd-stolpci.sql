@@ -49,12 +49,31 @@ comment on column gm_dn_rd.aae_produkt is
 comment on column gm_dn_rd.aae_izgube is
   'L AAE, ki jih produkt ne nosi: l_aae - aae_produkt.';
 
+-- ── Polizdelek pri poskusu ─────────────────────────────────────────────────
+-- Pilotna serija ni za prodajo in lahko lezi mesece, dokler se ne odlocis, ali
+-- jo regeneriras, predelas ali zavrzes. Delovni nalog to ze pozna (glej
+-- supabase-dn-polizdelek.sql); poskus je do zdaj ves etanol odpisal kot porabo,
+-- zato je nalog ostal odprt, ker ga ni bilo mogoce posteno zakljuciti.
+alter table gm_dn_rd
+  add column if not exists aae_polizdelek          numeric default 0,
+  add column if not exists aae_polizdelek_sproscen numeric default 0,
+  add column if not exists aae_polizdelek_odpisan  numeric default 0;
+
+-- Odpis polizdelka pri delovnem nalogu: kadar polizdelka ne bo vec in se ne
+-- vrne v zalogo. V knjigo etanola se pri tem ne knjizi nic — iz zaloge je ta
+-- alkohol odsel ze ob nalogu.
+alter table gm_dn_work_orders
+  add column if not exists aae_polizdelek_odpisan numeric default 0;
+
+comment on column gm_dn_rd.aae_polizdelek is
+  'L AAE, vezani v pilotni seriji. Iz kanistra so odsli, a niso ne izguba ne prodano blago.';
+
 -- PostgREST drzi shemo v predpomnilniku; brez tega bi novi stolpci prijeli
 -- sele cez kaksno minuto.
 notify pgrst, 'reload schema';
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
--- Vrniti mora 23 vrstic (16 + 6 spodnjih + id).
+-- Vrniti mora 26 vrstic (16 + 6 + 3 spodnjih + id).
 select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_dn_rd'

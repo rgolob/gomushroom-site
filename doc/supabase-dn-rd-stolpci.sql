@@ -44,17 +44,53 @@ alter table gm_dn_rd
   add column if not exists aae_produkt  numeric,
   add column if not exists aae_izgube   numeric;
 
+-- Koncentrat z rotavaporja (vrstica R v masni bilanci): gre nazaj v kanister
+-- in iz zaloge sploh ne odide. Zato se ne knjizi nikamor — niti kot izhod niti
+-- kot vhod; knjizi se le tisto, kar zalogo res zapusti. Enako dela izhod
+-- delovnega naloga, ki knjizi tinkture + gly + polizdelek + izgube, odvzema R
+-- pa ne. Tu ga hranimo samo zato, da je razclenitev poskusa popolna.
+alter table gm_dn_rd
+  add column if not exists masa_regen numeric,
+  add column if not exists pct_regen  numeric,
+  add column if not exists aae_regen  numeric;
+
 comment on column gm_dn_rd.aae_produkt is
-  'L AAE, ki so ostali v produktu. Trosarinsko je poraba se vedno cela (l_aae).';
+  'L AAE, ki so ostali v produktu (polizdelek). Trosarina je odlozena.';
+comment on column gm_dn_rd.aae_regen is
+  'L AAE koncentrata, ki ostane na zalogi. Vrstica R v masni bilanci; ne knjizi se.';
 comment on column gm_dn_rd.aae_izgube is
-  'L AAE, ki jih produkt ne nosi: l_aae - aae_produkt.';
+  'Manjko: l_aae - aae_regen - aae_produkt. Knjizi se skupaj s polizdelkom.';
+
+-- ── Polizdelek pri poskusu ─────────────────────────────────────────────────
+-- Pilotna serija ni za prodajo in lahko lezi mesece, dokler se ne odlocis, ali
+-- jo regeneriras, predelas ali zavrzes. Delovni nalog to ze pozna (glej
+-- supabase-dn-polizdelek.sql); poskus je do zdaj ves etanol odpisal kot porabo,
+-- zato je nalog ostal odprt, ker ga ni bilo mogoce posteno zakljuciti.
+alter table gm_dn_rd
+  add column if not exists aae_polizdelek          numeric default 0,
+  add column if not exists aae_polizdelek_sproscen numeric default 0,
+  add column if not exists aae_polizdelek_odpisan  numeric default 0;
+
+-- Odpis polizdelka pri delovnem nalogu: kadar polizdelka ne bo vec in se ne
+-- vrne v zalogo. V knjigo etanola se pri tem ne knjizi nic — iz zaloge je ta
+-- alkohol odsel ze ob nalogu.
+alter table gm_dn_work_orders
+  add column if not exists aae_polizdelek_odpisan numeric default 0;
+
+comment on column gm_dn_rd.aae_polizdelek is
+  'L AAE, vezani v pilotni seriji. Iz kanistra so odsli, a niso ne izguba ne prodano blago.';
+
+-- Vmesna razlicica je koncentrat knjizila kot vhod 'regeneracija' in je imela
+-- kljukico "regenerat je ze vpisan rocno". Ker se zdaj ne knjizi nic, ni kaj
+-- podvajati in stolpec ni vec v rabi.
+alter table gm_dn_rd drop column if exists regen_knjizen;
 
 -- PostgREST drzi shemo v predpomnilniku; brez tega bi novi stolpci prijeli
 -- sele cez kaksno minuto.
 notify pgrst, 'reload schema';
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
--- Vrniti mora 23 vrstic (16 + 6 spodnjih + id).
+-- Vrniti mora 29 vrstic (16 + 6 + 3 + 3 spodnjih + id).
 select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_dn_rd'

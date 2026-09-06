@@ -1373,10 +1373,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     </div>
     <div class="shbody">
       <div style="font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
-        Vire bere iz <strong>Popisa etanola</strong>. Voda je vedno na voljo, a je
-        na dnu seznama — če isto dosežeš z bolj razredčenim kanistrom, je bolje porabiti njega.
-        Pri visokem cilju pa velja obratno: razredčeno terja preveč etanola nad ciljem,
-        zato ga takrat pusti pri miru — najmočnejši je najdragocenejši.
+        Vire bere iz <strong>Popisa etanola</strong>. Predlog je en sam — če ti kateri
+        kanister ne ustreza, ga s križcem odmisli in preračuna se brez njega.
+        <div style="margin-top:.3rem">
+          Voda je vedno na voljo, a je zadnja izbira — če isto dosežeš z bolj razredčenim
+          kanistrom, je bolje porabiti njega. Pri visokem cilju velja obratno: razredčeno
+          terja preveč etanola nad ciljem, zato ga takrat pusti pri miru.
+        </div>
       </div>
       <div class="frow">
         <div class="field"><label>Želim</label>
@@ -1393,7 +1396,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         <div class="field"><label>Kontrola pri (°C)</label>
           <input id="mesTemp" type="text" inputmode="decimal" placeholder="20" oninput="mesanjeIzracun()"></div>
       </div>
-      <button class="bcancel" id="mesSarzaGumb" style="width:100%;margin:.45rem 0 .2rem;font-size:.72rem" onclick="mesSarza()"></button>
       <div id="mesNalogNamig"></div>
       <div id="mesOpozorilo"></div>
       <div id="mesIzid"></div>
@@ -1949,18 +1951,6 @@ function etSestava(volPct){
 
 // Koliko litrov vira A in vira B je treba zliti za ciljV litrov pri ciljPct.
 // Negativna kolicina pomeni, da s tem parom cilja ni mogoce doseci.
-function etMesaj(ciljV,ciljPct,pctA,pctB){
-  const c=etSestava(ciljPct);
-  const E=ciljV*c.etanol,W=ciljV*c.voda;
-  const a=etSestava(pctA),b=etSestava(pctB);
-  const det=a.etanol*b.voda-b.etanol*a.voda;
-  if(Math.abs(det)<1e-12)return null;            // enaki jakosti — ni resljivo
-  const xa=(E*b.voda-W*b.etanol)/det;
-  const xb=(a.etanol*W-a.voda*E)/det;
-  if(xa<-1e-9||xb<-1e-9)return null;
-  return {xa:Math.max(0,xa),xb:Math.max(0,xb)};
-}
-
 // Predlog mesanja iz vec virov. Vrstni red ni poljuben:
 //   sibki — od najbolj razredcenega navzgor, da se porabi, kar caka na
 //           regeneracijo; voda gre na konec, ker je zadnja izbira, ne prva
@@ -2041,10 +2031,6 @@ function etPredlogMesanja(ciljV,ciljPct,viri){
   // Oba padeta: pokazemo tistega, ki je prisel dlje.
   return etRabaAae(drugi)>etRabaAae(prvi)?{...drugi,varcno:true}:prvi;
 }
-
-let mesVsePrikazane=false;
-function mesanjeVec(){mesVsePrikazane=true;mesanjeIzracun();}
-function mesanjeManj(){mesVsePrikazane=false;mesanjeIzracun();}
 
 // ── Potrditev mesanja ──────────────────────────────────────────────────────
 // Dokler se ni potrjeno, je predlog samo predlog. Ob potrditvi iz vsakega kanistra
@@ -2335,7 +2321,7 @@ function mesEnota(){
 }
 function mesPlaceholder(){
   const el=document.getElementById('mesVolumen');
-  if(el)el.placeholder=mesEnota()==='kg'?`npr. ${SARZA.kg}`:'npr. 4';
+  if(el)el.placeholder=mesEnota()==='kg'?'npr. 40':'npr. 4';
 }
 function mesEnotaSprememba(){
   settings.mesEnota=mesEnota();
@@ -2346,16 +2332,6 @@ function mesEnotaSprememba(){
 function mesCiljV(vpis,ciljPct){
   if(mesEnota()!=='kg')return vpis;
   return ciljPct>0?vpis/etohDensity(ciljPct):0;
-}
-function mesSarza(){
-  const e=document.getElementById('mesEnota');
-  if(e)e.value='kg';
-  settings.mesEnota='kg';
-  try{localStorage.setItem('gm_dn_settings',JSON.stringify(settings));}catch(e){}
-  document.getElementById('mesVolumen').value=String(SARZA.kg).replace('.',',');
-  document.getElementById('mesPct').value=String(SARZA.pct).replace('.',',');
-  mesPlaceholder();
-  mesanjeIzracun();
 }
 
 // Mesanje za delovni nalog
@@ -2396,13 +2372,12 @@ function mesNalogNamig(){
       <div style="color:var(--muted);margin-top:.15rem">Odštevanje velja takoj, nalog pa shrani kot običajno.</div></div>`;
 }
 
-// Kaj gre v nalog: izmerjeno, ce si zmes stehtal in izmeril, sicer nacrtovano.
-// Jakost je vedno pri 20 C — nalog racuna z gostoto pri 20 C in odcitek pri
-// 26 C bi bil tam tiha napaka.
+// Kaj gre v nalog: izmerjeno, ce si zmes stehtal in izmeril, sicer natehtano,
+// sele na koncu nacrtovano. Jakost je vedno pri 20 C — nalog racuna z gostoto
+// pri 20 C in odcitek pri 26 C bi bil tam tiha napaka.
 function mesZaNalog(ciljV,ciljPct){
   const s=mesKontrolaStanje();
   if(s&&s.prava!==null)return {masa:s.masa,pct:round(s.prava,2),vir:'izmerjeno'};
-  // Brez meritve je natehtano blizje resnici od nacrta.
   const n=mesNatehtanoStanje();
   if(n&&n.spremenjeno&&n.volPct>0)return {masa:n.masa,pct:n.volPct,vir:'iz natehtanega'};
   return {masa:ciljV*etohDensity(ciljPct),pct:round(ciljPct,2),vir:'načrtovano'};
@@ -2417,7 +2392,6 @@ function mesCilj(){
 async function openMesanjeSheet(){
   popisNalozi();
   mesKontrolaNalozi();
-  mesVsePrikazane=false;
   mesZaDN=false;
   mesNalogNamig();
   mesIzkljuceni.clear();   // odmisljeni viri veljajo za en izracun, ne za vedno
@@ -2425,8 +2399,6 @@ async function openMesanjeSheet(){
   mesKontrolaIzrisi(true); // polja naj pokazejo, kar je shranjeno
   const e=document.getElementById('mesEnota');
   if(e&&settings.mesEnota)e.value=settings.mesEnota;
-  const g=document.getElementById('mesSarzaGumb');
-  if(g)g.textContent=`Šarža ${SARZA.ime} — ${SARZA.kg} kg pri ${String(SARZA.pct).replace('.',',')} %`;
   mesPlaceholder();
   mesanjeIzracun();
   openSheet('mesanjeOverlay');
@@ -2504,40 +2476,61 @@ function mesRabaMasa(x){
 function mesNatehtanoStanje(){
   const pred=_mesZadnjiPredlog;
   if(!pred||!pred.raba.length)return null;
-  let masa=0,etanol=0,spremenjeno=false;
+  let masa=0,etanol=0,vliteje=0,spremenjeno=false;
   pred.raba.forEach(x=>{
     const nacrt=x.kol*etohDensity(x.vir.pct);
     const m=mesRabaMasa(x);
     if(Math.abs(m-nacrt)>1e-6)spremenjeno=true;
     masa+=m;etanol+=m*volToMas(x.vir.pct)/100;
+    vliteje+=m/etohDensity(x.vir.pct);
   });
   if(!(masa>0))return null;
   const volPct=round(masToVol(etanol/masa*100),2);
-  return {masa,volPct,spremenjeno,
+  return {masa,volPct,spremenjeno,vliteje:round(vliteje,4),
           vol:volPct>0?round(masa/etohDensity(volPct),4):0};
 }
 
+// Sproti sesteva, kar si res natehtal, in pove, kaj bi iz tega moralo nastati.
+// Teoreticno — potrditi ga je treba z alkoholometrom, zato je tu tudi odcitek,
+// ki ga mora pokazati. Racuna iz vpisanih mas, tudi kadar so enake nacrtu.
 function mesNatehtanoIzrisi(){
   const el=document.getElementById('mesNatehtanoIzid');
   if(!el)return;
   const s=mesNatehtanoStanje();
-  const {ciljPct}=mesCilj();
-  if(!s||!s.spremenjeno){el.innerHTML='';return;}
+  const {ciljV,ciljPct}=mesCilj();
+  if(!s){el.innerHTML='';return;}
+  const st=(v,n=3)=>v.toLocaleString('sl-SI',{minimumFractionDigits:n,maximumFractionDigits:n});
   const d=ciljPct>0?round(s.volPct-ciljPct,2):null;
-  const barva=d===null?'var(--muted)':(Math.abs(d)<=0.5?'var(--success)':'var(--danger)');
-  el.innerHTML=`<div style="margin-top:.25rem;padding-top:.25rem;border-top:1px dashed rgba(175,132,85,.4)">
-    Iz natehtanega: <strong>${kgVG(s.masa)} g</strong> pri
-    <strong style="color:${barva}">${s.volPct.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} vol %</strong>
-    ${d===null?'':`<span style="color:${barva}">(${d>=0?'+':'−'}${Math.abs(d).toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`}
-    · ${s.vol.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3})} L
-    <button onclick="mesNatehtanoPocisti()" style="border:0;background:none;cursor:pointer;color:var(--accent);
-      font-family:inherit;font-size:.64rem;text-decoration:underline;padding:0 .2rem">↺ nazaj na načrt</button>
-    <div style="color:var(--muted);font-size:.64rem">Toliko se bo odštelo iz kanistrov. Po zlitju zmes vseeno izmeri — spodaj.</div>
+  const barva=d===null?'var(--ink)':(Math.abs(d)<=0.1?'var(--success)':(Math.abs(d)<=0.5?'#8b5a2a':'var(--danger)'));
+  const dM=ciljV>0?s.masa-ciljV*etohDensity(ciljPct):null;   // kg, izpise se v gramih
+
+  // Kontrolna temperatura: kaj mora pokazati alkoholometer za TO jakost, ne za
+  // ciljno — meris zmes, ki si jo res naredil.
+  const tVpis=String(document.getElementById('mesTemp')?.value||'').trim();
+  let tK=20,slabaT=false;
+  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));if(isFinite(b))tK=b;else slabaT=true;}
+  const odcitek=slabaT?null:oimlOdcitekPri(s.volPct,tK);
+
+  el.innerHTML=`<div style="margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(175,132,85,.35);line-height:1.6">
+    <div style="font-size:.78rem">Skupaj natehtano: <strong>${kgVG(s.masa)} g</strong>
+      <span style="color:var(--muted)">(${st(s.vol)} L)</span>${
+      dM===null||Math.abs(dM)<0.00005?'':` <span style="color:var(--muted)">${dM>=0?'+':'−'}${kgVG(Math.abs(dM))} g od cilja</span>`}</div>
+    <div style="font-size:.78rem">Teoretična jakost: <strong style="color:${barva}">${st(s.volPct,2)} vol %</strong>${
+      d===null?'':` <span style="color:${barva}">(${d>=0?'+':'−'}${st(Math.abs(d),2)} od cilja)</span>`}</div>
+    <div style="color:var(--muted)">Zliješ ${st(s.vliteje)} L, zmes se skrči za ${st(Math.max(0,s.vliteje-s.vol))} L.</div>
+    ${slabaT?'<div style="color:var(--danger)">Kontrolne temperature ne razumem.</div>'
+      :odcitek===null?'<div style="color:var(--danger)">Kontrolna temperatura mora biti med −20 in 40 °C.</div>'
+      :`<div>Alkoholometer mora pri ${tK.toLocaleString('sl-SI')} °C pokazati
+         <strong>≈ ${st(odcitek,2)} %</strong> — <span style="color:var(--muted)">to je izračun, potrdi ga z meritvijo spodaj.</span></div>`}
+    ${s.spremenjeno?`<div style="color:var(--muted)">Odšteje se natehtano, ne načrt.
+      <button onclick="mesNatehtanoPocisti()" style="border:0;background:none;cursor:pointer;color:var(--accent);
+        font-family:inherit;font-size:.66rem;text-decoration:underline;padding:0 .2rem">↺ nazaj na načrt</button></div>`:''}
   </div>`;
 }
+
 function jsNiz(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
   .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function mesIzkljuci(k){mesIzkljuceni.add(k);mesVsePrikazane=false;mesanjeIzracun();}
+function mesIzkljuci(k){mesIzkljuceni.add(k);mesanjeIzracun();}
 function mesVrni(k){mesIzkljuceni.delete(k);mesanjeIzracun();}
 function mesVrniVse(){mesIzkljuceni.clear();mesanjeIzracun();}
 
@@ -2594,90 +2587,23 @@ function mesanjeIzracun(){
     return;
   }
 
-  const resitve=[];
-  for(let i=0;i<viri.length;i++)for(let j=i+1;j<viri.length;j++){
-    const A=viri[i],B=viri[j];
-    const mocnejsi=A.pct>=B.pct?A:B, sibkejsi=A.pct>=B.pct?B:A;
-    if(!(mocnejsi.pct>ciljPct-1e-9&&sibkejsi.pct<ciljPct+1e-9))continue;
-    const r=etMesaj(ciljV,ciljPct,mocnejsi.pct,sibkejsi.pct);
-    if(!r)continue;
-    const dovolj=r.xa<=mocnejsi.naVoljo+1e-6&&r.xb<=sibkejsi.naVoljo+1e-6;
-    resitve.push({mocnejsi,sibkejsi,vMocnejsi:r.xa,vSibkejsi:r.xb,dovolj,
-                  vode:sibkejsi.voda?r.xb:0});
-  }
-
-  if(!resitve.length){
+  // Za cilj potrebujes nekaj mocnejsega od njega; sibkejse je vedno tu, ker je
+  // voda vir. Brez tega predlog spodaj ne bi imel kaj poceti.
+  if(!viri.some(v=>v.pct>ciljPct+1e-9)){
     el.innerHTML=`<div style="font-size:.72rem;color:var(--danger);line-height:1.5;margin-bottom:.4rem">
       S temi viri ${ciljPct.toLocaleString('sl-SI')} vol % ni mogoče doseči —
-      potrebuješ enega močnejšega in enega šibkejšega od cilja.</div>${mesIzkljuceniHtml(izkljuceni)}`;
+      potrebuješ nekaj močnejšega od cilja.</div>${mesIzkljuceniHtml(izkljuceni)}`;
     return;
   }
 
-  // Ce je cilj enak jakosti vira, izracun vrne "ta vir + 0,000 L necesa
-  // drugega" za vsak par posebej. To je isti nasvet, napisan veckrat, zato
-  // pustimo eno vrstico na vir.
-  const videni=new Set();
-  const brezPodvojenih=resitve.filter(r=>{
-    if(r.vSibkejsi>=0.0005&&r.vMocnejsi>=0.0005)return true;
-    const sam=r.vSibkejsi<0.0005?r.mocnejsi.ime:r.sibkejsi.ime;
-    if(videni.has(sam))return false;
-    videni.add(sam);r.cisto=sam;return true;
-  });
-  resitve.length=0;resitve.push(...brezPodvojenih);
-
-  // Kombinacije, ki jih ni iz cesa zmesati, ne kazemo. Moznost, ki je ne mores
-  // izvesti, ni moznost — je samo pot do razocaranja pri tehtnici, in ce jih je
-  // vec, pokopljejo tiste, ki so res na voljo. Predlog zgoraj zna cez vec virov
-  // in ostane, tudi kadar noben par ne zadosca.
-  const izvedljive=resitve.filter(r=>r.dovolj);
-
-  // Isto nacelo kot pri predlogu: najprej tiste brez vode, nato tiste z
-  // najsibkejsim uporabnim virom (mocnejsi naj ostane za takrat, ko ga bo res
-  // treba), nato tiste z najbolj razredcenim sibkim virom, in sele na koncu
-  // tiste, ki porabijo najmanj mocnega.
-  izvedljive.sort((a,b)=>(a.vode-b.vode)
-    ||(a.mocnejsi.pct-b.mocnejsi.pct)||(a.sibkejsi.pct-b.sibkejsi.pct)
-    ||(a.vMocnejsi-b.vMocnejsi));
-
-  const zVodo=izvedljive.find(r=>r.sibkejsi.voda);
   const stev=v=>v.toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3});
-
-  // Predlog: porabi najbolj razredceno in najsibkejsega uporabnega, po potrebi
-  // cez vec virov. To je obicajno tisto, kar hoces — pari spodaj so za primer,
-  // ko hoces tocno doloceno kombinacijo.
-  // Predlog steje kot prva moznost, zato spodaj privzeto se dve — skupaj tri.
-  // Ves seznam je bil predolg in je pokopal tisto, kar naj bi bilo v ospredju.
-  const prikazane=mesVsePrikazane?izvedljive:izvedljive.slice(0,2);
-  const skritih=mesVsePrikazane?0:Math.max(0,izvedljive.length-prikazane.length);
 
   const pred=etPredlogMesanja(ciljV,ciljPct,viri);
   _mesZadnjiPredlog=pred;
-  const vliteje=pred.raba.reduce((s,x)=>s+x.kol,0);
-  // Masa se pri mesanju ohrani, zato je masa zmesi kar masa cilja.
+  // Masa cilja — potrebna samo se pri sporocilu, ko cilja ni mogoce doseci.
   const masaZmesi=ciljV*etohDensity(ciljPct);
-  // Kadar si cilj zastavil v kilogramih, ga tako tudi izpisemo — volumen zraven
-  // v oklepaju, ker mesas po masi, kontroliras pa oboje.
-  const ciljOpis=mesEnota()==='kg'
-    ? `${kgVG(masaZmesi)} g <span style="font-weight:400;opacity:.8">(${stev(ciljV)} L)</span>`
-    : `${stev(ciljV)} L`;
-
-  // Ko cilja ni mogoce doseci, je edino uporabno vprasanje, koliko pa bi ga slo.
   const najvec=pred.ok?0:etNajvecMozno(ciljPct,viri);
   const najvecMasa=najvec*etohDensity(ciljPct);
-
-  // Kontrola po mesanju: kaj mora alkoholometer pokazati pri dani temperaturi.
-  const tVpis=String(document.getElementById('mesTemp').value||'').trim();
-  let tKontrola=20,tNeveljavna=false;
-  if(tVpis){const b=parseFloat(tVpis.replace(',','.'));
-    if(isFinite(b))tKontrola=b; else tNeveljavna=true;}
-  const odcitek=tNeveljavna?null:oimlOdcitekPri(ciljPct,tKontrola);
-  const kontrola=tNeveljavna
-    ? '<div style="color:var(--danger)">Kontrolne temperature ne razumem.</div>'
-    : odcitek===null
-      ? '<div style="color:var(--danger)">Kontrolna temperatura mora biti med −20 in 40 °C.</div>'
-      : `<div>Po mešanju mora alkoholometer pri ${tKontrola.toLocaleString('sl-SI')} °C pokazati
-           <strong>≈ ${odcitek.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2})} %</strong>
-           <span style="opacity:.8">(steklen alkoholometer bere na kakšno desetinko natančno)</span></div>`;
 
   el.innerHTML=`
     <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.6rem 0 .35rem">
@@ -2702,12 +2628,8 @@ function mesanjeIzracun(){
         }).join('')}
       </div>
       <div id="mesNatehtanoIzid" style="font-size:.68rem;line-height:1.5"></div>`:''}
-      ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3);line-height:1.55">
-        ${pred.cisto?'Nič ne mešaš — ta kanister je že prave jakosti.'
-          :`Zliješ ${stev(vliteje)} L, dobiš <strong>${ciljOpis}</strong> pri ${ciljPct.toLocaleString('sl-SI')} vol %
-             — zmes se skrči za ${stev(vliteje-ciljV)} L.`}
-        ${mesEnota()==='kg'?'':`<div>Masa zmesi: <strong>${kgVG(masaZmesi)} g</strong> <span style="opacity:.8">(informativno, za kontrolo tehtanja)</span></div>`}
-        ${kontrola}
+      ${pred.ok?`<div style="font-size:.66rem;color:var(--muted);margin-top:.35rem;line-height:1.55">
+        ${pred.cisto?'<div style="padding-top:.3rem;border-top:1px solid rgba(175,132,85,.3)">Nič ne mešaš — ta kanister je že prave jakosti.</div>':''}
         ${pred.varcno?`<div style="margin-top:.25rem;color:#8b5a2a">Najbolj razredčenega tokrat ne dolivam — z njim
           ${ciljPct.toLocaleString('sl-SI')} % ne bi šlo, ker bi zmanjkalo etanola nad ciljem. Ostane za takrat,
           ko bo cilj nižji.</div>`:''}
@@ -2722,42 +2644,8 @@ function mesanjeIzracun(){
     </div>
     ${mesIzkljuceniHtml(izkljuceni)}
 
-    ${prikazane.length?`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 .35rem">
-      Druge kombinacije — po dva vira
-    </div>`:pred.ok?`<div style="font-size:.66rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
-      Iz samo dveh virov tega ni mogoče zmešati — v nobenem kanistru ni dovolj.
-      Predlog zgoraj zato jemlje iz več kanistrov.
-    </div>`:''}
-    ${prikazane.map(r=>{
-      const prihranek=(zVodo&&!r.sibkejsi.voda)?zVodo.vMocnejsi-r.vMocnejsi:0;
-      const vrstice=r.cisto
-        ? [r.vSibkejsi<0.0005?r.mocnejsi:r.sibkejsi].map(v=>({v,kol:ciljV}))
-        : [{v:r.mocnejsi,kol:r.vMocnejsi},{v:r.sibkejsi,kol:r.vSibkejsi}];
-      return `<div style="border:1px solid var(--border);border-radius:8px;padding:.55rem .65rem;margin-bottom:.45rem">
-        <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.78rem">
-          ${vrstice.map(({v,kol})=>`
-          <span>${htmlEsc(v.ime)} <span style="color:var(--muted)">${v.pct.toLocaleString('sl-SI')} %</span></span>
-          <span style="text-align:right"><strong>${kgVG(kol*etohDensity(v.pct))} g</strong>
-            <div style="font-size:.66rem;font-weight:400;color:var(--muted)">${stev(kol)} L</div></span>`).join('')}
-        </div>
-        ${r.cisto?'<div style="font-size:.66rem;color:var(--muted);margin-top:.25rem">Nič ne mešaš — jakost je že prava.</div>':''}
-        ${r.cisto?'':`<div style="font-size:.66rem;color:var(--muted);margin-top:.3rem;padding-top:.25rem;border-top:1px solid var(--border)">
-          Zliješ ${stev(r.vMocnejsi+r.vSibkejsi)} L, dobiš ${stev(ciljV)} L pri ${ciljPct.toLocaleString('sl-SI')} vol %
-          — zmes se skrči za ${stev(r.vMocnejsi+r.vSibkejsi-ciljV)} L.
-        </div>`}
-        ${prihranek>0.0005?`<div style="font-size:.66rem;color:var(--success);margin-top:.15rem">
-          Prihraniš ${stev(prihranek)} L močnega etanola v primerjavi z dolivanjem vode.</div>`:''}
-      </div>`;
-    }).join('')}
     ${pred.ok&&!pred.cisto&&pred.raba.some(x=>x.vir.vrsticaId)?`<button class="bsave" style="width:100%;margin:0 0 .8rem" onclick="potrdiMesanje()">
       ✓ Sem zmešal — odštej ${mesZaDN?'in zapiši v nalog':'iz kanistrov'}
-    </button>`:''}
-
-    ${skritih>0?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeVec()">
-      Pokaži še ${skritih} ${sklon(skritih,MOZNOST)}
-    </button>`:''}
-    ${mesVsePrikazane&&izvedljive.length>2?`<button class="bcancel" style="width:100%;margin:.1rem 0 .6rem" onclick="mesanjeManj()">
-      Pokaži manj
     </button>`:''}
 
     <div style="font-size:.65rem;color:var(--muted);line-height:1.5;margin-bottom:.8rem">
@@ -2826,7 +2714,6 @@ function sklon(n,oblike){
 // 5+ kanistrov.
 const KANISTER=['kanister','kanistra','kanistri','kanistrov'];
 const KANISTER_TOZ=['kanister','kanistra','kanistre','kanistrov'];
-const MOZNOST=['možnost','možnosti','možnosti','možnosti'];
 
 function popisIzLokalnega(){
   try{const s=localStorage.getItem(POPIS_KLJUC);popisVrstice=s?JSON.parse(s):[];}
@@ -3102,6 +2989,54 @@ function kanistriBrisiIzBaze(id){
   return sbDel('gm_kanistri',id).catch(e=>console.warn('kanistriBrisi',e));
 }
 
+// Povezava za nalepko na kanistru
+// ───────────────────────────────
+// Na kanistru je QR koda; skeniras jo in popis se odpre pri tem kanistru, s
+// taro in oznako ze vpisanima. Ce vrstice zanj se ni, jo naredi — to je ravno
+// tisto, kar hoces, ko stojis pred njim s tehtnico.
+function kanisterPovezava(id){
+  return `${location.origin}${location.pathname}#popis=${encodeURIComponent(id)}`;
+}
+async function kanisterPovezavoKopiraj(i){
+  const k=kanistri[i];
+  if(!k)return;
+  const url=kanisterPovezava(k.id);
+  try{
+    await navigator.clipboard.writeText(url);
+    toast('✓ Povezava kopirana — iz nje naredi QR kodo');
+  }catch(e){
+    // Brez varne povezave ali dovoljenja odlozisce ne dela; takrat jo pokazemo,
+    // da jo lahko oznacis rocno.
+    prompt(`Povezava za QR kodo — ${k.oznaka||'kanister'}:`,url);
+  }
+}
+
+async function odpriPopisNaKanistru(kanisterId){
+  await openPopisSheet();
+  if(!kanisterId)return;
+  const k=kanisterPo(kanisterId);
+  if(!k){toast('Kanistra iz povezave ni v registru');return;}
+  let i=popisVrstice.findIndex(v=>v.kanister===k.id);
+  if(i<0){
+    const nova=popisPrazna();
+    nova.kanister=k.id;nova.tara=String(k.tara||'');
+    nova.tip=k.tip||'';nova.opis=k.oznaka;
+    popisVrstice.push(nova);i=popisVrstice.length-1;
+    popisVLokalno();
+  }
+  popisZaprti.delete(popisVrstice[i].id);
+  popisZaprteShrani();
+  popisIzrisi();
+  const vr=document.getElementById('popisRow'+i);
+  if(vr){
+    vr.scrollIntoView({block:'center',behavior:'smooth'});
+    vr.style.transition='background .4s';
+    vr.style.background='rgba(175,132,85,.18)';
+    setTimeout(()=>{vr.style.background='';},1600);
+  }
+  toast(`Kanister ${k.oznaka||''} — vpiši bruto`);
+}
+
 async function openKanistriSheet(){
   kanistriIzLokalnega();
   if(!kanistri.length)kanistriDodajTiho();
@@ -3207,9 +3142,14 @@ function kanistriIzrisi(){
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.35rem">
         <span id="kanStatus${i}" style="font-size:.64rem">${kanistriStatusHtml(k,vRabi)}</span>
-        <button onclick="kanistriBrisi(${i})"
-          style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;
-                 padding:.2rem .45rem;cursor:pointer;color:var(--danger);font-size:.68rem">✕</button>
+        <span style="flex:0 0 auto;display:flex;gap:.3rem">
+          <button onclick="kanisterPovezavoKopiraj(${i})" title="Povezava za QR kodo na nalepki"
+            style="border:1px solid var(--border);background:none;border-radius:6px;
+                   padding:.2rem .45rem;cursor:pointer;color:var(--accent);font-size:.68rem">🔗 QR</button>
+          <button onclick="kanistriBrisi(${i})"
+            style="border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;
+                   padding:.2rem .45rem;cursor:pointer;color:var(--danger);font-size:.68rem">✕</button>
+        </span>
       </div>
     </div>`;
   }).join('')||'<div style="font-size:.72rem;color:var(--muted)">Ni še nobenega kanistra.</div>';
@@ -3381,7 +3321,7 @@ function popisIzrisi(){
         onclick="popisPreklopiVse()">${vsiZaprti?'▾ Razpri vse':'▸ Zloži vse'}</button>
     </div>`:'';
   el.innerHTML=glava+popisVrstice.map((v,i)=>popisZaprti.has(v.id)?popisVrsticaZaprta(v,i):`
-    <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
+    <div id="popisRow${i}" style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
         <button onclick="popisPreklopi(${i})" aria-expanded="true" title="Zloži"
           style="flex:0 0 auto;border:0;background:none;cursor:pointer;color:var(--muted);font-size:.7rem;padding:.25rem .15rem">▾</button>
@@ -10860,6 +10800,36 @@ async function sbDel(tbl,id){
   if(!r.ok)throw new Error(`${tbl}:${r.status}`);
 }
 
+// Manjkajoc stolpec ne sme pokopati celega zapisa
+// ───────────────────────────────────────────────
+// Kadar je baza starejsa od aplikacije, PostgREST vrne PGRST204 in poimenuje
+// stolpec, ki ga ne pozna — vendar vedno samo PRVEGA. Zato poskusimo znova brez
+// njega, in tako naprej, dokler zapis ne gre skozi. Bolje zapis brez enega
+// polja kot nic; kar smo izpustili, pa povemo, sicer bi se podatek tiho gubil.
+const _manjkajoci={};
+async function sbUpsertProzno(tbl,vrstica){
+  const podatki={...vrstica};
+  const izpusceni=[];
+  for(let k=0;k<12;k++){
+    try{await sbUpsert(tbl,podatki);break;}
+    catch(e){
+      const m=/Could not find the '([^']+)' column/.exec(e.message||'');
+      if(!m||!(m[1] in podatki)||k===11)throw e;
+      delete podatki[m[1]];izpusceni.push(m[1]);
+    }
+  }
+  if(izpusceni.length){
+    sinkNapaka(`${tbl} — manjkajoči stolpci`,
+      new Error(`V Supabase ni stolpcev: ${izpusceni.join(', ')}. Zapis je shranjen `+
+                'brez njih — zaženi ustrezno dopolnitev iz mape doc.'));
+    if(!_manjkajoci[tbl]){
+      _manjkajoci[tbl]=true;
+      toast(`⚠ ${tbl}: manjka ${izpusceni.join(', ')} — shranjeno brez tega`);
+    }
+  }
+  return izpusceni;
+}
+
 // Converters DN ↔ Supabase
 function dnToSb(d){return{
   id:d.id,oznaka:d.oznaka,je_rd:!!d.jeRd,datum:d.datum||null,namen:d.namen||null,
@@ -11159,25 +11129,12 @@ async function sbPushGly(z){
 }
 
 async function sbPushRD(r){
-  try{await sbUpsert('gm_dn_rd',rdToSb(r));setSyncStatus('✓');return;}
-  catch(e){
-    // 'oznaka' je nov stolpec. Ce ga v bazi se ni, zapis vseeno sinhroniziramo
-    // brez njega - sicer bi tiho odpovedala sinhronizacija celega R&D naloga.
-    if(/oznaka/i.test(e.message||'')){
-      try{
-        const {oznaka,...brezOznake}=rdToSb(r);
-        await sbUpsert('gm_dn_rd',brezOznake);
-        sinkNapaka('gm_dn_rd — manjkajoc stolpec',
-          new Error('V Supabase ni stolpca oznaka. R&D nalog je shranjen brez nje.'));
-        if(!window._rdOznakaOpozorilo){
-          window._rdOznakaOpozorilo=true;
-          toast('⚠ V Supabase manjka stolpec gm_dn_rd.oznaka — oznake se ne sinhronizirajo');
-        }
-        return;
-      }catch(e2){console.error('sbPushRD (brez oznake)',e2);}
-    }
-    sinkNapaka('sbPushRD',e);
-  }
+  try{
+    // Prej smo lovili samo manjkajoco 'oznako'; enako se je zgodilo z
+    // 'etanol_knjizen' in zapis ni sel skozi. Zdaj velja za vsak stolpec.
+    const izpusceni=await sbUpsertProzno('gm_dn_rd',rdToSb(r));
+    if(!izpusceni.length)setSyncStatus('✓');
+  }catch(e){sinkNapaka('sbPushRD',e);}
 }
 // Tabela gm_dn_mat_tipi je nova. Ce je se ni, lastni tipi ostanejo lokalni -
 // vnosi se vseeno shranijo, le ime in enota se na drugi napravi ne pokazeta.
@@ -11571,6 +11528,24 @@ async function migrateOpombaToDoabvitelj(){
   var izvirni = window.switchTab;
   if (typeof izvirni !== 'function') return;
 
+  // Listi so pod zaslonom Preracuni; nanje kaze QR koda na nalepki kanistra in
+  // bliznjica na namizju. #popis=<id kanistra> odpre popis pri tem kanistru.
+  var LISTI = {
+    popis: function (arg) {
+      izvirni('preracuni');
+      if (arg && typeof odpriPopisNaKanistru === 'function') odpriPopisNaKanistru(arg);
+      else if (typeof openPopisSheet === 'function') openPopisSheet();
+    },
+    mesanje: function () {
+      izvirni('preracuni');
+      if (typeof openMesanjeSheet === 'function') openMesanjeSheet();
+    },
+    kanistri: function () {
+      izvirni('preracuni');
+      if (typeof openKanistriSheet === 'function') openKanistriSheet();
+    }
+  };
+
   window.switchTab = function (id, el) {
     izvirni(id, el);
     if (ZASLONI.indexOf(id) === -1) return;
@@ -11578,9 +11553,15 @@ async function migrateOpombaToDoabvitelj(){
   };
 
   function izNaslova() {
-    var id = String(location.hash || '').replace(/^#/, '');
-    if (ZASLONI.indexOf(id) === -1) return;
-    try { izvirni(id); } catch (e) { console.warn('Zaslona ' + id + ' ni bilo mogoce odpreti:', e); }
+    var cel = String(location.hash || '').replace(/^#/, '');
+    var enak = cel.indexOf('=');
+    var id = enak === -1 ? cel : cel.slice(0, enak);
+    var arg = enak === -1 ? '' : decodeURIComponent(cel.slice(enak + 1));
+    try {
+      if (LISTI[id]) { LISTI[id](arg); return; }
+      if (ZASLONI.indexOf(id) === -1) return;
+      izvirni(id);
+    } catch (e) { console.warn('Povezave #' + cel + ' ni bilo mogoce odpreti:', e); }
   }
 
   // Prijavni zaslon prekriva aplikacijo, dokler se uporabnik ne prijavi.

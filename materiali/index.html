@@ -2989,6 +2989,54 @@ function kanistriBrisiIzBaze(id){
   return sbDel('gm_kanistri',id).catch(e=>console.warn('kanistriBrisi',e));
 }
 
+// Povezava za nalepko na kanistru
+// ───────────────────────────────
+// Na kanistru je QR koda; skeniras jo in popis se odpre pri tem kanistru, s
+// taro in oznako ze vpisanima. Ce vrstice zanj se ni, jo naredi — to je ravno
+// tisto, kar hoces, ko stojis pred njim s tehtnico.
+function kanisterPovezava(id){
+  return `${location.origin}${location.pathname}#popis=${encodeURIComponent(id)}`;
+}
+async function kanisterPovezavoKopiraj(i){
+  const k=kanistri[i];
+  if(!k)return;
+  const url=kanisterPovezava(k.id);
+  try{
+    await navigator.clipboard.writeText(url);
+    toast('✓ Povezava kopirana — iz nje naredi QR kodo');
+  }catch(e){
+    // Brez varne povezave ali dovoljenja odlozisce ne dela; takrat jo pokazemo,
+    // da jo lahko oznacis rocno.
+    prompt(`Povezava za QR kodo — ${k.oznaka||'kanister'}:`,url);
+  }
+}
+
+async function odpriPopisNaKanistru(kanisterId){
+  await openPopisSheet();
+  if(!kanisterId)return;
+  const k=kanisterPo(kanisterId);
+  if(!k){toast('Kanistra iz povezave ni v registru');return;}
+  let i=popisVrstice.findIndex(v=>v.kanister===k.id);
+  if(i<0){
+    const nova=popisPrazna();
+    nova.kanister=k.id;nova.tara=String(k.tara||'');
+    nova.tip=k.tip||'';nova.opis=k.oznaka;
+    popisVrstice.push(nova);i=popisVrstice.length-1;
+    popisVLokalno();
+  }
+  popisZaprti.delete(popisVrstice[i].id);
+  popisZaprteShrani();
+  popisIzrisi();
+  const vr=document.getElementById('popisRow'+i);
+  if(vr){
+    vr.scrollIntoView({block:'center',behavior:'smooth'});
+    vr.style.transition='background .4s';
+    vr.style.background='rgba(175,132,85,.18)';
+    setTimeout(()=>{vr.style.background='';},1600);
+  }
+  toast(`Kanister ${k.oznaka||''} — vpiši bruto`);
+}
+
 async function openKanistriSheet(){
   kanistriIzLokalnega();
   if(!kanistri.length)kanistriDodajTiho();
@@ -3094,9 +3142,14 @@ function kanistriIzrisi(){
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.35rem">
         <span id="kanStatus${i}" style="font-size:.64rem">${kanistriStatusHtml(k,vRabi)}</span>
-        <button onclick="kanistriBrisi(${i})"
-          style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;
-                 padding:.2rem .45rem;cursor:pointer;color:var(--danger);font-size:.68rem">✕</button>
+        <span style="flex:0 0 auto;display:flex;gap:.3rem">
+          <button onclick="kanisterPovezavoKopiraj(${i})" title="Povezava za QR kodo na nalepki"
+            style="border:1px solid var(--border);background:none;border-radius:6px;
+                   padding:.2rem .45rem;cursor:pointer;color:var(--accent);font-size:.68rem">🔗 QR</button>
+          <button onclick="kanistriBrisi(${i})"
+            style="border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;
+                   padding:.2rem .45rem;cursor:pointer;color:var(--danger);font-size:.68rem">✕</button>
+        </span>
       </div>
     </div>`;
   }).join('')||'<div style="font-size:.72rem;color:var(--muted)">Ni še nobenega kanistra.</div>';
@@ -3268,7 +3321,7 @@ function popisIzrisi(){
         onclick="popisPreklopiVse()">${vsiZaprti?'▾ Razpri vse':'▸ Zloži vse'}</button>
     </div>`:'';
   el.innerHTML=glava+popisVrstice.map((v,i)=>popisZaprti.has(v.id)?popisVrsticaZaprta(v,i):`
-    <div style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
+    <div id="popisRow${i}" style="border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;margin-bottom:.45rem">
       <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
         <button onclick="popisPreklopi(${i})" aria-expanded="true" title="Zloži"
           style="flex:0 0 auto;border:0;background:none;cursor:pointer;color:var(--muted);font-size:.7rem;padding:.25rem .15rem">▾</button>
@@ -11475,6 +11528,24 @@ async function migrateOpombaToDoabvitelj(){
   var izvirni = window.switchTab;
   if (typeof izvirni !== 'function') return;
 
+  // Listi so pod zaslonom Preracuni; nanje kaze QR koda na nalepki kanistra in
+  // bliznjica na namizju. #popis=<id kanistra> odpre popis pri tem kanistru.
+  var LISTI = {
+    popis: function (arg) {
+      izvirni('preracuni');
+      if (arg && typeof odpriPopisNaKanistru === 'function') odpriPopisNaKanistru(arg);
+      else if (typeof openPopisSheet === 'function') openPopisSheet();
+    },
+    mesanje: function () {
+      izvirni('preracuni');
+      if (typeof openMesanjeSheet === 'function') openMesanjeSheet();
+    },
+    kanistri: function () {
+      izvirni('preracuni');
+      if (typeof openKanistriSheet === 'function') openKanistriSheet();
+    }
+  };
+
   window.switchTab = function (id, el) {
     izvirni(id, el);
     if (ZASLONI.indexOf(id) === -1) return;
@@ -11482,9 +11553,15 @@ async function migrateOpombaToDoabvitelj(){
   };
 
   function izNaslova() {
-    var id = String(location.hash || '').replace(/^#/, '');
-    if (ZASLONI.indexOf(id) === -1) return;
-    try { izvirni(id); } catch (e) { console.warn('Zaslona ' + id + ' ni bilo mogoce odpreti:', e); }
+    var cel = String(location.hash || '').replace(/^#/, '');
+    var enak = cel.indexOf('=');
+    var id = enak === -1 ? cel : cel.slice(0, enak);
+    var arg = enak === -1 ? '' : decodeURIComponent(cel.slice(enak + 1));
+    try {
+      if (LISTI[id]) { LISTI[id](arg); return; }
+      if (ZASLONI.indexOf(id) === -1) return;
+      izvirni(id);
+    } catch (e) { console.warn('Povezave #' + cel + ' ni bilo mogoce odpreti:', e); }
   }
 
   // Prijavni zaslon prekriva aplikacijo, dokler se uporabnik ne prijavi.

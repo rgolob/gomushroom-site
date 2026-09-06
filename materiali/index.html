@@ -2085,6 +2085,7 @@ async function potrdiMesanje(){
     if(!v)continue;
     const nova=Math.max(0,gVKg(v.masa)-mesRabaMasa(x));
     v.masa=kgVG(nova);
+    popisMasaSpremenjena(v);
     await popisVBazo(v);
   }
 
@@ -2193,6 +2194,7 @@ async function potrdiDolivanje(kljuc,dodajKg){
     const vrstica=popisVrstice.find(p=>p.id===v.vrsticaId);
     if(vrstica){
       vrstica.masa=kgVG(Math.max(0,gVKg(vrstica.masa)-dodaj));
+      popisMasaSpremenjena(vrstica);
       popisVLokalno();
       await popisVBazo(vrstica);
     }
@@ -2776,6 +2778,7 @@ async function popisNaloziIzBaze(){
       tara:x.tara==null?'':kgVG(x.tara),
       bruto:x.bruto==null?'':kgVG(x.bruto),
       tip:x.tip||'',kanister:x.kanister||'',
+      masaPosodobljeno:x.masa_posodobljeno||null,
       posodobljeno:x.posodobljeno||null,
     }));
 
@@ -2832,15 +2835,25 @@ function popisVBazo(v){
   popisOsveziNeto(v);
   v.posodobljeno=new Date().toISOString();
   const t=String(v.temp||'').trim();
-  return sbUpsert('gm_etanol_zaloga',{
+  // Prozno: ce stolpca masa_posodobljeno v bazi se ni, gre zapis skozi brez
+  // njega — bolje kot da bi ves popis obstal pri sinhronizaciji.
+  return sbUpsertProzno('gm_etanol_zaloga',{
     id:v.id,oznaka:(v.opis||'').trim()||null,   // prosto besedilo; ime pride iz registra
     masa:gVKg(v.masa),odcitek:parseNum(v.pct),
     temperatura:t?parseNum(t):null,
     tara:String(v.tara||'').trim()?gVKg(v.tara):null,
     bruto:String(v.bruto||'').trim()?gVKg(v.bruto):null,
     tip:v.tip||null,kanister:v.kanister||null,
+    masa_posodobljeno:v.masaPosodobljeno||null,
     posodobljeno:new Date().toISOString(),
   }).catch(e=>{popisSinkNapaka=e.message||'napaka';console.warn('popisVBazo',e);});
+}
+
+// Masa se je spremenila — to je tisti datum, ki pove, kdaj si kanister zadnjic
+// zares stehtal. Popravek tare ali oznake ga ne premakne, ker se v kanistru
+// takrat ni nic zgodilo.
+function popisMasaSpremenjena(v){
+  v.masaPosodobljeno=new Date().toISOString();
 }
 
 function popisShrani(vrstica){
@@ -2890,6 +2903,7 @@ async function regeneriraj(){
 
   for(const x of kandidati){
     x.v.masa='0';
+    popisMasaSpremenjena(x.v);
     await popisVBazo(x.v);
   }
 
@@ -2898,6 +2912,7 @@ async function regeneriraj(){
       masa:String(Math.round(regenerat.masa*10)/10).replace('.',','),
       pct:String(round(regenerat.pct,2)).replace('.',','),
       temp:regenerat.temp};
+    popisMasaSpremenjena(nova);
     popisVrstice.push(nova);
     await popisVBazo(nova);
   }
@@ -2918,13 +2933,27 @@ async function openPopisSheet(){
 }
 
 function popisDodaj(){popisVrstice.push(popisPrazna());popisShrani();popisIzrisi();}
-function popisBrisi(i){
+// Kanistra ne brisemo — obstaja tudi, ko je prazen, in njegova zgodovina je
+// del popisa. Zato se ga izprazni: masa na nic, jakost ostane, da se ve, kaj
+// je bilo notri. Odstraniti se da samo vrstico, v kateri ni nicesar.
+function popisIzprazni(i){
   const v=popisVrstice[i];
-  if(popisJePolna(v)&&!confirm(`Izbrišem kanister ${popisIme(v,i)}?`))return;
-  popisVrstice.splice(i,1);
-  if(v&&v.id)sbDel('gm_etanol_zaloga',v.id).catch(e=>console.warn('popisBrisi',e));
-  if(!popisVrstice.length)popisVrstice=[popisPrazna()];
-  popisShrani();popisIzrisi();
+  if(!v)return;
+  if(!popisNekajVpisano(v)){
+    // Prazna predloga — ta gre lahko stran brez vprasanj.
+    popisVrstice.splice(i,1);
+    if(v.id)sbDel('gm_etanol_zaloga',v.id).catch(e=>console.warn('popisIzprazni',e));
+    if(!popisVrstice.length)popisVrstice=[popisPrazna()];
+    popisShrani();popisIzrisi();
+    return;
+  }
+  if(parseNum(v.masa)<=0&&!String(v.bruto||'').trim()){
+    toast('Ta kanister je že prazen');return;
+  }
+  if(!confirm(`Izpraznim ${popisIme(v,i)}?\n\nMasa gre na 0 g, jakost ostane zapisana.`))return;
+  v.masa='0';v.bruto='';
+  popisMasaSpremenjena(v);
+  popisShrani(v);popisIzrisi();
 }
 function popisPocisti(){
   if(!confirm('Počistim ves popis? Kanistri se izbrišejo tudi iz baze.'))return;
@@ -3200,7 +3229,7 @@ function kanistriIzrisi(){
 
 function kanistriVBazo(k){
   if(!String(k.oznaka||'').trim())return Promise.resolve();
-  return sbUpsert('gm_kanistri',{
+  return sbUpsertProzno('gm_kanistri',{
     id:k.id,oznaka:String(k.oznaka).trim(),
     tara:String(k.tara||'').trim()?gVKg(k.tara):null,
     tip:k.tip||null,stehtana:!!k.stehtana,
@@ -3301,6 +3330,7 @@ function popisBrutoSprememba(i,vrednost){
   const v=popisVrstice[i];
   v.bruto=vrednost;
   popisOsveziNeto(v);
+  popisMasaSpremenjena(v);
   popisVLokalno();popisIzrisi();
   clearTimeout(_popisCakalnik);
   _popisCakalnik=setTimeout(()=>popisVBazo(v),500);
@@ -3312,6 +3342,7 @@ function popisNetoSprememba(i,vrednost){
   const v=popisVrstice[i];
   v.masa=vrednost;
   v.bruto='';
+  popisMasaSpremenjena(v);
   popisVLokalno();
   popisIzracun();
   clearTimeout(_popisCakalnik);
@@ -3416,7 +3447,10 @@ function popisIzrisi(){
         </span>`:`<input value="${(v.opis||'').replace(/"/g,'&quot;')}" placeholder="Oznaka kanistra (neobvezno)"
           oninput="popisSprememba(${i},'opis',this.value)"
           style="flex:1;min-width:0;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.75rem">`}
-        <button onclick="popisBrisi(${i})" style="flex:0 0 auto;border:1px solid rgba(139,58,42,.3);background:none;border-radius:6px;padding:.25rem .5rem;cursor:pointer;color:var(--danger);font-size:.7rem">✕</button>
+        <button onclick="popisIzprazni(${i})" title="Izprazni kanister"
+          style="flex:0 0 auto;border:1px solid var(--border);background:none;border-radius:6px;
+                 padding:.25rem .5rem;cursor:pointer;color:var(--muted);font-size:.7rem;white-space:nowrap">${
+          popisNekajVpisano(v)?'Izprazni':'✕'}</button>
       </div>
       <div class="frow" style="margin-bottom:.35rem">
         <div class="field"><label>Kanister</label>
@@ -3448,7 +3482,9 @@ function popisIzrisi(){
             oninput="popisSprememba(${i},'temp',this.value)"></div>
       </div>
       <div id="popisVr${i}" style="font-size:.7rem;color:var(--muted)"></div>
-      ${v.posodobljeno?`<div style="font-size:.64rem;color:var(--muted);margin-top:.15rem">Nazadnje posodobljen ${popisDatum(v.posodobljeno)}</div>`:''}
+      ${v.masaPosodobljeno||v.posodobljeno?`<div style="font-size:.64rem;color:var(--muted);margin-top:.15rem">${
+        v.masaPosodobljeno?`Masa nazadnje vpisana ${popisDatum(v.masaPosodobljeno)}`
+                          :`Nazadnje posodobljen ${popisDatum(v.posodobljeno)}`}</div>`:''}
     </div>`).join('');
   popisIzracun();
 }
@@ -3534,13 +3570,16 @@ function popisIzracun(){
 
   // Popis je star toliko kot njegov najstarejsi vpis: en sveze stehtan kanister
   // ne pomeni, da so ostali se resnicni.
-  const zigi=popisVrstice.filter(popisJePolna).map(v=>v.posodobljeno).filter(Boolean);
+  // Popis je star toliko, kolikor je stara najstarejsa MASA — popravek oznake
+  // ali tare ne pomeni, da je kanister znova na tehtnici.
+  const zigi=popisVrstice.filter(popisJePolna)
+    .map(v=>v.masaPosodobljeno||v.posodobljeno).filter(Boolean);
   let starost='';
   if(zigi.length){
     const najstarejsi=zigi.slice().sort()[0];
     const dni=Math.floor((Date.now()-new Date(najstarejsi).getTime())/86400000);
     const manjka=popisVrstice.filter(popisJePolna).length-zigi.length;
-    starost=` · najstarejši vpis ${popisDatum(najstarejsi)}`+
+    starost=` · najstarejša masa ${popisDatum(najstarejsi)}`+
             (dni>30?' ⚠':'')+(manjka?` · ${manjka} brez datuma`:'');
   }
   const barvaRazlike=razlikaVRedu?'var(--success)':'var(--danger)';

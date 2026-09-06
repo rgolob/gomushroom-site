@@ -199,3 +199,29 @@ select column_name
 --
 -- Pricakovano: osem stolpcev gm_kanistri, ena politika gm_auth_all za
 -- {authenticated} in stolpec kanister v gm_etanol_zaloga.
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Dopolnitev: datum zadnje spremembe mase
+-- ═══════════════════════════════════════════════════════════════════════════
+--
+-- posodobljeno se premakne ob vsakem popravku — tudi ce si samo popravil
+-- oznako ali taro. Za popis pa je pomembno nekaj drugega: kdaj je bil kanister
+-- zadnjic na tehtnici. To je masa_posodobljeno; postavi se samo, ko se
+-- spremeni masa (vpis bruta ali neta, odstevanje ob mesanju, praznjenje,
+-- regeneracija).
+--
+-- Po njem se ravna tudi starost popisa: "najstarejsa masa" v povzetku.
+
+alter table gm_etanol_zaloga
+  add column if not exists masa_posodobljeno timestamptz;
+
+comment on column gm_etanol_zaloga.masa_posodobljeno is
+  'Kdaj je bila zadnjic spremenjena masa (tehtanje, odvzem, praznjenje). '
+  'Popravek oznake ali tare tega datuma ne premakne.';
+
+notify pgrst, 'reload schema';
+
+-- ── Preveri ────────────────────────────────────────────────────────────────
+select column_name, data_type
+  from information_schema.columns
+ where table_name = 'gm_etanol_zaloga' and column_name = 'masa_posodobljeno';

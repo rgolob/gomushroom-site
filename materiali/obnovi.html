@@ -272,8 +272,20 @@ function prazno(v){
   if(typeof v==='object')return Object.keys(v).length===0;
   return false;
 }
+// Isti trenutek, zapisan drugace, ni razlika. Streznik vrne
+// '2026-08-12T10:00:00+00:00', lokalna kopija pa '2026-08-12T10:00:00.000Z' -
+// primerjava po nizu je zato vseh 39 bilancnih dogodkov trajno kazala kot
+// razlicne, tudi takoj po uspesnem prenosu. Svarilo "preveri, preden posljes"
+// je ob tem izgubilo pomen: kricalo je pri vsakem pregledu, zato ga clovek
+// preneha brati prav takrat, ko bi ga moral.
+const CASOVNI=/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}|$)/;
+function casovni(v){return typeof v==='string'&&CASOVNI.test(v);}
 function enaka(a,b){
   if(prazno(a)&&prazno(b))return true;
+  if(casovni(a)&&casovni(b)){
+    const x=Date.parse(a),y=Date.parse(b);
+    if(Number.isFinite(x)&&Number.isFinite(y))return x===y;
+  }
   if(typeof a==='number'||typeof b==='number'){
     const x=Number(a),y=Number(b);
     if(Number.isFinite(x)&&Number.isFinite(y))return Math.abs(x-y)<1e-9;

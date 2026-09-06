@@ -44,10 +44,24 @@ alter table gm_dn_rd
   add column if not exists aae_produkt  numeric,
   add column if not exists aae_izgube   numeric;
 
+-- Regenerat: destilat visoke koncentracije, ki se vrne v kanister. To ni
+-- izguba — v masni bilanci serije je to vrstica R. Ob zakljucku naloga se
+-- knjizi kot vhod 'regeneracija', sicer bi zaloga v knjigi padla za nekaj, kar
+-- v kanistru fizicno je.
+alter table gm_dn_rd
+  add column if not exists masa_regen    numeric,
+  add column if not exists pct_regen     numeric,
+  add column if not exists aae_regen     numeric,
+  add column if not exists regen_knjizen boolean default false;
+
 comment on column gm_dn_rd.aae_produkt is
-  'L AAE, ki so ostali v produktu. Trosarinsko je poraba se vedno cela (l_aae).';
+  'L AAE, ki so ostali v produktu (polizdelek). Trosarina je odlozena.';
+comment on column gm_dn_rd.aae_regen is
+  'L AAE regenerata, vrnjenega v zalogo. Vrstica R v masni bilanci serije.';
+comment on column gm_dn_rd.regen_knjizen is
+  'true = regenerat je bil v knjigo etanola vpisan rocno; ob zakljucku ga ne knjizimo se enkrat.';
 comment on column gm_dn_rd.aae_izgube is
-  'L AAE, ki jih produkt ne nosi: l_aae - aae_produkt.';
+  'Prava izguba: l_aae - aae_regen - aae_produkt.';
 
 -- ── Polizdelek pri poskusu ─────────────────────────────────────────────────
 -- Pilotna serija ni za prodajo in lahko lezi mesece, dokler se ne odlocis, ali
@@ -73,7 +87,7 @@ comment on column gm_dn_rd.aae_polizdelek is
 notify pgrst, 'reload schema';
 
 -- ── Preveri ────────────────────────────────────────────────────────────────
--- Vrniti mora 26 vrstic (16 + 6 + 3 spodnjih + id).
+-- Vrniti mora 30 vrstic (16 + 6 + 4 + 3 spodnjih + id).
 select column_name, data_type
   from information_schema.columns
  where table_name = 'gm_dn_rd'

@@ -80,6 +80,11 @@ alter table gm_dn_work_orders
 comment on column gm_dn_rd.aae_polizdelek is
   'L AAE, vezani v pilotni seriji. Iz kanistra so odsli, a niso ne izguba ne prodano blago.';
 
+-- Vmesna razlicica je koncentrat knjizila kot vhod 'regeneracija' in je imela
+-- kljukico "regenerat je ze vpisan rocno". Ker se zdaj ne knjizi nic, ni kaj
+-- podvajati in stolpec ni vec v rabi.
+alter table gm_dn_rd drop column if exists regen_knjizen;
+
 -- PostgREST drzi shemo v predpomnilniku; brez tega bi novi stolpci prijeli
 -- sele cez kaksno minuto.
 notify pgrst, 'reload schema';

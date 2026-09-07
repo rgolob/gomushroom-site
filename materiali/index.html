@@ -420,6 +420,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <!-- Koliko AAE lezi vezanega v polizdelkih. Trosarina zanje se ni zapadla,
          zato je to znesek, ki te caka, ce jih kdaj prodas ali predelas. -->
     <div id="etPolizdelki" style="display:none;margin-top:.4rem;padding:.4rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);border:1px solid rgba(90,58,107,.25);font-size:.7rem;color:#5a3a6b"></div>
+    <button class="bcancel" style="width:100%;margin-top:.4rem;font-size:.76rem" onclick="openPolizdelkiSeznam()">🧪 Polizdelki</button>
     <div class="filter-row" id="etFilterRow" style="margin-top:.2rem"></div>
     <div id="etFilterPovzetek"></div>
     <div id="etanolList"></div>
@@ -1488,6 +1489,43 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
         Vpisi se shranjujejo sproti; gumb je za gotovost — pove, koliko jih je
         šlo v bazo, in če kaj ni, tudi zakaj.
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: KARTICA POLIZDELKA -->
+<div class="overlay" id="polizOverlay" style="z-index:215">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="polizNaslov">Polizdelek</span>
+      <button class="shclose" onclick="closeSheet('polizOverlay')">✕</button>
+    </div>
+    <div class="shbody" id="polizTelo"></div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('polizOverlay')">Zapri</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: SEZNAM POLIZDELKOV -->
+<div class="overlay" id="polizSeznamOverlay" style="z-index:210">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle">Polizdelki</span>
+      <button class="shclose" onclick="closeSheet('polizSeznamOverlay')">✕</button>
+    </div>
+    <div class="shbody">
+      <div style="font-size:.7rem;color:var(--muted);line-height:1.55;margin-bottom:.7rem">
+        Posode z alkoholom, ki so nastale iz nalogov in še niso izdelek. Alkohol
+        v njih je iz zaloge že odšel, trošarina zanj pa je odložena, dokler se
+        ne odločiš, kaj bo z njimi.
+      </div>
+      <div id="polizSeznam"></div>
+    </div>
+    <div class="shfoot">
+      <button class="bcancel" onclick="closeSheet('polizSeznamOverlay')">Zapri</button>
     </div>
   </div>
 </div>
@@ -7021,6 +7059,11 @@ function knjizEtanolIzhod(id){
     lAAE:aaeSkupaj,aaeTinkture,aaeIzgube,aaeEtanolGly,aaePolizdelek:aaePoliz,
   };
   etanolKnjiga.push(newEt);
+  const novPoliz=aaePoliz>0?polizUstvari({
+    nalogId:d.id,nalogOznaka:d.oznaka,
+    naziv:d.polizdelekOpis||d.vrstaGobe||'Polizdelek',
+    lAAE:aaePoliz,volPct:volPct,
+  }):null;
   save();
   sbPushEt(newEt);
   closeSheet('dnDetailOverlay');
@@ -7255,106 +7298,348 @@ function renderEtStats(){
     const poliz=polizdelkiOdprti();
     if(!poliz.length){el.style.display='none';}
     else{
-      const skupaj=poliz.reduce((s,d)=>s+polizdelekOstanek(d),0);
+      const skupaj=poliz.reduce((s,p)=>s+polizStanje(p),0);
       const trosarina=skupaj/100*settings.trosarinaEUR;
       el.style.display='';
       el.innerHTML=`<strong>V polizdelkih: ${skupaj.toFixed(4)} L AAE</strong>
-        · trošarina odložena ≈ ${trosarina.toFixed(2)} €
-        <div style="margin-top:.3rem">${poliz.map(d=>{
-          const ost=polizdelekOstanek(d);
-          const spr=d.aaePolizdelekSproscen||0;
-          const opis=d.polizdelekOpis||d.naziv||'';
-          return `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
-            <span style="flex:1;min-width:0;color:var(--muted)">${d.oznaka||'brez oznake'}:
-              <strong style="color:#5a3a6b">${ost.toFixed(4)} L</strong>${opis?' — '+htmlEsc(opis):''}
-              ${spr>0?`<span style="font-size:.62rem"> (že sproščeno ${spr.toFixed(4)} L)</span>`:''}</span>
-            <button onclick="sprostiPolizdelek('${d.id}')" style="flex:0 0 auto;font-size:.62rem;padding:.2rem .5rem;border:1px solid rgba(90,58,107,.4);border-radius:6px;background:white;cursor:pointer;color:#5a3a6b">↩ Sprosti</button>
-            <button onclick="odpisiPolizdelek('${d.id}')" style="flex:0 0 auto;font-size:.62rem;padding:.2rem .5rem;border:1px solid var(--border);border-radius:6px;background:white;cursor:pointer;color:var(--muted)">✕ Odpiši</button>
-          </div>`;
-        }).join('')}</div>
-        <div style="color:var(--muted);margin-top:.25rem">Tu etanol lahko leži, dokler se ne odločiš. „Sprosti" ga vrne v zalogo, ko polizdelek predelaš ali regeneriraš — nato ga porabi nov nalog in trošarina zapade tam. „Odpiši" pa uporabi, če polizdelka ne bo več: iz zaloge je odšel že ob nalogu, zato se nikamor ne knjiži, le ta račun se zapre.</div>`;
+        · trošarina odložena ≈ ${eur(trosarina)}
+        <div style="margin-top:.3rem">${poliz.map(p=>`
+          <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
+            <span style="flex:1;min-width:0;color:var(--muted)">
+              <strong style="color:#5a3a6b">${htmlEsc(p.oznaka)}</strong>
+              · ${fmtNum(polizStanje(p),4)} L AAE${p.naziv?' — '+htmlEsc(p.naziv):''}</span>
+            <button onclick="openPolizdelek('${p.id}')" style="flex:0 0 auto;font-size:.62rem;padding:.2rem .5rem;border:1px solid rgba(90,58,107,.4);border-radius:6px;background:white;cursor:pointer;color:#5a3a6b">Odpri kartico</button>
+          </div>`).join('')}</div>
+        <div style="color:var(--muted);margin-top:.25rem">Alkohol je odšel iz kanistra, ni pa izgubljen — vezan je v teh posodah in trošarina zanj je odložena. Na kartici polizdelka ga regeneriraš nazaj v zalogo, odpremiš drugemu podjetju ali odpišeš.</div>`;
     }
   }
 }
 
-// Koliko AAE je v polizdelku se ostalo. Vpisana kolicina minus tisto, kar je
-// ze slo nazaj v zalogo, in minus tisto, kar je bilo odpisano.
-function polizdelekOstanek(d){
-  return round((d.aaePolizdelek||0)-(d.aaePolizdelekSproscen||0)-(d.aaePolizdelekOdpisan||0),4);
-}
-// Polizdelek nastane pri obeh vrstah razvojnega dela: pri delovnem nalogu z
-// vpisom "AAE v polizdelku", pri poskusu pa iz ostanka v produktu. Racun je
-// isti, zato ju tu obravnavamo skupaj.
-function polizdelkiOdprti(){
-  return [...workOrders,...rdNalogi].filter(d=>polizdelekOstanek(d)>0.00005);
-}
-function polizdelekNajdi(id){
-  const d=workOrders.find(x=>x.id===id);
-  if(d)return {d,jeRd:false};
-  const r=rdNalogi.find(x=>x.id===id);
-  return r?{d:r,jeRd:true}:null;
+// ═══ POLIZDELKI ═══════════════════════════════════════════════════════════
+// Polizdelek je oznacena posoda z vsebino, ki vsebuje alkohol, a se ni izdelek.
+// Nastane ob zakljucku naloga iz tistega, kar je ostalo v seriji, in ostane,
+// dokler se ne odlocimo, kaj bo iz njega.
+//
+// Zakaj seznam gibanj in ne stevci
+// ────────────────────────────────
+// Prej so bili trije stevci na nalogu: vpisano, sprosceno, odpisano. Vsak nov
+// izid je zahteval nov stevec — ko je prisla odprema drugemu podjetju, bi bil
+// cetrti. Seznam gibanj tega ne potrebuje: nova vrsta izida je nova vrstica,
+// ne nov stolpec. Poleg tega pove, KAJ se je s posodo dogajalo, ne le koliko
+// je se notri — in ena serija gre lahko po delih na vec strani.
+//
+// Kaj se ob katerem gibanju knjizi v knjigo etanola:
+//   nastanek     nic — alkohol je bil odpisan ze ob zakljucku naloga
+//   regeneracija VHOD, ker destilat res pritece nazaj v kanister
+//   v_nalog      nic — tekocina gre naravnost v naslednji nalog, mimo kanistra
+//   odprema      nic — iz zaloge je odsel ze ob nalogu; trosarina zapade tu
+//   odpis        nic — iz istega razloga; dvojni odpis bi zalogo potisnil v minus
+const POLIZDELKI_KLJUC='gm_dn_polizdelki';
+let polizdelki=[];
+try{const v=JSON.parse(localStorage.getItem(POLIZDELKI_KLJUC)||'[]');if(Array.isArray(v))polizdelki=v;}
+catch(e){polizdelki=[];}
+function polizdelkiVLokalno(){
+  try{localStorage.setItem(POLIZDELKI_KLJUC,JSON.stringify(polizdelki));}catch(e){}
 }
 
-// Etanol iz polizdelka nazaj v zalogo. Brez tega bi bil vpis v polizdelek
-// slepa ulica: alkohol bi bil odpisan iz cisterne in ga nov nalog ne bi imel
-// od kod porabiti. Knjizba je vhod, simetricna izhodu ob razvojnem nalogu.
-function sprostiPolizdelek(id){
-  const najden=polizdelekNajdi(id);if(!najden)return;
-  const {d,jeRd}=najden;
-  const ostanek=polizdelekOstanek(d);
-  if(!(ostanek>0)){toast('V tem polizdelku ni več etanola');return;}
-  const opis=d.polizdelekOpis||d.naziv||'';
-  const vnos=prompt(
-    `Koliko L AAE sprostiš iz polizdelka ${d.oznaka||''}?\n`+
-    `${opis?opis+'\n':''}Na voljo: ${ostanek.toFixed(4)} L AAE\n\n`+
-    `Vpiši, kolikor si ga zares dobil nazaj — če je regeneracija dala manj, `+
-    `ostanek pusti tu in ga pozneje odpiši.`,
-    String(ostanek.toFixed(4)).replace('.',','));
-  if(vnos===null)return;
-  const aae=parseNum(vnos);
-  if(!(aae>0)){toast('⚠ Vnesi količino');return;}
-  if(aae>ostanek+0.00005){toast(`⚠ Največ ${ostanek.toFixed(4)} L AAE`);return;}
+const POLIZ_GIBANJA={
+  nastanek:    {ime:'Nastanek',    znak:+1, barva:'var(--muted)'},
+  regeneracija:{ime:'Regeneracija',znak:-1, barva:'var(--success)'},
+  v_nalog:     {ime:'V nalog',     znak:-1, barva:'#5a3a6b'},
+  odprema:     {ime:'Odprema',     znak:-1, barva:'#8a6d1f'},
+  odpis:       {ime:'Odpis',       znak:-1, barva:'var(--danger)'},
+};
+function polizGibanjaIme(v){return POLIZ_GIBANJA[v]?.ime||v;}
+// Denar ima vedno dve decimalki — fmtNum bi 3,00 € skrajsal v 3 €.
+function eur(x){return (Math.round((x||0)*100)/100).toFixed(2).replace('.',',')+' €';}
 
-  // Polizdelek ni cist etanol, njegove jakosti pa ne vodimo — vpisuje se
-  // naravnost v AAE. Zato zapisemo kolicino kot AAE pri 100 %, kar je edino
-  // stevilo, ki ga zares poznamo; zaloga tako ali tako sesteva samo lAAE.
-  const newEt={
+// Stanje je vsota gibanj, ne razlika stevcev. Racunamo v L AAE, ker je to
+// edina kolicina, ki je trosarinsko merodajna; grame vodimo zraven za tisto,
+// kar se tehta.
+function polizStanje(p){
+  return round((p?.gibanja||[]).reduce((s,g)=>s+(POLIZ_GIBANJA[g.vrsta]?.znak||0)*(g.lAAE||0),0),4);
+}
+function polizStanjeG(p){
+  return round((p?.gibanja||[]).reduce((s,g)=>s+(POLIZ_GIBANJA[g.vrsta]?.znak||0)*(g.kolicinaG||0),0),1);
+}
+function polizOdprt(p){return polizStanje(p)>0.00005;}
+// Zaprt polizdelek pove, zakaj je zaprt: zadnje gibanje je razlog.
+function polizStatus(p){
+  if(polizOdprt(p))return 'odprt';
+  const zadnje=(p.gibanja||[]).filter(g=>g.vrsta!=='nastanek').slice(-1)[0];
+  return zadnje?({regeneracija:'regeneriran',v_nalog:'porabljen',
+                  odprema:'odpremljen',odpis:'odpisan'}[zadnje.vrsta]||'zaprt'):'zaprt';
+}
+function polizdelkiOdprti(){return polizdelki.filter(polizOdprt);}
+function polizNajdi(id){
+  return polizdelki.find(p=>p.id===id)||polizdelki.find(p=>p.oznaka===id)||null;
+}
+// Trenutna jakost: iz stanja v gramih in L AAE. Ko posode ni vec, vrne izhodisce.
+function polizVolPct(p){
+  const g=polizStanjeG(p),l=polizStanje(p);
+  if(g>0&&l>0)return round(l/(gVKg(g)/etohDensity(p.volPct||50))*100,2)||p.volPct||0;
+  return p.volPct||0;
+}
+
+// Oznaka izhaja iz naloga, iz katerega je polizdelek nastal: RD-26-001-P1 je
+// prvi polizdelek naloga RD-26-001. En nalog jih lahko da vec.
+function polizNovaOznaka(oznakaNaloga){
+  const osnova=(oznakaNaloga||'POL').trim().toUpperCase();
+  for(let i=1;i<100;i++){
+    const kandidat=`${osnova}-P${i}`;
+    if(!polizdelki.some(p=>p.oznaka===kandidat))return kandidat;
+  }
+  return `${osnova}-P${Date.now().toString(36).slice(-3)}`;
+}
+
+function polizGibanje(vrsta,lAAE,kolicinaG,dodatno){
+  return {id:uid(),datum:todayISO(),vrsta,lAAE:round(lAAE,4),
+          kolicinaG:round(kolicinaG||0,1),...(dodatno||{})};
+}
+
+// Ustvari polizdelek ob zakljucku naloga. Vrne zapis ali null, ce ni kaj vezati.
+function polizUstvari({nalogId,nalogOznaka,naziv,lAAE,kolicinaG,volPct,opomba}){
+  if(!(lAAE>0.00005))return null;
+  const p={
     id:uid(),
+    oznaka:polizNovaOznaka(nalogOznaka),
+    naziv:naziv||nalogOznaka||'Polizdelek',
+    izDN:nalogId||'', izDNOznaka:nalogOznaka||'',
     datum:todayISO(),
-    tip:'polizdelek',
-    dokument:d.oznaka||'',
-    opomba:`Sproščeno iz polizdelka${opis?' — '+opis:''}`,
-    kolicina:round(aae,4),pct:100,gostota:etohDensity(100),
-    lAAE:round(aae,4),
+    kolicinaG:round(kolicinaG||0,1), volPct:round(volPct||0,2), lAAE:round(lAAE,4),
+    lokacija:'', opomba:opomba||'',
+    gibanja:[polizGibanje('nastanek',lAAE,kolicinaG,{kam:nalogOznaka||''})],
   };
-  etanolKnjiga.push(newEt);
-  d.aaePolizdelekSproscen=round((d.aaePolizdelekSproscen||0)+aae,4);
+  polizdelki.push(p);
+  polizdelkiVLokalno();
+  polizVBazo(p);
+  return p;
+}
+
+// Nalogi, ki so polizdelek vpisali se pred to evidenco, ga dobijo enkrat.
+// Preslikava je determinirana: iz istega naloga vedno nastane ista oznaka.
+function polizMigriraj(){
+  let ustvarjenih=0;
+  for(const d of [...workOrders,...rdNalogi]){
+    const vpisano=round((d.aaePolizdelek||0),4);
+    if(!(vpisano>0.00005))continue;
+    if(polizdelki.some(p=>p.izDN===d.id))continue;
+    const p=polizUstvari({
+      nalogId:d.id, nalogOznaka:d.oznaka,
+      naziv:d.polizdelekOpis||d.naziv||d.namen||d.vrstaGobe||'Polizdelek',
+      lAAE:vpisano, kolicinaG:d.masaProdukt||0, volPct:d.pctProdukt||0,
+      opomba:'Preneseno iz naloga ob uvedbi kartic polizdelkov',
+    });
+    if(!p)continue;
+    // Kar je bilo po starem ze sprosceno ali odpisano, prenesemo kot gibanji,
+    // da se stanje ujema s prejsnjim.
+    const spr=round(d.aaePolizdelekSproscen||0,4);
+    if(spr>0.00005)p.gibanja.push(polizGibanje('regeneracija',spr,0,{opomba:'preneseno'}));
+    const odp=round(d.aaePolizdelekOdpisan||0,4);
+    if(odp>0.00005)p.gibanja.push(polizGibanje('odpis',odp,0,{opomba:'preneseno'}));
+    ustvarjenih++;
+  }
+  if(ustvarjenih){
+    polizdelkiVLokalno();
+    polizdelki.filter(p=>/ob uvedbi kartic/.test(p.opomba||'')).forEach(polizVBazo);
+  }
+  return ustvarjenih;
+}
+
+// ── Gibanja ───────────────────────────────────────────────────────────────
+function polizVprasajKolicino(p,naslov,dodatek){
+  const stanje=polizStanje(p);
+  if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return null;}
+  const vnos=prompt(`${naslov}\n\n${p.oznaka} · ${p.naziv}\nNa voljo: `
+    +`${fmtNum(stanje,4)} L AAE${polizStanjeG(p)>0?' · '+fmtNum(polizStanjeG(p),1)+' g':''}`
+    +(dodatek?'\n\n'+dodatek:''),
+    String(fmtNum(stanje,4)));
+  if(vnos===null)return null;
+  const aae=parseNum(vnos);
+  if(!(aae>0)){toast('⚠ Vnesi količino');return null;}
+  if(aae>stanje+0.00005){toast(`⚠ Največ ${fmtNum(stanje,4)} L AAE`);return null;}
+  return aae;
+}
+// Sorazmeren del mase: kolikor AAE vzamemo, toliko snovi gre iz posode.
+function polizMasaZa(p,aae){
+  const stanje=polizStanje(p),masa=polizStanjeG(p);
+  return stanje>0?round(masa*(aae/stanje),1):0;
+}
+function polizShrani(p,sporocilo){
+  polizdelkiVLokalno();
+  polizVBazo(p);
+  renderEtStats();renderEtanol();
+  if(currentTab==='rd')renderRD();
+  if(document.getElementById('polizOverlay')?.classList.contains('open'))openPolizdelek(p.id);
+  if(sporocilo)toast(sporocilo);
+}
+
+// Regeneracija je edino gibanje, ki gre nazaj v knjigo etanola — destilat res
+// pritece v kanister in ga popis tam najde.
+function polizRegeneriraj(id){
+  const p=polizNajdi(id);if(!p)return;
+  const aae=polizVprasajKolicino(p,'Koliko L AAE si dobil nazaj v kanister?',
+    'Vpiši, kolikor si ga zares dobil. Kar ni prišlo nazaj, pusti tu in pozneje odpiši.');
+  if(aae===null)return;
+  const e={
+    id:uid(), datum:todayISO(), tip:'polizdelek',
+    dokument:p.oznaka,
+    opomba:`Regenerat iz polizdelka ${p.oznaka} — ${p.naziv}`,
+    kolicina:round(aae,4),pct:100,gostota:etohDensity(100),lAAE:round(aae,4),
+  };
+  etanolKnjiga.push(e);
+  p.gibanja.push(polizGibanje('regeneracija',aae,polizMasaZa(p,aae),{kam:'kanister'}));
   save();
-  sbPushEt(newEt);
-  if(jeRd)sbPushRD(d);else sbPushDN(d);
-  renderEtStats();renderEtanol();renderDN();if(currentTab==='rd')renderRD();
-  toast(`✓ +${aae.toFixed(4)} L AAE nazaj v zalogo`);
+  sbPushEt(e);
+  polizShrani(p,`✓ +${fmtNum(aae,4)} L AAE nazaj na kartico etanola`);
+}
+
+// Odprema drugemu podjetju. V knjigo etanola ne gre nic — iz zaloge je alkohol
+// odsel ze ob nalogu. Trosarina pa zapade tukaj, zato znesek pokazemo, preden
+// odpremo potrdimo: to je stevilka, ki gre na racun.
+function polizOdpremi(id){
+  const p=polizNajdi(id);if(!p)return;
+  const kam=prompt(`Komu odpremljaš ${p.oznaka}?\n\nVpiši naziv podjetja.`,'');
+  if(kam===null)return;
+  const aae=polizVprasajKolicino(p,'Koliko L AAE odpremljaš?');
+  if(aae===null)return;
+  const trosarina=aae/100*settings.trosarinaEUR;
+  const masa=polizMasaZa(p,aae);
+  if(!confirm(
+    `Odprema ${p.oznaka} — ${kam||'brez prejemnika'}\n\n`+
+    `Količina: ${fmtNum(masa,1)} g\n`+
+    `Vsebnost: ${fmtNum(aae,4)} L AAE\n`+
+    `Trošarina: ${eur(trosarina)}\n`+
+    `Obdobje: ${new Date().toLocaleDateString('sl-SI',{month:'long',year:'numeric'})}\n\n`+
+    `Trošarina zapade s to odpremo — znesek daj na račun kot svojo postavko.\n`+
+    `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu.`))return;
+  p.gibanja.push(polizGibanje('odprema',aae,masa,{kam:kam||'',trosarina:round(trosarina,2)}));
+  polizShrani(p,`✓ Odpremljeno ${fmtNum(aae,4)} L AAE · trošarina ${eur(trosarina)}`);
 }
 
 // Polizdelka ne bo vec: vrzen stran, porabljen za pokusino, posusen do konca.
-// V knjigo etanola tu ne pisemo nicesar — alkohol je iz zaloge odsel ze ob
-// nalogu in je takrat tudi obdavcen. Zapiramo samo evidenco o tem, kje lezi;
-// dvojni odpis bi zalogo potisnil v minus.
-function odpisiPolizdelek(id){
-  const najden=polizdelekNajdi(id);if(!najden)return;
-  const {d,jeRd}=najden;
-  const ostanek=polizdelekOstanek(d);
-  if(!(ostanek>0)){toast('V tem polizdelku ni več etanola');return;}
+function polizOdpisi(id){
+  const p=polizNajdi(id);if(!p)return;
+  const stanje=polizStanje(p);
+  if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return;}
   if(!confirm(
-    `Odpišem ${ostanek.toFixed(4)} L AAE iz polizdelka ${d.oznaka||''}?\n\n`+
-    `Uporabi to, kadar polizdelka ne bo več — ne bo predelan in ne bo regeneriran.\n\n`+
-    `V knjigo etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu. `+
+    `Odpišem ${fmtNum(stanje,4)} L AAE iz ${p.oznaka}?\n\n`+
+    `Uporabi to, kadar polizdelka ne bo več — ne bo predelan, ne regeneriran in ne odpremljen.\n\n`+
+    `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu. `+
     `Zapre se samo evidenca, kje leži.`))return;
-  d.aaePolizdelekOdpisan=round((d.aaePolizdelekOdpisan||0)+ostanek,4);
-  save();
-  if(jeRd)sbPushRD(d);else sbPushDN(d);
-  renderEtStats();renderEtanol();renderDN();if(currentTab==='rd')renderRD();
-  toast(`✓ Odpisano ${ostanek.toFixed(4)} L AAE`);
+  p.gibanja.push(polizGibanje('odpis',stanje,polizStanjeG(p),{kam:'uničeno'}));
+  polizShrani(p,`✓ Odpisano ${fmtNum(stanje,4)} L AAE`);
+}
+
+// ── Kartica in seznam ─────────────────────────────────────────────────────
+function polizPovezava(p){
+  return `${location.origin}${location.pathname}#polizdelek=${encodeURIComponent(p.oznaka)}`;
+}
+async function polizPovezavoKopiraj(id){
+  const p=polizNajdi(id);if(!p)return;
+  const url=polizPovezava(p);
+  try{await navigator.clipboard.writeText(url);toast('✓ Povezava kopirana — iz nje naredi QR kodo');}
+  catch(e){prompt('Povezava za QR kodo:',url);}
+}
+
+function openPolizdelkiSeznam(){
+  polizSeznamIzrisi();
+  openSheet('polizSeznamOverlay');
+}
+function polizSeznamIzrisi(){
+  const el=document.getElementById('polizSeznam');
+  if(!el)return;
+  const odprti=polizdelki.filter(polizOdprt);
+  const zaprti=polizdelki.filter(p=>!polizOdprt(p));
+  if(!polizdelki.length){
+    el.innerHTML=`<div class="empty"><div class="ei">🧪</div><div class="et">Ni polizdelkov</div>
+      <div class="es">Nastanejo ob zaključku naloga, ki pusti alkohol v seriji</div></div>`;
+    return;
+  }
+  const vrstica=p=>{
+    const st=polizStanje(p),odprt=polizOdprt(p);
+    return `<div class="dn-card" style="${odprt?'':'opacity:.55'}">
+      <div class="dn-header" onclick="openPolizdelek('${p.id}')">
+        <div class="dn-info" style="flex:1">
+          <div class="dn-name"><span style="color:#5a3a6b">${htmlEsc(p.oznaka)}</span> · ${htmlEsc(p.naziv||'')}</div>
+          <div class="dn-meta">${fmtDate(p.datum)}${p.izDNOznaka?' · iz '+htmlEsc(p.izDNOznaka):''}${p.lokacija?' · '+htmlEsc(p.lokacija):''}</div>
+        </div>
+        <div class="dn-right">
+          <span class="status-badge ${odprt?'status-odprt':'status-zakljucen'}">${polizStatus(p)}</span>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;margin-top:.2rem;color:#5a3a6b">${fmtNum(st,4)} L</div>
+        </div>
+      </div>
+    </div>`;
+  };
+  const skupaj=odprti.reduce((s,p)=>s+polizStanje(p),0);
+  el.innerHTML=
+    (odprti.length?`<div class="slabel">Odprti — ${fmtNum(skupaj,4)} L AAE · trošarina odložena ≈ ${eur(skupaj/100*settings.trosarinaEUR)}</div>`
+                  +odprti.map(vrstica).join(''):'')
+    +(zaprti.length?`<div class="slabel" style="margin-top:.9rem">Zaprti</div>`+zaprti.map(vrstica).join(''):'');
+}
+
+function openPolizdelek(id){
+  const p=polizNajdi(id);
+  if(!p){toast('⚠ Polizdelka ni');return;}
+  const stanje=polizStanje(p),masa=polizStanjeG(p),odprt=polizOdprt(p);
+  const gib=(p.gibanja||[]).map(g=>{
+    const o=POLIZ_GIBANJA[g.vrsta]||{};
+    const znak=o.znak>0?'+':'−';
+    return `<tr>
+      <td style="white-space:nowrap">${fmtDate(g.datum)}</td>
+      <td style="color:${o.barva||'var(--ink)'}">${polizGibanjaIme(g.vrsta)}${g.kam?`<div style="font-size:.66rem;color:var(--muted)">${htmlEsc(g.kam)}</div>`:''}</td>
+      <td style="text-align:right;white-space:nowrap">${g.kolicinaG?znak+fmtNum(g.kolicinaG,1)+' g':'—'}</td>
+      <td style="text-align:right;white-space:nowrap;font-weight:600;color:${o.barva||'var(--ink)'}">${znak}${fmtNum(g.lAAE,4)} L</td>
+    </tr>`;
+  }).join('');
+  const odpremljeno=(p.gibanja||[]).filter(g=>g.vrsta==='odprema');
+  document.getElementById('polizNaslov').textContent=p.oznaka;
+  document.getElementById('polizTelo').innerHTML=`
+    <div style="padding:.25rem 0">
+      <table class="mini-table">
+        <tr><td>Naziv</td><td>${htmlEsc(p.naziv||'—')}</td></tr>
+        <tr><td>Iz naloga</td><td>${htmlEsc(p.izDNOznaka||'—')}</td></tr>
+        <tr><td>Datum nastanka</td><td>${fmtDate(p.datum)}</td></tr>
+        <tr><td>Ob nastanku</td><td>${p.kolicinaG?`${fmtNum(p.kolicinaG,1)} g @ ${fmtNum(p.volPct,2)} vol% · `:''}${fmtNum(p.lAAE,4)} L AAE</td></tr>
+        <tr><td>Stanje</td><td style="font-weight:600;color:#5a3a6b">${masa?fmtNum(masa,1)+' g · ':''}${fmtNum(stanje,4)} L AAE</td></tr>
+        <tr><td>Status</td><td>${polizStatus(p)}</td></tr>
+      </table>
+
+      <div class="field" style="margin-top:.7rem"><label>Lokacija</label>
+        <input id="polizLokacija" value="${htmlEsc(p.lokacija||'')}" placeholder="npr. polica B2"
+               onchange="polizNastavi('${p.id}','lokacija',this.value)"></div>
+
+      ${odprt?`<div style="font-size:.72rem;color:#5a3a6b;padding:.45rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin:.2rem 0 .7rem">
+        Trošarina odložena ≈ ${eur(stanje/100*settings.trosarinaEUR)} · zapade ob odpremi ali ob izdelku.
+      </div>`:''}
+
+      <div class="slabel">Gibanja</div>
+      <table class="mini-table">${gib||'<tr><td colspan="4">—</td></tr>'}</table>
+
+      ${odpremljeno.length?`<div class="slabel" style="margin-top:.7rem">Odpreme</div>
+        <div style="font-size:.76rem;color:var(--muted);line-height:1.6">
+        ${odpremljeno.map(g=>`${fmtDate(g.datum)} · ${htmlEsc(g.kam||'—')} · ${fmtNum(g.lAAE,4)} L AAE · trošarina ${eur(g.trosarina||0)}`).join('<br>')}
+        </div>`:''}
+
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem">
+        ${odprt?`<button class="bsave green" onclick="polizRegeneriraj('${p.id}')">♻️ Regeneriraj — nazaj v kanister</button>
+        <button class="bsave" onclick="polizOdpremi('${p.id}')">📦 Odpremi drugemu podjetju</button>`:''}
+        <button class="bcancel" onclick="polizPovezavoKopiraj('${p.id}')">🔗 Povezava za QR nalepko</button>
+        ${odprt?`<button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="polizOdpisi('${p.id}')">✕ Odpiši — polizdelka ne bo več</button>`:''}
+      </div>
+    </div>`;
+  openSheet('polizOverlay');
+}
+function polizNastavi(id,polje,vrednost){
+  const p=polizNajdi(id);if(!p)return;
+  p[polje]=String(vrednost||'').trim();
+  polizdelkiVLokalno();polizVBazo(p);
+}
+// Iz QR nalepke na posodi.
+function odpriPolizdelekPoOznaki(oznaka){
+  const p=polizNajdi(oznaka);
+  if(!p){toast('⚠ Polizdelka '+oznaka+' ni v evidenci');openPolizdelkiSeznam();return;}
+  openPolizdelek(p.id);
 }
 
 // ── RENDER ETANOL ──
@@ -7570,6 +7855,7 @@ function clearAll(){
   localStorage.removeItem('gm_dn_materiali');
   localStorage.removeItem('gm_dn_oprema');
   localStorage.removeItem('gm_dn_rd');
+  polizdelki=[];localStorage.removeItem('gm_dn_polizdelki');
   nesink={};nesinkShrani();
   save();
   renderDNStats();renderDN();renderEtStats();renderEtanol();if(currentTab==='rd')renderRD();
@@ -7672,8 +7958,7 @@ async function genEtanolPorocilo(){
     .reduce((s,e)=>s+(e.lAAE||0),0),4);
   // Koliko ostane vezanega v polizdelkih na koncu obdobja — po vseh nalogih,
   // ne le tistih iz tega obdobja, ker polizdelek lahko lezi tudi cez mejo.
-  const vezanoVPoliz=round([...workOrders,...rdNalogi].reduce((s,d)=>
-    s+Math.max(0,polizdelekOstanek(d)),0),4);
+  const vezanoVPoliz=round(polizdelki.reduce((s,p)=>s+Math.max(0,polizStanje(p)),0),4);
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Materialna kartica etanola</title>
@@ -10301,6 +10586,13 @@ function zakljuciRD(id){
   // rezerviran. Brez tega bi moral nalog ostati odprt, dokler se ne odlocis, kaj
   // s pilotno serijo — in prav to je do zdaj drzalo naloge odprte.
   if(vProduktu>0)r.aaePolizdelek=round(vProduktu,4);
+  // Ostanek ni le stevilka na nalogu: dobi svojo posodo z oznako, ki jo je
+  // mogoce nalepiti, prescati in pozneje regenerirati ali odpremiti.
+  const novPoliz=vProduktu>0?polizUstvari({
+    nalogId:r.id,nalogOznaka:r.oznaka,
+    naziv:r.naziv||r.surovina||'Polizdelek',
+    lAAE:vProduktu,kolicinaG:r.masaProdukt||0,volPct:r.pctProdukt||0,
+  }):null;
   save();
   sbPushEt(e);
   sbPushRD(r);
@@ -10308,6 +10600,7 @@ function zakljuciRD(id){
   renderEtStats();
   if(currentTab==='etanol')renderEtanol();
   toast(`✓ Zaključeno · −${knjizeno.toFixed(4)} L AAE knjiženo`
+    +(novPoliz?` · nastal ${novPoliz.oznaka}`:'')
     +(naZalogi>0?` · ${naZalogi.toFixed(4)} L ostaja na zalogi`:''));
 }
 
@@ -10379,9 +10672,14 @@ function openRDDetail(id){
       ${r.opazanja?`<div class="slabel">Opažanja</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.opazanja)}</div>`:''}
       ${r.zakljucki?`<div class="slabel">Zaključki</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.zakljucki)}</div>`:''}
       ${zakljucen?`<div style="font-size:.72rem;color:var(--success);padding:.4rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);margin-top:.75rem">✓ Zaključeno ${fmtDate(r.datumZakljucka)} · Etanol knjižen</div>`:''}
-      ${polizdelekOstanek(r)>0.00005?`<div style="font-size:.72rem;color:#5a3a6b;padding:.4rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin-top:.5rem">
-        🧪 V polizdelku leži ${polizdelekOstanek(r).toFixed(4)} L AAE — trošarina odložena.
-        Uredi ga na zavihku Etanol, ko se odločiš.</div>`:''}
+      ${(()=>{
+        // Polizdelki tega naloga: klik odpre kartico, kjer so gibanja in izidi.
+        const moji=polizdelki.filter(x=>x.izDN===r.id&&polizOdprt(x));
+        if(!moji.length)return '';
+        return `<div style="font-size:.72rem;color:#5a3a6b;padding:.4rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin-top:.5rem">
+          🧪 ${moji.map(x=>`<a href="javascript:void 0" onclick="closeSheet('rdDetailOverlay');openPolizdelek('${x.id}')" style="color:#5a3a6b;font-weight:600">${htmlEsc(x.oznaka)}</a> — ${fmtNum(polizStanje(x),4)} L AAE`).join('<br>🧪 ')}
+          <div style="margin-top:.2rem">Trošarina odložena. Klikni oznako za kartico.</div></div>`;
+      })()}
       <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
         ${!zakljucen?`<button class="bsave" onclick="openRDSheet('${r.id}');closeSheet('rdDetailOverlay')">✎ Uredi</button>`:''}
         ${!zakljucen?`<button class="bsave green" onclick="closeSheet('rdDetailOverlay');zakljuciRD('${r.id}')">✓ Zaključi &amp; Knji&nbsp;etanol</button>`:''}
@@ -11529,6 +11827,7 @@ async function nesinkPoskusiZnova(){
     ['gm_dn_oprema',oprema,sbPushOp],
     ['gm_dn_rd',rdNalogi,sbPushRD],
     ['gm_dn_bilanca',bilancaDogodki,sbPushBilanca],
+    ['gm_dn_polizdelki',polizdelki,polizVBazo],
   ];
   let poslano=0,poskusov=0;
   for(const [tabela,seznam,posiljatelj] of skupine){
@@ -11645,6 +11944,45 @@ function sbToGly(r){return{
 async function sbPushGly(z){
   try{await sbUpsert('gm_dn_gly_zapisi',glyToSb(z));setSyncStatus('✓');}
   catch(e){sinkNapaka('sbPushGly',e);toast('⚠ Zapis GLY ni sinhroniziran: '+String(e.message).slice(0,90));}
+}
+
+// Converters polizdelek <-> Supabase (tabela gm_dn_polizdelki)
+function polizToSb(p){return{
+  id:p.id,oznaka:p.oznaka||null,naziv:p.naziv||null,
+  iz_dn:p.izDN||null,iz_dn_oznaka:p.izDNOznaka||null,
+  datum:p.datum||null,kolicina_g:p.kolicinaG||0,vol_pct:p.volPct||0,l_aae:p.lAAE||0,
+  lokacija:p.lokacija||null,opomba:p.opomba||null,
+  gibanja:p.gibanja?.length?p.gibanja:[],
+};}
+function sbToPoliz(r){return{
+  id:r.id,oznaka:r.oznaka||'',naziv:r.naziv||'',
+  izDN:r.iz_dn||'',izDNOznaka:r.iz_dn_oznaka||'',
+  datum:r.datum||'',kolicinaG:r.kolicina_g||0,volPct:r.vol_pct||0,lAAE:r.l_aae||0,
+  lokacija:r.lokacija||'',opomba:r.opomba||'',
+  gibanja:Array.isArray(r.gibanja)?r.gibanja:[],
+};}
+// Polizdelek nosi trosarinsko pomembno stevilko, zato tiha odpoved ni sprejemljiva.
+async function polizVBazo(p){
+  try{
+    const izpusceni=await sbUpsertProzno('gm_dn_polizdelki',polizToSb(p));
+    if(!izpusceni.length)setSyncStatus('✓');
+    nesinkOdstrani('gm_dn_polizdelki',p.id);
+  }catch(e){
+    sinkNapaka('polizVBazo',e);
+    nesinkDodaj('gm_dn_polizdelki',p.id);
+    toast('⚠ Polizdelek ni shranjen v bazo — ostaja samo v tem brskalniku');
+  }
+}
+async function polizNaloziIzBaze(){
+  try{
+    const izBaze=(await sbFetch('gm_dn_polizdelki','order=datum.desc')).map(sbToPoliz);
+    // Zdruzimo, ne prepisemo: kar streznik se nima, ostane in gre gor.
+    const vBazi=new Set(izBaze.map(p=>p.id));
+    const samoLokalni=polizdelki.filter(p=>!vBazi.has(p.id));
+    polizdelki=izBaze.concat(samoLokalni);
+    polizdelkiVLokalno();
+    for(const p of samoLokalni)await polizVBazo(p);
+  }catch(e){console.warn('polizNaloziIzBaze',e);}
 }
 
 async function sbPushRD(r){
@@ -11805,6 +12143,9 @@ async function loadFromSB(){
     if(currentTab==='oprema')renderOprema();
     if(currentTab==='rd')renderRD();
     if(currentTab==='bilanca')renderBilancaSelect();
+    await polizNaloziIzBaze();
+    // Nalogi, ki so polizdelek vpisali se pred to evidenco, ga dobijo enkrat.
+    if(polizMigriraj())renderEtStats();
     setSyncStatus('✓');
     // Ce je vzrok medtem odpravljen (npr. pognan SQL z manjkajocim stolpcem),
     // gredo cakajoci zapisi gor zdaj; kar ostane, mora uporabnik videti.
@@ -12085,6 +12426,12 @@ async function migrateOpombaToDoabvitelj(){
     kanistri: function () {
       izvirni('preracuni');
       if (typeof openKanistriSheet === 'function') openKanistriSheet();
+    },
+    // QR nalepka na posodi polizdelka: #polizdelek=RD-26-001-P1
+    polizdelek: function (arg) {
+      izvirni('etanol');
+      if (arg && typeof odpriPolizdelekPoOznaki === 'function') odpriPolizdelekPoOznaki(arg);
+      else if (typeof openPolizdelkiSeznam === 'function') openPolizdelkiSeznam();
     }
   };
 

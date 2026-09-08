@@ -135,6 +135,16 @@ ol.vpr li{font-size:.95rem;margin-bottom:.85rem;padding-left:.25rem}
 ol.vpr li:last-child{margin-bottom:0}
 ol.vpr li::marker{font-family:var(--mono);font-size:.82rem;color:var(--accent)}
 
+/* sedaj / naprej */
+.dva{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr))}
+.stolp{background:var(--sheet);border:1px solid var(--line);border-top:3px solid;
+  border-radius:2px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.55rem}
+.stolp p{max-width:none;font-size:.9rem}
+.oz{font-family:var(--mono);font-size:.64rem;letter-spacing:.09em;
+  text-transform:uppercase;font-weight:500}
+.s-sedaj{border-top-color:var(--line2)} .s-sedaj .oz{color:var(--muted)}
+.s-naprej{border-top-color:var(--bound)} .s-naprej .oz{color:var(--bound)}
+
 .okvir{border:1px solid var(--ink);border-radius:3px;background:var(--sheet);
   padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
 .eq{font-family:var(--mono);font-size:.84rem;line-height:1.85;
@@ -324,13 +334,50 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline
 
 <!-- 5 -->
 <section>
-  <div class="sec-h"><span class="sec-n">5</span><h2>Kdaj obračunamo trošarino</h2></div>
-  <p>Doslej smo trošarino obračunali <strong>ob zaključku ekstrakcije, ko je
-  nastal prodajni izdelek</strong>. Takrat je znana količina tinkture in njena
-  vsebnost absolutnega alkohola, ki je osnova za obračun.</p>
-  <p>Pri redni proizvodnji sta ta dva dogodka vedno sovpadala: alkohol je
-  zapustil kanister in hkrati je nastal izdelek. Pri razvojni ekstrakciji se
-  prvič razideta — alkohol kanister zapusti, izdelka za prodajo pa ni.</p>
+  <div class="sec-h"><span class="sec-n">5</span><h2>Trošarina — kako je sedaj in kaj predlagamo</h2></div>
+
+  <div class="dva">
+    <div class="stolp s-sedaj">
+      <span class="oz">Kako je sedaj</span>
+      <p><strong>Trošarino obračunamo ob zaključku ekstrakcije, ko nastane
+      prodajni izdelek.</strong></p>
+      <p>Pri redni proizvodnji se vse zgodi hkrati: alkohol zapusti kanister in
+      iz njega nastane tinktura. Takrat sta znani količina in njena vsebnost
+      absolutnega alkohola — to je osnova za obračun.</p>
+      <p class="drobno">Dokler smo delali samo redno proizvodnjo, je bilo to
+      dovolj. Vsak liter, ki je zapustil kanister, je bil bodisi v izdelku
+      bodisi izguba.</p>
+    </div>
+    <div class="stolp s-naprej">
+      <span class="oz">Kaj predlagamo naprej</span>
+      <p><strong>Alkohol, ki ostane v polizdelku, vodimo kot vezan, trošarina
+      pa je odložena</strong> — dokler se ne odločimo, kaj bo iz polizdelka.</p>
+      <p>Polizdelek ni izdelek in ni izguba: je v označeni posodi, stehtan in
+      izmerjen, in ga je mogoče kadar koli prešteti. Trošarina zapade takrat, ko
+      polizdelek gre v prodajo, v odpremo drugemu podjetju ali v končni izdelek.</p>
+      <p class="drobno">Odlog ni odpis. Količina je ves čas vidna, vezana na
+      oznako posode in všteta v kontrolno enačbo iz razdelka 7.</p>
+    </div>
+  </div>
+
+  <h3>Kdaj trošarina zapade</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Dogodek</th><th>Kaj se zgodi z alkoholom</th><th>Trošarina</th></tr></thead>
+      <tbody>
+        <tr><td>Polizdelek še stoji</td><td>Leži v označeni posodi in ga je mogoče kadar koli prešteti</td><td class="c2">odložena</td></tr>
+        <tr><td>Gre v končni izdelek za prodajo</td><td>Preide na kartico produkta</td><td class="c3">zapade ob nastanku izdelka</td></tr>
+        <tr><td>Prodamo ali odpremimo drugemu podjetju</td><td>Zapusti podjetje v označeni posodi, z deklarirano vsebnostjo alkohola</td><td class="c3">zapade ob odpremi</td></tr>
+        <tr><td>Regeneriramo ga</td><td>Alkohol se z destilacijo vrne v kanister</td><td class="c1">ne zapade — alkohol je spet na zalogi</td></tr>
+        <tr><td>Uničimo ga</td><td>Dokumentirano uničenje z datumom in razlogom</td><td class="c4">ne zapade — evidentirano kot izguba</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Za redno proizvodnjo se ne spremeni nič.</strong> Tam trošarina še
+  naprej zapade ob nastanku prodajnega izdelka. Predlog se nanaša samo na
+  alkohol, ki je zapustil kanister, izdelek pa iz njega še ni nastal — to se
+  zgodi le pri razvojnih ekstrakcijah.</p>
 </section>
 
 <!-- 6 -->
@@ -350,15 +397,16 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline
   Kartica vsebuje količino, jakost, vsebnost absolutnega alkohola, lokacijo in
   seznam vseh gibanj.</p>
 
-  <h3>Kaj se s polizdelkom lahko zgodi</h3>
+  <h3>Kako je vsak izid evidentiran</h3>
+  <p class="drobno">Kdaj pri posameznem izidu zapade trošarina, je v razdelku 5.</p>
   <div class="tw">
     <table>
-      <thead><tr><th>Izid</th><th>Kaj se zgodi</th><th>Kako je evidentirano</th></tr></thead>
+      <thead><tr><th>Izid</th><th>Kako je evidentirano</th></tr></thead>
       <tbody>
-        <tr><td>Regeneracija</td><td>Alkohol z destilacijo ločimo in ga zlijemo nazaj v kanister</td><td>Vhod na kartico etanola; razlika je procesna izguba</td></tr>
-        <tr><td>Predelava v izdelek</td><td>Polizdelek gre v nadaljnjo predelavo in nastane prodajni izdelek</td><td>Alkohol preide na kartico produkta; trošarina zapade tam</td></tr>
-        <tr><td>Odprema drugemu podjetju</td><td>Polizdelek prodamo podjetju za nadaljnjo predelavo</td><td>Dobavnica z deklarirano vsebnostjo alkohola; trošarina obračunana ob odpremi</td></tr>
-        <tr><td>Uničenje</td><td>Iz pilotne serije ne bo nič</td><td>Zapiše se kot procesna izguba z datumom in razlogom</td></tr>
+        <tr><td>Regeneracija</td><td>Vhod na kartico etanola; razlika med vezano in vrnjeno količino je procesna izguba</td></tr>
+        <tr><td>Predelava v izdelek</td><td>Alkohol preide na kartico produkta, ki je osnova za obračun</td></tr>
+        <tr><td>Odprema drugemu podjetju</td><td>Dobavnica z deklarirano vsebnostjo alkohola in obračunano trošarino</td></tr>
+        <tr><td>Uničenje</td><td>Zapiše se kot procesna izguba z datumom in razlogom</td></tr>
       </tbody>
     </table>
   </div>

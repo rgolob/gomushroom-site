@@ -4671,6 +4671,22 @@ function dnVolAlcTinkture(){
 //
 // parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
+// ── Kaj ostane v pogaci ───────────────────────────────────────────────────
+// Pogaca je goba plus tisto, kar se je vpilo vanjo. Gobo poznamo iz tehtanja,
+// pogaco stehtamo, razlika pa je topilo oz. voda - to je bolj zanesljivo kot
+// posebna meritev in ne more biti vpisano narobe.
+//
+// Masa gobe je vsota serij naloga. Vpisana je v kilogramih, ker se tako tehta,
+// pogaca pa v gramih; pretvorba stoji tu, na enem mestu.
+function masaSuheGobeG(){
+  const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);
+  return v>0?round(v*1000,1):null;
+}
+function razlikaPogace(pa){
+  const p=parseNum(pa.m_pogace),g=parseNum(pa.m_gobe);
+  return (p>0&&g>0)?round(p-g,1):null;
+}
+
 const DN_PREDLOGA_KORAKOV=[
   // Priprava surovine je eno opravilo, ki se ga opravi v enem zamahu: stehta
   // se goba, dolodi vlaga in pripravi topilo. Cas pripada temu opravilu, ne
@@ -4744,7 +4760,13 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija preko 400 mesh ~37 µm najlonske filtrirne tkanine.'},
      {k:'m_me',tip:'meritev',napis:'Σm ME',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_topila',tip:'meritev',napis:'m topila v pogači',enota:'g'},
+     // Topilo v pogaci ni meritev: pogaco stehtas, gobo, ki je vanjo sla, pa ze
+     // poznas iz tehtanja. Razlika je zanesljivejsa od ocene in je ni mogoce
+     // vpisati narobe.
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_topila',tip:'izracun',napis:'m topila v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'1.3', korak:'preracun_me', naziv:'Ločitev matičnega ekstrakta', faza:'OF', akcija:'me',
    naprave:['tehtnica'],
@@ -4846,7 +4868,11 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija skozi 300 mesh ~48 µm najlonsko filtrno tkanino.'},
      {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
+     // Enako kot pri organski fazi: kar je nad maso gobe, je zaostala voda.
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_vode_pogaca',tip:'izracun',napis:'m vode v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'2.2', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'VF',
@@ -4895,7 +4921,10 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija skozi 400 mesh ~37 µm najlonsko filtrsko tkanino.'},
      {k:'m_te',tip:'meritev',napis:'Σm TE ekstrakta',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_vode_pogaca',tip:'izracun',napis:'m vode v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'3.2', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'TE',
@@ -5087,6 +5116,27 @@ function preseliPoljaKorakov(vrstice){
       if(novi.parametri[p]!==undefined&&novi.parametri[p]!=='')return;
       novi.parametri[p]=vrednost;
     });
+  });
+  return vrstice;
+}
+
+// Topilo oz. voda v pogaci je bila do zdaj rocna meritev, zdaj je razlika med
+// stehtano pogaco in maso gobe. Ze vpisano stevilko ohranimo pod svojim
+// kljucem: zapisnik serije je dokument in kar je bilo takrat vpisano, mora
+// ostati zapisano, tudi ce se izpeljana vrednost od tega razlikuje.
+const IZPELJANO_IZ_ROCNEGA=[
+  {korak:'stiskanje_of', polje:'m_topila'},
+  {korak:'stiskanje_hve',polje:'m_vode_pogaca'},
+  {korak:'stiskanje_te', polje:'m_vode_pogaca'},
+];
+function ohraniRocneMeritve(vrstice){
+  IZPELJANO_IZ_ROCNEGA.forEach(({korak,polje})=>{
+    const k=vrstice.find(x=>x.korak===korak);
+    if(!k)return;
+    const pa=k.parametri||(k.parametri={});
+    const v=pa[polje];
+    if(v===undefined||v===''||v===null)return;
+    if(pa[polje+'_rocno']===undefined)pa[polje+'_rocno']=String(v);
   });
   return vrstice;
 }
@@ -6469,7 +6519,7 @@ function openDNSheet(id){
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
   dnKorakiRows=id
-    ?preseliVPonovitve(preseliPoljaKorakov(korakiZDopolnitvijo(d?.oznaka)))
+    ?ohraniRocneMeritve(preseliVPonovitve(preseliPoljaKorakov(korakiZDopolnitvijo(d?.oznaka))))
     :korakiIzPredloge();
   renderDNSerijeRows();
   renderDNKorakiRows();

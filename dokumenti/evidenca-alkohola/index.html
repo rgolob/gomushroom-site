@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="sl-SI">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+<title>Evidenca alkohola | GoMushroom</title>
+<meta name="description" content="Opis, kako v podjetju GoMushroom vodimo gibanje alkohola od nabave do izdelka, in vprašanja glede alkohola, vezanega v polizdelku iz razvojne ekstrakcije." />
+<meta name="author" content="GoMushroom — Rok Golob" />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="canonical" href="https://gomushroom.si/dokumenti/evidenca-alkohola/" />
+<meta name="theme-color" content="#F6F8F9" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#101417" media="(prefers-color-scheme: dark)" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;600&family=Jost:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+
+<style>
+:root{
+  color-scheme:light dark;
+  --paper:#F6F8F9; --sheet:#FFFFFF; --sheet2:#EDF1F3;
+  --ink:#14181C; --muted:#5A646E; --line:#DCE2E6; --line2:#95A1AA;
+  --accent:#1F4E6B;
+  --stock:#2F6F5E; --bound:#6B4E8C; --prod:#8A6D1F; --loss:#A33A2A;
+  --stock-bg:rgba(47,111,94,.08); --bound-bg:rgba(107,78,140,.08);
+  --prod-bg:rgba(138,109,31,.09); --loss-bg:rgba(163,58,42,.08);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#101417; --sheet:#171C20; --sheet2:#1F252A;
+    --ink:#E6ECEF; --muted:#96A2AB; --line:#2A3238; --line2:#6E7C86;
+    --accent:#6FA8C9;
+    --stock:#63B79F; --bound:#AE90D0; --prod:#CFAE55; --loss:#DE7A67;
+    --stock-bg:rgba(99,183,159,.12); --bound-bg:rgba(174,144,208,.12);
+    --prod-bg:rgba(207,174,85,.12); --loss-bg:rgba(222,122,103,.12);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101417; --sheet:#171C20; --sheet2:#1F252A;
+  --ink:#E6ECEF; --muted:#96A2AB; --line:#2A3238; --line2:#6E7C86;
+  --accent:#6FA8C9;
+  --stock:#63B79F; --bound:#AE90D0; --prod:#CFAE55; --loss:#DE7A67;
+  --stock-bg:rgba(99,183,159,.12); --bound-bg:rgba(174,144,208,.12);
+  --prod-bg:rgba(207,174,85,.12); --loss-bg:rgba(222,122,103,.12);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-weight:300;line-height:1.6;font-size:15.5px}
+img{max-width:100%}
+.doc{max-width:52rem;margin:0 auto;padding:2.4rem 1.4rem 4.5rem;
+  display:flex;flex-direction:column;gap:2.1rem}
+
+/* glava dokumenta */
+.hd{display:grid;gap:1rem;padding-bottom:1.2rem;border-bottom:2px solid var(--ink)}
+.hd-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.8rem;
+  align-items:flex-start}
+.podjetje{font-family:var(--serif);font-size:1.5rem;font-weight:500;line-height:1.1}
+.podjetje span{color:var(--accent)}
+.meta{font-family:var(--mono);font-size:.7rem;line-height:1.7;color:var(--muted);
+  text-align:right}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(1.9rem,5vw,2.7rem);
+  line-height:1.06;margin:0;text-wrap:balance}
+.namen{font-size:.98rem;color:var(--muted);max-width:40rem;margin:0}
+
+/* razdelki */
+section{display:flex;flex-direction:column;gap:.85rem;break-inside:avoid}
+.sec-h{display:flex;align-items:baseline;gap:.75rem;border-bottom:1px solid var(--line);
+  padding-bottom:.4rem}
+.sec-n{font-family:var(--mono);font-size:.72rem;color:var(--accent);font-weight:500}
+h2{font-family:var(--serif);font-weight:500;font-size:1.4rem;line-height:1.2;margin:0}
+h3{font-family:var(--sans);font-weight:500;font-size:.95rem;margin:.3rem 0 0}
+p{margin:0;max-width:40rem}
+strong{font-weight:500}
+.drobno{font-size:.88rem;color:var(--muted)}
+
+/* koši */
+.kosi{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(10.5rem,1fr))}
+.kos{padding:.6rem .75rem;border-radius:2px;border-left:3px solid;
+  display:flex;flex-direction:column;gap:.1rem}
+.kos b{font-size:.85rem;font-weight:500}
+.kos span{font-size:.74rem;color:var(--muted);line-height:1.45}
+.k1{border-color:var(--stock);background:var(--stock-bg)} .k1 b{color:var(--stock)}
+.k2{border-color:var(--bound);background:var(--bound-bg)} .k2 b{color:var(--bound)}
+.k3{border-color:var(--prod);background:var(--prod-bg)}   .k3 b{color:var(--prod)}
+.k4{border-color:var(--loss);background:var(--loss-bg)}   .k4 b{color:var(--loss)}
+
+/* figura */
+figure{margin:0;display:flex;flex-direction:column;gap:.55rem;break-inside:avoid}
+.platno{overflow-x:auto;background:var(--sheet);border:1px solid var(--line);
+  border-radius:3px;padding:1rem}
+.platno svg{display:block;width:100%;min-width:34rem;height:auto;color:var(--ink)}
+.platno.ozko svg{min-width:26rem}
+figcaption{font-size:.79rem;color:var(--muted);max-width:40rem}
+.b{fill:var(--sheet2);stroke:var(--line2);stroke-width:1.4}
+.b1{fill:var(--stock-bg);stroke:var(--stock);stroke-width:1.6}
+.b2{fill:var(--bound-bg);stroke:var(--bound);stroke-width:1.6}
+.b3{fill:var(--prod-bg);stroke:var(--prod);stroke-width:1.6}
+.b4{fill:var(--loss-bg);stroke:var(--loss);stroke-width:1.6}
+.bn{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6}
+.t{fill:currentColor;font-family:var(--sans);font-weight:500;font-size:12.5px}
+.ts{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.tn{font-family:var(--mono);font-size:11px;font-weight:500}
+.l{stroke:var(--line2);stroke-width:1.5;fill:none}
+.l1{stroke:var(--stock);stroke-width:1.7;fill:none}
+.ld{stroke:var(--line2);stroke-width:1.3;fill:none;stroke-dasharray:5 4}
+.mk{fill:var(--line2)} .mk1{fill:var(--stock)}
+.rl{stroke:var(--line);stroke-width:1}
+
+/* tabele */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:28rem}
+th{text-align:left;font-family:var(--mono);font-weight:500;font-size:.64rem;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  padding:.55rem .8rem;background:var(--sheet2);border-bottom:1px solid var(--line)}
+td{padding:.48rem .8rem;border-bottom:1px solid var(--line);font-size:.86rem;
+  vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+tr.vsota td{background:var(--sheet2);font-weight:500}
+.c1{color:var(--stock)} .c2{color:var(--bound)} .c3{color:var(--prod)} .c4{color:var(--loss)}
+
+/* seznami */
+ul{margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:.4rem;
+  max-width:40rem}
+li{font-size:.93rem}
+ol.vpr{margin:0;padding-left:1.6rem;max-width:40rem}
+ol.vpr li{font-size:.95rem;margin-bottom:.85rem;padding-left:.25rem}
+ol.vpr li:last-child{margin-bottom:0}
+ol.vpr li::marker{font-family:var(--mono);font-size:.82rem;color:var(--accent)}
+
+.okvir{border:1px solid var(--ink);border-radius:3px;background:var(--sheet);
+  padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+.eq{font-family:var(--mono);font-size:.84rem;line-height:1.85;
+  overflow-x:auto;white-space:nowrap;padding-bottom:.15rem}
+.op{border-left:3px solid var(--accent);background:var(--sheet);
+  padding:.85rem 1rem;border-radius:0 2px 2px 0;display:flex;
+  flex-direction:column;gap:.45rem}
+.op b{font-weight:500;color:var(--accent)}
+.ft{border-top:1px solid var(--line);padding-top:1.1rem;font-size:.78rem;
+  color:var(--muted);display:flex;flex-direction:column;gap:.35rem}
+.ft a{color:var(--accent)}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media print{
+  body{background:#fff;font-size:11pt}
+  .doc{max-width:none;padding:0;gap:1.4rem}
+  .platno,.tw,.okvir,.op{break-inside:avoid}
+  section{break-inside:avoid}
+  .platno svg{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+<header class="hd">
+  <div class="hd-top">
+    <div class="podjetje">Go<span>Mushroom</span></div>
+    <div class="meta">
+      Datum · 8. september 2026<br>
+      Zadeva · evidenca alkohola<br>
+      Enota · L AAE pri 20 °C
+    </div>
+  </div>
+  <h1>Evidenca alkohola</h1>
+  <p class="namen">Opis, kako v našem podjetju vodimo gibanje alkohola — od nabave
+  do izdelka — in vprašanja glede alkohola, ki je vezan v polizdelku iz razvojne
+  ekstrakcije. Vse količine so v litrih absolutnega alkohola (L&nbsp;AAE) pri
+  20 °C.</p>
+</header>
+
+<!-- 1 -->
+<section>
+  <div class="sec-h"><span class="sec-n">1</span><h2>Kaj delamo</h2></div>
+  <p>Izdelujemo tinkture iz zdravilnih gob. Kupimo etanol, z njim opravimo
+  ekstrakcijo gobe, izvleček koncentriramo in ga formuliramo v alkoholno
+  tinkturo, ki jo polnimo v stekleničke po <strong>50 mL pri 30 vol %</strong>.</p>
+  <p>Med koncentriranjem na rotavaporju se del etanola odvzame kot destilat.
+  Destilat visoke koncentracije se vrne v isti kanister in gre v naslednjo
+  ekstrakcijo; destilat nizke koncentracije je izguba.</p>
+  <p>Poleg redne proizvodnje delamo razvojne ekstrakcije. Iz teh ne nastane
+  izdelek za prodajo, ampak pilotna serija — polizdelek, o katerem govori
+  razdelek 6.</p>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="sec-h"><span class="sec-n">2</span><h2>Kje je vsak liter</h2></div>
+  <p>Vsak liter absolutnega alkohola je v vsakem trenutku natanko v enem od
+  štirih stanj. Vse evidence so urejene tako, da to velja brez izjeme.</p>
+  <div class="kosi">
+    <div class="kos k1"><b>Na zalogi</b>
+      <span>V kanistrih. Popis to fizično prešteje.</span></div>
+    <div class="kos k2"><b>V polizdelku</b>
+      <span>Iz kanistra je odšel, ni izgubljen. Trošarina odložena.</span></div>
+    <div class="kos k3"><b>V izdelku</b>
+      <span>Tinktura za prodajo. Tu trošarina zapade.</span></div>
+    <div class="kos k4"><b>Izguba</b>
+      <span>Procesna izguba, dokumentirana po seriji.</span></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="sec-h"><span class="sec-n">3</span><h2>Evidence, ki jih vodimo</h2></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Evidenca</th><th>Kaj vsebuje</th><th>Kdaj nastane</th></tr></thead>
+      <tbody>
+        <tr><td>Kartica etanola</td><td>Vsi vhodi in izhodi v L AAE; stanje zaloge je njihova razlika</td><td>Ob vsaki nabavi in ob zaključku vsakega naloga</td></tr>
+        <tr><td>Popis kanistrov</td><td>Vsak kanister posebej: tara posode, bruto masa, jakost, temperatura</td><td>Redno; je neodvisna kontrola kartice</td></tr>
+        <tr><td>Delovni nalog</td><td>Serija, surovina in njena serija, vloženi etanol, nastali izdelek</td><td>Za vsako ekstrakcijo</td></tr>
+        <tr><td>Masna bilanca serije</td><td>Vsak vnos in odvzem med procesom: masa, jakost, absolutni alkohol, ura</td><td>Med samim procesom, sproti</td></tr>
+        <tr><td>Kartica produkta</td><td>Število kosov, volumen, jakost in vsebnost absolutnega alkohola</td><td>Ob zaključku naloga</td></tr>
+        <tr><td>Kartica polizdelka</td><td>Označena posoda: količina, jakost, L AAE, lokacija in vsa gibanja</td><td>Ob zaključku razvojnega naloga</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="drobno">Evidence vodimo elektronsko. Vsak zapis nosi datum in oznako
+  dokumenta, na katerega se nanaša, je sledljiv do posamezne serije in ga je
+  mogoče izpisati.</p>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="sec-h"><span class="sec-n">4</span><h2>Tok alkohola pri redni proizvodnji</h2></div>
+
+  <figure>
+    <div class="platno">
+      <svg viewBox="0 0 880 420" role="img" aria-label="Nabava etanola se zapiše na kartico etanola, ki jo popis kanistrov potrjuje. Delovni nalog ustvari en izhod, ki je vsota alkohola v izdelku in procesnih izgub. Alkohol v izdelku preide na kartico produkta, kjer nastane trošarinska obveznost. Destilat visoke koncentracije se vrne v kanister in se ne knjiži.">
+        <defs>
+          <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,0 10,5 0,10"/></marker>
+          <marker id="m1s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk1" points="0,0 10,5 0,10"/></marker>
+          <marker id="m1d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon class="mk" points="0,0 10,5 0,10"/></marker>
+        </defs>
+
+        <rect class="b" x="20" y="24" width="150" height="40" rx="2"/>
+        <text class="t" x="95" y="49" text-anchor="middle">Nabava etanola</text>
+        <line class="l" x1="95" y1="64" x2="95" y2="106" marker-end="url(#m1)"/>
+        <text class="ts" x="104" y="90">vhod</text>
+
+        <path class="l1" d="M 450 148 C 450 88, 205 88, 205 110" marker-end="url(#m1s)"/>
+        <text class="tn" x="328" y="80" text-anchor="middle" fill="var(--stock)">destilat visoke koncentracije</text>
+        <text class="ts" x="328" y="94" text-anchor="middle">vrne se v isti kanister · ni izhod</text>
+
+        <rect class="b1" x="20" y="112" width="286" height="120" rx="3"/>
+        <text class="t" x="36" y="136">Kartica etanola</text>
+        <line class="rl" x1="36" y1="148" x2="290" y2="148"/>
+        <text class="ts" x="36" y="170">vhod</text>
+        <text class="ts" x="290" y="170" text-anchor="end">nabava · regenerat</text>
+        <text class="ts" x="36" y="192">izhod</text>
+        <text class="ts" x="290" y="192" text-anchor="end">ekstrakcija</text>
+        <text class="tn" x="36" y="216" fill="var(--stock)">stanje</text>
+        <text class="tn" x="290" y="216" text-anchor="end" fill="var(--stock)">zaloga v L AAE</text>
+
+        <path class="ld" d="M 163 232 V 276" marker-start="url(#m1d)" marker-end="url(#m1d)"/>
+        <text class="ts" x="174" y="252">se mora</text>
+        <text class="ts" x="174" y="266">ujemati</text>
+        <rect class="b" x="20" y="280" width="286" height="48" rx="2"/>
+        <text class="t" x="36" y="301">Popis kanistrov</text>
+        <text class="ts" x="36" y="317">fizično stanje · kontrola, ne knjižba</text>
+
+        <line class="l" x1="306" y1="174" x2="362" y2="174" marker-end="url(#m1)"/>
+        <text class="tn" x="314" y="160" fill="var(--accent)">izhod</text>
+
+        <rect class="bn" x="370" y="148" width="158" height="52" rx="2"/>
+        <text class="t" x="449" y="170" text-anchor="middle">Delovni nalog</text>
+        <text class="ts" x="449" y="186" text-anchor="middle">ekstrakcija serije</text>
+
+        <path class="l" d="M 528 174 H 566 V 134 H 608" marker-end="url(#m1)"/>
+        <path class="l" d="M 528 174 H 566 V 224 H 676" marker-end="url(#m1)"/>
+        <text class="ts" x="566" y="204" text-anchor="end">izhod = obojno</text>
+
+        <rect class="b3" x="612" y="112" width="244" height="44" rx="2"/>
+        <text class="t" x="626" y="132">Alkohol v izdelku</text>
+        <text class="ts" x="626" y="147">gre na kartico produkta</text>
+
+        <rect class="b4" x="680" y="202" width="176" height="44" rx="2"/>
+        <text class="t" x="694" y="222">Procesne izgube</text>
+        <text class="ts" x="694" y="237">po masni bilanci serije</text>
+
+        <path class="l" d="M 638 156 V 288" marker-end="url(#m1)"/>
+
+        <rect class="b3" x="612" y="292" width="244" height="94" rx="3"/>
+        <text class="t" x="628" y="315">Kartica produkta</text>
+        <line class="rl" x1="628" y1="327" x2="840" y2="327"/>
+        <text class="ts" x="628" y="349">količina</text>
+        <text class="ts" x="840" y="349" text-anchor="end">kos × 50 mL @ 30 vol %</text>
+        <text class="tn" x="628" y="372" fill="var(--prod)">L AAE</text>
+        <text class="tn" x="840" y="372" text-anchor="end" fill="var(--prod)">osnova za trošarino</text>
+      </svg>
+    </div>
+    <figcaption>Ob zaključku naloga se na kartico etanola zapiše en izhod, ki je
+    vsota alkohola v izdelku in procesnih izgub. Destilat, ki se vrne v kanister,
+    vanj ne šteje, ker zaloge ni zapustil.</figcaption>
+  </figure>
+
+  <h3>Primer ene serije</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Postavka</th><th>Pojasnilo</th><th style="text-align:right">L AAE</th></tr></thead>
+      <tbody>
+        <tr><td>Alkohol v izdelku</td><td>100 kosov × 50 mL @ 30 vol %</td><td class="n c3">1,500</td></tr>
+        <tr><td>Procesne izgube</td><td>ostanek v tropinah, izhlapevanje</td><td class="n c4">0,300</td></tr>
+        <tr class="vsota"><td>Izhod na kartici etanola</td><td>ena knjižba, vsota obojega</td><td class="n">1,800</td></tr>
+        <tr><td>Od tega osnova za trošarino</td><td>količina na kartici produkta</td><td class="n c3">1,500</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="drobno">Ponazoritev razmerja med postavkami; ni dejanska serija.</p>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="sec-h"><span class="sec-n">5</span><h2>Kdaj obračunamo trošarino</h2></div>
+  <p>Doslej smo trošarino obračunali <strong>ob zaključku ekstrakcije, ko je
+  nastal prodajni izdelek</strong>. Takrat je znana količina tinkture in njena
+  vsebnost absolutnega alkohola, ki je osnova za obračun.</p>
+  <p>Pri redni proizvodnji sta ta dva dogodka vedno sovpadala: alkohol je
+  zapustil kanister in hkrati je nastal izdelek. Pri razvojni ekstrakciji se
+  prvič razideta — alkohol kanister zapusti, izdelka za prodajo pa ni.</p>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="sec-h"><span class="sec-n">6</span><h2>Razvojne ekstrakcije in polizdelek</h2></div>
+  <p>Razvojna ekstrakcija se konča s pilotno serijo, ki ni namenjena prodaji.
+  V njej ostane alkohol. Ta alkohol:</p>
+  <ul>
+    <li>je <strong>zapustil kanister</strong> in ga popis zaloge ne najde več,</li>
+    <li><strong>ni izguba</strong> — je v posodi, stehtan in izmerjen, in ga je
+    mogoče kadar koli prešteti,</li>
+    <li><strong>ni izdelek</strong> — pilotna serija ni dokončana in ni
+    namenjena prodaji.</li>
+  </ul>
+  <p>Zato smo uvedli <strong>kartico polizdelka</strong>. Vsaka posoda ima
+  oznako, izpeljano iz naloga, iz katerega je nastala, in nalepko s to oznako.
+  Kartica vsebuje količino, jakost, vsebnost absolutnega alkohola, lokacijo in
+  seznam vseh gibanj.</p>
+
+  <h3>Kaj se s polizdelkom lahko zgodi</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Izid</th><th>Kaj se zgodi</th><th>Kako je evidentirano</th></tr></thead>
+      <tbody>
+        <tr><td>Regeneracija</td><td>Alkohol z destilacijo ločimo in ga zlijemo nazaj v kanister</td><td>Vhod na kartico etanola; razlika je procesna izguba</td></tr>
+        <tr><td>Predelava v izdelek</td><td>Polizdelek gre v nadaljnjo predelavo in nastane prodajni izdelek</td><td>Alkohol preide na kartico produkta; trošarina zapade tam</td></tr>
+        <tr><td>Odprema drugemu podjetju</td><td>Polizdelek prodamo podjetju za nadaljnjo predelavo</td><td>Dobavnica z deklarirano vsebnostjo alkohola; trošarina obračunana ob odpremi</td></tr>
+        <tr><td>Uničenje</td><td>Iz pilotne serije ne bo nič</td><td>Zapiše se kot procesna izguba z datumom in razlogom</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 7 -->
+<section>
+  <div class="sec-h"><span class="sec-n">7</span><h2>Kako je zagotovljeno, da se alkohol ne šteje dvakrat</h2></div>
+  <div class="okvir">
+    <p><strong>Vsak premik hkrati odšteje na eni evidenci in prišteje na drugi.</strong>
+    Nobena količina ne izgine in nobena ne nastane brez izvora.</p>
+    <div class="eq">
+      nabave&nbsp;−&nbsp;prodano&nbsp;=&nbsp;<span class="c1">zaloga</span>&nbsp;+&nbsp;<span class="c2">Σ&nbsp;polizdelki</span>&nbsp;+&nbsp;<span class="c3">Σ&nbsp;v&nbsp;izdelkih</span>&nbsp;+&nbsp;<span class="c4">Σ&nbsp;izgube</span>
+    </div>
+    <p class="drobno">Enačba se mora iziti ob vsakem trenutku. Stanje zaloge je
+    poleg tega neodvisno potrjeno s fizičnim popisom kanistrov.</p>
+  </div>
+  <p>Destilat, ki se z rotavaporja vrne v isti kanister, se ne knjiži ne kot
+  izhod ne kot vhod — zaloge ni zapustil. Če bi ga vodili kot vhod, bi evidenca
+  izkazovala nabave, ki jih ni bilo.</p>
+</section>
+
+<!-- 8 -->
+<section>
+  <div class="sec-h"><span class="sec-n">8</span><h2>Trenutno stanje razvojnih nalogov</h2></div>
+  <p>Odprti so trije razvojni delovni nalogi. Za vsakega obstaja masna bilanca z
+  vsemi meritvami. Knjižba na kartico etanola je v pripravi in bo opravljena v
+  roku za tekoče obdobje; pred tem želimo potrditi obravnavo alkohola, vezanega
+  v pilotni seriji. To je razlog za ta dopis.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Nalog</th><th>Datum</th><th>Vsebina</th><th>Stanje</th></tr></thead>
+      <tbody>
+        <tr><td>RD-26-001</td><td>3. 8. 2026</td><td>Pilot 1 — ekstrakcija vanilije</td><td>meritve zaključene, knjižba v pripravi</td></tr>
+        <tr><td>RD-26-002</td><td>16. 8. 2026</td><td>Koncentriranje matičnega ekstrakta za naročnika</td><td>meritve zaključene, knjižba v pripravi</td></tr>
+        <tr><td>RD-26-003</td><td>4. 9. 2026</td><td>Pilot 2 — ekstrakcija vanilije</td><td>meritve zaključene, knjižba v pripravi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Kam gre alkohol pri razvojnem nalogu</h3>
+  <p class="drobno">Shematski prikaz na primeru naloga RD-26-001 — razmerja so
+  približna, brez količin. Točne meritve so v masni bilanci serije, ki je na
+  voljo na vpogled.</p>
+
+  <figure>
+    <div class="platno ozko">
+      <svg viewBox="0 0 700 240" role="img" aria-label="Vloženi alkohol razvojnega naloga se razdeli na tri dele: približno dve tretjini se kot destilat vrne v kanister in ostane na zalogi, dobra četrtina ostane vezana v pilotni seriji, majhen del je procesna izguba. Iz zaloge odideta le zadnja dva dela.">
+        <defs>
+          <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,0 10,5 0,10"/></marker>
+        </defs>
+
+        <text class="t" x="14" y="26">Vloženo v poskus</text>
+        <text class="ts" x="14" y="42">celoten alkohol serije = 100 %</text>
+
+        <rect class="b1" x="14" y="56" width="452" height="42" rx="2"/>
+        <text class="t" x="240" y="76" text-anchor="middle" fill="var(--stock)">vrne se v kanister</text>
+        <text class="ts" x="240" y="91" text-anchor="middle">destilat · pribl. dve tretjini</text>
+
+        <rect class="b2" x="470" y="56" width="182" height="42" rx="2"/>
+        <text class="t" x="561" y="76" text-anchor="middle" fill="var(--bound)">pilotna serija</text>
+        <text class="ts" x="561" y="91" text-anchor="middle">pribl. četrtina</text>
+
+        <rect class="b4" x="656" y="56" width="30" height="42" rx="2"/>
+        <text class="ts" x="671" y="82" text-anchor="middle" fill="var(--loss)">izg.</text>
+
+        <path class="l" d="M 240 98 V 140" marker-end="url(#m2)"/>
+        <path class="l" d="M 561 98 V 140" marker-end="url(#m2)"/>
+        <path class="l" d="M 671 98 V 116 H 620 V 140" marker-end="url(#m2)"/>
+
+        <rect class="b1" x="14" y="144" width="452" height="62" rx="3"/>
+        <text class="t" x="240" y="170" text-anchor="middle">Ostane na zalogi</text>
+        <text class="ts" x="240" y="188" text-anchor="middle">kanistra ni zapustil · se ne knjiži</text>
+
+        <rect class="bn" x="470" y="144" width="216" height="62" rx="3"/>
+        <text class="t" x="578" y="170" text-anchor="middle">Izhod na kartici etanola</text>
+        <text class="ts" x="578" y="188" text-anchor="middle">polizdelek + izguba</text>
+
+        <text class="ts" x="14" y="228">Trošarina odložena za del, ki je vezan v pilotni seriji; izguba je dokumentirana po masni bilanci.</text>
+      </svg>
+    </div>
+    <figcaption>Iz kanistra odideta samo pilotna serija in procesna izguba. Del,
+    ki se je kot destilat vrnil v kanister, se ne knjiži, ker zaloge ni
+    zapustil.</figcaption>
+  </figure>
+
+  <p><strong>Vračilo v šaržo.</strong> Pri koncentriranju smo šli pregloboko in
+  presegli tehnološko mejo topnosti — izvleček se je zgostil čez uporabno mejo.
+  Del že odvzetega destilata smo zato zlili nazaj v šaržo. To je premik znotraj
+  postopka, ki zaloge ne zadeva; v bilanci je prikazan kot pobot z odvzemom, ne
+  kot nova nabava.</p>
+</section>
+
+<!-- 9 -->
+<section>
+  <div class="sec-h"><span class="sec-n">9</span><h2>Vprašanja, na katera prosimo za odgovor</h2></div>
+  <ol class="vpr">
+    <li><strong>Kdaj nastane trošarinska obveznost za alkohol, vezan v
+    polizdelku, ki ni namenjen prodaji</strong> — ob nastanku prodajnega izdelka
+    ali že ob odvzemu iz skladišča?</li>
+    <li>Ali je opisani način evidentiranja — polizdelek kot ločeno stanje z
+    odloženo trošarino, z lastno kartico in gibanji — <strong>ustrezen</strong>,
+    ali zahtevate drugačno obliko?</li>
+    <li>Kako naj evidentiramo <strong>odvzem in vračilo v istem postopku</strong>
+    (destilat, ki se vrne v isti kanister) — kot dvojno knjižbo ali samo neto,
+    kot to počnemo zdaj?</li>
+    <li>Kakšna je obravnava <strong>procesnih izgub</strong> — obstajajo priznani
+    normativi, ali jih je treba posebej prijaviti?</li>
+    <li>Če polizdelek <strong>uničimo</strong>: kako dokumentirati uničenje, da
+    trošarina ne zapade — je potrebna predhodna prijava?</li>
+    <li>Če polizdelek <strong>odpremimo drugemu podjetju</strong> v nadaljnjo
+    predelavo: pod kakšnimi pogoji je mogoča odprema pod odlogom in kaj
+    potrebujemo za to?</li>
+  </ol>
+
+  <div class="op">
+    <b>Zakaj se obračamo na vas vnaprej</b>
+    <p style="font-size:.9rem">Vse meritve so opravljene in dokumentirane, rok
+    za knjižbo pa še teče. Raje jo opravimo po vašem navodilu, kot da bi izbrali
+    napačno obravnavo in jo popravljali kasneje.</p>
+  </div>
+</section>
+
+<footer class="ft">
+  <div>Vse količine v litrih absolutnega alkohola pri 20 °C
+  (gostota čistega etanola 0,78927 g/mL). Preračun iz gramov absolutnega
+  alkohola v litre: g ÷ 789,27.</div>
+  <div>Masne bilance vseh treh razvojnih nalogov so z vsemi meritvami na voljo
+  na vpogled skupaj z delovnimi nalogi, kartico etanola in popisom
+  kanistrov.</div>
+  <div>GoMushroom · <a href="https://gomushroom.si/">gomushroom.si</a></div>
+</footer>
+
+</div>
+</body>
+</html>

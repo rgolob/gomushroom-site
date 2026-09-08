@@ -10,3 +10,7 @@
 # istim imenom, zato brez vecnega predpomnjenja — teden dni je dovolj.
 /*/ikona-*.png
   Cache-Control: public, max-age=604800
+
+# Dopis o evidenci alkohola — ni za iskalnike, posljemo le povezavo.
+/dokumenti/evidenca-alkohola/*
+  X-Robots-Tag: noindex, nofollow

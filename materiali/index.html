@@ -182,6 +182,19 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-cas-bil{font-size:.66rem;color:var(--muted);background:var(--parchment);
   border:1px solid var(--border);border-radius:var(--rs);padding:.3rem .45rem;margin-bottom:.3rem}
 .korak-cas-bil strong{color:var(--ink)}
+/* Polnitev: isto opravilo, ponovljeno. Vsaka ima svoj cas in svoje mase,
+   nastavitev nad njimi pa je ena sama in velja za vse. */
+.korak-pon-naslov{font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);margin:.35rem 0 .18rem}
+.korak-pon{border:1px solid var(--border);border-radius:var(--rs);background:var(--parchment);
+  padding:.3rem .4rem;margin-bottom:.28rem}
+.korak-pon-hdr{display:flex;align-items:center;gap:.35rem;margin-bottom:.2rem}
+.korak-pon-st{font-size:.6rem;font-weight:600;color:var(--accent);flex:1;min-width:0}
+.korak-pon-ure{font-size:.6rem;color:var(--muted);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.korak-pon-x{flex:0 0 auto;min-width:26px;min-height:24px;border:1px solid var(--border);
+  border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
+  font-family:'Jost',sans-serif}
+.korak-pon-x:hover{border-color:var(--danger);color:var(--danger)}
 .korak-ccp-gumbi button,.korak-izbira-moz button{padding:.18rem .4rem;border:1px solid var(--border);
   border-radius:4px;background:white;color:var(--muted);cursor:pointer;font-size:.6rem;
   font-family:'Jost',sans-serif;min-height:26px}
@@ -4658,6 +4671,22 @@ function dnVolAlcTinkture(){
 //
 // parametri: [kljuc, napis, enota]. Vrednosti gredo v jsonb, ker se po tipu
 // koraka mocno razlikujejo - loceni stolpci bi dali vecinoma prazno tabelo.
+// ── Kaj ostane v pogaci ───────────────────────────────────────────────────
+// Pogaca je goba plus tisto, kar se je vpilo vanjo. Gobo poznamo iz tehtanja,
+// pogaco stehtamo, razlika pa je topilo oz. voda - to je bolj zanesljivo kot
+// posebna meritev in ne more biti vpisano narobe.
+//
+// Masa gobe je vsota serij naloga. Vpisana je v kilogramih, ker se tako tehta,
+// pogaca pa v gramih; pretvorba stoji tu, na enem mestu.
+function masaSuheGobeG(){
+  const v=dnSerijeRows.reduce((a,r)=>a+(parseNum(r.masa)||0),0);
+  return v>0?round(v*1000,1):null;
+}
+function razlikaPogace(pa){
+  const p=parseNum(pa.m_pogace),g=parseNum(pa.m_gobe);
+  return (p>0&&g>0)?round(p-g,1):null;
+}
+
 const DN_PREDLOGA_KORAKOV=[
   // Priprava surovine je eno opravilo, ki se ga opravi v enem zamahu: stehta
   // se goba, dolodi vlaga in pripravi topilo. Cas pripada temu opravilu, ne
@@ -4731,7 +4760,13 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija preko 400 mesh ~37 µm najlonske filtrirne tkanine.'},
      {k:'m_me',tip:'meritev',napis:'Σm ME',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_topila',tip:'meritev',napis:'m topila v pogači',enota:'g'},
+     // Topilo v pogaci ni meritev: pogaco stehtas, gobo, ki je vanjo sla, pa ze
+     // poznas iz tehtanja. Razlika je zanesljivejsa od ocene in je ni mogoce
+     // vpisati narobe.
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_topila',tip:'izracun',napis:'m topila v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'1.3', korak:'preracun_me', naziv:'Ločitev matičnega ekstrakta', faza:'OF', akcija:'me',
    naprave:['tehtnica'],
@@ -4803,13 +4838,27 @@ const DN_PREDLOGA_KORAKOV=[
   // Pogaca iz stiskanja organske faze gre v vodo - lahko takoj, lahko dan
   // kasneje. Vsak korak ima zato svoj datum in uro, ekstrakcija in stiskanje
   // pa sta loceni opravili: prvo pove pogoje, drugo kaj je iz njih prislo ven.
+  // Pogaca gre v vodo vcasih naenkrat, vcasih v dveh delih - drugi del tudi cez
+  // noc ali naslednji dan. Zato korak nima ene mase in enega casa: nastavitev
+  // (T in t) je ena sama in velja za vse, vsaka polnitev pa nosi svoj cas in
+  // svoji masi. Stolpca "drugi del" ne dodajamo - vsaka polnitev je svoja
+  // vrstica, kot povsod, kjer se opravilo ponovi.
   {st:'2',   korak:'hve', naziv:'Vroča vodna ekstrakcija — HVE', faza:'VF',
    naprave:['grelnik','termometer','tehtnica'],
+   nastavitev:'Nastavitev — velja za vse polnitve',
    polja:[
-     {k:'m_pogace',tip:'meritev',napis:'m pogače',enota:'g'},
-     {k:'m_vode',tip:'meritev',napis:'m dodane vode',enota:'g'},
      {k:'t',tip:'meritev',napis:'T',enota:'°C',naziv_priv:'80–90'},
      {k:'cas',tip:'meritev',napis:'t',enota:'min',naziv_priv:'300'},
+     {k:'polnitve',tip:'ponovitve',napis:'polnitev',naslov:'Polnitve',
+      dodaj:'Dodaj polnitev',
+      polja:[
+        {k:'m_pogace',napis:'m pogače',enota:'g'},
+        {k:'m_vode',napis:'m dodane vode',enota:'g'},
+      ],
+      vsote:[
+        {k:'m_pogace',napis:'Σ m pogače',enota:'g'},
+        {k:'m_vode',napis:'Σ m dodane vode',enota:'g'},
+      ]},
    ]},
   {st:'2.1', korak:'stiskanje_hve', naziv:'Stiskanje in ločitev vodne faze — HVE', faza:'VF',
    // Enako kot pri organski fazi: tri mase, zato je tehtnica na prvem mestu.
@@ -4819,7 +4868,11 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija skozi 300 mesh ~48 µm najlonsko filtrno tkanino.'},
      {k:'m_hve',tip:'meritev',napis:'Σm HVE ekstrakta',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
+     // Enako kot pri organski fazi: kar je nad maso gobe, je zaostala voda.
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_vode_pogaca',tip:'izracun',napis:'m vode v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'2.2', korak:'koncentriranje_hve', naziv:'Koncentriranje HVE', faza:'VF',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'VF',
@@ -4868,7 +4921,10 @@ const DN_PREDLOGA_KORAKOV=[
       opis:'Stiskanje in filtracija skozi 400 mesh ~37 µm najlonsko filtrsko tkanino.'},
      {k:'m_te',tip:'meritev',napis:'Σm TE ekstrakta',enota:'g'},
      {k:'m_pogace',tip:'meritev',napis:'Σm pogače',enota:'g'},
-     {k:'m_vode_pogaca',tip:'meritev',napis:'m vode v pogači',enota:'g'},
+     {k:'m_gobe',tip:'iz_naloga',napis:'m suhe gobe',enota:'g',
+      vir:()=>masaSuheGobeG()},
+     {k:'m_vode_pogaca',tip:'izracun',napis:'m vode v pogači',enota:'g',
+      izracun:pa=>razlikaPogace(pa)},
    ]},
   {st:'3.2', korak:'koncentriranje_te', naziv:'Koncentriranje TE', faza:'TE',
    naprave:['rotavapor','vakuum','chiller'], akcija:'bilanca', casIzBilance:'TE',
@@ -5064,6 +5120,54 @@ function preseliPoljaKorakov(vrstice){
   return vrstice;
 }
 
+// Topilo oz. voda v pogaci je bila do zdaj rocna meritev, zdaj je razlika med
+// stehtano pogaco in maso gobe. Ze vpisano stevilko ohranimo pod svojim
+// kljucem: zapisnik serije je dokument in kar je bilo takrat vpisano, mora
+// ostati zapisano, tudi ce se izpeljana vrednost od tega razlikuje.
+const IZPELJANO_IZ_ROCNEGA=[
+  {korak:'stiskanje_of', polje:'m_topila'},
+  {korak:'stiskanje_hve',polje:'m_vode_pogaca'},
+  {korak:'stiskanje_te', polje:'m_vode_pogaca'},
+];
+function ohraniRocneMeritve(vrstice){
+  IZPELJANO_IZ_ROCNEGA.forEach(({korak,polje})=>{
+    const k=vrstice.find(x=>x.korak===korak);
+    if(!k)return;
+    const pa=k.parametri||(k.parametri={});
+    const v=pa[polje];
+    if(v===undefined||v===''||v===null)return;
+    if(pa[polje+'_rocno']===undefined)pa[polje+'_rocno']=String(v);
+  });
+  return vrstice;
+}
+
+// Korak, ki je bil ena sama polnitev, je nosil eno maso in en cas. Ko je dobil
+// vec polnitev, mora ze vpisano postati prva - sicer bi kartica izgledala
+// prazna, podatki pa bi tiho lezali v zapisu. Izvirnika ne brisemo.
+function preseliVPonovitve(vrstice){
+  vrstice.forEach(k=>{
+    const x=ponovitvePolje(k.korak);
+    if(!x)return;
+    const pa=k.parametri||(k.parametri={});
+    if(Array.isArray(pa[x.k]))return;
+    const prva={};
+    let ima=false;
+    (x.polja||[]).forEach(p=>{
+      const v=pa[p.k];
+      if(v===undefined||v===''||v===null)return;
+      prva[p.k]=String(v);ima=true;
+    });
+    const od=korakUra(k,'zacetek'),doU=korakUra(k,'konec');
+    if(od){prva.od=od;ima=true;}
+    if(doU){prva.do=doU;ima=true;}
+    if(!ima)return;
+    const d=korakDatum(k);
+    if(d)prva.datum=d;
+    pa[x.k]=[prva];
+  });
+  return vrstice;
+}
+
 // ── Katero napravo korak poklice ──────────────────────────────────────────
 // Register ima cel kup naprav, korak pa jih uporabi eno ali dve. Iskanje po
 // dolgem spustnem seznamu je zamudno in je mesto za napacen klik, zato korak
@@ -5170,10 +5274,72 @@ function korakCCPNeustreza(k){
   return skupinaKoraka(k).flatMap(x=>korakCCP(x).filter(p=>x.parametri?.[p.k+'__presoja']==='ne'));
 }
 
+// ── Polnitve: opravilo, ki se ponovi ──────────────────────────────────────
+// Vroca vodna ekstrakcija tece vcasih v dveh delih. Nastavitev je ena (T in t),
+// pogaca in voda pa gresta v kotel dvakrat, vsakic ob svojem casu - drugi del
+// tudi naslednji dan. Vsak del je svoja vrstica; cas koraka in ure naprave se
+// izpeljejo iz njih, zato jih zgoraj ne vpisujemo se enkrat.
+function ponovitvePolje(korak){
+  return poljaKoraka(predlogaZaKorak(korak)).find(x=>x.tip==='ponovitve')||null;
+}
+function korakPonovitve(k){
+  const x=ponovitvePolje(k.korak);
+  if(!x)return [];
+  const v=k.parametri?.[x.k];
+  return Array.isArray(v)?v:[];
+}
+function ponovitveVrstice(k){
+  const x=ponovitvePolje(k.korak);
+  if(!x)return null;
+  const pa=k.parametri||(k.parametri={});
+  if(!Array.isArray(pa[x.k]))pa[x.k]=[];
+  return pa[x.k];
+}
+// Trajanje ene polnitve. Konec pred zacetkom pomeni cez polnoc - enako kot pri
+// koraku samem; grelnik, ki tece cez noc, je pravilo in ne izjema.
+function ponovitevMinute(p){
+  if(!p||!p.od||!p.do)return null;
+  const m=s=>Number(String(s).slice(0,2))*60+Number(String(s).slice(3,5));
+  const a=m(p.od),b=m(p.do);
+  if(!isFinite(a)||!isFinite(b))return null;
+  return b>=a?b-a:b+1440-a;
+}
+function ponovitevVsota(k,kljuc){
+  const v=korakPonovitve(k).map(p=>parseNum(p?.[kljuc])).filter(x=>x>0);
+  return v.length?round(v.reduce((s,x)=>s+x,0),1):null;
+}
+// Cas koraka s polnitvami: razpon od prve do zadnje, ure pa VSOTA delov.
+// Razpon bi pri delu cez dva dneva nastel tudi noc vmes, servisni interval
+// naprave pa steje njeno delo, ne cakanja.
+function korakCasIzPonovitev(k){
+  const vrstice=korakPonovitve(k).filter(p=>p&&(p.od||p.do));
+  if(!vrstice.length)return null;
+  const dat=p=>p.datum||korakDatum(k)||'';
+  const zac=vrstice.filter(p=>p.od&&dat(p)).map(p=>`${dat(p)}T${p.od}`).sort();
+  const kon=vrstice.filter(p=>p.do&&dat(p)).map(p=>
+    (p.od&&p.do<p.od)?`${danPozneje(dat(p))}T${p.do}`:`${dat(p)}T${p.do}`).sort();
+  const minute=vrstice.reduce((s,p)=>s+(ponovitevMinute(p)||0),0);
+  return {od:zac[0]||'',konec:kon[kon.length-1]||'',
+          ure:minute?minute/60:null,deli:vrstice.length};
+}
+// Korak nosi cas tudi v svojem zapisu: dnevnik naprav in izpis zapisnika
+// bereta zacetek in konec, ne polnitev.
+function uskladiCasIzPonovitev(k){
+  if(!ponovitvePolje(k.korak))return k;
+  const p=korakCasIzPonovitev(k);
+  if(!p){k.zacetek='';k.konec='';return k;}
+  if(p.od)k.datum=p.od.slice(0,10);
+  k.zacetek=p.od||'';
+  k.konec=p.konec||'';
+  return k;
+}
+
 // Trajanje v urah; brez obeh casov ni znano.
 function korakUre(k){
   const bil=korakCasIzBilance(k);
   if(bil)return bil.ure;
+  const pon=korakCasIzPonovitev(k);
+  if(pon)return pon.ure;
   if(!k.zacetek||!k.konec)return null;
   const a=new Date(k.zacetek).getTime(),b=new Date(k.konec).getTime();
   if(!isFinite(a)||!isFinite(b)||b<=a)return null;
@@ -5212,19 +5378,19 @@ function korakDatum(k){
 function korakUra(k,polje){
   return (k[polje]||'').slice(11,16);
 }
+function danPozneje(datum){
+  const d=new Date(datum+'T00:00');
+  d.setDate(d.getDate()+1);
+  d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,10);
+}
 // Ce je konec pred zacetkom, je korak tekel cez polnoc.
 function sestaviCase(k,datum,od,doU){
   k.datum=datum||'';
   if(!datum){k.zacetek='';k.konec='';return;}
   k.zacetek=od?`${datum}T${od}`:'';
   if(!doU){k.konec='';return;}
-  let dan=datum;
-  if(od&&doU<od){
-    const d=new Date(datum+'T00:00');
-    d.setDate(d.getDate()+1);
-    dan=d.toISOString().slice(0,10);
-  }
-  k.konec=`${dan}T${doU}`;
+  k.konec=`${(od&&doU<od)?danPozneje(datum):datum}T${doU}`;
 }
 
 function lokalniCasZdaj(){
@@ -5277,6 +5443,62 @@ function onDNKorakParam(idx,kljuc,val){
   if(String(val).trim()==='')delete k.parametri[kljuc];
   else k.parametri[kljuc]=String(val).trim();
   osveziIzracuneKoraka(idx);
+}
+
+// ── Vnos polnitev ─────────────────────────────────────────────────────────
+// Ura spremeni cas koraka in s tem glavo kartice, zato se ta izrise na novo.
+// Masa je le stevilka: med tipkanjem bi ponoven izris vzel fokus, zato se
+// osvezijo samo vsote.
+function poPonovitvi(idx){
+  const k=dnKorakiRows[idx];if(!k)return;
+  uskladiCasIzPonovitev(k);
+  osveziStatusKoraka(k);
+  renderDNKorakiRows();
+  dnOsveziPovzetke();
+}
+function dodajPonovitev(idx){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const v=ponovitveVrstice(k);if(!v)return;
+  // Druga polnitev je najveckrat istega dne kot prva; kadar ni, se datum
+  // popravi na njej sami.
+  v.push({datum:v[v.length-1]?.datum||korakDatum(k)||lokalniCasZdaj().slice(0,10)});
+  poPonovitvi(idx);
+}
+function odstraniPonovitev(idx,i){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const v=ponovitveVrstice(k);if(!v||!v[i])return;
+  const vpisano=Object.keys(v[i]).some(kl=>kl!=='datum'&&v[i][kl]);
+  if(vpisano&&!confirm(`Izbrišem ${i+1}. polnitev? Vpisano se izgubi.`))return;
+  v.splice(i,1);
+  poPonovitvi(idx);
+}
+function onPonovitevPolje(idx,i,polje,val){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const v=ponovitveVrstice(k);if(!v||!v[i])return;
+  if(String(val).trim()==='')delete v[i][polje];
+  else v[i][polje]=String(val).trim();
+  if(polje==='datum'||polje==='od'||polje==='do')return poPonovitvi(idx);
+  osveziPonovitveVsote(k);
+  dnOsveziPovzetke();
+}
+function nastaviPonovitevCas(idx,i,kaj){
+  const k=dnKorakiRows[idx];if(!k)return;
+  const v=ponovitveVrstice(k);if(!v||!v[i])return;
+  const zdaj=lokalniCasZdaj();
+  if(!v[i].datum)v[i].datum=zdaj.slice(0,10);
+  v[i][kaj]=zdaj.slice(11,16);
+  poPonovitvi(idx);
+}
+function osveziPonovitveVsote(k){
+  const x=ponovitvePolje(k.korak);
+  if(!x)return;
+  (x.vsote||[]).forEach(y=>{
+    const el=document.querySelector(
+      `#dnKorakiContainer .korak-izpis-p[data-vsota="${k.id}|${y.k}"] b`);
+    if(!el)return;
+    const v=ponovitevVsota(k,y.k);
+    el.textContent=v==null?'—':String(v).replace('.',',');
+  });
 }
 
 // Izracunanih polj ne izrisujemo na novo - to bi med tipkanjem vzelo fokus.
@@ -5336,6 +5558,12 @@ function zapisiIzracune(k){
   // obrazca, tam pa bilance ne moremo vprasati po seriji.
   const bil=korakCasIzBilance(k);
   if(bil)k={...k,datum:bil.od.slice(0,10),zacetek:bil.od,konec:bil.konec};
+  // Enako pri polnitvah: cas koraka je razpon vseh delov. Zapisemo ga ob
+  // shranjevanju, da ga nosi tudi korak, ki je bil preseljen iz starega zapisa
+  // in ga uporabnik ni odprl.
+  const pon=ponovitvePolje(k.korak)?korakCasIzPonovitev(k):null;
+  if(pon)k={...k,datum:pon.od?pon.od.slice(0,10):k.datum,
+                 zacetek:pon.od||'',konec:pon.konec||''};
   const polja=poljaKoraka(t);
   const izr=polja.filter(x=>x.tip==='izracun');
   const viri=polja.filter(x=>x.tip==='iz_naloga');
@@ -5581,6 +5809,57 @@ function korakRubrike(k){
     const ccp=vp.filter(x=>x.tip==='ccp'&&!x.podMeritvami).map(ccpVse).join('');
     const ccpPod=vp.filter(x=>x.tip==='ccp'&&x.podMeritvami).map(ccpVse).join('');
 
+    const ponovitve=vp.filter(x=>x.tip==='ponovitve').map(x=>{
+      const vrstice=korakPonovitve(k);
+      const uraP=(i,kaj,napis,vr)=>`
+        <div class="korak-f">
+          <label>${napis}</label>
+          <div class="korak-casbox">
+            <input type="time" value="${vr||''}"
+                   onchange="onPonovitevPolje(${idx},${i},'${kaj}',this.value)">
+            <button type="button" class="korak-zdaj" title="Vpiši trenutni čas" aria-label="Vpiši trenutni čas"
+                    onclick="nastaviPonovitevCas(${idx},${i},'${kaj}')">⏱</button>
+          </div>
+        </div>`;
+      const kartice=vrstice.map((p,i)=>{
+        const min=ponovitevMinute(p);
+        const polja=(x.polja||[]).map(y=>`
+          <div class="korak-f">
+            <label title="${(y.napis+(y.enota?' '+y.enota:'')).replace(/"/g,'&quot;')}">${y.napis}${y.enota?' '+y.enota:''}</label>
+            <input type="text" inputmode="decimal" placeholder="${y.naziv_priv||''}"
+                   value="${(p?.[y.k]??'').toString().replace(/"/g,'&quot;')}"
+                   oninput="onPonovitevPolje(${idx},${i},'${y.k}',this.value)">
+          </div>`).join('');
+        return `<div class="korak-pon">
+          <div class="korak-pon-hdr">
+            <span class="korak-pon-st">${i+1}. ${x.napis}</span>
+            ${min!=null?`<span class="korak-pon-ure">${fmtUre(min/60)}</span>`:''}
+            <button type="button" class="korak-pon-x" onclick="odstraniPonovitev(${idx},${i})"
+                    title="Odstrani" aria-label="Odstrani ${i+1}. ${x.napis}">✕</button>
+          </div>
+          <div class="korak-cas">
+            <div class="korak-f">
+              <label>Datum</label>
+              <input type="date" value="${p?.datum||''}"
+                     onchange="onPonovitevPolje(${idx},${i},'datum',this.value)">
+            </div>
+            ${uraP(i,'od','Od',p?.od)}${uraP(i,'do','Do',p?.do)}
+          </div>
+          <div class="korak-grid">${polja}</div>
+        </div>`;}).join('');
+      // Vsota ima pomen sele, ko sta polnitvi vec kot ena - pri eni sami bi
+      // isto stevilko povedala dvakrat.
+      const vsote=vrstice.length>1?(x.vsote||[]).map(y=>{
+        const v=ponovitevVsota(k,y.k);
+        return `<span class="korak-izpis-p" data-vsota="${k.id}|${y.k}"><span>${y.napis}</span
+          ><b>${v==null?'—':String(v).replace('.',',')}</b>${y.enota?'<span>'+y.enota+'</span>':''}</span>`;
+      }).join(''):'';
+      return `<div class="korak-pon-naslov">${x.naslov||'Ponovitve'}</div>
+        ${kartice}
+        ${vsote?`<div class="korak-izpis">${vsote}</div>`:''}
+        <button type="button" class="korak-akcija" onclick="dodajPonovitev(${idx})">+ ${x.dodaj||'Dodaj'}</button>`;
+    }).join('');
+
     const izbire=vp.filter(x=>x.tip==='izbira').map(x=>`
       <div class="korak-izbira">
         <div class="korak-izbira-napis">${x.napis}</div>
@@ -5609,7 +5888,9 @@ function korakRubrike(k){
       ${cilji?`<div class="korak-izpis korak-cilj">${cilji}</div>`:''}
       ${ccp}${izbire}
       ${t.vsebina?`<div class="korak-premik" data-vsebina="${t.vsebina.join('|')}"></div>`:''}
-      ${meritve?`<div class="korak-grid">${meritve}</div>`:''}
+      ${meritve?`${t.nastavitev?`<div class="korak-pon-naslov">${t.nastavitev}</div>`:''}
+        <div class="korak-grid">${meritve}</div>`:''}
+      ${ponovitve}
       ${ccpPod}
       ${izpisi?`<div class="korak-izpis">${izpisi}</div>`:''}
       <div class="korak-grid" style="grid-template-columns:${napravaPolje?'1fr 1fr':'1fr'}">
@@ -5651,11 +5932,22 @@ function korakKartica(k){
   // Kjer cas pove bilanca, ga ne vpisujemo: faza tece od prvega vhoda do
   // izhoda oz. korekcije in to je zapisano ze tam.
   const bilCas=korakCasIzBilance(k);
+  // Kjer korak tece v polnitvah, ga cas ne opise z eno vrstico: vsaka polnitev
+  // ima svojega in tu je zato le izvlecek. Vpisuje se pri polnitvi sami, sicer
+  // bi bila zgoraj se ena resnica, ki se s spodnjimi lahko razide.
+  const ponCas=ponovitvePolje(k.korak)?korakCasIzPonovitev(k):null;
+  const dmy=t=>`${t.slice(8,10)}.${t.slice(5,7)}. ${t.slice(11,16)}`;
   const casBlok=bilCas
     ? `<div class="korak-cas-bil">⚖️ Iz bilance:
         <strong>${bilCas.od.slice(8,10)}.${bilCas.od.slice(5,7)}. ${bilCas.od.slice(11,16)}</strong>
         – <strong>${bilCas.konec.slice(8,10)}.${bilCas.konec.slice(5,7)}. ${bilCas.konec.slice(11,16)}</strong>
         · ${fmtUre(bilCas.ure)}</div>`
+    : ponovitvePolje(k.korak)
+    ? `<div class="korak-cas-bil">${ponCas
+        ? `🔁 ${ponCas.deli} ${ponCas.deli===1?'polnitev':ponCas.deli===2?'polnitvi':'polnitve'}:
+           ${ponCas.od?`<strong>${dmy(ponCas.od)}</strong>`:''}${ponCas.konec?` – <strong>${dmy(ponCas.konec)}</strong>`:''}
+           ${ponCas.ure!=null?`· skupaj ${fmtUre(ponCas.ure)}`:''}`
+        : '🔁 Čas določijo polnitve — dodaj jo spodaj.'}</div>`
     : `<div class="korak-cas">
         <div class="korak-f">
           <label>Datum</label>
@@ -6226,7 +6518,9 @@ function openDNSheet(id){
   }
   // Nov nalog dobi korake iz predloge takoj - zaporedje je vedno isto, zato
   // prazen seznam nikomur ne koristi.
-  dnKorakiRows=id?preseliPoljaKorakov(korakiZDopolnitvijo(d?.oznaka)):korakiIzPredloge();
+  dnKorakiRows=id
+    ?ohraniRocneMeritve(preseliVPonovitve(preseliPoljaKorakov(korakiZDopolnitvijo(d?.oznaka))))
+    :korakiIzPredloge();
   renderDNSerijeRows();
   renderDNKorakiRows();
   document.getElementById('dnMasaEtOH').value=d?.masaEtOH||'';
@@ -8141,10 +8435,29 @@ async function genZapisnikProizvodnje(dnId){
         return v?`<div class="izbira"><span>${esc(x.napis)}:</span> ${esc(v)}</div>`:'';})
       .filter(Boolean).join('');
 
+    // Polnitve: vsaka svoja vrstica s svojim casom. Vsota stoji spodaj, ker je
+    // to stevilka, ki gre naprej v bilanco.
+    const pon=polja.find(x=>x.tip==='ponovitve');
+    const ponV=pon&&Array.isArray(k.parametri?.[pon.k])?k.parametri[pon.k]:[];
+    const ponStolpci=pon?(pon.polja||[]):[];
+    const vsotaP=kljuc=>{
+      const v=ponV.map(p=>parseNum(p?.[kljuc])).filter(x=>x>0);
+      return v.length?round(v.reduce((s,x)=>s+x,0),1):null;
+    };
+    const ponTabela=ponV.length?`<table class="mer pon">
+      <tr><th>${esc(pon.naslov||'Ponovitve')}</th><th>čas</th>
+        ${ponStolpci.map(y=>`<th class="num">${esc(y.napis)}${y.enota?' ('+esc(y.enota)+')':''}</th>`).join('')}</tr>
+      ${ponV.map((p,i)=>`<tr><td>${i+1}.</td>
+        <td>${esc(dat(p.datum))} ${esc(p.od||'')}${p.do?'–'+esc(p.do):''}</td>
+        ${ponStolpci.map(y=>`<td class="num">${stev(p?.[y.k])}</td>`).join('')}</tr>`).join('')}
+      ${ponV.length>1?`<tr class="vsota"><td></td><td>skupaj</td>
+        ${ponStolpci.map(y=>`<td class="num">${stev(vsotaP(y.k))}</td>`).join('')}</tr>`:''}
+    </table>`:'';
+
     const napravaIme=k.opremaId?opremaNaziv(k.opremaId):'';
     // Nadrejeni korak sam po sebi nima rubrik - njegova vsebina so podkoraki,
     // zato ga "ni izpolnjeno" ne zadeva.
-    const prazna=!ccpVrstice&&!meritve&&!izbire&&!k.zacetek&&!k.opomba
+    const prazna=!ccpVrstice&&!meritve&&!izbire&&!ponTabela&&!k.zacetek&&!k.opomba
       &&!koraki.some(x=>predlogaZaKorak(x.korak).nad===k.korak);
 
     return `<section class="rub${presk?' presk':''}${stars?' pod':''}">
@@ -8161,6 +8474,7 @@ async function genZapisnikProizvodnje(dnId){
         ${ccpVrstice}
         ${izbire}
         ${meritve?`<table class="mer">${meritve}</table>`:''}
+        ${ponTabela}
         ${napravaIme?`<div class="naprava">Naprava: ${esc(napravaIme)}</div>`:''}
         ${k.opomba?`<div class="opomba">${esc(k.opomba)}</div>`:''}`)}
     </section>`;
@@ -8221,6 +8535,13 @@ table{width:100%;border-collapse:collapse}
 .mer td{padding:.13rem .5rem;border-bottom:1px solid #f6f2ea;font-size:.75rem}
 .mer td.enota{color:#7a6f60;width:3.5rem}
 .mer td.num{width:6rem}
+/* Polnitve: vsak del svoja vrstica, skupaj spodaj. */
+.mer.pon{width:100%;border-collapse:collapse}
+.mer.pon th{text-align:left;padding:.13rem .5rem;font-size:.66rem;font-weight:600;
+  color:#7a6f60;border-bottom:1px solid #ede6d6}
+.mer.pon th.num{text-align:right}
+.mer.pon td.num{width:auto}
+.mer.pon tr.vsota td{font-weight:600;border-top:1px solid #ede6d6}
 .naprava,.opomba{padding:.2rem .5rem;font-size:.7rem;color:#7a6f60}
 .opomba{font-style:italic}
 .prazno{padding:.3rem .5rem;font-size:.7rem;color:#a89b88}

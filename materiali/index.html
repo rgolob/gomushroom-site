@@ -230,8 +230,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   padding-bottom:.15rem;display:flex;align-items:baseline;gap:.45rem}
 .dok-n{font-size:.65rem;color:var(--accent);font-weight:600}
 .dok-p{font-size:.78rem;line-height:1.55;margin:0 0 .35rem;color:var(--ink)}
-.dok-ul{margin:.1rem 0 .4rem;padding-left:1rem;font-size:.78rem;line-height:1.55}
-.dok-ul li{margin-bottom:.15rem}
+.dok-ul,.dok-ol{margin:.1rem 0 .4rem;padding-left:1.05rem;font-size:.78rem;line-height:1.55}
+.dok-ul li,.dok-ol li{margin-bottom:.15rem}
+.dok-pod{font-size:.75rem;font-weight:600;color:var(--ink);margin:.5rem 0 .2rem;
+  letter-spacing:.01em}
 .dok-opomba{border-left:2px solid var(--accent);background:var(--parchment);
   padding:.4rem .55rem;font-size:.74rem;line-height:1.5;margin:.25rem 0 .45rem;
   border-radius:0 var(--rs) var(--rs) 0}
@@ -248,6 +250,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .dok-vir{font-size:.62rem;color:var(--muted);font-style:italic;margin:-.25rem 0 .5rem}
 .dok-pov{font-size:.7rem;color:var(--muted);margin:.5rem 0;line-height:1.5}
 .dok-pov a{color:var(--accent);text-decoration:none;font-weight:500}
+.dok-sklic{color:var(--accent);text-decoration:none;font-weight:500;
+  border-bottom:1px dotted var(--accent)}
 .korak-akcija{width:100%;padding:.35rem;margin-bottom:.28rem;border:1px dashed var(--accent);
   border-radius:var(--rs);background:rgba(175,132,85,.08);color:var(--accent);
   cursor:pointer;font-size:.68rem;font-family:'Jost',sans-serif}
@@ -6386,152 +6390,703 @@ function onEtTipChange(){
 const DOKUMENTI=[
   // Postopki
   {oznaka:'SOP-0001', naziv:'Obvladovanje in organizacija dela v laboratoriju',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0001','OBR-0005'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0001_1).'}]}]},
-
-  {oznaka:'SOP-0002', naziv:'Čiščenje in higiena prostorov',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0002'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0002_1).'}]}]},
-
-  {oznaka:'SOP-0003', naziv:'Trojna ekstrakcija in formulacija tinkture medicinskih gob',
-   vrsta:'Postopek', lastnik:'Rok Golob',
-   zapisi:['OBR-0003','OBR-0004','ZOP-0001','ZOP-0002'],
-   povezani:['DOK-0002','SOP-0004'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (SOP-0003_1). Datum veljavnosti še ni prenesen iz izvirnika.'}],
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0001'], povezani:['SOP-0002','OBR-0002'],
+   verzije:[{v:'01', velja:'2025-07-31', odobril:'Rok Golob',
+     opis:'Prva izdaja. Z njo se je začela uporaba standardnih operativnih postopkov, ki podrobneje opredeljujejo posamezne faze proizvodnje, čiščenja in organizacije dela.'}],
    vsebina:[
      {naslov:'Namen', blok:[
-       'Postopek opisuje izdelavo alkoholne tinkture iz posušenih plodišč zdravilnih gob — od prevzema surovine do polnjenja in zaključka serije.',
-       'Namen je, da vsaka serija nastane po istem postopku, da so kritične kontrolne točke presojene, preden se gre naprej, in da o vsaki seriji ostane zapis, iz katerega je mogoče postopek rekonstruirati.']},
+       'Zagotavljanje varnega in higienskega dela v laboratoriju ter preprečevanje navzkrižne kontaminacije med posameznimi postopki.']},
 
-     {naslov:'Področje uporabe', blok:[
-       'Velja za vse redne delovne naloge (DN), po katerih nastane prodajni izdelek.',
-       'Za razvojne naloge (RD) velja smiselno: postopek je isti, izid pa ni prodajni izdelek, ampak polizdelek. Kar je za razvojne naloge drugače, je zapisano v razdelku Odstopanja.']},
+     {naslov:'Obseg', blok:[
+       'Ta postopek velja za vse dejavnosti, ki jih izvaja lastnik podjetja GoMushroom v laboratoriju in predprostoru laboratorija. V obratu se procesi, ki lahko predstavljajo kontaminacijsko tveganje (delo z micelijem), izvajajo časovno ločeno od čistih procesov (ekstrakcija, stiskanje, koncentriranje), kar je razvidno tudi iz {{OBR-0001}} Dnevnik uporabe prostorov — evidenca dela.',
+       'Mletje gob in tehtanje suhe surovine se zaradi prašenja izvaja izven omenjenih prostorov, na prostem. Dejavnosti po prostorih:',
+       {tabela:{glava:['Laboratorij','Predprostor'], vrstice:[
+         ['kloniranje micelija, inokulacija substratov, dosuševanje gob v vakuumskem sušilniku, stiskanje suspenzije, koncentracija tinktur, polnjenje tinktur',
+          'sterilizacija gojitvenih substratov, ekstrakcija, mešanje topil, pomivanje steklovine, etiketiranje tinktur']]}}]},
 
      {naslov:'Odgovornosti', blok:[
-       {tabela:{glava:['Vloga','Odgovornost'], vrstice:[
-         ['Vodja proizvodnje','Izvedba postopka, presoja kritičnih kontrolnih točk, vodenje masne bilance, zaključek in sprostitev serije.'],
-         ['Skrbnik opreme','Umerjena merila in vzdrževana oprema pred začetkom serije.']]}},
-       'V podjetju z enim izvajalcem obe vlogi nosi ista oseba. Zapis o tem, kdo je presodil kritično točko in kdaj, nastane samodejno ob presoji.']},
+       'Vse postopke izvaja in zanje odgovarja ena oseba — lastnik podjetja. Ista oseba vodi evidence, izvaja čiščenje in zagotavlja sledljivost.']},
 
-     {naslov:'Definicije in kratice', blok:[
-       {tabela:{glava:['Kratica','Pomen'], vrstice:[
-         ['OF','organska faza — etanolni izvleček'],
-         ['VF','vodna faza — vodni izvleček'],
-         ['HVE','vroča vodna ekstrakcija'],
-         ['TE','tlačna ekstrakcija'],
-         ['ME','matični ekstrakt'],
-         ['Pogača','stisnjen ostanek surovine po ločitvi ekstrakta'],
-         ['AAE','absolutni alkohol (etanol, preračunan na 100 %) pri 20 °C'],
-         ['KKT','kritična kontrolna točka']]}}]},
+     {naslov:'Organizacija dela', blok:[
+       'Glavni laboratorij je prostor pod nadtlakom z dovodom zraka preko HEPA filtra. Po vsaki dejavnosti se prostor očisti in razkuži z ozonom ter UV svetlobo.',
+       'Med procesom dela z micelijem so v prostorih prepovedane vse aktivnosti, povezane s tinkturami; prav tako je prepovedano hkratno shranjevanje odprtih ekstraktov. Pred menjavo vrste postopka (na primer iz micelija na tinkture) je obvezno čiščenje skladno s {{SOP-0002}}.',
+       'Vse dejavnosti se beležijo na {{OBR-0001}} Dnevnik uporabe prostorov — evidenca dela.',
+       {opomba:'Brez izpolnjenega dnevnika je delo v prostorih prepovedano.'},
+       'Čiščenje in razkuževanje po vsakem postopku se zabeleži v {{OBR-0002}}.']},
 
-     {naslov:'Oprema in merila', blok:[
-       'Naprave in merila so vodeni v registru opreme. Vsak korak postopka pove, katero vrsto naprave zahteva, in ta se v zapis serije vpiše ob izvedbi.',
-       {opomba:'Merilo s poteklim umerjanjem oziroma preverjanjem zadrži korak: dokler preverjanje ni opravljeno, koraka ni mogoče zaključiti. To ni priporočilo — meritev z neumerjenim merilom ni dokaz.'}]},
+     {naslov:'Opis prostorov', blok:[
+       {pod:'Glavni laboratorij'},
+       'Delo v laboratoriju se izvaja izključno z osebno zaščitno opremo (halja, obutev, rokavice).',
+       'Glavni laboratorij je čista cona z nadtlakom in HEPA filtrom. V njem sta dva rotavaporja (5 L in 20 L), namenjena koncentraciji ekstraktov, ter velik pult z namiznim HEPA filtrom (flowhood), ki omogoča delo z micelijem in polnjenje tinktur v sterilnem okolju. V prostoru sta tudi vakuumski sušilnik in sistem za razvlaževanje zraka.',
+       'Prostor je namenjen delu z micelijem v sterilnem okolju ali stiskanju, koncentraciji tinktur, končni formulaciji in polnjenju tinktur. Delo z micelijem in delo s tinkturami se med seboj izključujeta in se ne izvajata sočasno.',
+       'Tu lahko poteka tudi dosuševanje gob v vakuumskem sušilniku, ki je zaprt sistem. Proces ne predstavlja tveganja kontaminacije, ker material med sušenjem ni v stiku z okoljem; paziti je treba le, da se sušilnik polni takrat, ko se ostale operacije ne izvajajo.',
+       'V glavnem laboratoriju se hrani etanol, ki je vedno pod nadzorom in izven dosega nepooblaščenih oseb.',
+       'Prostor, delovne površine in oprema se po uporabi čistijo in razkužujejo skladno s {{SOP-0002}}.',
+       {pod:'Predprostor laboratorija'},
+       'Predprostor glavnega laboratorija je prostor z umivalnikom za roke in pomivalnim koritom s čistili, ki so shranjena v zaprti omarici pod koritom. Tu se v steklenicah hranita tudi izopropanol za razkuževanje in destilirana voda za splakovanje steklovine.',
+       'V prostoru sta dva delovna pulta. Na enem je ultrazvočna sonda — sonotroda s podpultnim generatorjem. Pod pultom je tudi halogenski sušilnik, namenjen določevanju suhe snovi v ekstraktih in določevanju vlage v gobjem materialu kot kontroli učinkovitosti sušenja.',
+       'V prostoru je priročen hladilnik za začasno shranjevanje vzorcev in zaprtih ekstraktov ter občasno micelija v neprodušno zaprtih petrijevkah.',
+       'V prostoru sta tudi avtoklav in atmosferski sterilizator z generatorjem pare. Tu se izvajajo sterilizacija gojitvenih substratov, žita, agarja ali ločeno ekstrakcije v zaprtih embalažah, stiskanje ekstraktov in raztapljanje koncentratov na ultrazvočni kopeli.',
+       'Predprostor je tudi prehodna cona za preoblačenje in pripravo pred vstopom v čisto cono. Oblačila in obutev so v garderobni omarici, razdeljeni na del za umazana in del za čista oblačila.',
+       {pod:'Priročno skladišče'},
+       'Priročno skladišče je v ločenem prostoru z omarami, namenjenimi shranjevanju surovin v hermetično zaprtih posodah, embalaže, rezervnih delov in ostalega potrošnega materiala v večjih količinah. Manjše količine embalaže in surovin je mogoče hraniti tudi v hermetično zaprtih posodah v predprostoru laboratorija.',
+       {pod:'Ostala dela izven laboratorija'},
+       'Mletje gob se izvaja na prostem, v zaprtem sistemu — mlinu, ki preprečuje razpršitev prahu in zmanjšuje možnost kontaminacije. Možnost vnosa insektov ali drugih nečistot je minimalna, saj je surovina izpostavljena okolju le kratek čas med prenosom v večjo embalažo. Po mletju se material takoj shrani v hermetično zaprte čiste posode. Po vsakem mletju se mlin očisti in razkuži skladno s {{SOP-0002}}.']},
 
-     {naslov:'Surovine in topila', blok:[
-       'Surovina je posušeno plodišče gobe, prevzeto po seriji dobavitelja. Ena serija izdelka lahko nastane iz več serij surovine; vse so zapisane v delovnem nalogu.',
-       'Topilo je etanol, po potrebi razredčen z vodo ali pripravljen iz regeneriranega etanola. Priprava topila in odvzem iz kanistrov sta zapisana na kartici etanola in v popisu kanistrov.']},
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Vedno se uporabljajo zaščitna obleka, rokavice in po potrebi očala.',
+         'V laboratoriju ni dovoljeno jesti ali piti.',
+         'Etanol je vnetljiv in se hrani v skladu s predpisi, pod ključem in izven dosega nepooblaščenih oseb.',
+         'Vsa čistila in razkužila se hranijo v zaprti omarici, ločeno od surovin in izdelkov.',
+         'Laboratorij se uporablja izključno za namen proizvodnje in raziskav GoMushroom.']}]},
 
-     {naslov:'Potek postopka', blok:[{koraki:true}]},
+     {naslov:'Zgodovinski pregled vodenja evidenc', blok:[
+       'Podjetje GoMushroom je bilo ustanovljeno 8. 2. 2025. Od tega datuma se vse serije tinktur vodijo kot uradne serije pod sistemom HACCP in so zajete v ustrezni dokumentaciji (evidence proizvodnje, sledljivost surovin, seznam dobaviteljev).',
+       'Dne 31. 7. 2025 je bila uvedena nadgradnja sistema z začetkom priprave in uporabe standardnih operativnih postopkov, ki podrobneje opredeljujejo posamezne faze proizvodnje, čiščenja in organizacije dela.']},
 
-     {naslov:'Kritične kontrolne točke', blok:[
-       'Korak s presojo se ne more zaključiti, dokler presoja ni dana. Kadar kritična točka ne ustreza, se serija ne nadaljuje brez zapisanega odstopanja.',
-       {ccp:true}]},
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
 
-     {naslov:'Masna bilanca in alkohol', blok:[
-       'Za vsako serijo se med postopkom vodi masna bilanca: vsak vnos in odvzem z maso, jakostjo, izračunanim absolutnim alkoholom in uro.',
-       'Ob zaključku naloga se na kartico etanola zapiše en izhod, ki je vsota alkohola v izdelku in procesnih izgub. Destilat, ki se z rotavaporja vrne v isti kanister, se ne knjiži — zaloge ni zapustil.',
-       'Alkohol v izdelku je osnova za obračun trošarine.']},
+  {oznaka:'SOP-0002', naziv:'Čiščenje in higiena prostorov',
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0002'], povezani:['SOP-0001'],
+   verzije:[{v:'01', velja:'2025-08-16', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Zagotavljanje čistoče, higienske ustreznosti in preprečevanje kontaminacije pri vseh dejavnostih, povezanih z izdelavo prehranskih dopolnil iz medicinskih gob. S tem postopkom se zagotavlja stalna mikrobiološka in fizikalna čistoča vseh površin, prostorov in opreme, ki so v stiku z izdelki ali procesnimi materiali.']},
 
-     {naslov:'Zapisi, ki nastanejo', blok:[{obrazci:true}]},
+     {naslov:'Obseg', blok:[
+       'Postopek velja za vse prostore in opremo v obratih podjetja GoMushroom:',
+       {ul:[
+         'glavni laboratorij,',
+         'predprostor laboratorija,',
+         'vsa uporabljena oprema (rotavapor, vakuumski sušilnik, ultrazvočna sonda, sterilizatorji, posode, pribor in laboratorijska steklovina).']},
+       'Predprostor laboratorija se uporablja za zaprte tehnološke postopke (sterilizacija, ekstrakcije), pomožne čiste operacije (mešanje topil, pomivanje steklovine) in pripravo substratov. V njem se izvajata sterilizacija substratov in priprava agarja v avtoklavu, pri čemer se uporabljata zaprta oprema in zaščitna oblačila.',
+       'Glavni laboratorij se uporablja za odprte in aseptične postopke (koncentracija na rotavaporju, homogenizacija, formulacija in polnjenje tinktur) ter občasno za mikrobiološko delo z micelijem, ki obsega inokulacijo sterilnih gojitvenih substratov ali kloniranje kultur na petrijevkah pod laminarno komoro. Gojenje micelija poteka izven laboratorijskih prostorov.',
+       'Obe območji se obravnavata kot čisti coni, ki sta časovno ločeni po funkciji; po vsaki fazi se izvedejo postopki čiščenja in razkuževanja skladno s tem postopkom. Časovno ločevanje dejavnosti ureja {{SOP-0001}}.']},
 
-     {naslov:'Odstopanja', blok:[
-       'Odstopanje od tega postopka se zapiše v opombo koraka, na katerem je nastalo, in v zaključno opombo naloga. Zapisati je treba, kaj se je zgodilo, kaj je bilo ukrenjeno in kakšna je presoja o seriji.',
-       'Pri razvojnih nalogih izdelek za prodajo ne nastane. Alkohol, ki ostane v pilotni seriji, se vodi kot polizdelek z odloženo trošarino, dokler se ne odloči, kaj bo iz njega.']},
+     {naslov:'Odgovornosti', blok:[
+       'Čiščenje in razkuževanje izvaja lastnik podjetja oziroma odgovorna oseba za proizvodnjo. Odgovorna oseba vodi evidence čiščenja v obrazcu {{OBR-0002}}.',
+       {opomba:'Evidenca se izpolni takoj po opravljenem čiščenju oziroma razkuževanju. Podpisana evidenca se hrani najmanj 12 mesecev.'}]},
+
+     {naslov:'Postopek čiščenja in razkuževanja', blok:[
+       {pod:'Pogostost čiščenja in način'},
+       {tabela:{glava:['Pogostost','Kdaj','Opravila'], vrstice:[
+         ['Dnevno','le, če so se izvajala dela','suho čiščenje, brisanje ali sesanje · mokro brisanje delovnih pultov, lijakov in vratnih kljuk · razkuževanje in sterilizacija z ozonom'],
+         ['Tedensko','če so se v prostorih izvajala dela v zadnjem tednu','mokro brisanje in razkuževanje vseh delovnih površin, tal, vrat in okenskih polic · mokro brisanje zunanjih površin delovne opreme · ometanje pajčevine · pobiranje smeti in odpadkov'],
+         ['Mesečno','—','mokro brisanje tal in vseh težko dosegljivih mest · mokro brisanje notranjosti omar v glavnem prostoru'],
+         ['Po potrebi','takoj','ob razlitju, onesnaženju ali nenavadnem vonju']]}},
+
+       {pod:'Čiščenje površin in tal'},
+       {st:[
+         'Površino obriši z vlažno krpo.',
+         'Nanesi razkužilo: 70 % izopropanol ali raztopino Ecocid za tla (1 % = 10 g praška na liter vode; po potrebi 2 % = 20 g/L).',
+         'Pusti delovati vsaj 5 minut.',
+         'Obriši s čisto suho krpo ali pusti, da se posuši na zraku.']},
+       {opomba:'Raztopino Ecocid pripravi svežo pred uporabo: natehtaj potrebno maso praška, raztopi v mlačni vodi in premešaj. Raztopina se ne shranjuje dlje kot 24 ur.'},
+
+       {pod:'Čiščenje opreme in steklovine'},
+       'Velja za opremo (rotavapor, vakuumski sušilnik, ultrazvočna sonda, posode) in laboratorijsko steklovino (bučke, čaše, epruvete in podobno):',
+       {st:[
+         'Po uporabi speri z vodo.',
+         'Operi z blagim nevtralnim čistilom ali specializiranim laboratorijskim čistilom Labshine.',
+         'Temeljito speri s čisto vodo.',
+         'Izvedi dvojno splakovanje z destilirano vodo.',
+         'Razkuži s 70 % etanolom (denaturiranim).',
+         'Pusti, da se popolnoma posuši na zraku, preden pride v stik z izdelkom.']},
+
+       {pod:'Samodejno razkuževanje z ozonom'},
+       'Sterilizacija z ozonom se izvaja izključno takrat, ko v prostorih ne potekajo aktivnosti (koncentriranje, ekstrakcija, formulacija, polnjenje). Samodejni postopek teče dnevno ob 3. uri zjutraj:',
+       {st:[
+         'UV lučke se vklopijo in 30 minut generirajo ozon.',
+         'Vklopi se laminarna komora (flowhood), ki premeša ozon po celotnem prostoru.',
+         'Za 30 minut se vklopi HEPA filtracija, ki ustvari nadtlak v glavnem laboratoriju in potisne ozon v predprostor.']},
+       'Vsak postopek se evidentira v obrazec {{OBR-0002}}.',
+       {opomba:'Med razkuževanjem z ozonom je vstop v laboratorij prepovedan. Vstop je dovoljen šele po prezračevanju in zagonu HEPA filtracije.'}]},
+
+     {naslov:'Uporabljena sredstva', blok:[
+       'Blaga nevtralna čistila (tekoče milo), detergent za laboratorijsko opremo Labshine, pralne krpe, papirnate brisače.',
+       {tabela:{glava:['Razkužilo','Uporaba'], vrstice:[
+         ['70 % izopropanol','delovne površine in tla'],
+         ['70 % etanol (denaturiran)','oprema in steklovina, ki pride v stik z izdelki'],
+         ['Ecocid (Krka), 1 % raztopina (10 g/L)','tla']]}}]},
+
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Vedno se uporabljajo zaščitna obleka, rokavice in po potrebi očala.',
+         'V laboratoriju ni dovoljeno jesti ali piti.',
+         'Čistila in razkužila se hranijo v originalni embalaži, v ločeni omari od surovin in izdelkov.',
+         'Med razkuževanjem z ozonom je vstop strogo prepovedan.',
+         'Laboratorij se uporablja izključno za proizvodnjo in raziskave GoMushroom.']}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
+
+  {oznaka:'SOP-0003', naziv:'Trojna ekstrakcija in formulacija tinkture medicinskih gob',
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['ZOP-0001','OBR-0003','OBR-0004','OBR-0005'],
+   povezani:['DOK-0001','DOK-0002'],
+   verzije:[{v:'01', velja:'2025-10-03', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Postopek opisuje standardizirano trojno ekstrakcijo vseh vrst medicinskih gob, ki se obdelujejo v proizvodnji. Vključuje etanolno ekstrakcijo z ultrazvočno podporo, vročevodno ekstrakcijo (HVE) in tlačno ekstrakcijo (TE) ter nadaljnjo koncentracijo in formulacijo alkoholne in glicerinske tinkture.',
+       'Postopek se uporablja skupaj z obrazcem {{ZOP-0001}}, kjer se beležijo vse meritve, mase, volumni in izračuni. Vključuje tudi občasno regeneracijo — koncentriranje procesno nezanimivega etanola pod 30 vol %, ki nastane kot stranski produkt koncentriranja matičnih ekstraktov.']},
+
+     {naslov:'Obseg', blok:[
+       'Uporablja se za pripravo alkoholnih in glicerinskih tinktur medicinskih gob v laboratoriju oziroma produkciji GoMushroom.',
+       {ul:[
+         'Vsi podatki o izvedbi postopka se beležijo v {{ZOP-0001}}, ki je obvezna priloga dokumentacije serije.',
+         'Regeneracija etanola se beleži v {{OBR-0004}}.',
+         'Organoleptična analiza se beleži v {{OBR-0003}}.']}]},
+
+     {naslov:'Odgovornosti', blok:[
+       'Vse naloge izvajanja, preverjanja in potrjevanja izvaja lastnik podjetja.']},
+
+     {naslov:'Materiali in oprema', blok:[
+       {tabela:{glava:['Postavka','Opis'], vrstice:[
+         ['Surovina','suha mleta goba'],
+         ['Etanol','food grade 96 % (farmacevtske čistine) · regeneriran etanol neposredno po koncentriranju organske faze (zabeleženo v ZOP) · regeneriran etanol nižjih, procesno nezanimivih koncentracij (zabeleženo v OBR-0004)'],
+         ['Voda','destilirana ali RO voda'],
+         ['Posoda','stekleni kozarci 7,6 L s pokrovom'],
+         ['Ultrazvočna sonda','20 kHz, 3000 W'],
+         ['Mešalnik','laboratorijski nadglavni mešalnik'],
+         ['Stiskalnica','meh ali ploščna'],
+         ['Filtrna tkanina','400–500 mesh, inertna, pralna, sušena pred ponovno uporabo'],
+         ['Rotavapor','5–20 L, z vakuumsko črpalko in hladilnikom'],
+         ['Avtoklav / tlačni ekstraktor','125–130 °C, s PID regulacijo']]}}]},
+
+     {naslov:'Postopek', blok:[
+       {pod:'Etanolna ekstrakcija — organska faza'},
+       'Etanolna ekstrakcija se izvede skladno s specifičnimi pogoji glede na vrsto gobe. Vse dejanske mase, volumni in odstotki etanola se beležijo v {{ZOP-0001}}. Reishi ima zaradi puhaste strukture zelo velik nasipni volumen — 250 g gobe zasede 5 L — zato je zanjo potrebno še enkrat več topila kot za resasti bradovec ali chago.',
+       {tabela:{glava:['Vrsta gobe','Etanol (% v/v)','Razmerje goba : etanol','Ultrazvok (moč / čas, najvišja T)'], vrstice:[
+         ['Reishi','85–87 %','1 : 25–30 (1 kg / 25–30 L)','2 × 20 min pri ~99 % moči, T ≤ 50 °C'],
+         ['Resasti bradovec','78–80 %','1 : 10–13 (1 kg : 10–13 L)','2 × 15 min pri ~80 % moči, T ≤ 50 °C'],
+         ['Chaga','78–80 %','1 : 10–13 (1 kg : 10–13 L)','2 × 15 min pri ~80 % moči, T ≤ 50 °C']]}},
+       'V 7,6-litrski stekleni kozarec natehtamo 250–280 g reishija oziroma 500–600 g resastega bradovca ali chage, nato s peristaltično črpalko dodamo 5500 g ustreznega topila. V kozarec se namestijo ultrazvočna sonda, propelersko mešalo in temperaturni senzor, nato se kozarec zapre s pokrovom. Mešalo se nastavi na takšne obrate, da suspenzija enakomerno kroži po celotnem volumnu. Ultrazvok se vklopi skladno s pogoji iz tabele. Po najmanj 12 urah se obdelava ponovi.',
+       {opomba:'Temperatura se med postopkom sproti spremlja in ne sme preseči 50 °C.'},
+       'Po končani etanolni ekstrakciji se matični ekstrakt loči od biomase s stiskalnico in pralno filtrno tkanino (400 mesh, ≈ 37 µm). Tkanina se po uporabi opere in razkuži. Matični ekstrakt (ME) se uporabi za koncentriranje in pripravo tinkture, pogača pa je vhodni material za vročevodno ekstrakcijo.',
+       'Matični ekstrakt se razdeli na dva dela: večji del se koncentrira na rotavaporju do suhega ostanka (smole, triterpeni), manjši del pa se shrani nespremenjen in uporabi za ponovno raztapljanje suhega ostanka po koncentriranju. Količina shranjenega dela je odvisna od končnega volumna in ciljne koncentracije etanola v izdelku; ker delamo z masami, se prek volumna in gostote izračuna tudi potrebna masa ME.',
+
+       {pod:'Vročevodna ekstrakcija (HVE) — vodna faza I'},
+       'HVE se izvaja na pogači, ki ostane po etanolni ekstrakciji. Pogačo prenesemo v avtoklav in ji dodamo približno 5- do 10-kratnik mase demineralizirane vode. Ekstrakcija poteka v zaprtem sistemu pri 80–90 °C; temperaturo regulira PID krmilnik, ki zagotavlja stalne pogoje skozi celoten potek.',
+       'Po končani ekstrakciji se tekoči del loči od biomase s filtrno tkanino 300 mesh. Tkanina se po uporabi opere in razkuži. Ekstrakt se koncentrira na rotavaporju do mase, potrebne za združevanje z organsko fazo: od ciljnega volumna končne tinkture se ob upoštevanju kontrakcije 30 % etanolne mešanice odšteje volumen organske faze, preostanek pa se enakomerno razdeli na dva dela — prvi je koncentrat HVE, drugi koncentrat TE.',
+
+       {pod:'Tlačna ekstrakcija (TE) — vodna faza II'},
+       'TE se izvaja na isti pogači po končani vročevodni ekstrakciji. Pogačo ponovno prenesemo v avtoklav in ji dodamo približno 12-kratnik mase demineralizirane vode. Ekstrakcija poteka v zaprtem sistemu pod tlakom, para v notranjosti doseže približno 120–130 °C, stabilne pogoje zagotavlja PID krmilnik.',
+       'Po končani ekstrakciji se tekoči del loči s filtrno tkanino 300 mesh, tkanina se opere in razkuži. Ekstrakt se koncentrira do mase, izračunane na enak način kot pri HVE: od skupne mase se odšteje masa koncentrata vročevodne ekstrakcije.',
+
+       {pod:'Diagram poteka procesa ekstrakcije'},
+       {koraki:true},
+
+       {pod:'Končna formulacija alkoholne tinkture'},
+       'Za končno formulacijo se uporabi že določena količina organske faze (matičnega etanolnega ekstrakta) z znano koncentracijo etanola. Na podlagi ciljnega končnega volumna tinkture in znane mase organske faze se izračuna skupna potrebna masa vodne faze (HVE + TE), ki zagotavlja končni etanolni delež 30 % v/v.',
+       'Izračun se izvede po masi, pri čemer je kontrakcija volumna že upoštevana z uporabo gostote 30-odstotne etanolne raztopine. Če razpoložljiva količina vodnih koncentratov ne zadošča, se manjkajoči del mase dopolni z demineralizirano vodo, tako da skupna masa ustreza ciljnemu volumnu tinkture.',
+
+       {pod:'Dodajanje vitamina C in lecitina'},
+       'Po združitvi in homogenizaciji frakcij (OF, HVE, TE) se v tinkturo dodata vitamin C in sončnični lecitin (non-GMO). Vitamin C (askorbinska kislina) deluje kot antioksidant, ki preprečuje oksidacijo učinkovin (triterpenov, fenolov) in podaljšuje obstojnost. Lecitin deluje kot naravni emulgator in stabilizator, ki izboljša disperzijo trdnih delcev, zmanjša možnost geliranja ali usedanja in poveča biološko razpoložljivost lipofilnih spojin.',
+       {tabela:{glava:['Dodatek','Delež glede na skupno maso tinkture'], vrstice:[
+         ['Vitamin C','0,20 % m/m'],
+         ['Lecitin','<s>0,50 % m/m</s> → velja <b>0,30 % m/m</b>']]}},
+       {opomba:'Napaka v izvirniku, potrjena: v proizvodnji se dodaja 0,30 % m/m lecitina, ne 0,50 %. Enak delež nosita zapisnika {{ZOP-0001}} in {{ZOP-0002}} ter preračun v aplikaciji. Podpisana izdaja /01 navaja 0,50 % — popravek zahteva novo izdajo tega postopka.'},
+       'Dodatka se raztopita oziroma dispergirata v manjšem delu tinkture in se med mešanjem vneseta v glavno maso. Po dodatku obeh komponent se tinktura meša neprekinjeno najmanj 4 ure pri T < 40 °C do popolne homogenizacije, nato pa stoji najmanj 12 ur za stabilizacijo pred filtracijo ali polnjenjem.',
+
+       {pod:'Formulacija glicerinske tinkture'},
+       'Glicerinska tinktura se pripravi iz že izdelane alkoholne tinkture, ki vsebuje vse raztopljene učinkovine. Postopek temelji na popolni odstranitvi etanola in nadomestitvi topila z glicerolom ter delom vode, tako da končna tinktura vsebuje približno 75 % m/m glicerola.',
+       'Stehtana alkoholna tinktura se prenese v bučko rotavaporja. Topilo (etanol in voda) se odstrani z izparevanjem pri T ≤ 40 °C, dokler ne nastane gosta pasta, ki vsebuje suho snov in preostanek vode. Vsebnost suhe snovi je bila predhodno določena na halogenskem sušilniku; ta podatek se uporabi za izračun količine suhe snovi, ki ostane v bučki, in za oceno preostanka vode. Med izparevanjem se odstrani le topilo, vsa suha snov ostane v bučki.',
+       'Na osnovi znane količine suhe snovi in preostale vode se izračuna potrebna količina glicerola in demineralizirane vode za natanko 75 % m/m glicerola. Zmes se meša do popolne homogenizacije pri temperaturi pod 40 °C.',
+
+       {pod:'Dodajanje vitamina C v glicerinsko tinkturo'},
+       'V glicerinsko tinkturo se doda preostanek vitamina C v količini 0,50 % m/m, tako da skupna vsebnost vitamina C (alkoholna in glicerinska formulacija) znaša 0,70 % m/m. Vitamin C se natehta, raztopi v manjšem delu tinkture in doda med mešanjem v glavno maso.',
+       'Glicerinske tinkture ne vsebujejo etanola, zato imajo manjšo protimikrobno zaščito in so bolj oksidativno občutljive. Višji delež vitamina C deluje kot antioksidant in naravni konzervans, askorbinska kislina pa hkrati rahlo zniža pH, kar dodatno zmanjša možnost mikrobne rasti.']},
+
+     {naslov:'Kontrola kakovosti', blok:[
+       {pod:'Vsebnost suhe snovi'},
+       'Končnemu izdelku — alkoholni tinkturi — preverimo učinkovitost ekstrakcije tako, da na halogenskem sušilniku določimo masni odstotek suhe snovi. Spodnje meje po končni formulaciji:',
+       {tabela:{glava:['Vrsta gobe','Suha snov (% m/m)'], vrstice:[
+         ['Reishi','≥ 4,0 %'],['Chaga','≥ 6,0 %'],['Resasti bradovec','≥ 10,0 %']]}},
+
+       {pod:'Potrditev etanola v alkoholni tinkturi'},
+       'Med izdelavo glicerinske tinkture eksperimentalno potrdimo vsebnost etanola: iz odmerjene mase alkoholne tinkture odparimo vse topilo, predpostavimo, da ob suhi snovi ostane le voda, in iz masnega ravnotežja izračunamo volumski in masni odstotek etanola.',
+       {opomba:'Spodnja meja je 25,0 % v/v oziroma 20,5 % m/m.'},
+
+       {pod:'Organoleptična analiza'},
+       'Po zaključeni stabilizaciji izvedemo organoleptično analizo, kjer opisno potrdimo ustreznost posamezne formulacije. Rezultate beležimo na obrazec {{OBR-0003}}.',
+       'Vsi rezultati in merilni pogoji se zapišejo v {{ZOP-0001}}.']},
+
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Etanol in izopropanol sta vnetljiva; uporaba odprtega ognja in kajenje v laboratoriju sta prepovedana.',
+         'Pri delu z avtoklavom se uporabljajo zaščitna obleka, rokavice in zaščitna očala.',
+         'Ekstrakcije se izvajajo v dobro prezračevanem prostoru.']}]},
+
+     {naslov:'Priloge', blok:[
+       {obrazci:true},
+       'Priloge so sestavni del tega postopka in se hranijo skladno z zahtevami za dokumentacijo serij oziroma procesov. Sem sodita tudi {{DOK-0001}} in {{DOK-0002}}.']},
    ]},
 
   {oznaka:'SOP-0004', naziv:'Evidenca surovin, embalaže, proizvodnje in končnih izdelkov',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0007'], povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0004_1). Aplikacija se na ta postopek že sklicuje: materialna kartica etanola je izpisana kot OBR-0007/01 · SOP-0004/01.'}]}]},
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0006','OBR-0007','OBR-0008','OBR-0009'],
+   povezani:['SOP-0001','SOP-0003','ZOP-0001'],
+   verzije:[{v:'01', velja:'2025-11-22', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Vzpostaviti enoten in sledljiv sistem evidentiranja vseh faz proizvodnje — od prejema surovin in embalaže prek izdelave in vodenja delovnih nalogov do končnih izdelkov in arhiviranja serij. Dokument zajema tudi pogoje skladiščenja, nadzor embalaže ter povezavo z materialnimi karticami in trošarinskimi evidencami.']},
 
-  {oznaka:'SOP-0005', naziv:'Načrt umika in odpoklica živila',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0010'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0005_1).'}]}]},
+     {naslov:'Obseg', blok:[
+       {ul:[
+         'surovine (gobe, etanol, glicerin, voda, lecitin, vitamin C, citronska kislina in podobno),',
+         'embalaža (stekleničke, kapalke, pokrovčki),',
+         'končni izdelki (alkoholne in glicerinske tinkture).']}]},
 
-  // Dokumenti
+     {naslov:'Odgovornosti', blok:[
+       'Vse naloge izvajanja, preverjanja in potrjevanja izvaja lastnik podjetja.']},
+
+     {naslov:'Postopek', blok:[
+       {pod:'Prejem surovin in embalaže'},
+       {ul:[
+         'Preveri se identiteta dobavitelja, skladnost z naročilom in stanje pakiranja.',
+         'Vpis v {{OBR-0006}} (naziv, datum, količina, dobavitelj, serija, ustreza ali ne ustreza).',
+         'Vsak prejem gobe dobi svojo unikatno oznako serije, ki se zapiše na obrazec.']},
+
+       {pod:'Skladiščenje surovin'},
+       {ul:[
+         'Surovine so v zaprtih originalnih posodah ali vrečkah.',
+         'Prostor je suh, čist, brez vonjav, ločen od kemikalij in topil.',
+         'Na vsaki posodi je označeno: naziv, serija, datum prejema.',
+         'Mleta goba je v 35-litrskih zaprtih kantah s silikagelom; v vsaj eni od embalaž mora biti zapisovalnik za nadzor vlage in temperature.',
+         'Uporablja se načelo FIFO.']},
+
+       {pod:'Skladiščenje embalaže'},
+       'Neodprta embalaža se lahko hrani izven cone HACCP v suhih, čistih prostorih, ločeno od topil, na policah ali paletah in ne na tleh. Odprta embalaža se prenese v laboratorij (čista cona) in hrani v čistih posodah ali vrečkah z vidnim datumom odprtja. Pred uporabo se vizualno pregleda — čistoča, brez prašnih delcev, brez poškodb.',
+
+       {pod:'Odpiranje delovnega naloga in izdaja surovin'},
+       'Pred začetkom proizvodnje se odpre nov delovni nalog, ki samodejno dobi unikatno oznako (na primer DN-25-001). Delovni nalog je osnovni dokument, ki povezuje vse faze postopka — od surovin do končnega izdelka — in mora biti odprt pred izdajo surovin v proizvodnjo.',
+       'Vanj se vnesejo oznaka, datum odprtja, vrsta in serija gobe, količina gobe, ki vstopa v ekstrakcijo, ter količina uporabljenega etanola v AAE.',
+       {tabela:{glava:['Poraba','Evidenca'], vrstice:[
+         ['Etanol (AAE)','{{OBR-0007}}'],
+         ['Ostale surovine in embalaža','{{OBR-0006}}']]}},
+       'Vse evidence in materialne kartice ključnih surovin so povezane z delovnim nalogom; skupaj tvorijo sledljiv sistem od vhodnih surovin do končnega izdelka. Po zaključku proizvodnje se delovni nalog arhivira skupaj z vsemi spremljajočimi zapisi — {{ZOP-0001}}, organoleptično analizo, trošarinsko evidenco in karticami izdelkov.',
+
+       {pod:'Skladiščenje končnih izdelkov'},
+       {ul:[
+         'Tinkture se izdelujejo izključno po naročilu, zato je hranjenje kratkotrajno — največ 48 ur po izdelavi.',
+         'Do predaje se hranijo na delovnem pultu v čisti coni oziroma v suhih in prezračevanih prostorih pri 10–25 °C.',
+         'Vsaka steklenička je označena z nazivom, serijo, datumom in rokom uporabe.',
+         'Vse serije so evidentirane v {{OBR-0008}} in {{OBR-0009}}.']},
+
+       {pod:'Pogoji in prostorske cone'},
+       'Prostorske cone ureja {{SOP-0001}}. V čistem delu laboratorija sta samo odprta embalaža in končni izdelki; topila in surovine so v zaprtih posodah v podporni coni. Temperatura in vlaga se spremljata z zapisovalnikom.',
+       {opomba:'Izvirnik se na ta postopek sklicuje s staro oznako „SOP-OR-01 Organizacija dela in prostorske cone“. Gre za {{SOP-0001}}; oznako je treba popraviti.'}]},
+
+     {naslov:'Vodenje in arhiviranje dokumentacije', blok:[
+       'Dokumentacija se vodi v kombinirani obliki.',
+       {pod:'Pisne evidence'},
+       'Vodijo se na obrazcih, po izpolnitvi podpišejo in arhivirajo v tematskih mapah v laboratoriju:',
+       {ul:['{{OBR-0001}}','{{OBR-0002}}','{{ZOP-0001}}','{{OBR-0003}}','{{OBR-0004}}','{{OBR-0005}}']},
+       {pod:'Elektronske evidence'},
+       'Vodijo se v elektronski obliki:',
+       {ul:['{{OBR-0007}}','{{OBR-0008}}','{{OBR-0009}}','{{OBR-0006}}']},
+       {opomba:'Izvirnik pri zadnji postavki navaja OBR-0009, čeprav gre za evidenco prejema surovin in embalaže — to je OBR-0006. Oznaka je v seznamu zapisana dvakrat.'},
+       'Ti zapisi so osnova za mesečni trošarinski obračun (FURS eTroD). Ob zaključku meseca se datoteka izvozi v PDF, elektronsko podpiše in pripne v eTroD, hkrati pa se natisne in arhivira.',
+       {opomba:'Vsa pisna in elektronska dokumentacija se hrani najmanj 5 let in je na zahtevo na voljo za notranji ali uradni nadzor.'}]},
+
+     {naslov:'Izvoz uradnih evidenc in trošarinska napoved', blok:[
+       'Glavni seznam delovnih nalogov in serij končnih izdelkov se vodi v datoteki »Materialne kartice in_nalogi.numbers«, kjer so na posameznih listih vse elektronske evidence iz prejšnje točke.',
+       'Do 20. dne v mesecu za pretekli mesec se pripravijo dokumenti PDF, elektronsko podpisani s kvalificiranim digitalnim potrdilom, nato natisnjeni in arhivirani. Podpisane materialne kartice etanola in končnih izdelkov se uporabijo kot priloge pri mesečni trošarinski napovedi; podatki morajo natančno ustrezati dejanski zalogi etanola in izhodu končnih izdelkov.',
+       {opomba:'Ta razdelek opisuje vodenje v preglednici Numbers. Elektronske evidence so medtem prešle v to aplikacijo, ki materialno kartico etanola tudi izpisuje. Postopek je treba uskladiti z dejanskim načinom vodenja.'}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
+  {oznaka:'SOP-0005', naziv:'Načrt za umik in odpoklic živila',
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0010'], povezani:['OBR-0005'],
+   verzije:[{v:'01', velja:'2025-12-26', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Zagotavljanje hitrega, učinkovitega in sledljivega postopka umika ali odpoklica živila, ki lahko predstavlja tveganje za zdravje potrošnikov ali ne izpolnjuje zahtev varnosti živil.']},
+
+     {naslov:'Obseg', blok:[
+       'Postopek se uporablja za vsa živila (prehranska dopolnila), ki jih GoMushroom proizvaja in polni ter dobavlja poslovnim kupcem.',
+       {opomba:'GoMushroom ne prodaja neposredno končnim potrošnikom. Odpoklic pri potrošnikih se po potrebi izvede v sodelovanju s poslovnim kupcem in pristojnimi organi.'}]},
+
+     {naslov:'Odgovornosti', blok:[
+       'Rok Golob je kot proizvajalec in nosilec dejavnosti odgovorna oseba za umik in odpoklic. Njegove naloge:',
+       {ul:[
+         'odloča o obsegu in stopnji umika oziroma odpoklica,',
+         'izvede oceno tveganja in jo zabeleži v {{OBR-0010}},',
+         'komunicira z organi nadzora (UVHVVR, po potrebi drugi pristojni organi),',
+         'obvešča poslovne kupce o potrebnih ukrepih,',
+         'po potrebi koordinira obveščanje končnih potrošnikov prek poslovnega kupca,',
+         'organizira zbiranje izdelkov pri GoMushroom in pri kupcu,',
+         'vodi vse evidence o umiku in odpoklicu.']}]},
+
+     {naslov:'Postopek umika in odpoklica', blok:[
+       {tabela:{glava:['Pojem','Pomen'], vrstice:[
+         ['Umik (withdrawal)','odstranitev živila iz distribucije pred prodajo potrošniku'],
+         ['Odpoklic (recall)','odstranitev živila od potrošnika']]}},
+
+       {pod:'Zaznava tveganja'},
+       'Do informacije o možni neskladnosti lahko pride pri notranji kontroli (analize, organoleptika, vizualni pregled), prek poslovnega kupca, prek pristojnega organa (UVHVVR, ZIRS) ali laboratorija ter prek dobavitelja surovine ali drugega verodostojnega vira.',
+       {opomba:'Identifikacija izdelka temelji na številki serije (lot) in oznaki delovnega naloga, ki povezuje vse evidence — proizvodnjo, analize, korektivne ukrepe in odpoklic.'},
+
+       {pod:'Ocena tveganja'},
+       'Oceni se resnost, verjetnost izpostavljenosti in obseg, vsaka na lestvici od 1 do 3:',
+       {tabela:{glava:['Merilo','1','2','3'], vrstice:[
+         ['Resnost','napaka v kakovosti brez vpliva na zdravje','možne blage težave pri občutljivih','možna resna škoda za zdravje, alergen, mikrobiološka nevarnost'],
+         ['Verjetnost','izdelek je še v karanteni oziroma ni dobavljen','del serije je pri kupcu','večina serije je pri kupcu ali že pri potrošnikih'],
+         ['Obseg','manjša serija ali omejeno število enot','srednji','več serij ali večje število enot']]}},
+       'Ocena in kratka utemeljitev se zapišeta v {{OBR-0010}}. Na tej podlagi se odloči, ali zadostuje interni ukrep (blokada v skladišču), ali je potreben umik pri kupcu, ali je potreben odpoklic. V dvomu se opravi posvet z UVHVVR.',
+
+       {pod:'Odločitev in obveščanje pristojnih organov'},
+       {opomba:'Če obstaja možnost, da izdelek ni varen za potrošnike, se pristojni organ (UVHVVR) obvesti nemudoma — praviloma najpozneje v 24 urah. Obveščanje se zabeleži v {{OBR-0010}}.'},
+
+       {pod:'Obveščanje poslovnega kupca'},
+       'Poslovni kupec se nemudoma obvesti o ustavitvi prodaje, blokadi serije in po potrebi zbiranju izdelkov. Posredujejo se osnovni podatki: izdelek, lot, rok uporabe, razlog, količine in jasna navodila za umik oziroma odpoklic. Obveščanje končnih potrošnikov se izvede v dogovoru s pristojnim organom in prek poslovnega kupca.',
+
+       {pod:'Izvedba'},
+       'Izdelki se zberejo v skladišču GoMushroom in po dogovoru pri poslovnem kupcu, izločijo in označijo z „NEUPORABNO — ODPOKLIC / KARANTENA“ ter hranijo ločeno. Količine in osnovni podatki se evidentirajo v {{OBR-0010}}.',
+
+       {pod:'Zaključek in korektivni ukrepi'},
+       'Po zaključku se odloči o končnem ravnanju (uničenje, analiza in podobno) in se to zabeleži v {{OBR-0010}}. Morebitni korektivni in preventivni ukrepi se vodijo na {{OBR-0005}} in se po potrebi sklicujejo na evidenco odpoklica.']},
+
+     {naslov:'Dokumentacija in evidence', blok:[
+       'Vsi zapisi o umiku in odpoklicu se hranijo najmanj tri leta in vključujejo:',
+       {ul:[
+         'izpolnjen obrazec {{OBR-0010}},',
+         'kopije obvestil in dopisov (UVHVVR, poslovni kupec, po potrebi javnost),',
+         'zapisnike ali dokazila o uničenju ali vračilu,',
+         'povezavo na {{OBR-0005}}.']}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
   {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
-   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0001_1).'}]}]},
+   vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Dokument strokovno utemeljuje, da sta obe vrsti tinktur ob pravilnem shranjevanju mikrobiološko stabilni in lahko nosita rok uporabnosti 24 mesecev: glicerinske tinkture z najmanj 70 % v/v glicerina in alkoholne tinkture z okoli 30 % v/v etanola. Utemeljitev temelji na vodni aktivnosti, znanih protimikrobnih lastnostih etanola in glicerola ter na uradnih smernicah in znanstveni literaturi.']},
 
+     {naslov:'Opis izdelkov', blok:[
+       'Tinkture so tekoči izvlečki (fitopreparati) iz medicinskih gob, pripravljeni v vodno-alkoholni ali glicerolno-vodni osnovi. Končne koncentracije topil so približno 30 % v/v etanola oziroma najmanj 70 % v/v glicerina. Polnijo se v temne (amber) stekleničke s tesnečimi pokrovčki in kapalkami.']},
+
+     {naslov:'Mikrobiološka utemeljitev', blok:[
+       {pod:'Alkoholne tinkture (≈ 30 % etanola)'},
+       'Etanol je v zdravilih uradno priznan excipient z vlogo topila in protimikrobnega konzervansa. Farmacevtska literatura navaja, da morajo biti tinkture za ustrezno samoohranjanje pripravljene z vsaj približno 24–26 % v/v etanola, eksperimentalni podatki pa kažejo, da že 20 % etanola inhibira metabolizem biofilmov Candida albicans in Staphylococcus aureus, približno 30 % pa v nekaterih pogojih deluje baktericidno. Tinkture z okoli 30 % etanola so zato mikrobiološko stabilne tudi brez dodatnih konzervansov, če so pravilno shranjene.',
+
+       {pod:'Glicerinske tinkture (≥ 70 % glicerina)'},
+       'Vodna aktivnost (aw) je merilo proste vode, ki je na voljo za mikrobiološko rast. Rast večine patogenih bakterij je onemogočena pri aw okoli 0,85, kvasovk in plesni pa pri aw okoli 0,70.',
+       'Glicerol močno znižuje aw. Pri 70 % v/v glicerina je vodna aktivnost približno 0,56 (pri 25–27 °C), torej bistveno pod pragom za rast patogenov in tudi večine kvasovk in plesni. Glicerol je kemično stabilen in kot dodatek E 422 opisan kot snov, ki ostaja stabilna pri običajnih pogojih shranjevanja.',
+       {tabela:{glava:['Glicerol (v/v %)','Glicerol (m/m %)','aw pri 25 °C'], vrstice:[
+         ['50','55,8','0,764'],['60','65,5','0,677'],
+         ['70','74,7','0,594'],['80','83,5','0,460']]}}]},
+
+     {naslov:'Rok uporabnosti in pogoji shranjevanja', blok:[
+       'Za obe vrsti tinktur se določi konservativni rok uporabnosti 24 mesecev od datuma polnitve, pri naslednjih pogojih:',
+       {ul:[
+         'shranjevanje v temnem, suhem prostoru pri 15–25 °C,',
+         'tesno zaprte stekleničke (kapljanje brez vračanja vsebine),',
+         'zaščita pred neposredno svetlobo in vročino,',
+         'brez izpostavljanja ekstremnim temperaturam ali kontaminaciji.']}]},
+
+     {naslov:'Notranja kontrola serij', blok:[
+       'Za vsako serijo se izvajajo naslednje kontrole in zapisi kot del dokumentacije HACCP:',
+       {ul:[
+         'identiteta in koncentracija topila — etanol (% v/v) ali glicerol (% v/v),',
+         'organoleptika — barva, vonj, homogenost, odsotnost kvarnih sedimentov,',
+         'označevanje in sledljivost — koda serije, datum polnitve, odgovorna oseba.']}]},
+
+     {naslov:'Bibliografija', blok:[
+       {ul:[
+         'FDA. Water Activity (aw) in Foods — pragovi rasti mikroorganizmov; aw ≤ 0,85 zavira rast večine patogenih bakterij.',
+         'Nakagawa H. in sod. Molecular Basis of Water Activity in Glycerol–Water Mixtures. Front Chem, 2019.',
+         'EFSA. Re-evaluation of glycerol (E 422) as a food additive. EFSA Journal, 2017.',
+         'EMA. Information for the package leaflet regarding ethanol used as an excipient, 2018.',
+         'ScienceDirect Topics: Tincture — „Tinctures must contain at least 24–26 % pure alcohol to be well preserved.“',
+         'Peters BM. in sod. Efficacy of Ethanol against Candida albicans and Staphylococcus aureus biofilms. Antimicrob Agents Chemother, 2013.',
+         'Chatterjee I. in sod. Very Low Ethanol Concentrations Affect the Viability and Morphology of S. aureus, 2006.']}]},
+   ]},
   {oznaka:'DOK-0002', naziv:'Analiza tveganj in kritične točke procesa',
-   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0002_1). Iz tega dokumenta izhaja kritična kontrolna točka vlažnosti surovine, na katero se aplikacija sklicuje v koraku določitve vlažnosti.'}]}]},
+   vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003','DOK-0001'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Dokument je sistematična analiza tveganj in določitev kritičnih kontrolnih točk (CCP) v postopku trojne ekstrakcije medicinskih gob (reishi, chaga, Hericium erinaceus). Je sestavni del sistema HACCP podjetja GoMushroom in se uporablja za zagotavljanje varnosti in ponovljivosti proizvodnje tinktur.']},
 
-  // Obrazci
+     {naslov:'Kritične kontrolne točke', blok:[
+       {tabela:{glava:['Procesni korak','Utemeljitev','Kontrolni parameter','Sprejemljiva meja','Nadzor in pogostost','Evidenca','Ukrepi ob odstopanju'], vrstice:[
+         ['Sprejem surovine','Vstopna točka tveganj (plesni, mikotoksini, tujki).','vlaga; vizualni in organoleptični pregled','vlaga < 12 %, brez vonja po plesni, ujemanje identitete','ob vsaki dostavi; halogenski sušilnik in vizualno','{{OBR-0005}}','karantena ali zavrnitev, obvestilo dobavitelju'],
+         ['Konzervirna bariera končnega izdelka','Končni produkt mora onemogočati rast.','ena od: % EtOH, aw ali % glicerola','EtOH ≥ 25 % v/v ali aw ≤ 0,85 ali glicerol ≥ 70 % m/m po izračunu','vsaka serija; denzitometer, refraktometer ali izračun','{{ZOP-0001}}','prilagoditev razmerij (EtOH, glicerin, voda), ponovna meritev'],
+         ['Polnjenje in zapiranje','Največje tveganje sekundarne kontaminacije.','predoperativna higiena (flowhood, HEPA, UV), status opreme, pregled stekla','brez odstopanj v predoperativnem pregledu; okolje pripravljeno','pred začetkom; vizualno na 30 min; kontrolni seznam v zapisniku','{{ZOP-0001}}','ustavitev, razkuževanje, zamenjava embalaže, ponovni predoperativni pregled']]}},
+       {opomba:'Meja vlage < 12 % izhaja iz cilja aw ≤ 0,70 za preprečevanje rasti plesni v surovini. Končna bariera se zagotavlja z etanolom ≥ 25 % v/v ali glicerolom ≥ 70 % m/m — glej {{DOK-0001}}.'},
+       'Odstopanja in korektivni ukrepi se v vsakem primeru zabeležijo v {{OBR-0005}}.']},
+   ]},
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0001_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0001}}.'}]
+   ,vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Mesečna evidenca, kateri prostor je bil kateri dan uporabljen in za katero dejavnost. Iz nje je razvidno, da se procesi z večjim tveganjem kontaminacije izvajajo časovno ločeno od čistih procesov, kar zahteva {{SOP-0001}}.',
+       {opomba:'Brez izpolnjenega dnevnika je delo v prostorih prepovedano.'}]},
+
+     {naslov:'Zgradba obrazca', blok:[
+       'Obrazec je mesečna preglednica: ena vrstica na dan v mesecu, stolpci po dejavnostih, razdeljeni na predprostor in laboratorij, ter stolpec za podpis izvajalca.',
+       {tabela:{glava:['Prostor','Dejavnosti'], vrstice:[
+         ['Predprostor','sterilizacija (steklovina, agar, žito, substrati) · priprava topila (mešanje, redčenje) · ekstrakcija (alkoholna, vodna, tlačna) · pomivanje (steklovina, posode)'],
+         ['Laboratorij','koncentriranje (EtOH, HVE, TE, Gly) · formulacija (EtOH, Gly) · polnjenje (EtOH, Gly) · stiskanje in filtracija (EtOH, HVE, TE) · micelij (kloniranje, inokulacija substratov)']]}},
+       'V glavo se vpišeta mesec in leto, vsak dan pa se označijo dejavnosti in doda podpis.']},
+
+     {naslov:'Legenda', blok:[
+       {tabela:{glava:['Oznaka','Pomen'], vrstice:[
+         ['+','prostor je bil uporabljen za delo'],
+         ['prazno','prostor tisti dan ni bil uporabljen'],
+         ['+ (opomba)','prostor je bil uporabljen, dodana je kratka razlaga ali vrsta dela — na primer „+ (ekstrakcija EtOH)“, „+ (koncentracija tinkture)“, „+ (kloniranje)“']]}}]},
+   ]},
 
   {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0002'],
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0002'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0002_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0002}}.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Mesečna evidenca opravljenega čiščenja in razkuževanja po pogostosti, ki jo določa {{SOP-0002}}. Izpolni se takoj po opravljenem čiščenju; podpisana evidenca se hrani najmanj 12 mesecev.']},
+
+     {naslov:'Zgradba obrazca', blok:[
+       'Ena vrstica na dan v mesecu, stolpci pa so razvrščeni po pogostosti čiščenja, na koncu je podpis izvajalca.',
+       {tabela:{glava:['Sklop','Stolpci'], vrstice:[
+         ['Dnevno čiščenje (v primeru uporabe)','tla — suho brisanje ali sesanje · tla — mokro brisanje po potrebi · vratne kljuke, lijak, delovni pulti — mokro brisanje in razkuževanje · sterilizacija z ozonom in UV svetlobo'],
+         ['Tedensko čiščenje','laboratorijski pulti, delovne površine, delovni lijaki — mokro brisanje in razkuževanje · tla — mokro brisanje in razkuževanje · okenske police in vidni madeži na pohištvu ter opremi — mokro brisanje in razkuževanje · ometanje pajčevine · posoda za odpadke — pobiranje in odstranjevanje smeti'],
+         ['Mesečno čiščenje','tla pod pulti in težko dosegljiva mesta — mokro brisanje in razkuževanje · notranjost omar in predalov za steklovino — mokro brisanje in razkuževanje']]}},
+       'V glavo se vpišeta mesec in leto.']},
+
+     {naslov:'Legenda', blok:[
+       {tabela:{glava:['Oznaka','Pomen'], vrstice:[
+         ['+','postopek čiščenja oziroma razkuževanja je bil izveden; vpiše se tudi datum in podpis izvajalca'],
+         ['prazno','postopek ni bil izveden'],
+         ['+ (opomba)','postopek je bil izveden, dodana je kratka razlaga ali posebnost — na primer „+ (čiščenje po razlitju)“']]}}]},
+
+     {naslov:'Opomba k izvirniku', blok:[
+       {opomba:'V glavi izvirnika sta dve različni oznaki: v naslovni vrstici piše OBR-0002/1, v vrstici z mesecem in letom pa OBR-0002/2. Ime datoteke in vsebina ustrezata izdaji 2; navedba /1 v glavi je ostanek prejšnje izdaje in jo je treba popraviti.'}]},
+   ]},
 
   {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0003_1).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'V mapi Veljavno je izdaja _1, aplikacija pa na izpisu kartice senzorične ocene tiska OBR-0003/02. Ena od obeh navedb je napačna — dokler ni potrjeno katera, je v registru zavedena izdaja iz mape.'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. V nogi izvirnika je zapisana kot OBR–0003/01, priloga k {{SOP-0003}}.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Z organoleptično analizo (ocena z vidom, vonjem, okusom in tipom) se preverja skladnost tinktur z internim standardom in odkrivajo morebitne spremembe, ki bi lahko kazale na kvar ali kontaminacijo.',
+       {opomba:'Analizo izvede odgovorna oseba za vsako serijo pred sprostitvijo izdelka.'}]},
 
-  {oznaka:'OBR-0004', naziv:'Evidenca regeneracije etanola',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0004_1).'}]}]},
+     {naslov:'Glava obrazca', blok:[
+       'Vpišejo se ime izdelka, serija, delovni nalog in tip tinkture (alkoholna ali glicerinska).']},
 
+     {naslov:'Standardni opisi', blok:[
+       'Za vsako vrsto gobe in obe formulaciji so predpisani standardni opisi, ki se med analizo potrdijo.',
+       {pod:'Resasti bradovec (Hericium erinaceus)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','jantarno-rjava','temnejša jantarno-rjava'],
+         ['Vonj','zemeljski, gobast, z etanolom','nežen, skoraj nevtralen'],
+         ['Okus','grenkobno-lesnat, z alkoholno ostrino','sladkast, rahlo gobast'],
+         ['Konsistenca','srednje tekoča','gostejša, sirupasta']]}},
+       {pod:'Reishi (Ganoderma lucidum)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','črna do temno rjava','temno rjava'],
+         ['Vonj','močan gobast, lesnat, z etanolom','lesnat, gobast, brez etanola'],
+         ['Okus','izrazito grenak, lesnat, z alkoholno ostrino','sladkast, grenak, gobast'],
+         ['Konsistenca','srednje tekoča, z rjavo usedlino','gostejša, tekoče-sirupasta']]}},
+       {pod:'Chaga (Inonotus obliquus)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','temno črna','temno črna-rjava'],
+         ['Vonj','zemeljski, kiselkast, z etanolom','zemeljski, brez etanola'],
+         ['Okus','grenek, rahlo dimljen, z etanolom','sladkast, rahlo grenak, dimljen'],
+         ['Konsistenca','tekoča','gostejša, tekoče-sirupasta']]}}]},
+
+     {naslov:'Ocena in podpis', blok:[
+       'Obrazec se zaključi z oceno „ustreza“ oziroma „ne ustreza organoleptičnim zahtevam“ ter podpisom in datumom osebe, ki je analizo izvedla in odobrila.']},
+
+     {naslov:'Opombi k izvirniku', blok:[
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda, ki je ostal v predlogi.'},
+       {opomba:'Aplikacija se na tej kartici sklicuje na OBR-0003/02, veljavna izdaja pa je /01. Napačna navedba izvira iz noge zapisnika {{ZOP-0001}}, kjer namesto oznake zapisnika piše OBR-0003/02.'}]},
+   ]},
+  {oznaka:'OBR-0004', naziv:'Evidenčni list — regeneracija etanola',
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Poenostavljeno beleženje regeneracije etanola iz procesnih frakcij s koncentracijo 40–70 vol % ter iz frakcij, ki se sicer vodijo kot procesne izgube (10–40 vol %).',
+       'Regeneracija se lahko izvaja več dni v več stopnjah: začne se z najnižjimi koncentracijami, ki se vračajo nazaj in postopno pridružujejo višjim, dokler ni dosežena procesno uporabna koncentracija nad 70 vol %.']},
+
+     {naslov:'Zgradba obrazca', blok:[
+       'Za vsako regeneracijo se zapišejo povprečna vhodna koncentracija, skupna masa, končna koncentracija, končna masa in izračunani absolutni alkohol.',
+       {tabela:{glava:['Stolpec','Vsebina'], vrstice:[
+         ['Nalog','oznaka delovnega naloga'],
+         ['Datum','datum regeneracije'],
+         ['Vhod','količina v kg ali L in koncentracija v % m/m oziroma % v/v'],
+         ['Izhod','količina v kg ali L in koncentracija v % m/m oziroma % v/v'],
+         ['Absolutni etanol','kg AAE in L AAE']]}}]},
+   ]},
   {oznaka:'OBR-0005', naziv:'Zapisnik odstopa in korektivnih ukrepov',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0005_1).'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0003','SOP-0005','DOK-0002'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Zapis odstopa od predpisanih pogojev in korektivnega ukrepa, ki je bil ob tem izveden. Je hkrati obrazec CAPA, na katerega se sklicujeta {{DOK-0002}} pri odstopanjih od kritičnih kontrolnih točk in {{SOP-0005}} pri umiku oziroma odpoklicu.']},
 
-  {oznaka:'OBR-0007', naziv:'Materialna kartica etanola',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0004'],
-   verzije:[{v:'01', velja:'', odobril:'', opis:'Aplikacija ta obrazec že izpisuje, v mapi Veljavno pa ga ni.'}],
+     {naslov:'Zgradba obrazca', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava','delovni nalog, izdelek, serija, tip tinkture (alkoholna ali glicerinska)'],
+         ['Korak CCP','1 sprejem surovine · 2 končna bariera · 3 polnjenje in zapiranje · drugo'],
+         ['Odstop','kaj je odstopalo; parameter, meja in rezultat — na primer „vlaga < 12 % → izmerjeno 12,8“'],
+         ['Takojšnji ukrep','ustavitev postopka · karantena · oznaka „NEUPORABNO“'],
+         ['Korektivni ukrep','kaj je bilo narejeno in kakšen je bil ponovni rezultat po ukrepu'],
+         ['Odločitev o seriji','nadaljuj · ponovi korak · prilagodi razmerja · zavrzi, z utemeljitvijo'],
+         ['Podpis','oseba, ki je izvedla in odobrila, z datumom']]}}]},
+
+     {naslov:'Opomba k izvirniku', blok:[
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana oznaka CAPA-25-001 — ostanek izpolnjenega izvoda, ki je ostal v predlogi.'}]},
+   ]},
+  {oznaka:'OBR-0006', naziv:'Evidenca prejema surovin in embalaže',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
-     'Obrazec nastane kot izpis kartice etanola: vsi vhodi in izhodi v L AAE za izbrano obdobje, s stanjem zaloge kot njihovo razliko. Ne izpolnjuje se ročno.',
-     {opomba:'Aplikacija ta obrazec tiska pod oznako OBR-0007/01, v mapi Veljavno pa ga ni — prav tako ni OBR-0006, OBR-0008 in OBR-0009. Ali obstaja drugje ali pa je bila oznaka dodeljena, ne da bi obrazec nastal. Dokler to ni razčiščeno, tu stoji brez veljavnosti.'}]}]},
+     'Vpisujejo se naziv, datum, količina, dobavitelj, serija ter presoja „ustreza / ne ustreza“. Vsak prejem gobe dobi svojo unikatno oznako serije.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici, ne kot obrazec v mapi Veljavno. Vsebina še ni prenesena.'}]}]},
 
+  {oznaka:'OBR-0007', naziv:'Materialna kartica surovine — etanol',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}. Izpisuje jo aplikacija.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Kartica nosi vse vhode in izhode etanola v L AAE za izbrano obdobje; stanje zaloge je njihova razlika. Poraba etanola po delovnem nalogu se zapiše nanjo, kartica pa je podlaga za mesečno trošarinsko napoved.',
+     {opomba:'Obrazca ni v mapi Veljavno, ker je elektronska evidenca — {{SOP-0004}} ga navaja med evidencami, ki se vodijo elektronsko. V tej aplikaciji ga izpiše kartica etanola.'}]}]},
+
+  {oznaka:'OBR-0008', naziv:'Materialna kartica izdelka',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Evidenca serij končnih izdelkov. Podpisan izvoz te kartice je priloga mesečne trošarinske napovedi.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici. Vsebina še ni prenesena.'}]}]},
+
+  {oznaka:'OBR-0009', naziv:'Evidenca delovnih nalogov in serij končnih izdelkov',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Glavni seznam delovnih nalogov in serij končnih izdelkov. Ob odprtju naloga se mu tu dodeli unikatna oznaka.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici. Vsebina še ni prenesena.'}]}]},
   {oznaka:'OBR-0010', naziv:'Evidenca umika in odpoklica živila',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0005'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0010_1).'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0005','OBR-0005'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0005}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Evidenca celotnega poteka umika ali odpoklica po {{SOP-0005}} — od zaznave neskladnosti prek ocene tveganja in odločitve do izvedbe in zaključka.']},
 
-  // Zapisniki o proizvodnji
+     {naslov:'Zgradba obrazca', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Osnovni podatki o izdelku','naziv, serija (LOT), datum proizvodnje, rok uporabe, tip tinkture, količina v seriji'],
+         ['Zaznava neskladnosti','datum zaznave, vir informacije (notranja kontrola · poslovni kupec · dobavitelj · pristojni organ · drugo), opis odstopanja'],
+         ['Ocena tveganja','resnost, verjetnost in obseg, vsak na lestvici 1–3, s kratko utemeljitvijo'],
+         ['Odločitev in ukrepi','blokada v skladišču · umik pri kupcu · odpoklic, z obveščanjem organa in kupca'],
+         ['Zaključek','končno ravnanje z izdelki in povezava na {{OBR-0005}}']]}}]},
+   ]},
   {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
-   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0003','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (ZOP-0001_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika. Ta zapisnik pokriva isto, kar aplikacija izpiše kot zapisnik delovnega naloga — ob prenosu je treba razčistiti, kateri od obeh je veljavni zapis serije.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti zapisnik sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen zapisnika', blok:[
+       'Zapisnik je obvezna priloga dokumentacije serije. Vanj se sproti beležijo vse meritve, mase, volumni, izračuni in presoje kritičnih kontrolnih točk skozi celoten postopek iz {{SOP-0003}}.',
+       {opomba:'To je papirna oblika istega zapisa, ki ga aplikacija vodi kot delovni nalog s koraki in izpiše kot zapisnik serije. Ob prenosu je treba določiti, kateri od obeh je veljavni zapis serije — dva vzporedna zapisa istega postopka sta tveganje, ne varnost.'},
+       {opomba:'To je veljavni zapisnik o proizvodnji in pokriva celotno trojno ekstrakcijo. Krajša izdaja {{ZOP-0002}} ni v veljavi.'}]},
 
-  {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record',
-   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (ZOP-0002_1).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika. V mapi stojita dva zapisnika o proizvodnji z istim nazivom — ob prenosu je treba povedati, po čem se razlikujeta.'}]}]},
+     {naslov:'Zgradba zapisnika', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava serije','delovni nalog, oznaka serije, datum začetka in konca, surovina in njen dobavitelj oziroma serija, vrsta izdelka in količina'],
+         ['Etanolna ekstrakcija — priprava','Σm surovine, vlažnost (meja < 12 %), presoja CCP; način priprave etanola (96 %, regeneriran, voda), Σm in ΣV etanola, koncentracija v % m/m in % v/v'],
+         ['Ultrazvočna sonikacija','čas, moč in končna temperatura za obe ponovitvi; presoja, da T ni presegla 55 °C'],
+         ['Stiskanje organske faze','presoja bistrosti filtrata, Σm matičnega ekstrakta, Σm pogače, masa topila v pogači'],
+         ['Ločitev matičnega ekstrakta','izračun količine ME, ki se odstrani in pozneje vrne; volumen in masa ME, AAE v organski fazi'],
+         ['Koncentriranje organske faze','pogoji rotavaporja, regenerirani etanol po frakcijah z masami in koncentracijami, vsota izgub, masa suhe snovi in masa organske faze'],
+         ['Vroča vodna ekstrakcija (HVE)','T 80–90 °C, t = 300 min; masa pogače in dodane vode, po potrebi v dveh delih; presoja bistrosti filtrata, Σm ekstrakta'],
+         ['Koncentriranje HVE','izračun ciljne mase, pogoji rotavaporja, regenerirani etanol in izgube, masa koncentrata'],
+         ['Tlačna ekstrakcija (TE)','T 115–130 °C, t = 150 min; masa pogače in dodane vode, po potrebi v dveh delih; presoji temperature in časa ter bistrosti filtrata'],
+         ['Koncentriranje TE','izračun mase TE iz skupne mase, zmanjšane za HVE in organsko fazo'],
+         ['Alkoholna formulacija','mase OF, HVE in TE, gostota in volumen tinkture, izračunana koncentracija etanola'],
+         ['Vitamin C in lecitin','izračunani in dejansko dodani masi'],
+         ['Analiza suhe snovi','odstotek suhe snovi in presoja glede na zahtevo za vrsto gobe'],
+         ['Glicerinska formulacija','masa vhodne alkoholne tinkture, suha snov, odparjeno topilo, izračun glicerola in vode, potrditev koncentracije etanola'],
+         ['Poraba etanola in trošarina','regeneriran etanol, AAE v produktu, AAE izgub'],
+         ['Polnjenje','predoperativni kontrolni seznam (flowhood, UV in ozon, čiščenje, embalaža, higiena), presoja CCP, število polnitev'],
+         ['Priloge in podpis','sklic na {{OBR-0003}} in {{OBR-0005}}, podpis osebe, ki je izvedla in odobrila']]}}]},
+
+     {naslov:'Mejne vrednosti v zapisniku', blok:[
+       {tabela:{glava:['Parameter','Meja'], vrstice:[
+         ['Vlažnost surovine','< 12 %'],
+         ['Temperatura med sonikacijo','≤ 55 °C'],
+         ['HVE','80–90 °C, 300 min'],
+         ['TE','115–130 °C, 150 min'],
+         ['Suha snov','reishi ≥ 4,0 % · chaga ≥ 6,0 % · resasti bradovec ≥ 10,0 %'],
+         ['Etanol v alkoholni tinkturi','≥ 25,0 % v/v oziroma ≥ 20,5 % m/m'],
+         ['Vitamin C','0,20 % m/m (alkoholna) · +0,50 % m/m (glicerinska), skupaj 0,70 % m/m'],
+         ['Lecitin','0,30 % m/m'],
+         ['Glicerol v glicerinski tinkturi','75 % m/m'],
+         ['Regeneriran etanol','pod 30 % v/v se beleži kot izguba; zbrani se koncentrira nad 70 % v/v']]}}]},
+
+     {naslov:'Opombe k izvirniku', blok:[
+       {opomba:'V nogi izvirnika je namesto oznake zapisnika zapisano OBR-0003/02. Od tod izvira tudi napačna navedba na kartici senzorične ocene v aplikaciji; veljavna izdaja organoleptičnega obrazca je {{OBR-0003}}.'},
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
+       {opomba:'Gostota 30-odstotne etanolne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Aplikacija računa z 0,9622. Vrednosti je treba poenotiti.'},
+       {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m in to je pravilna vrednost; {{SOP-0003}} navaja 0,50 %, kar je napaka izvirnika.'}]},
+   ]},
+  {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
+   vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO', razveljavljen:true,
+   povezani:['SOP-0003','ZOP-0001'],
+   verzije:[{v:'01', velja:'', odobril:'', opis:'Ni v veljavi. Veljavni zapisnik o proizvodnji je {{ZOP-0001}}.'}],
+   vsebina:[
+     {naslov:'Stanje', blok:[
+       {opomba:'Ta zapisnik ni v veljavi. Veljavni zapisnik o proizvodnji je {{ZOP-0001}}. Zapis je tu zato, da je ob pregledu starejših serij razvidno, kaj je krajša izdaja vsebovala in česa ni.'}]},
+
+     {naslov:'Kaj je vseboval', blok:[
+       'Krajša izdaja zapisnika serije. Do koncentriranja organske faze je bila enaka {{ZOP-0001}}, nato pa je šla naravnost v alkoholno formulacijo.',
+       'Sklopi, ki jih ta zapisnik nima, {{ZOP-0001}} pa jih ima:',
+       {ul:[
+         'ločitev matičnega ekstrakta — izračun dela ME, ki se odstrani in pozneje vrne,',
+         'vroča vodna ekstrakcija (HVE) — T 80–90 °C, t 300 min, masa pogače in dodane vode, stiskanje in Σm ekstrakta,',
+         'koncentriranje HVE — izračun ciljne mase, pogoji rotavaporja, regenerirani etanol in izgube, masa koncentrata,',
+         'tlačna ekstrakcija (TE) — T 115–130 °C, t 150 min, masa pogače in dodane vode, presoji temperature in bistrosti filtrata,',
+         'koncentriranje TE — izračun mase TE iz skupne mase.']},
+       'Vse ostalo — od priprave etanola prek vitamina C in lecitina, analize suhe snovi, glicerinske formulacije in porabe etanola do polnjenja, prilog in podpisa — je enako.',
+       {opomba:'Da krajša izdaja ni bila dodelana, kaže tudi njena lastna vsebina: sklop alkoholne formulacije kljub odsotnosti obeh vodnih ekstrakcij še vedno zahteva vpis mase HVE in mase TE, pri vlažnosti surovine pa ni zapisane meje, ki jo {{ZOP-0001}} navaja ob polju.'}]},
+
+     {naslov:'Zgradba zapisnika', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava serije','delovni nalog, oznaka serije, datum začetka in konca, surovina in njen dobavitelj oziroma serija, vrsta izdelka in količina'],
+         ['Etanolna ekstrakcija — priprava','Σm surovine, vlažnost, presoja CCP; način priprave etanola (96 %, regeneriran, voda), Σm in ΣV etanola, koncentracija v % m/m in % v/v'],
+         ['Ultrazvočna sonikacija','čas, moč in končna temperatura za obe ponovitvi; presoja, da T ni presegla 55 °C'],
+         ['Stiskanje in filtriranje ekstrakta','presoja bistrosti filtrata, Σm matičnega ekstrakta, Σm pogače, masa topila v pogači'],
+         ['Koncentriranje organske faze','pogoji rotavaporja, regenerirani etanol po frakcijah z masami in koncentracijami, vsota izgub, masa suhe snovi in masa organske faze'],
+         ['Alkoholna formulacija','mase OF, HVE in TE, gostota in volumen tinkture, izračunana koncentracija etanola'],
+         ['Vitamin C in lecitin','izračunani in dejansko dodani masi'],
+         ['Analiza suhe snovi','odstotek suhe snovi in presoja glede na zahtevo za vrsto gobe'],
+         ['Glicerinska formulacija','masa vhodne alkoholne tinkture, suha snov, odparjeno topilo, izračun glicerola in vode, potrditev koncentracije etanola'],
+         ['Poraba etanola in trošarina','regeneriran etanol, AAE v produktu, AAE izgub'],
+         ['Polnjenje','predoperativni kontrolni seznam, presoja CCP, število polnitev'],
+         ['Priloge in podpis','sklic na {{OBR-0003}} in {{OBR-0005}}, podpis osebe, ki je izvedla in odobrila']]}}]},
+
+     {naslov:'Opombe k izvirniku', blok:[
+       {opomba:'Naziv je enak nazivu {{ZOP-0001}}, čeprav je obseg drugačen. V registru je dopolnjen s pojasnilom v oklepaju.'},
+       {opomba:'V nogi izvirnika stoji OBR-0003/02 namesto oznake zapisnika — enaka napaka kot v {{ZOP-0001}}.'},
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
+       {opomba:'Pri stiskanju se stavek „Za povečanje izplena uporabimo rinse …“ konča nedokončan.'},
+       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,9622.'}]},
+   ]},
 ];
 
 // ── Verzije ───────────────────────────────────────────────────────────────
@@ -6612,11 +7167,21 @@ function dokTabelaHtml(glava,vrstice){
     <tbody>${vrstice.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
   </table></div>`;
 }
+function dokSklici(t){
+  return String(t).replace(/\{\{([A-Z]{3}-\d{4})\}\}/g,(cel,o)=>{
+    const z=dokNajdi(o);
+    if(!z)return o;
+    return `<a class="dok-sklic" href="#dokument=${z.oznaka}"
+      onclick="odpriDokument('${z.oznaka}');return false">${dokPolnaOznaka(z)}</a>`;
+  });
+}
 function dokBlokHtml(b,d){
-  if(typeof b==='string')return `<p class="dok-p">${b}</p>`;
-  if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-  if(b.opomba)return `<div class="dok-opomba">${b.opomba}</div>`;
-  if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice);
+  if(typeof b==='string')return `<p class="dok-p">${dokSklici(b)}</p>`;
+  if(b.pod)return `<h4 class="dok-pod">${dokSklici(b.pod)}</h4>`;
+  if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${dokSklici(x)}</li>`).join('')}</ul>`;
+  if(b.st)return `<ol class="dok-ol">${b.st.map(x=>`<li>${dokSklici(x)}</li>`).join('')}</ol>`;
+  if(b.opomba)return `<div class="dok-opomba">${dokSklici(b.opomba)}</div>`;
+  if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice.map(r=>r.map(dokSklici)));
   if(b.koraki)return dokKorakiHtml();
   if(b.ccp)return dokCCPHtml();
   if(b.obrazci)return dokObrazciHtml(d);
@@ -6635,7 +7200,7 @@ function dokZgodovinaHtml(d){
       :v.velja==='?'?'<span class="dok-caka">ni prenesen</span>'
       :'<span class="dok-caka">ne velja</span>',
     v.odobril||'—',
-    v.opis||'—']);
+    dokSklici(v.opis||'—')]);
   return dokTabelaHtml(['Verzija','Velja od','Odobril','Sprememba'],vrstice);
 }
 function dokPovezaniHtml(d){
@@ -6683,7 +7248,7 @@ function renderDokumenti(){
       <div class="dn-header" onclick="odpriDokument('${d.oznaka}')">
         <div class="dn-info">
           <div class="dn-name">${dokPolnaOznaka(d)} <span style="font-size:.75rem;color:var(--muted)">${d.naziv}</span></div>
-          <div class="dn-meta">${d.vrsta}${d.lastnik?' · '+d.lastnik:''}</div>
+          <div class="dn-meta">${d.vrsta}${d.oblika?' · '+d.oblika:''}${d.lastnik?' · '+d.lastnik:''}</div>
           <div class="dn-meta">${dokDatum(v)?`Velja od ${fmtDate(v.velja)}`
             :v?'Velja · datum ni prenesen':'Ni v veljavi'}${vse.length>1?` · ${vse.length} verziji`:''}</div>
         </div>
@@ -6710,6 +7275,8 @@ function odpriDokument(oznaka){
         <span><b>Odobril</b>${v&&v.odobril?v.odobril:'—'}</span>
         <span><b>Lastnik</b>${d.lastnik||'—'}</span>
         <span><b>Stanje</b>${st.napis}</span>
+        ${d.klasifikacija?`<span><b>Klasifik.</b>${d.klasifikacija}</span>`:''}
+        ${d.oblika?`<span><b>Oblika</b>${d.oblika}</span>`:''}
       </div>
     </div>
     ${st.kljuc!=='velja'
@@ -6747,6 +7314,8 @@ body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weigh
 h3{font-size:10pt;font-weight:500;margin:1rem 0 .3rem;text-transform:uppercase;
   letter-spacing:.06em;border-bottom:.6pt solid #e2dacc;padding-bottom:.15rem}
 h3 span{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45;margin-right:.5rem}
+h4{font-size:9pt;font-weight:500;margin:.5rem 0 .15rem}
+ol{margin:.2rem 0 .5rem;padding-left:1.1rem}
 p{margin:0 0 .4rem}
 ul{margin:.2rem 0 .5rem;padding-left:1.1rem}
 table{border-collapse:collapse;width:100%;margin:.3rem 0 .6rem;font-size:8.6pt}
@@ -6777,12 +7346,14 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
     <b>Vrsta</b> ${d.vrsta}<br>
     <b>Velja od</b> ${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}<br>
     <b>Lastnik</b> ${d.lastnik||'—'}<br>
-    <b>Stanje</b> ${st.napis}
+    <b>Stanje</b> ${st.napis}${d.klasifikacija?'<br><b>Klasifikacija</b> '+d.klasifikacija:''}
   </div>
 </div>
 ${st.kljuc!=='velja'?`<div class="op">Ta izvod ne velja: dokument nima datuma veljavnosti in podpisa odobritve.</div>`:''}
-${dokVsebinaHtml(d).replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
-   .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-tw"/g,'')
+${dokVsebinaHtml(d).replace(/<a class="dok-sklic"[^>]*>/g,'').replace(/<\/a>/g,'')
+   .replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
+   .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-ol"/g,'')
+   .replace(/class="dok-pod"/g,'').replace(/class="dok-tw"/g,'')
    .replace(/class="dok-t"/g,'').replace(/class="dok-opomba"/g,'class="op"')
    .replace(/class="dok-vir"/g,'class="vir"')}
 <h3><span>≡</span>Zgodovina sprememb</h3>

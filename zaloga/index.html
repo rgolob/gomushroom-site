@@ -6406,7 +6406,8 @@ function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';padding:3rem 2.5rem 2rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';padding:3rem 2.5rem 2rem;max-width:750px;margin:0 auto;color:#1a1209;font-size:13px;line-height:1.5;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem}
 .company{font-size:.78rem;line-height:1.8}
 .company strong{font-size:.9rem;display:block;margin-bottom:.2rem}
@@ -6443,7 +6444,14 @@ td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
 .actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
 @page{size:A4;margin:12mm}
-@media print{body{max-width:none;width:100%;padding:0}.actions{display:none!important}}
+@media print{
+  body{max-width:none;width:100%;padding:0;font-size:10pt}
+  .actions{display:none!important}
+  .company{font-size:8.5pt} .company strong{font-size:9.5pt}
+  .notice{font-size:8.5pt}
+  .sig-box,.sig-name{font-size:8.5pt} .sig-label{font-size:7pt} .sig-ts{font-size:7.5pt}
+  .footer-bold{font-size:8pt} .footer-tagline{font-size:8.5pt}
+}
 </style></head><body>
 
 <div class="hdr">

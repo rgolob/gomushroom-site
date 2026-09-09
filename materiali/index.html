@@ -6583,6 +6583,7 @@ const DOKUMENTI=[
        {pod:'Končna formulacija alkoholne tinkture'},
        'Za končno formulacijo se uporabi že določena količina organske faze (matičnega etanolnega ekstrakta) z znano koncentracijo etanola. Na podlagi ciljnega končnega volumna tinkture in znane mase organske faze se izračuna skupna potrebna masa vodne faze (HVE + TE), ki zagotavlja končni etanolni delež 30 % v/v.',
        'Izračun se izvede po masi, pri čemer je kontrakcija volumna že upoštevana z uporabo gostote 30-odstotne etanolne raztopine. Če razpoložljiva količina vodnih koncentratov ne zadošča, se manjkajoči del mase dopolni z demineralizirano vodo, tako da skupna masa ustreza ciljnemu volumnu tinkture.',
+       {opomba:'Vrednost gostote je predmet odprte odločitve: {{ZOP-0001}} jo navaja dvakrat različno, določena pa bo na novo, ko bo upoštevana tudi suha snov v posamezni tinkturi. Podrobneje v opombi pri zapisniku.'},
 
        {pod:'Dodajanje vitamina C in lecitina'},
        'Po združitvi in homogenizaciji frakcij (OF, HVE, TE) se v tinkturo dodata vitamin C in sončnični lecitin (non-GMO). Vitamin C (askorbinska kislina) deluje kot antioksidant, ki preprečuje oksidacijo učinkovin (triterpenov, fenolov) in podaljšuje obstojnost. Lecitin deluje kot naravni emulgator in stabilizator, ki izboljša disperzijo trdnih delcev, zmanjša možnost geliranja ali usedanja in poveča biološko razpoložljivost lipofilnih spojin.',
@@ -7092,7 +7093,7 @@ const DOKUMENTI=[
      {naslov:'Opombe k izvirniku', blok:[
        {opomba:'V nogi izvirnika je namesto oznake zapisnika zapisano OBR-0003/02. Od tod izvira tudi napačna navedba na kartici senzorične ocene v aplikaciji; veljavna izdaja organoleptičnega obrazca je {{OBR-0003}}.'},
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
-       {opomba:'Gostota 30-odstotne etanolne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Aplikacija računa z 0,9622. Vrednosti je treba poenotiti.'},
+       {opomba:'Gostota 30-odstotne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Odločeno je, da ostane tako, kot je v zapisniku, in da se vrednosti zaenkrat ne poenotita. Gostota bo pozneje na novo določena tako, da bo upoštevala tudi suho snov v posamezni tinkturi — ta je v obeh navedbah ni, zato bi bilo poenotenje zdaj le izbira med dvema približkoma. Aplikacija do takrat računa s tabelarično vrednostjo za binarno mešanico voda–etanol, 0,96224 g/mL; pri 30 L končne tinkture je razlika proti 0,965 približno 83 g ciljne mase.'},
        {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m in to je pravilna vrednost; {{SOP-0003}} navaja 0,50 %, kar je napaka izvirnika.'}]},
    ]},
   {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
@@ -7136,7 +7137,7 @@ const DOKUMENTI=[
        {opomba:'V nogi izvirnika stoji OBR-0003/02 namesto oznake zapisnika — enaka napaka kot v {{ZOP-0001}}.'},
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
        {opomba:'Pri stiskanju se stavek „Za povečanje izplena uporabimo rinse …“ konča nedokončan.'},
-       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,9622.'}]},
+       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,96224. Razlika ostaja namerno — glej opombo pri {{ZOP-0001}}.'}]},
    ]},
 ];
 

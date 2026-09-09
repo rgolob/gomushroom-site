@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>Batch Production &amp; In-house QC Summary Report | GoMushroom</title>
+<meta name="description" content="Fillable batch documentation template supplied to B2B customers with a finished GoMushroom batch." />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="canonical" href="https://gomushroom.si/dokumenti/batch-report/" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+
+<style>
+:root{
+  color-scheme:light;
+  --paper:#FFFFFF; --desk:#EFEDE8; --ink:#17130D; --text:#2B251C;
+  --muted:#7A6F60; --faint:#9A9083;
+  --line:#E2DACC; --rule:#17130D; --fill:#FAF8F4;
+  --accent:#8A6A45;
+  --ok:#3A6B4A; --no:#8B3A2A;
+  --sans:'Jost',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--desk);color:var(--text);
+  font-family:var(--sans);font-weight:300;font-size:9.6pt;line-height:1.5}
+img{max-width:100%}
+
+/* ── Sheet ─────────────────────────────────────────────────────────────── */
+.sheet{background:var(--paper);width:210mm;max-width:100%;margin:0 auto;
+  padding:14mm 15mm 12mm;box-shadow:0 1px 3px rgba(0,0,0,.12);
+  display:flex;flex-direction:column;gap:5.5mm}
+
+/* ── Controls (screen only) ────────────────────────────────────────────── */
+.bar{position:sticky;top:0;z-index:5;background:var(--desk);
+  border-bottom:1px solid var(--line);padding:.5rem .8rem;
+  display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
+.bar .grow{flex:1;min-width:0}
+.bar button{font-family:var(--sans);font-size:.78rem;font-weight:400;
+  padding:.4rem .9rem;border-radius:3px;border:1px solid var(--line);
+  background:var(--paper);color:var(--text);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.bar button.primary:hover{background:#000;color:#fff}
+.bar .hint{font-size:.68rem;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.hd{display:grid;grid-template-columns:1fr auto;gap:8mm;align-items:start;
+  border-bottom:1.6pt solid var(--rule);padding-bottom:3.5mm}
+.hd-logo{height:11mm;width:auto;display:block;margin-bottom:1.6mm}
+.wordmark{font-size:13pt;font-weight:500;letter-spacing:-.01em;color:var(--ink);
+  margin-bottom:1.2mm}
+.wordmark span{color:var(--accent)}
+.addr{font-size:8pt;line-height:1.55;color:var(--muted)}
+.addr strong{font-weight:500;color:var(--text);display:block}
+.hd-right{text-align:right;display:flex;flex-direction:column;gap:2mm;
+  min-width:74mm}
+h1{font-size:12.5pt;font-weight:500;line-height:1.25;margin:0;color:var(--ink);
+  letter-spacing:-.005em;text-wrap:balance}
+.refs{display:grid;grid-template-columns:auto 1fr;gap:.6mm 3mm;
+  font-size:8pt;text-align:left;justify-self:end;min-width:62mm}
+.refs dt{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+  font-size:7pt;padding-top:.9mm}
+.refs dd{margin:0}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+section{display:flex;flex-direction:column;gap:2.4mm;break-inside:avoid}
+.sec-h{display:flex;align-items:baseline;gap:2.5mm;
+  border-bottom:.6pt solid var(--line);padding-bottom:1.2mm}
+.sec-n{font-family:var(--mono);font-size:7.5pt;font-weight:500;color:var(--accent)}
+h2{font-size:9.5pt;font-weight:500;margin:0;color:var(--ink);
+  text-transform:uppercase;letter-spacing:.075em}
+p{margin:0;max-width:170mm}
+.lead{font-size:9pt;line-height:1.6}
+.note{font-size:8pt;line-height:1.55;color:var(--muted)}
+.callout{border-left:2pt solid var(--accent);background:var(--fill);
+  padding:2.4mm 3mm;font-size:8.2pt;line-height:1.6}
+
+/* ── Tables ────────────────────────────────────────────────────────────── */
+table{border-collapse:collapse;width:100%}
+th{font-size:7pt;font-weight:500;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);text-align:left;padding:1.4mm 2mm;
+  border-bottom:.9pt solid var(--rule);background:var(--fill)}
+td{padding:1.1mm 2mm;border-bottom:.5pt solid var(--line);vertical-align:middle;
+  font-size:8.8pt}
+tr:last-child td{border-bottom:.5pt solid var(--line)}
+/* Label/value pairs */
+.kv td:first-child{width:52mm;color:var(--muted);font-size:8.2pt}
+.kv.wide td:first-child{width:64mm}
+.qc th:nth-child(1){width:52mm} .qc th:nth-child(2){width:34mm}
+.qc th:nth-child(3){width:28mm} .qc th:nth-child(5){width:24mm}
+.qc td:nth-child(4){font-size:8pt;color:var(--muted)}
+.ext th:first-child{width:44mm}
+
+/* ── Fields ────────────────────────────────────────────────────────────── */
+/* Vnosno polje je urejevalni div in ne <input>: vpisano se mora v tisku
+   prelomiti v vec vrstic, sicer dolg opis videza serije v izpisu odrezemo -
+   in odrezana stevilka v dokumentu za kupca je huje kot grd obrazec. */
+.f,select{font-family:var(--sans);font-size:8.8pt;font-weight:400;
+  color:var(--ink);width:100%;border:0;border-bottom:.5pt solid var(--line);
+  background:var(--fill);padding:.9mm 1.4mm;border-radius:2px 2px 0 0;
+  outline:none;min-width:0;line-height:1.5}
+.f{min-height:5.2mm;white-space:pre-wrap;overflow-wrap:anywhere}
+.f:focus,select:focus{border-bottom-color:var(--accent);
+  background:#fff;box-shadow:inset 0 0 0 1px rgba(138,106,69,.28)}
+.f:empty::before{content:attr(data-ph);color:var(--faint);font-weight:300}
+.f[data-ro]{background:transparent;border-bottom:0;cursor:default}
+.f[data-multi]{min-height:7mm}
+select{appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+                   linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:right 4mm center,right 2.9mm center;
+  background-size:3px 3px,3px 3px;background-repeat:no-repeat;padding-right:7mm}
+/* V tabeli polje nima svojega okvirja, a se mora videti, kam se pise -
+   pikcasta crta to pove, ne da bi obrazec izgledal razpredeljen. */
+td .f,td select{background:transparent;padding:.5mm 0;min-height:4.4mm;
+  border-bottom:.5pt dotted #D6CCBA}
+td .f[data-ro]{border-bottom:0}
+td .f:focus,td select:focus{background:var(--fill)}
+.mono,.f.mono{font-family:var(--mono);font-size:8.6pt;
+  font-variant-numeric:tabular-nums}
+.refs .f{background:transparent;border-bottom:.5pt solid var(--line);
+  padding:.4mm 0;min-height:4.6mm}
+
+/* Status reads at a glance, but stays typographic - no traffic lights. */
+select.status{font-weight:500;font-size:8.2pt}
+select.status.ok{color:var(--ok)}
+select.status.no{color:var(--no)}
+select.status.na{color:var(--muted)}
+
+/* ── Approval ──────────────────────────────────────────────────────────── */
+.appr{display:grid;grid-template-columns:1fr 1fr;gap:6mm;align-items:end;
+  margin-top:1mm}
+.sig{border-bottom:.7pt solid var(--rule);height:16mm}
+.sig-l{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);padding-top:1.2mm}
+.ft{border-top:.6pt solid var(--line);padding-top:2.4mm;
+  font-size:7.4pt;color:var(--muted);display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:2mm}
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+@page{size:A4;margin:14mm 15mm}
+@media print{
+  body{background:#fff}
+  .bar,.noprint{display:none!important}
+  /* Izpolnjeno porocilo mora sesti na dve strani A4: v tisku ni treba prostora
+     za klikanje, zato so razmiki tesnejsi kot na zaslonu. */
+  .sheet{width:auto;padding:0;box-shadow:none;gap:3.6mm}
+  section{gap:1.8mm}
+  td{padding:.85mm 2mm}
+  th{padding:1.1mm 2mm}
+  .sig{height:12mm}
+  .appr{margin-top:0}
+  /* Filled form must read as a typeset report, not as a blank form. */
+  .f,select,td .f,td select{background:transparent!important;border-bottom:0;
+    box-shadow:none;padding:0;color:#000;min-height:0}
+  select{appearance:none;background-image:none;padding-right:0}
+  /* Prazno polje v izpisu ne sme kazati napotka za izpolnjevanje. */
+  .f:empty::before{content:''}
+  th{background:#F6F4F0!important;-webkit-print-color-adjust:exact;
+     print-color-adjust:exact}
+  .callout{background:#F9F7F3!important;-webkit-print-color-adjust:exact;
+     print-color-adjust:exact}
+  select.status.ok{color:#2A5A3A} select.status.no{color:#7A2E20}
+  section,table,tr{break-inside:avoid}
+  .ft{position:running(footer)}
+}
+@media (max-width:760px){
+  .sheet{padding:8mm 6mm}
+  .hd{grid-template-columns:1fr;gap:4mm}
+  .hd-right{text-align:left;min-width:0}
+  .refs{justify-self:start;min-width:0;width:100%}
+  .appr{grid-template-columns:1fr}
+  .kv td:first-child{width:38%}
+  .tw{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="bar noprint">
+  <span class="grow hint">Fill in the fields, then print to PDF. Your entries are kept
+    in this browser only — they are never uploaded.</span>
+  <button type="button" onclick="clearForm()">New report</button>
+  <button type="button" class="primary" onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<div class="sheet" id="sheet">
+
+<header class="hd">
+  <div>
+    <img class="hd-logo" src="/assets/logo-h168.webp" alt="GoMushroom"
+         onerror="this.remove();document.getElementById('wm').hidden=false">
+    <div class="wordmark" id="wm" hidden>Go<span>Mushroom</span></div>
+    <div class="addr">
+      <strong>GoMushroom</strong>
+      Prapreče pri Straži 22<br>
+      8351 Straža<br>
+      Slovenia
+    </div>
+  </div>
+  <div class="hd-right">
+    <h1>Batch Production &amp; In-house QC Summary Report</h1>
+    <dl class="refs">
+      <dt>Report no.</dt><dd><div class="f mono" data-k="reportNo" data-ph="BR-2026-001" contenteditable="plaintext-only"></div></dd>
+      <dt>Batch no.</dt><dd><div class="f mono" data-k="batchNo" data-ph="DN-26-000" contenteditable="plaintext-only"></div></dd>
+      <dt>Date of issue</dt><dd><div class="f mono" data-datum="1" data-k="issueDate" data-ph="YYYY-MM-DD" contenteditable="plaintext-only"></div></dd>
+    </dl>
+  </div>
+</header>
+
+<!-- 1 -->
+<section>
+  <div class="sec-h"><span class="sec-n">1</span><h2>Product and Batch Information</h2></div>
+  <div class="tw">
+    <table class="kv">
+      <tbody>
+        <tr><td>Customer</td><td><div class="f" data-k="customer" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Product name</td><td><div class="f" data-k="product" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Mushroom species / Latin name</td><td><div class="f" data-k="species" data-ph="e.g. Lion's mane / Hericium erinaceus" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Product type</td><td><div class="f" data-k="ptype" contenteditable="plaintext-only">Hydroalcoholic liquid extract</div></td></tr>
+        <tr><td>Batch number</td><td><div class="f mono" data-ro="1" data-k="batchNo2"></div></td></tr>
+        <tr><td>Production date</td><td><div class="f mono" data-datum="1" data-k="prodDate" data-ph="YYYY-MM-DD" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Final batch volume</td><td><div class="f" data-k="batchVol" data-ph="e.g. 30.0 L" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Filled quantity</td><td><div class="f" data-k="filledQty" data-ph="e.g. 580 units" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Bottle size</td><td><div class="f" data-k="bottle" data-ph="e.g. 50 mL" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Raw material supplied by customer</td><td>
+          <select id="rmSupplied">
+            <option value="">—</option><option>Yes</option><option>No</option>
+          </select></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="sec-h"><span class="sec-n">2</span><h2>Raw Material Information</h2></div>
+  <div class="tw">
+    <table class="kv">
+      <tbody>
+        <tr><td>Raw material</td><td><div class="f" data-k="rmType" contenteditable="plaintext-only">Dried mushroom fruiting body</div></td></tr>
+        <tr><td>Origin / supplier</td><td><div class="f" data-k="rmOrigin" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Quantity received</td><td><div class="f" data-k="rmIn" data-ph="e.g. 4.000 kg" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Quantity used</td><td><div class="f" data-k="rmUsed" data-ph="e.g. 4.000 kg" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Moisture content on receipt</td><td><div class="f" data-k="rmMoist1" data-ph="e.g. 9.8 % m/m" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Moisture content before processing</td><td><div class="f" data-k="rmMoist2" data-ph="e.g. 7.4 % m/m" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Additional drying performed</td><td>
+          <select id="rmDried">
+            <option value="">—</option><option>Yes</option><option>No</option>
+          </select></td></tr>
+        <tr><td>Notes on raw material</td><td><div class="f" data-k="rmNotes" data-multi="1"
+          data-ph="e.g. drying conditions, condition on receipt"
+          contenteditable="plaintext-only"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="sec-h"><span class="sec-n">3</span><h2>Production Summary</h2></div>
+  <p class="lead">The batch was manufactured using GoMushroom’s multi-stage extraction
+  process, including hydroalcoholic extraction, hot-water extraction and pressure
+  extraction, followed by filtration, concentration, blending and final
+  formulation.</p>
+  <p class="note">Individual process parameters form part of GoMushroom’s
+  proprietary manufacturing know-how and are not disclosed. The agreed finished
+  product parameters for this batch are stated below.</p>
+  <div class="tw">
+    <table class="kv wide">
+      <tbody>
+        <tr><td>Raw material : finished extract ratio</td><td><div class="f" data-k="ratio" data-ph="e.g. 1 : 8" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Target extractable dry matter</td><td><div class="f" data-k="targetDM" data-ph="e.g. ≥ 4.0 % m/m" contenteditable="plaintext-only"></div></td></tr>
+        <tr><td>Target final ethanol concentration</td><td><div class="f" data-k="targetEtOH" data-ph="e.g. 24 % m/m" contenteditable="plaintext-only"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="sec-h"><span class="sec-n">4</span><h2>In-house Quality Control</h2></div>
+  <div class="tw">
+    <table class="qc">
+      <thead><tr>
+        <th>Parameter</th><th>Target / specification</th><th>Result</th>
+        <th>Method</th><th>Status</th>
+      </tr></thead>
+      <tbody id="qcBody">
+        <!-- vrstice doda skripta iz enega seznama, da so metode povsod enake -->
+      </tbody>
+    </table>
+  </div>
+  <p class="note">The measurements listed in this section are GoMushroom in-house
+  process and quality-control measurements. They are not independent laboratory
+  analyses of beta-glucans, hericenones, hericenes or other functional mushroom
+  constituents.</p>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="sec-h"><span class="sec-n">5</span><h2>Natural Sediment</h2></div>
+  <div class="callout">Natural sediment may occur in concentrated hydroalcoholic
+  mushroom extracts. This sediment is not residual mushroom material. Individual
+  extraction fractions are filtered prior to blending. Following combination of the
+  concentrated aqueous and alcoholic fractions, components of the polysaccharide-rich
+  fraction may partially precipitate in the presence of ethanol. This is considered a
+  normal physical characteristic of this type of concentrated liquid extract.</div>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="sec-h"><span class="sec-n">6</span><h2>External Laboratory Analysis</h2></div>
+  <div class="tw">
+    <table class="ext">
+      <thead><tr>
+        <th>Test</th><th>External laboratory</th><th>Report no.</th>
+        <th>Date</th><th>Result / reference</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>Heavy metals</td>
+          <td><div class="f" data-k="labName" contenteditable="plaintext-only"></div></td>
+          <td><div class="f mono" data-k="labNo" contenteditable="plaintext-only"></div></td>
+          <td><div class="f mono" data-datum="1" data-k="labDate" data-ph="YYYY-MM-DD" contenteditable="plaintext-only"></div></td>
+          <td><div class="f" data-k="labResult" data-ph="See attached report" contenteditable="plaintext-only"></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Heavy-metal testing is performed by an external laboratory. The
+  original laboratory report is supplied separately as an attachment to this batch
+  documentation.</p>
+</section>
+
+<!-- 7 -->
+<section>
+  <div class="sec-h"><span class="sec-n">7</span><h2>Batch Conclusion</h2></div>
+  <p class="lead">The batch was manufactured according to the agreed production
+  specification. The in-house process-control parameters listed above were measured
+  and documented. External heavy-metal testing was performed separately as indicated
+  in this report.</p>
+  <div class="f" data-k="conclusion" data-multi="1"
+    data-ph="Additional batch-specific remarks (optional)"
+    contenteditable="plaintext-only"></div>
+</section>
+
+<!-- 8 -->
+<section>
+  <div class="sec-h"><span class="sec-n">8</span><h2>Approval</h2></div>
+  <div class="appr">
+    <div>
+      <div class="tw">
+        <table class="kv">
+          <tbody>
+            <tr><td>Prepared by</td><td><div class="f" data-k="preparedBy" contenteditable="plaintext-only">Rok Golob</div></td></tr>
+            <tr><td>Company</td><td><div class="f" data-k="preparedFor" contenteditable="plaintext-only">GoMushroom</div></td></tr>
+            <tr><td>Date</td><td><div class="f mono" data-datum="1" data-k="signDate" data-ph="YYYY-MM-DD" contenteditable="plaintext-only"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="sig"></div>
+      <div class="sig-l">Signature</div>
+    </div>
+  </div>
+</section>
+
+<footer class="ft">
+  <span>Batch-specific production and in-house QC documentation. This document is
+  not an independent analytical certificate.</span>
+  <span class="mono" id="ftRef"></span>
+</footer>
+
+</div>
+
+<script>
+// ── Vrstice notranje kontrole ────────────────────────────────────────────
+// Parameter in metoda sta stalnica obrazca: kupec mora pri vsaki seriji brati
+// isto ime metode. Vpisujeta se le zahteva in izmerjeno, zato sta samo ta dva
+// stolpca vnosna.
+const QC = [
+  ['Raw material moisture content (% m/m)', 'In-house gravimetric determination'],
+  ['Extractable dry matter (% m/m)',        'In-house gravimetric determination'],
+  ['Final ethanol concentration (% m/m)',   'In-house alcohol concentration measurement'],
+  ['Ethanol concentration (% v/v), approx.','Calculated from in-house measurement'],
+  ['Final batch volume',                    'Production record'],
+  ['Appearance',                            'Visual inspection'],
+  ['Natural sediment / precipitation',      'Visual inspection'],
+  ['Filled quantity',                       'Production record'],
+];
+const STATUS = ['—', 'Conforms', 'Out of specification', 'Not applicable'];
+
+document.getElementById('qcBody').innerHTML = QC.map(([ime, metoda], i) => `
+  <tr>
+    <td>${ime}</td>
+    <td><div class="f" data-k="qcT${i}" contenteditable="plaintext-only"></div></td>
+    <td><div class="f" data-k="qcR${i}" contenteditable="plaintext-only"></div></td>
+    <td>${metoda}</td>
+    <td><select class="status" id="qcS${i}">${
+      STATUS.map(s => `<option${s === '—' ? ' value=""' : ''}>${s}</option>`).join('')
+    }</select></td>
+  </tr>`).join('');
+
+// ── Stanje ───────────────────────────────────────────────────────────────
+// Vsako polje ima kljuc: urejevalni div ga nosi v data-k, spustni seznam in
+// besedilno polje v id. Branje in pisanje gresta prek enega para funkcij, da
+// shranjevanje ne pozna razlike med njimi.
+const KLJUC = 'gm_batch_report';
+const polja = () => [...document.querySelectorAll('#sheet .f[data-k], #sheet select[id]')];
+const kljuc = el => el.dataset.k || el.id;
+const beri  = el => (el.classList.contains('f') ? el.textContent : el.value).trim();
+const pisi  = (el, v) => { if(el.classList.contains('f')) el.textContent = v;
+                           else el.value = v; };
+const poljeZ = k => document.querySelector(`#sheet [data-k="${k}"]`) || document.getElementById(k);
+
+function barvaStatusa(el){
+  el.classList.remove('ok', 'no', 'na');
+  if(el.value === 'Conforms') el.classList.add('ok');
+  else if(el.value === 'Out of specification') el.classList.add('no');
+  else if(el.value === 'Not applicable') el.classList.add('na');
+}
+
+// Stevilka serije stoji v glavi in v razdelku 1. Vpisuje se enkrat - dve polji
+// bi se lahko razsla in prav stevilka serije je tista, po kateri kupec isce.
+function zrcaliSerijo(){
+  const serija = beri(poljeZ('batchNo'));
+  pisi(poljeZ('batchNo2'), serija);
+  document.getElementById('ftRef').textContent =
+    [beri(poljeZ('reportNo')), serija].filter(Boolean).join(' · ');
+}
+
+// Osnutek ostane v tem brskalniku, da ga osvezitev strani ne odnese. Nikamor
+// ne potuje; "New report" ga pobrise.
+function shrani(){
+  const d = {};
+  polja().forEach(el => { const v = beri(el); if(v) d[kljuc(el)] = v; });
+  try{ localStorage.setItem(KLJUC, JSON.stringify(d)); }catch(e){}
+}
+function naloziOsnutek(){
+  let d = {};
+  try{ d = JSON.parse(localStorage.getItem(KLJUC) || '{}'); }catch(e){}
+  Object.entries(d).forEach(([k, v]) => { const el = poljeZ(k); if(el) pisi(el, v); });
+}
+// Privzeto vpisano (vrsta izdelka, podpisnik) ni vnos, ampak del obrazca -
+// zato ga "New report" ne pobrise.
+const privzeto = new Map();
+function clearForm(){
+  if(!confirm('Clear all entries and start a new report?')) return;
+  try{ localStorage.removeItem(KLJUC); }catch(e){}
+  polja().forEach(el => pisi(el, privzeto.get(kljuc(el)) || ''));
+  document.querySelectorAll('select.status').forEach(barvaStatusa);
+  zrcaliSerijo();
+  poljeZ('reportNo').focus();
+}
+
+// Lepljenje mora prinesti samo besedilo: obliko iz e-poste bi vleklo v
+// dokument. contenteditable="plaintext-only" to vecinoma ze uredi, a ne povsod.
+document.addEventListener('paste', e => {
+  const p = e.target.closest?.('.f');
+  if(!p) return;
+  e.preventDefault();
+  document.execCommand('insertText', false,
+    (e.clipboardData || window.clipboardData).getData('text/plain'));
+});
+// Enter v enovrsticnem polju ne pomeni nove vrstice, ampak konec vnosa.
+// Opomba in zakljucek sta vecvrsticna in tam Enter dela svoje.
+document.addEventListener('keydown', e => {
+  const p = e.target.closest?.('.f');
+  if(e.key === 'Enter' && p && !p.dataset.multi){ e.preventDefault(); p.blur(); }
+});
+document.addEventListener('input', e => {
+  const el = e.target.closest?.('#sheet *') ? e.target : null;
+  if(!el || !el.closest('#sheet')) return;
+  const k = kljuc(el);
+  if(k === 'batchNo' || k === 'reportNo') zrcaliSerijo();
+  shrani();
+});
+document.addEventListener('change', e => {
+  if(!e.target.closest?.('#sheet')) return;
+  if(e.target.classList.contains('status')) barvaStatusa(e.target);
+  shrani();
+});
+
+polja().forEach(el => privzeto.set(kljuc(el), beri(el)));
+naloziOsnutek();
+document.querySelectorAll('select.status').forEach(barvaStatusa);
+zrcaliSerijo();
+</script>
+
+</body>
+</html>

@@ -14,3 +14,7 @@
 # Dopis o evidenci alkohola — ni za iskalnike, posljemo le povezavo.
 /dokumenti/evidenca-alkohola/*
   X-Robots-Tag: noindex, nofollow
+
+# Predloga poročila o seriji — interno orodje, ne za iskalnike.
+/dokumenti/batch-report/*
+  X-Robots-Tag: noindex, nofollow

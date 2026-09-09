@@ -6627,17 +6627,141 @@ const DOKUMENTI=[
    ]},
 
   {oznaka:'SOP-0004', naziv:'Evidenca surovin, embalaže, proizvodnje in končnih izdelkov',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0007'], povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0004_1). Aplikacija se na ta postopek že sklicuje: materialna kartica etanola je izpisana kot OBR-0007/01 · SOP-0004/01.'}]}]},
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0006','OBR-0007','OBR-0008','OBR-0009'],
+   povezani:['SOP-0001','SOP-0003','ZOP-0001'],
+   verzije:[{v:'01', velja:'2025-11-22', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Vzpostaviti enoten in sledljiv sistem evidentiranja vseh faz proizvodnje — od prejema surovin in embalaže prek izdelave in vodenja delovnih nalogov do končnih izdelkov in arhiviranja serij. Dokument zajema tudi pogoje skladiščenja, nadzor embalaže ter povezavo z materialnimi karticami in trošarinskimi evidencami.']},
 
-  {oznaka:'SOP-0005', naziv:'Načrt umika in odpoklica živila',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0010'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0005_1).'}]}]},
+     {naslov:'Obseg', blok:[
+       {ul:[
+         'surovine (gobe, etanol, glicerin, voda, lecitin, vitamin C, citronska kislina in podobno),',
+         'embalaža (stekleničke, kapalke, pokrovčki),',
+         'končni izdelki (alkoholne in glicerinske tinkture).']}]},
 
-  // Dokumenti
+     {naslov:'Odgovornosti', blok:[
+       'Vse naloge izvajanja, preverjanja in potrjevanja izvaja lastnik podjetja.']},
+
+     {naslov:'Postopek', blok:[
+       {pod:'Prejem surovin in embalaže'},
+       {ul:[
+         'Preveri se identiteta dobavitelja, skladnost z naročilom in stanje pakiranja.',
+         'Vpis v {{OBR-0006}} (naziv, datum, količina, dobavitelj, serija, ustreza ali ne ustreza).',
+         'Vsak prejem gobe dobi svojo unikatno oznako serije, ki se zapiše na obrazec.']},
+
+       {pod:'Skladiščenje surovin'},
+       {ul:[
+         'Surovine so v zaprtih originalnih posodah ali vrečkah.',
+         'Prostor je suh, čist, brez vonjav, ločen od kemikalij in topil.',
+         'Na vsaki posodi je označeno: naziv, serija, datum prejema.',
+         'Mleta goba je v 35-litrskih zaprtih kantah s silikagelom; v vsaj eni od embalaž mora biti zapisovalnik za nadzor vlage in temperature.',
+         'Uporablja se načelo FIFO.']},
+
+       {pod:'Skladiščenje embalaže'},
+       'Neodprta embalaža se lahko hrani izven cone HACCP v suhih, čistih prostorih, ločeno od topil, na policah ali paletah in ne na tleh. Odprta embalaža se prenese v laboratorij (čista cona) in hrani v čistih posodah ali vrečkah z vidnim datumom odprtja. Pred uporabo se vizualno pregleda — čistoča, brez prašnih delcev, brez poškodb.',
+
+       {pod:'Odpiranje delovnega naloga in izdaja surovin'},
+       'Pred začetkom proizvodnje se odpre nov delovni nalog, ki samodejno dobi unikatno oznako (na primer DN-25-001). Delovni nalog je osnovni dokument, ki povezuje vse faze postopka — od surovin do končnega izdelka — in mora biti odprt pred izdajo surovin v proizvodnjo.',
+       'Vanj se vnesejo oznaka, datum odprtja, vrsta in serija gobe, količina gobe, ki vstopa v ekstrakcijo, ter količina uporabljenega etanola v AAE.',
+       {tabela:{glava:['Poraba','Evidenca'], vrstice:[
+         ['Etanol (AAE)','{{OBR-0007}}'],
+         ['Ostale surovine in embalaža','{{OBR-0006}}']]}},
+       'Vse evidence in materialne kartice ključnih surovin so povezane z delovnim nalogom; skupaj tvorijo sledljiv sistem od vhodnih surovin do končnega izdelka. Po zaključku proizvodnje se delovni nalog arhivira skupaj z vsemi spremljajočimi zapisi — {{ZOP-0001}}, organoleptično analizo, trošarinsko evidenco in karticami izdelkov.',
+
+       {pod:'Skladiščenje končnih izdelkov'},
+       {ul:[
+         'Tinkture se izdelujejo izključno po naročilu, zato je hranjenje kratkotrajno — največ 48 ur po izdelavi.',
+         'Do predaje se hranijo na delovnem pultu v čisti coni oziroma v suhih in prezračevanih prostorih pri 10–25 °C.',
+         'Vsaka steklenička je označena z nazivom, serijo, datumom in rokom uporabe.',
+         'Vse serije so evidentirane v {{OBR-0008}} in {{OBR-0009}}.']},
+
+       {pod:'Pogoji in prostorske cone'},
+       'Prostorske cone ureja {{SOP-0001}}. V čistem delu laboratorija sta samo odprta embalaža in končni izdelki; topila in surovine so v zaprtih posodah v podporni coni. Temperatura in vlaga se spremljata z zapisovalnikom.',
+       {opomba:'Izvirnik se na ta postopek sklicuje s staro oznako „SOP-OR-01 Organizacija dela in prostorske cone“. Gre za {{SOP-0001}}; oznako je treba popraviti.'}]},
+
+     {naslov:'Vodenje in arhiviranje dokumentacije', blok:[
+       'Dokumentacija se vodi v kombinirani obliki.',
+       {pod:'Pisne evidence'},
+       'Vodijo se na obrazcih, po izpolnitvi podpišejo in arhivirajo v tematskih mapah v laboratoriju:',
+       {ul:['{{OBR-0001}}','{{OBR-0002}}','{{ZOP-0001}}','{{OBR-0003}}','{{OBR-0004}}','{{OBR-0005}}']},
+       {pod:'Elektronske evidence'},
+       'Vodijo se v elektronski obliki:',
+       {ul:['{{OBR-0007}}','{{OBR-0008}}','{{OBR-0009}}','{{OBR-0006}}']},
+       {opomba:'Izvirnik pri zadnji postavki navaja OBR-0009, čeprav gre za evidenco prejema surovin in embalaže — to je OBR-0006. Oznaka je v seznamu zapisana dvakrat.'},
+       'Ti zapisi so osnova za mesečni trošarinski obračun (FURS eTroD). Ob zaključku meseca se datoteka izvozi v PDF, elektronsko podpiše in pripne v eTroD, hkrati pa se natisne in arhivira.',
+       {opomba:'Vsa pisna in elektronska dokumentacija se hrani najmanj 5 let in je na zahtevo na voljo za notranji ali uradni nadzor.'}]},
+
+     {naslov:'Izvoz uradnih evidenc in trošarinska napoved', blok:[
+       'Glavni seznam delovnih nalogov in serij končnih izdelkov se vodi v datoteki »Materialne kartice in_nalogi.numbers«, kjer so na posameznih listih vse elektronske evidence iz prejšnje točke.',
+       'Do 20. dne v mesecu za pretekli mesec se pripravijo dokumenti PDF, elektronsko podpisani s kvalificiranim digitalnim potrdilom, nato natisnjeni in arhivirani. Podpisane materialne kartice etanola in končnih izdelkov se uporabijo kot priloge pri mesečni trošarinski napovedi; podatki morajo natančno ustrezati dejanski zalogi etanola in izhodu končnih izdelkov.',
+       {opomba:'Ta razdelek opisuje vodenje v preglednici Numbers. Elektronske evidence so medtem prešle v to aplikacijo, ki materialno kartico etanola tudi izpisuje. Postopek je treba uskladiti z dejanskim načinom vodenja.'}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
+  {oznaka:'SOP-0005', naziv:'Načrt za umik in odpoklic živila',
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0010'], povezani:['OBR-0005'],
+   verzije:[{v:'01', velja:'2025-12-26', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Zagotavljanje hitrega, učinkovitega in sledljivega postopka umika ali odpoklica živila, ki lahko predstavlja tveganje za zdravje potrošnikov ali ne izpolnjuje zahtev varnosti živil.']},
+
+     {naslov:'Obseg', blok:[
+       'Postopek se uporablja za vsa živila (prehranska dopolnila), ki jih GoMushroom proizvaja in polni ter dobavlja poslovnim kupcem.',
+       {opomba:'GoMushroom ne prodaja neposredno končnim potrošnikom. Odpoklic pri potrošnikih se po potrebi izvede v sodelovanju s poslovnim kupcem in pristojnimi organi.'}]},
+
+     {naslov:'Odgovornosti', blok:[
+       'Rok Golob je kot proizvajalec in nosilec dejavnosti odgovorna oseba za umik in odpoklic. Njegove naloge:',
+       {ul:[
+         'odloča o obsegu in stopnji umika oziroma odpoklica,',
+         'izvede oceno tveganja in jo zabeleži v {{OBR-0010}},',
+         'komunicira z organi nadzora (UVHVVR, po potrebi drugi pristojni organi),',
+         'obvešča poslovne kupce o potrebnih ukrepih,',
+         'po potrebi koordinira obveščanje končnih potrošnikov prek poslovnega kupca,',
+         'organizira zbiranje izdelkov pri GoMushroom in pri kupcu,',
+         'vodi vse evidence o umiku in odpoklicu.']}]},
+
+     {naslov:'Postopek umika in odpoklica', blok:[
+       {tabela:{glava:['Pojem','Pomen'], vrstice:[
+         ['Umik (withdrawal)','odstranitev živila iz distribucije pred prodajo potrošniku'],
+         ['Odpoklic (recall)','odstranitev živila od potrošnika']]}},
+
+       {pod:'Zaznava tveganja'},
+       'Do informacije o možni neskladnosti lahko pride pri notranji kontroli (analize, organoleptika, vizualni pregled), prek poslovnega kupca, prek pristojnega organa (UVHVVR, ZIRS) ali laboratorija ter prek dobavitelja surovine ali drugega verodostojnega vira.',
+       {opomba:'Identifikacija izdelka temelji na številki serije (lot) in oznaki delovnega naloga, ki povezuje vse evidence — proizvodnjo, analize, korektivne ukrepe in odpoklic.'},
+
+       {pod:'Ocena tveganja'},
+       'Oceni se resnost, verjetnost izpostavljenosti in obseg, vsaka na lestvici od 1 do 3:',
+       {tabela:{glava:['Merilo','1','2','3'], vrstice:[
+         ['Resnost','napaka v kakovosti brez vpliva na zdravje','možne blage težave pri občutljivih','možna resna škoda za zdravje, alergen, mikrobiološka nevarnost'],
+         ['Verjetnost','izdelek je še v karanteni oziroma ni dobavljen','del serije je pri kupcu','večina serije je pri kupcu ali že pri potrošnikih'],
+         ['Obseg','manjša serija ali omejeno število enot','srednji','več serij ali večje število enot']]}},
+       'Ocena in kratka utemeljitev se zapišeta v {{OBR-0010}}. Na tej podlagi se odloči, ali zadostuje interni ukrep (blokada v skladišču), ali je potreben umik pri kupcu, ali je potreben odpoklic. V dvomu se opravi posvet z UVHVVR.',
+
+       {pod:'Odločitev in obveščanje pristojnih organov'},
+       {opomba:'Če obstaja možnost, da izdelek ni varen za potrošnike, se pristojni organ (UVHVVR) obvesti nemudoma — praviloma najpozneje v 24 urah. Obveščanje se zabeleži v {{OBR-0010}}.'},
+
+       {pod:'Obveščanje poslovnega kupca'},
+       'Poslovni kupec se nemudoma obvesti o ustavitvi prodaje, blokadi serije in po potrebi zbiranju izdelkov. Posredujejo se osnovni podatki: izdelek, lot, rok uporabe, razlog, količine in jasna navodila za umik oziroma odpoklic. Obveščanje končnih potrošnikov se izvede v dogovoru s pristojnim organom in prek poslovnega kupca.',
+
+       {pod:'Izvedba'},
+       'Izdelki se zberejo v skladišču GoMushroom in po dogovoru pri poslovnem kupcu, izločijo in označijo z „NEUPORABNO — ODPOKLIC / KARANTENA“ ter hranijo ločeno. Količine in osnovni podatki se evidentirajo v {{OBR-0010}}.',
+
+       {pod:'Zaključek in korektivni ukrepi'},
+       'Po zaključku se odloči o končnem ravnanju (uničenje, analiza in podobno) in se to zabeleži v {{OBR-0010}}. Morebitni korektivni in preventivni ukrepi se vodijo na {{OBR-0005}} in se po potrebi sklicujejo na evidenco odpoklica.']},
+
+     {naslov:'Dokumentacija in evidence', blok:[
+       'Vsi zapisi o umiku in odpoklicu se hranijo najmanj tri leta in vključujejo:',
+       {ul:[
+         'izpolnjen obrazec {{OBR-0010}},',
+         'kopije obvestil in dopisov (UVHVVR, poslovni kupec, po potrebi javnost),',
+         'zapisnike ali dokazila o uničenju ali vračilu,',
+         'povezavo na {{OBR-0005}}.']}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
   {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
    vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
@@ -6789,29 +6913,87 @@ const DOKUMENTI=[
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda, ki je ostal v predlogi.'},
        {opomba:'Aplikacija se na tej kartici sklicuje na OBR-0003/02, veljavna izdaja pa je /01. Napačna navedba izvira iz noge zapisnika {{ZOP-0001}}, kjer namesto oznake zapisnika piše OBR-0003/02.'}]},
    ]},
-  {oznaka:'OBR-0004', naziv:'Evidenca regeneracije etanola',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0004_1).'}]}]},
+  {oznaka:'OBR-0004', naziv:'Evidenčni list — regeneracija etanola',
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Poenostavljeno beleženje regeneracije etanola iz procesnih frakcij s koncentracijo 40–70 vol % ter iz frakcij, ki se sicer vodijo kot procesne izgube (10–40 vol %).',
+       'Regeneracija se lahko izvaja več dni v več stopnjah: začne se z najnižjimi koncentracijami, ki se vračajo nazaj in postopno pridružujejo višjim, dokler ni dosežena procesno uporabna koncentracija nad 70 vol %.']},
 
+     {naslov:'Zgradba obrazca', blok:[
+       'Za vsako regeneracijo se zapišejo povprečna vhodna koncentracija, skupna masa, končna koncentracija, končna masa in izračunani absolutni alkohol.',
+       {tabela:{glava:['Stolpec','Vsebina'], vrstice:[
+         ['Nalog','oznaka delovnega naloga'],
+         ['Datum','datum regeneracije'],
+         ['Vhod','količina v kg ali L in koncentracija v % m/m oziroma % v/v'],
+         ['Izhod','količina v kg ali L in koncentracija v % m/m oziroma % v/v'],
+         ['Absolutni etanol','kg AAE in L AAE']]}}]},
+   ]},
   {oznaka:'OBR-0005', naziv:'Zapisnik odstopa in korektivnih ukrepov',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0005_1).'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0003','SOP-0005','DOK-0002'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Zapis odstopa od predpisanih pogojev in korektivnega ukrepa, ki je bil ob tem izveden. Je hkrati obrazec CAPA, na katerega se sklicujeta {{DOK-0002}} pri odstopanjih od kritičnih kontrolnih točk in {{SOP-0005}} pri umiku oziroma odpoklicu.']},
 
-  {oznaka:'OBR-0007', naziv:'Materialna kartica etanola',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0004'],
-   verzije:[{v:'01', velja:'', odobril:'', opis:'Aplikacija ta obrazec že izpisuje, v mapi Veljavno pa ga ni.'}],
+     {naslov:'Zgradba obrazca', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava','delovni nalog, izdelek, serija, tip tinkture (alkoholna ali glicerinska)'],
+         ['Korak CCP','1 sprejem surovine · 2 končna bariera · 3 polnjenje in zapiranje · drugo'],
+         ['Odstop','kaj je odstopalo; parameter, meja in rezultat — na primer „vlaga < 12 % → izmerjeno 12,8“'],
+         ['Takojšnji ukrep','ustavitev postopka · karantena · oznaka „NEUPORABNO“'],
+         ['Korektivni ukrep','kaj je bilo narejeno in kakšen je bil ponovni rezultat po ukrepu'],
+         ['Odločitev o seriji','nadaljuj · ponovi korak · prilagodi razmerja · zavrzi, z utemeljitvijo'],
+         ['Podpis','oseba, ki je izvedla in odobrila, z datumom']]}}]},
+
+     {naslov:'Opomba k izvirniku', blok:[
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana oznaka CAPA-25-001 — ostanek izpolnjenega izvoda, ki je ostal v predlogi.'}]},
+   ]},
+  {oznaka:'OBR-0006', naziv:'Evidenca prejema surovin in embalaže',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
-     'Obrazec nastane kot izpis kartice etanola: vsi vhodi in izhodi v L AAE za izbrano obdobje, s stanjem zaloge kot njihovo razliko. Ne izpolnjuje se ročno.',
-     {opomba:'Aplikacija ta obrazec tiska pod oznako OBR-0007/01, v mapi Veljavno pa ga ni — prav tako ni OBR-0006, OBR-0008 in OBR-0009. Ali obstaja drugje ali pa je bila oznaka dodeljena, ne da bi obrazec nastal. Dokler to ni razčiščeno, tu stoji brez veljavnosti.'}]}]},
+     'Vpisujejo se naziv, datum, količina, dobavitelj, serija ter presoja „ustreza / ne ustreza“. Vsak prejem gobe dobi svojo unikatno oznako serije.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici, ne kot obrazec v mapi Veljavno. Vsebina še ni prenesena.'}]}]},
 
+  {oznaka:'OBR-0007', naziv:'Materialna kartica surovine — etanol',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}. Izpisuje jo aplikacija.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Kartica nosi vse vhode in izhode etanola v L AAE za izbrano obdobje; stanje zaloge je njihova razlika. Poraba etanola po delovnem nalogu se zapiše nanjo, kartica pa je podlaga za mesečno trošarinsko napoved.',
+     {opomba:'Obrazca ni v mapi Veljavno, ker je elektronska evidenca — {{SOP-0004}} ga navaja med evidencami, ki se vodijo elektronsko. V tej aplikaciji ga izpiše kartica etanola.'}]}]},
+
+  {oznaka:'OBR-0008', naziv:'Materialna kartica izdelka',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Evidenca serij končnih izdelkov. Podpisan izvoz te kartice je priloga mesečne trošarinske napovedi.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici. Vsebina še ni prenesena.'}]}]},
+
+  {oznaka:'OBR-0009', naziv:'Evidenca delovnih nalogov in serij končnih izdelkov',
+   vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Glavni seznam delovnih nalogov in serij končnih izdelkov. Ob odprtju naloga se mu tu dodeli unikatna oznaka.',
+     {opomba:'Elektronska evidenca — vodi se v preglednici. Vsebina še ni prenesena.'}]}]},
   {oznaka:'OBR-0010', naziv:'Evidenca umika in odpoklica živila',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0005'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0010_1).'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0005','OBR-0005'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0005}}; datuma veljavnosti obrazec sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Evidenca celotnega poteka umika ali odpoklica po {{SOP-0005}} — od zaznave neskladnosti prek ocene tveganja in odločitve do izvedbe in zaključka.']},
 
-  // Zapisniki o proizvodnji
+     {naslov:'Zgradba obrazca', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Osnovni podatki o izdelku','naziv, serija (LOT), datum proizvodnje, rok uporabe, tip tinkture, količina v seriji'],
+         ['Zaznava neskladnosti','datum zaznave, vir informacije (notranja kontrola · poslovni kupec · dobavitelj · pristojni organ · drugo), opis odstopanja'],
+         ['Ocena tveganja','resnost, verjetnost in obseg, vsak na lestvici 1–3, s kratko utemeljitvijo'],
+         ['Odločitev in ukrepi','blokada v skladišču · umik pri kupcu · odpoklic, z obveščanjem organa in kupca'],
+         ['Zaključek','končno ravnanje z izdelki in povezava na {{OBR-0005}}']]}}]},
+   ]},
   {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
    vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0003','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
@@ -7028,7 +7210,7 @@ function renderDokumenti(){
       <div class="dn-header" onclick="odpriDokument('${d.oznaka}')">
         <div class="dn-info">
           <div class="dn-name">${dokPolnaOznaka(d)} <span style="font-size:.75rem;color:var(--muted)">${d.naziv}</span></div>
-          <div class="dn-meta">${d.vrsta}${d.lastnik?' · '+d.lastnik:''}</div>
+          <div class="dn-meta">${d.vrsta}${d.oblika?' · '+d.oblika:''}${d.lastnik?' · '+d.lastnik:''}</div>
           <div class="dn-meta">${dokDatum(v)?`Velja od ${fmtDate(v.velja)}`
             :v?'Velja · datum ni prenesen':'Ni v veljavi'}${vse.length>1?` · ${vse.length} verziji`:''}</div>
         </div>
@@ -7056,6 +7238,7 @@ function odpriDokument(oznaka){
         <span><b>Lastnik</b>${d.lastnik||'—'}</span>
         <span><b>Stanje</b>${st.napis}</span>
         ${d.klasifikacija?`<span><b>Klasifik.</b>${d.klasifikacija}</span>`:''}
+        ${d.oblika?`<span><b>Oblika</b>${d.oblika}</span>`:''}
       </div>
     </div>
     ${st.kljuc!=='velja'

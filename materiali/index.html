@@ -7289,8 +7289,143 @@ function odpriDokument(oznaka){
       ${dokZgodovinaHtml(d)}
     </section>
     ${dokPovezaniHtml(d)}
+    ${imaPrazenObrazec(d)?`<button type="button" class="korak-akcija"
+      onclick="natisniPrazenObrazec('${d.oznaka}')">📝 Natisni prazen obrazec za izpolnjevanje</button>`:''}
     <button type="button" class="korak-akcija" onclick="natisniDokument('${d.oznaka}')">🖨 Natisni / shrani v PDF</button>`;
   openSheet('dokOverlay');
+}
+
+// ── Prazni obrazci za rocno izpolnjevanje ─────────────────────────────────
+// Dnevnik prostorov in evidenca ciscenja se izpolnjujeta na roko, na papirju.
+// Register zato ponudi prazen obrazec za tisk: mesecno mrezo z dnevi, kot je
+// v izvirniku. Oznaka z verzijo in sklic na postopek se vzameta iz registra,
+// da natisnjen list ne more nositi zastarele verzije.
+const PRAZNI_OBRAZCI={
+  'OBR-0001':{
+    naslov:'Dnevnik uporabe prostorov — evidenca dela', sop:'SOP-0001',
+    skupine:[['Predprostor',4],['Laboratorij',5],['Izvajalec',1]],
+    stolpci:[
+      ['Sterilizacija','steklovina, agar, žito, substrati'],
+      ['Priprava topila','mešanje, redčenje'],
+      ['Ekstrakcija','alkoholna, vodna, tlačna'],
+      ['Pomivanje','steklovina, posode'],
+      ['Koncentriranje','EtOH, HVE, TE, Gly'],
+      ['Formulacija','EtOH, Gly'],
+      ['Polnjenje','EtOH, Gly'],
+      ['Stiskanje, filtracija','EtOH, HVE, TE'],
+      ['Micelij','kloniranje, inokulacija substratov'],
+      ['Podpis',''],
+    ],
+    legenda:[
+      ['+','prostor je bil uporabljen za delo'],
+      ['prazno','prostor tisti dan ni bil uporabljen'],
+      ['+ (opomba)','prostor je bil uporabljen, dodana je kratka razlaga ali vrsta dela — npr. „+ (ekstrakcija EtOH)“'],
+    ]},
+  'OBR-0002':{
+    naslov:'Evidenca in kontrola čiščenja prostorov', sop:'SOP-0002',
+    skupine:[['Dnevno čiščenje — v primeru uporabe',4],['Tedensko čiščenje',5],
+             ['Mesečno čiščenje',2],['Izvajalec',1]],
+    stolpci:[
+      ['Tla','suho brisanje / sesanje'],
+      ['Tla','po potrebi mokro brisanje'],
+      ['Vratne kljuke, lijak, delovni pulti','mokro brisanje, razkuževanje'],
+      ['Sterilizacija','ozon in UV svetloba'],
+      ['Lab. pulti, delovne površine, lijaki','mokro brisanje, razkuževanje'],
+      ['Tla','mokro brisanje, razkuževanje'],
+      ['Okenske police, vidni madeži','mokro brisanje, razkuževanje'],
+      ['Ometanje pajčevine',''],
+      ['Posoda za odpadke','pobiranje in odstranjevanje smeti'],
+      ['Tla pod pulti, težko dosegljiva mesta','mokro brisanje, razkuževanje'],
+      ['Notranjost omar in predalov za steklovino','mokro brisanje, razkuževanje'],
+      ['Podpis',''],
+    ],
+    legenda:[
+      ['+','postopek čiščenja oziroma razkuževanja je bil izveden; vpiše se tudi datum in podpis izvajalca'],
+      ['prazno','postopek ni bil izveden'],
+      ['+ (opomba)','postopek je bil izveden, dodana je kratka razlaga ali posebnost — npr. „+ (čiščenje po razlitju)“'],
+    ]},
+};
+function imaPrazenObrazec(d){return !!PRAZNI_OBRAZCI[d.oznaka];}
+
+function natisniPrazenObrazec(oznaka){
+  const d=dokNajdi(oznaka), o=PRAZNI_OBRAZCI[oznaka];
+  if(!d||!o){toast('Za ta dokument praznega obrazca ni');return;}
+  const sop=dokNajdi(o.sop);
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Dnevi so razdeljeni na dve strani, kot v izvirniku - na eni sami bi bile
+  // vrstice pretesne, da bi se dalo vpisati z roko.
+  const vrstice=(od,doK)=>{let h='';
+    for(let i=od;i<=doK;i++)h+=`<tr><td class="dan">${String(i).padStart(2,'0')}.</td>`
+      +o.stolpci.map(()=>'<td></td>').join('')+'</tr>';
+    return h;};
+  // Stolpec Dan stoji pred skupinami, zato v vrhnji vrstici sega cez obe
+  // glavi - sicer bi se skupine zamaknile za en stolpec.
+  const tabela=(od,doK)=>`<table>
+    <thead><tr><th class="dan prazna" rowspan="2">Dan</th>${o.skupine.map(([ime,n])=>
+      `<th colspan="${n}" class="sk">${esc(ime)}</th>`).join('')}</tr>
+    <tr>${o.stolpci.map(([a,b])=>
+      `<th><b>${esc(a)}</b>${b?`<span>${esc(b)}</span>`:''}</th>`).join('')}</tr></thead>
+    <tbody>${vrstice(od,doK)}</tbody></table>`;
+  const glavaLista=stran=>`<div class="hd">
+    <div><div class="nas">${esc(o.naslov)}</div>
+      <div class="sif">${esc(dokPolnaOznaka(d))}${sop?' · '+esc(dokPolnaOznaka(sop)):''}</div></div>
+    <div class="mes">Mesec / leto: <span class="crta"></span></div>
+  </div>`;
+  const noga=stran=>`<div class="ft"><span>INTERNO</span>
+    <span>${stran}/2</span><span>${esc(dokPolnaOznaka(d))}</span></div>`;
+
+  const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
+<title>${esc(dokPolnaOznaka(d))} — ${esc(o.naslov)}</title>
+<style>
+@page{size:A4 landscape;margin:10mm}
+body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weight:300;
+  color:#1a1209;font-size:9pt;margin:0;padding:1cm}
+.list{page-break-after:always}
+.list:last-of-type{page-break-after:auto}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;
+  border-bottom:1.4pt solid #1a1209;padding-bottom:.25rem;margin-bottom:.35rem}
+.nas{font-size:12pt;font-weight:500}
+.sif{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45}
+.mes{font-size:9pt;white-space:nowrap}
+.crta{display:inline-block;width:38mm;border-bottom:.7pt solid #1a1209}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th,td{border:.5pt solid #b9ad99}
+th{background:#f4f1ea;-webkit-print-color-adjust:exact;print-color-adjust:exact;
+  font-weight:500;font-size:6pt;line-height:1.15;padding:1mm .6mm;vertical-align:top;
+  text-align:center;overflow-wrap:anywhere}
+th.sk{font-size:7pt;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  background:#e8e2d4;padding:1.1mm .6mm}
+th b{display:block;font-weight:600}
+th span{display:block;color:#6b6152;font-weight:300}
+th.dan,td.dan{width:9mm}
+th.prazna{background:#e8e2d4}
+td{height:6.4mm}
+td.dan{text-align:center;font-size:7.5pt;color:#6b6152;
+  background:#faf8f4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.leg{margin-top:.4rem;font-size:7.5pt;line-height:1.5}
+.leg b{font-weight:600}
+.opombe{margin-top:.35rem;font-size:7.5pt}
+.opombe .polje{border:.5pt solid #b9ad99;height:14mm;margin-top:.15rem}
+.ft{display:flex;justify-content:space-between;font-size:7pt;color:#6b6152;
+  border-top:.5pt solid #d8cdb6;margin-top:.3rem;padding-top:.15rem}
+.btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1rem}
+.btnrow button{padding:.55rem 1.5rem;border:none;border-radius:4px;background:#1a1209;
+  color:#fff;font-family:inherit;font-size:.8rem;cursor:pointer}
+@media print{.btnrow{display:none}body{padding:0}}
+</style></head><body>
+<div class="list">${glavaLista(1)}${tabela(1,18)}${noga(1)}</div>
+<div class="list">${glavaLista(2)}${tabela(19,31)}
+  <div class="leg"><b>Legenda:</b> ${o.legenda.map(([z,p])=>
+    `<b>${esc(z)}</b> — ${esc(p)}`).join(' · ')}</div>
+  <div class="opombe">Opombe:<div class="polje"></div></div>
+  ${noga(2)}</div>
+<div class="btnrow"><button onclick="window.print()">🖨 Natisni</button></div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(!win){const a=document.createElement('a');a.href=url;a.download=oznaka+'-prazen.html';a.click();}
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 // Natisnjen izvod je tisti, ki ga podpises - dokument velja od podpisa, zato

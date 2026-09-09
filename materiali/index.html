@@ -6764,6 +6764,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
    vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen', blok:[
@@ -6810,6 +6811,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'DOK-0002', naziv:'Analiza tveganj in kritične točke procesa',
    vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003','DOK-0001'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen', blok:[
@@ -6823,8 +6825,46 @@ const DOKUMENTI=[
        {opomba:'Meja vlage < 12 % izhaja iz cilja aw ≤ 0,70 za preprečevanje rasti plesni v surovini. Končna bariera se zagotavlja z etanolom ≥ 25 % v/v ali glicerolom ≥ 70 % m/m — glej {{DOK-0001}}.'},
        'Odstopanja in korektivni ukrepi se v vsakem primeru zabeležijo v {{OBR-0005}}.']},
    ]},
+  {oznaka:'DOK-0003', naziv:'Profil podjetja', vrsta:'Dokument', lastnik:'Rok Golob',
+   povezani:['SOP-0003','SOP-0004','OBR-0009'],
+   verzije:[{v:'01', velja:'', odobril:'', opis:'Izvirnik nima oznake, verzije ne datuma. Oznaka DOK-0003 je predlog registra.'}],
+   vsebina:[
+     {naslov:'Stanje', blok:[
+       {opomba:'Ta dokument v izvirniku nima oznake, številke verzije ne datuma veljavnosti — v glavi piše samo „Profil podjetja — GoMushroom, Rok Golob s.p.“, v nogi pa „Dokument je del sistema notranje kontrole GoMushroom“. Oznaka DOK-0003 je predlog registra; dokler mu ne določiš oznake, verzije in datuma, tu ne velja.'}]},
+
+     {naslov:'Osnovni podatki', blok:[
+       {tabela:{glava:['Postavka','Vsebina'], vrstice:[
+         ['Naziv','GoMushroom'],
+         ['Odgovorna oseba','Rok Golob'],
+         ['Dejavnost','gojenje medicinskih gob ter proizvodnja prehranskih dopolnil — tekočih ekstraktov medicinskih gob']]}},
+       'GoMushroom je manjši specializiran proizvajalec tekočih ekstraktov medicinskih gob. Proizvodnja poteka v lastnem laboratoriju, kjer se izvajajo postopki gojenja gob, ekstrakcije učinkovin, formulacije in polnjenja končnih izdelkov.',
+       'Del surovine podjetje prideluje samo, predvsem gobo reishi (Ganoderma lucidum), druge surovine pa se pridobivajo od preverjenih dobaviteljev.',
+       'Izdelki se dobavljajo poslovnim kupcem (B2B). GoMushroom končnih izdelkov ne prodaja neposredno končnim potrošnikom.']},
+
+     {naslov:'Proizvodni program', blok:[
+       'Glavni proizvodi so tekoči ekstrakti medicinskih gob:',
+       {ul:['reishi (Ganoderma lucidum)','resasti bradovec (Hericium erinaceus)','chaga (Inonotus obliquus)']},
+       'Izdelujejo se kot alkoholne in glicerinske tinkture.']},
+
+     {naslov:'Tehnološki proces', blok:[
+       {st:['prejem in kontrola surovin','ekstrakcija učinkovin iz gob','koncentracija ekstrakta',
+            'formulacija končnega izdelka','polnjenje in označevanje','skladiščenje in dobava kupcem']},
+       'Postopek je podrobno opisan v {{SOP-0003}}.']},
+
+     {naslov:'Sistem sledljivosti', blok:[
+       'Vsaka proizvodna serija je označena z delovnim nalogom, ki se vodi na obrazcu {{OBR-0009}}. Na oznako delovnega naloga so vezani:',
+       {ul:['{{ZOP-0001}} — zapisnik o proizvodnji','{{OBR-0003}} — organoleptična analiza ekstrakta','{{OBR-0005}} — zapisi o odstopanjih in korektivnih ukrepih']},
+       'Serija končnega izdelka je evidentirana na obrazcu {{OBR-0009}}, kjer je neposredno povezana z ustreznim delovnim nalogom. Taka struktura omogoča sledljivost od uporabljene surovine prek proizvodnega postopka do serije končnega izdelka.']},
+
+     {naslov:'Dopolnitev sistema dokumentacije', blok:[
+       'Sistem notranje kontrole je bil prvotno vzpostavljen v okviru dokumentacije HACCP (2024). Leta 2025 je bil nadgrajen s standardnimi operativnimi postopki, ki podrobneje urejajo posamezne procese proizvodnje, sledljivosti, higiene, nadzora kakovosti ter ukrepanja ob odstopanjih ali odpoklicu.',
+       'Obstoječi obrazci HACCP ostajajo veljavni in se uporabljajo za spremljanje procesov, kjer postopki SOP še niso posebej pripravljeni.',
+       {opomba:'Letnica 2024 ni v nasprotju z ustanovitvijo podjetja: sistem HACCP je bil vzpostavljen pred odprtjem GoMushroom, potrjeno. Zaporedje je: HACCP 2024 → ustanovitev podjetja 8. 2. 2025, od koder se vse serije vodijo kot uradne → prvi standardni operativni postopek velja od 31. 7. 2025 ({{SOP-0001}}).'}]},
+   ]},
+
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
+   nadrejeni:'SOP-0001',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0001}}.'}]
@@ -6849,6 +6889,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0002'],
+   nadrejeni:'SOP-0002',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0002}}.'}],
@@ -6876,6 +6917,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. V nogi izvirnika je zapisana kot OBR–0003/01, priloga k {{SOP-0003}}.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6915,6 +6957,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'OBR-0004', naziv:'Evidenčni list — regeneracija etanola',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6933,6 +6976,7 @@ const DOKUMENTI=[
   {oznaka:'OBR-0005', naziv:'Zapisnik odstopa in korektivnih ukrepov',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0003','SOP-0005','DOK-0002'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6953,6 +6997,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'OBR-0006', naziv:'Evidenca prejema surovin in embalaže',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Vpisujejo se naziv, datum, količina, dobavitelj, serija ter presoja „ustreza / ne ustreza“. Vsak prejem gobe dobi svojo unikatno oznako serije.',
@@ -6960,6 +7005,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0007', naziv:'Materialna kartica surovine — etanol',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}. Izpisuje jo aplikacija.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Kartica nosi vse vhode in izhode etanola v L AAE za izbrano obdobje; stanje zaloge je njihova razlika. Poraba etanola po delovnem nalogu se zapiše nanjo, kartica pa je podlaga za mesečno trošarinsko napoved.',
@@ -6967,6 +7013,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0008', naziv:'Materialna kartica izdelka',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Evidenca serij končnih izdelkov. Podpisan izvoz te kartice je priloga mesečne trošarinske napovedi.',
@@ -6974,6 +7021,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0009', naziv:'Evidenca delovnih nalogov in serij končnih izdelkov',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Glavni seznam delovnih nalogov in serij končnih izdelkov. Ob odprtju naloga se mu tu dodeli unikatna oznaka.',
@@ -6981,6 +7029,7 @@ const DOKUMENTI=[
   {oznaka:'OBR-0010', naziv:'Evidenca umika in odpoklica živila',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0005','OBR-0005'],
+   nadrejeni:'SOP-0005',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0005}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6997,6 +7046,7 @@ const DOKUMENTI=[
   {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
    vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0003','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
+   nadrejeni:'SOP-0003',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti zapisnik sam ne nosi.'}],
@@ -7048,6 +7098,7 @@ const DOKUMENTI=[
   {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
    vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO', razveljavljen:true,
    povezani:['SOP-0003','ZOP-0001'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'', odobril:'', opis:'Ni v veljavi. Veljavni zapisnik o proizvodnji je {{ZOP-0001}}.'}],
    vsebina:[
      {naslov:'Stanje', blok:[
@@ -7106,9 +7157,30 @@ function dokVeljavna(d){
   const v=dokVerzije(d).filter(x=>x.velja&&(x.velja==='?'||x.velja<=danes));
   return v.length?v[v.length-1]:null;
 }
-function dokBrezDatuma(d){
+// Obrazec ali priloga velja z dnem, ko zacne veljati postopek, ki mu pripada -
+// tako pise v nogi izvirnika, kjer namesto lastnega datuma stoji sklic na SOP.
+// Datuma zato ne prepisujemo, ampak ga izpeljemo: ko postopek dobi novo izdajo
+// z novim datumom, se popravi tudi pri vseh njegovih prilogah.
+function dokNadrejeni(d){return d&&d.nadrejeni?dokNajdi(d.nadrejeni):null;}
+function dokVeljavnost(d){
   const v=dokVeljavna(d);
-  return !!v&&!dokDatum(v);
+  if(!v)return null;
+  if(dokDatum(v))return {datum:v.velja,vir:'lasten'};
+  const n=dokNadrejeni(d), nv=n?dokVeljavna(n):null;
+  if(nv&&dokDatum(nv))return {datum:nv.velja,vir:'prevzet',iz:n};
+  return {datum:null,vir:'neznan'};
+}
+function dokBrezDatuma(d){
+  const x=dokVeljavnost(d);
+  return !!x&&!x.datum;
+}
+// Kadar je datum prevzet, veljavna izdaja pa ni prva, iz izvirnikov ni
+// razvidno, kdaj je nadomestila prejsnjo. To je vrzel in mora biti vidna.
+function dokVrzelIzdaje(d){
+  const x=dokVeljavnost(d);
+  if(!x||x.vir!=='prevzet')return false;
+  const vs=dokVerzije(d), v=dokVeljavna(d);
+  return vs.length>1&&vs[0]!==v;
 }
 function dokPolnaOznaka(d){
   const v=dokVeljavna(d);
@@ -7237,9 +7309,11 @@ function renderDokumenti(){
     return;
   }
   const brezDatuma=DOKUMENTI.filter(dokBrezDatuma).length;
+  const vrzeli=DOKUMENTI.filter(dokVrzelIzdaje).map(d=>d.oznaka);
   const cakajo=DOKUMENTI.filter(d=>dokStanje(d).kljuc==='priprava').length;
   const vrstice=[];
-  if(brezDatuma)vrstice.push(`📅 Pri ${brezDatuma} dokumentih datum veljavnosti še ni prenesen iz izvirnika.`);
+  if(brezDatuma)vrstice.push(`📅 Pri ${brezDatuma} dokumentih datuma veljavnosti ni.`);
+  if(vrzeli.length)vrstice.push(`⚠ ${vrzeli.join(', ')} ${vrzeli.length===1?'ni v prvi izdaji':'niso v prvi izdaji'}, datum pa je prevzet iz nadrejenega postopka — kdaj je nova izdaja nadomestila prejšnjo, iz izvirnikov ni razvidno.`);
   if(cakajo)vrstice.push(`⏳ ${cakajo} ${cakajo===1?'dokument ni':'dokumentov ni'} v veljavi.`);
   const opozorilo=vrstice.length?`<div class="dok-opozorilo">${vrstice.join('<br>')}</div>`:'';
   el.innerHTML=opozorilo+vrste.map(d=>{
@@ -7249,8 +7323,11 @@ function renderDokumenti(){
         <div class="dn-info">
           <div class="dn-name">${dokPolnaOznaka(d)} <span style="font-size:.75rem;color:var(--muted)">${d.naziv}</span></div>
           <div class="dn-meta">${d.vrsta}${d.oblika?' · '+d.oblika:''}${d.lastnik?' · '+d.lastnik:''}</div>
-          <div class="dn-meta">${dokDatum(v)?`Velja od ${fmtDate(v.velja)}`
-            :v?'Velja · datum ni prenesen':'Ni v veljavi'}${vse.length>1?` · ${vse.length} verziji`:''}</div>
+          <div class="dn-meta">${(()=>{const x=dokVeljavnost(d);
+            if(!x)return 'Ni v veljavi';
+            if(!x.datum)return 'Velja · datum ni znan';
+            return `Velja od ${fmtDate(x.datum)}${x.vir==='prevzet'?' · prevzeto':''}`;})()
+            }${vse.length>1?` · ${vse.length} verziji`:''}</div>
         </div>
         <div class="dn-right">
           <div class="status-badge ${st.cls}">${st.napis}</div>
@@ -7271,7 +7348,9 @@ function odpriDokument(oznaka){
       <div class="dok-gvrstice">
         <span><b>Oznaka</b>${dokPolnaOznaka(d)}</span>
         <span><b>Vrsta</b>${d.vrsta}</span>
-        <span><b>Velja od</b>${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}</span>
+        <span><b>Velja od</b>${(()=>{const x=dokVeljavnost(d);
+          if(!x||!x.datum)return '—';
+          return fmtDate(x.datum)+(x.vir==='prevzet'?` (iz ${dokPolnaOznaka(x.iz)})`:'');})()}</span>
         <span><b>Odobril</b>${v&&v.odobril?v.odobril:'—'}</span>
         <span><b>Lastnik</b>${d.lastnik||'—'}</span>
         <span><b>Stanje</b>${st.napis}</span>
@@ -7282,23 +7361,177 @@ function odpriDokument(oznaka){
     ${st.kljuc!=='velja'
       ?`<div class="dok-opomba">Ta dokument ni v veljavi: nima potrjene verzije. Po njem se ne dela, dokler ga ne potrdiš.</div>`
       :dokBrezDatuma(d)
-      ?`<div class="dok-opomba">Dokument je v veljavi, datum veljavnosti pa še ni prenesen iz izvirnika. Vpiši ga, da bo iz registra razvidno, po kateri verziji je bila delana posamezna serija.</div>`:''}
+      ?`<div class="dok-opomba">Dokument je v veljavi, datuma veljavnosti pa ni ne v izvirniku ne pri nadrejenem dokumentu.</div>`
+      :''}
+    ${dokVrzelIzdaje(d)?`<div class="dok-opomba">Datum veljavnosti je prevzet iz ${dokPolnaOznaka(dokNadrejeni(d))}, ker ga izvirnik sam ne nosi. Ta dokument pa ni v prvi izdaji — kdaj je izdaja ${dokVeljavna(d).v} nadomestila prejšnjo, iz izvirnikov ni razvidno. Za serije iz vmesnega obdobja register ne more povedati, katera izdaja je takrat veljala.</div>`:''}
     ${dokVsebinaHtml(d)}
     <section class="dok-r">
       <h3 class="dok-h"><span class="dok-n">≡</span>Zgodovina sprememb</h3>
       ${dokZgodovinaHtml(d)}
     </section>
     ${dokPovezaniHtml(d)}
+    ${imaPrazenObrazec(d)?`<button type="button" class="korak-akcija"
+      onclick="natisniPrazenObrazec('${d.oznaka}')">📝 Natisni prazen obrazec za izpolnjevanje</button>`:''}
     <button type="button" class="korak-akcija" onclick="natisniDokument('${d.oznaka}')">🖨 Natisni / shrani v PDF</button>`;
   openSheet('dokOverlay');
 }
 
+let _gmLogoTisk=null;
+async function gmLogoZaTisk(){
+  if(_gmLogoTisk!==null)return _gmLogoTisk;
+  try{
+    const r=await fetch('/assets/logo-h168.webp');
+    const b=await r.blob();
+    _gmLogoTisk=await new Promise(res=>{
+      const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(b);});
+  }catch(e){_gmLogoTisk='';}
+  return _gmLogoTisk;
+}
+
+// ── Prazni obrazci za rocno izpolnjevanje ─────────────────────────────────
+// Dnevnik prostorov in evidenca ciscenja se izpolnjujeta na roko, na papirju.
+// Register zato ponudi prazen obrazec za tisk: mesecno mrezo z dnevi, kot je
+// v izvirniku. Oznaka z verzijo in sklic na postopek se vzameta iz registra,
+// da natisnjen list ne more nositi zastarele verzije.
+const PRAZNI_OBRAZCI={
+  'OBR-0001':{
+    naslov:'Dnevnik uporabe prostorov — evidenca dela', sop:'SOP-0001',
+    skupine:[['Predprostor',4],['Laboratorij',5],['Izvajalec',1]],
+    stolpci:[
+      ['Sterilizacija','steklovina, agar, žito, substrati'],
+      ['Priprava topila','mešanje, redčenje'],
+      ['Ekstrakcija','alkoholna, vodna, tlačna'],
+      ['Pomivanje','steklovina, posode'],
+      ['Koncentriranje','EtOH, HVE, TE, Gly'],
+      ['Formulacija','EtOH, Gly'],
+      ['Polnjenje','EtOH, Gly'],
+      ['Stiskanje, filtracija','EtOH, HVE, TE'],
+      ['Micelij','kloniranje, inokulacija substratov'],
+      ['Podpis',''],
+    ],
+    legenda:[
+      ['+','prostor je bil uporabljen za delo'],
+      ['prazno','prostor tisti dan ni bil uporabljen'],
+      ['+ (opomba)','prostor je bil uporabljen, dodana je kratka razlaga ali vrsta dela — npr. „+ (ekstrakcija EtOH)“'],
+    ]},
+  'OBR-0002':{
+    naslov:'Evidenca in kontrola čiščenja prostorov', sop:'SOP-0002',
+    skupine:[['Dnevno čiščenje — v primeru uporabe',4],['Tedensko čiščenje',5],
+             ['Mesečno čiščenje',2],['Izvajalec',1]],
+    stolpci:[
+      ['Tla','suho brisanje / sesanje'],
+      ['Tla','po potrebi mokro brisanje'],
+      ['Vratne kljuke, lijak, delovni pulti','mokro brisanje, razkuževanje'],
+      ['Sterilizacija','ozon in UV svetloba'],
+      ['Lab. pulti, delovne površine, lijaki','mokro brisanje, razkuževanje'],
+      ['Tla','mokro brisanje, razkuževanje'],
+      ['Okenske police, vidni madeži','mokro brisanje, razkuževanje'],
+      ['Ometanje pajčevine',''],
+      ['Posoda za odpadke','pobiranje in odstranjevanje smeti'],
+      ['Tla pod pulti, težko dosegljiva mesta','mokro brisanje, razkuževanje'],
+      ['Notranjost omar in predalov za steklovino','mokro brisanje, razkuževanje'],
+      ['Podpis',''],
+    ],
+    legenda:[
+      ['+','postopek čiščenja oziroma razkuževanja je bil izveden; vpiše se tudi datum in podpis izvajalca'],
+      ['prazno','postopek ni bil izveden'],
+      ['+ (opomba)','postopek je bil izveden, dodana je kratka razlaga ali posebnost — npr. „+ (čiščenje po razlitju)“'],
+    ]},
+};
+function imaPrazenObrazec(d){return !!PRAZNI_OBRAZCI[d.oznaka];}
+
+async function natisniPrazenObrazec(oznaka){
+  const d=dokNajdi(oznaka), o=PRAZNI_OBRAZCI[oznaka];
+  if(!d||!o){toast('Za ta dokument praznega obrazca ni');return;}
+  const logo=await gmLogoZaTisk();
+  const sop=dokNajdi(o.sop);
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Dnevi so razdeljeni na dve strani, kot v izvirniku - na eni sami bi bile
+  // vrstice pretesne, da bi se dalo vpisati z roko.
+  const vrstice=(od,doK)=>{let h='';
+    for(let i=od;i<=doK;i++)h+=`<tr><td class="dan">${String(i).padStart(2,'0')}.</td>`
+      +o.stolpci.map(()=>'<td></td>').join('')+'</tr>';
+    return h;};
+  // Stolpec Dan stoji pred skupinami, zato v vrhnji vrstici sega cez obe
+  // glavi - sicer bi se skupine zamaknile za en stolpec.
+  const tabela=(od,doK)=>`<table>
+    <thead><tr><th class="dan prazna" rowspan="2">Dan</th>${o.skupine.map(([ime,n])=>
+      `<th colspan="${n}" class="sk">${esc(ime)}</th>`).join('')}</tr>
+    <tr>${o.stolpci.map(([a,b])=>
+      `<th><b>${esc(a)}</b>${b?`<span>${esc(b)}</span>`:''}</th>`).join('')}</tr></thead>
+    <tbody>${vrstice(od,doK)}</tbody></table>`;
+  const glavaLista=stran=>`<div class="hd">
+    <div class="levo">${logo?`<img class="logo" src="${logo}" alt="">`:''}
+      <div><div class="nas">${esc(o.naslov)}</div>
+      <div class="sif">${esc(dokPolnaOznaka(d))}${sop?' · '+esc(dokPolnaOznaka(sop)):''}</div></div></div>
+    <div class="mes">Mesec / leto: <span class="crta"></span></div>
+  </div>`;
+  const noga=stran=>`<div class="ft"><span>INTERNO</span>
+    <span>${stran}/2</span><span>${esc(dokPolnaOznaka(d))}</span></div>`;
+
+  const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
+<title>${esc(dokPolnaOznaka(d))} — ${esc(o.naslov)}</title>
+<style>
+@page{size:A4 landscape;margin:10mm}
+body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weight:300;
+  color:#1a1209;font-size:9pt;margin:0;padding:1cm}
+.list{page-break-after:always}
+.list:last-of-type{page-break-after:auto}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;
+  border-bottom:1.4pt solid #1a1209;padding-bottom:.25rem;margin-bottom:.35rem}
+.levo{display:flex;align-items:center;gap:3mm}
+.logo{height:9mm;width:auto;display:block}
+.nas{font-size:12pt;font-weight:500}
+.sif{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45}
+.mes{font-size:9pt;white-space:nowrap}
+.crta{display:inline-block;width:38mm;border-bottom:.7pt solid #1a1209}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th,td{border:.5pt solid #b9ad99}
+th{background:#f4f1ea;-webkit-print-color-adjust:exact;print-color-adjust:exact;
+  font-weight:500;font-size:6pt;line-height:1.15;padding:1mm .6mm;vertical-align:top;
+  text-align:center;overflow-wrap:anywhere}
+th.sk{font-size:7pt;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  background:#e8e2d4;padding:1.1mm .6mm}
+th b{display:block;font-weight:600}
+th span{display:block;color:#6b6152;font-weight:300}
+th.dan,td.dan{width:9mm}
+th.prazna{background:#e8e2d4}
+td{height:6.4mm}
+td.dan{text-align:center;font-size:7.5pt;color:#6b6152;
+  background:#faf8f4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.leg{margin-top:.4rem;font-size:7.5pt;line-height:1.5}
+.leg b{font-weight:600}
+.opombe{margin-top:.35rem;font-size:7.5pt}
+.opombe .polje{border:.5pt solid #b9ad99;height:14mm;margin-top:.15rem}
+.ft{display:flex;justify-content:space-between;font-size:7pt;color:#6b6152;
+  border-top:.5pt solid #d8cdb6;margin-top:.3rem;padding-top:.15rem}
+.btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1rem}
+.btnrow button{padding:.55rem 1.5rem;border:none;border-radius:4px;background:#1a1209;
+  color:#fff;font-family:inherit;font-size:.8rem;cursor:pointer}
+@media print{.btnrow{display:none}body{padding:0}}
+</style></head><body>
+<div class="list">${glavaLista(1)}${tabela(1,18)}${noga(1)}</div>
+<div class="list">${glavaLista(2)}${tabela(19,31)}
+  <div class="leg"><b>Legenda:</b> ${o.legenda.map(([z,p])=>
+    `<b>${esc(z)}</b> — ${esc(p)}`).join(' · ')}</div>
+  <div class="opombe">Opombe:<div class="polje"></div></div>
+  ${noga(2)}</div>
+<div class="btnrow"><button onclick="window.print()">🖨 Natisni</button></div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(!win){const a=document.createElement('a');a.href=url;a.download=oznaka+'-prazen.html';a.click();}
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
 // Natisnjen izvod je tisti, ki ga podpises - dokument velja od podpisa, zato
 // mora izpis nositi verzijo, datum veljavnosti in prostor za podpis.
-function natisniDokument(oznaka){
+async function natisniDokument(oznaka){
   const d=dokNajdi(oznaka);
   if(!d){toast('Dokumenta ni v registru');return;}
   const v=dokVeljavna(d), st=dokStanje(d);
+  const logo=await gmLogoZaTisk();
   const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
 <title>${dokPolnaOznaka(d)} — ${d.naziv}</title>
 <style>
@@ -7307,6 +7540,8 @@ body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weigh
   color:#2b251c;font-size:10pt;line-height:1.55;max-width:180mm;margin:0 auto;padding:1cm}
 .hd{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-start;
   border-bottom:1.6pt solid #17130d;padding-bottom:.5rem;margin-bottom:1rem}
+.hd .levo{display:flex;align-items:center;gap:4mm}
+.hd .logo{height:11mm;width:auto;display:block}
 .hd h1{font-size:13pt;font-weight:500;margin:0 0 .15rem}
 .hd .sif{font-family:ui-monospace,Menlo,monospace;font-size:9pt;color:#8a6a45}
 .hd .meta{font-size:8pt;color:#7a6f60;text-align:right;line-height:1.7;white-space:nowrap}
@@ -7326,6 +7561,8 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 .op{border-left:2pt solid #8a6a45;background:#faf8f4;padding:.4rem .6rem;margin:.3rem 0 .6rem;
   font-size:9pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .vir{font-size:7.5pt;color:#9a9083;margin:-.3rem 0 .6rem}
+.dlv{margin-top:1rem;border:.8pt solid #8b3a2a;border-radius:3px;padding:.35rem .6rem;
+  font-size:7.5pt;color:#8b3a2a;page-break-inside:avoid}
 .podpis{margin-top:1.6rem;display:flex;gap:2rem;page-break-inside:avoid}
 .podpis div{flex:1}
 .crta{border-bottom:.7pt solid #17130d;height:14mm}
@@ -7338,13 +7575,18 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 @media print{.btnrow{display:none}body{padding:0;max-width:none}}
 </style></head><body>
 <div class="hd">
-  <div>
-    <h1>${d.naziv}</h1>
-    <div class="sif">${dokPolnaOznaka(d)}</div>
+  <div class="levo">
+    ${logo?`<img class="logo" src="${logo}" alt="">`:''}
+    <div>
+      <h1>${d.naziv}</h1>
+      <div class="sif">${dokPolnaOznaka(d)}</div>
+    </div>
   </div>
   <div class="meta">
     <b>Vrsta</b> ${d.vrsta}<br>
-    <b>Velja od</b> ${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}<br>
+    <b>Velja od</b> ${(()=>{const x=dokVeljavnost(d);
+      if(!x||!x.datum)return '—';
+      return fmtDate(x.datum)+(x.vir==='prevzet'?' (iz '+dokPolnaOznaka(x.iz)+')':'');})()}<br>
     <b>Lastnik</b> ${d.lastnik||'—'}<br>
     <b>Stanje</b> ${st.napis}${d.klasifikacija?'<br><b>Klasifikacija</b> '+d.klasifikacija:''}
   </div>
@@ -7359,13 +7601,11 @@ ${dokVsebinaHtml(d).replace(/<a class="dok-sklic"[^>]*>/g,'').replace(/<\/a>/g,'
 <h3><span>≡</span>Zgodovina sprememb</h3>
 ${dokZgodovinaHtml(d).replace(/class="dok-tw"/g,'').replace(/class="dok-t"/g,'')
    .replace(/class="dok-caka"/g,'')}
-<div class="podpis">
-  <div><div class="crta"></div><div class="crta-l">Pripravil — ${d.lastnik||''}</div></div>
-  <div><div class="crta"></div><div class="crta-l">Odobril · datum</div></div>
-</div>
+<div class="dlv">Delovni izvod iz registra dokumentacije — ni nadomestilo za podpisani izvirnik.
+  Obvladovani dokument je podpisani izvod, ki se hrani v mapi.</div>
 <div class="ft">
   <span>GoMushroom · ${dokPolnaOznaka(d)}</span>
-  <span>Izpis ${new Date().toLocaleDateString('sl-SI')} · veljavno verzijo potrjuje register dokumentacije</span>
+  <span>Izpis ${new Date().toLocaleDateString('sl-SI')}</span>
 </div>
 <div class="btnrow"><button onclick="window.print()">📄 Shrani / Natisni</button></div>
 </body></html>`;

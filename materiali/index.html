@@ -6588,8 +6588,8 @@ const DOKUMENTI=[
        'Po združitvi in homogenizaciji frakcij (OF, HVE, TE) se v tinkturo dodata vitamin C in sončnični lecitin (non-GMO). Vitamin C (askorbinska kislina) deluje kot antioksidant, ki preprečuje oksidacijo učinkovin (triterpenov, fenolov) in podaljšuje obstojnost. Lecitin deluje kot naravni emulgator in stabilizator, ki izboljša disperzijo trdnih delcev, zmanjša možnost geliranja ali usedanja in poveča biološko razpoložljivost lipofilnih spojin.',
        {tabela:{glava:['Dodatek','Delež glede na skupno maso tinkture'], vrstice:[
          ['Vitamin C','0,20 % m/m'],
-         ['Lecitin','0,50 % m/m']]}},
-       {opomba:'Delež lecitina se med dokumenti razhaja: ta postopek navaja 0,50 % m/m, zapisnik {{ZOP-0001}} pa 0,30 % m/m. Enak delež (0,3 %) je privzet tudi v preračunu matičnega ekstrakta v aplikaciji. Razliko je treba razčistiti in uskladiti.'},
+         ['Lecitin','<s>0,50 % m/m</s> → velja <b>0,30 % m/m</b>']]}},
+       {opomba:'Napaka v izvirniku, potrjena: v proizvodnji se dodaja 0,30 % m/m lecitina, ne 0,50 %. Enak delež nosita zapisnika {{ZOP-0001}} in {{ZOP-0002}} ter preračun v aplikaciji. Podpisana izdaja /01 navaja 0,50 % — popravek zahteva novo izdajo tega postopka.'},
        'Dodatka se raztopita oziroma dispergirata v manjšem delu tinkture in se med mešanjem vneseta v glavno maso. Po dodatku obeh komponent se tinktura meša neprekinjeno najmanj 4 ure pri T < 40 °C do popolne homogenizacije, nato pa stoji najmanj 12 ur za stabilizacijo pred filtracijo ali polnjenjem.',
 
        {pod:'Formulacija glicerinske tinkture'},
@@ -7003,7 +7003,8 @@ const DOKUMENTI=[
    vsebina:[
      {naslov:'Namen zapisnika', blok:[
        'Zapisnik je obvezna priloga dokumentacije serije. Vanj se sproti beležijo vse meritve, mase, volumni, izračuni in presoje kritičnih kontrolnih točk skozi celoten postopek iz {{SOP-0003}}.',
-       {opomba:'To je papirna oblika istega zapisa, ki ga aplikacija vodi kot delovni nalog s koraki in izpiše kot zapisnik serije. Ob prenosu je treba določiti, kateri od obeh je veljavni zapis serije — dva vzporedna zapisa istega postopka sta tveganje, ne varnost.'}]},
+       {opomba:'To je papirna oblika istega zapisa, ki ga aplikacija vodi kot delovni nalog s koraki in izpiše kot zapisnik serije. Ob prenosu je treba določiti, kateri od obeh je veljavni zapis serije — dva vzporedna zapisa istega postopka sta tveganje, ne varnost.'},
+       {opomba:'Ta zapisnik pokriva celotno trojno ekstrakcijo. {{ZOP-0002}} nosi enak naziv, a nima sklopov za obe vodni ekstrakciji in za ločitev matičnega ekstrakta.'}]},
 
      {naslov:'Zgradba zapisnika', blok:[
        {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
@@ -7042,13 +7043,49 @@ const DOKUMENTI=[
        {opomba:'V nogi izvirnika je namesto oznake zapisnika zapisano OBR-0003/02. Od tod izvira tudi napačna navedba na kartici senzorične ocene v aplikaciji; veljavna izdaja organoleptičnega obrazca je {{OBR-0003}}.'},
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
        {opomba:'Gostota 30-odstotne etanolne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Aplikacija računa z 0,9622. Vrednosti je treba poenotiti.'},
-       {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m, v {{SOP-0003}} pa 0,50 % m/m.'}]},
+       {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m in to je pravilna vrednost; {{SOP-0003}} navaja 0,50 %, kar je napaka izvirnika.'}]},
    ]},
-  {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record',
-   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (ZOP-0002_1).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika. V mapi stojita dva zapisnika o proizvodnji z istim nazivom — ob prenosu je treba povedati, po čem se razlikujeta.'}]}]},
+  {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
+   vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0003','ZOP-0001','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti zapisnik sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen zapisnika', blok:[
+       'Krajša izdaja zapisnika serije. Do koncentriranja organske faze je enaka {{ZOP-0001}}, nato pa gre naravnost v alkoholno formulacijo.',
+       'Sklopi, ki jih ta zapisnik nima, {{ZOP-0001}} pa jih ima:',
+       {ul:[
+         'ločitev matičnega ekstrakta — izračun dela ME, ki se odstrani in pozneje vrne,',
+         'vroča vodna ekstrakcija (HVE) — T 80–90 °C, t 300 min, masa pogače in dodane vode, stiskanje in Σm ekstrakta,',
+         'koncentriranje HVE — izračun ciljne mase, pogoji rotavaporja, regenerirani etanol in izgube, masa koncentrata,',
+         'tlačna ekstrakcija (TE) — T 115–130 °C, t 150 min, masa pogače in dodane vode, presoji temperature in bistrosti filtrata,',
+         'koncentriranje TE — izračun mase TE iz skupne mase.']},
+       'Vse ostalo — od priprave etanola prek vitamina C in lecitina, analize suhe snovi, glicerinske formulacije in porabe etanola do polnjenja, prilog in podpisa — je enako.',
+       {opomba:'Namena tega zapisnika ne izpeljujem iz vsebine: sklop alkoholne formulacije kljub odsotnosti obeh vodnih ekstrakcij še vedno zahteva vpis mase HVE in mase TE. Ali je krajša izdaja namenjena ekstrakciji brez vodnih faz, ali pa sta bila sklopa izpuščena po pomoti, mora povedati avtor.'}]},
+
+     {naslov:'Zgradba zapisnika', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava serije','delovni nalog, oznaka serije, datum začetka in konca, surovina in njen dobavitelj oziroma serija, vrsta izdelka in količina'],
+         ['Etanolna ekstrakcija — priprava','Σm surovine, vlažnost, presoja CCP; način priprave etanola (96 %, regeneriran, voda), Σm in ΣV etanola, koncentracija v % m/m in % v/v'],
+         ['Ultrazvočna sonikacija','čas, moč in končna temperatura za obe ponovitvi; presoja, da T ni presegla 55 °C'],
+         ['Stiskanje in filtriranje ekstrakta','presoja bistrosti filtrata, Σm matičnega ekstrakta, Σm pogače, masa topila v pogači'],
+         ['Koncentriranje organske faze','pogoji rotavaporja, regenerirani etanol po frakcijah z masami in koncentracijami, vsota izgub, masa suhe snovi in masa organske faze'],
+         ['Alkoholna formulacija','mase OF, HVE in TE, gostota in volumen tinkture, izračunana koncentracija etanola'],
+         ['Vitamin C in lecitin','izračunani in dejansko dodani masi'],
+         ['Analiza suhe snovi','odstotek suhe snovi in presoja glede na zahtevo za vrsto gobe'],
+         ['Glicerinska formulacija','masa vhodne alkoholne tinkture, suha snov, odparjeno topilo, izračun glicerola in vode, potrditev koncentracije etanola'],
+         ['Poraba etanola in trošarina','regeneriran etanol, AAE v produktu, AAE izgub'],
+         ['Polnjenje','predoperativni kontrolni seznam, presoja CCP, število polnitev'],
+         ['Priloge in podpis','sklic na {{OBR-0003}} in {{OBR-0005}}, podpis osebe, ki je izvedla in odobrila']]}}]},
+
+     {naslov:'Opombe k izvirniku', blok:[
+       {opomba:'Naziv je enak nazivu {{ZOP-0001}}, čeprav je obseg drugačen. V registru je dopolnjen s pojasnilom v oklepaju; v izvirniku bi ju kazalo ločiti tudi po nazivu.'},
+       {opomba:'V sklopu alkoholne formulacije sta polji „m HVE“ in „m TE“, čeprav zapisnik nima sklopov za ti dve ekstrakciji. Bodisi vodni fazi prideta od drugod, bodisi je polji ostalo iz {{ZOP-0001}}.'},
+       {opomba:'V nogi izvirnika stoji OBR-0003/02 namesto oznake zapisnika — enaka napaka kot v {{ZOP-0001}}.'},
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
+       {opomba:'Pri vlažnosti surovine tu ni zapisane meje; v {{ZOP-0001}} je ob polju navedeno „meja < 12 %“. Meja izhaja iz {{DOK-0002}} in bi morala biti navedena na obeh.'},
+       {opomba:'Pri stiskanju se stavek „Za povečanje izplena uporabimo rinse …“ konča nedokončan.'},
+       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,9622. Delež lecitina je 0,30 % m/m — pravilna vrednost, enaka kot v {{ZOP-0001}} in v aplikaciji; navedba 0,50 % v {{SOP-0003}} je napaka izvirnika.'}]},
+   ]},
 ];
 
 // ── Verzije ───────────────────────────────────────────────────────────────

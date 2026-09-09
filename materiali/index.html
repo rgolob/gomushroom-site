@@ -6764,6 +6764,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
    vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen', blok:[
@@ -6810,6 +6811,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'DOK-0002', naziv:'Analiza tveganj in kritične točke procesa',
    vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003','DOK-0001'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen', blok:[
@@ -6825,6 +6827,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
+   nadrejeni:'SOP-0001',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0001}}.'}]
@@ -6849,6 +6852,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0002'],
+   nadrejeni:'SOP-0002',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0002}}.'}],
@@ -6876,6 +6880,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. V nogi izvirnika je zapisana kot OBR–0003/01, priloga k {{SOP-0003}}.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6915,6 +6920,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'OBR-0004', naziv:'Evidenčni list — regeneracija etanola',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6933,6 +6939,7 @@ const DOKUMENTI=[
   {oznaka:'OBR-0005', naziv:'Zapisnik odstopa in korektivnih ukrepov',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0003','SOP-0005','DOK-0002'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6953,6 +6960,7 @@ const DOKUMENTI=[
    ]},
   {oznaka:'OBR-0006', naziv:'Evidenca prejema surovin in embalaže',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Vpisujejo se naziv, datum, količina, dobavitelj, serija ter presoja „ustreza / ne ustreza“. Vsak prejem gobe dobi svojo unikatno oznako serije.',
@@ -6960,6 +6968,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0007', naziv:'Materialna kartica surovine — etanol',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}. Izpisuje jo aplikacija.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Kartica nosi vse vhode in izhode etanola v L AAE za izbrano obdobje; stanje zaloge je njihova razlika. Poraba etanola po delovnem nalogu se zapiše nanjo, kartica pa je podlaga za mesečno trošarinsko napoved.',
@@ -6967,6 +6976,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0008', naziv:'Materialna kartica izdelka',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Evidenca serij končnih izdelkov. Podpisan izvoz te kartice je priloga mesečne trošarinske napovedi.',
@@ -6974,6 +6984,7 @@ const DOKUMENTI=[
 
   {oznaka:'OBR-0009', naziv:'Evidenca delovnih nalogov in serij končnih izdelkov',
    vrsta:'Obrazec', lastnik:'Rok Golob', oblika:'elektronska', povezani:['SOP-0004'],
+   nadrejeni:'SOP-0004',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Elektronska evidenca po {{SOP-0004}}; vsebina še ni prenesena.'}],
    vsebina:[{naslov:'Vsebina', blok:[
      'Glavni seznam delovnih nalogov in serij končnih izdelkov. Ob odprtju naloga se mu tu dodeli unikatna oznaka.',
@@ -6981,6 +6992,7 @@ const DOKUMENTI=[
   {oznaka:'OBR-0010', naziv:'Evidenca umika in odpoklica živila',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0005','OBR-0005'],
+   nadrejeni:'SOP-0005',
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0005}}; datuma veljavnosti obrazec sam ne nosi.'}],
    vsebina:[
      {naslov:'Namen obrazca', blok:[
@@ -6997,6 +7009,7 @@ const DOKUMENTI=[
   {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
    vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
    povezani:['SOP-0003','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
+   nadrejeni:'SOP-0003',
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
      {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti zapisnik sam ne nosi.'}],
@@ -7048,6 +7061,7 @@ const DOKUMENTI=[
   {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
    vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO', razveljavljen:true,
    povezani:['SOP-0003','ZOP-0001'],
+   nadrejeni:'SOP-0003',
    verzije:[{v:'01', velja:'', odobril:'', opis:'Ni v veljavi. Veljavni zapisnik o proizvodnji je {{ZOP-0001}}.'}],
    vsebina:[
      {naslov:'Stanje', blok:[
@@ -7106,9 +7120,30 @@ function dokVeljavna(d){
   const v=dokVerzije(d).filter(x=>x.velja&&(x.velja==='?'||x.velja<=danes));
   return v.length?v[v.length-1]:null;
 }
-function dokBrezDatuma(d){
+// Obrazec ali priloga velja z dnem, ko zacne veljati postopek, ki mu pripada -
+// tako pise v nogi izvirnika, kjer namesto lastnega datuma stoji sklic na SOP.
+// Datuma zato ne prepisujemo, ampak ga izpeljemo: ko postopek dobi novo izdajo
+// z novim datumom, se popravi tudi pri vseh njegovih prilogah.
+function dokNadrejeni(d){return d&&d.nadrejeni?dokNajdi(d.nadrejeni):null;}
+function dokVeljavnost(d){
   const v=dokVeljavna(d);
-  return !!v&&!dokDatum(v);
+  if(!v)return null;
+  if(dokDatum(v))return {datum:v.velja,vir:'lasten'};
+  const n=dokNadrejeni(d), nv=n?dokVeljavna(n):null;
+  if(nv&&dokDatum(nv))return {datum:nv.velja,vir:'prevzet',iz:n};
+  return {datum:null,vir:'neznan'};
+}
+function dokBrezDatuma(d){
+  const x=dokVeljavnost(d);
+  return !!x&&!x.datum;
+}
+// Kadar je datum prevzet, veljavna izdaja pa ni prva, iz izvirnikov ni
+// razvidno, kdaj je nadomestila prejsnjo. To je vrzel in mora biti vidna.
+function dokVrzelIzdaje(d){
+  const x=dokVeljavnost(d);
+  if(!x||x.vir!=='prevzet')return false;
+  const vs=dokVerzije(d), v=dokVeljavna(d);
+  return vs.length>1&&vs[0]!==v;
 }
 function dokPolnaOznaka(d){
   const v=dokVeljavna(d);
@@ -7237,9 +7272,11 @@ function renderDokumenti(){
     return;
   }
   const brezDatuma=DOKUMENTI.filter(dokBrezDatuma).length;
+  const vrzeli=DOKUMENTI.filter(dokVrzelIzdaje).map(d=>d.oznaka);
   const cakajo=DOKUMENTI.filter(d=>dokStanje(d).kljuc==='priprava').length;
   const vrstice=[];
-  if(brezDatuma)vrstice.push(`📅 Pri ${brezDatuma} dokumentih datum veljavnosti še ni prenesen iz izvirnika.`);
+  if(brezDatuma)vrstice.push(`📅 Pri ${brezDatuma} dokumentih datuma veljavnosti ni.`);
+  if(vrzeli.length)vrstice.push(`⚠ ${vrzeli.join(', ')} ${vrzeli.length===1?'ni v prvi izdaji':'niso v prvi izdaji'}, datum pa je prevzet iz nadrejenega postopka — kdaj je nova izdaja nadomestila prejšnjo, iz izvirnikov ni razvidno.`);
   if(cakajo)vrstice.push(`⏳ ${cakajo} ${cakajo===1?'dokument ni':'dokumentov ni'} v veljavi.`);
   const opozorilo=vrstice.length?`<div class="dok-opozorilo">${vrstice.join('<br>')}</div>`:'';
   el.innerHTML=opozorilo+vrste.map(d=>{
@@ -7249,8 +7286,11 @@ function renderDokumenti(){
         <div class="dn-info">
           <div class="dn-name">${dokPolnaOznaka(d)} <span style="font-size:.75rem;color:var(--muted)">${d.naziv}</span></div>
           <div class="dn-meta">${d.vrsta}${d.oblika?' · '+d.oblika:''}${d.lastnik?' · '+d.lastnik:''}</div>
-          <div class="dn-meta">${dokDatum(v)?`Velja od ${fmtDate(v.velja)}`
-            :v?'Velja · datum ni prenesen':'Ni v veljavi'}${vse.length>1?` · ${vse.length} verziji`:''}</div>
+          <div class="dn-meta">${(()=>{const x=dokVeljavnost(d);
+            if(!x)return 'Ni v veljavi';
+            if(!x.datum)return 'Velja · datum ni znan';
+            return `Velja od ${fmtDate(x.datum)}${x.vir==='prevzet'?' · prevzeto':''}`;})()
+            }${vse.length>1?` · ${vse.length} verziji`:''}</div>
         </div>
         <div class="dn-right">
           <div class="status-badge ${st.cls}">${st.napis}</div>
@@ -7271,7 +7311,9 @@ function odpriDokument(oznaka){
       <div class="dok-gvrstice">
         <span><b>Oznaka</b>${dokPolnaOznaka(d)}</span>
         <span><b>Vrsta</b>${d.vrsta}</span>
-        <span><b>Velja od</b>${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}</span>
+        <span><b>Velja od</b>${(()=>{const x=dokVeljavnost(d);
+          if(!x||!x.datum)return '—';
+          return fmtDate(x.datum)+(x.vir==='prevzet'?` (iz ${dokPolnaOznaka(x.iz)})`:'');})()}</span>
         <span><b>Odobril</b>${v&&v.odobril?v.odobril:'—'}</span>
         <span><b>Lastnik</b>${d.lastnik||'—'}</span>
         <span><b>Stanje</b>${st.napis}</span>
@@ -7282,7 +7324,9 @@ function odpriDokument(oznaka){
     ${st.kljuc!=='velja'
       ?`<div class="dok-opomba">Ta dokument ni v veljavi: nima potrjene verzije. Po njem se ne dela, dokler ga ne potrdiš.</div>`
       :dokBrezDatuma(d)
-      ?`<div class="dok-opomba">Dokument je v veljavi, datum veljavnosti pa še ni prenesen iz izvirnika. Vpiši ga, da bo iz registra razvidno, po kateri verziji je bila delana posamezna serija.</div>`:''}
+      ?`<div class="dok-opomba">Dokument je v veljavi, datuma veljavnosti pa ni ne v izvirniku ne pri nadrejenem dokumentu.</div>`
+      :''}
+    ${dokVrzelIzdaje(d)?`<div class="dok-opomba">Datum veljavnosti je prevzet iz ${dokPolnaOznaka(dokNadrejeni(d))}, ker ga izvirnik sam ne nosi. Ta dokument pa ni v prvi izdaji — kdaj je izdaja ${dokVeljavna(d).v} nadomestila prejšnjo, iz izvirnikov ni razvidno. Za serije iz vmesnega obdobja register ne more povedati, katera izdaja je takrat veljala.</div>`:''}
     ${dokVsebinaHtml(d)}
     <section class="dok-r">
       <h3 class="dok-h"><span class="dok-n">≡</span>Zgodovina sprememb</h3>
@@ -7481,7 +7525,9 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
   </div>
   <div class="meta">
     <b>Vrsta</b> ${d.vrsta}<br>
-    <b>Velja od</b> ${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}<br>
+    <b>Velja od</b> ${(()=>{const x=dokVeljavnost(d);
+      if(!x||!x.datum)return '—';
+      return fmtDate(x.datum)+(x.vir==='prevzet'?' (iz '+dokPolnaOznaka(x.iz)+')':'');})()}<br>
     <b>Lastnik</b> ${d.lastnik||'—'}<br>
     <b>Stanje</b> ${st.napis}${d.klasifikacija?'<br><b>Klasifikacija</b> '+d.klasifikacija:''}
   </div>

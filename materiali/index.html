@@ -230,8 +230,10 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
   padding-bottom:.15rem;display:flex;align-items:baseline;gap:.45rem}
 .dok-n{font-size:.65rem;color:var(--accent);font-weight:600}
 .dok-p{font-size:.78rem;line-height:1.55;margin:0 0 .35rem;color:var(--ink)}
-.dok-ul{margin:.1rem 0 .4rem;padding-left:1rem;font-size:.78rem;line-height:1.55}
-.dok-ul li{margin-bottom:.15rem}
+.dok-ul,.dok-ol{margin:.1rem 0 .4rem;padding-left:1.05rem;font-size:.78rem;line-height:1.55}
+.dok-ul li,.dok-ol li{margin-bottom:.15rem}
+.dok-pod{font-size:.75rem;font-weight:600;color:var(--ink);margin:.5rem 0 .2rem;
+  letter-spacing:.01em}
 .dok-opomba{border-left:2px solid var(--accent);background:var(--parchment);
   padding:.4rem .55rem;font-size:.74rem;line-height:1.5;margin:.25rem 0 .45rem;
   border-radius:0 var(--rs) var(--rs) 0}
@@ -6414,22 +6416,22 @@ const DOKUMENTI=[
        'Čiščenje in razkuževanje po vsakem postopku se zabeleži v {{OBR-0002}}.']},
 
      {naslov:'Opis prostorov', blok:[
-       'Glavni laboratorij',
+       {pod:'Glavni laboratorij'},
        'Delo v laboratoriju se izvaja izključno z osebno zaščitno opremo (halja, obutev, rokavice).',
        'Glavni laboratorij je čista cona z nadtlakom in HEPA filtrom. V njem sta dva rotavaporja (5 L in 20 L), namenjena koncentraciji ekstraktov, ter velik pult z namiznim HEPA filtrom (flowhood), ki omogoča delo z micelijem in polnjenje tinktur v sterilnem okolju. V prostoru sta tudi vakuumski sušilnik in sistem za razvlaževanje zraka.',
        'Prostor je namenjen delu z micelijem v sterilnem okolju ali stiskanju, koncentraciji tinktur, končni formulaciji in polnjenju tinktur. Delo z micelijem in delo s tinkturami se med seboj izključujeta in se ne izvajata sočasno.',
        'Tu lahko poteka tudi dosuševanje gob v vakuumskem sušilniku, ki je zaprt sistem. Proces ne predstavlja tveganja kontaminacije, ker material med sušenjem ni v stiku z okoljem; paziti je treba le, da se sušilnik polni takrat, ko se ostale operacije ne izvajajo.',
        'V glavnem laboratoriju se hrani etanol, ki je vedno pod nadzorom in izven dosega nepooblaščenih oseb.',
        'Prostor, delovne površine in oprema se po uporabi čistijo in razkužujejo skladno s {{SOP-0002}}.',
-       'Predprostor laboratorija',
+       {pod:'Predprostor laboratorija'},
        'Predprostor glavnega laboratorija je prostor z umivalnikom za roke in pomivalnim koritom s čistili, ki so shranjena v zaprti omarici pod koritom. Tu se v steklenicah hranita tudi izopropanol za razkuževanje in destilirana voda za splakovanje steklovine.',
        'V prostoru sta dva delovna pulta. Na enem je ultrazvočna sonda — sonotroda s podpultnim generatorjem. Pod pultom je tudi halogenski sušilnik, namenjen določevanju suhe snovi v ekstraktih in določevanju vlage v gobjem materialu kot kontroli učinkovitosti sušenja.',
        'V prostoru je priročen hladilnik za začasno shranjevanje vzorcev in zaprtih ekstraktov ter občasno micelija v neprodušno zaprtih petrijevkah.',
        'V prostoru sta tudi avtoklav in atmosferski sterilizator z generatorjem pare. Tu se izvajajo sterilizacija gojitvenih substratov, žita, agarja ali ločeno ekstrakcije v zaprtih embalažah, stiskanje ekstraktov in raztapljanje koncentratov na ultrazvočni kopeli.',
        'Predprostor je tudi prehodna cona za preoblačenje in pripravo pred vstopom v čisto cono. Oblačila in obutev so v garderobni omarici, razdeljeni na del za umazana in del za čista oblačila.',
-       'Priročno skladišče',
+       {pod:'Priročno skladišče'},
        'Priročno skladišče je v ločenem prostoru z omarami, namenjenimi shranjevanju surovin v hermetično zaprtih posodah, embalaže, rezervnih delov in ostalega potrošnega materiala v večjih količinah. Manjše količine embalaže in surovin je mogoče hraniti tudi v hermetično zaprtih posodah v predprostoru laboratorija.',
-       'Ostala dela izven laboratorija',
+       {pod:'Ostala dela izven laboratorija'},
        'Mletje gob se izvaja na prostem, v zaprtem sistemu — mlinu, ki preprečuje razpršitev prahu in zmanjšuje možnost kontaminacije. Možnost vnosa insektov ali drugih nečistot je minimalna, saj je surovina izpostavljena okolju le kratek čas med prenosom v večjo embalažo. Po mletju se material takoj shrani v hermetično zaprte čiste posode. Po vsakem mletju se mlin očisti in razkuži skladno s {{SOP-0002}}.']},
 
      {naslov:'Varnost in higiena', blok:[
@@ -6448,9 +6450,79 @@ const DOKUMENTI=[
    ]},
 
   {oznaka:'SOP-0002', naziv:'Čiščenje in higiena prostorov',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0002'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0002_1).'}]}]},
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0002'], povezani:['SOP-0001'],
+   verzije:[{v:'01', velja:'2025-08-16', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Zagotavljanje čistoče, higienske ustreznosti in preprečevanje kontaminacije pri vseh dejavnostih, povezanih z izdelavo prehranskih dopolnil iz medicinskih gob. S tem postopkom se zagotavlja stalna mikrobiološka in fizikalna čistoča vseh površin, prostorov in opreme, ki so v stiku z izdelki ali procesnimi materiali.']},
+
+     {naslov:'Obseg', blok:[
+       'Postopek velja za vse prostore in opremo v obratih podjetja GoMushroom:',
+       {ul:[
+         'glavni laboratorij,',
+         'predprostor laboratorija,',
+         'vsa uporabljena oprema (rotavapor, vakuumski sušilnik, ultrazvočna sonda, sterilizatorji, posode, pribor in laboratorijska steklovina).']},
+       'Predprostor laboratorija se uporablja za zaprte tehnološke postopke (sterilizacija, ekstrakcije), pomožne čiste operacije (mešanje topil, pomivanje steklovine) in pripravo substratov. V njem se izvajata sterilizacija substratov in priprava agarja v avtoklavu, pri čemer se uporabljata zaprta oprema in zaščitna oblačila.',
+       'Glavni laboratorij se uporablja za odprte in aseptične postopke (koncentracija na rotavaporju, homogenizacija, formulacija in polnjenje tinktur) ter občasno za mikrobiološko delo z micelijem, ki obsega inokulacijo sterilnih gojitvenih substratov ali kloniranje kultur na petrijevkah pod laminarno komoro. Gojenje micelija poteka izven laboratorijskih prostorov.',
+       'Obe območji se obravnavata kot čisti coni, ki sta časovno ločeni po funkciji; po vsaki fazi se izvedejo postopki čiščenja in razkuževanja skladno s tem postopkom. Časovno ločevanje dejavnosti ureja {{SOP-0001}}.']},
+
+     {naslov:'Odgovornosti', blok:[
+       'Čiščenje in razkuževanje izvaja lastnik podjetja oziroma odgovorna oseba za proizvodnjo. Odgovorna oseba vodi evidence čiščenja v obrazcu {{OBR-0002}}.',
+       {opomba:'Evidenca se izpolni takoj po opravljenem čiščenju oziroma razkuževanju. Podpisana evidenca se hrani najmanj 12 mesecev.'}]},
+
+     {naslov:'Postopek čiščenja in razkuževanja', blok:[
+       {pod:'Pogostost čiščenja in način'},
+       {tabela:{glava:['Pogostost','Kdaj','Opravila'], vrstice:[
+         ['Dnevno','le, če so se izvajala dela','suho čiščenje, brisanje ali sesanje · mokro brisanje delovnih pultov, lijakov in vratnih kljuk · razkuževanje in sterilizacija z ozonom'],
+         ['Tedensko','če so se v prostorih izvajala dela v zadnjem tednu','mokro brisanje in razkuževanje vseh delovnih površin, tal, vrat in okenskih polic · mokro brisanje zunanjih površin delovne opreme · ometanje pajčevine · pobiranje smeti in odpadkov'],
+         ['Mesečno','—','mokro brisanje tal in vseh težko dosegljivih mest · mokro brisanje notranjosti omar v glavnem prostoru'],
+         ['Po potrebi','takoj','ob razlitju, onesnaženju ali nenavadnem vonju']]}},
+
+       {pod:'Čiščenje površin in tal'},
+       {st:[
+         'Površino obriši z vlažno krpo.',
+         'Nanesi razkužilo: 70 % izopropanol ali raztopino Ecocid za tla (1 % = 10 g praška na liter vode; po potrebi 2 % = 20 g/L).',
+         'Pusti delovati vsaj 5 minut.',
+         'Obriši s čisto suho krpo ali pusti, da se posuši na zraku.']},
+       {opomba:'Raztopino Ecocid pripravi svežo pred uporabo: natehtaj potrebno maso praška, raztopi v mlačni vodi in premešaj. Raztopina se ne shranjuje dlje kot 24 ur.'},
+
+       {pod:'Čiščenje opreme in steklovine'},
+       'Velja za opremo (rotavapor, vakuumski sušilnik, ultrazvočna sonda, posode) in laboratorijsko steklovino (bučke, čaše, epruvete in podobno):',
+       {st:[
+         'Po uporabi speri z vodo.',
+         'Operi z blagim nevtralnim čistilom ali specializiranim laboratorijskim čistilom Labshine.',
+         'Temeljito speri s čisto vodo.',
+         'Izvedi dvojno splakovanje z destilirano vodo.',
+         'Razkuži s 70 % etanolom (denaturiranim).',
+         'Pusti, da se popolnoma posuši na zraku, preden pride v stik z izdelkom.']},
+
+       {pod:'Samodejno razkuževanje z ozonom'},
+       'Sterilizacija z ozonom se izvaja izključno takrat, ko v prostorih ne potekajo aktivnosti (koncentriranje, ekstrakcija, formulacija, polnjenje). Samodejni postopek teče dnevno ob 3. uri zjutraj:',
+       {st:[
+         'UV lučke se vklopijo in 30 minut generirajo ozon.',
+         'Vklopi se laminarna komora (flowhood), ki premeša ozon po celotnem prostoru.',
+         'Za 30 minut se vklopi HEPA filtracija, ki ustvari nadtlak v glavnem laboratoriju in potisne ozon v predprostor.']},
+       'Vsak postopek se evidentira v obrazec {{OBR-0002}}.',
+       {opomba:'Med razkuževanjem z ozonom je vstop v laboratorij prepovedan. Vstop je dovoljen šele po prezračevanju in zagonu HEPA filtracije.'}]},
+
+     {naslov:'Uporabljena sredstva', blok:[
+       'Blaga nevtralna čistila (tekoče milo), detergent za laboratorijsko opremo Labshine, pralne krpe, papirnate brisače.',
+       {tabela:{glava:['Razkužilo','Uporaba'], vrstice:[
+         ['70 % izopropanol','delovne površine in tla'],
+         ['70 % etanol (denaturiran)','oprema in steklovina, ki pride v stik z izdelki'],
+         ['Ecocid (Krka), 1 % raztopina (10 g/L)','tla']]}}]},
+
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Vedno se uporabljajo zaščitna obleka, rokavice in po potrebi očala.',
+         'V laboratoriju ni dovoljeno jesti ali piti.',
+         'Čistila in razkužila se hranijo v originalni embalaži, v ločeni omari od surovin in izdelkov.',
+         'Med razkuževanjem z ozonom je vstop strogo prepovedan.',
+         'Laboratorij se uporablja izključno za proizvodnjo in raziskave GoMushroom.']}]},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
 
   {oznaka:'SOP-0003', naziv:'Trojna ekstrakcija in formulacija tinkture medicinskih gob',
    vrsta:'Postopek', lastnik:'Rok Golob',
@@ -6558,11 +6630,31 @@ const DOKUMENTI=[
    ]},
 
   {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0002'],
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0002'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0002_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0002}}.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Mesečna evidenca opravljenega čiščenja in razkuževanja po pogostosti, ki jo določa {{SOP-0002}}. Izpolni se takoj po opravljenem čiščenju; podpisana evidenca se hrani najmanj 12 mesecev.']},
+
+     {naslov:'Zgradba obrazca', blok:[
+       'Ena vrstica na dan v mesecu, stolpci pa so razvrščeni po pogostosti čiščenja, na koncu je podpis izvajalca.',
+       {tabela:{glava:['Sklop','Stolpci'], vrstice:[
+         ['Dnevno čiščenje (v primeru uporabe)','tla — suho brisanje ali sesanje · tla — mokro brisanje po potrebi · vratne kljuke, lijak, delovni pulti — mokro brisanje in razkuževanje · sterilizacija z ozonom in UV svetlobo'],
+         ['Tedensko čiščenje','laboratorijski pulti, delovne površine, delovni lijaki — mokro brisanje in razkuževanje · tla — mokro brisanje in razkuževanje · okenske police in vidni madeži na pohištvu ter opremi — mokro brisanje in razkuževanje · ometanje pajčevine · posoda za odpadke — pobiranje in odstranjevanje smeti'],
+         ['Mesečno čiščenje','tla pod pulti in težko dosegljiva mesta — mokro brisanje in razkuževanje · notranjost omar in predalov za steklovino — mokro brisanje in razkuževanje']]}},
+       'V glavo se vpišeta mesec in leto.']},
+
+     {naslov:'Legenda', blok:[
+       {tabela:{glava:['Oznaka','Pomen'], vrstice:[
+         ['+','postopek čiščenja oziroma razkuževanja je bil izveden; vpiše se tudi datum in podpis izvajalca'],
+         ['prazno','postopek ni bil izveden'],
+         ['+ (opomba)','postopek je bil izveden, dodana je kratka razlaga ali posebnost — na primer „+ (čiščenje po razlitju)“']]}}]},
+
+     {naslov:'Opomba k izvirniku', blok:[
+       {opomba:'V glavi izvirnika sta dve različni oznaki: v naslovni vrstici piše OBR-0002/1, v vrstici z mesecem in letom pa OBR-0002/2. Ime datoteke in vsebina ustrezata izdaji 2; navedba /1 v glavi je ostanek prejšnje izdaje in jo je treba popraviti.'}]},
+   ]},
 
   {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
    vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
@@ -6696,7 +6788,9 @@ function dokSklici(t){
 }
 function dokBlokHtml(b,d){
   if(typeof b==='string')return `<p class="dok-p">${dokSklici(b)}</p>`;
+  if(b.pod)return `<h4 class="dok-pod">${dokSklici(b.pod)}</h4>`;
   if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${dokSklici(x)}</li>`).join('')}</ul>`;
+  if(b.st)return `<ol class="dok-ol">${b.st.map(x=>`<li>${dokSklici(x)}</li>`).join('')}</ol>`;
   if(b.opomba)return `<div class="dok-opomba">${dokSklici(b.opomba)}</div>`;
   if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice.map(r=>r.map(dokSklici)));
   if(b.koraki)return dokKorakiHtml();
@@ -6717,7 +6811,7 @@ function dokZgodovinaHtml(d){
       :v.velja==='?'?'<span class="dok-caka">ni prenesen</span>'
       :'<span class="dok-caka">ne velja</span>',
     v.odobril||'—',
-    v.opis||'—']);
+    dokSklici(v.opis||'—')]);
   return dokTabelaHtml(['Verzija','Velja od','Odobril','Sprememba'],vrstice);
 }
 function dokPovezaniHtml(d){
@@ -6830,6 +6924,8 @@ body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weigh
 h3{font-size:10pt;font-weight:500;margin:1rem 0 .3rem;text-transform:uppercase;
   letter-spacing:.06em;border-bottom:.6pt solid #e2dacc;padding-bottom:.15rem}
 h3 span{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45;margin-right:.5rem}
+h4{font-size:9pt;font-weight:500;margin:.5rem 0 .15rem}
+ol{margin:.2rem 0 .5rem;padding-left:1.1rem}
 p{margin:0 0 .4rem}
 ul{margin:.2rem 0 .5rem;padding-left:1.1rem}
 table{border-collapse:collapse;width:100%;margin:.3rem 0 .6rem;font-size:8.6pt}
@@ -6866,7 +6962,8 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 ${st.kljuc!=='velja'?`<div class="op">Ta izvod ne velja: dokument nima datuma veljavnosti in podpisa odobritve.</div>`:''}
 ${dokVsebinaHtml(d).replace(/<a class="dok-sklic"[^>]*>/g,'').replace(/<\/a>/g,'')
    .replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
-   .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-tw"/g,'')
+   .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-ol"/g,'')
+   .replace(/class="dok-pod"/g,'').replace(/class="dok-tw"/g,'')
    .replace(/class="dok-t"/g,'').replace(/class="dok-opomba"/g,'class="op"')
    .replace(/class="dok-vir"/g,'class="vir"')}
 <h3><span>≡</span>Zgodovina sprememb</h3>

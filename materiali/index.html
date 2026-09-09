@@ -6583,6 +6583,7 @@ const DOKUMENTI=[
        {pod:'Končna formulacija alkoholne tinkture'},
        'Za končno formulacijo se uporabi že določena količina organske faze (matičnega etanolnega ekstrakta) z znano koncentracijo etanola. Na podlagi ciljnega končnega volumna tinkture in znane mase organske faze se izračuna skupna potrebna masa vodne faze (HVE + TE), ki zagotavlja končni etanolni delež 30 % v/v.',
        'Izračun se izvede po masi, pri čemer je kontrakcija volumna že upoštevana z uporabo gostote 30-odstotne etanolne raztopine. Če razpoložljiva količina vodnih koncentratov ne zadošča, se manjkajoči del mase dopolni z demineralizirano vodo, tako da skupna masa ustreza ciljnemu volumnu tinkture.',
+       {opomba:'Vrednost gostote je predmet odprte odločitve: {{ZOP-0001}} jo navaja dvakrat različno, določena pa bo na novo, ko bo upoštevana tudi suha snov v posamezni tinkturi. Podrobneje v opombi pri zapisniku.'},
 
        {pod:'Dodajanje vitamina C in lecitina'},
        'Po združitvi in homogenizaciji frakcij (OF, HVE, TE) se v tinkturo dodata vitamin C in sončnični lecitin (non-GMO). Vitamin C (askorbinska kislina) deluje kot antioksidant, ki preprečuje oksidacijo učinkovin (triterpenov, fenolov) in podaljšuje obstojnost. Lecitin deluje kot naravni emulgator in stabilizator, ki izboljša disperzijo trdnih delcev, zmanjša možnost geliranja ali usedanja in poveča biološko razpoložljivost lipofilnih spojin.',
@@ -7092,7 +7093,7 @@ const DOKUMENTI=[
      {naslov:'Opombe k izvirniku', blok:[
        {opomba:'V nogi izvirnika je namesto oznake zapisnika zapisano OBR-0003/02. Od tod izvira tudi napačna navedba na kartici senzorične ocene v aplikaciji; veljavna izdaja organoleptičnega obrazca je {{OBR-0003}}.'},
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
-       {opomba:'Gostota 30-odstotne etanolne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Aplikacija računa z 0,9622. Vrednosti je treba poenotiti.'},
+       {opomba:'Gostota 30-odstotne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Odločeno je, da ostane tako, kot je v zapisniku, in da se vrednosti zaenkrat ne poenotita. Gostota bo pozneje na novo določena tako, da bo upoštevala tudi suho snov v posamezni tinkturi — ta je v obeh navedbah ni, zato bi bilo poenotenje zdaj le izbira med dvema približkoma. Aplikacija do takrat računa s tabelarično vrednostjo za binarno mešanico voda–etanol, 0,96224 g/mL; pri 30 L končne tinkture je razlika proti 0,965 približno 83 g ciljne mase.'},
        {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m in to je pravilna vrednost; {{SOP-0003}} navaja 0,50 %, kar je napaka izvirnika.'}]},
    ]},
   {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record (krajša izdaja)',
@@ -7136,7 +7137,7 @@ const DOKUMENTI=[
        {opomba:'V nogi izvirnika stoji OBR-0003/02 namesto oznake zapisnika — enaka napaka kot v {{ZOP-0001}}.'},
        {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
        {opomba:'Pri stiskanju se stavek „Za povečanje izplena uporabimo rinse …“ konča nedokončan.'},
-       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,9622.'}]},
+       {opomba:'Gostota 30-odstotne zmesi je navedena kot 0,965 g/mL, aplikacija pa računa z 0,96224. Razlika ostaja namerno — glej opombo pri {{ZOP-0001}}.'}]},
    ]},
 ];
 
@@ -7393,6 +7394,10 @@ async function gmLogoZaTisk(){
 // Register zato ponudi prazen obrazec za tisk: mesecno mrezo z dnevi, kot je
 // v izvirniku. Oznaka z verzijo in sklic na postopek se vzameta iz registra,
 // da natisnjen list ne more nositi zastarele verzije.
+// V glavi izvirnika ne stoji "Postopek", ampak polno ime vrste dokumenta.
+const VRSTA_NAZIV={Postopek:'Standardni operativni postopek', Obrazec:'Obrazec',
+  Dokument:'Dokument sistema notranje kontrole', Zapisnik:'Zapisnik o proizvodnji'};
+
 const PRAZNI_OBRAZCI={
   'OBR-0001':{
     naslov:'Dnevnik uporabe prostorov — evidenca dela', sop:'SOP-0001',
@@ -7496,7 +7501,7 @@ th b{display:block;font-weight:600}
 th span{display:block;color:#6b6152;font-weight:300}
 th.dan,td.dan{width:9mm}
 th.prazna{background:#e8e2d4}
-td{height:6.4mm}
+td{height:9mm}
 td.dan{text-align:center;font-size:7.5pt;color:#6b6152;
   background:#faf8f4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .leg{margin-top:.4rem;font-size:7.5pt;line-height:1.5}
@@ -7510,8 +7515,8 @@ td.dan{text-align:center;font-size:7.5pt;color:#6b6152;
   color:#fff;font-family:inherit;font-size:.8rem;cursor:pointer}
 @media print{.btnrow{display:none}body{padding:0}}
 </style></head><body>
-<div class="list">${glavaLista(1)}${tabela(1,18)}${noga(1)}</div>
-<div class="list">${glavaLista(2)}${tabela(19,31)}
+<div class="list">${glavaLista(1)}${tabela(1,16)}${noga(1)}</div>
+<div class="list">${glavaLista(2)}${tabela(17,31)}
   <div class="leg"><b>Legenda:</b> ${o.legenda.map(([z,p])=>
     `<b>${esc(z)}</b> — ${esc(p)}`).join(' · ')}</div>
   <div class="opombe">Opombe:<div class="polje"></div></div>
@@ -7538,14 +7543,13 @@ async function natisniDokument(oznaka){
 @page{size:A4;margin:16mm 15mm}
 body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weight:300;
   color:#2b251c;font-size:10pt;line-height:1.55;max-width:180mm;margin:0 auto;padding:1cm}
-.hd{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-start;
-  border-bottom:1.6pt solid #17130d;padding-bottom:.5rem;margin-bottom:1rem}
-.hd .levo{display:flex;align-items:center;gap:4mm}
+.hd{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-end;
+  border-bottom:1.6pt solid #17130d;padding-bottom:.25rem;margin-bottom:1rem}
+.hd .levo{display:flex;align-items:flex-end;gap:4mm}
 .hd .logo{height:11mm;width:auto;display:block}
-.hd h1{font-size:13pt;font-weight:500;margin:0 0 .15rem}
-.hd .sif{font-family:ui-monospace,Menlo,monospace;font-size:9pt;color:#8a6a45}
-.hd .meta{font-size:8pt;color:#7a6f60;text-align:right;line-height:1.7;white-space:nowrap}
-.hd .meta b{color:#2b251c;font-weight:500}
+.hd h1{font-size:13pt;font-weight:500;margin:0;line-height:1.15}
+.hd .meta{font-size:8.5pt;color:#7a6f60;text-align:right;line-height:1.5;white-space:nowrap}
+.hd .meta b{color:#2b251c;font-weight:500;font-family:ui-monospace,Menlo,monospace;font-size:8pt}
 h3{font-size:10pt;font-weight:500;margin:1rem 0 .3rem;text-transform:uppercase;
   letter-spacing:.06em;border-bottom:.6pt solid #e2dacc;padding-bottom:.15rem}
 h3 span{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45;margin-right:.5rem}
@@ -7569,6 +7573,7 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 .crta-l{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;padding-top:.2rem}
 .ft{margin-top:1.2rem;border-top:.6pt solid #e2dacc;padding-top:.4rem;
   font-size:7.5pt;color:#7a6f60;display:flex;justify-content:space-between;gap:1rem}
+.ft em{font-style:normal;color:#9a9083}
 .btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem}
 .btnrow button{padding:.55rem 1.5rem;border:none;border-radius:4px;background:#17130d;
   color:#fff;font-family:inherit;font-size:.8rem;cursor:pointer}
@@ -7577,19 +7582,10 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 <div class="hd">
   <div class="levo">
     ${logo?`<img class="logo" src="${logo}" alt="">`:''}
-    <div>
-      <h1>${d.naziv}</h1>
-      <div class="sif">${dokPolnaOznaka(d)}</div>
-    </div>
+    <h1>${d.naziv}</h1>
   </div>
-  <div class="meta">
-    <b>Vrsta</b> ${d.vrsta}<br>
-    <b>Velja od</b> ${(()=>{const x=dokVeljavnost(d);
-      if(!x||!x.datum)return '—';
-      return fmtDate(x.datum)+(x.vir==='prevzet'?' (iz '+dokPolnaOznaka(x.iz)+')':'');})()}<br>
-    <b>Lastnik</b> ${d.lastnik||'—'}<br>
-    <b>Stanje</b> ${st.napis}${d.klasifikacija?'<br><b>Klasifikacija</b> '+d.klasifikacija:''}
-  </div>
+  <div class="meta">${VRSTA_NAZIV[d.vrsta]||d.vrsta}<br>
+    <b>Oznaka: ${dokPolnaOznaka(d)}</b></div>
 </div>
 ${st.kljuc!=='velja'?`<div class="op">Ta izvod ne velja: dokument nima datuma veljavnosti in podpisa odobritve.</div>`:''}
 ${dokVsebinaHtml(d).replace(/<a class="dok-sklic"[^>]*>/g,'').replace(/<\/a>/g,'')
@@ -7604,8 +7600,12 @@ ${dokZgodovinaHtml(d).replace(/class="dok-tw"/g,'').replace(/class="dok-t"/g,'')
 <div class="dlv">Delovni izvod iz registra dokumentacije — ni nadomestilo za podpisani izvirnik.
   Obvladovani dokument je podpisani izvod, ki se hrani v mapi.</div>
 <div class="ft">
-  <span>GoMushroom · ${dokPolnaOznaka(d)}</span>
-  <span>Izpis ${new Date().toLocaleDateString('sl-SI')}</span>
+  <span>${d.klasifikacija||'GoMushroom'}</span>
+  <span>${(()=>{const x=dokVeljavnost(d);
+    if(!x||!x.datum)return 'Datum veljavnosti ni določen';
+    return 'Veljavno od: '+fmtDate(x.datum)
+      +(x.vir==='prevzet'?' <em>(iz '+dokPolnaOznaka(x.iz)+')</em>':'');})()
+    } · Avtor: ${d.lastnik||'—'}</span>
 </div>
 <div class="btnrow"><button onclick="window.print()">📄 Shrani / Natisni</button></div>
 </body></html>`;

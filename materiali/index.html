@@ -210,6 +210,44 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .korak-izbira-moz{display:flex;flex-wrap:wrap;gap:.2rem}
 .korak-izbira-moz button.izbran{border-color:var(--accent);background:rgba(175,132,85,.15);
   color:var(--accent);font-weight:600}
+/* ── DOKUMENTACIJA ──
+   Obvladovan dokument mora ze na prvi pogled povedati, katera verzija velja in
+   od kdaj - zato je glava tabela in ne odstavek. */
+.dok-opozorilo{font-size:.68rem;color:#8b5a2a;background:rgba(139,90,42,.08);
+  border:1px solid rgba(139,90,42,.25);border-radius:var(--rs);
+  padding:.4rem .55rem;margin-bottom:.5rem;line-height:1.4}
+.dok-glava{border:1px solid var(--border);border-radius:var(--rs);
+  background:var(--parchment);padding:.5rem .6rem;margin-bottom:.6rem}
+.dok-gnaziv{font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem}
+.dok-gvrstice{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+  gap:.15rem .8rem}
+.dok-gvrstice span{font-size:.7rem;color:var(--ink);display:flex;gap:.35rem}
+.dok-gvrstice b{font-weight:500;color:var(--muted);min-width:4.6rem;font-size:.62rem;
+  text-transform:uppercase;letter-spacing:.04em;padding-top:.08rem}
+.dok-r{margin-bottom:.7rem}
+.dok-h{font-size:.78rem;font-weight:600;color:var(--ink);margin:.7rem 0 .3rem;
+  text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);
+  padding-bottom:.15rem;display:flex;align-items:baseline;gap:.45rem}
+.dok-n{font-size:.65rem;color:var(--accent);font-weight:600}
+.dok-p{font-size:.78rem;line-height:1.55;margin:0 0 .35rem;color:var(--ink)}
+.dok-ul{margin:.1rem 0 .4rem;padding-left:1rem;font-size:.78rem;line-height:1.55}
+.dok-ul li{margin-bottom:.15rem}
+.dok-opomba{border-left:2px solid var(--accent);background:var(--parchment);
+  padding:.4rem .55rem;font-size:.74rem;line-height:1.5;margin:.25rem 0 .45rem;
+  border-radius:0 var(--rs) var(--rs) 0}
+.dok-tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs);
+  margin:.25rem 0 .45rem}
+.dok-t{border-collapse:collapse;width:100%;min-width:20rem}
+.dok-t th{font-size:.58rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);text-align:left;padding:.3rem .45rem;background:var(--parchment);
+  border-bottom:1px solid var(--border);white-space:nowrap}
+.dok-t td{font-size:.72rem;padding:.28rem .45rem;border-bottom:1px solid var(--border);
+  vertical-align:top;line-height:1.45}
+.dok-t tr:last-child td{border-bottom:0}
+.dok-caka{color:#8b5a2a}
+.dok-vir{font-size:.62rem;color:var(--muted);font-style:italic;margin:-.25rem 0 .5rem}
+.dok-pov{font-size:.7rem;color:var(--muted);margin:.5rem 0;line-height:1.5}
+.dok-pov a{color:var(--accent);text-decoration:none;font-weight:500}
 .korak-akcija{width:100%;padding:.35rem;margin-bottom:.28rem;border:1px dashed var(--accent);
   border-radius:var(--rs);background:rgba(175,132,85,.08);color:var(--accent);
   cursor:pointer;font-size:.68rem;font-family:'Jost',sans-serif}
@@ -568,6 +606,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     <div class="pager" id="opremaPager"></div>
   </div>
 
+  <div class="view" id="view-dokumenti">
+    <div class="view-hdr">
+      <div class="view-title">Dokumentacija</div>
+    </div>
+    <div class="filter-row">
+      <button class="fpill active" id="dok-vsi" onclick="setDokFilter('vsi',this)">Vsi</button>
+      <button class="fpill" onclick="setDokFilter('SOP',this)">📘 Postopki</button>
+      <button class="fpill" onclick="setDokFilter('OBR',this)">📄 Obrazci</button>
+      <button class="fpill" onclick="setDokFilter('DOK',this)">📕 Dokumenti</button>
+      <button class="fpill" onclick="setDokFilter('ZOP',this)">🧾 Zapisniki</button>
+      <button class="fpill" onclick="setDokFilter('cakajo',this)">⏳ Za potrditev</button>
+      <button class="fpill" onclick="setDokFilter('arhiv',this)">🗄 Arhiv</button>
+    </div>
+    <div id="dokList"></div>
+  </div>
+
 </div>
 
 <!-- BOTTOM NAV -->
@@ -642,9 +696,22 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <button class="vec-item" onclick="vecOdpri('materiali')"><span class="vec-ico">📦</span><span><strong>Materiali</strong><small>Zaloga steklenic, etiket, gob, glicerina</small></span></button>
       <button class="vec-item" onclick="vecOdpri('oprema')"><span class="vec-ico">🔧</span><span><strong>Oprema</strong><small>Oprema, inventar, vzdrževanje</small></span></button>
       <button class="vec-item" onclick="vecOdpri('dnevniki')"><span class="vec-ico">🕘</span><span><strong>Dnevniki dela</strong><small>Naprave, ki so kaj delale — ure in uporabe</small></span></button>
+      <button class="vec-item" onclick="vecOdpri('dokumenti')"><span class="vec-ico">📄</span><span><strong>Dokumentacija</strong><small>Postopki, obrazci in njihove veljavne verzije</small></span></button>
       <button class="vec-item" onclick="vecOdpri('rd')"><span class="vec-ico">🔬</span><span><strong>R&amp;D</strong><small>Razvojni nalogi</small></span></button>
       <button class="vec-item" onclick="closeSheet('vecOverlay');openSettings()"><span class="vec-ico">⚙️</span><span><strong>Nastavitve</strong><small>Sinhronizacija, cene, trošarina</small></span></button>
     </div>
+  </div>
+</div>
+
+<!-- SHEET: DOKUMENT -->
+<div class="overlay" id="dokOverlay">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="shdr">
+      <span class="shtitle" id="dokNaslov">Dokument</span>
+      <button class="shclose" onclick="closeSheet('dokOverlay')">✕</button>
+    </div>
+    <div class="shbody" id="dokTelo"></div>
   </div>
 </div>
 
@@ -6303,10 +6370,448 @@ function onEtTipChange(){
     tip==='izguba'?'none':'';
 }
 
+// ── DOKUMENTACIJA ─────────────────────────────────────────────────────────
+// Postopki, obrazci in dokumenti sistema kakovosti. Vsebina zivi v tej
+// datoteki in se spremeni le skozi pregled - to je smisel obvladovanega
+// dokumenta: sprememba je namerna in vidna, ne tiha.
+//
+// Verzija stoji na ENEM mestu, v registru spodaj. Glava dokumenta si jo izrise
+// iz njega, zato register in dokument ne moreta povedati vsak svojega - prav
+// to se je zgodilo pri OBR-0003, na katerega se aplikacija sklicuje enkrat kot
+// /01 in drugic kot /02.
+//
+// Verzija brez datuma veljavnosti pomeni "se ni potrjena": dokument je viden,
+// a ne velja. Datumov ne ugibamo - dokument, ki bi trdil, da velja od nekega
+// izmisljenega dne, je slabsi od dokumenta, ki prizna, da ceka na podpis.
+const DOKUMENTI=[
+  // Postopki
+  {oznaka:'SOP-0001', naziv:'Obvladovanje in organizacija dela v laboratoriju',
+   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0001','OBR-0005'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0001_1).'}]}]},
+
+  {oznaka:'SOP-0002', naziv:'Čiščenje in higiena prostorov',
+   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0002'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0002_1).'}]}]},
+
+  {oznaka:'SOP-0003', naziv:'Trojna ekstrakcija in formulacija tinkture medicinskih gob',
+   vrsta:'Postopek', lastnik:'Rok Golob',
+   zapisi:['OBR-0003','OBR-0004','ZOP-0001','ZOP-0002'],
+   povezani:['DOK-0002','SOP-0004'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (SOP-0003_1). Datum veljavnosti še ni prenesen iz izvirnika.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Postopek opisuje izdelavo alkoholne tinkture iz posušenih plodišč zdravilnih gob — od prevzema surovine do polnjenja in zaključka serije.',
+       'Namen je, da vsaka serija nastane po istem postopku, da so kritične kontrolne točke presojene, preden se gre naprej, in da o vsaki seriji ostane zapis, iz katerega je mogoče postopek rekonstruirati.']},
+
+     {naslov:'Področje uporabe', blok:[
+       'Velja za vse redne delovne naloge (DN), po katerih nastane prodajni izdelek.',
+       'Za razvojne naloge (RD) velja smiselno: postopek je isti, izid pa ni prodajni izdelek, ampak polizdelek. Kar je za razvojne naloge drugače, je zapisano v razdelku Odstopanja.']},
+
+     {naslov:'Odgovornosti', blok:[
+       {tabela:{glava:['Vloga','Odgovornost'], vrstice:[
+         ['Vodja proizvodnje','Izvedba postopka, presoja kritičnih kontrolnih točk, vodenje masne bilance, zaključek in sprostitev serije.'],
+         ['Skrbnik opreme','Umerjena merila in vzdrževana oprema pred začetkom serije.']]}},
+       'V podjetju z enim izvajalcem obe vlogi nosi ista oseba. Zapis o tem, kdo je presodil kritično točko in kdaj, nastane samodejno ob presoji.']},
+
+     {naslov:'Definicije in kratice', blok:[
+       {tabela:{glava:['Kratica','Pomen'], vrstice:[
+         ['OF','organska faza — etanolni izvleček'],
+         ['VF','vodna faza — vodni izvleček'],
+         ['HVE','vroča vodna ekstrakcija'],
+         ['TE','tlačna ekstrakcija'],
+         ['ME','matični ekstrakt'],
+         ['Pogača','stisnjen ostanek surovine po ločitvi ekstrakta'],
+         ['AAE','absolutni alkohol (etanol, preračunan na 100 %) pri 20 °C'],
+         ['KKT','kritična kontrolna točka']]}}]},
+
+     {naslov:'Oprema in merila', blok:[
+       'Naprave in merila so vodeni v registru opreme. Vsak korak postopka pove, katero vrsto naprave zahteva, in ta se v zapis serije vpiše ob izvedbi.',
+       {opomba:'Merilo s poteklim umerjanjem oziroma preverjanjem zadrži korak: dokler preverjanje ni opravljeno, koraka ni mogoče zaključiti. To ni priporočilo — meritev z neumerjenim merilom ni dokaz.'}]},
+
+     {naslov:'Surovine in topila', blok:[
+       'Surovina je posušeno plodišče gobe, prevzeto po seriji dobavitelja. Ena serija izdelka lahko nastane iz več serij surovine; vse so zapisane v delovnem nalogu.',
+       'Topilo je etanol, po potrebi razredčen z vodo ali pripravljen iz regeneriranega etanola. Priprava topila in odvzem iz kanistrov sta zapisana na kartici etanola in v popisu kanistrov.']},
+
+     {naslov:'Potek postopka', blok:[{koraki:true}]},
+
+     {naslov:'Kritične kontrolne točke', blok:[
+       'Korak s presojo se ne more zaključiti, dokler presoja ni dana. Kadar kritična točka ne ustreza, se serija ne nadaljuje brez zapisanega odstopanja.',
+       {ccp:true}]},
+
+     {naslov:'Masna bilanca in alkohol', blok:[
+       'Za vsako serijo se med postopkom vodi masna bilanca: vsak vnos in odvzem z maso, jakostjo, izračunanim absolutnim alkoholom in uro.',
+       'Ob zaključku naloga se na kartico etanola zapiše en izhod, ki je vsota alkohola v izdelku in procesnih izgub. Destilat, ki se z rotavaporja vrne v isti kanister, se ne knjiži — zaloge ni zapustil.',
+       'Alkohol v izdelku je osnova za obračun trošarine.']},
+
+     {naslov:'Zapisi, ki nastanejo', blok:[{obrazci:true}]},
+
+     {naslov:'Odstopanja', blok:[
+       'Odstopanje od tega postopka se zapiše v opombo koraka, na katerem je nastalo, in v zaključno opombo naloga. Zapisati je treba, kaj se je zgodilo, kaj je bilo ukrenjeno in kakšna je presoja o seriji.',
+       'Pri razvojnih nalogih izdelek za prodajo ne nastane. Alkohol, ki ostane v pilotni seriji, se vodi kot polizdelek z odloženo trošarino, dokler se ne odloči, kaj bo iz njega.']},
+   ]},
+
+  {oznaka:'SOP-0004', naziv:'Evidenca surovin, embalaže, proizvodnje in končnih izdelkov',
+   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0007'], povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     {opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0004_1). Aplikacija se na ta postopek že sklicuje: materialna kartica etanola je izpisana kot OBR-0007/01 · SOP-0004/01.'}]}]},
+
+  {oznaka:'SOP-0005', naziv:'Načrt umika in odpoklica živila',
+   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0010'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0005_1).'}]}]},
+
+  // Dokumenti
+  {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
+   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0001_1).'}]}]},
+
+  {oznaka:'DOK-0002', naziv:'Analiza tveganj in kritične točke procesa',
+   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     {opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0002_1). Iz tega dokumenta izhaja kritična kontrolna točka vlažnosti surovine, na katero se aplikacija sklicuje v koraku določitve vlažnosti.'}]}]},
+
+  // Obrazci
+  {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
+   verzije:[
+     {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0001_2).'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+
+  {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0002'],
+   verzije:[
+     {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0002_2).'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+
+  {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0003_1).'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     {opomba:'V mapi Veljavno je izdaja _1, aplikacija pa na izpisu kartice senzorične ocene tiska OBR-0003/02. Ena od obeh navedb je napačna — dokler ni potrjeno katera, je v registru zavedena izdaja iz mape.'}]}]},
+
+  {oznaka:'OBR-0004', naziv:'Evidenca regeneracije etanola',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0004_1).'}]}]},
+
+  {oznaka:'OBR-0005', naziv:'Zapisnik odstopa in korektivnih ukrepov',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0005_1).'}]}]},
+
+  {oznaka:'OBR-0007', naziv:'Materialna kartica etanola',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0004'],
+   verzije:[{v:'01', velja:'', odobril:'', opis:'Aplikacija ta obrazec že izpisuje, v mapi Veljavno pa ga ni.'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     'Obrazec nastane kot izpis kartice etanola: vsi vhodi in izhodi v L AAE za izbrano obdobje, s stanjem zaloge kot njihovo razliko. Ne izpolnjuje se ročno.',
+     {opomba:'Aplikacija ta obrazec tiska pod oznako OBR-0007/01, v mapi Veljavno pa ga ni — prav tako ni OBR-0006, OBR-0008 in OBR-0009. Ali obstaja drugje ali pa je bila oznaka dodeljena, ne da bi obrazec nastal. Dokler to ni razčiščeno, tu stoji brez veljavnosti.'}]}]},
+
+  {oznaka:'OBR-0010', naziv:'Evidenca umika in odpoklica živila',
+   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0005'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
+   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (OBR-0010_1).'}]}]},
+
+  // Zapisniki o proizvodnji
+  {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
+   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[
+     {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (ZOP-0001_2).'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     {opomba:'Vsebina še ni prenesena iz izvirnika. Ta zapisnik pokriva isto, kar aplikacija izpiše kot zapisnik delovnega naloga — ob prenosu je treba razčistiti, kateri od obeh je veljavni zapis serije.'}]}]},
+
+  {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record',
+   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (ZOP-0002_1).'}],
+   vsebina:[{naslov:'Vsebina', blok:[
+     {opomba:'Vsebina še ni prenesena iz izvirnika. V mapi stojita dva zapisnika o proizvodnji z istim nazivom — ob prenosu je treba povedati, po čem se razlikujeta.'}]}]},
+];
+
+// ── Verzije ───────────────────────────────────────────────────────────────
+function dokVerzije(d){
+  return [...(d.verzije||[])].sort((a,b)=>String(a.v).localeCompare(String(b.v)));
+}
+// Veljavna je zadnja verzija, ki je ze zacela veljati. Trije primeri:
+//   datum   - verzija velja od tega dne,
+//   '?'     - verzija je v veljavi (izvirnik je v mapi Veljavno), datum pa se
+//             ni prenesen; dokument velja, le od kdaj, ne vemo,
+//   prazno  - verzija ne velja (ceka na potrditev ali je nadomescena).
+// Loceno vodimo prav zato, ker bi "ne velja" pri podpisanem postopku bila
+// neresnica, "velja od 1. 1." pa izmislen datum. Nobeno ni sprejemljivo.
+function dokDatum(v){return v&&v.velja&&v.velja!=='?'?v.velja:null;}
+function dokVeljavna(d){
+  const danes=todayISO();
+  const v=dokVerzije(d).filter(x=>x.velja&&(x.velja==='?'||x.velja<=danes));
+  return v.length?v[v.length-1]:null;
+}
+function dokBrezDatuma(d){
+  const v=dokVeljavna(d);
+  return !!v&&!dokDatum(v);
+}
+function dokPolnaOznaka(d){
+  const v=dokVeljavna(d);
+  return d.oznaka+(v?'/'+v.v:'');
+}
+function dokStanje(d){
+  if(d.razveljavljen)return {kljuc:'arhiv',napis:'Razveljavljen',cls:'status-prenos'};
+  return dokVeljavna(d)
+    ?{kljuc:'velja',napis:'Velja',cls:'status-zakljucen'}
+    :{kljuc:'priprava',napis:'Za potrditev',cls:'status-odprt'};
+}
+function dokNajdi(oznaka){
+  const o=String(oznaka||'').trim().toUpperCase().split('/')[0];
+  return DOKUMENTI.find(d=>d.oznaka.toUpperCase()===o)||null;
+}
+function dokPovezava(d){
+  return `${location.origin}${location.pathname}#dokument=${encodeURIComponent(d.oznaka)}`;
+}
+
+// ── Izris vsebine ─────────────────────────────────────────────────────────
+// Razdelka Potek postopka in Kritične kontrolne točke se izriseta iz predloge
+// korakov, po kateri aplikacija dejansko vodi nalog. Prepisati ju v besedilo
+// bi pomenilo dve resnici, ki se scasoma razideta - in prav to je tisto, kar
+// inspektor najde.
+function dokKorakiHtml(){
+  const vrstice=DN_PREDLOGA_KORAKOV.map(t=>{
+    const meri=(t.polja||[]).filter(x=>x.tip==='meritev')
+      .map(x=>x.napis+(x.enota?' ('+x.enota+')':'')).join(', ');
+    const pon=(t.polja||[]).find(x=>x.tip==='ponovitve');
+    const vse=[meri, pon?`${pon.naslov||'ponovitve'}: ${(pon.polja||[]).map(y=>y.napis).join(', ')}`:'']
+      .filter(Boolean).join(' · ');
+    return [t.st||'', t.naziv, t.faza||'—', vse||'—'];
+  });
+  return dokTabelaHtml(['Št.','Korak','Faza','Kaj se izmeri'],vrstice)
+    +`<div class="dok-vir">Razdelek se izriše iz predloge korakov v aplikaciji — tiste, po kateri se nalog dejansko vodi.</div>`;
+}
+function dokCCPHtml(){
+  const vrstice=[];
+  DN_PREDLOGA_KORAKOV.forEach(t=>(t.polja||[]).filter(x=>x.tip==='ccp').forEach(x=>{
+    vrstice.push([t.st||'', t.naziv, x.napis, x.meja||'presoja']);
+  }));
+  return dokTabelaHtml(['Št.','Korak','Kritična kontrolna točka','Meja'],vrstice)
+    +`<div class="dok-vir">Razdelek se izriše iz predloge korakov v aplikaciji.</div>`;
+}
+function dokObrazciHtml(d){
+  const vrstice=(d.zapisi||[]).map(o=>{
+    const z=dokNajdi(o);
+    return [z?dokPolnaOznaka(z):o, z?z.naziv:'—'];
+  });
+  if(!vrstice.length)return `<p class="dok-p">Iz tega dokumenta ne nastane noben obrazec.</p>`;
+  return dokTabelaHtml(['Obrazec','Naziv'],vrstice);
+}
+function dokTabelaHtml(glava,vrstice){
+  return `<div class="dok-tw"><table class="dok-t">
+    <thead><tr>${glava.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${vrstice.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function dokBlokHtml(b,d){
+  if(typeof b==='string')return `<p class="dok-p">${b}</p>`;
+  if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  if(b.opomba)return `<div class="dok-opomba">${b.opomba}</div>`;
+  if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice);
+  if(b.koraki)return dokKorakiHtml();
+  if(b.ccp)return dokCCPHtml();
+  if(b.obrazci)return dokObrazciHtml(d);
+  return '';
+}
+function dokVsebinaHtml(d){
+  return (d.vsebina||[]).map((r,i)=>`<section class="dok-r">
+    <h3 class="dok-h"><span class="dok-n">${i+1}</span>${r.naslov}</h3>
+    ${(r.blok||[]).map(b=>dokBlokHtml(b,d)).join('')}
+  </section>`).join('');
+}
+function dokZgodovinaHtml(d){
+  const vrstice=dokVerzije(d).map(v=>[
+    d.oznaka+'/'+v.v,
+    dokDatum(v)?fmtDate(v.velja)
+      :v.velja==='?'?'<span class="dok-caka">ni prenesen</span>'
+      :'<span class="dok-caka">ne velja</span>',
+    v.odobril||'—',
+    v.opis||'—']);
+  return dokTabelaHtml(['Verzija','Velja od','Odobril','Sprememba'],vrstice);
+}
+function dokPovezaniHtml(d){
+  const vsi=[...(d.povezani||[])];
+  if(!vsi.length)return '';
+  return `<div class="dok-pov">Povezani dokumenti: ${vsi.map(o=>{
+    const z=dokNajdi(o);
+    return z?`<a href="#dokument=${z.oznaka}" onclick="odpriDokument('${z.oznaka}');return false">${dokPolnaOznaka(z)}</a>`:o;
+  }).join(' · ')}</div>`;
+}
+
+// ── Register ──────────────────────────────────────────────────────────────
+let dokFilter='vsi';
+function setDokFilter(f,btn){
+  dokFilter=f;
+  document.querySelectorAll('#view-dokumenti .fpill').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderDokumenti();
+}
+function renderDokumenti(){
+  const el=document.getElementById('dokList');
+  if(!el)return;
+  let vrste=DOKUMENTI.filter(d=>{
+    const st=dokStanje(d);
+    if(dokFilter==='vsi')return st.kljuc!=='arhiv';
+    if(dokFilter==='arhiv')return st.kljuc==='arhiv';
+    if(dokFilter==='cakajo')return st.kljuc==='priprava';
+    return d.oznaka.startsWith(dokFilter);
+  });
+  vrste.sort((a,b)=>a.oznaka.localeCompare(b.oznaka));
+  if(!vrste.length){
+    el.innerHTML=`<div class="empty"><div class="ei">📄</div><div class="et">Ni dokumentov</div>
+      <div class="es">Za to izbiro ni nobenega zapisa</div></div>`;
+    return;
+  }
+  const brezDatuma=DOKUMENTI.filter(dokBrezDatuma).length;
+  const cakajo=DOKUMENTI.filter(d=>dokStanje(d).kljuc==='priprava').length;
+  const vrstice=[];
+  if(brezDatuma)vrstice.push(`📅 Pri ${brezDatuma} dokumentih datum veljavnosti še ni prenesen iz izvirnika.`);
+  if(cakajo)vrstice.push(`⏳ ${cakajo} ${cakajo===1?'dokument ni':'dokumentov ni'} v veljavi.`);
+  const opozorilo=vrstice.length?`<div class="dok-opozorilo">${vrstice.join('<br>')}</div>`:'';
+  el.innerHTML=opozorilo+vrste.map(d=>{
+    const st=dokStanje(d), v=dokVeljavna(d), vse=dokVerzije(d);
+    return `<div class="dn-card">
+      <div class="dn-header" onclick="odpriDokument('${d.oznaka}')">
+        <div class="dn-info">
+          <div class="dn-name">${dokPolnaOznaka(d)} <span style="font-size:.75rem;color:var(--muted)">${d.naziv}</span></div>
+          <div class="dn-meta">${d.vrsta}${d.lastnik?' · '+d.lastnik:''}</div>
+          <div class="dn-meta">${dokDatum(v)?`Velja od ${fmtDate(v.velja)}`
+            :v?'Velja · datum ni prenesen':'Ni v veljavi'}${vse.length>1?` · ${vse.length} verziji`:''}</div>
+        </div>
+        <div class="dn-right">
+          <div class="status-badge ${st.cls}">${st.napis}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function odpriDokument(oznaka){
+  const d=dokNajdi(oznaka);
+  if(!d){toast('Dokumenta '+oznaka+' ni v registru');return;}
+  const v=dokVeljavna(d), st=dokStanje(d);
+  document.getElementById('dokNaslov').textContent=dokPolnaOznaka(d);
+  document.getElementById('dokTelo').innerHTML=`
+    <div class="dok-glava">
+      <div class="dok-gnaziv">${d.naziv}</div>
+      <div class="dok-gvrstice">
+        <span><b>Oznaka</b>${dokPolnaOznaka(d)}</span>
+        <span><b>Vrsta</b>${d.vrsta}</span>
+        <span><b>Velja od</b>${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}</span>
+        <span><b>Odobril</b>${v&&v.odobril?v.odobril:'—'}</span>
+        <span><b>Lastnik</b>${d.lastnik||'—'}</span>
+        <span><b>Stanje</b>${st.napis}</span>
+      </div>
+    </div>
+    ${st.kljuc!=='velja'
+      ?`<div class="dok-opomba">Ta dokument ni v veljavi: nima potrjene verzije. Po njem se ne dela, dokler ga ne potrdiš.</div>`
+      :dokBrezDatuma(d)
+      ?`<div class="dok-opomba">Dokument je v veljavi, datum veljavnosti pa še ni prenesen iz izvirnika. Vpiši ga, da bo iz registra razvidno, po kateri verziji je bila delana posamezna serija.</div>`:''}
+    ${dokVsebinaHtml(d)}
+    <section class="dok-r">
+      <h3 class="dok-h"><span class="dok-n">≡</span>Zgodovina sprememb</h3>
+      ${dokZgodovinaHtml(d)}
+    </section>
+    ${dokPovezaniHtml(d)}
+    <button type="button" class="korak-akcija" onclick="natisniDokument('${d.oznaka}')">🖨 Natisni / shrani v PDF</button>`;
+  openSheet('dokOverlay');
+}
+
+// Natisnjen izvod je tisti, ki ga podpises - dokument velja od podpisa, zato
+// mora izpis nositi verzijo, datum veljavnosti in prostor za podpis.
+function natisniDokument(oznaka){
+  const d=dokNajdi(oznaka);
+  if(!d){toast('Dokumenta ni v registru');return;}
+  const v=dokVeljavna(d), st=dokStanje(d);
+  const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
+<title>${dokPolnaOznaka(d)} — ${d.naziv}</title>
+<style>
+@page{size:A4;margin:16mm 15mm}
+body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weight:300;
+  color:#2b251c;font-size:10pt;line-height:1.55;max-width:180mm;margin:0 auto;padding:1cm}
+.hd{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-start;
+  border-bottom:1.6pt solid #17130d;padding-bottom:.5rem;margin-bottom:1rem}
+.hd h1{font-size:13pt;font-weight:500;margin:0 0 .15rem}
+.hd .sif{font-family:ui-monospace,Menlo,monospace;font-size:9pt;color:#8a6a45}
+.hd .meta{font-size:8pt;color:#7a6f60;text-align:right;line-height:1.7;white-space:nowrap}
+.hd .meta b{color:#2b251c;font-weight:500}
+h3{font-size:10pt;font-weight:500;margin:1rem 0 .3rem;text-transform:uppercase;
+  letter-spacing:.06em;border-bottom:.6pt solid #e2dacc;padding-bottom:.15rem}
+h3 span{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45;margin-right:.5rem}
+p{margin:0 0 .4rem}
+ul{margin:.2rem 0 .5rem;padding-left:1.1rem}
+table{border-collapse:collapse;width:100%;margin:.3rem 0 .6rem;font-size:8.6pt}
+th{text-align:left;font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;
+  padding:.2rem .4rem;border-bottom:.9pt solid #17130d;background:#faf8f4;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
+.op{border-left:2pt solid #8a6a45;background:#faf8f4;padding:.4rem .6rem;margin:.3rem 0 .6rem;
+  font-size:9pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.vir{font-size:7.5pt;color:#9a9083;margin:-.3rem 0 .6rem}
+.podpis{margin-top:1.6rem;display:flex;gap:2rem;page-break-inside:avoid}
+.podpis div{flex:1}
+.crta{border-bottom:.7pt solid #17130d;height:14mm}
+.crta-l{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:#7a6f60;padding-top:.2rem}
+.ft{margin-top:1.2rem;border-top:.6pt solid #e2dacc;padding-top:.4rem;
+  font-size:7.5pt;color:#7a6f60;display:flex;justify-content:space-between;gap:1rem}
+.btnrow{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem}
+.btnrow button{padding:.55rem 1.5rem;border:none;border-radius:4px;background:#17130d;
+  color:#fff;font-family:inherit;font-size:.8rem;cursor:pointer}
+@media print{.btnrow{display:none}body{padding:0;max-width:none}}
+</style></head><body>
+<div class="hd">
+  <div>
+    <h1>${d.naziv}</h1>
+    <div class="sif">${dokPolnaOznaka(d)}</div>
+  </div>
+  <div class="meta">
+    <b>Vrsta</b> ${d.vrsta}<br>
+    <b>Velja od</b> ${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}<br>
+    <b>Lastnik</b> ${d.lastnik||'—'}<br>
+    <b>Stanje</b> ${st.napis}
+  </div>
+</div>
+${st.kljuc!=='velja'?`<div class="op">Ta izvod ne velja: dokument nima datuma veljavnosti in podpisa odobritve.</div>`:''}
+${dokVsebinaHtml(d).replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
+   .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-tw"/g,'')
+   .replace(/class="dok-t"/g,'').replace(/class="dok-opomba"/g,'class="op"')
+   .replace(/class="dok-vir"/g,'class="vir"')}
+<h3><span>≡</span>Zgodovina sprememb</h3>
+${dokZgodovinaHtml(d).replace(/class="dok-tw"/g,'').replace(/class="dok-t"/g,'')
+   .replace(/class="dok-caka"/g,'')}
+<div class="podpis">
+  <div><div class="crta"></div><div class="crta-l">Pripravil — ${d.lastnik||''}</div></div>
+  <div><div class="crta"></div><div class="crta-l">Odobril · datum</div></div>
+</div>
+<div class="ft">
+  <span>GoMushroom · ${dokPolnaOznaka(d)}</span>
+  <span>Izpis ${new Date().toLocaleDateString('sl-SI')} · veljavno verzijo potrjuje register dokumentacije</span>
+</div>
+<div class="btnrow"><button onclick="window.print()">📄 Shrani / Natisni</button></div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(!win){
+    const a=document.createElement('a');
+    a.href=url;a.download=d.oznaka+'.html';a.click();
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
 // ── TAB ──
 // Zasloni pod gumbom "Vec" nimajo svojega gumba v spodnji vrstici, zato ostane
 // oznacen gumb "Vec" - sicer med njimi ni oznacen noben zavihek.
-const NAV_VEC=['materiali','oprema','rd','dnevniki'];
+const NAV_VEC=['materiali','oprema','rd','dnevniki','dokumenti'];
 
 function switchTab(id,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -6324,6 +6829,7 @@ function switchTab(id,btn){
   if(id==='rd'){renderRD();}
   if(id==='bilanca'){renderBilancaSelect();}
   if(id==='preracuni'){renderPreracuni();}
+  if(id==='dokumenti'){renderDokumenti();}
 }
 
 function openVecMenu(){openSheet('vecOverlay');}
@@ -12728,7 +13234,7 @@ async function migrateOpombaToDoabvitelj(){
 <script>
 (function () {
   'use strict';
-  var ZASLONI = ['materiali', 'dn', 'etanol', 'oprema', 'dnevniki', 'rd', 'bilanca', 'preracuni'];
+  var ZASLONI = ['materiali', 'dn', 'etanol', 'oprema', 'dnevniki', 'rd', 'bilanca', 'preracuni', 'dokumenti'];
   var izvirni = window.switchTab;
   if (typeof izvirni !== 'function') return;
 
@@ -12747,6 +13253,11 @@ async function migrateOpombaToDoabvitelj(){
     kanistri: function () {
       izvirni('preracuni');
       if (typeof openKanistriSheet === 'function') openKanistriSheet();
+    },
+    // Nalepka na napravi ali sklic v zapisu: #dokument=SOP-0004
+    dokument: function (arg) {
+      izvirni('dokumenti');
+      if (arg && typeof odpriDokument === 'function') odpriDokument(arg);
     },
     // QR nalepka na posodi polizdelka: #polizdelek=RD-26-001-P1
     polizdelek: function (arg) {

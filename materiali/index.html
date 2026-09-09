@@ -6525,60 +6525,105 @@ const DOKUMENTI=[
    ]},
 
   {oznaka:'SOP-0003', naziv:'Trojna ekstrakcija in formulacija tinkture medicinskih gob',
-   vrsta:'Postopek', lastnik:'Rok Golob',
-   zapisi:['OBR-0003','OBR-0004','ZOP-0001','ZOP-0002'],
-   povezani:['DOK-0002','SOP-0004'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (SOP-0003_1). Datum veljavnosti še ni prenesen iz izvirnika.'}],
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['ZOP-0001','OBR-0003','OBR-0004','OBR-0005'],
+   povezani:['DOK-0001','DOK-0002'],
+   verzije:[{v:'01', velja:'2025-10-03', odobril:'Rok Golob', opis:'Prva izdaja.'}],
    vsebina:[
      {naslov:'Namen', blok:[
-       'Postopek opisuje izdelavo alkoholne tinkture iz posušenih plodišč zdravilnih gob — od prevzema surovine do polnjenja in zaključka serije.',
-       'Namen je, da vsaka serija nastane po istem postopku, da so kritične kontrolne točke presojene, preden se gre naprej, in da o vsaki seriji ostane zapis, iz katerega je mogoče postopek rekonstruirati.']},
+       'Postopek opisuje standardizirano trojno ekstrakcijo vseh vrst medicinskih gob, ki se obdelujejo v proizvodnji. Vključuje etanolno ekstrakcijo z ultrazvočno podporo, vročevodno ekstrakcijo (HVE) in tlačno ekstrakcijo (TE) ter nadaljnjo koncentracijo in formulacijo alkoholne in glicerinske tinkture.',
+       'Postopek se uporablja skupaj z obrazcem {{ZOP-0001}}, kjer se beležijo vse meritve, mase, volumni in izračuni. Vključuje tudi občasno regeneracijo — koncentriranje procesno nezanimivega etanola pod 30 vol %, ki nastane kot stranski produkt koncentriranja matičnih ekstraktov.']},
 
-     {naslov:'Področje uporabe', blok:[
-       'Velja za vse redne delovne naloge (DN), po katerih nastane prodajni izdelek.',
-       'Za razvojne naloge (RD) velja smiselno: postopek je isti, izid pa ni prodajni izdelek, ampak polizdelek. Kar je za razvojne naloge drugače, je zapisano v razdelku Odstopanja.']},
+     {naslov:'Obseg', blok:[
+       'Uporablja se za pripravo alkoholnih in glicerinskih tinktur medicinskih gob v laboratoriju oziroma produkciji GoMushroom.',
+       {ul:[
+         'Vsi podatki o izvedbi postopka se beležijo v {{ZOP-0001}}, ki je obvezna priloga dokumentacije serije.',
+         'Regeneracija etanola se beleži v {{OBR-0004}}.',
+         'Organoleptična analiza se beleži v {{OBR-0003}}.']}]},
 
      {naslov:'Odgovornosti', blok:[
-       {tabela:{glava:['Vloga','Odgovornost'], vrstice:[
-         ['Vodja proizvodnje','Izvedba postopka, presoja kritičnih kontrolnih točk, vodenje masne bilance, zaključek in sprostitev serije.'],
-         ['Skrbnik opreme','Umerjena merila in vzdrževana oprema pred začetkom serije.']]}},
-       'V podjetju z enim izvajalcem obe vlogi nosi ista oseba. Zapis o tem, kdo je presodil kritično točko in kdaj, nastane samodejno ob presoji.']},
+       'Vse naloge izvajanja, preverjanja in potrjevanja izvaja lastnik podjetja.']},
 
-     {naslov:'Definicije in kratice', blok:[
-       {tabela:{glava:['Kratica','Pomen'], vrstice:[
-         ['OF','organska faza — etanolni izvleček'],
-         ['VF','vodna faza — vodni izvleček'],
-         ['HVE','vroča vodna ekstrakcija'],
-         ['TE','tlačna ekstrakcija'],
-         ['ME','matični ekstrakt'],
-         ['Pogača','stisnjen ostanek surovine po ločitvi ekstrakta'],
-         ['AAE','absolutni alkohol (etanol, preračunan na 100 %) pri 20 °C'],
-         ['KKT','kritična kontrolna točka']]}}]},
+     {naslov:'Materiali in oprema', blok:[
+       {tabela:{glava:['Postavka','Opis'], vrstice:[
+         ['Surovina','suha mleta goba'],
+         ['Etanol','food grade 96 % (farmacevtske čistine) · regeneriran etanol neposredno po koncentriranju organske faze (zabeleženo v ZOP) · regeneriran etanol nižjih, procesno nezanimivih koncentracij (zabeleženo v OBR-0004)'],
+         ['Voda','destilirana ali RO voda'],
+         ['Posoda','stekleni kozarci 7,6 L s pokrovom'],
+         ['Ultrazvočna sonda','20 kHz, 3000 W'],
+         ['Mešalnik','laboratorijski nadglavni mešalnik'],
+         ['Stiskalnica','meh ali ploščna'],
+         ['Filtrna tkanina','400–500 mesh, inertna, pralna, sušena pred ponovno uporabo'],
+         ['Rotavapor','5–20 L, z vakuumsko črpalko in hladilnikom'],
+         ['Avtoklav / tlačni ekstraktor','125–130 °C, s PID regulacijo']]}}]},
 
-     {naslov:'Oprema in merila', blok:[
-       'Naprave in merila so vodeni v registru opreme. Vsak korak postopka pove, katero vrsto naprave zahteva, in ta se v zapis serije vpiše ob izvedbi.',
-       {opomba:'Merilo s poteklim umerjanjem oziroma preverjanjem zadrži korak: dokler preverjanje ni opravljeno, koraka ni mogoče zaključiti. To ni priporočilo — meritev z neumerjenim merilom ni dokaz.'}]},
+     {naslov:'Postopek', blok:[
+       {pod:'Etanolna ekstrakcija — organska faza'},
+       'Etanolna ekstrakcija se izvede skladno s specifičnimi pogoji glede na vrsto gobe. Vse dejanske mase, volumni in odstotki etanola se beležijo v {{ZOP-0001}}. Reishi ima zaradi puhaste strukture zelo velik nasipni volumen — 250 g gobe zasede 5 L — zato je zanjo potrebno še enkrat več topila kot za resasti bradovec ali chago.',
+       {tabela:{glava:['Vrsta gobe','Etanol (% v/v)','Razmerje goba : etanol','Ultrazvok (moč / čas, najvišja T)'], vrstice:[
+         ['Reishi','85–87 %','1 : 25–30 (1 kg / 25–30 L)','2 × 20 min pri ~99 % moči, T ≤ 50 °C'],
+         ['Resasti bradovec','78–80 %','1 : 10–13 (1 kg : 10–13 L)','2 × 15 min pri ~80 % moči, T ≤ 50 °C'],
+         ['Chaga','78–80 %','1 : 10–13 (1 kg : 10–13 L)','2 × 15 min pri ~80 % moči, T ≤ 50 °C']]}},
+       'V 7,6-litrski stekleni kozarec natehtamo 250–280 g reishija oziroma 500–600 g resastega bradovca ali chage, nato s peristaltično črpalko dodamo 5500 g ustreznega topila. V kozarec se namestijo ultrazvočna sonda, propelersko mešalo in temperaturni senzor, nato se kozarec zapre s pokrovom. Mešalo se nastavi na takšne obrate, da suspenzija enakomerno kroži po celotnem volumnu. Ultrazvok se vklopi skladno s pogoji iz tabele. Po najmanj 12 urah se obdelava ponovi.',
+       {opomba:'Temperatura se med postopkom sproti spremlja in ne sme preseči 50 °C.'},
+       'Po končani etanolni ekstrakciji se matični ekstrakt loči od biomase s stiskalnico in pralno filtrno tkanino (400 mesh, ≈ 37 µm). Tkanina se po uporabi opere in razkuži. Matični ekstrakt (ME) se uporabi za koncentriranje in pripravo tinkture, pogača pa je vhodni material za vročevodno ekstrakcijo.',
+       'Matični ekstrakt se razdeli na dva dela: večji del se koncentrira na rotavaporju do suhega ostanka (smole, triterpeni), manjši del pa se shrani nespremenjen in uporabi za ponovno raztapljanje suhega ostanka po koncentriranju. Količina shranjenega dela je odvisna od končnega volumna in ciljne koncentracije etanola v izdelku; ker delamo z masami, se prek volumna in gostote izračuna tudi potrebna masa ME.',
 
-     {naslov:'Surovine in topila', blok:[
-       'Surovina je posušeno plodišče gobe, prevzeto po seriji dobavitelja. Ena serija izdelka lahko nastane iz več serij surovine; vse so zapisane v delovnem nalogu.',
-       'Topilo je etanol, po potrebi razredčen z vodo ali pripravljen iz regeneriranega etanola. Priprava topila in odvzem iz kanistrov sta zapisana na kartici etanola in v popisu kanistrov.']},
+       {pod:'Vročevodna ekstrakcija (HVE) — vodna faza I'},
+       'HVE se izvaja na pogači, ki ostane po etanolni ekstrakciji. Pogačo prenesemo v avtoklav in ji dodamo približno 5- do 10-kratnik mase demineralizirane vode. Ekstrakcija poteka v zaprtem sistemu pri 80–90 °C; temperaturo regulira PID krmilnik, ki zagotavlja stalne pogoje skozi celoten potek.',
+       'Po končani ekstrakciji se tekoči del loči od biomase s filtrno tkanino 300 mesh. Tkanina se po uporabi opere in razkuži. Ekstrakt se koncentrira na rotavaporju do mase, potrebne za združevanje z organsko fazo: od ciljnega volumna končne tinkture se ob upoštevanju kontrakcije 30 % etanolne mešanice odšteje volumen organske faze, preostanek pa se enakomerno razdeli na dva dela — prvi je koncentrat HVE, drugi koncentrat TE.',
 
-     {naslov:'Potek postopka', blok:[{koraki:true}]},
+       {pod:'Tlačna ekstrakcija (TE) — vodna faza II'},
+       'TE se izvaja na isti pogači po končani vročevodni ekstrakciji. Pogačo ponovno prenesemo v avtoklav in ji dodamo približno 12-kratnik mase demineralizirane vode. Ekstrakcija poteka v zaprtem sistemu pod tlakom, para v notranjosti doseže približno 120–130 °C, stabilne pogoje zagotavlja PID krmilnik.',
+       'Po končani ekstrakciji se tekoči del loči s filtrno tkanino 300 mesh, tkanina se opere in razkuži. Ekstrakt se koncentrira do mase, izračunane na enak način kot pri HVE: od skupne mase se odšteje masa koncentrata vročevodne ekstrakcije.',
 
-     {naslov:'Kritične kontrolne točke', blok:[
-       'Korak s presojo se ne more zaključiti, dokler presoja ni dana. Kadar kritična točka ne ustreza, se serija ne nadaljuje brez zapisanega odstopanja.',
-       {ccp:true}]},
+       {pod:'Diagram poteka procesa ekstrakcije'},
+       {koraki:true},
 
-     {naslov:'Masna bilanca in alkohol', blok:[
-       'Za vsako serijo se med postopkom vodi masna bilanca: vsak vnos in odvzem z maso, jakostjo, izračunanim absolutnim alkoholom in uro.',
-       'Ob zaključku naloga se na kartico etanola zapiše en izhod, ki je vsota alkohola v izdelku in procesnih izgub. Destilat, ki se z rotavaporja vrne v isti kanister, se ne knjiži — zaloge ni zapustil.',
-       'Alkohol v izdelku je osnova za obračun trošarine.']},
+       {pod:'Končna formulacija alkoholne tinkture'},
+       'Za končno formulacijo se uporabi že določena količina organske faze (matičnega etanolnega ekstrakta) z znano koncentracijo etanola. Na podlagi ciljnega končnega volumna tinkture in znane mase organske faze se izračuna skupna potrebna masa vodne faze (HVE + TE), ki zagotavlja končni etanolni delež 30 % v/v.',
+       'Izračun se izvede po masi, pri čemer je kontrakcija volumna že upoštevana z uporabo gostote 30-odstotne etanolne raztopine. Če razpoložljiva količina vodnih koncentratov ne zadošča, se manjkajoči del mase dopolni z demineralizirano vodo, tako da skupna masa ustreza ciljnemu volumnu tinkture.',
 
-     {naslov:'Zapisi, ki nastanejo', blok:[{obrazci:true}]},
+       {pod:'Dodajanje vitamina C in lecitina'},
+       'Po združitvi in homogenizaciji frakcij (OF, HVE, TE) se v tinkturo dodata vitamin C in sončnični lecitin (non-GMO). Vitamin C (askorbinska kislina) deluje kot antioksidant, ki preprečuje oksidacijo učinkovin (triterpenov, fenolov) in podaljšuje obstojnost. Lecitin deluje kot naravni emulgator in stabilizator, ki izboljša disperzijo trdnih delcev, zmanjša možnost geliranja ali usedanja in poveča biološko razpoložljivost lipofilnih spojin.',
+       {tabela:{glava:['Dodatek','Delež glede na skupno maso tinkture'], vrstice:[
+         ['Vitamin C','0,20 % m/m'],
+         ['Lecitin','0,50 % m/m']]}},
+       {opomba:'Delež lecitina se med dokumenti razhaja: ta postopek navaja 0,50 % m/m, zapisnik {{ZOP-0001}} pa 0,30 % m/m. Enak delež (0,3 %) je privzet tudi v preračunu matičnega ekstrakta v aplikaciji. Razliko je treba razčistiti in uskladiti.'},
+       'Dodatka se raztopita oziroma dispergirata v manjšem delu tinkture in se med mešanjem vneseta v glavno maso. Po dodatku obeh komponent se tinktura meša neprekinjeno najmanj 4 ure pri T < 40 °C do popolne homogenizacije, nato pa stoji najmanj 12 ur za stabilizacijo pred filtracijo ali polnjenjem.',
 
-     {naslov:'Odstopanja', blok:[
-       'Odstopanje od tega postopka se zapiše v opombo koraka, na katerem je nastalo, in v zaključno opombo naloga. Zapisati je treba, kaj se je zgodilo, kaj je bilo ukrenjeno in kakšna je presoja o seriji.',
-       'Pri razvojnih nalogih izdelek za prodajo ne nastane. Alkohol, ki ostane v pilotni seriji, se vodi kot polizdelek z odloženo trošarino, dokler se ne odloči, kaj bo iz njega.']},
+       {pod:'Formulacija glicerinske tinkture'},
+       'Glicerinska tinktura se pripravi iz že izdelane alkoholne tinkture, ki vsebuje vse raztopljene učinkovine. Postopek temelji na popolni odstranitvi etanola in nadomestitvi topila z glicerolom ter delom vode, tako da končna tinktura vsebuje približno 75 % m/m glicerola.',
+       'Stehtana alkoholna tinktura se prenese v bučko rotavaporja. Topilo (etanol in voda) se odstrani z izparevanjem pri T ≤ 40 °C, dokler ne nastane gosta pasta, ki vsebuje suho snov in preostanek vode. Vsebnost suhe snovi je bila predhodno določena na halogenskem sušilniku; ta podatek se uporabi za izračun količine suhe snovi, ki ostane v bučki, in za oceno preostanka vode. Med izparevanjem se odstrani le topilo, vsa suha snov ostane v bučki.',
+       'Na osnovi znane količine suhe snovi in preostale vode se izračuna potrebna količina glicerola in demineralizirane vode za natanko 75 % m/m glicerola. Zmes se meša do popolne homogenizacije pri temperaturi pod 40 °C.',
+
+       {pod:'Dodajanje vitamina C v glicerinsko tinkturo'},
+       'V glicerinsko tinkturo se doda preostanek vitamina C v količini 0,50 % m/m, tako da skupna vsebnost vitamina C (alkoholna in glicerinska formulacija) znaša 0,70 % m/m. Vitamin C se natehta, raztopi v manjšem delu tinkture in doda med mešanjem v glavno maso.',
+       'Glicerinske tinkture ne vsebujejo etanola, zato imajo manjšo protimikrobno zaščito in so bolj oksidativno občutljive. Višji delež vitamina C deluje kot antioksidant in naravni konzervans, askorbinska kislina pa hkrati rahlo zniža pH, kar dodatno zmanjša možnost mikrobne rasti.']},
+
+     {naslov:'Kontrola kakovosti', blok:[
+       {pod:'Vsebnost suhe snovi'},
+       'Končnemu izdelku — alkoholni tinkturi — preverimo učinkovitost ekstrakcije tako, da na halogenskem sušilniku določimo masni odstotek suhe snovi. Spodnje meje po končni formulaciji:',
+       {tabela:{glava:['Vrsta gobe','Suha snov (% m/m)'], vrstice:[
+         ['Reishi','≥ 4,0 %'],['Chaga','≥ 6,0 %'],['Resasti bradovec','≥ 10,0 %']]}},
+
+       {pod:'Potrditev etanola v alkoholni tinkturi'},
+       'Med izdelavo glicerinske tinkture eksperimentalno potrdimo vsebnost etanola: iz odmerjene mase alkoholne tinkture odparimo vse topilo, predpostavimo, da ob suhi snovi ostane le voda, in iz masnega ravnotežja izračunamo volumski in masni odstotek etanola.',
+       {opomba:'Spodnja meja je 25,0 % v/v oziroma 20,5 % m/m.'},
+
+       {pod:'Organoleptična analiza'},
+       'Po zaključeni stabilizaciji izvedemo organoleptično analizo, kjer opisno potrdimo ustreznost posamezne formulacije. Rezultate beležimo na obrazec {{OBR-0003}}.',
+       'Vsi rezultati in merilni pogoji se zapišejo v {{ZOP-0001}}.']},
+
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Etanol in izopropanol sta vnetljiva; uporaba odprtega ognja in kajenje v laboratoriju sta prepovedana.',
+         'Pri delu z avtoklavom se uporabljajo zaščitna obleka, rokavice in zaščitna očala.',
+         'Ekstrakcije se izvajajo v dobro prezračevanem prostoru.']}]},
+
+     {naslov:'Priloge', blok:[
+       {obrazci:true},
+       'Priloge so sestavni del tega postopka in se hranijo skladno z zahtevami za dokumentacijo serij oziroma procesov. Sem sodita tudi {{DOK-0001}} in {{DOK-0002}}.']},
    ]},
 
   {oznaka:'SOP-0004', naziv:'Evidenca surovin, embalaže, proizvodnje in končnih izdelkov',
@@ -6594,17 +6639,66 @@ const DOKUMENTI=[
 
   // Dokumenti
   {oznaka:'DOK-0001', naziv:'Strokovna utemeljitev roka uporabe tinktur',
-   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0001_1).'}]}]},
+   vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Dokument strokovno utemeljuje, da sta obe vrsti tinktur ob pravilnem shranjevanju mikrobiološko stabilni in lahko nosita rok uporabnosti 24 mesecev: glicerinske tinkture z najmanj 70 % v/v glicerina in alkoholne tinkture z okoli 30 % v/v etanola. Utemeljitev temelji na vodni aktivnosti, znanih protimikrobnih lastnostih etanola in glicerola ter na uradnih smernicah in znanstveni literaturi.']},
 
+     {naslov:'Opis izdelkov', blok:[
+       'Tinkture so tekoči izvlečki (fitopreparati) iz medicinskih gob, pripravljeni v vodno-alkoholni ali glicerolno-vodni osnovi. Končne koncentracije topil so približno 30 % v/v etanola oziroma najmanj 70 % v/v glicerina. Polnijo se v temne (amber) stekleničke s tesnečimi pokrovčki in kapalkami.']},
+
+     {naslov:'Mikrobiološka utemeljitev', blok:[
+       {pod:'Alkoholne tinkture (≈ 30 % etanola)'},
+       'Etanol je v zdravilih uradno priznan excipient z vlogo topila in protimikrobnega konzervansa. Farmacevtska literatura navaja, da morajo biti tinkture za ustrezno samoohranjanje pripravljene z vsaj približno 24–26 % v/v etanola, eksperimentalni podatki pa kažejo, da že 20 % etanola inhibira metabolizem biofilmov Candida albicans in Staphylococcus aureus, približno 30 % pa v nekaterih pogojih deluje baktericidno. Tinkture z okoli 30 % etanola so zato mikrobiološko stabilne tudi brez dodatnih konzervansov, če so pravilno shranjene.',
+
+       {pod:'Glicerinske tinkture (≥ 70 % glicerina)'},
+       'Vodna aktivnost (aw) je merilo proste vode, ki je na voljo za mikrobiološko rast. Rast večine patogenih bakterij je onemogočena pri aw okoli 0,85, kvasovk in plesni pa pri aw okoli 0,70.',
+       'Glicerol močno znižuje aw. Pri 70 % v/v glicerina je vodna aktivnost približno 0,56 (pri 25–27 °C), torej bistveno pod pragom za rast patogenov in tudi večine kvasovk in plesni. Glicerol je kemično stabilen in kot dodatek E 422 opisan kot snov, ki ostaja stabilna pri običajnih pogojih shranjevanja.',
+       {tabela:{glava:['Glicerol (v/v %)','Glicerol (m/m %)','aw pri 25 °C'], vrstice:[
+         ['50','55,8','0,764'],['60','65,5','0,677'],
+         ['70','74,7','0,594'],['80','83,5','0,460']]}}]},
+
+     {naslov:'Rok uporabnosti in pogoji shranjevanja', blok:[
+       'Za obe vrsti tinktur se določi konservativni rok uporabnosti 24 mesecev od datuma polnitve, pri naslednjih pogojih:',
+       {ul:[
+         'shranjevanje v temnem, suhem prostoru pri 15–25 °C,',
+         'tesno zaprte stekleničke (kapljanje brez vračanja vsebine),',
+         'zaščita pred neposredno svetlobo in vročino,',
+         'brez izpostavljanja ekstremnim temperaturam ali kontaminaciji.']}]},
+
+     {naslov:'Notranja kontrola serij', blok:[
+       'Za vsako serijo se izvajajo naslednje kontrole in zapisi kot del dokumentacije HACCP:',
+       {ul:[
+         'identiteta in koncentracija topila — etanol (% v/v) ali glicerol (% v/v),',
+         'organoleptika — barva, vonj, homogenost, odsotnost kvarnih sedimentov,',
+         'označevanje in sledljivost — koda serije, datum polnitve, odgovorna oseba.']}]},
+
+     {naslov:'Bibliografija', blok:[
+       {ul:[
+         'FDA. Water Activity (aw) in Foods — pragovi rasti mikroorganizmov; aw ≤ 0,85 zavira rast večine patogenih bakterij.',
+         'Nakagawa H. in sod. Molecular Basis of Water Activity in Glycerol–Water Mixtures. Front Chem, 2019.',
+         'EFSA. Re-evaluation of glycerol (E 422) as a food additive. EFSA Journal, 2017.',
+         'EMA. Information for the package leaflet regarding ethanol used as an excipient, 2018.',
+         'ScienceDirect Topics: Tincture — „Tinctures must contain at least 24–26 % pure alcohol to be well preserved.“',
+         'Peters BM. in sod. Efficacy of Ethanol against Candida albicans and Staphylococcus aureus biofilms. Antimicrob Agents Chemother, 2013.',
+         'Chatterjee I. in sod. Very Low Ethanol Concentrations Affect the Viability and Morphology of S. aureus, 2006.']}]},
+   ]},
   {oznaka:'DOK-0002', naziv:'Analiza tveganj in kritične točke procesa',
-   vrsta:'Dokument', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika (DOK-0002_1). Iz tega dokumenta izhaja kritična kontrolna točka vlažnosti surovine, na katero se aplikacija sklicuje v koraku določitve vlažnosti.'}]}]},
+   vrsta:'Dokument', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003','DOK-0001'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti dokument sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Dokument je sistematična analiza tveganj in določitev kritičnih kontrolnih točk (CCP) v postopku trojne ekstrakcije medicinskih gob (reishi, chaga, Hericium erinaceus). Je sestavni del sistema HACCP podjetja GoMushroom in se uporablja za zagotavljanje varnosti in ponovljivosti proizvodnje tinktur.']},
 
-  // Obrazci
+     {naslov:'Kritične kontrolne točke', blok:[
+       {tabela:{glava:['Procesni korak','Utemeljitev','Kontrolni parameter','Sprejemljiva meja','Nadzor in pogostost','Evidenca','Ukrepi ob odstopanju'], vrstice:[
+         ['Sprejem surovine','Vstopna točka tveganj (plesni, mikotoksini, tujki).','vlaga; vizualni in organoleptični pregled','vlaga < 12 %, brez vonja po plesni, ujemanje identitete','ob vsaki dostavi; halogenski sušilnik in vizualno','{{OBR-0005}}','karantena ali zavrnitev, obvestilo dobavitelju'],
+         ['Konzervirna bariera končnega izdelka','Končni produkt mora onemogočati rast.','ena od: % EtOH, aw ali % glicerola','EtOH ≥ 25 % v/v ali aw ≤ 0,85 ali glicerol ≥ 70 % m/m po izračunu','vsaka serija; denzitometer, refraktometer ali izračun','{{ZOP-0001}}','prilagoditev razmerij (EtOH, glicerin, voda), ponovna meritev'],
+         ['Polnjenje in zapiranje','Največje tveganje sekundarne kontaminacije.','predoperativna higiena (flowhood, HEPA, UV), status opreme, pregled stekla','brez odstopanj v predoperativnem pregledu; okolje pripravljeno','pred začetkom; vizualno na 30 min; kontrolni seznam v zapisniku','{{ZOP-0001}}','ustavitev, razkuževanje, zamenjava embalaže, ponovni predoperativni pregled']]}},
+       {opomba:'Meja vlage < 12 % izhaja iz cilja aw ≤ 0,70 za preprečevanje rasti plesni v surovini. Končna bariera se zagotavlja z etanolom ≥ 25 % v/v ali glicerolom ≥ 70 % m/m — glej {{DOK-0001}}.'},
+       'Odstopanja in korektivni ukrepi se v vsakem primeru zabeležijo v {{OBR-0005}}.']},
+   ]},
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
    verzije:[
@@ -6657,11 +6751,44 @@ const DOKUMENTI=[
    ]},
 
   {oznaka:'OBR-0003', naziv:'Organoleptična analiza',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0003_1).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'V mapi Veljavno je izdaja _1, aplikacija pa na izpisu kartice senzorične ocene tiska OBR-0003/02. Ena od obeh navedb je napačna — dokler ni potrjeno katera, je v registru zavedena izdaja iz mape.'}]}]},
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0003'],
+   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. V nogi izvirnika je zapisana kot OBR–0003/01, priloga k {{SOP-0003}}.'}],
+   vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Z organoleptično analizo (ocena z vidom, vonjem, okusom in tipom) se preverja skladnost tinktur z internim standardom in odkrivajo morebitne spremembe, ki bi lahko kazale na kvar ali kontaminacijo.',
+       {opomba:'Analizo izvede odgovorna oseba za vsako serijo pred sprostitvijo izdelka.'}]},
 
+     {naslov:'Glava obrazca', blok:[
+       'Vpišejo se ime izdelka, serija, delovni nalog in tip tinkture (alkoholna ali glicerinska).']},
+
+     {naslov:'Standardni opisi', blok:[
+       'Za vsako vrsto gobe in obe formulaciji so predpisani standardni opisi, ki se med analizo potrdijo.',
+       {pod:'Resasti bradovec (Hericium erinaceus)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','jantarno-rjava','temnejša jantarno-rjava'],
+         ['Vonj','zemeljski, gobast, z etanolom','nežen, skoraj nevtralen'],
+         ['Okus','grenkobno-lesnat, z alkoholno ostrino','sladkast, rahlo gobast'],
+         ['Konsistenca','srednje tekoča','gostejša, sirupasta']]}},
+       {pod:'Reishi (Ganoderma lucidum)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','črna do temno rjava','temno rjava'],
+         ['Vonj','močan gobast, lesnat, z etanolom','lesnat, gobast, brez etanola'],
+         ['Okus','izrazito grenak, lesnat, z alkoholno ostrino','sladkast, grenak, gobast'],
+         ['Konsistenca','srednje tekoča, z rjavo usedlino','gostejša, tekoče-sirupasta']]}},
+       {pod:'Chaga (Inonotus obliquus)'},
+       {tabela:{glava:['Lastnost','Alkoholna','Glicerinska'], vrstice:[
+         ['Barva','temno črna','temno črna-rjava'],
+         ['Vonj','zemeljski, kiselkast, z etanolom','zemeljski, brez etanola'],
+         ['Okus','grenek, rahlo dimljen, z etanolom','sladkast, rahlo grenak, dimljen'],
+         ['Konsistenca','tekoča','gostejša, tekoče-sirupasta']]}}]},
+
+     {naslov:'Ocena in podpis', blok:[
+       'Obrazec se zaključi z oceno „ustreza“ oziroma „ne ustreza organoleptičnim zahtevam“ ter podpisom in datumom osebe, ki je analizo izvedla in odobrila.']},
+
+     {naslov:'Opombi k izvirniku', blok:[
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda, ki je ostal v predlogi.'},
+       {opomba:'Aplikacija se na tej kartici sklicuje na OBR-0003/02, veljavna izdaja pa je /01. Napačna navedba izvira iz noge zapisnika {{ZOP-0001}}, kjer namesto oznake zapisnika piše OBR-0003/02.'}]},
+   ]},
   {oznaka:'OBR-0004', naziv:'Evidenca regeneracije etanola',
    vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0003'],
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
@@ -6686,13 +6813,55 @@ const DOKUMENTI=[
 
   // Zapisniki o proizvodnji
   {oznaka:'ZOP-0001', naziv:'Zapisnik o proizvodnji — Batch Record',
-   vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
+   vrsta:'Zapisnik', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   povezani:['SOP-0003','DOK-0002','OBR-0003','OBR-0004','OBR-0005'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (ZOP-0001_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[
-     {opomba:'Vsebina še ni prenesena iz izvirnika. Ta zapisnik pokriva isto, kar aplikacija izpiše kot zapisnik delovnega naloga — ob prenosu je treba razčistiti, kateri od obeh je veljavni zapis serije.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Priloga k {{SOP-0003}}; datuma veljavnosti zapisnik sam ne nosi.'}],
+   vsebina:[
+     {naslov:'Namen zapisnika', blok:[
+       'Zapisnik je obvezna priloga dokumentacije serije. Vanj se sproti beležijo vse meritve, mase, volumni, izračuni in presoje kritičnih kontrolnih točk skozi celoten postopek iz {{SOP-0003}}.',
+       {opomba:'To je papirna oblika istega zapisa, ki ga aplikacija vodi kot delovni nalog s koraki in izpiše kot zapisnik serije. Ob prenosu je treba določiti, kateri od obeh je veljavni zapis serije — dva vzporedna zapisa istega postopka sta tveganje, ne varnost.'}]},
 
+     {naslov:'Zgradba zapisnika', blok:[
+       {tabela:{glava:['Sklop','Kaj se vpisuje'], vrstice:[
+         ['Glava serije','delovni nalog, oznaka serije, datum začetka in konca, surovina in njen dobavitelj oziroma serija, vrsta izdelka in količina'],
+         ['Etanolna ekstrakcija — priprava','Σm surovine, vlažnost (meja < 12 %), presoja CCP; način priprave etanola (96 %, regeneriran, voda), Σm in ΣV etanola, koncentracija v % m/m in % v/v'],
+         ['Ultrazvočna sonikacija','čas, moč in končna temperatura za obe ponovitvi; presoja, da T ni presegla 55 °C'],
+         ['Stiskanje organske faze','presoja bistrosti filtrata, Σm matičnega ekstrakta, Σm pogače, masa topila v pogači'],
+         ['Ločitev matičnega ekstrakta','izračun količine ME, ki se odstrani in pozneje vrne; volumen in masa ME, AAE v organski fazi'],
+         ['Koncentriranje organske faze','pogoji rotavaporja, regenerirani etanol po frakcijah z masami in koncentracijami, vsota izgub, masa suhe snovi in masa organske faze'],
+         ['Vroča vodna ekstrakcija (HVE)','T 80–90 °C, t = 300 min; masa pogače in dodane vode, po potrebi v dveh delih; presoja bistrosti filtrata, Σm ekstrakta'],
+         ['Koncentriranje HVE','izračun ciljne mase, pogoji rotavaporja, regenerirani etanol in izgube, masa koncentrata'],
+         ['Tlačna ekstrakcija (TE)','T 115–130 °C, t = 150 min; masa pogače in dodane vode, po potrebi v dveh delih; presoji temperature in časa ter bistrosti filtrata'],
+         ['Koncentriranje TE','izračun mase TE iz skupne mase, zmanjšane za HVE in organsko fazo'],
+         ['Alkoholna formulacija','mase OF, HVE in TE, gostota in volumen tinkture, izračunana koncentracija etanola'],
+         ['Vitamin C in lecitin','izračunani in dejansko dodani masi'],
+         ['Analiza suhe snovi','odstotek suhe snovi in presoja glede na zahtevo za vrsto gobe'],
+         ['Glicerinska formulacija','masa vhodne alkoholne tinkture, suha snov, odparjeno topilo, izračun glicerola in vode, potrditev koncentracije etanola'],
+         ['Poraba etanola in trošarina','regeneriran etanol, AAE v produktu, AAE izgub'],
+         ['Polnjenje','predoperativni kontrolni seznam (flowhood, UV in ozon, čiščenje, embalaža, higiena), presoja CCP, število polnitev'],
+         ['Priloge in podpis','sklic na {{OBR-0003}} in {{OBR-0005}}, podpis osebe, ki je izvedla in odobrila']]}}]},
+
+     {naslov:'Mejne vrednosti v zapisniku', blok:[
+       {tabela:{glava:['Parameter','Meja'], vrstice:[
+         ['Vlažnost surovine','< 12 %'],
+         ['Temperatura med sonikacijo','≤ 55 °C'],
+         ['HVE','80–90 °C, 300 min'],
+         ['TE','115–130 °C, 150 min'],
+         ['Suha snov','reishi ≥ 4,0 % · chaga ≥ 6,0 % · resasti bradovec ≥ 10,0 %'],
+         ['Etanol v alkoholni tinkturi','≥ 25,0 % v/v oziroma ≥ 20,5 % m/m'],
+         ['Vitamin C','0,20 % m/m (alkoholna) · +0,50 % m/m (glicerinska), skupaj 0,70 % m/m'],
+         ['Lecitin','0,30 % m/m'],
+         ['Glicerol v glicerinski tinkturi','75 % m/m'],
+         ['Regeneriran etanol','pod 30 % v/v se beleži kot izguba; zbrani se koncentrira nad 70 % v/v']]}}]},
+
+     {naslov:'Opombe k izvirniku', blok:[
+       {opomba:'V nogi izvirnika je namesto oznake zapisnika zapisano OBR-0003/02. Od tod izvira tudi napačna navedba na kartici senzorične ocene v aplikaciji; veljavna izdaja organoleptičnega obrazca je {{OBR-0003}}.'},
+       {opomba:'V glavi izvirnika je pod „Šifra dokumenta“ vpisana serija DN-26-004 — ostanek izpolnjenega izvoda.'},
+       {opomba:'Gostota 30-odstotne etanolne mešanice je v zapisniku navedena dvakrat različno: pri koncentriranju HVE kot 0,9622 g/mL, pri alkoholni formulaciji pa kot 0,965 g/mL. Aplikacija računa z 0,9622. Vrednosti je treba poenotiti.'},
+       {opomba:'Delež lecitina je v tem zapisniku 0,30 % m/m, v {{SOP-0003}} pa 0,50 % m/m.'}]},
+   ]},
   {oznaka:'ZOP-0002', naziv:'Zapisnik o proizvodnji — Batch Record',
    vrsta:'Zapisnik', lastnik:'Rok Golob', povezani:['SOP-0003'],
    verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja (ZOP-0002_1).'}],

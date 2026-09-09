@@ -6825,6 +6825,43 @@ const DOKUMENTI=[
        {opomba:'Meja vlage < 12 % izhaja iz cilja aw ≤ 0,70 za preprečevanje rasti plesni v surovini. Končna bariera se zagotavlja z etanolom ≥ 25 % v/v ali glicerolom ≥ 70 % m/m — glej {{DOK-0001}}.'},
        'Odstopanja in korektivni ukrepi se v vsakem primeru zabeležijo v {{OBR-0005}}.']},
    ]},
+  {oznaka:'DOK-0003', naziv:'Profil podjetja', vrsta:'Dokument', lastnik:'Rok Golob',
+   povezani:['SOP-0003','SOP-0004','OBR-0009'],
+   verzije:[{v:'01', velja:'', odobril:'', opis:'Izvirnik nima oznake, verzije ne datuma. Oznaka DOK-0003 je predlog registra.'}],
+   vsebina:[
+     {naslov:'Stanje', blok:[
+       {opomba:'Ta dokument v izvirniku nima oznake, številke verzije ne datuma veljavnosti — v glavi piše samo „Profil podjetja — GoMushroom, Rok Golob s.p.“, v nogi pa „Dokument je del sistema notranje kontrole GoMushroom“. Oznaka DOK-0003 je predlog registra; dokler mu ne določiš oznake, verzije in datuma, tu ne velja.'}]},
+
+     {naslov:'Osnovni podatki', blok:[
+       {tabela:{glava:['Postavka','Vsebina'], vrstice:[
+         ['Naziv','GoMushroom'],
+         ['Odgovorna oseba','Rok Golob'],
+         ['Dejavnost','gojenje medicinskih gob ter proizvodnja prehranskih dopolnil — tekočih ekstraktov medicinskih gob']]}},
+       'GoMushroom je manjši specializiran proizvajalec tekočih ekstraktov medicinskih gob. Proizvodnja poteka v lastnem laboratoriju, kjer se izvajajo postopki gojenja gob, ekstrakcije učinkovin, formulacije in polnjenja končnih izdelkov.',
+       'Del surovine podjetje prideluje samo, predvsem gobo reishi (Ganoderma lucidum), druge surovine pa se pridobivajo od preverjenih dobaviteljev.',
+       'Izdelki se dobavljajo poslovnim kupcem (B2B). GoMushroom končnih izdelkov ne prodaja neposredno končnim potrošnikom.']},
+
+     {naslov:'Proizvodni program', blok:[
+       'Glavni proizvodi so tekoči ekstrakti medicinskih gob:',
+       {ul:['reishi (Ganoderma lucidum)','resasti bradovec (Hericium erinaceus)','chaga (Inonotus obliquus)']},
+       'Izdelujejo se kot alkoholne in glicerinske tinkture.']},
+
+     {naslov:'Tehnološki proces', blok:[
+       {st:['prejem in kontrola surovin','ekstrakcija učinkovin iz gob','koncentracija ekstrakta',
+            'formulacija končnega izdelka','polnjenje in označevanje','skladiščenje in dobava kupcem']},
+       'Postopek je podrobno opisan v {{SOP-0003}}.']},
+
+     {naslov:'Sistem sledljivosti', blok:[
+       'Vsaka proizvodna serija je označena z delovnim nalogom, ki se vodi na obrazcu {{OBR-0009}}. Na oznako delovnega naloga so vezani:',
+       {ul:['{{ZOP-0001}} — zapisnik o proizvodnji','{{OBR-0003}} — organoleptična analiza ekstrakta','{{OBR-0005}} — zapisi o odstopanjih in korektivnih ukrepih']},
+       'Serija končnega izdelka je evidentirana na obrazcu {{OBR-0009}}, kjer je neposredno povezana z ustreznim delovnim nalogom. Taka struktura omogoča sledljivost od uporabljene surovine prek proizvodnega postopka do serije končnega izdelka.']},
+
+     {naslov:'Dopolnitev sistema dokumentacije', blok:[
+       'Sistem notranje kontrole je bil prvotno vzpostavljen v okviru dokumentacije HACCP (2024). Leta 2025 je bil nadgrajen s standardnimi operativnimi postopki, ki podrobneje urejajo posamezne procese proizvodnje, sledljivosti, higiene, nadzora kakovosti ter ukrepanja ob odstopanjih ali odpoklicu.',
+       'Obstoječi obrazci HACCP ostajajo veljavni in se uporabljajo za spremljanje procesov, kjer postopki SOP še niso posebej pripravljeni.',
+       {opomba:'Letnica 2024 je vredna preverjanja: {{SOP-0001}} navaja, da je bilo podjetje ustanovljeno 8. 2. 2025 in da se od tega datuma vse serije vodijo kot uradne. Če je bila dokumentacija HACCP pripravljena pred ustanovitvijo, je navedba pravilna in bi jo kazalo tako tudi zapisati.'}]},
+   ]},
+
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
    vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
    nadrejeni:'SOP-0001',
@@ -7339,6 +7376,18 @@ function odpriDokument(oznaka){
   openSheet('dokOverlay');
 }
 
+let _gmLogoTisk=null;
+async function gmLogoZaTisk(){
+  if(_gmLogoTisk!==null)return _gmLogoTisk;
+  try{
+    const r=await fetch('/assets/logo-h168.webp');
+    const b=await r.blob();
+    _gmLogoTisk=await new Promise(res=>{
+      const fr=new FileReader();fr.onload=e=>res(e.target.result);fr.readAsDataURL(b);});
+  }catch(e){_gmLogoTisk='';}
+  return _gmLogoTisk;
+}
+
 // ── Prazni obrazci za rocno izpolnjevanje ─────────────────────────────────
 // Dnevnik prostorov in evidenca ciscenja se izpolnjujeta na roko, na papirju.
 // Register zato ponudi prazen obrazec za tisk: mesecno mrezo z dnevi, kot je
@@ -7391,9 +7440,10 @@ const PRAZNI_OBRAZCI={
 };
 function imaPrazenObrazec(d){return !!PRAZNI_OBRAZCI[d.oznaka];}
 
-function natisniPrazenObrazec(oznaka){
+async function natisniPrazenObrazec(oznaka){
   const d=dokNajdi(oznaka), o=PRAZNI_OBRAZCI[oznaka];
   if(!d||!o){toast('Za ta dokument praznega obrazca ni');return;}
+  const logo=await gmLogoZaTisk();
   const sop=dokNajdi(o.sop);
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   // Dnevi so razdeljeni na dve strani, kot v izvirniku - na eni sami bi bile
@@ -7411,8 +7461,9 @@ function natisniPrazenObrazec(oznaka){
       `<th><b>${esc(a)}</b>${b?`<span>${esc(b)}</span>`:''}</th>`).join('')}</tr></thead>
     <tbody>${vrstice(od,doK)}</tbody></table>`;
   const glavaLista=stran=>`<div class="hd">
-    <div><div class="nas">${esc(o.naslov)}</div>
-      <div class="sif">${esc(dokPolnaOznaka(d))}${sop?' · '+esc(dokPolnaOznaka(sop)):''}</div></div>
+    <div class="levo">${logo?`<img class="logo" src="${logo}" alt="">`:''}
+      <div><div class="nas">${esc(o.naslov)}</div>
+      <div class="sif">${esc(dokPolnaOznaka(d))}${sop?' · '+esc(dokPolnaOznaka(sop)):''}</div></div></div>
     <div class="mes">Mesec / leto: <span class="crta"></span></div>
   </div>`;
   const noga=stran=>`<div class="ft"><span>INTERNO</span>
@@ -7428,6 +7479,8 @@ body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weigh
 .list:last-of-type{page-break-after:auto}
 .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;
   border-bottom:1.4pt solid #1a1209;padding-bottom:.25rem;margin-bottom:.35rem}
+.levo{display:flex;align-items:center;gap:3mm}
+.logo{height:9mm;width:auto;display:block}
 .nas{font-size:12pt;font-weight:500}
 .sif{font-family:ui-monospace,Menlo,monospace;font-size:8pt;color:#8a6a45}
 .mes{font-size:9pt;white-space:nowrap}
@@ -7474,10 +7527,11 @@ td.dan{text-align:center;font-size:7.5pt;color:#6b6152;
 
 // Natisnjen izvod je tisti, ki ga podpises - dokument velja od podpisa, zato
 // mora izpis nositi verzijo, datum veljavnosti in prostor za podpis.
-function natisniDokument(oznaka){
+async function natisniDokument(oznaka){
   const d=dokNajdi(oznaka);
   if(!d){toast('Dokumenta ni v registru');return;}
   const v=dokVeljavna(d), st=dokStanje(d);
+  const logo=await gmLogoZaTisk();
   const html=`<!DOCTYPE html><html lang="sl"><head><meta charset="UTF-8">
 <title>${dokPolnaOznaka(d)} — ${d.naziv}</title>
 <style>
@@ -7486,6 +7540,8 @@ body{font-family:'Jost',-apple-system,'Segoe UI',Helvetica,sans-serif;font-weigh
   color:#2b251c;font-size:10pt;line-height:1.55;max-width:180mm;margin:0 auto;padding:1cm}
 .hd{display:flex;justify-content:space-between;gap:1.5rem;align-items:flex-start;
   border-bottom:1.6pt solid #17130d;padding-bottom:.5rem;margin-bottom:1rem}
+.hd .levo{display:flex;align-items:center;gap:4mm}
+.hd .logo{height:11mm;width:auto;display:block}
 .hd h1{font-size:13pt;font-weight:500;margin:0 0 .15rem}
 .hd .sif{font-family:ui-monospace,Menlo,monospace;font-size:9pt;color:#8a6a45}
 .hd .meta{font-size:8pt;color:#7a6f60;text-align:right;line-height:1.7;white-space:nowrap}
@@ -7519,9 +7575,12 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
 @media print{.btnrow{display:none}body{padding:0;max-width:none}}
 </style></head><body>
 <div class="hd">
-  <div>
-    <h1>${d.naziv}</h1>
-    <div class="sif">${dokPolnaOznaka(d)}</div>
+  <div class="levo">
+    ${logo?`<img class="logo" src="${logo}" alt="">`:''}
+    <div>
+      <h1>${d.naziv}</h1>
+      <div class="sif">${dokPolnaOznaka(d)}</div>
+    </div>
   </div>
   <div class="meta">
     <b>Vrsta</b> ${d.vrsta}<br>

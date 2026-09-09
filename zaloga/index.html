@@ -11040,7 +11040,7 @@ async function _loadHtml2pdf(){
   });
 }
 
-async function _generatePDFBase64(htmlContent){
+async function _generatePDFBase64(htmlContent,dodatno){
   await _loadHtml2pdf();
   return new Promise((resolve,reject)=>{
     const opt={
@@ -11048,7 +11048,10 @@ async function _generatePDFBase64(htmlContent){
       filename:'dobavnica.pdf',
       image:{type:'jpeg',quality:0.95},
       html2canvas:{scale:1.5,useCORS:true,logging:false,allowTaint:true,windowWidth:750},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      ...(dodatno||{}),
+      html2canvas:{scale:1.5,useCORS:true,logging:false,allowTaint:true,windowWidth:750,
+        ...((dodatno||{}).html2canvas||{})},
     };
     html2pdf().set(opt).from(htmlContent,'string').output('blob').then(blob=>{
       const reader=new FileReader();
@@ -11083,10 +11086,24 @@ async function _downloadReportPDF(reportHTML,sigDataURL,ts){
   toast('✓ PDF prenesen');
 }
 
-function downloadDobavnicaPDF(groupId){
+async function downloadDobavnicaPDF(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g)return;
-  printDobavnica(g);
+  try{
+    toast('📄 Pripravljam PDF…');
+    // Gumbi na dnu lista v PDF ne sodijo - enako kot pri posiljanju po e-posti.
+    const html=buildDobavnicaHTML(g)
+      .replace('<div class="actions">','<div class="actions" style="display:none">');
+    const pdf=await _generatePDFBase64(html,{image:{type:'png'},html2canvas:{scale:2}});
+    _openPDFBlob(pdf,(g.deliveryNum||'dobavnica')+'.pdf');
+    toast('✓ PDF pripravljen');
+  }catch(e){
+    // Knjiznica se nalozi s spleta. Brez povezave PDF-ja ni, tisk pa vedno gre,
+    // zato v tem primeru odpremo list za tisk in to povemo.
+    console.warn('PDF',e);
+    toast('PDF ni uspel — odpiram za tisk');
+    printDobavnica(g);
+  }
 }
 
 async function sendDobavnicaByEmail(group,signatureDataURL,signedAt){

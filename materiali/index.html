@@ -248,6 +248,8 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .dok-vir{font-size:.62rem;color:var(--muted);font-style:italic;margin:-.25rem 0 .5rem}
 .dok-pov{font-size:.7rem;color:var(--muted);margin:.5rem 0;line-height:1.5}
 .dok-pov a{color:var(--accent);text-decoration:none;font-weight:500}
+.dok-sklic{color:var(--accent);text-decoration:none;font-weight:500;
+  border-bottom:1px dotted var(--accent)}
 .korak-akcija{width:100%;padding:.35rem;margin-bottom:.28rem;border:1px dashed var(--accent);
   border-radius:var(--rs);background:rgba(175,132,85,.08);color:var(--accent);
   cursor:pointer;font-size:.68rem;font-family:'Jost',sans-serif}
@@ -6386,9 +6388,64 @@ function onEtTipChange(){
 const DOKUMENTI=[
   // Postopki
   {oznaka:'SOP-0001', naziv:'Obvladovanje in organizacija dela v laboratoriju',
-   vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0001','OBR-0005'],
-   verzije:[{v:'01', velja:'?', odobril:'Rok Golob', opis:'Prva izdaja.'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika (SOP-0001_1).'}]}]},
+   vrsta:'Postopek', lastnik:'Rok Golob', klasifikacija:'INTERNO',
+   zapisi:['OBR-0001'], povezani:['SOP-0002','OBR-0002'],
+   verzije:[{v:'01', velja:'2025-07-31', odobril:'Rok Golob',
+     opis:'Prva izdaja. Z njo se je začela uporaba standardnih operativnih postopkov, ki podrobneje opredeljujejo posamezne faze proizvodnje, čiščenja in organizacije dela.'}],
+   vsebina:[
+     {naslov:'Namen', blok:[
+       'Zagotavljanje varnega in higienskega dela v laboratoriju ter preprečevanje navzkrižne kontaminacije med posameznimi postopki.']},
+
+     {naslov:'Obseg', blok:[
+       'Ta postopek velja za vse dejavnosti, ki jih izvaja lastnik podjetja GoMushroom v laboratoriju in predprostoru laboratorija. V obratu se procesi, ki lahko predstavljajo kontaminacijsko tveganje (delo z micelijem), izvajajo časovno ločeno od čistih procesov (ekstrakcija, stiskanje, koncentriranje), kar je razvidno tudi iz {{OBR-0001}} Dnevnik uporabe prostorov — evidenca dela.',
+       'Mletje gob in tehtanje suhe surovine se zaradi prašenja izvaja izven omenjenih prostorov, na prostem. Dejavnosti po prostorih:',
+       {tabela:{glava:['Laboratorij','Predprostor'], vrstice:[
+         ['kloniranje micelija, inokulacija substratov, dosuševanje gob v vakuumskem sušilniku, stiskanje suspenzije, koncentracija tinktur, polnjenje tinktur',
+          'sterilizacija gojitvenih substratov, ekstrakcija, mešanje topil, pomivanje steklovine, etiketiranje tinktur']]}}]},
+
+     {naslov:'Odgovornosti', blok:[
+       'Vse postopke izvaja in zanje odgovarja ena oseba — lastnik podjetja. Ista oseba vodi evidence, izvaja čiščenje in zagotavlja sledljivost.']},
+
+     {naslov:'Organizacija dela', blok:[
+       'Glavni laboratorij je prostor pod nadtlakom z dovodom zraka preko HEPA filtra. Po vsaki dejavnosti se prostor očisti in razkuži z ozonom ter UV svetlobo.',
+       'Med procesom dela z micelijem so v prostorih prepovedane vse aktivnosti, povezane s tinkturami; prav tako je prepovedano hkratno shranjevanje odprtih ekstraktov. Pred menjavo vrste postopka (na primer iz micelija na tinkture) je obvezno čiščenje skladno s {{SOP-0002}}.',
+       'Vse dejavnosti se beležijo na {{OBR-0001}} Dnevnik uporabe prostorov — evidenca dela.',
+       {opomba:'Brez izpolnjenega dnevnika je delo v prostorih prepovedano.'},
+       'Čiščenje in razkuževanje po vsakem postopku se zabeleži v {{OBR-0002}}.']},
+
+     {naslov:'Opis prostorov', blok:[
+       'Glavni laboratorij',
+       'Delo v laboratoriju se izvaja izključno z osebno zaščitno opremo (halja, obutev, rokavice).',
+       'Glavni laboratorij je čista cona z nadtlakom in HEPA filtrom. V njem sta dva rotavaporja (5 L in 20 L), namenjena koncentraciji ekstraktov, ter velik pult z namiznim HEPA filtrom (flowhood), ki omogoča delo z micelijem in polnjenje tinktur v sterilnem okolju. V prostoru sta tudi vakuumski sušilnik in sistem za razvlaževanje zraka.',
+       'Prostor je namenjen delu z micelijem v sterilnem okolju ali stiskanju, koncentraciji tinktur, končni formulaciji in polnjenju tinktur. Delo z micelijem in delo s tinkturami se med seboj izključujeta in se ne izvajata sočasno.',
+       'Tu lahko poteka tudi dosuševanje gob v vakuumskem sušilniku, ki je zaprt sistem. Proces ne predstavlja tveganja kontaminacije, ker material med sušenjem ni v stiku z okoljem; paziti je treba le, da se sušilnik polni takrat, ko se ostale operacije ne izvajajo.',
+       'V glavnem laboratoriju se hrani etanol, ki je vedno pod nadzorom in izven dosega nepooblaščenih oseb.',
+       'Prostor, delovne površine in oprema se po uporabi čistijo in razkužujejo skladno s {{SOP-0002}}.',
+       'Predprostor laboratorija',
+       'Predprostor glavnega laboratorija je prostor z umivalnikom za roke in pomivalnim koritom s čistili, ki so shranjena v zaprti omarici pod koritom. Tu se v steklenicah hranita tudi izopropanol za razkuževanje in destilirana voda za splakovanje steklovine.',
+       'V prostoru sta dva delovna pulta. Na enem je ultrazvočna sonda — sonotroda s podpultnim generatorjem. Pod pultom je tudi halogenski sušilnik, namenjen določevanju suhe snovi v ekstraktih in določevanju vlage v gobjem materialu kot kontroli učinkovitosti sušenja.',
+       'V prostoru je priročen hladilnik za začasno shranjevanje vzorcev in zaprtih ekstraktov ter občasno micelija v neprodušno zaprtih petrijevkah.',
+       'V prostoru sta tudi avtoklav in atmosferski sterilizator z generatorjem pare. Tu se izvajajo sterilizacija gojitvenih substratov, žita, agarja ali ločeno ekstrakcije v zaprtih embalažah, stiskanje ekstraktov in raztapljanje koncentratov na ultrazvočni kopeli.',
+       'Predprostor je tudi prehodna cona za preoblačenje in pripravo pred vstopom v čisto cono. Oblačila in obutev so v garderobni omarici, razdeljeni na del za umazana in del za čista oblačila.',
+       'Priročno skladišče',
+       'Priročno skladišče je v ločenem prostoru z omarami, namenjenimi shranjevanju surovin v hermetično zaprtih posodah, embalaže, rezervnih delov in ostalega potrošnega materiala v večjih količinah. Manjše količine embalaže in surovin je mogoče hraniti tudi v hermetično zaprtih posodah v predprostoru laboratorija.',
+       'Ostala dela izven laboratorija',
+       'Mletje gob se izvaja na prostem, v zaprtem sistemu — mlinu, ki preprečuje razpršitev prahu in zmanjšuje možnost kontaminacije. Možnost vnosa insektov ali drugih nečistot je minimalna, saj je surovina izpostavljena okolju le kratek čas med prenosom v večjo embalažo. Po mletju se material takoj shrani v hermetično zaprte čiste posode. Po vsakem mletju se mlin očisti in razkuži skladno s {{SOP-0002}}.']},
+
+     {naslov:'Varnost in higiena', blok:[
+       {ul:[
+         'Vedno se uporabljajo zaščitna obleka, rokavice in po potrebi očala.',
+         'V laboratoriju ni dovoljeno jesti ali piti.',
+         'Etanol je vnetljiv in se hrani v skladu s predpisi, pod ključem in izven dosega nepooblaščenih oseb.',
+         'Vsa čistila in razkužila se hranijo v zaprti omarici, ločeno od surovin in izdelkov.',
+         'Laboratorij se uporablja izključno za namen proizvodnje in raziskav GoMushroom.']}]},
+
+     {naslov:'Zgodovinski pregled vodenja evidenc', blok:[
+       'Podjetje GoMushroom je bilo ustanovljeno 8. 2. 2025. Od tega datuma se vse serije tinktur vodijo kot uradne serije pod sistemom HACCP in so zajete v ustrezni dokumentaciji (evidence proizvodnje, sledljivost surovin, seznam dobaviteljev).',
+       'Dne 31. 7. 2025 je bila uvedena nadgradnja sistema z začetkom priprave in uporabe standardnih operativnih postopkov, ki podrobneje opredeljujejo posamezne faze proizvodnje, čiščenja in organizacije dela.']},
+
+     {naslov:'Priloge', blok:[{obrazci:true}]},
+   ]},
 
   {oznaka:'SOP-0002', naziv:'Čiščenje in higiena prostorov',
    vrsta:'Postopek', lastnik:'Rok Golob', zapisi:['OBR-0002'],
@@ -6477,11 +6534,28 @@ const DOKUMENTI=[
 
   // Obrazci
   {oznaka:'OBR-0001', naziv:'Dnevnik uporabe prostorov — evidenca dela',
-   vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0001'],
+   vrsta:'Obrazec', lastnik:'Rok Golob', klasifikacija:'INTERNO', povezani:['SOP-0001'],
    verzije:[
      {v:'01', velja:'', odobril:'', opis:'Prva izdaja — nadomeščena.'},
-     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja (OBR-0001_2).'}],
-   vsebina:[{naslov:'Vsebina', blok:[{opomba:'Vsebina še ni prenesena iz izvirnika.'}]}]},
+     {v:'02', velja:'?', odobril:'Rok Golob', opis:'Veljavna izdaja. Obrazec sam datuma veljavnosti ne nosi, v nogi se sklicuje na {{SOP-0001}}.'}]
+   ,vsebina:[
+     {naslov:'Namen obrazca', blok:[
+       'Mesečna evidenca, kateri prostor je bil kateri dan uporabljen in za katero dejavnost. Iz nje je razvidno, da se procesi z večjim tveganjem kontaminacije izvajajo časovno ločeno od čistih procesov, kar zahteva {{SOP-0001}}.',
+       {opomba:'Brez izpolnjenega dnevnika je delo v prostorih prepovedano.'}]},
+
+     {naslov:'Zgradba obrazca', blok:[
+       'Obrazec je mesečna preglednica: ena vrstica na dan v mesecu, stolpci po dejavnostih, razdeljeni na predprostor in laboratorij, ter stolpec za podpis izvajalca.',
+       {tabela:{glava:['Prostor','Dejavnosti'], vrstice:[
+         ['Predprostor','sterilizacija (steklovina, agar, žito, substrati) · priprava topila (mešanje, redčenje) · ekstrakcija (alkoholna, vodna, tlačna) · pomivanje (steklovina, posode)'],
+         ['Laboratorij','koncentriranje (EtOH, HVE, TE, Gly) · formulacija (EtOH, Gly) · polnjenje (EtOH, Gly) · stiskanje in filtracija (EtOH, HVE, TE) · micelij (kloniranje, inokulacija substratov)']]}},
+       'V glavo se vpišeta mesec in leto, vsak dan pa se označijo dejavnosti in doda podpis.']},
+
+     {naslov:'Legenda', blok:[
+       {tabela:{glava:['Oznaka','Pomen'], vrstice:[
+         ['+','prostor je bil uporabljen za delo'],
+         ['prazno','prostor tisti dan ni bil uporabljen'],
+         ['+ (opomba)','prostor je bil uporabljen, dodana je kratka razlaga ali vrsta dela — na primer „+ (ekstrakcija EtOH)“, „+ (koncentracija tinkture)“, „+ (kloniranje)“']]}}]},
+   ]},
 
   {oznaka:'OBR-0002', naziv:'Evidenca in kontrola čiščenja prostorov',
    vrsta:'Obrazec', lastnik:'Rok Golob', povezani:['SOP-0002'],
@@ -6612,11 +6686,19 @@ function dokTabelaHtml(glava,vrstice){
     <tbody>${vrstice.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
   </table></div>`;
 }
+function dokSklici(t){
+  return String(t).replace(/\{\{([A-Z]{3}-\d{4})\}\}/g,(cel,o)=>{
+    const z=dokNajdi(o);
+    if(!z)return o;
+    return `<a class="dok-sklic" href="#dokument=${z.oznaka}"
+      onclick="odpriDokument('${z.oznaka}');return false">${dokPolnaOznaka(z)}</a>`;
+  });
+}
 function dokBlokHtml(b,d){
-  if(typeof b==='string')return `<p class="dok-p">${b}</p>`;
-  if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-  if(b.opomba)return `<div class="dok-opomba">${b.opomba}</div>`;
-  if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice);
+  if(typeof b==='string')return `<p class="dok-p">${dokSklici(b)}</p>`;
+  if(b.ul)return `<ul class="dok-ul">${b.ul.map(x=>`<li>${dokSklici(x)}</li>`).join('')}</ul>`;
+  if(b.opomba)return `<div class="dok-opomba">${dokSklici(b.opomba)}</div>`;
+  if(b.tabela)return dokTabelaHtml(b.tabela.glava,b.tabela.vrstice.map(r=>r.map(dokSklici)));
   if(b.koraki)return dokKorakiHtml();
   if(b.ccp)return dokCCPHtml();
   if(b.obrazci)return dokObrazciHtml(d);
@@ -6710,6 +6792,7 @@ function odpriDokument(oznaka){
         <span><b>Odobril</b>${v&&v.odobril?v.odobril:'—'}</span>
         <span><b>Lastnik</b>${d.lastnik||'—'}</span>
         <span><b>Stanje</b>${st.napis}</span>
+        ${d.klasifikacija?`<span><b>Klasifik.</b>${d.klasifikacija}</span>`:''}
       </div>
     </div>
     ${st.kljuc!=='velja'
@@ -6777,11 +6860,12 @@ td{padding:.2rem .4rem;border-bottom:.5pt solid #e2dacc;vertical-align:top}
     <b>Vrsta</b> ${d.vrsta}<br>
     <b>Velja od</b> ${dokDatum(v)?fmtDate(v.velja):v?'ni prenesen':'—'}<br>
     <b>Lastnik</b> ${d.lastnik||'—'}<br>
-    <b>Stanje</b> ${st.napis}
+    <b>Stanje</b> ${st.napis}${d.klasifikacija?'<br><b>Klasifikacija</b> '+d.klasifikacija:''}
   </div>
 </div>
 ${st.kljuc!=='velja'?`<div class="op">Ta izvod ne velja: dokument nima datuma veljavnosti in podpisa odobritve.</div>`:''}
-${dokVsebinaHtml(d).replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
+${dokVsebinaHtml(d).replace(/<a class="dok-sklic"[^>]*>/g,'').replace(/<\/a>/g,'')
+   .replace(/class="dok-r"/g,'').replace(/class="dok-h"/g,'').replace(/class="dok-n"/g,'')
    .replace(/class="dok-p"/g,'').replace(/class="dok-ul"/g,'').replace(/class="dok-tw"/g,'')
    .replace(/class="dok-t"/g,'').replace(/class="dok-opomba"/g,'class="op"')
    .replace(/class="dok-vir"/g,'class="vir"')}

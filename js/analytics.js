@@ -4,11 +4,30 @@
 
 const GM_GA_ID = 'G-L2PGE7VDHB';
 
+// Imena parametrov, s katerimi GA4 doloca vir obiska. Ce jih poslje navaden
+// dogodek, GA4 z njimi prepise vir seje - obisk iz Google Ads se potem v
+// porocilu ne vodi vec kot google / cpc, ampak pod tem, kar je poslal dogodek.
+// Popup za prvi nakup je posiljal source:'first_purchase_popup' in prav to se
+// je zgodilo. Zato jih tu prestrezemo, da napaka ne more znova uiti v produkcijo.
+const GM_REZERVIRANI_PARAMI = ['source', 'medium', 'campaign', 'campaign_id', 'term', 'content'];
+
 // Varno pokliče gtag samo če obstaja in je GA naložen
 function gmTrack(eventName, params = {}) {
   if (typeof gtag !== 'function') return;
   if (localStorage.getItem('gm_cookie_consent') !== 'all') return;
-  gtag('event', eventName, params);
+  const varni = {};
+  const zavrnjeni = [];
+  Object.keys(params).forEach((k) => {
+    if (GM_REZERVIRANI_PARAMI.includes(k)) zavrnjeni.push(k);
+    else varni[k] = params[k];
+  });
+  if (zavrnjeni.length) {
+    console.warn(
+      `gmTrack("${eventName}"): parametri ${zavrnjeni.join(', ')} niso poslani — ` +
+      'GA4 z njimi prepiše vir obiska. Uporabi svoje ime, npr. popup_source.'
+    );
+  }
+  gtag('event', eventName, varni);
 }
 
 // ── Pomočne funkcije ──────────────────────────────────────

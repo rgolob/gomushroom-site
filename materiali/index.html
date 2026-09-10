@@ -1317,6 +1317,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <summary>🥃 Etanol — poraba <span class="dnsum" id="rdsumEtanol"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-alc">
+        <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="rdProstoEtanol">Prosto: — L AAE</div>
         <div class="frow">
           <div class="field"><label>Masa EtOH (kg)</label><input id="rdMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcRD()"></div>
           <div class="field"><label>% EtOH vol.</label><input id="rdPctEtOH" type="text" placeholder="npr. 70,0" inputmode="decimal" oninput="calcRD()"></div>
@@ -8923,13 +8924,28 @@ function calcEtZaloga(){
   return Math.max(0,round(aae,4));
 }
 
-function calcEtRezervirano(){
-  // Rezervirano = odprti DN, v L AAE vhodnega etanola
+// Rezervirano = alkohol, ki je iz kanistra ze odsel, na kartico etanola pa se
+// ni knjizen. To velja za odprt delovni nalog in enako za odprt R&D nalog:
+// tudi ta vzame etanol ob odprtju in ga knjizi sele ob zakljucku.
+//
+// R&D nalogi doslej niso rezervirali nicesar. Dokler so se zakljucevali sproti,
+// se to ni poznalo. Ko sme R&D ostati odprt - ker iz njega nastane polizdelek,
+// nalog pa tece naprej - bi njegov etanol drugim nalogom kazal kot prost,
+// fizicno pa ga v kanistrih ne bi bilo.
+//
+// izvzemiId: nalog, ki ga trenutno urejamo. Njegova lastna rezervacija ne sme
+// zmanjsevati prostega stanja, ki mu ga kazemo - sicer bi si stal na poti.
+function calcEtRezervirano(izvzemiId){
   let aae=0;
-  workOrders.filter(d=>d.status==='odprt').forEach(d=>{
+  workOrders.filter(d=>d.status==='odprt'&&d.id!==izvzemiId).forEach(d=>{
     aae+=d.lAAE||0;
   });
-  return aae;
+  // Merilo je knjizba, ne status: nalog, ki je etanol ze knjizil, ne rezervira
+  // vec, tudi ce bi mu status iz kaksnega razloga ostal odprt.
+  rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==izvzemiId).forEach(r=>{
+    aae+=r.lAAE||0;
+  });
+  return round(aae,4);
 }
 
 function renderEtStats(){
@@ -11995,6 +12011,24 @@ let rdPage=0;
 const RD_PER_PAGE=10;
 let editingRDId=null;
 
+// Koliko etanola je se prostega in koliko ga ta poskus potrebuje. Isti prikaz
+// kot pri delovnem nalogu - clovek mora videti, da mu ga zmanjkuje, preden
+// nalog shrani, ne sele ko gre po kanister.
+function rdOsveziProsto(){
+  const el=document.getElementById('rdProstoEtanol');
+  if(!el)return;
+  const prosto=round(calcEtZaloga()-calcEtRezervirano(editingRDId||undefined),4);
+  const masaKg=parseNum(document.getElementById('rdMasaEtOH').value);
+  const volPct=parseNum(document.getElementById('rdPctEtOH').value);
+  const potrebno=(masaKg&&volPct)
+    ?calcAAE(round(masaKg/etohDensity(volPct),3),volPct):0;
+  const dovolj=!potrebno||potrebno<=prosto;
+  el.textContent=`Prosto: ${prosto.toFixed(4)} L AAE`
+    +(potrebno?` · Potrebno: ${potrebno.toFixed(4)} L AAE${dovolj?' ✓':' ⛔ PREMALO'}`:'');
+  el.style.background=dovolj?'rgba(58,107,74,.08)':'rgba(139,58,42,.08)';
+  el.style.color=dovolj?'var(--success)':'var(--danger)';
+}
+
 function calcRD(){
   const masaKg=parseNum(document.getElementById('rdMasaEtOH').value);
   const volPct=parseNum(document.getElementById('rdPctEtOH').value);
@@ -12008,6 +12042,7 @@ function calcRD(){
     document.getElementById('rdVol').value=volL.toFixed(3)+' L';
     document.getElementById('rdLAAE').value=aae.toFixed(4)+' L';
   }
+  rdOsveziProsto();
   // Produkt nosi svoj % - v macerat gre alkohol, ven pride razredcen s tem, kar
   // je goba oddala. Dokler ga clovek ne izmeri, ponudimo vhodni % kot namig, ne
   // kot vrednost: privzeta stevilka bi se tiho prepisala v bilanco.
@@ -12173,6 +12208,17 @@ function saveRD(){
     document.getElementById('rdsecIzid').open=true;
     toast('⚠ Koncentrat in polizdelek skupaj presegata vloženo — preveri mase in odstotke');
     return;
+  }
+
+  // Enako opozorilo kot pri delovnem nalogu in iz istega razloga: nov poskus
+  // etanol rezervira, zato mora clovek videti, ce ga obljublja dvakrat. Odlocitev
+  // pustimo njemu - vcasih je kanister ze pripravljen in evidenca sledi.
+  if(!editingRDId&&aae>0){
+    const prosto=round(calcEtZaloga()-calcEtRezervirano(),4);
+    if(aae>prosto+0.00005&&!confirm(
+      `⛔ Premalo etanola!\n\nProsto (AAE): ${prosto.toFixed(4)} L\n`+
+      `Potrebno (AAE): ${aae.toFixed(4)} L\n`+
+      `Primanjkljaj: ${(aae-prosto).toFixed(4)} L AAE\n\nVseeno nadaljuješ?`))return;
   }
   const r={
     id:editingRDId||uid(),

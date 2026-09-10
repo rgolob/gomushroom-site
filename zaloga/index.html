@@ -6119,6 +6119,83 @@ function nalepkaDrzava(koda){
   return jeTujina(koda)?drzavaIme(koda,'sl').toUpperCase():'';
 }
 
+// ── CRTNA KODA CODE 128 ────────────────────────────────────────────────────
+// Postna oznaka za sledenje mora biti na nalepki tudi strojno berljiva. Kodo
+// izrisemo sami v SVG, ne prek zunanje storitve: nalepko se pogosto tiska
+// tik pred odhodom na posto in ce bi slika prisla z interneta, bi ob slabi
+// povezavi natisnili nalepko brez kode - tega se na paketu ne opazi, dokler
+// je na okencu ne zavrnejo.
+//
+// Oznaka po standardu S10 (RR123456789SI) je Code 128. Nabor stevk (C) stisne
+// par stevk v en simbol, zato je koda ozja; na isti sirini to pomeni sirsi
+// modul in s tem zanesljivejse branje.
+const C128_VZORCI=['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+const C128_START_B=104, C128_START_C=105, C128_V_C=99, C128_V_B=100, C128_STOP=106;
+
+// Vrne zaporedje vrednosti simbolov brez kontrolne vsote in brez znaka stop.
+// V nabor C preklopi sele pri stirih zaporednih stevkah - pri manj preklop
+// stane vec, kot prihrani.
+function c128Vrednosti(t){
+  const stevka=c=>c>='0'&&c<='9';
+  const vals=[]; let nabor='', i=0;
+  const vC=()=>{vals.push(nabor?C128_V_C:C128_START_C);nabor='C';};
+  const vB=()=>{vals.push(nabor?C128_V_B:C128_START_B);nabor='B';};
+  while(i<t.length){
+    let n=0; while(i+n<t.length&&stevka(t[i+n]))n++;
+    if(n>=4){
+      const par=n-(n%2);
+      if(nabor!=='C')vC();
+      for(let k=0;k<par;k+=2)vals.push(parseInt(t.substr(i+k,2),10));
+      i+=par; continue;
+    }
+    if(nabor!=='B')vB();
+    vals.push(t.charCodeAt(i)-32);
+    i++;
+  }
+  return vals;
+}
+
+// modulX in visina sta v milimetrih. 0,5 mm je sredina razpona, ki ga S10
+// dovoljuje (0,375-0,66), zato ostane berljiva tudi, ce tiskalnik malo razlije.
+function c128Svg(besedilo,modulX,visinaMm){
+  const t=String(besedilo||'').replace(/\s+/g,'');
+  if(!t||!/^[\x20-\x7e]+$/.test(t))return '';
+  const vals=c128Vrednosti(t);
+  if(!vals.length)return '';
+  let vsota=vals[0];
+  for(let k=1;k<vals.length;k++)vsota+=vals[k]*k;
+  vals.push(vsota%103, C128_STOP);
+
+  const TIHO=10;                       // tiha cona v modulih, na vsaki strani
+  let x=TIHO, crte='';
+  vals.forEach(v=>{
+    const vz=C128_VZORCI[v];
+    for(let k=0;k<vz.length;k++){
+      const s=+vz[k];
+      if(k%2===0)crte+=`<rect x="${x}" y="0" width="${s}" height="10"/>`;
+      x+=s;
+    }
+  });
+  const sirina=x+TIHO;
+  return `<svg class="crtna" width="${(sirina*modulX).toFixed(2)}mm" height="${visinaMm}mm"`
+    +` viewBox="0 0 ${sirina} 10" preserveAspectRatio="none" shape-rendering="crispEdges"`
+    +` role="img" aria-label="${NALEPKA_ESC(t)}">${crte}</svg>`;
+}
+
+// Polje sledenja lahko vsebuje celo povezavo ali golo stevilko. Za crtno kodo
+// potrebujemo golo oznako, zato jo iz povezave Poste Slovenije izlusimo; pri
+// povezavi drugega prevoznika kode ne ugibamo.
+function sledenjeKoda(v){
+  const s=String(v||'').trim();
+  if(!s)return '';
+  if(/^https?:\/\//i.test(s)){
+    const m=s.match(/[?&]id=([^&#]+)/i);
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]).replace(/\s+/g,'');}catch(e){return m[1].replace(/\s+/g,'');}
+  }
+  return s.replace(/\s+/g,'');
+}
+
 function nalepkaMarkup(o){
   const esc=NALEPKA_ESC;
   const drz=nalepkaDrzava(o.country);
@@ -6127,8 +6204,21 @@ function nalepkaMarkup(o){
   // anglescini - domaca nalepka ostane slovenska.
   const napisPosiljatelj=drz?'Sender':'Pošiljatelj';
   const napisPrejemnik=drz?'Recipient':'Prejemnik';
+
+  // Rubrika za posto se izrise samo, ce je oznaka za sledenje znana ze ob
+  // kreiranju nalepke. Brez nje nalepka ostane taka, kot je bila doslej -
+  // prazna rubrika bi na paketu izgledala kot pozabljen vpis.
+  const koda=sledenjeKoda(o.sledenje);
+  const crtna=koda?c128Svg(koda,0.5,13):'';
+  const posta=crtna?`<div class="posta">
+          <div class="posta-oznaka">${drz?'Tracking':'Pošta Slovenije — sledenje'}</div>
+          ${crtna}
+          <div class="posta-st">${esc(sledenjeSkupine(koda))}</div>
+        </div>`:'';
+
   return `<div class="label">
-      <div class="frame">
+      <div class="frame${posta?' s-posto':''}">
+        <div class="frame-vrh">
         <div class="sender-col">
           <img class="logo-img" src="https://gomushroom.si/assets/gomushroom_logo_800px.webp" alt="GoMushroom">
           <div class="sender-data">
@@ -6149,8 +6239,18 @@ function nalepkaMarkup(o){
           ${o.phone?`<div class="rphone">${esc(o.phone)}</div>`:''}
           ${o.ref?`<div class="ref">${esc(o.ref)}</div>`:''}
         </div>
+        </div>
+        ${posta}
       </div>
     </div>`;
+}
+
+// Oznaka S10 se bere laze v skupinah - dve crki, tri trojke stevk, dve crki.
+// Kar v ta kalup ne gre, pustimo pri miru; crtna koda je itak brez presledkov.
+function sledenjeSkupine(k){
+  const m=String(k||'').match(/^([A-Za-z]{2})(\d{9})([A-Za-z]{2})$/);
+  if(!m)return k;
+  return `${m[1]} ${m[2].slice(0,3)} ${m[2].slice(3,6)} ${m[2].slice(6)} ${m[3]}`;
 }
 
 const NALEPKA_CSS=`
@@ -6159,7 +6259,24 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff}
 .sheet{display:block}
 .label{width:148mm;height:105mm;padding:5mm;page-break-after:always;break-after:page}
 .sheet:last-child .label:last-child{page-break-after:avoid;break-after:avoid}
-.frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;overflow:hidden}
+.frame{width:100%;height:100%;border:1.5px solid #111;border-radius:2mm;display:flex;flex-direction:column;overflow:hidden}
+.frame-vrh{flex:1;display:flex;min-height:0}
+/* Rubrika za posto. Crtna koda ima levo in desno tiho cono ze v svojem SVG,
+   zato je tu ne dodajamo se enkrat - dvojna bi kodo po nepotrebnem stisnila. */
+.posta{border-top:1.5px solid #111;padding:2mm 4mm 2.5mm;text-align:center;
+  flex-shrink:0;background:#fff}
+.posta-oznaka{font-size:6pt;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#555;margin-bottom:1mm}
+.posta .crtna{display:block;margin:0 auto}
+.posta-st{font-family:'Courier New',Courier,monospace;font-size:11pt;font-weight:700;
+  letter-spacing:.06em;color:#000;margin-top:1mm}
+/* Ko je rubrika prisotna, je v stolpcu posiljatelja manj prostora. Umakne se
+   QR, ker je od vsega na paketu najmanj pomemben - naslov posiljatelja in
+   logotip morata ostati cela. Tuja nalepka ima v naslovu vrstico vec
+   (SLOVENIJA) in daljso telefonsko stevilko, zato mora biti rezerva dovolj
+   velika tudi zanjo. */
+.frame.s-posto .qr-img{width:12mm;height:12mm}
+.frame.s-posto .sender-qr{margin-top:1.5mm}
+.frame.s-posto .logo-img{margin-bottom:2mm}
 .sender-col{width:50mm;flex-shrink:0;border-right:1.5px solid #111;padding:4mm;display:flex;flex-direction:column}
 .logo-img{width:28mm;display:block;margin-bottom:3mm}
 .sender-data{flex:1}
@@ -6293,22 +6410,29 @@ function odpriNalepke(html){
   win.document.close();
 }
 
-function printShippingLabel(name, street, post, phone, country, ref) {
-  odpriNalepke(nalepkeStran([nalepkaMarkup({name,street,post,phone,country,ref})],'Nalepka − '+(name||''),''));
+function printShippingLabel(name, street, post, phone, country, ref, sledenje) {
+  odpriNalepke(nalepkeStran([nalepkaMarkup({name,street,post,phone,country,ref,sledenje})],'Nalepka − '+(name||''),''));
 }
 
 function printInvoiceLabel(invId){
   const i=invoices.find(x=>x.id===invId);
   if(!i) return;
   const g=saleGroups.find(x=>x.id===i.groupId);
+  // Odsotnost rubrike za posto se na natisnjeni nalepki ne opazi, zato nanjo
+  // opozorimo tu - ko je nalepka na paketu, je prepozno.
+  if(jePosiljka(i)&&!sledenjeKoda(i.sledenje))
+    toast('📮 Nalepka brez oznake za sledenje — vpiši jo z gumbom 📮 in natisni znova');
   printShippingLabel(i.buyer||'', i.street||i.address||'', i.post||'', i.phone||'',
-    i.country||g?.country, i.num||'');
+    i.country||g?.country, i.num||'', i.sledenje||'');
 }
 function printSaleLabel(groupId){
   const g=saleGroups.find(x=>x.id===groupId);
   if(!g) return;
+  // Sledenje je zapisano na racunu, ne na prodaji - nalepko pa se tiska tudi
+  // iz kartice prodaje, zato ga poiscemo tam.
+  const i=invoices.find(x=>x.groupId===g.id);
   printShippingLabel(g.buyer||'', g.street||g.address||'', g.post||'', g.phone||'',
-    g.country, g.invoiceNum||'');
+    g.country, g.invoiceNum||'', i?.sledenje||'');
 }
 
 function printAllPaidLabels(){
@@ -6331,8 +6455,11 @@ function printAllPaidLabels(){
       name:i.buyer||'', street:i.street||i.address||'', post:i.post||'', phone:i.phone||'',
       country:i.country||g?.country,
       ref:(i.num||'')+(i.date?' · '+i.date.split('-').reverse().join('.'):''),
+      sledenje:i.sledenje||'',
     });
   });
+  const brezKode=candidates.filter(i=>!sledenjeKoda(i.sledenje)).length;
+  if(brezKode)toast(`📮 ${brezKode} od ${candidates.length} nalepk je brez oznake za sledenje`);
   odpriNalepke(nalepkeStran(nalepke,`Nalepke (${candidates.length})`,`${candidates.length} nalepk`));
 }
 async function ustvariDobavnico(groupId){

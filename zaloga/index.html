@@ -6422,6 +6422,9 @@ body{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';paddin
 .buyer strong{font-size:.88rem}
 .doc-meta{text-align:right;font-size:.82rem;line-height:1.9}
 .vat-line{font-size:.78rem;margin-bottom:1rem}
+/* Na ozkem zaslonu se tabela zaradi nedeljivih stolpcev ne more skrciti, zato
+   dobi svoj drsnik namesto da bi odrezala desni rob strani. */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;margin-bottom:.8rem}
 th{font-size:.65rem;font-weight:600;padding:.4rem .5rem;border-top:1px solid #999;border-bottom:1px solid #999;text-align:left;background:#f9f7f3}
 th.r,td.r{text-align:right}
@@ -6449,9 +6452,24 @@ td{padding:.32rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical
 .btn-pdf{background:#1a1209;color:#f5f0e8}
 .btn-close{background:rgba(0,0,0,.08);color:#1a1209}
 .actions{display:flex;gap:.6rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+/* Telefon: manjsi robovi in drobnejsa tabela, opis se sme lomiti. Zneski in
+   sifre ostanejo v eni vrstici, ker so kratki. Tisk tega ne vidi. */
+@media screen and (max-width:760px){
+  body{padding:1.5rem 1rem 1.5rem;font-size:12px}
+  .hdr{gap:1rem;margin-bottom:1.25rem}
+  .doc-block{gap:1rem}
+  th{font-size:.6rem;padding:.35rem .3rem}
+  td{font-size:.72rem;padding:.3rem .3rem}
+  .desc{font-size:.62rem}
+  th[style*="width"]{width:auto}
+  th.nw:not(.r),td.nw:not(.r){white-space:normal}
+  th.nw:first-child,td.nw:first-child{white-space:nowrap}
+  .sig-grid{gap:1rem}
+}
 @page{size:A4;margin:12mm}
 @media print{
   body{max-width:none;width:100%;padding:0;font-size:10pt}
+  .tbl-wrap{overflow:visible}
   .actions{display:none!important}
   .company{font-size:8.5pt} .company strong{font-size:9.5pt}
   .notice{font-size:8.5pt}
@@ -6490,6 +6508,7 @@ td{padding:.32rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical
 
 ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
+<div class="tbl-wrap">
 <table>
   <tr>
     <th class="nw" style="width:16%">Artikel</th>
@@ -6501,6 +6520,7 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
   </tr>
   ${tableRows||'<tr><td colspan="6" style="color:#7a6f60;text-align:center">—</td></tr>'}
 </table>
+</div>
 
 <div class="totals">
   <table>

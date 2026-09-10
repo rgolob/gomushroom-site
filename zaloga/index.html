@@ -6182,18 +6182,42 @@ function c128Svg(besedilo,modulX,visinaMm){
     +` role="img" aria-label="${NALEPKA_ESC(t)}">${crte}</svg>`;
 }
 
-// Polje sledenja lahko vsebuje celo povezavo ali golo stevilko. Za crtno kodo
-// potrebujemo golo oznako, zato jo iz povezave Poste Slovenije izlusimo; pri
-// povezavi drugega prevoznika kode ne ugibamo.
+// Polje sledenja lahko vsebuje celo povezavo ali golo stevilko. Za nalepko
+// potrebujemo golo oznako: Posta jo ima v parametru id, GLS v match.
 function sledenjeKoda(v){
   const s=String(v||'').trim();
   if(!s)return '';
   if(/^https?:\/\//i.test(s)){
-    const m=s.match(/[?&]id=([^&#]+)/i);
+    const m=s.match(/[?&](?:id|match)=([^&#]+)/i);
     if(!m)return '';
     try{return decodeURIComponent(m[1]).replace(/\s+/g,'');}catch(e){return m[1].replace(/\s+/g,'');}
   }
   return s.replace(/\s+/g,'');
+}
+
+// Oznaka po standardu S10: dve crki, devet stevk, dve crki drzave.
+const S10_VZOREC=/^[A-Za-z]{2}\d{9}[A-Za-z]{2}$/;
+
+// Prevoznika prepoznamo iz povezave, sicer iz oblike oznake. Cesar ne
+// prepoznamo, na nalepki ostane brez imena - ugibanje bi bilo slabse od
+// nevtralnega napisa.
+function sledenjePrevoznik(surovo,koda){
+  const s=String(surovo||'');
+  if(/gls-group\.eu|gls-slovenia/i.test(s))return 'GLS';
+  if(/posta\.si/i.test(s))return 'POSTA';
+  if(S10_VZOREC.test(koda))return 'POSTA';
+  return '';
+}
+
+// Oznaka S10 se bere laze v skupinah - dve crki, tri trojke stevk, dve crki.
+// Dolge stevilke drugih prevoznikov razdelimo po tri, ker jih je treba na
+// paketomatu vtipkati. Kar v noben kalup ne gre, pustimo pri miru.
+function sledenjeSkupine(k){
+  const s=String(k||'');
+  const m=s.match(/^([A-Za-z]{2})(\d{9})([A-Za-z]{2})$/);
+  if(m)return `${m[1]} ${m[2].slice(0,3)} ${m[2].slice(3,6)} ${m[2].slice(6)} ${m[3]}`;
+  if(/^\d{9,}$/.test(s))return s.replace(/\d(?=(\d{3})+$)/g,'$& ');
+  return s;
 }
 
 function nalepkaMarkup(o){
@@ -6205,13 +6229,23 @@ function nalepkaMarkup(o){
   const napisPosiljatelj=drz?'Sender':'Pošiljatelj';
   const napisPrejemnik=drz?'Recipient':'Prejemnik';
 
-  // Rubrika za posto se izrise samo, ce je oznaka za sledenje znana ze ob
-  // kreiranju nalepke. Brez nje nalepka ostane taka, kot je bila doslej -
-  // prazna rubrika bi na paketu izgledala kot pozabljen vpis.
+  // Rubrika za sledenje se izrise samo, ce je oznaka znana ze ob kreiranju
+  // nalepke. Brez nje nalepka ostane taka, kot je bila doslej - prazna rubrika
+  // bi na paketu izgledala kot pozabljen vpis.
+  //
+  // Crtno kodo dobi samo postna oznaka S10. Pri GLS paket dobi svojo uradno
+  // nalepko - iz paketomata ali od kurirja - in dodatna crtna koda na istem
+  // paketu je nevarna: sortirni citalec ne loci, katera je prava. Stevilka je
+  // zato izpisana samo z besedilom, da paket lahko pripises racunu.
   const koda=sledenjeKoda(o.sledenje);
-  const crtna=koda?c128Svg(koda,0.5,13):'';
-  const posta=crtna?`<div class="posta">
-          <div class="posta-oznaka">${drz?'Tracking':'Pošta Slovenije — sledenje'}</div>
+  const prevoznik=sledenjePrevoznik(o.sledenje,koda);
+  const crtna=(koda&&prevoznik==='POSTA')?c128Svg(koda,0.5,13):'';
+  const napisSledenje=drz?'Tracking'
+    :prevoznik==='POSTA'?'Pošta Slovenije — sledenje'
+    :prevoznik==='GLS'?'GLS — številka paketa'
+    :'Sledenje pošiljki';
+  const posta=koda?`<div class="posta${crtna?'':' brez-kode'}">
+          <div class="posta-oznaka">${napisSledenje}</div>
           ${crtna}
           <div class="posta-st">${esc(sledenjeSkupine(koda))}</div>
         </div>`:'';
@@ -6245,13 +6279,6 @@ function nalepkaMarkup(o){
     </div>`;
 }
 
-// Oznaka S10 se bere laze v skupinah - dve crki, tri trojke stevk, dve crki.
-// Kar v ta kalup ne gre, pustimo pri miru; crtna koda je itak brez presledkov.
-function sledenjeSkupine(k){
-  const m=String(k||'').match(/^([A-Za-z]{2})(\d{9})([A-Za-z]{2})$/);
-  if(!m)return k;
-  return `${m[1]} ${m[2].slice(0,3)} ${m[2].slice(3,6)} ${m[2].slice(6)} ${m[3]}`;
-}
 
 const NALEPKA_CSS=`
 *{box-sizing:border-box;margin:0;padding:0}
@@ -6269,6 +6296,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff}
 .posta .crtna{display:block;margin:0 auto}
 .posta-st{font-family:'Courier New',Courier,monospace;font-size:11pt;font-weight:700;
   letter-spacing:.06em;color:#000;margin-top:1mm}
+/* Brez crtne kode je stevilka edino, kar rubrika nosi, zato je vecja - z nje
+   se prepisuje na paketomatu. */
+.posta.brez-kode{padding:2.5mm 4mm 3mm}
+.posta.brez-kode .posta-st{font-size:15pt;margin-top:.5mm}
 /* Ko je rubrika prisotna, je v stolpcu posiljatelja manj prostora. Umakne se
    QR, ker je od vsega na paketu najmanj pomemben - naslov posiljatelja in
    logotip morata ostati cela. Tuja nalepka ima v naslovu vrstico vec

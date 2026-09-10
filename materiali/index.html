@@ -216,6 +216,21 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 .dok-opozorilo{font-size:.68rem;color:#8b5a2a;background:rgba(139,90,42,.08);
   border:1px solid rgba(139,90,42,.25);border-radius:var(--rs);
   padding:.4rem .55rem;margin-bottom:.5rem;line-height:1.4}
+/* Spremljajoce strani na gomushroom.si. Locene od registra in vidno drugacne,
+   ker nimajo izdaje ne datuma veljavnosti - ce bi izgledale kot kartice
+   registra, bi obljubljale obvladovanje, ki ga nimajo. */
+.dok-strani{margin:1.1rem 0 .5rem}
+.dok-strani-nasl{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;margin-bottom:.15rem}
+.dok-strani-uvod{font-size:.68rem;color:var(--muted);line-height:1.45;
+  margin-bottom:.5rem}
+.dok-stran{display:flex;align-items:flex-start;gap:.5rem;text-decoration:none;
+  color:inherit;border:1px dashed var(--border);border-radius:var(--rs);
+  background:var(--parchment);padding:.5rem .6rem;margin-bottom:.4rem}
+.dok-stran-ime{font-size:.82rem;font-weight:500;color:var(--ink)}
+.dok-stran-opis{font-size:.68rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
+.dok-stran-ikona{font-size:.9rem;flex-shrink:0;line-height:1.4}
+.dok-stran-puscica{margin-left:auto;color:var(--muted);flex-shrink:0;font-size:.9rem}
 .dok-glava{border:1px solid var(--border);border-radius:var(--rs);
   background:var(--parchment);padding:.5rem .6rem;margin-bottom:.6rem}
 .dok-gnaziv{font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem}
@@ -6387,6 +6402,21 @@ function onEtTipChange(){
 // Verzija brez datuma veljavnosti pomeni "se ni potrjena": dokument je viden,
 // a ne velja. Datumov ne ugibamo - dokument, ki bi trdil, da velja od nekega
 // izmisljenega dne, je slabsi od dokumenta, ki prizna, da ceka na podpis.
+// Strani na gomushroom.si, ki dokumentacijo spremljajo, a niso obvladovani
+// dokumenti - nimajo izdaje ne datuma veljavnosti, zato v register ne sodijo.
+// Tu so zato, da jih je mogoce odpreti od tod in povezavo poslati naprej.
+const DOK_STRANI=[
+  {url:'https://gomushroom.si/dokumenti/aplikaciji/',
+   ikona:'🗂', naziv:'Kako vodimo evidence',
+   opis:'Kaj vodita aplikaciji, shema sledljivosti in zaporedje pregleda — za inšpekcijo'},
+  {url:'https://gomushroom.si/dokumenti/evidenca-alkohola/',
+   ikona:'🧪', naziv:'Evidenca alkohola',
+   opis:'Gibanje alkohola od nabave do izdelka in vprašanja o polizdelku — za FURS'},
+  {url:'https://gomushroom.si/dokumenti/batch-report/',
+   ikona:'🧾', naziv:'Batch Production & In-house QC Summary Report',
+   opis:'Predloga poročila o seriji za kupce, v angleščini — izpolni se sproti'},
+];
+
 const DOKUMENTI=[
   // Postopki
   {oznaka:'SOP-0001', naziv:'Obvladovanje in organizacija dela v laboratoriju',
@@ -7317,6 +7347,19 @@ function renderDokumenti(){
   if(vrzeli.length)vrstice.push(`⚠ ${vrzeli.join(', ')} ${vrzeli.length===1?'ni v prvi izdaji':'niso v prvi izdaji'}, datum pa je prevzet iz nadrejenega postopka — kdaj je nova izdaja nadomestila prejšnjo, iz izvirnikov ni razvidno.`);
   if(cakajo)vrstice.push(`⏳ ${cakajo} ${cakajo===1?'dokument ni':'dokumentov ni'} v veljavi.`);
   const opozorilo=vrstice.length?`<div class="dok-opozorilo">${vrstice.join('<br>')}</div>`:'';
+  // Spremljajoce strani samo pod "Vsi" - pod filtrom obrazcev ali postopkov bi
+  // izgledale, kot da v tisto skupino sodijo.
+  const strani=dokFilter!=='vsi'?'':`<div class="dok-strani">
+    <div class="dok-strani-nasl">Spremljajoče strani</div>
+    <div class="dok-strani-uvod">Niso v registru — nimajo izdaje ne datuma veljavnosti.
+      Odprejo se na gomushroom.si, povezavo je mogoče poslati naprej.</div>
+    ${DOK_STRANI.map(s=>`<a class="dok-stran" href="${s.url}" target="_blank" rel="noopener">
+      <span class="dok-stran-ikona">${s.ikona}</span>
+      <span><span class="dok-stran-ime">${s.naziv}</span>
+        <span class="dok-stran-opis" style="display:block">${s.opis}</span></span>
+      <span class="dok-stran-puscica">↗</span>
+    </a>`).join('')}
+  </div>`;
   el.innerHTML=opozorilo+vrste.map(d=>{
     const st=dokStanje(d), v=dokVeljavna(d), vse=dokVerzije(d);
     return `<div class="dn-card">
@@ -7335,7 +7378,7 @@ function renderDokumenti(){
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')+strani;
 }
 
 function odpriDokument(oznaka){

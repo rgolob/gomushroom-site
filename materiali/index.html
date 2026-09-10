@@ -1303,6 +1303,12 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div>
       <div class="field"><label>Naziv eksperimenta</label><input id="rdNaziv" placeholder="npr. UZ ekstrakcija reishi"></div>
 
+      <!-- Prosti etanol stoji na vrhu in ne v razdelku "Etanol - poraba":
+           razdelek je privzeto zaprt, ta stevilka pa je pogoj za cel nalog in
+           ne podrobnost enega polja. Odprt R&D nalog etanol rezervira, zato je
+           to edino mesto, kjer clovek vidi, koliko ga sme se obljubiti. -->
+      <div style="font-size:.72rem;padding:.4rem .65rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin:.1rem 0 .6rem" id="rdProstoEtanol">Prosto: — L AAE</div>
+
       <details class="dnsec rdsec" id="rdsecSurovina">
       <summary>🍄 Surovina <span class="dnsum" id="rdsumSurovina"></span></summary>
       <div class="dnsec-body">
@@ -1317,7 +1323,6 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       <summary>🥃 Etanol — poraba <span class="dnsum" id="rdsumEtanol"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-alc">
-        <div style="font-size:.7rem;padding:.3rem .6rem;border-radius:6px;background:rgba(58,107,74,.08);color:var(--success);margin-bottom:.4rem" id="rdProstoEtanol">Prosto: — L AAE</div>
         <div class="frow">
           <div class="field"><label>Masa EtOH (kg)</label><input id="rdMasaEtOH" type="text" placeholder="0,000" inputmode="decimal" oninput="calcRD()"></div>
           <div class="field"><label>% EtOH vol.</label><input id="rdPctEtOH" type="text" placeholder="npr. 70,0" inputmode="decimal" oninput="calcRD()"></div>

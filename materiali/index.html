@@ -1320,7 +1320,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div></details>
 
       <details class="dnsec rdsec" id="rdsecEtanol">
-      <summary>🥃 Etanol — poraba <span class="dnsum" id="rdsumEtanol"></span></summary>
+      <summary>🥃 Etanol — vhod <span class="dnsum" id="rdsumEtanol"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-alc">
         <div class="frow">
@@ -8948,9 +8948,30 @@ function calcEtRezervirano(izvzemiId){
   // Merilo je knjizba, ne status: nalog, ki je etanol ze knjizil, ne rezervira
   // vec, tudi ce bi mu status iz kaksnega razloga ostal odprt.
   rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==izvzemiId).forEach(r=>{
-    aae+=r.lAAE||0;
+    aae+=rdDrziAAE(r);
   });
   return round(aae,4);
+}
+
+// Koliko alkohola odprt R&D nalog se drzi.
+//
+// Ne ves vlozeni etanol: v poskus gre cela kolicina, med koncentriranjem pa se
+// velik del destilira nazaj in ga clovek zlije v kanister. Od tam ga popis spet
+// najde. Ce bi rezervirali cel vlozek, bi bil isti alkohol stet dvakrat - kot
+// prisoten v kanistru in kot rezerviran - in prosto stanje bi bilo prenizko.
+//
+// Nalog drzi torej samo tisto, kar bo ob zakljucku zares odslo z zaloge:
+// polizdelek in manjko. Ista stevilka, ki jo obrazec napove pod "Kam je sel
+// etanol", in isti znesek, ki se ob zakljucku knjizi na kartico etanola.
+function rdRegeneriranAAE(r){
+  if(r?.aaeRegen>0)return r.aaeRegen;
+  // Star ali uvozen zapis ima lahko samo tehtano maso in odstotek.
+  const masaG=r?.masaRegen||0, pct=r?.pctRegen||0;
+  if(!(masaG>0&&pct>0))return 0;
+  return calcAAE(round(gVKg(masaG)/etohDensity(pct),4),pct);
+}
+function rdDrziAAE(r){
+  return Math.max(0, round((r?.lAAE||0)-rdRegeneriranAAE(r),4));
 }
 
 function renderEtStats(){
@@ -12028,8 +12049,17 @@ function rdOsveziProsto(){
   const potrebno=(masaKg&&volPct)
     ?calcAAE(round(masaKg/etohDensity(volPct),3),volPct):0;
   const dovolj=!potrebno||potrebno<=prosto;
-  el.textContent=`Prosto: ${prosto.toFixed(4)} L AAE`
-    +(potrebno?` · Potrebno: ${potrebno.toFixed(4)} L AAE${dovolj?' ✓':' ⛔ PREMALO'}`:'');
+  // Ko je koncentrat ze stehtan, je del vlozka spet v kanistru. Takrat je
+  // zanimivo, koliko nalog se drzi - to je stevilka, ki bo ob zakljucku odsla
+  // z zaloge, in tista, ki drugim nalogom jemlje prosto stanje.
+  const regen=rdMasaPct('rdMasaRegen','rdPctRegen');
+  const vrnjeno=regen?regen.aae:0;
+  const drzi=Math.max(0,round(potrebno-vrnjeno,4));
+  el.innerHTML=`Prosto: ${prosto.toFixed(4)} L AAE`
+    +(potrebno?` · Potrebno: ${potrebno.toFixed(4)} L AAE${dovolj?' ✓':' ⛔ PREMALO'}`:'')
+    +(vrnjeno>0.00005
+      ?`<br>Vrnjeno v kanister: ${vrnjeno.toFixed(4)} · <strong>ta nalog drži: ${drzi.toFixed(4)} L AAE</strong>`
+      :'');
   el.style.background=dovolj?'rgba(58,107,74,.08)':'rgba(139,58,42,.08)';
   el.style.color=dovolj?'var(--success)':'var(--danger)';
 }

@@ -9,6 +9,15 @@
 [build]
   command = "node doc/osvezi-ocene.mjs || true"
 
+# Igrisce za razvoj polizdelkov. Ista datoteka kot /materiali/, samo drug
+# naslov - aplikacija se po njem prepozna in preklopi v peskovnik: podatke
+# prebere enkrat, nato pa v bazo ne zapise nicesar. Prepis (200) in ne
+# preusmeritev (301), da naslov v vrstici ostane /materiali-lab/.
+[[redirects]]
+  from = "/materiali-lab/*"
+  to = "/materiali/index.html"
+  status = 200
+
 [[redirects]]
   from = "/favicon.ico"
   to = "/assets/favicon-32.png"

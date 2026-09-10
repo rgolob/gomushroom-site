@@ -18,3 +18,7 @@
 # Predloga poročila o seriji — interno orodje, ne za iskalnike.
 /dokumenti/batch-report/*
   X-Robots-Tag: noindex, nofollow
+
+# Predstavitev vodenja evidenc — posljemo le povezavo, ne za iskalnike.
+/dokumenti/aplikaciji/*
+  X-Robots-Tag: noindex, nofollow

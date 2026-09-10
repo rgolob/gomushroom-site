@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="sl-SI">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+<title>Vodenje evidenc | GoMushroom</title>
+<meta name="description" content="Predstavitev aplikacij Materiali in Zaloga: kaj vodita, kako je zagotovljena sledljivost od surovine do kupca in po katerem zaporedju poteka pregled." />
+<meta name="author" content="GoMushroom — Rok Golob" />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="canonical" href="https://gomushroom.si/dokumenti/aplikaciji/" />
+<meta name="theme-color" content="#F6F8F9" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#101417" media="(prefers-color-scheme: dark)" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;600&family=Jost:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+
+<style>
+/* Isti nabor barv in pisav kot dopis o evidenci alkohola — dokumenta gresta
+   istemu bralcu in morata biti videti kot en komplet. */
+:root{
+  color-scheme:light dark;
+  --paper:#F6F8F9; --sheet:#FFFFFF; --sheet2:#EDF1F3;
+  --ink:#14181C; --muted:#5A646E; --line:#DCE2E6; --line2:#95A1AA;
+  --accent:#1F4E6B;
+  --mat:#2F6F5E; --zal:#6B4E8C; --dok:#8A6D1F; --kon:#A33A2A;
+  --mat-bg:rgba(47,111,94,.08); --zal-bg:rgba(107,78,140,.08);
+  --dok-bg:rgba(138,109,31,.09); --kon-bg:rgba(163,58,42,.08);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#101417; --sheet:#171C20; --sheet2:#1F252A;
+    --ink:#E6ECEF; --muted:#96A2AB; --line:#2A3238; --line2:#6E7C86;
+    --accent:#6FA8C9;
+    --mat:#63B79F; --zal:#AE90D0; --dok:#CFAE55; --kon:#DE7A67;
+    --mat-bg:rgba(99,183,159,.12); --zal-bg:rgba(174,144,208,.12);
+    --dok-bg:rgba(207,174,85,.12); --kon-bg:rgba(222,122,103,.12);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101417; --sheet:#171C20; --sheet2:#1F252A;
+  --ink:#E6ECEF; --muted:#96A2AB; --line:#2A3238; --line2:#6E7C86;
+  --accent:#6FA8C9;
+  --mat:#63B79F; --zal:#AE90D0; --dok:#CFAE55; --kon:#DE7A67;
+  --mat-bg:rgba(99,183,159,.12); --zal-bg:rgba(174,144,208,.12);
+  --dok-bg:rgba(207,174,85,.12); --kon-bg:rgba(222,122,103,.12);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-weight:300;line-height:1.6;font-size:15.5px}
+img{max-width:100%}
+.doc{max-width:52rem;margin:0 auto;padding:2.4rem 1.4rem 4.5rem;
+  display:flex;flex-direction:column;gap:2.1rem}
+
+.hd{display:grid;gap:1rem;padding-bottom:1.2rem;border-bottom:2px solid var(--ink)}
+.hd-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.8rem;
+  align-items:flex-start}
+.podjetje{font-family:var(--serif);font-size:1.5rem;font-weight:500;line-height:1.1}
+.podjetje span{color:var(--accent)}
+.meta{font-family:var(--mono);font-size:.7rem;line-height:1.7;color:var(--muted);
+  text-align:right}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(1.9rem,5vw,2.7rem);
+  line-height:1.06;margin:0;text-wrap:balance}
+.namen{font-size:.98rem;color:var(--muted);max-width:40rem;margin:0}
+
+section{display:flex;flex-direction:column;gap:.85rem;break-inside:avoid}
+.sec-h{display:flex;align-items:baseline;gap:.75rem;border-bottom:1px solid var(--line);
+  padding-bottom:.4rem}
+.sec-n{font-family:var(--mono);font-size:.72rem;color:var(--accent);font-weight:500}
+h2{font-family:var(--serif);font-weight:500;font-size:1.4rem;line-height:1.2;margin:0}
+h3{font-family:var(--sans);font-weight:500;font-size:.95rem;margin:.3rem 0 0}
+p{margin:0;max-width:40rem}
+strong{font-weight:500}
+.drobno{font-size:.88rem;color:var(--muted)}
+
+/* dva stolpca — aplikaciji druga ob drugi */
+.dva{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr))}
+.stolp{background:var(--sheet);border:1px solid var(--line);border-top:3px solid;
+  border-radius:2px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.55rem}
+.stolp p{max-width:none;font-size:.9rem}
+.stolp ul{gap:.3rem}
+.stolp li{font-size:.87rem}
+.oz{font-family:var(--mono);font-size:.64rem;letter-spacing:.09em;
+  text-transform:uppercase;font-weight:500}
+.s-mat{border-top-color:var(--mat)} .s-mat .oz{color:var(--mat)}
+.s-zal{border-top-color:var(--zal)} .s-zal .oz{color:var(--zal)}
+.ime{font-family:var(--serif);font-size:1.25rem;font-weight:500;line-height:1.15}
+
+/* koši */
+.kosi{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(10.5rem,1fr))}
+.kos{padding:.6rem .75rem;border-radius:2px;border-left:3px solid;
+  display:flex;flex-direction:column;gap:.1rem}
+.kos b{font-size:.85rem;font-weight:500}
+.kos span{font-size:.74rem;color:var(--muted);line-height:1.45}
+.k1{border-color:var(--mat);background:var(--mat-bg)} .k1 b{color:var(--mat)}
+.k2{border-color:var(--zal);background:var(--zal-bg)} .k2 b{color:var(--zal)}
+.k3{border-color:var(--dok);background:var(--dok-bg)} .k3 b{color:var(--dok)}
+.k4{border-color:var(--kon);background:var(--kon-bg)} .k4 b{color:var(--kon)}
+
+/* figura */
+figure{margin:0;display:flex;flex-direction:column;gap:.55rem;break-inside:avoid}
+.platno{overflow-x:auto;background:var(--sheet);border:1px solid var(--line);
+  border-radius:3px;padding:1rem}
+.platno svg{display:block;width:100%;min-width:34rem;height:auto;color:var(--ink)}
+figcaption{font-size:.79rem;color:var(--muted);max-width:40rem}
+.b{fill:var(--sheet2);stroke:var(--line2);stroke-width:1.4}
+.b1{fill:var(--mat-bg);stroke:var(--mat);stroke-width:1.6}
+.b2{fill:var(--zal-bg);stroke:var(--zal);stroke-width:1.6}
+.b3{fill:var(--dok-bg);stroke:var(--dok);stroke-width:1.6}
+.t{fill:currentColor;font-family:var(--sans);font-weight:500;font-size:13px}
+.ts{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.l{stroke:var(--line2);stroke-width:1.6;fill:none}
+.ld{stroke:var(--line2);stroke-width:1.3;fill:none;stroke-dasharray:5 4}
+.lk{stroke:var(--kon);stroke-width:1.5;fill:none;stroke-dasharray:6 4}
+.mk{fill:var(--line2)} .mkk{fill:var(--kon)}
+
+/* tabele */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:30rem}
+th{text-align:left;font-family:var(--mono);font-weight:500;font-size:.64rem;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  padding:.55rem .8rem;background:var(--sheet2);border-bottom:1px solid var(--line)}
+td{padding:.48rem .8rem;border-bottom:1px solid var(--line);font-size:.86rem;
+  vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.k{font-family:var(--mono);font-size:.76rem;white-space:nowrap;color:var(--accent)}
+td.v{white-space:nowrap}
+.vpr{font-weight:500}
+
+/* seznami */
+ul{margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:.4rem;
+  max-width:40rem}
+li{font-size:.93rem}
+
+.okvir{border:1px solid var(--ink);border-radius:3px;background:var(--sheet);
+  padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+.op{border-left:3px solid var(--accent);background:var(--sheet);
+  padding:.85rem 1rem;border-radius:0 2px 2px 0;display:flex;
+  flex-direction:column;gap:.45rem}
+.op b{font-weight:500;color:var(--accent)}
+.op p{font-size:.9rem}
+.ft{border-top:1px solid var(--line);padding-top:1.1rem;font-size:.78rem;
+  color:var(--muted);display:flex;flex-direction:column;gap:.35rem}
+.ft a{color:var(--accent)}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media print{
+  body{background:#fff;font-size:11pt}
+  .doc{max-width:none;padding:0;gap:1.4rem}
+  .platno,.tw,.okvir,.op,.stolp{break-inside:avoid}
+  section{break-inside:avoid}
+  .platno svg{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+<header class="hd">
+  <div class="hd-top">
+    <div class="podjetje">Go<span>Mushroom</span></div>
+    <div class="meta">
+      Datum · 10. september 2026<br>
+      Zadeva · vodenje evidenc<br>
+      Pripravil · Rok Golob
+    </div>
+  </div>
+  <h1>Kako vodimo evidence</h1>
+  <p class="namen">Evidence proizvodnje in prometa vodimo v dveh lastnih
+  aplikacijah. Ta dokument pove, kaj vsaka od njiju vodi, kako je zagotovljena
+  sledljivost od prevzema surovine do imena kupca in po katerem zaporedju
+  poteka pregled, da je vsak podatek mogoče preveriti na izpisu.</p>
+</header>
+
+<!-- 1 -->
+<section>
+  <div class="sec-h"><span class="sec-n">1</span><h2>Dve aplikaciji, ena veriga</h2></div>
+  <p>Evidence so razdeljene na dvoje po naravni meji: <strong>dokler nastaja
+  izdelek</strong> in <strong>ko izdelek obstaja</strong>. Meja je zaključek
+  delovnega naloga — takrat serija nastane in preide iz prve aplikacije v drugo.</p>
+
+  <div class="dva">
+    <div class="stolp s-mat">
+      <div class="oz">Proizvodnja</div>
+      <div class="ime">Materiali</div>
+      <p>Vodi vse od prevzema gobe do napolnjene stekleničke: delovne naloge,
+      masno bilanco vsake serije, knjigo etanola, zalogo surovin in embalaže,
+      opremo z umerjanji ter register dokumentacije.</p>
+    </div>
+    <div class="stolp s-zal">
+      <div class="oz">Promet z izdelki</div>
+      <div class="ime">Zaloga</div>
+      <p>Vodi vse od nastale serije naprej: stanje zaloge po produktih in
+      serijah, prodajo po kanalih, dobavnice in račune, stranke ter poročila,
+      med njimi trošarinsko in evidenco delovnih nalogov.</p>
+    </div>
+  </div>
+
+  <p class="drobno">Obe tečeta v brskalniku, dostop je za zaprtimi vrati s
+  prijavo, podatki so v skupni bazi. Isti podatek se ne vpisuje dvakrat: serija,
+  ki nastane v prvi aplikaciji, se v drugi ne vnaša ročno, ampak se pojavi sama.</p>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="sec-h"><span class="sec-n">2</span><h2>Sledljivost</h2></div>
+  <p>Vsak izdelek je vezan na serijo, vsaka serija na delovni nalog, vsak nalog
+  na serijo vhodne surovine in na porabljen etanol. Veriga ni prekinjena na
+  nobenem členu, zato jo je mogoče prehoditi v obe smeri.</p>
+
+  <figure>
+    <div class="platno">
+      <svg viewBox="0 0 780 440" role="img" aria-label="Prejem surovin z evidenco OBR-0006 vodi v delovni nalog, ta v proizvodnjo z zapisnikom ZOP-0001, iz nje nastane serija izdelka s kartico OBR-0008, ki gre v prodajo z dobavnico in računom do kupca. Kartica etanola OBR-0007 se steka v delovni nalog, potrjuje pa jo fizični popis kanistrov. Iz kupca vodi povratna pot nazaj do prejema surovin.">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mk" points="0,0 10,5 0,10"/></marker>
+          <marker id="ak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="mkk" points="0,0 10,5 0,10"/></marker>
+        </defs>
+
+        <!-- etanol -->
+        <rect class="b1" x="285" y="20" width="210" height="46" rx="2"/>
+        <text class="t" x="390" y="40" text-anchor="middle">Kartica etanola</text>
+        <text class="ts" x="390" y="56" text-anchor="middle">OBR-0007 · L AAE</text>
+
+        <rect class="b" x="540" y="20" width="210" height="46" rx="2"/>
+        <text class="t" x="645" y="40" text-anchor="middle">Popis kanistrov</text>
+        <text class="ts" x="645" y="56" text-anchor="middle">fizična kontrola</text>
+        <path class="ld" d="M 535 43 H 502" marker-end="url(#a)"/>
+
+        <path class="l" d="M 390 66 V 122" marker-end="url(#a)"/>
+
+        <!-- vrsta A -->
+        <rect class="b1" x="30" y="125" width="210" height="56" rx="2"/>
+        <text class="t" x="135" y="149" text-anchor="middle">Prejem surovin</text>
+        <text class="ts" x="135" y="166" text-anchor="middle">OBR-0006 · serija gobe</text>
+
+        <rect class="b1" x="285" y="125" width="210" height="56" rx="2"/>
+        <text class="t" x="390" y="149" text-anchor="middle">Delovni nalog</text>
+        <text class="ts" x="390" y="166" text-anchor="middle">OBR-0009 · DN-26-0XX</text>
+
+        <rect class="b1" x="540" y="125" width="210" height="56" rx="2"/>
+        <text class="t" x="645" y="149" text-anchor="middle">Proizvodnja</text>
+        <text class="ts" x="645" y="166" text-anchor="middle">ZOP-0001 · 22 korakov</text>
+
+        <path class="l" d="M 240 153 H 282" marker-end="url(#a)"/>
+        <path class="l" d="M 495 153 H 537" marker-end="url(#a)"/>
+        <path class="l" d="M 645 181 V 242" marker-end="url(#a)"/>
+
+        <!-- vrsta B -->
+        <rect class="b2" x="540" y="245" width="210" height="56" rx="2"/>
+        <text class="t" x="645" y="269" text-anchor="middle">Serija izdelka</text>
+        <text class="ts" x="645" y="286" text-anchor="middle">OBR-0008 · kartica</text>
+
+        <rect class="b2" x="285" y="245" width="210" height="56" rx="2"/>
+        <text class="t" x="390" y="269" text-anchor="middle">Prodaja</text>
+        <text class="ts" x="390" y="286" text-anchor="middle">dobavnica · račun</text>
+
+        <rect class="b2" x="30" y="245" width="210" height="56" rx="2"/>
+        <text class="t" x="135" y="269" text-anchor="middle">Kupec</text>
+        <text class="ts" x="135" y="286" text-anchor="middle">ime · datum · količina</text>
+
+        <path class="l" d="M 537 273 H 498" marker-end="url(#a)"/>
+        <path class="l" d="M 282 273 H 243" marker-end="url(#a)"/>
+
+        <!-- povratna pot -->
+        <path class="lk" d="M 135 301 V 392 H 14 V 153 H 26" marker-end="url(#ak)"/>
+        <text class="ts" x="400" y="414" text-anchor="middle">odpoklic — iz imena kupca nazaj do serije gobe in porabljenega etanola</text>
+      </svg>
+    </div>
+    <figcaption>Veriga sledljivosti. Polna črta je pot nastajanja, črtkana ob
+    strani je pot iskanja pri odpoklicu. Popis kanistrov je fizično štetje in je
+    neodvisna kontrola kartice etanola — ne izhaja iz nje.</figcaption>
+  </figure>
+
+  <p>Pot v desno je proizvodnja: iz prevzete serije gobe nastane nalog, iz naloga
+  serija, iz serije prodaja. Pot v levo je odgovor na vprašanje
+  <em>komu je šla ta serija</em>: aplikacija ob vsaki seriji izpiše seznam
+  kupcev, datumov in količin, ker je vsaka prodana steklenička ob prodaji
+  pripisana svoji seriji.</p>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="sec-h"><span class="sec-n">3</span><h2>Kaj vodi aplikacija Materiali</h2></div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Zaslon</th><th>Kaj vsebuje</th></tr></thead>
+      <tbody>
+        <tr><td class="v"><strong>Nalogi</strong></td><td>Delovni nalogi po serijah. Vsak nalog vodi surovino in njeno serijo, vloženi etanol, vse korake postopka in nastali izdelek.</td></tr>
+        <tr><td class="v"><strong>Bilanca</strong></td><td>Masna bilanca serije: vsak vnos in odvzem med procesom z maso, jakostjo, vsebnostjo absolutnega alkohola in uro. Izkoristki in izgube se izračunajo iz vpisanih mas.</td></tr>
+        <tr><td class="v"><strong>Preračuni</strong></td><td>Preračuni, ki jih zahteva postopek: matični ekstrakt, glicerinska tinktura, popis etanola, mešanje etanola do želene jakosti iz popisanih kanistrov.</td></tr>
+        <tr><td class="v"><strong>Etanol</strong></td><td>Knjiga etanola v litrih absolutnega alkohola pri 20 °C. Vhodi: nabava, regenerat, vrnitev iz polizdelka. Izhodi: ekstrakcija po nalogu, razvojna poraba. Stanje je razlika med njimi.</td></tr>
+        <tr><td class="v"><strong>Materiali</strong></td><td>Zaloga gob, etanola, glicerina, steklenic, etiket in ostale embalaže.</td></tr>
+        <tr><td class="v"><strong>Oprema</strong></td><td>Register opreme z roki umerjanja in vzdrževanja. Merila so ločena kategorija, ker je pri njih umerjanje pogoj za uporabo.</td></tr>
+        <tr><td class="v"><strong>Dnevniki dela</strong></td><td>Katera naprava je kdaj kaj delala — ure obratovanja in uporabe po napravah.</td></tr>
+        <tr><td class="v"><strong>Dokumentacija</strong></td><td>Register vseh postopkov, dokumentov in obrazcev z veljavnimi izdajami. Podrobneje v razdelku 6.</td></tr>
+        <tr><td class="v"><strong>R&amp;D</strong></td><td>Razvojni nalogi. Iz njih ne nastane izdelek za prodajo, ampak polizdelek, ki ostane evidentiran.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Postopek proizvodnje je v aplikaciji razdeljen na <strong>22 korakov</strong>
+  v fazah od 1 do 9 — od tehtanja gobe in določitve njene vlažnosti, prek
+  ultrazvočne sonikacije, stiskanja in koncentriranja organske faze, vroče vodne
+  in tlačne ekstrakcije, do formulacije, polnjenja in organoleptične analize.
+  Vsak korak ima svoja vpisna polja; kar ni vpisano, ostane vidno kot nevpisano.</p>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="sec-h"><span class="sec-n">4</span><h2>Kaj vodi aplikacija Zaloga</h2></div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Zaslon</th><th>Kaj vsebuje</th></tr></thead>
+      <tbody>
+        <tr><td class="v"><strong>Zaloga</strong></td><td>Stanje po produktih: koliko alkoholnih in glicerinskih stekleničk je razpoložljivih, koliko je razporejenih za prodajo in koliko za interno rabo.</td></tr>
+        <tr><td class="v"><strong>Prodaja</strong></td><td>Vsaka prodaja s kanalom, kupcem, datumom in postavkami. Kanali: maloprodaja, veleprodaja, splet, komisija, podaritev, interna poraba.</td></tr>
+        <tr><td class="v"><strong>Serije</strong></td><td>Vse proizvedene serije z ostanki. Pri vsaki seriji je izpisan seznam kupcev, ki so iz nje kaj prejeli.</td></tr>
+        <tr><td class="v"><strong>Dokumenti</strong></td><td>Izdane dobavnice in računi. Zaporedne številke se dodeljujejo samodejno po kanalu in letu.</td></tr>
+        <tr><td class="v"><strong>Stranke</strong></td><td>Kupci z naslovi in davčnimi številkami, uporabljeni na dobavnicah in računih.</td></tr>
+        <tr><td class="v"><strong>Poročilo</strong></td><td>Šest poročil, opisanih v razdelku 5.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="drobno">Aplikacija ima še zaslona Recenzije in Osnutki člankov, ki
+  se nanašata na prodajno vsebino in nista del evidenc.</p>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="sec-h"><span class="sec-n">5</span><h2>Kaj je mogoče izpisati</h2></div>
+  <p>Vsako od naštetega se izpiše na papir ali shrani v PDF, z glavo podjetja in
+  datumom izpisa. Poročila se pripravijo za poljubno obdobje.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Izpis</th><th>Vsebina</th><th>Oznaka</th></tr></thead>
+      <tbody>
+        <tr><td class="v">Stanje zaloge</td><td>Trenutno stanje po produktih in serijah</td><td class="k">—</td></tr>
+        <tr><td class="v">Poročilo serij</td><td>Proizvedene serije z ostanki za obdobje</td><td class="k">—</td></tr>
+        <tr><td class="v">Poročilo prodaje</td><td>Prodaja po kanalih, produktih in serijah, z razčlenitvijo po mesecih</td><td class="k">—</td></tr>
+        <tr><td class="v">Poročilo trošarin</td><td>Alkoholne tinkture za trošarinski obračun; podpiše se z digitalnim podpisom odgovorne osebe</td><td class="k">—</td></tr>
+        <tr><td class="v">Evidenca delovnih nalogov</td><td>Nalogi in serije končnih izdelkov za obdobje — pripravljena za pregled</td><td class="k">OBR-0009</td></tr>
+        <tr><td class="v">Izpis izdanih računov</td><td>Vsi računi obdobja po izbranih vrstah prodaje</td><td class="k">—</td></tr>
+        <tr><td class="v">Dobavnica</td><td>Postavke s serijami, komisijski pogoji, opomba o poravnani trošarini</td><td class="k">—</td></tr>
+        <tr><td class="v">Zapisnik o proizvodnji</td><td>Celotna masna bilanca serije, korak za korakom</td><td class="k">ZOP-0001</td></tr>
+        <tr><td class="v">Postopki in obrazci</td><td>Vsak dokument iz registra, v veljavni izdaji</td><td class="k">SOP · OBR · DOK</td></tr>
+        <tr><td class="v">Prazni obrazci</td><td>Dnevnik dela in evidenca čiščenja za ročno izpolnjevanje</td><td class="k">OBR-0001 · 0002</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="sec-h"><span class="sec-n">6</span><h2>Dokumentacija in verzije</h2></div>
+  <p>V aplikaciji je register <strong>dvajsetih dokumentov</strong>: pet
+  standardnih operativnih postopkov, trije spremljajoči dokumenti, deset
+  obrazcev in dve izdaji zapisnika o proizvodnji. Pri vsakem je vidno, katera
+  izdaja je veljavna in od kdaj.</p>
+
+  <div class="kosi">
+    <div class="kos k3"><b>SOP-0001 … 0005</b>
+      <span>Organizacija dela, čiščenje, ekstrakcija in formulacija, evidence, umik in odpoklic</span></div>
+    <div class="kos k3"><b>DOK-0001 … 0003</b>
+      <span>Rok uporabe, analiza tveganj in kritične točke, profil podjetja</span></div>
+    <div class="kos k3"><b>OBR-0001 … 0010</b>
+      <span>Obrazci — del se izpolnjuje ročno, del se vodi elektronsko</span></div>
+    <div class="kos k3"><b>ZOP-0001, ZOP-0002</b>
+      <span>Zapisnik o proizvodnji; veljavna je izdaja, označena v registru</span></div>
+  </div>
+
+  <p>Obrazec prevzame datum veljavnosti od postopka, ki mu je priložen — tako
+  kot to določa oznaka <span class="k">/XX</span> v izvirnih dokumentih. Sklici
+  med dokumenti so v aplikaciji povezave: iz postopka se pride na njegov obrazec
+  z enim klikom in obratno.</p>
+
+  <div class="op">
+    <b>Izpis iz aplikacije je delovni izvod.</b>
+    <p>Podpisani izvirniki so na papirju v mapah v laboratoriju. Aplikacija hrani
+    vsebino in podatek o veljavni izdaji ter omogoča izpis; ne nadomešča
+    podpisanega izvirnika in je tudi tako označena na vsakem izpisu.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section>
+  <div class="sec-h"><span class="sec-n">7</span><h2>Zaporedje pregleda</h2></div>
+  <p>Spodnja poteka pokažeta, kje se odgovori na najpogostejša vprašanja. Vsaka
+  vrstica je en zaslon in en izpis — nič ni treba iskati po datotekah.</p>
+
+  <h3>Od izdelka nazaj</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Vprašanje</th><th>Kje</th><th>Kaj se pokaže</th></tr></thead>
+      <tbody>
+        <tr><td class="vpr">Iz česa je ta steklenička?</td><td class="v">Zaloga › Serije</td><td>Serija, njen delovni nalog, vrsta in serija gobe, porabljen etanol</td></tr>
+        <tr><td class="vpr">Kako je bila narejena?</td><td class="v">Materiali › Nalogi</td><td>Zapisnik o proizvodnji: vseh 22 korakov z masami, jakostmi, temperaturami in urami</td></tr>
+        <tr><td class="vpr">Od kod je goba?</td><td class="v">Materiali › Materiali</td><td>Prevzem s serijo, dobaviteljem, datumom in oceno ustreznosti</td></tr>
+        <tr><td class="vpr">S čim je bilo tehtano?</td><td class="v">Materiali › Oprema</td><td>Merilo z datumom zadnjega umerjanja in rokom naslednjega</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Od surovine naprej</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Vprašanje</th><th>Kje</th><th>Kaj se pokaže</th></tr></thead>
+      <tbody>
+        <tr><td class="vpr">Kaj je nastalo iz te serije gobe?</td><td class="v">Materiali › Nalogi</td><td>Nalogi, ki so jo porabili, in serije, ki so iz njih nastale</td></tr>
+        <tr><td class="vpr">Komu je šla ta serija?</td><td class="v">Zaloga › Serije</td><td>Seznam kupcev z datumi in količinami — podlaga za odpoklic</td></tr>
+        <tr><td class="vpr">Kaj je še na zalogi?</td><td class="v">Zaloga › Zaloga</td><td>Ostanek serije, ločeno za prodajo in za interno rabo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Alkohol in trošarina</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Vprašanje</th><th>Kje</th><th>Kaj se pokaže</th></tr></thead>
+      <tbody>
+        <tr><td class="vpr">Koliko alkohola je na zalogi?</td><td class="v">Materiali › Etanol</td><td>Stanje v L AAE kot razlika vseh vhodov in izhodov</td></tr>
+        <tr><td class="vpr">Se to ujema z dejanskim stanjem?</td><td class="v">Materiali › Preračuni</td><td>Popis kanistrov: vsak kanister posebej — tara, bruto masa, jakost, temperatura</td></tr>
+        <tr><td class="vpr">Kam je alkohol odšel?</td><td class="v">Materiali › Etanol</td><td>Vsak izhod je vezan na nalog; regenerat in vrnitve iz polizdelka so ločene vrste zapisa</td></tr>
+        <tr><td class="vpr">Kaj je bilo obračunano?</td><td class="v">Zaloga › Poročilo</td><td>Poročilo trošarin za obdobje, podpisano z digitalnim podpisom</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Prostori in delo</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Vprašanje</th><th>Kje</th><th>Kaj se pokaže</th></tr></thead>
+      <tbody>
+        <tr><td class="vpr">Kdaj je bilo čiščeno?</td><td class="v">papir</td><td>Evidenca čiščenja (OBR-0002), izpolnjena ročno; prazen obrazec se natisne iz aplikacije</td></tr>
+        <tr><td class="vpr">Kdo je bil v laboratoriju?</td><td class="v">papir</td><td>Dnevnik uporabe prostorov (OBR-0001), izpolnjen ročno</td></tr>
+        <tr><td class="vpr">Po katerem postopku?</td><td class="v">Materiali › Dokumentacija</td><td>Veljavna izdaja postopka z datumom začetka veljavnosti</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 8 -->
+<section>
+  <div class="sec-h"><span class="sec-n">8</span><h2>Kontrole, ki jih aplikacija vsiljuje</h2></div>
+  <p>Del pravil ni odvisen od tega, ali se jih človek spomni — aplikacija jih ne
+  dovoli obiti.</p>
+
+  <div class="kosi">
+    <div class="kos k4"><b>Poteklo umerjanje</b>
+      <span>Če je meritvi potekel rok umerjanja, koraka ni mogoče zaključiti</span></div>
+    <div class="kos k4"><b>Izdanega ni mogoče urejati</b>
+      <span>Izdan račun se ne popravlja — stornira se z navedbo razloga</span></div>
+    <div class="kos k4"><b>Serija je obvezna</b>
+      <span>Prodana steklenička je vedno pripisana konkretni seriji</span></div>
+    <div class="kos k4"><b>Zaporedne številke</b>
+      <span>Številke dobavnic in računov dodeljuje aplikacija, ne uporabnik</span></div>
+  </div>
+
+  <p>Storno ostane viden skupaj z datumom in razlogom; zapis se ne izbriše.
+  Enako velja za ročno izmerjene vrednosti, ki jih je pozneje nadomestil
+  izračun — prvotno vpisana številka ostane shranjena, ker je zapisnik serije
+  dokument o tem, kaj je bilo takrat izmerjeno.</p>
+</section>
+
+<!-- 9 -->
+<section>
+  <div class="sec-h"><span class="sec-n">9</span><h2>Meje sistema</h2></div>
+  <p>Da ne bo nesporazuma o tem, kaj aplikaciji sta in kaj nista:</p>
+  <ul>
+    <li>Podpisani izvirniki postopkov in ročno izpolnjenih obrazcev so na papirju.
+    Izpis iz aplikacije je delovni izvod in je tako označen.</li>
+    <li>Del obrazcev se namenoma izpolnjuje ročno — dnevnik dela in evidenca
+    čiščenja. Aplikacija zanje pripravi prazen obrazec za tisk.</li>
+    <li>Analize, ki jih opravi zunanji laboratorij, so ločene listine. Aplikacija
+    ne izdaja analiznih certifikatov in jih ne nadomešča.</li>
+    <li>Aplikaciji sta lastni orodji, izdelani za ta obrat. Nista potrjena
+    programska oprema in tega ne trdita.</li>
+  </ul>
+</section>
+
+<!-- 10 -->
+<section>
+  <div class="sec-h"><span class="sec-n">10</span><h2>Dostop</h2></div>
+  <p>Aplikaciji sta dostopni samo s prijavo. Ob pregledu ju odpremo na mestu in
+  pokažemo kateri koli zaslon ali izpis iz razdelka 5. Vsak izpis je mogoče
+  pripraviti sproti ali natisniti vnaprej.</p>
+
+  <div class="okvir">
+    <p><strong>Za pregled priporočamo to zaporedje:</strong> najprej evidenca
+    delovnih nalogov za izbrano obdobje, iz nje izbrana serija, iz serije njen
+    zapisnik o proizvodnji, nato kartica etanola in popis kanistrov, na koncu
+    seznam kupcev izbrane serije. Vsak korak izhaja iz prejšnjega, zato je
+    veriga vidna brez preskokov.</p>
+  </div>
+</section>
+
+<footer class="ft">
+  <div>GoMushroom — Rok Golob s.p. · Prapreče pri Straži 22, 8351 Straža</div>
+  <div>Dokument je pripravljen za predstavitev ob pregledu in ni namenjen objavi.</div>
+</footer>
+
+</div>
+</body>
+</html>

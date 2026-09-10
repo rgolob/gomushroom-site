@@ -5832,10 +5832,14 @@ const UPN_BIC     = 'REVOLT21';
 const UPN_DAVCNA  = '20581041';
 const UPN_MATICNA = '9851798000';
 const UPN_NAME    = 'Rok Golob';
-const UPN_ADDRESS = 'Prapece pri Strazi 22';       // brez šumnikov — za QR bralnik
-const UPN_CITY    = '8351 Straza';                 // brez šumnikov — za QR bralnik
-const UPN_ADDRESS_DISPLAY = 'Prapreče pri Straži 22'; // s šumniki — za prikaz na računu
-const UPN_CITY_DISPLAY    = '8351 Straža';            // s šumniki — za prikaz na računu
+// Naslov gre na dva nacina. V QR kodo mora brez sumnikov, ker jo banke berejo
+// po standardu UPN; povsod, kjer ga bere clovek, mora s sumniki. Golo ime nosi
+// razlicico s sumniki namenoma - kdor jo uporabi brez premisleka, dobi pravo.
+// Brez tega je dobavnica naslov izpisovala v QR razlicici.
+const UPN_ADDRESS    = 'Prapreče pri Straži 22';
+const UPN_CITY       = '8351 Straža';
+const UPN_ADDRESS_QR = 'Prapece pri Strazi 22';
+const UPN_CITY_QR    = '8351 Straza';
 
 // ISO 11649 RF referenca generator
 function generateRF(orderId){
@@ -5873,8 +5877,8 @@ function buildUpnString(amount, reference, purpose){
     UPN_IBAN,     // 15 IBAN prejemnika (brez presledkov)
     reference||'',// 16 Referenca prejemnika (SI00 + sklic skupaj)
     UPN_NAME,     // 17 Ime prejemnika
-    UPN_ADDRESS,  // 18 Ulica prejemnika
-    UPN_CITY,     // 19 Kraj prejemnika
+    UPN_ADDRESS_QR, // 18 Ulica prejemnika (brez šumnikov!)
+    UPN_CITY_QR,    // 19 Kraj prejemnika (brez šumnikov!)
   ];
   const body=fields.map(f=>f+'\n').join('');
   // Polje 20: kontrolna vsota = skupna dolžina (body + "XXX\n")
@@ -6804,7 +6808,7 @@ td{padding:.5rem .6rem;border-bottom:1px solid rgba(175,132,85,.12);font-size:.8
   <div>
     <div class="plabel">${T.izdajatelj}</div>
     <div class="pname">${UPN_NAME}</div>
-    <div class="pdetail">${UPN_ADDRESS_DISPLAY}<br>${UPN_CITY_DISPLAY}${tujina?'<br>'+drzavaIme('SI',lang):''}<br>gomushroom.si</div>
+    <div class="pdetail">${UPN_ADDRESS}<br>${UPN_CITY}${tujina?'<br>'+drzavaIme('SI',lang):''}<br>gomushroom.si</div>
   </div>
   <div>
     <div class="plabel">${T.kupec}</div>
@@ -6846,7 +6850,7 @@ ${qrImgTag?`<div class="qr-section">
 </div>`:(hasPayment&&tujina?`<div class="qr-section">
   <div class="qr-info">
     <strong>${T.podatkiPlacilo}</strong>
-    ${T.prejemnik}: ${UPN_NAME}, ${UPN_ADDRESS_DISPLAY}, ${UPN_CITY_DISPLAY}, ${drzavaIme('SI',lang)}<br>
+    ${T.prejemnik}: ${UPN_NAME}, ${UPN_ADDRESS}, ${UPN_CITY}, ${drzavaIme('SI',lang)}<br>
     IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
     BIC / SWIFT: ${UPN_BIC}<br>
     ${T.znesekPl}: <b style="color:#1a1209;font-size:.78rem">${total.toFixed(2)} €</b><br>
@@ -10525,7 +10529,7 @@ Rok`);
     ${terjaPlacilo?`<div class="payment-box">
       <div class="payment-details">
         <strong>${L('Podatki za plačilo','Payment details')}</strong>
-        ${L('Prejemnik','Beneficiary')}: ${UPN_NAME}${tujina?', '+UPN_ADDRESS_DISPLAY+', '+UPN_CITY_DISPLAY+', '+drzavaIme('SI',lang):''}<br>
+        ${L('Prejemnik','Beneficiary')}: ${UPN_NAME}${tujina?', '+UPN_ADDRESS+', '+UPN_CITY+', '+drzavaIme('SI',lang):''}<br>
         IBAN: ${UPN_IBAN.replace(/(.{4})/g,'$1 ').trim()}<br>
         BIC / SWIFT: ${UPN_BIC}<br>
         ${L('Referenca','Reference')}: ${upnRef||inv.num}<br>

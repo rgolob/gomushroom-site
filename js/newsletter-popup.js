@@ -150,13 +150,13 @@
     var email = ovoj.querySelector('#gm-nl-email');
     if (email) setTimeout(function () { email.focus(); }, 320);
 
-    sledi('newsletter_popup_view', { source: 'first_purchase_popup' });
+    sledi('newsletter_popup_view', { popup_source: 'first_purchase_popup' });
 
     // ── Zapiranje ──────────────────────────────────────────────────────────
     function zapri(razlog) {
       if (!document.getElementById('gm-nl')) return;
       zapisi(KLJUC_ZAPRT, String(Date.now()));
-      sledi('newsletter_popup_close', { source: 'first_purchase_popup', method: razlog });
+      sledi('newsletter_popup_close', { popup_source: 'first_purchase_popup', method: razlog });
       ovoj.classList.remove('je-odprt');
       document.removeEventListener('keydown', naTipko);
       setTimeout(function () { ovoj.remove(); }, 300);
@@ -222,7 +222,7 @@
 
           zapisi(KLJUC_PRIJAVLJEN, String(Date.now()));
           // E-naslova ne posiljamo v GA4 — samo, od kod je prijava prisla.
-          sledi('newsletter_signup', { source: 'first_purchase_popup' });
+          sledi('newsletter_signup', { popup_source: 'first_purchase_popup' });
 
           document.removeEventListener('keydown', naTipko);
           document.addEventListener('keydown', function (ev) {

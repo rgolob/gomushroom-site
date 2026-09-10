@@ -6352,6 +6352,9 @@ async function ustvariDobavnico(groupId){
 }
 
 function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
+  // Denar na slovenskem dokumentu pise z vejico, ne s piko. Nedeljivi presledek
+  // pred enoto drzi znesek skupaj - sicer se "17,90 €" lomi cez dve vrstici.
+  const EUR=n=>(Number(n)||0).toFixed(2).replace('.',',')+'\u00a0€';
   const sigImg=signatureDataURL||group.signatureData||null;
   const sigAt=signedAt||group.signedAt||null;
   const gmSig=getZS('podpisSlika')||null;
@@ -6372,12 +6375,12 @@ function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
       const art=alcSku||('A'+String(lineIdx).padStart(2,'0'));
       const znesek=l.alc*(l.alcPrice||0);
       rows.push(`<tr>
-        <td>${art}</td>
+        <td class="nw">${art}</td>
         <td>Alkoholni ekstrakt – ${l.productName}${l.bulk?' – razsuto':` (${alcVol} ml)`}${alcBatchStr?`<br><span class="desc">Serija: ${alcBatchStr}</span>`:''}</td>
         <td class="r">${fmtKol(l.alc)}</td>
         <td>${l.bulk?'L':'kos'}</td>
-        <td class="r">${(l.alcPrice||0)>0?(l.alcPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
+        <td class="r">${(l.alcPrice||0)>0?EUR(l.alcPrice):'—'}</td>
+        <td class="r">${znesek>0?EUR(znesek):'—'}</td>
       </tr>`);
     }
     if(l.gly>0){
@@ -6385,12 +6388,12 @@ function buildDobavnicaHTML(group, signatureDataURL=null, signedAt=null){
       const art=glySku||('G'+String(lineIdx).padStart(2,'0'));
       const znesek=l.gly*(l.glyPrice||0);
       rows.push(`<tr>
-        <td>${art}</td>
+        <td class="nw">${art}</td>
         <td>Glicerinski ekstrakt – ${l.productName}${l.bulk?' – razsuto':` (${glyVol} ml)`}${glyBatchStr?`<br><span class="desc">Serija: ${glyBatchStr}</span>`:''}</td>
         <td class="r">${fmtKol(l.gly)}</td>
         <td>${l.bulk?'L':'kos'}</td>
-        <td class="r">${(l.glyPrice||0)>0?(l.glyPrice||0).toFixed(2)+' €':'—'}</td>
-        <td class="r">${znesek>0?znesek.toFixed(2)+' €':'—'}</td>
+        <td class="r">${(l.glyPrice||0)>0?EUR(l.glyPrice):'—'}</td>
+        <td class="r">${znesek>0?EUR(znesek):'—'}</td>
       </tr>`);
     }
     return rows.join('');
@@ -6414,28 +6417,31 @@ body{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';paddin
 .logo{font-family:'Cormorant Garamond',serif,'Apple Color Emoji','Noto Color Emoji';font-size:2rem;font-weight:300;letter-spacing:.06em;text-align:right}
 .logo span{color:#af8455}
 .logo-sub{font-size:.6rem;color:#7a6f60;text-align:right;letter-spacing:.08em;margin-top:-.2rem}
-.doc-block{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #ccc}
+.doc-block{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid #ccc}
 .buyer{font-size:.82rem;line-height:1.75}
 .buyer strong{font-size:.88rem}
 .doc-meta{text-align:right;font-size:.82rem;line-height:1.9}
 .vat-line{font-size:.78rem;margin-bottom:1rem}
-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;margin-bottom:.8rem}
 th{font-size:.65rem;font-weight:600;padding:.4rem .5rem;border-top:1px solid #999;border-bottom:1px solid #999;text-align:left;background:#f9f7f3}
 th.r,td.r{text-align:right}
-td{padding:.4rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-align:top}
+th.nw,td.nw{white-space:nowrap}
+td.r{white-space:nowrap}
+tbody tr{break-inside:avoid}
+td{padding:.32rem .5rem;border-bottom:1px solid #e8e0d0;font-size:.8rem;vertical-align:top}
 .desc{font-size:.68rem;color:#7a6f60}
-.totals{text-align:right;font-size:.82rem;margin-bottom:1.25rem}
+.totals{text-align:right;font-size:.82rem;margin-bottom:1rem}
 .totals table{width:auto;display:inline-table;margin:0}
 .totals td{border:none;padding:.2rem .5rem}
 .totals .grand{font-weight:700;border-top:2px solid #1a1209}
-.notice{font-size:.76rem;line-height:1.7;margin-bottom:2rem}
-.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-bottom:.6rem}
+.notice{font-size:.76rem;line-height:1.65;margin-bottom:1.1rem}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:.5rem}
 .sig-box{font-size:.75rem}
 .sig-label{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7a6f60;margin-bottom:.35rem}
 .sig-line{border-bottom:1px solid #1a1209;height:3rem;margin-bottom:.4rem}
 .sig-name{font-size:.75rem;color:#1a1209}
 .sig-ts{font-size:.65rem;color:#7a6f60;margin-top:.1rem}
-.page-footer{margin-top:3rem;border-top:1px solid #ccc;padding:1rem 0 0}
+.page-footer{margin-top:1.4rem;border-top:1px solid #ccc;padding:.7rem 0 0}
 .footer-bold{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';font-weight:600;font-size:.7rem;color:#1a1209;text-align:center;margin-bottom:.15rem}
 .footer-tagline{font-family:'Cormorant Garamond',serif,'Apple Color Emoji','Noto Color Emoji';font-style:italic;font-size:.78rem;color:#7a6f60;text-align:center}
 .btn{font-family:'Jost',sans-serif,'Apple Color Emoji','Noto Color Emoji';font-size:.72rem;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:.65rem 1.25rem;border:none;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
@@ -6486,20 +6492,20 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
 
 <table>
   <tr>
-    <th style="width:14%">Artikel</th>
+    <th class="nw" style="width:16%">Artikel</th>
     <th>Opis</th>
-    <th class="r" style="width:7%">Kol.</th>
-    <th style="width:5%">Enota</th>
-    <th class="r" style="width:12%">Prodajna cena</th>
-    <th class="r" style="width:11%">Znesek</th>
+    <th class="r nw" style="width:7%">Kol.</th>
+    <th class="nw" style="width:8%">Enota</th>
+    <th class="r nw" style="width:13%">Cena</th>
+    <th class="r nw" style="width:13%">Znesek</th>
   </tr>
   ${tableRows||'<tr><td colspan="6" style="color:#7a6f60;text-align:center">—</td></tr>'}
 </table>
 
 <div class="totals">
   <table>
-    ${(group.discount||0)>0?`<tr><td>Popust ${group.discount}%</td><td style="color:#3a6b4a">–${(group.discountAmt||0).toFixed(2)} €</td></tr>`:''}
-    <tr class="grand"><td>Vrednost blaga</td><td>${(group.total||0).toFixed(2)} €</td></tr>
+    ${(group.discount||0)>0?`<tr><td>Popust ${group.discount}%</td><td style="color:#3a6b4a">–${EUR(group.discountAmt)}</td></tr>`:''}
+    <tr class="grand"><td>Vrednost blaga</td><td>${EUR(group.total)}</td></tr>
   </table>
 </div>
 
@@ -6516,7 +6522,9 @@ ${group.vat?`<div class="vat-line">ID za DDV kupca: ${group.vat}</div>`:''}
       <div class="sig-label">Predal</div>
       <div class="sig-name">GoMushroom, Rok Golob</div>
       ${sigAt ? `<div class="sig-ts">${sigAt}</div>` : ''}
-      ${gmSig ? `<img src="${gmSig}" style="height:2rem;max-width:100%;display:block;margin-top:.4rem">` : ''}
+      ${gmSig
+        ? `<img src="${gmSig}" style="height:3rem;max-width:100%;display:block;margin-top:.4rem">`
+        : `<div class="sig-line" style="margin-top:.4rem"></div>`}
     </div>
     <div class="sig-box">
       <div class="sig-label">Prejel</div>

@@ -6451,8 +6451,11 @@ function printInvoiceLabel(invId){
   const g=saleGroups.find(x=>x.id===i.groupId);
   // Odsotnost rubrike za posto se na natisnjeni nalepki ne opazi, zato nanjo
   // opozorimo tu - ko je nalepka na paketu, je prepozno.
+  // Pri GLS je nalepka brez oznake povsem v redu - stevilko dobis sele po
+  // oddaji, paket pa itak dobi svojo nalepko. Zato je to obvestilo in ne
+  // opozorilo; odsotnosti rubrike se na natisnjeni nalepki namrec ne opazi.
   if(jePosiljka(i)&&!sledenjeKoda(i.sledenje))
-    toast('📮 Nalepka brez oznake za sledenje — vpiši jo z gumbom 📮 in natisni znova');
+    toast('📮 Nalepka brez oznake za sledenje — če jo že imaš, jo vpiši z 📮 in natisni znova');
   printShippingLabel(i.buyer||'', i.street||i.address||'', i.post||'', i.phone||'',
     i.country||g?.country, i.num||'', i.sledenje||'');
 }
@@ -10887,8 +10890,13 @@ async function cycleInvStatus(invId){
   // Vprasamo ob oddaji, ko je stevilka v roki. Prazen vnos pomeni brez sledenja
   // in statusa ne zadrzi; preklic obstojecega ne povozi, da se ob popravljanju
   // statusa ne izgubi.
+  //
+  // Brisemo samo ob razveljavitvi oddaje: paket, ki ni vec predan, nima cesa
+  // slediti. Prej je bilo brisanje vezano na "ni predano" in je pobrisalo tudi
+  // stevilko, ki je bila vpisana vnaprej - pri Posti jo dobis ob placilu, torej
+  // preden natisnes nalepko, in prehod Caka -> Placano jo je tiho odnesel.
   if(i.invStatus==='predano'&&jePosiljka(i))vprasajZaSledenje(i);
-  if(i.invStatus!=='predano')i.sledenje='';
+  if(cur==='predano'&&i.invStatus!=='predano')i.sledenje='';
 
   const labels={caka:'🟡 Čaka',placano:'🟢 Plačano',predano:'📦 Predano'};
   save();renderInvoices();renderInvStats();

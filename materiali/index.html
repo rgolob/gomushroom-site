@@ -9680,7 +9680,15 @@ async function genEtanolPorocilo(){
   // Razclenitev izhodov po usodi alkohola. Za trosarino steje samo tisto, kar
   // je slo v tinkture; ostalo je bodisi izgubljeno, vezano v glicerinu ali pa
   // caka v polizdelku, kjer trosarina se ni zapadla.
-  const sestej=(polje)=>round(vsi.filter(e=>e.tip==='izhod_dn')
+  //
+  // Zajeti morata obe vrsti izhoda. Zakljucek R&D naloga knjizi 'poraba-rd' z
+  // istima postavkama aaePolizdelek in aaeIzgube, prej pa je razclenitev brala
+  // samo 'izhod_dn'. Tak izhod je bil zato v "Skupaj izhod" viden, v
+  // razclenitvi pa ga ni bilo nikjer - bralec kartice bi sklepal, da je
+  // alkohol porabljen, cetudi je vezan v polizdelku in trosarina zanj se ni
+  // zapadla. Prav to je vprasanje, ki ga postavi inspekcija.
+  const IZHODI_Z_RAZCLENITVIJO=['izhod_dn','poraba-rd'];
+  const sestej=(polje)=>round(vsi.filter(e=>IZHODI_Z_RAZCLENITVIJO.includes(e.tip))
     .reduce((s,e)=>s+(e[polje]||0),0),4);
   const izTinkture=sestej('aaeTinkture');
   const izGly=sestej('aaeEtanolGly');

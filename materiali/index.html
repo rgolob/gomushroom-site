@@ -406,6 +406,42 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
 /* ── LOGIN ── */
 .login-input::placeholder{color:rgba(245,240,232,.3)}
 </style>
+<!-- ── PESKOVNIK ────────────────────────────────────────────────────────────
+     Ista datoteka, dva naslova. Na /materiali-lab/ se aplikacija obnasa kot
+     igrisce: podatke prvic prepise iz produkcije, od tam naprej pa zivi
+     izkljucno lokalno in v Supabase ne zapise nicesar.
+
+     Zakaj namescanje kljucev in ne druge tabele: aplikacija hrani stanje v
+     localStorage pod kljuci gm_*, iste kljuce pa bere tudi produkcijska
+     razlicica v istem brskalniku. Brez locenega imenskega prostora bi si
+     igrisce in resnica povozila stanje.
+
+     Zapora mora teci pred vsem ostalim - modul za prijavo in glavna skripta
+     localStorage bereta takoj ob nalaganju. -->
+<script>
+(function(){
+  var jeLab=/^\/materiali-lab(\/|$)/.test(location.pathname);
+  window.GM_PESKOVNIK=jeLab;
+  if(!jeLab)return;
+  var pravi=window.localStorage, P='lab:';
+  window.__pravi=pravi;   // za preizkuse: pogled v pravi localStorage mimo lupine
+  function nasiKljuci(){
+    var k=[];
+    for(var i=0;i<pravi.length;i++){var x=pravi.key(i);if(x.indexOf(P)===0)k.push(x);}
+    return k;
+  }
+  var lupina={
+    get length(){return nasiKljuci().length;},
+    key:function(i){var k=nasiKljuci()[i];return k===undefined?null:k.slice(P.length);},
+    getItem:function(k){return pravi.getItem(P+k);},
+    setItem:function(k,v){return pravi.setItem(P+k,v);},
+    removeItem:function(k){return pravi.removeItem(P+k);},
+    clear:function(){nasiKljuci().forEach(function(k){pravi.removeItem(k);});},
+  };
+  try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return lupina;}});}
+  catch(e){console.error('Peskovnik: kljucev ni bilo mogoce lociti',e);}
+})();
+</script>
 <script src="../js/gm-auth.js"></script>
 <!-- QR se izrise v brskalniku, brez omreznega klica: nalepke se tiskajo v
      delavnici in tiskanje ne sme biti odvisno od povezave ali tujega servisa. -->
@@ -1320,7 +1356,7 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
       </div></details>
 
       <details class="dnsec rdsec" id="rdsecEtanol">
-      <summary>🥃 Etanol — poraba <span class="dnsum" id="rdsumEtanol"></span></summary>
+      <summary>🥃 Etanol — vhod <span class="dnsum" id="rdsumEtanol"></span></summary>
       <div class="dnsec-body">
       <div class="dn-block-alc">
         <div class="frow">
@@ -8948,9 +8984,30 @@ function calcEtRezervirano(izvzemiId){
   // Merilo je knjizba, ne status: nalog, ki je etanol ze knjizil, ne rezervira
   // vec, tudi ce bi mu status iz kaksnega razloga ostal odprt.
   rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==izvzemiId).forEach(r=>{
-    aae+=r.lAAE||0;
+    aae+=rdDrziAAE(r);
   });
   return round(aae,4);
+}
+
+// Koliko alkohola odprt R&D nalog se drzi.
+//
+// Ne ves vlozeni etanol: v poskus gre cela kolicina, med koncentriranjem pa se
+// velik del destilira nazaj in ga clovek zlije v kanister. Od tam ga popis spet
+// najde. Ce bi rezervirali cel vlozek, bi bil isti alkohol stet dvakrat - kot
+// prisoten v kanistru in kot rezerviran - in prosto stanje bi bilo prenizko.
+//
+// Nalog drzi torej samo tisto, kar bo ob zakljucku zares odslo z zaloge:
+// polizdelek in manjko. Ista stevilka, ki jo obrazec napove pod "Kam je sel
+// etanol", in isti znesek, ki se ob zakljucku knjizi na kartico etanola.
+function rdRegeneriranAAE(r){
+  if(r?.aaeRegen>0)return r.aaeRegen;
+  // Star ali uvozen zapis ima lahko samo tehtano maso in odstotek.
+  const masaG=r?.masaRegen||0, pct=r?.pctRegen||0;
+  if(!(masaG>0&&pct>0))return 0;
+  return calcAAE(round(gVKg(masaG)/etohDensity(pct),4),pct);
+}
+function rdDrziAAE(r){
+  return Math.max(0, round((r?.lAAE||0)-rdRegeneriranAAE(r),4));
 }
 
 function renderEtStats(){
@@ -12028,8 +12085,17 @@ function rdOsveziProsto(){
   const potrebno=(masaKg&&volPct)
     ?calcAAE(round(masaKg/etohDensity(volPct),3),volPct):0;
   const dovolj=!potrebno||potrebno<=prosto;
-  el.textContent=`Prosto: ${prosto.toFixed(4)} L AAE`
-    +(potrebno?` · Potrebno: ${potrebno.toFixed(4)} L AAE${dovolj?' ✓':' ⛔ PREMALO'}`:'');
+  // Ko je koncentrat ze stehtan, je del vlozka spet v kanistru. Takrat je
+  // zanimivo, koliko nalog se drzi - to je stevilka, ki bo ob zakljucku odsla
+  // z zaloge, in tista, ki drugim nalogom jemlje prosto stanje.
+  const regen=rdMasaPct('rdMasaRegen','rdPctRegen');
+  const vrnjeno=regen?regen.aae:0;
+  const drzi=Math.max(0,round(potrebno-vrnjeno,4));
+  el.innerHTML=`Prosto: ${prosto.toFixed(4)} L AAE`
+    +(potrebno?` · Potrebno: ${potrebno.toFixed(4)} L AAE${dovolj?' ✓':' ⛔ PREMALO'}`:'')
+    +(vrnjeno>0.00005
+      ?`<br>Vrnjeno v kanister: ${vrnjeno.toFixed(4)} · <strong>ta nalog drži: ${drzi.toFixed(4)} L AAE</strong>`
+      :'');
   el.style.background=dovolj?'rgba(58,107,74,.08)':'rgba(139,58,42,.08)';
   el.style.color=dovolj?'var(--success)':'var(--danger)';
 }
@@ -13247,7 +13313,11 @@ async function sbFetch(tbl,params=''){
   const r=await fetch(`${SB_URL}/rest/v1/${tbl}?${params}`,{headers:SB_HDR});
   if(!r.ok)throw new Error(`${tbl}:${r.status}`);return r.json();
 }
+// Peskovnik ne pise v bazo. Zapora je tu, na obeh pisalnih funkcijah, in ne
+// pri klicnih mestih - teh je vec sto in ena spregledana bi pomenila zapis v
+// produkcijo. Klicatelj dobi uspeh, ker je zapis lokalno res shranjen.
 async function sbUpsert(tbl,data){
+  if(window.GM_PESKOVNIK)return;
   const r=await fetch(`${SB_URL}/rest/v1/${tbl}`,{
     method:'POST',headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates'},
     body:JSON.stringify(Array.isArray(data)?data:[data])});
@@ -13257,6 +13327,7 @@ async function sbDel(tbl,id){
   // Zapis izginja namerno: oznaka "se ni sinhroniziran" ga ne sme vec varovati,
   // sicer bi ga naslednje branje iz baze vrnilo nazaj.
   nesinkOdstrani(tbl,id);
+  if(window.GM_PESKOVNIK)return;
   const r=await fetch(`${SB_URL}/rest/v1/${tbl}?id=eq.${id}`,{method:'DELETE',headers:SB_HDR});
   if(!r.ok)throw new Error(`${tbl}:${r.status}`);
 }
@@ -14092,15 +14163,76 @@ function importHistoricalMateriali(){
   if(added>0){save();renderMateriali();toast('✓ Uvoženo '+added+' vnosov');}
 }
 
+// ── PESKOVNIK ──
+// Igrisce potrebuje resnicne podatke, sicer na njem ni kaj preizkusati. Zato
+// jih prvic prebere iz produkcije in si jih shrani lokalno. Od tam naprej iz
+// baze ne bere vec: branje bi ob vsakem nalaganju povozilo, kar si na igriscu
+// naredil, ker zdruzevanje obdrzi le zapise, oznacene kot nesinhronizirane -
+// v peskovniku pa se zapis ni nikoli sinhroniziral, ker pisanja sploh ni.
+const PESKOVNIK_SEME='gm_lab_seme';
+function peskovnikOsemenjen(){
+  try{return !!localStorage.getItem(PESKOVNIK_SEME);}catch(e){return false;}
+}
+async function peskovnikPripravi(){
+  if(peskovnikOsemenjen())return false;
+  await loadFromSB();
+  save();
+  try{polizdelkiVLokalno();}catch(e){}
+  try{localStorage.setItem(PESKOVNIK_SEME,new Date().toISOString());}catch(e){}
+  return true;
+}
+// Zavrze vse, kar je na igriscu, in ga napolni na novo iz produkcije.
+async function peskovnikPonovnoNapolni(){
+  if(!window.GM_PESKOVNIK)return;
+  if(!confirm('Zavržem vse na igrišču in ga napolnim na novo iz produkcije?\n\n'
+    +'Kar si tu naredil, bo izgubljeno. Produkcije to ne spremeni.'))return;
+  try{localStorage.clear();}catch(e){}
+  location.reload();
+}
+
 // ── INIT ──
 async function appInit(){
   renderDNStats();
   renderDN();
   document.getElementById('dnDatum').value=todayISO();
+  if(window.GM_PESKOVNIK){
+    await peskovnikPripravi();
+    renderDNStats();renderDN();renderEtStats();
+    await migrateOpombaToDoabvitelj();
+    odpriIzUrl();
+    opozoriNaPoteklaMerila();
+    return;
+  }
   await loadFromSB();
   await migrateOpombaToDoabvitelj();
   odpriIzUrl();
   opozoriNaPoteklaMerila();
+}
+
+// Igrisce mora biti prepoznavno na prvi pogled. Zamenjava produkcije za
+// peskovnik je edina napaka, ki tu lahko zares skodi - ne v podatkih, ampak
+// tako, da bi delo vpisoval v igrisce in mislil, da je zabelezeno.
+function peskovnikOznaci(){
+  if(!window.GM_PESKOVNIK)return;
+  document.title='IGRIŠČE · '+document.title;
+  const pas=document.createElement('div');
+  pas.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;'
+    +'background:#5a3a6b;color:#fff;font-family:Jost,sans-serif;font-size:.72rem;'
+    +'line-height:1.35;padding:.45rem .7rem calc(.45rem + env(safe-area-inset-bottom));'
+    +'display:flex;gap:.6rem;align-items:center;justify-content:space-between';
+  pas.innerHTML='<span>🧪 <strong>IGRIŠČE</strong> — nič se ne shrani v bazo. '
+    +'Podatki so kopija produkcije.</span>';
+  const gumb=document.createElement('button');
+  gumb.textContent='↻ Napolni znova';
+  gumb.style.cssText='flex:0 0 auto;background:none;border:1px solid rgba(255,255,255,.5);'
+    +'color:#fff;border-radius:999px;padding:.2rem .6rem;font-family:inherit;'
+    +'font-size:.68rem;cursor:pointer';
+  gumb.onclick=peskovnikPonovnoNapolni;
+  pas.appendChild(gumb);
+  document.body.appendChild(pas);
+  // Spodnja navigacija bi sicer koncala pod pasom.
+  const nav=document.querySelector('.bottom-nav');
+  if(nav)nav.style.marginBottom=pas.offsetHeight+'px';
 }
 
 // Poteklo merilo se pokaze samo, ce ga kdo odpre - kar pomeni, da ga vidis
@@ -14113,6 +14245,14 @@ function opozoriNaPoteklaMerila(){
     1200);
 }
 function init(){appInit();}
+
+// Oznaka igrisca ne sme cakati na prijavo: prijavni zaslon je prav tisti, kjer
+// je zamenjava produkcije za peskovnik najbolj verjetna in najbolj skodljiva.
+if(window.GM_PESKOVNIK){
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>peskovnikOznaci());
+  else peskovnikOznaci();
+}
 
 async function migrateOpombaToDoabvitelj(){
   const toMigrate=materiali.filter(m=>!m.dobavitelj&&m.opomba);

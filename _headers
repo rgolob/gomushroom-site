@@ -22,3 +22,7 @@
 # Predstavitev vodenja evidenc — posljemo le povezavo, ne za iskalnike.
 /dokumenti/aplikaciji/*
   X-Robots-Tag: noindex, nofollow
+
+# Igrisce ni za iskalnike in ne za obiskovalce.
+/materiali-lab/*
+  X-Robots-Tag: noindex, nofollow

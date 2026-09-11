@@ -9322,6 +9322,50 @@ function polizOdpremi(id){
   polizShrani(p,`✓ Odpremljeno ${fmtNum(aae,4)} L AAE · trošarina ${eur(trosarina)}`);
 }
 
+// Kartica, ki je nastala pomotoma, mora biti odstranljiva. Odstranimo samo
+// nedotaknjeno posodo - ce je iz nje ze kaj odslo, bi izbris pomenil, da tistih
+// gibanj ni bilo. Pociscimo tudi polje na nalogu, sicer bi polizMigriraj()
+// kartico ob naslednjem zagonu ustvaril znova.
+async function polizIzbrisi(id){
+  const p=polizNajdi(id);if(!p)return;
+  const premaknjen=(p.gibanja||[]).some(g=>g.vrsta!=='nastanek');
+  if(premaknjen){
+    alert(`Polizdelka ${p.oznaka} ni mogoče izbrisati.\n\n`
+      +`Iz njega se je že kaj premaknilo — regeneracija, prenos v nalog, odprema `
+      +`ali odpis. Izbris bi pomenil, da teh gibanj ni bilo.`);
+    return;
+  }
+  // Kartico iz zakljucenega naloga je alkohol z zaloge ze zapustil. Izbris bi
+  // pomenil, da ga ni nikjer - ne na kartici in ne na nalogu. Pot nazaj je
+  // razveljavitev zakljucka, ki nalog spet odpre.
+  if(!polizVZalogi(p)){
+    alert(`Kartice ${p.oznaka} ni mogoče izbrisati.\n\n`
+      +`Nastala je ob zaključku naloga, kar pomeni, da je alkohol z zaloge že `
+      +`odšel. Če je bila ustvarjena pomotoma, najprej na nalogu poženi `
+      +`„Razveljavi zaključek".`);
+    return;
+  }
+  const nalog=[...rdNalogi,...workOrders].find(d=>d.id===p.izDN);
+  if(!confirm(`Izbrišem kartico ${p.oznaka}?\n\n`
+    +`${fmtNum(polizStanje(p),4)} L AAE se vrne na nalog `
+    +`${nalog?(nalog.oznaka||nalog.naziv):'—'}, ki jo bo spet držal. `
+    +`Prosto stanje etanola se ne spremeni.\n\n`
+    +`Uporabi to samo, če posoda ne obstaja — če je bila kartica ustvarjena `
+    +`pomotoma. Če polizdelek fizično imaš, ga pusti tu.`))return;
+  if(nalog&&nalog.aaePolizdelek!=null){
+    delete nalog.aaePolizdelek;
+    if(rdNalogi.includes(nalog))sbPushRD(nalog);else sbPushDN(nalog);
+  }
+  polizdelki=polizdelki.filter(x=>x.id!==p.id);
+  polizdelkiVLokalno();
+  try{await sbDel('gm_dn_polizdelki',p.id);}catch(e){console.warn('polizIzbrisi',e);}
+  save();
+  closeSheet('polizOverlay');
+  renderEtStats();renderRD();
+  if(currentTab==='etanol')renderEtanol();
+  toast(`✓ Kartica ${p.oznaka} izbrisana`);
+}
+
 // ── POLIZDELEK V NALOG ─────────────────────────────────────────────────────
 // Polizdelek gre po delih v enega ali vec nalogov in en nalog jih lahko prejme
 // iz vec polizdelkov. Zato to ni polje na nalogu, ampak gibanje na kartici -
@@ -9485,6 +9529,7 @@ function openPolizdelek(id){
         <button class="bsave" onclick="polizOdpremi('${p.id}')">📦 Odpremi drugemu podjetju</button>`:''}
         <button class="bcancel" onclick="polizPovezavoKopiraj('${p.id}')">🔗 Povezava za QR nalepko</button>
         ${odprt?`<button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="polizOdpisi('${p.id}')">✕ Odpiši — polizdelka ne bo več</button>`:''}
+        ${(p.gibanja||[]).every(g=>g.vrsta==='nastanek')?`<button style="padding:.5rem;border:none;background:none;color:var(--muted);font-family:'Jost',sans-serif;font-size:.72rem;cursor:pointer;text-decoration:underline" onclick="polizIzbrisi('${p.id}')">Izbriši kartico — posoda ne obstaja</button>`:''}
       </div>
     </div>`;
   openSheet('polizOverlay');
@@ -12555,6 +12600,12 @@ async function razveljaviZakljucekRD(id){
   r.status='odprt';
   r.etanolKnjizen=false;
   r.datumZakljucka=null;
+  // Polje aaePolizdelek je ostanek iz casa pred karticami. polizMigriraj() ob
+  // vsakem zagonu iz njega ustvari kartico, ce je ni - in to brez oznake "se v
+  // zalogi", torej tako, ki se ne rezervira. Po razveljavitvi je resnica na
+  // kartici, zato mora polje pasti; sicer bi se pri izbrisani kartici prikazal
+  // napacno tipiziran dvojnik.
+  delete r.aaePolizdelek;
   // Razveljavitev je dogodek in ne izbris: na nalogu mora ostati sled, da je
   // bil enkrat zakljucen in kdaj je bilo to vrnjeno.
   r.opazanja=((r.opazanja||'')+`\n[${todayISO()}] Zaključek razveljavljen — `

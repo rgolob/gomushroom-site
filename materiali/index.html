@@ -9287,12 +9287,46 @@ function polizShrani(p,sporocilo){
   if(sporocilo)toast(sporocilo);
 }
 
+
+// Vpis regenerata po meritvi. Alkoholometer kaze jakost pri temperaturi, pri
+// kateri meris; pri 20 C je drugacna, zato odcitek popravimo po OIML R 22 -
+// isto kot pri popisu kanistrov. Brez tega bi topel destilat kazal prenizko
+// jakost in v kanister bi knjizili premalo alkohola.
+function polizVprasajRegenerat(p){
+  const stanje=polizStanje(p);
+  if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return null;}
+  const masaG=parseNum(prompt(`Regenerat iz ${p.oznaka}\n\nMasa destilata (g):`,''));
+  if(!(masaG>0)){if(masaG!==null)toast('⚠ Vnesi maso');return null;}
+  const odcitek=parseNum(prompt('Odčitek alkoholometra (vol %):',''));
+  if(!(odcitek>0)){if(odcitek!==null)toast('⚠ Vnesi odčitek');return null;}
+  const tVnos=prompt('Temperatura ob meritvi (°C):','20');
+  if(tVnos===null)return null;
+  const t=parseNum(tVnos);
+  const prava=(t===20||!(t>=-20&&t<=40))?odcitek:oimlPravaVolPct(odcitek,t);
+  if(!(prava>0)){toast('⚠ Odčitka pri tej temperaturi ni mogoče preračunati');return null;}
+  const vol=round(gVKg(masaG)/etohDensity(prava),4);
+  const aae=round(calcAAE(vol,prava),4);
+  if(aae>stanje+0.00005){
+    toast(`⚠ V polizdelku je ${fmtNum(stanje,4)} L AAE — izračun da ${fmtNum(aae,4)}`);
+    return null;
+  }
+  if(!confirm(`Regenerat iz ${p.oznaka}\n\n`
+    +`Masa: ${fmtNum(masaG,1)} g\n`
+    +`Odčitek: ${fmtNum(odcitek,2)} vol % pri ${fmtNum(t,1)} °C\n`
+    +`Jakost pri 20 °C: ${fmtNum(prava,2)} vol %\n`
+    +`Volumen: ${fmtNum(vol,4)} L\n`
+    +`Vsebnost: ${fmtNum(aae,4)} L AAE\n\n`
+    +`V polizdelku ostane ${fmtNum(stanje-aae,4)} L AAE.`))return null;
+  return aae;
+}
 // Regeneracija je edino gibanje, ki gre nazaj v knjigo etanola — destilat res
 // pritece v kanister in ga popis tam najde.
 function polizRegeneriraj(id){
   const p=polizNajdi(id);if(!p)return;
-  const aae=polizVprasajKolicino(p,'Koliko L AAE si dobil nazaj v kanister?',
-    'Vpiši, kolikor si ga zares dobil. Kar ni prišlo nazaj, pusti tu in pozneje odpiši.');
+  // Regenerat se stehta in izmeri, ne oceni v litrih absolutnega alkohola.
+  // Vpis je zato enak kot pri popisu: masa, odcitek alkoholometra in
+  // temperatura. Jakost pri 20 C in L AAE izracunamo sami.
+  const aae=polizVprasajRegenerat(p);
   if(aae===null)return;
   // Polizdelek iz se odprtega naloga na kartici etanola nikoli ni bil knjizen
   // kot izhod. Vhod bi zato ustvaril alkohol iz nic - kartica bi narasla za
@@ -12851,6 +12885,39 @@ function openRDDetail(id){
         ${r.aaeProdukt?`<tr><td>Ostanek v produktu</td><td style="font-weight:600;color:#5a3a6b">${fmtNum(r.aaeProdukt,4)} L AAE</td></tr>`:''}
         ${(r.aaeProdukt||r.aaeRegen)?`<tr><td>Manjko</td><td>${fmtNum(r.aaeIzgube||0,4)} L AAE · ${fmtNum((r.aaeIzgube||0)/r.lAAE*100,1)} %</td></tr>`:''}
       </table>
+
+      ${(()=>{
+        // Bilanca alkohola na nalogu. Brez nje se prevzem iz polizdelka na
+        // nalogu nikjer ne vidi - zapis o njem stoji samo na kartici posode,
+        // nalog pa kaze le tisto, kar je prislo iz kanistra.
+        const prejeto=rdPrejetoIzPolizdelkov(r);
+        const oddano=rdOddanoVPolizdelke(r);
+        const regen=rdRegeneriranAAE(r);
+        const drzi=rdDrziAAE(r);
+        if(!(prejeto>0.00005||oddano>0.00005)&&r.status!=='odprt')return '';
+        const viri=polizdelki.filter(p=>(p.gibanja||[]).some(g=>g.vrsta==='v_nalog'&&g.nalogId===r.id));
+        const nasi=polizdelki.filter(p=>p.izDN===r.id);
+        return `<div class="slabel">Bilanca alkohola</div>
+        <table class="mini-table">
+          <tr><td>Iz kanistra</td><td>${fmtNum(r.lAAE||0,4)} L AAE</td></tr>
+          ${prejeto>0.00005?`<tr><td>Prejeto iz polizdelkov</td>
+            <td style="color:#5a3a6b;font-weight:600">+${fmtNum(prejeto,4)} L AAE</td></tr>`:''}
+          ${regen>0.00005?`<tr><td>Vrnjeno v kanister</td>
+            <td style="color:var(--success)">−${fmtNum(regen,4)} L AAE</td></tr>`:''}
+          ${oddano>0.00005?`<tr><td>Oddano v polizdelke</td>
+            <td style="color:#5a3a6b">−${fmtNum(oddano,4)} L AAE</td></tr>`:''}
+          <tr><td style="font-weight:600">Nalog trenutno drži</td>
+            <td style="font-weight:700">${fmtNum(drzi,4)} L AAE</td></tr>
+        </table>
+        ${viri.length?`<div style="font-size:.7rem;color:#5a3a6b;padding:.4rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin-bottom:.5rem">
+          Prejeto iz: ${viri.map(p=>{
+            const kolik=(p.gibanja||[]).filter(g=>g.vrsta==='v_nalog'&&g.nalogId===r.id)
+              .reduce((a,g)=>a+(g.lAAE||0),0);
+            return `<a href="javascript:void 0" onclick="closeSheet('rdDetailOverlay');openPolizdelek('${p.id}')" style="color:#5a3a6b;font-weight:600">${htmlEsc(p.oznaka)}</a> ${fmtNum(kolik,4)} L`;
+          }).join(' · ')}</div>`:''}
+        ${nasi.length?`<div style="font-size:.7rem;color:#5a3a6b;padding:.4rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin-bottom:.5rem">
+          Nastali polizdelki: ${nasi.map(p=>`<a href="javascript:void 0" onclick="closeSheet('rdDetailOverlay');openPolizdelek('${p.id}')" style="color:#5a3a6b;font-weight:600">${htmlEsc(p.oznaka)}</a> ${fmtNum(polizStanje(p),4)} L`).join(' · ')}</div>`:''}`;
+      })()}
       ${r.namen?`<div class="slabel">Namen</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.namen)}</div>`:''}
       ${r.opazanja?`<div class="slabel">Opažanja</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.opazanja)}</div>`:''}
       ${r.zakljucki?`<div class="slabel">Zaključki</div><div style="font-size:.8rem;color:var(--muted);line-height:1.5;white-space:pre-wrap">${htmlEsc(r.zakljucki)}</div>`:''}

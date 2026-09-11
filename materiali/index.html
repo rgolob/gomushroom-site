@@ -9051,8 +9051,21 @@ function rdOddanoVPolizdelke(r){
   return round(polizdelki.filter(p=>p.izDN===r.id&&polizVZalogi(p))
     .reduce((s,p)=>s+(p.lAAE||0),0),4);
 }
+// Kar je nalog prejel iz polizdelkov. Beremo iz gibanj in ne iz stevca na
+// nalogu: en nalog lahko prejme iz vec polizdelkov in en polizdelek lahko gre
+// po delih v vec nalogov, zato je edini zanesljiv vir gibanje samo.
+function rdPrejetoIzPolizdelkov(r){
+  if(!r?.id)return 0;
+  return round(polizdelki.reduce((s,p)=>s+(p.gibanja||[])
+    .filter(g=>g.vrsta==='v_nalog'&&g.nalogId===r.id)
+    .reduce((a,g)=>a+(g.lAAE||0),0),0),4);
+}
+// Koliko alkohola je v nalog sploh vstopilo: iz kanistra in iz polizdelkov.
+function rdVlozenoAAE(r){
+  return round((r?.lAAE||0)+rdPrejetoIzPolizdelkov(r),4);
+}
 function rdDrziAAE(r){
-  return Math.max(0, round((r?.lAAE||0)-rdRegeneriranAAE(r)-rdOddanoVPolizdelke(r),4));
+  return Math.max(0, round(rdVlozenoAAE(r)-rdRegeneriranAAE(r)-rdOddanoVPolizdelke(r),4));
 }
 
 function renderEtStats(){
@@ -9309,6 +9322,55 @@ function polizOdpremi(id){
   polizShrani(p,`✓ Odpremljeno ${fmtNum(aae,4)} L AAE · trošarina ${eur(trosarina)}`);
 }
 
+// ── POLIZDELEK V NALOG ─────────────────────────────────────────────────────
+// Polizdelek gre po delih v enega ali vec nalogov in en nalog jih lahko prejme
+// iz vec polizdelkov. Zato to ni polje na nalogu, ampak gibanje na kartici -
+// samo tako drzi 1:N in N:1 hkrati.
+//
+// Ali gre ob tem kaj na kartico etanola, je odvisno od tega, kje alkohol je:
+//   polizdelek se v zalogi  nic - z zaloge ni odsel, le nosilec se zamenja
+//   polizdelek iz zakljucenega naloga  VHOD, ker se alkohol vraca v sistem;
+//     brez tega bi ga ciljni nalog ob svojem zakljucku knjizil drugic
+function polizVNalog(id){
+  const p=polizNajdi(id);if(!p)return;
+  const stanje=polizStanje(p);
+  if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return;}
+  const cilji=rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==p.izDN);
+  if(!cilji.length){toast('⚠ Ni odprtega R&D naloga, v katerega bi ga dal');return;}
+  const seznam=cilji.map((r,i)=>`${i+1}) ${r.oznaka||'—'} · ${r.naziv||''}`).join('\n');
+  const izbira=prompt(`V kateri nalog gre ${p.oznaka}?\n\n${seznam}\n\nVpiši številko:`,'1');
+  if(izbira===null)return;
+  const cilj=cilji[parseInt(izbira,10)-1];
+  if(!cilj){toast('⚠ Tega naloga ni na seznamu');return;}
+  const aae=polizVprasajKolicino(p,`Koliko L AAE gre v ${cilj.oznaka||cilj.naziv}?`);
+  if(aae===null)return;
+  const masa=polizMasaZa(p,aae);
+  const vZalogi=polizVZalogi(p);
+  if(!confirm(`${p.oznaka} → ${cilj.oznaka||cilj.naziv}\n\n`
+    +`Količina: ${fmtNum(masa,1)} g\nVsebnost: ${fmtNum(aae,4)} L AAE\n\n`
+    +(vZalogi
+      ?`Na kartico etanola se ne knjiži nič — alkohol z zaloge ni odšel, samo iz `
+       +`polizdelka prehaja v nalog in tam ostane rezerviran.`
+      :`Na kartico etanola se knjiži VHOD ${fmtNum(aae,4)} L AAE — ta alkohol je bil `
+       +`ob zaključku izvornega naloga odpisan z zaloge in se zdaj vanjo vrača. `
+       +`Brez tega bi ga ciljni nalog ob svojem zaključku knjižil drugič.`)))return;
+
+  let e=null;
+  if(!vZalogi){
+    e={id:uid(),datum:todayISO(),tip:'polizdelek',dokument:cilj.oznaka||cilj.naziv,
+       opomba:`Iz polizdelka ${p.oznaka} — ${p.naziv} v nalog ${cilj.oznaka||cilj.naziv}`,
+       kolicina:round(aae,4),pct:100,gostota:etohDensity(100),lAAE:round(aae,4)};
+    etanolKnjiga.push(e);
+  }
+  p.gibanja.push(polizGibanje('v_nalog',aae,masa,
+    {kam:cilj.oznaka||cilj.naziv,nalogId:cilj.id}));
+  save();
+  if(e)sbPushEt(e);
+  renderRD();renderEtStats();
+  if(currentTab==='etanol')renderEtanol();
+  polizShrani(p,`✓ ${fmtNum(aae,4)} L AAE → ${cilj.oznaka||cilj.naziv}`);
+}
+
 // Polizdelka ne bo vec: vrzen stran, porabljen za pokusino, posusen do konca.
 function polizOdpisi(id){
   const p=polizNajdi(id);if(!p)return;
@@ -9419,6 +9481,7 @@ function openPolizdelek(id){
 
       <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem">
         ${odprt?`<button class="bsave green" onclick="polizRegeneriraj('${p.id}')">♻️ Regeneriraj — nazaj v kanister</button>
+        <button class="bsave" style="background:#5a3a6b" onclick="polizVNalog('${p.id}')">🧪 Uporabi v nalogu</button>
         <button class="bsave" onclick="polizOdpremi('${p.id}')">📦 Odpremi drugemu podjetju</button>`:''}
         <button class="bcancel" onclick="polizPovezavoKopiraj('${p.id}')">🔗 Povezava za QR nalepko</button>
         ${odprt?`<button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="polizOdpisi('${p.id}')">✕ Odpiši — polizdelka ne bo več</button>`:''}
@@ -9504,7 +9567,7 @@ function renderEtFilterPovzetek(rows){
 
 function renderEtanol(){
   renderEtFilterRow();
-  const rows=[...etanolKnjiga].filter(e=>etVelja(etFilter,e)).sort((a,b)=>b.datum.localeCompare(a.datum));
+  const rows=[...etanolKnjiga].filter(e=>etVelja(etFilter,e)).sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||'')));
   renderEtFilterPovzetek(rows);
   const total=rows.length;
   const pages=Math.ceil(total/ET_PER_PAGE)||1;
@@ -12508,17 +12571,23 @@ function zakljuciRD(id){
   if(r.etanolKnjizen){toast('⚠ Etanol je že knjižen');return;}
   const vProduktu=r.aaeProdukt||0;
   const naZalogi=r.aaeRegen||0;               // koncentrat z rotavaporja: iz kanistra ni odsel
-  const izgube=round(r.lAAE-vProduktu-naZalogi,4);
+  // V nalog ni nujno vstopil samo etanol iz kanistra: lahko je prejel tudi
+  // alkohol iz polizdelka. Manjko je razlika do vsega vlozenega, sicer bi bil
+  // pri takem nalogu izracunan prenizko.
+  const vlozeno=rdVlozenoAAE(r);
+  const izgube=round(vlozeno-vProduktu-naZalogi,4);
   const knjizeno=round(vProduktu+izgube,4);   // samo to zalogo res zapusti
   const razclenjeno=vProduktu>0||naZalogi>0;
   if(!confirm(`Zaključi R&D nalog "${r.naziv}"?\n\n`
-    +`V poskus je šlo ${r.lAAE.toFixed(4)} L AAE.\n`
+    +`V poskus je šlo ${vlozeno.toFixed(4)} L AAE`
+    +(rdPrejetoIzPolizdelkov(r)>0.00005
+       ?` (od tega ${fmtNum(rdPrejetoIzPolizdelkov(r),4)} L iz polizdelkov)`:'')+`.\n`
     +(naZalogi>0?`Koncentrat ${naZalogi.toFixed(4)} L AAE ostane na zalogi — iz kanistra ni odšel, zato ga ne knjižim.\n`:'')
     +(vProduktu>0?`${vProduktu.toFixed(4)} L AAE je rezerviranih v polizdelku — trošarina odložena, `
         +`tam lahko leži, dokler se ne odločiš.\n`:'')
     +(razclenjeno?`Manjko je ${izgube.toFixed(4)} L AAE.\n\n`
         +`Iz zaloge se knjiži ${knjizeno.toFixed(4)} L AAE (polizdelek + manjko).\n`
-      : `Razčlenitve nisi vpisal, zato bo vseh ${r.lAAE.toFixed(4)} L AAE knjiženih kot manjko. `
+      : `Razčlenitve nisi vpisal, zato bo vseh ${vlozeno.toFixed(4)} L AAE knjiženih kot manjko. `
         +`Če je kaj ostalo na zalogi ali v pilotni seriji, to najprej vpiši pod „Kam je šel etanol".\n`)
     +`\nDejanje ni mogoče razveljaviti.`))return;
   // Knjizimo pri jakosti, s katero je etanol odsel v poskus; volumen je tisti,

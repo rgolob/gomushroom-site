@@ -9079,6 +9079,15 @@ function rdPrejetoIzPolizdelkov(r){
 function rdVlozenoAAE(r){
   return round((r?.lAAE||0)+rdPrejetoIzPolizdelkov(r),4);
 }
+// Bilanca alkohola na nalogu se izrise samo, kadar pove kaj vec od same
+// vrstice "L AAE": torej ko je nalog kaj prejel iz polizdelkov, kaj oddal
+// vanje ali kaj vrnil v kanister.
+function rdBilancaVidna(r){
+  if(!r||r._tip==='nalog')return false;
+  return rdPrejetoIzPolizdelkov(r)>0.00005
+      || rdOddanoVPolizdelke(r)>0.00005
+      || rdRegeneriranAAE(r)>0.00005;
+}
 function rdDrziAAE(r){
   return Math.max(0, round(rdVlozenoAAE(r)-rdRegeneriranAAE(r)-rdOddanoVPolizdelke(r),4));
 }
@@ -12851,7 +12860,7 @@ function renderRD(){
         </div>
         <div class="dn-right">
           <span class="status-badge ${badgeCls}">${badgeTxt}</span>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;margin-top:.2rem;color:var(--danger)">${r.lAAE?'−'+r.lAAE.toFixed(4)+' L':''}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;margin-top:.2rem;color:var(--danger)">${(()=>{const v=r._tip==='nalog'?(r.lAAE||0):rdVlozenoAAE(r);return v?'−'+fmtNum(v,4)+' L':'';})()}</div>
         </div>
       </div>
     </div>`;
@@ -12876,8 +12885,8 @@ function openRDDetail(id){
         <tr><td>Serija surovine</td><td>${r.serijaS||'—'}</td></tr>
         <tr><td>Masa surovine</td><td>${r.masaS?r.masaS+' g':'—'}</td></tr>
         <tr><td>Masa EtOH</td><td>${r.masaEtOH} kg @ ${r.pctEtOH} vol%</td></tr>
-        <tr><td>Volumen EtOH</td><td>${r.volEtOH?.toFixed(3)||'—'} L</td></tr>
-        <tr><td>L AAE</td><td style="font-weight:600;color:var(--danger)">${r.lAAE?.toFixed(4)||'—'} L</td></tr>
+        <tr><td>Volumen EtOH</td><td>${r.volEtOH?fmtNum(r.volEtOH,3):'—'} L</td></tr>
+        ${rdBilancaVidna(r)?'':`<tr><td>L AAE</td><td style="font-weight:600;color:var(--danger)">${r.lAAE?fmtNum(r.lAAE,4):'—'} L</td></tr>`}
         ${r.izgube?`<tr><td>Izgube surovine</td><td>${r.izgube} g</td></tr>`:''}
         ${r.masaRegen?`<tr><td>Koncentrat (R)</td><td>${fmtNum(r.masaRegen,1)} g @ ${fmtNum(r.pctRegen,2)} vol%</td></tr>`:''}
         ${r.aaeRegen?`<tr><td>Ostane na zalogi</td><td style="font-weight:600;color:var(--success)">${fmtNum(r.aaeRegen,4)} L AAE</td></tr>`:''}
@@ -12890,11 +12899,11 @@ function openRDDetail(id){
         // Bilanca alkohola na nalogu. Brez nje se prevzem iz polizdelka na
         // nalogu nikjer ne vidi - zapis o njem stoji samo na kartici posode,
         // nalog pa kaze le tisto, kar je prislo iz kanistra.
+        if(!rdBilancaVidna(r))return '';
         const prejeto=rdPrejetoIzPolizdelkov(r);
         const oddano=rdOddanoVPolizdelke(r);
         const regen=rdRegeneriranAAE(r);
         const drzi=rdDrziAAE(r);
-        if(!(prejeto>0.00005||oddano>0.00005)&&r.status!=='odprt')return '';
         const viri=polizdelki.filter(p=>(p.gibanja||[]).some(g=>g.vrsta==='v_nalog'&&g.nalogId===r.id));
         const nasi=polizdelki.filter(p=>p.izDN===r.id);
         return `<div class="slabel">Bilanca alkohola</div>

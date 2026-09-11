@@ -9045,7 +9045,22 @@ function rdRegeneriranAAE(r){
 // Polizdelki izpred te moznosti nastanejo sele ob zakljucku naloga, ko je
 // alkohol ze knjizen kot izhod. Ti te oznake nimajo in se ne rezervirajo -
 // zanje se ni spremenilo nic.
-function polizVZalogi(p){return !!p?.vZalogi;}
+// Ali je alkohol te posode na kartici etanola se vedno v zalogi.
+//
+// Ne beremo shranjene zastavice, ampak izpeljemo iz izvornega naloga: alkohol
+// je v zalogi natanko dotlej, dokler ga nalog ni knjizil kot izhod. Zastavica
+// se namrec izgubi, ce v Supabase ni stolpca v_zalogi - zapis se tiho izpusti
+// in se ob branju vrne kot false. Kartica bi takrat nehala biti rezervirana in
+// izbris bi bil zavrnjen, cetudi je nalog se odprt.
+//
+// Zastavica ostane za posode brez naloga - tak bo prejem od zunanjega
+// narocnika, ki izvornega naloga pri nas nima.
+function polizVZalogi(p){
+  if(!p)return false;
+  const n=[...rdNalogi,...workOrders].find(d=>d.id===p.izDN);
+  if(!n)return !!p.vZalogi;
+  return !(n.etanolKnjizen||n.status==='zakljucen'||n.status==='prenos');
+}
 function rdOddanoVPolizdelke(r){
   if(!r?.id)return 0;
   return round(polizdelki.filter(p=>p.izDN===r.id&&polizVZalogi(p))
@@ -9300,10 +9315,6 @@ function polizRegeneriraj(id){
 // odpremo potrdimo: to je stevilka, ki gre na racun.
 function polizOdpremi(id){
   const p=polizNajdi(id);if(!p)return;
-  if(polizVZalogi(p)){
-    toast('⚠ Ta polizdelek je nastal pri odprtem nalogu — najprej zaključi nalog');
-    return;
-  }
   const kam=prompt(`Komu odpremljaš ${p.oznaka}?\n\nVpiši naziv podjetja.`,'');
   if(kam===null)return;
   const aae=polizVprasajKolicino(p,'Koliko L AAE odpremljaš?');
@@ -9317,8 +9328,13 @@ function polizOdpremi(id){
     `Trošarina: ${eur(trosarina)}\n`+
     `Obdobje: ${new Date().toLocaleDateString('sl-SI',{month:'long',year:'numeric'})}\n\n`+
     `Trošarina zapade s to odpremo — znesek daj na račun kot svojo postavko.\n`+
-    `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu.`))return;
+    (polizVZalogi(p)
+      ? `Na kartico etanola se knjiži IZHOD ${fmtNum(aae,4)} L AAE: ta alkohol z zaloge `
+        +`doslej ni odšel, ker je nalog še odprt.`
+      : `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu.`)))return;
+  const e=polizIzhodEtanola(p,aae,`Odprema${kam?' — '+kam:''}`,'polizdelek');
   p.gibanja.push(polizGibanje('odprema',aae,masa,{kam:kam||'',trosarina:round(trosarina,2)}));
+  if(e){save();sbPushEt(e);renderEtStats();if(currentTab==='etanol')renderEtanol();}
   polizShrani(p,`✓ Odpremljeno ${fmtNum(aae,4)} L AAE · trošarina ${eur(trosarina)}`);
 }
 
@@ -9364,6 +9380,29 @@ async function polizIzbrisi(id){
   renderEtStats();renderRD();
   if(currentTab==='etanol')renderEtanol();
   toast(`✓ Kartica ${p.oznaka} izbrisana`);
+}
+
+// Ko alkohol polizdelka, ki je se v zalogi, zares zapusti sistem - odpremljen
+// ali unicen - mora iti z kartice etanola. Pri polizdelku iz zakljucenega
+// naloga se to ne zgodi: tam je bil odpisan ze ob zakljucku.
+//
+// Razclenitev na izpisu kartice bere aaePolizdelek in aaeIzgube, zato ju
+// postavimo: odprema je polizdelek, ki je odsel iz hise, odpis je izguba.
+function polizIzhodEtanola(p,aae,razlog,postavka){
+  if(!polizVZalogi(p))return null;
+  const volPct=p.volPct||96.25;
+  const vol=round(aae/(volPct/100),3);
+  const e={
+    id:uid(), datum:todayISO(), tip:'poraba-rd',
+    dokument:p.oznaka,
+    opomba:`${razlog} — polizdelek ${p.oznaka}${p.naziv?' ('+p.naziv+')':''}`,
+    kolicina:vol, pct:volPct, gostota:etohDensity(volPct),
+    lAAE:round(aae,4),
+    aaePolizdelek: postavka==='polizdelek'?round(aae,4):0,
+    aaeIzgube: postavka==='izguba'?round(aae,4):0,
+  };
+  etanolKnjiga.push(e);
+  return e;
 }
 
 // ── POLIZDELEK V NALOG ─────────────────────────────────────────────────────
@@ -9418,18 +9457,19 @@ function polizVNalog(id){
 // Polizdelka ne bo vec: vrzen stran, porabljen za pokusino, posusen do konca.
 function polizOdpisi(id){
   const p=polizNajdi(id);if(!p)return;
-  if(polizVZalogi(p)){
-    toast('⚠ Ta polizdelek je nastal pri odprtem nalogu — najprej zaključi nalog');
-    return;
-  }
   const stanje=polizStanje(p);
   if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return;}
   if(!confirm(
     `Odpišem ${fmtNum(stanje,4)} L AAE iz ${p.oznaka}?\n\n`+
     `Uporabi to, kadar polizdelka ne bo več — ne bo predelan, ne regeneriran in ne odpremljen.\n\n`+
-    `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu. `+
-    `Zapre se samo evidenca, kje leži.`))return;
+    (polizVZalogi(p)
+      ? `Na kartico etanola se knjiži IZHOD ${fmtNum(stanje,4)} L AAE kot procesna izguba: `
+        +`ta alkohol z zaloge doslej ni odšel, ker je nalog še odprt.`
+      : `Na kartico etanola se ne knjiži nič: iz zaloge je ta alkohol odšel že ob nalogu. `
+        +`Zapre se samo evidenca, kje leži.`)))return;
+  const e=polizIzhodEtanola(p,stanje,'Odpis','izguba');
   p.gibanja.push(polizGibanje('odpis',stanje,polizStanjeG(p),{kam:'uničeno'}));
+  if(e){save();sbPushEt(e);renderEtStats();if(currentTab==='etanol')renderEtanol();}
   polizShrani(p,`✓ Odpisano ${fmtNum(stanje,4)} L AAE`);
 }
 
@@ -12679,7 +12719,10 @@ function zakljuciRD(id){
   // enkrat - dobil bi drugo oznako, isti alkohol pa bi bil na dveh karticah.
   // Njegov alkohol je s to knjizbo z zaloge odsel, zato oznaka "se v zalogi"
   // pade: od tu naprej se obnasa kot vsi dosedanji polizdelki.
-  const zeNastali=polizdelki.filter(p=>p.izDN===r.id&&polizVZalogi(p));
+  // Merilo je izvorni nalog in ne oznaka "se v zalogi": ta je izpeljana iz
+  // stanja naloga, na tem mestu pa je nalog ze oznacen kot zakljucen, zato bi
+  // bila ze false in kartica bi nastala se enkrat.
+  const zeNastali=polizdelki.filter(p=>p.izDN===r.id);
   if(zeNastali.length){
     zeNastali.forEach(p=>{p.vZalogi=false;polizVBazo(p);});
     polizdelkiVLokalno();

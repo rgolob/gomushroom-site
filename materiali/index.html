@@ -438,8 +438,32 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
     removeItem:function(k){return pravi.removeItem(P+k);},
     clear:function(){nasiKljuci().forEach(function(k){pravi.removeItem(k);});},
   };
-  try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return lupina;}});}
-  catch(e){console.error('Peskovnik: kljucev ni bilo mogoce lociti',e);}
+  // Ce locitve kljucev ni mogoce izvesti, se igrisce NE sme zagnati. Sicer bi
+  // pisalo v iste kljuce kot produkcija, produkcijska aplikacija pa bi ob
+  // naslednjem zagonu to prebrala kot svoje in poslala v bazo - zapora pri
+  // Supabase tega ne bi ujela, ker zapis ne bi sel iz peskovnika, ampak iz
+  // produkcije. Tiho deljenje shrambe je nevarnejse od nedelujocega igrisca.
+  var uspelo=false;
+  try{
+    Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return lupina;}});
+    localStorage.setItem('__preizkus','1');
+    uspelo=pravi.getItem(P+'__preizkus')==='1';
+    localStorage.removeItem('__preizkus');
+  }catch(e){uspelo=false;}
+  if(!uspelo){
+    window.GM_PESKOVNIK=false;
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.innerHTML='<div style="font-family:system-ui,sans-serif;max-width:32rem;'
+        +'margin:3rem auto;padding:1.5rem;border:2px solid #8b3a2a;border-radius:8px;'
+        +'color:#8b3a2a;line-height:1.6">'
+        +'<h1 style="font-size:1.1rem;margin:0 0 .6rem">Igrišče se ni moglo zagnati</h1>'
+        +'<p style="margin:0 0 .6rem">Ta brskalnik ne dovoli ločitve shrambe, zato bi igrišče '
+        +'pisalo v iste podatke kot prava aplikacija. Raje se ne zaženem.</p>'
+        +'<p style="margin:0"><a href="/materiali/" style="color:#8b3a2a">Odpri pravo aplikacijo</a></p>'
+        +'</div>';
+    });
+    throw new Error('Peskovnik: locitev shrambe ni mogoca');
+  }
 })();
 </script>
 <script src="../js/gm-auth.js"></script>
@@ -12422,6 +12446,63 @@ function zakljuciOperacijo(id){
   toast(`✓ Nastal ${p.oznaka} · ${fmtNum(aae,4)} L AAE · nalog ostaja odprt`);
 }
 
+// ── RAZVELJAVITEV ZAKLJUCKA ────────────────────────────────────────────────
+// Zakljucek naloga alkohol polizdelka knjizi z zaloge. Dokler je polizdelek se
+// pri nas in iz njega ni nastal izdelek, to ni prav: trosarina zapade sele
+// takrat. Nalog, ki je bil zakljucen prezgodaj, mora biti mogoce vrniti v
+// odprto stanje.
+//
+// Rezultat razveljavitve je natanko tisto stanje, ki bi ga dal "Zakljuci
+// operacijo": nalog odprt, polizdelek obstaja in je se v zalogi, na kartici
+// etanola pa ni knjizbe.
+//
+// Razveljavimo lahko samo, dokler se s polizdelkom ni nic zgodilo. Ce je bil
+// ze regeneriran, odpremljen ali odpisan, bi vracanje knjizbe pomenilo, da
+// tistih gibanj ni bilo - zato takrat raje odklonimo.
+async function razveljaviZakljucekRD(id){
+  const r=rdNalogi.find(x=>x.id===id);if(!r)return;
+  if(r.status!=='zakljucen'&&!r.etanolKnjizen){toast('⚠ Ta nalog ni zaključen');return;}
+  const dok=r.oznaka||r.naziv;
+  const vnosi=etanolKnjiga.filter(e=>e.tip==='poraba-rd'&&e.dokument===dok);
+  const moji=polizdelki.filter(p=>p.izDN===r.id);
+  const premaknjeni=moji.filter(p=>(p.gibanja||[]).some(g=>g.vrsta!=='nastanek'));
+  if(premaknjeni.length){
+    alert(`Zaključka ni mogoče razveljaviti.\n\n`
+      +`Polizdelek ${premaknjeni.map(p=>p.oznaka).join(', ')} se je že premaknil `
+      +`(regeneracija, odprema ali odpis). Vračanje knjižbe bi pomenilo, da teh `
+      +`gibanj ni bilo.`);
+    return;
+  }
+  const knjizeno=round(vnosi.reduce((s,e)=>s+(e.lAAE||0),0),4);
+  if(!confirm(`Razveljavim zaključek naloga ${dok}?\n\n`
+    +(vnosi.length?`S kartice etanola se odstrani ${vnosi.length===1?'vnos':'vnosov: '+vnosi.length}`
+       +` v skupni vrednosti ${fmtNum(knjizeno,4)} L AAE.\n`:'Na kartici etanola ni vnosa za ta nalog.\n')
+    +(moji.length?`Polizdelek ${moji.map(p=>p.oznaka).join(', ')} ostane, `
+       +`vrne pa se med rezervirane — alkohol je spet v zalogi.\n`:'')
+    +`Nalog se vrne v stanje ODPRT.\n\n`
+    +`Trošarina za polizdelek s tem ne zapade — zapade šele, ko iz njega nastane `
+    +`izdelek ali ko gre iz hiše.`))return;
+
+  for(const e of vnosi){
+    etanolKnjiga=etanolKnjiga.filter(x=>x.id!==e.id);
+    try{await sbDel('gm_dn_etanol',e.id);}catch(err){console.warn('razveljavi sbDel',err);}
+  }
+  moji.forEach(p=>{p.vZalogi=true;polizVBazo(p);});
+  if(moji.length)polizdelkiVLokalno();
+  r.status='odprt';
+  r.etanolKnjizen=false;
+  r.datumZakljucka=null;
+  // Razveljavitev je dogodek in ne izbris: na nalogu mora ostati sled, da je
+  // bil enkrat zakljucen in kdaj je bilo to vrnjeno.
+  r.opazanja=((r.opazanja||'')+`\n[${todayISO()}] Zaključek razveljavljen — `
+    +`odstranjena knjižba ${fmtNum(knjizeno,4)} L AAE; polizdelek vrnjen med rezervirane.`).trim();
+  save();
+  sbPushRD(r);
+  renderRD();renderEtStats();
+  if(currentTab==='etanol')renderEtanol();
+  toast(`✓ ${dok} je spet odprt · ${fmtNum(knjizeno,4)} L AAE vrnjenih v zalogo`);
+}
+
 function zakljuciRD(id){
   const r=rdNalogi.find(x=>x.id===id);if(!r)return;
   if(r.etanolKnjizen){toast('⚠ Etanol je že knjižen');return;}
@@ -12582,6 +12663,7 @@ function openRDDetail(id){
         ${!zakljucen&&(r.aaeProdukt||0)>0.00005&&rdOddanoVPolizdelke(r)<0.00005
           ?`<button class="bsave" style="background:#5a3a6b" onclick="closeSheet('rdDetailOverlay');zakljuciOperacijo('${r.id}')">🧪 Zaključi operacijo — nalog ostane odprt</button>`:''}
         ${!zakljucen?`<button class="bsave green" onclick="closeSheet('rdDetailOverlay');zakljuciRD('${r.id}')">✓ Zaključi &amp; Knji&nbsp;etanol</button>`:''}
+        ${zakljucen?`<button style="padding:.55rem;border:1px solid #5a3a6b;border-radius:var(--rs);background:none;color:#5a3a6b;font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="closeSheet('rdDetailOverlay');razveljaviZakljucekRD('${r.id}')">↩ Razveljavi zaključek</button>`:''}
         <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteRD('${r.id}')">Izbriši</button>
       </div>
     </div>`;

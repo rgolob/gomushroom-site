@@ -159,11 +159,25 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
   </url>
   <url>
+    <loc>https://gomushroom.si/znanje/vakuumsko-koncentriranje/</loc>
+    <lastmod>2026-08-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/vakuumsko-koncentriranje/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/vacuum-concentration/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/vakuumsko-koncentriranje/"/>
+  </url>
+  <url>
     <loc>https://gomushroom.si/en/learn/ultrasonic-extraction/</loc>
     <lastmod>2026-07-21</lastmod>
     <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/ultrasonic-extraction/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/ultrazvocna-ekstrakcija/"/>
+  </url>
+  <url>
+    <loc>https://gomushroom.si/en/learn/vacuum-concentration/</loc>
+    <lastmod>2026-08-03</lastmod>
+    <xhtml:link rel="alternate" hreflang="sl" href="https://gomushroom.si/znanje/vakuumsko-koncentriranje/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gomushroom.si/en/learn/vacuum-concentration/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gomushroom.si/znanje/vakuumsko-koncentriranje/"/>
   </url>
 
   <!-- Article: Trojna ekstrakcija / Triple extraction -->

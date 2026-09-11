@@ -12660,6 +12660,26 @@ async function razveljaviZakljucekRD(id){
 function zakljuciRD(id){
   const r=rdNalogi.find(x=>x.id===id);if(!r)return;
   if(r.etanolKnjizen){toast('⚠ Etanol je že knjižen');return;}
+  // Zakljucek naloga je trosarinsko merodajen trenutek: alkohol gre z zaloge.
+  // Ce iz naloga se stoji polizdelek, o katerem se ni odloceno, zakljucek
+  // prehiti odlocitev - in prav to je razlog, da nalog ostane odprt.
+  //
+  // Zapora namesto opozorila, ker je posledica denarna in je ni mogoce
+  // razveljaviti brez dodatnega posega. Pot naprej je vedno ena od stirih:
+  // regeneracija, prenos v drug nalog, odprema ali odpis.
+  const nerazreseni=polizdelki.filter(p=>p.izDN===r.id&&polizStanje(p)>0.00005);
+  if(nerazreseni.length){
+    alert(`Naloga ${r.oznaka||r.naziv} še ni mogoče zaključiti.\n\n`
+      +nerazreseni.map(p=>`${p.oznaka} — ${fmtNum(polizStanje(p),4)} L AAE`).join('\n')
+      +`\n\nZaključek naloga pomeni, da alkohol odide z zaloge. Dokler o polizdelku `
+      +`ni odločeno, tega ne smemo narediti.\n\n`
+      +`Na kartici polizdelka izberi eno od poti:\n`
+      +`• Regeneriraj — nazaj v kanister\n`
+      +`• Uporabi v nalogu — gre v naslednjo formulacijo\n`
+      +`• Odpremi — gre iz hiše, trošarina zapade\n`
+      +`• Odpiši — polizdelka ne bo več`);
+    return;
+  }
   const vProduktu=r.aaeProdukt||0;
   const naZalogi=r.aaeRegen||0;               // koncentrat z rotavaporja: iz kanistra ni odsel
   // V nalog ni nujno vstopil samo etanol iz kanistra: lahko je prejel tudi
@@ -12667,7 +12687,15 @@ function zakljuciRD(id){
   // pri takem nalogu izracunan prenizko.
   const vlozeno=rdVlozenoAAE(r);
   const izgube=round(vlozeno-vProduktu-naZalogi,4);
-  const knjizeno=round(vProduktu+izgube,4);   // samo to zalogo res zapusti
+  // Knjizimo to, kar nalog ta trenutek se drzi - ne vsote iz polj. Ce je
+  // polizdelek nastal ze ob zakljucku operacije, je njegov alkohol zalogo
+  // zapustil takrat (ali pa je se vedno na kartici, vezan v posodi) in tu ga
+  // ne smemo knjiziti drugic. Pri nalogu brez polizdelka je to ista stevilka
+  // kot prej: vlozeno minus regenerat.
+  const zeVPolizdelkih=rdOddanoVPolizdelke(r)>0.00005;
+  const knjizeno=rdDrziAAE(r);
+  const vPolizKnjizeno=zeVPolizdelkih?0:vProduktu;
+  const izgubeKnjizene=round(knjizeno-vPolizKnjizeno,4);
   const razclenjeno=vProduktu>0||naZalogi>0;
   if(!confirm(`Zaključi R&D nalog "${r.naziv}"?\n\n`
     +`V poskus je šlo ${vlozeno.toFixed(4)} L AAE`
@@ -12705,7 +12733,7 @@ function zakljuciRD(id){
     strosek:0,
     // Iste postavke kot pri izhodu delovnega naloga, da ju porocilo lahko
     // sesteje po isti razclenitvi.
-    aaePolizdelek:vProduktu,aaeIzgube:izgube,
+    aaePolizdelek:vPolizKnjizeno,aaeIzgube:izgubeKnjizene,
   };
   etanolKnjiga.push(e);
   r.status='zakljucen';

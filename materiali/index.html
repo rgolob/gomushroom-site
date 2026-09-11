@@ -9104,10 +9104,14 @@ function renderEtStats(){
     if(!poliz.length){el.style.display='none';}
     else{
       const skupaj=poliz.reduce((s,p)=>s+polizStanje(p),0);
-      const trosarina=skupaj/100*settings.trosarinaEUR;
+      // Obveznost se lahko ze nastala: nastane ob zakljucku naloga. Locimo
+      // torej tisto, kar je se v odprtih nalogih, od tistega, kar je zapadlo.
+      const seNiZapadlo=poliz.filter(polizVZalogi).reduce((s,p)=>s+polizStanje(p),0);
+      const zapadlo=round(skupaj-seNiZapadlo,4);
       el.style.display='';
       el.innerHTML=`<strong>V polizdelkih: ${skupaj.toFixed(4)} L AAE</strong>
-        · trošarina odložena ≈ ${eur(trosarina)}
+        ${seNiZapadlo>0.00005?`· obveznost še ni nastala za ${fmtNum(seNiZapadlo,4)} L ≈ ${eur(seNiZapadlo/100*settings.trosarinaEUR)}`:''}
+        ${zapadlo>0.00005?`· <span style="color:#8b3a2a">trošarina zapadla za ${fmtNum(zapadlo,4)} L ≈ ${eur(zapadlo/100*settings.trosarinaEUR)}</span>`:''}
         <div style="margin-top:.3rem">${poliz.map(p=>`
           <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem">
             <span style="flex:1;min-width:0;color:var(--muted)">
@@ -9115,7 +9119,7 @@ function renderEtStats(){
               · ${fmtNum(polizStanje(p),4)} L AAE${p.naziv?' — '+htmlEsc(p.naziv):''}</span>
             <button onclick="openPolizdelek('${p.id}')" style="flex:0 0 auto;font-size:.62rem;padding:.2rem .5rem;border:1px solid rgba(90,58,107,.4);border-radius:6px;background:white;cursor:pointer;color:#5a3a6b">Odpri kartico</button>
           </div>`).join('')}</div>
-        <div style="color:var(--muted);margin-top:.25rem">Alkohol je odšel iz kanistra, ni pa izgubljen — vezan je v teh posodah in trošarina zanj je odložena. Na kartici polizdelka ga regeneriraš nazaj v zalogo, odpremiš drugemu podjetju ali odpišeš.</div>`;
+        <div style="color:var(--muted);margin-top:.25rem">Alkohol je odšel iz kanistra, ni pa izgubljen — vezan je v teh posodah. Trošarinska obveznost nastane ob zaključku naloga; dokler je nalog odprt, še ni nastala. Na kartici polizdelka ga regeneriraš nazaj v zalogo, odpremiš drugemu podjetju ali odpišeš.</div>`;
     }
   }
 }
@@ -9327,7 +9331,10 @@ function polizOdpremi(id){
     `Vsebnost: ${fmtNum(aae,4)} L AAE\n`+
     `Trošarina: ${eur(trosarina)}\n`+
     `Obdobje: ${new Date().toLocaleDateString('sl-SI',{month:'long',year:'numeric'})}\n\n`+
-    `Trošarina zapade s to odpremo — znesek daj na račun kot svojo postavko.\n`+
+    (polizVZalogi(p)
+      ? `Trošarina zapade s to odpremo — znesek daj na račun kot svojo postavko.\n`
+      : `Trošarina je za ta alkohol zapadla že ob zaključku naloga ${p.izDNOznaka||''} — `
+        +`ob odpremi se ne obračuna znova. Znesek je informativen.\n`)+
     (polizVZalogi(p)
       ? `Na kartico etanola se knjiži IZHOD ${fmtNum(aae,4)} L AAE: ta alkohol z zaloge `
         +`doslej ni odšel, ker je nalog še odprt.`
@@ -9551,9 +9558,15 @@ function openPolizdelek(id){
         <input id="polizLokacija" value="${htmlEsc(p.lokacija||'')}" placeholder="npr. polica B2"
                onchange="polizNastavi('${p.id}','lokacija',this.value)"></div>
 
-      ${odprt?`<div style="font-size:.72rem;color:#5a3a6b;padding:.45rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin:.2rem 0 .7rem">
-        Trošarina odložena ≈ ${eur(stanje/100*settings.trosarinaEUR)} · zapade ob odpremi ali ob izdelku.
-      </div>`:''}
+      ${odprt?(polizVZalogi(p)
+        ?`<div style="font-size:.72rem;color:#5a3a6b;padding:.45rem .6rem;border-radius:6px;background:rgba(90,58,107,.08);margin:.2rem 0 .7rem">
+        Trošarinska obveznost še ni nastala ≈ ${eur(stanje/100*settings.trosarinaEUR)} · nalog je še odprt.
+        Nastane ob zaključku naloga, ob odpremi ali ob odpisu.
+      </div>`
+        :`<div style="font-size:.72rem;color:#8b3a2a;padding:.45rem .6rem;border-radius:6px;background:rgba(139,58,42,.08);margin:.2rem 0 .7rem">
+        Trošarina je zapadla ob zaključku naloga ${htmlEsc(p.izDNOznaka||'')} ≈ ${eur(stanje/100*settings.trosarinaEUR)}.
+        Ob odpremi se ne obračuna znova.
+      </div>`):''}
 
       <div class="slabel">Gibanja</div>
       <table class="mini-table">${gib||'<tr><td colspan="4">—</td></tr>'}</table>
@@ -9964,7 +9977,7 @@ ${(izTinkture||izGly||izPoliz||izIzgube||vezanoVPoliz||sproscenoIzPoliz)?`
         <td style="padding:.2rem .3rem;text-align:right;font-weight:700">${izTinkture.toFixed(4)} L AAE</td></tr>
     ${izGly?`<tr><td style="padding:.2rem .3rem">Vezan v glicerinskih tinkturah</td>
         <td style="padding:.2rem .3rem;text-align:right">${izGly.toFixed(4)} L AAE</td></tr>`:''}
-    ${izPoliz?`<tr><td style="padding:.2rem .3rem">V polizdelke — trošarina odložena</td>
+    ${izPoliz?`<tr><td style="padding:.2rem .3rem">V polizdelke <strong>— trošarina zapadla ob zaključku naloga</strong></td>
         <td style="padding:.2rem .3rem;text-align:right">${izPoliz.toFixed(4)} L AAE</td></tr>`:''}
     ${izIzgube?`<tr><td style="padding:.2rem .3rem">Procesne izgube</td>
         <td style="padding:.2rem .3rem;text-align:right">${izIzgube.toFixed(4)} L AAE</td></tr>`:''}
@@ -9974,8 +9987,9 @@ ${(izTinkture||izGly||izPoliz||izIzgube||vezanoVPoliz||sproscenoIzPoliz)?`
     (v zgornjem seštevku vhodov). Trošarina zanj zapade pri nalogu, ki ga porabi.
   </div>`:''}
   ${vezanoVPoliz?`<div style="margin-top:.4rem;padding-top:.35rem;border-top:1px solid #ede6d6;color:#5a3a6b">
-    Na dan izpisa je v polizdelkih vezanega <strong>${vezanoVPoliz.toFixed(4)} L AAE</strong>,
-    za katerega trošarina še ni zapadla. Zapade, ko iz polizdelka nastane izdelek ali ko ga prodaš.
+    Na dan izpisa je v polizdelkih vezanega <strong>${vezanoVPoliz.toFixed(4)} L AAE</strong>.
+    Za tiste iz zaključenih nalogov je trošarina zapadla ob zaključku; za tiste iz
+    nalogov, ki so še odprti, obveznost še ni nastala.
   </div>`:''}
 </div>`:''}
 

@@ -10277,7 +10277,14 @@ table{width:100%;border-collapse:collapse}
   <div style="text-align:right">
     <div class="doc-naslov">Zapisnik o proizvodnji</div>
     <div class="doc-sifra">Šifra dokumenta: <strong>${esc(d.oznaka||'')}</strong></div>
-    <div class="doc-sifra">OBR-0003/02 · SOP-0003</div>
+    <div class="doc-sifra">${(()=>{
+      // Izvirnik je v nogi nosil OBR-0003/02 - oznako organolepticne analize,
+      // ne zapisnika. Napaka je zabelezena v registru pri {{ZOP-0001}} in se je
+      // prenesla sem. Oznaki beremo iz registra, da ostaneta pravilni tudi, ko
+      // katera od izdaj napreduje.
+      const z=dokNajdi('ZOP-0001'), o=dokNajdi('SOP-0003');
+      return `${z?dokPolnaOznaka(z):'ZOP-0001'} · ${o?dokPolnaOznaka(o):'SOP-0003'}`;
+    })()}</div>
   </div>
 </div>
 

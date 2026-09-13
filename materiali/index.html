@@ -809,6 +809,30 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-
           <option value="rd">R&amp;D nalog — uradno ne nastane produkt</option>
         </select>
       </div>
+      <!-- Namen dela in izid naloga sta dva neodvisna atributa, ne dve vrsti
+           zapisa: razvojni nalog lahko pripelje do prodajnega izdelka, redni
+           pa se lahko konca s polizdelkom. Vidno samo v peskovniku, dokler
+           koncept ni preizkusen do konca. -->
+      <div class="frow" id="dnModelRow" style="display:none">
+        <div class="field"><label>Namen dela</label>
+          <select id="dnNamenVrsta">
+            <option value="redna">Redna proizvodnja</option>
+            <option value="razvoj">Razvoj / pilot</option>
+            <option value="pogodbena">Pogodbena proizvodnja</option>
+          </select>
+        </div>
+        <div class="field"><label>Izid naloga</label>
+          <select id="dnIzid">
+            <option value="izdelek">Končni izdelek</option>
+            <option value="polizdelek">Polizdelek</option>
+          </select>
+        </div>
+      </div>
+      <div id="dnModelNamig" style="display:none;font-size:.65rem;color:var(--muted);margin:-.3rem 0 .5rem;line-height:1.45">
+        Namen pove, zakaj delo teče; izid pove, kaj iz naloga nastane. Nalog s
+        končnim izdelkom gre ob zaključku v Zalogo, nalog s polizdelkom ostane
+        med materiali — tudi razvojni nalog lahko pripelje do prodajnega izdelka.
+      </div>
       <div class="frow">
         <div class="field"><label>Oznaka</label><input id="dnOznaka" placeholder="DN-26-001" autocapitalize="characters"></div>
         <div class="field"><label>Datum odprtja</label><input id="dnDatum" type="date"></div>
@@ -6313,7 +6337,11 @@ function calcDNBilanca(){
   // odsteti AAE dejansko izdelane tinkture, sicer pokaze primanjkljaj, ki ga ni.
   const alcBulk=dnJeBulk('Alc');
   const kom=dnKol('dnKolAlc',alcBulk)+dnKol('dnKolAlcInterno',alcBulk);
-  const aaeVhod=parseNum(document.getElementById('dnLAAE')?.value);
+  // Vhod ni samo etanol iz kanistra: nalog lahko prejme alkohol tudi iz
+  // polizdelka. Brez tega clena bi bilanca kazala manjko v natanko tej visini
+  // in clovek bi ga pokril z izgubami, ki jih ni bilo.
+  const aaeIzPoliz=editingDNId?rdPrejetoIzPolizdelkov({id:editingDNId}):0;
+  const aaeVhod=round(parseNum(document.getElementById('dnLAAE')?.value)+aaeIzPoliz,4);
   const izgube=parseNum(document.getElementById('dnIzgube')?.value||'0');
   const poliz=parseNum(document.getElementById('dnAAEPolizdelek')?.value||'0');
   const etanolGlyRaw=parseNum(document.getElementById('dnEtanolGly')?.value||'0');
@@ -6342,6 +6370,8 @@ function calcDNBilanca(){
     <div style="display:grid;grid-template-columns:1fr auto;gap:.15rem .5rem;font-size:.72rem">
       <span style="color:var(--muted)">Vhodni AAE:</span>
       <span style="text-align:right;font-weight:600">${aaeVhod.toFixed(4)} L</span>
+      ${aaeIzPoliz>0?`<span style="color:var(--muted);padding-left:.6rem">od tega iz polizdelkov:</span>
+      <span style="text-align:right;color:#5a3a6b">${aaeIzPoliz.toFixed(4)} L</span>`:''}
       <span style="color:var(--muted)">AAE v tinktaurah (trošar.):</span>
       <span style="text-align:right;color:var(--accent);font-weight:600">− ${aaeT.toFixed(4)} L</span>
       ${aaeGly>0?`<span style="color:var(--muted)">Etanol v GLY:</span>
@@ -7928,6 +7958,13 @@ function openDNSheet(id){
   const d=id?workOrders.find(x=>x.id===id):null;
   document.getElementById('dnSheetTitle').textContent=d?'Uredi DN':'Nov delovni nalog';
   document.getElementById('dnVrsta').value=d?(d.jeRd?'rd':'dn'):'dn';
+  // Privzetka izpeljemo iz vrste naloga, da obstojeci nalogi ob prvem odprtju
+  // dobijo tisto, kar so ze bili - in se s samim ogledom nic ne spremeni.
+  const jeRdZdaj=d?!!d.jeRd:false;
+  document.getElementById('dnNamenVrsta').value=d?.namenVrsta||(jeRdZdaj?'razvoj':'redna');
+  document.getElementById('dnIzid').value=d?.izid||(jeRdZdaj?'polizdelek':'izdelek');
+  document.getElementById('dnModelRow').style.display=window.GM_PESKOVNIK?'':'none';
+  document.getElementById('dnModelNamig').style.display=window.GM_PESKOVNIK?'':'none';
   document.getElementById('dnOznaka').value=d?.oznaka||nextDNNum();
   document.getElementById('dnDatum').value=d?.datum||todayISO();
   document.getElementById('dnNamen').value=d?.namen||'Ekstrakcija Reishi';
@@ -8484,6 +8521,13 @@ function saveDN(){
     id:editingDNId||uid(),
     oznaka:document.getElementById('dnOznaka').value.trim().toUpperCase(),
     jeRd:document.getElementById('dnVrsta').value==='rd',
+    // Model naloga (namen dela + izid) je zaenkrat peskovniski: v produkciji ga
+    // ne ustvarjamo, ker ga tam ni mogoce ne videti ne popraviti - ze vpisanega
+    // pa ob shranjevanju ne izgubimo.
+    ...(window.GM_PESKOVNIK
+      ?{namenVrsta:document.getElementById('dnNamenVrsta').value,
+        izid:document.getElementById('dnIzid').value}
+      :dnModelObstojeci(editingDNId)),
     datum:document.getElementById('dnDatum').value,
     namen:document.getElementById('dnNamen').value,
     vrstaGobe:document.getElementById('dnVrstaGobe').value,
@@ -8658,6 +8702,12 @@ function openDNDetail(id){
       <tr><td>Serija gobe</td><td>${dnSerijeOznaka(d)}</td></tr>
       <tr><td>Masa gobe</td><td>${d.masaGobe} kg</td></tr>
       <tr><td>Masa EtOH</td><td>${d.masaEtOH} kg</td></tr>
+      ${(()=>{const pz=rdPrejetoIzPolizdelkov(d);
+        return pz>0.00005?`<tr><td>Prejeto iz polizdelkov</td>
+          <td style="color:#5a3a6b">${fmtNum(pz,4)} L AAE</td></tr>`:'';})()}
+      ${d.namenVrsta||d.izid?`<tr><td>Namen · izid</td><td>${
+        {redna:'Redna proizvodnja',razvoj:'Razvoj / pilot',pogodbena:'Pogodbena proizvodnja'}[d.namenVrsta]||'—'
+        } · ${d.izid==='polizdelek'?'polizdelek':'končni izdelek'}</td></tr>`:''}
       ${(()=>{const ss=suhaSnovNaloga(d);const stat=suhaSnovStatBesedilo(d.vrstaGobe,d.id);
         return`<tr><td>Suha snov (Lod)</td><td>${ss!=null?ss.toLocaleString('sl-SI',{maximumFractionDigits:2})+' %':'—'}${stat?`<div style="font-size:.68rem;color:var(--muted)">${stat}</div>`:''}</td></tr>`;})()}
     </table>
@@ -8743,8 +8793,8 @@ function openDNDetail(id){
       ${canKnjizEt?`<button class="bsave" style="background:#2a5a8b" onclick="knjizEtanolIzhod('${d.id}')">🧪 Knjiži etanol izhod</button>`:''}
       ${etKnjizen?`<div style="font-size:.7rem;color:var(--success);text-align:center;padding:.3rem">✓ Etanol izhod že knjižen</div>`:''}
       ${canKnjizMat?`<button class="bsave" style="background:#5a6a2a" onclick="knjizMaterialeIzhodRetro('${d.id}')">${matKnjizen?'↻ Posodobi materiale izhod':'📦 Knjiži materiale izhod'}</button>`:''}
-      ${canTransfer&&!d.jeRd?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
-      ${d.jeRd?`<div style="font-size:.7rem;color:var(--muted);text-align:center;padding:.3rem">🔬 R&amp;D nalog — uradno ne nastane produkt, zato se ne prenaša v Zalogo</div>`:''}
+      ${canTransfer&&dnDajeIzdelek(d)?`<button class="bsave accent" onclick="prenesDN('${d.id}')">→ Prenesi v Zaloga app</button>`:''}
+      ${dnZakajBrezIzdelka(d)?`<div style="font-size:.7rem;color:var(--muted);text-align:center;padding:.3rem">${dnZakajBrezIzdelka(d)}</div>`:''}
       ${d.status==='prenos'?`<button class="bsave" style="background:#6b7a3a" onclick="posljiGobaPodatke('${d.id}')">🍄 Pošlji serijo gobe v Zalogo</button>`:''}
       <button style="padding:.55rem;border:1px solid var(--danger);border-radius:var(--rs);background:none;color:var(--danger);font-family:'Jost',sans-serif;font-size:.82rem;cursor:pointer" onclick="deleteDN('${d.id}')">Izbriši DN</button>
     </div>`;
@@ -9002,8 +9052,12 @@ function calcEtZaloga(){
 // zmanjsevati prostega stanja, ki mu ga kazemo - sicer bi si stal na poti.
 function calcEtRezervirano(izvzemiId){
   let aae=0;
+  // Nalog drzi, kar je vzel iz kanistra, in kar je prejel iz polizdelkov. Brez
+  // drugega clena bi ob prenosu polizdelka v nalog rezervacija padla: polizdelku
+  // se stanje zmanjsa, nalogu pa se ne bi nic pristelo, in prosto stanje bi
+  // poskocilo za alkohol, ki je fizicno se vedno vezan.
   workOrders.filter(d=>d.status==='odprt'&&d.id!==izvzemiId).forEach(d=>{
-    aae+=d.lAAE||0;
+    aae+=(d.lAAE||0)+rdPrejetoIzPolizdelkov(d);
   });
   // Merilo je knjizba, ne status: nalog, ki je etanol ze knjizil, ne rezervira
   // vec, tudi ce bi mu status iz kaksnega razloga ostal odprt.
@@ -9090,6 +9144,52 @@ function rdBilancaVidna(r){
 }
 function rdDrziAAE(r){
   return Math.max(0, round(rdVlozenoAAE(r)-rdRegeneriranAAE(r)-rdOddanoVPolizdelke(r),4));
+}
+
+// ── NAMEN IN IZID ──────────────────────────────────────────────────────────
+// Ali iz naloga nastane koncni izdelek, ki gre v Zalogo.
+//
+// Doslej je o tem odlocala vrsta zapisa: R&D nalog ni mogel oddati nicesar,
+// redni pa je vedno lahko. To ni bilo pravilo, ampak posledica tega, da sta
+// bila to dva locena tipa. Namen dela (razvoj ali redna proizvodnja) in izid
+// naloga (koncni izdelek ali polizdelek) sta dve razlicni stvari: razvojni
+// nalog lahko pripelje do prodajnega izdelka, redni pa se lahko konca s
+// polizdelkom za kasnejso formulacijo.
+//
+// Odloca naj izid. Kjer ta ni vpisan - torej pri vseh obstojecih nalogih -
+// ostane staro obnasanje nedotaknjeno.
+function dnDajeIzdelek(d){
+  if(!d)return false;
+  if(d.izid)return d.izid==='izdelek';
+  return !d.jeRd;
+}
+
+// Ze vpisan model naloga, da ga shranjevanje zunaj peskovnika ne pobrise.
+function dnModelObstojeci(id){
+  const d=id?workOrders.find(x=>x.id===id):null;
+  if(!d)return{};
+  const o={};
+  if(d.namenVrsta)o.namenVrsta=d.namenVrsta;
+  if(d.izid)o.izid=d.izid;
+  return o;
+}
+
+// Nalogi prihajajo iz dveh zbirk z razlicnima poljema za ime: preprost poskus
+// ima naziv, delovni nalog namen. Kjer jih nastevamo skupaj, potrebujemo eno
+// branje za oba.
+function nalogNaziv(n){
+  if(!n)return'—';
+  const ime=n.naziv||n.namen||'';
+  return`${n.oznaka||'—'}${ime?' · '+ime:''}`;
+}
+
+// Zakaj nalog ne more v Zalogo. Loceno od zgornje odlocitve, ker je razlog pri
+// vpisanem izidu drug kot pri podedovanem obnasanju R&D naloga.
+function dnZakajBrezIzdelka(d){
+  if(!d||dnDajeIzdelek(d))return'';
+  if(d.izid==='polizdelek')
+    return'🧪 Izid tega naloga je polizdelek — v Zalogo gre šele izdelek, ki bo iz njega nastal';
+  return'🔬 R&D nalog — uradno ne nastane produkt, zato se ne prenaša v Zalogo';
 }
 
 function renderEtStats(){
@@ -9468,9 +9568,20 @@ function polizVNalog(id){
   const p=polizNajdi(id);if(!p)return;
   const stanje=polizStanje(p);
   if(!(stanje>0)){toast('V tem polizdelku ni več alkohola');return;}
-  const cilji=rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==p.izDN);
-  if(!cilji.length){toast('⚠ Ni odprtega R&D naloga, v katerega bi ga dal');return;}
-  const seznam=cilji.map((r,i)=>`${i+1}) ${r.oznaka||'—'} · ${r.naziv||''}`).join('\n');
+  // Cilj je lahko vsak odprt nalog, ki alkohola se ni knjizil - tudi redni.
+  // Prav to sklene verigo polizdelek -> nalog -> koncni izdelek: doslej je bil
+  // polizdelek mogoc samo kot vhod v razvojni nalog, ta pa izdelka ni mogel
+  // oddati v Zalogo, zato se veriga ni sklenila nikjer.
+  //
+  // Zaenkrat samo v peskovniku, dokler ves tok ni preizkusen.
+  const cilji=[
+    ...rdNalogi.filter(r=>r.status==='odprt'&&!r.etanolKnjizen&&r.id!==p.izDN),
+    ...(window.GM_PESKOVNIK
+      ?workOrders.filter(d=>d.status==='odprt'&&d.id!==p.izDN)
+      :[]),
+  ];
+  if(!cilji.length){toast('⚠ Ni odprtega naloga, v katerega bi ga dal');return;}
+  const seznam=cilji.map((r,i)=>`${i+1}) ${nalogNaziv(r)}`).join('\n');
   const izbira=prompt(`V kateri nalog gre ${p.oznaka}?\n\n${seznam}\n\nVpiši številko:`,'1');
   if(izbira===null)return;
   const cilj=cilji[parseInt(izbira,10)-1];
@@ -9500,6 +9611,8 @@ function polizVNalog(id){
   save();
   if(e)sbPushEt(e);
   renderRD();renderEtStats();
+  // Cilj je lahko tudi delovni nalog; njegova bilanca se je pravkar spremenila.
+  if(workOrders.includes(cilj)){renderDNStats();renderDN();}
   if(currentTab==='etanol')renderEtanol();
   polizShrani(p,`✓ ${fmtNum(aae,4)} L AAE → ${cilj.oznaka||cilj.naziv}`);
 }
